@@ -1,5 +1,6 @@
 pub mod archive;
 mod assert;
+pub mod interp;
 mod io_ext;
 mod serde;
 mod size;

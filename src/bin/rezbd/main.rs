@@ -1,5 +1,6 @@
 use clap::Clap;
 use mech3rs::archive::{write_archive, Entry};
+use mech3rs::interp::{write_interp, Script};
 use std::fs::File;
 use std::io::Read;
 use zip::read::ZipArchive;
@@ -20,8 +21,15 @@ struct ZipOpts {
 }
 
 #[derive(Clap)]
+struct JsonOpts {
+    input: String,
+    output: String,
+}
+
+#[derive(Clap)]
 enum SubCommand {
     Sound(ZipOpts),
+    Interp(JsonOpts),
 }
 
 fn manifest_from_zip(zip: &mut ZipArchive<File>) -> Result<Vec<Entry>> {
@@ -53,10 +61,23 @@ fn sound(opts: ZipOpts) -> Result<()> {
     Ok(())
 }
 
+fn interp(opts: JsonOpts) -> Result<()> {
+    let mut input = File::open(opts.input)?;
+    let mut output = File::create(opts.output)?;
+
+    let mut buf = Vec::new();
+    input.read_to_end(&mut buf)?;
+    let scripts = serde_json::from_slice::<Vec<Script>>(&buf)?;
+
+    write_interp(&mut output, scripts)?;
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
 
     match opts.subcmd {
         SubCommand::Sound(zip_opts) => sound(zip_opts),
+        SubCommand::Interp(json_opts) => interp(json_opts),
     }
 }

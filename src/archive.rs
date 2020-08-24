@@ -5,7 +5,7 @@ use crate::size::ReprSize;
 use crate::string::{bytes_to_c, str_from_c, str_to_c};
 use crate::{assert_that, static_assert_size, Result};
 use ::serde::{Deserialize, Serialize};
-use std::io::{self, Read, Seek, SeekFrom, Write};
+use std::io::{Read, Seek, SeekFrom, Write};
 
 const VERSION: u32 = 1;
 
@@ -103,7 +103,7 @@ where
     let mut offset = 0;
     let count = entries.len() as u32;
 
-    entries
+    let transformed = entries
         .into_iter()
         .map(|(entry, data)| {
             let entry_c = entry_to_c(entry, offset, data.len() as u32);
@@ -111,10 +111,11 @@ where
             write.write_all(&data)?;
             Ok(entry_c)
         })
-        .collect::<Result<Vec<_>>>()?
-        .into_iter()
-        .map(|entry| write.write_struct::<EntryC>(&entry))
-        .collect::<io::Result<Vec<_>>>()?;
+        .collect::<Result<Vec<_>>>()?;
+
+    for entry in transformed.into_iter() {
+        write.write_struct::<EntryC>(&entry)?
+    }
 
     write.write_u32(VERSION)?;
     write.write_u32(count)?;

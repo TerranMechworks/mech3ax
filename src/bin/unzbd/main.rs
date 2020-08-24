@@ -1,5 +1,6 @@
 use clap::Clap;
 use mech3rs::archive::read_archive;
+use mech3rs::interp::read_interp;
 use std::fs::File;
 use std::io::Write;
 use zip::write::{FileOptions, ZipWriter};
@@ -20,8 +21,15 @@ struct ZipOpts {
 }
 
 #[derive(Clap)]
+struct JsonOpts {
+    input: String,
+    output: String,
+}
+
+#[derive(Clap)]
 enum SubCommand {
     Sound(ZipOpts),
+    Interp(JsonOpts),
 }
 
 fn sound(opts: ZipOpts) -> Result<()> {
@@ -48,10 +56,21 @@ fn sound(opts: ZipOpts) -> Result<()> {
     Ok(())
 }
 
+fn interp(opts: JsonOpts) -> Result<()> {
+    let mut input = File::open(opts.input)?;
+    let mut output = File::create(opts.output)?;
+
+    let scripts = read_interp(&mut input)?;
+    let data = serde_json::to_vec_pretty(&scripts)?;
+    output.write_all(&data)?;
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
 
     match opts.subcmd {
         SubCommand::Sound(zip_opts) => sound(zip_opts),
+        SubCommand::Interp(json_opts) => interp(json_opts),
     }
 }
