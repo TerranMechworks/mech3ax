@@ -1,0 +1,240 @@
+use std::cmp::{PartialEq, PartialOrd};
+use std::fmt::{self, Debug, Display};
+
+pub struct AssertionError(pub String);
+
+impl Debug for AssertionError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+type Result<T> = ::std::result::Result<T, AssertionError>;
+
+pub fn is_equal_to<S, T>(name: S, expected: T, actual: T, pos: u64) -> Result<()>
+where
+    S: Display,
+    T: PartialEq + PartialOrd + Debug,
+{
+    if actual == expected {
+        Ok(())
+    } else {
+        let msg = format!(
+            "Expected '{}' == {:#?}, but was {:#?} (at {})",
+            name, expected, actual, pos
+        );
+        Err(AssertionError(msg))
+    }
+}
+
+#[allow(dead_code)]
+pub fn is_not_equal_to<S, T>(name: S, expected: T, actual: T, pos: u64) -> Result<()>
+where
+    S: Display,
+    T: PartialEq + PartialOrd + Debug,
+{
+    if actual != expected {
+        Ok(())
+    } else {
+        let msg = format!("Expected '{}' != {:#?}, but was (at {})", name, actual, pos);
+        Err(AssertionError(msg))
+    }
+}
+
+pub fn is_less_than<S, T>(name: S, expected: T, actual: T, pos: u64) -> Result<()>
+where
+    S: Display,
+    T: PartialEq + PartialOrd + Debug,
+{
+    if actual < expected {
+        Ok(())
+    } else {
+        let msg = format!(
+            "Expected '{}' < {:#?}, but was {:#?} (at {})",
+            name, expected, actual, pos
+        );
+        Err(AssertionError(msg))
+    }
+}
+
+pub fn is_less_than_or_equal_to<S, T>(name: S, expected: T, actual: T, pos: u64) -> Result<()>
+where
+    S: Display,
+    T: PartialEq + PartialOrd + Debug,
+{
+    if actual <= expected {
+        Ok(())
+    } else {
+        let msg = format!(
+            "Expected '{}' <= {:#?}, but was {:#?} (at {})",
+            name, expected, actual, pos
+        );
+        Err(AssertionError(msg))
+    }
+}
+
+#[allow(dead_code)]
+pub fn is_greater_than<S, T>(name: S, expected: T, actual: T, pos: u64) -> Result<()>
+where
+    S: Display,
+    T: PartialEq + PartialOrd + Debug,
+{
+    if actual > expected {
+        Ok(())
+    } else {
+        let msg = format!(
+            "Expected '{}' > {:#?}, but was {:#?} (at {})",
+            name, expected, actual, pos
+        );
+        Err(AssertionError(msg))
+    }
+}
+
+#[allow(dead_code)]
+pub fn is_greater_than_or_equal_to<S, T>(name: S, expected: T, actual: T, pos: u64) -> Result<()>
+where
+    S: Display,
+    T: PartialEq + PartialOrd + Debug,
+{
+    if actual >= expected {
+        Ok(())
+    } else {
+        let msg = format!(
+            "Expected '{}' >= {:#?}, but was {:#?} (at {})",
+            name, expected, actual, pos
+        );
+        Err(AssertionError(msg))
+    }
+}
+
+#[allow(dead_code)]
+pub fn is_between<S, T>(
+    name: S,
+    expected_min: T,
+    expected_max: T,
+    actual: T,
+    pos: u64,
+) -> Result<()>
+where
+    S: Display,
+    T: PartialEq + PartialOrd + Debug,
+{
+    if expected_min <= actual && actual <= expected_max {
+        Ok(())
+    } else {
+        let msg = format!(
+            "Expected {:#?} <= '{}' <= {:#?}, but was {:#?} (at {})",
+            expected_min, name, expected_max, actual, pos
+        );
+        Err(AssertionError(msg))
+    }
+}
+
+pub fn assert_utf8<S, F, T>(name: S, pos: u64, func: F) -> Result<T>
+where
+    S: Display,
+    F: FnOnce() -> ::std::result::Result<T, ::std::str::Utf8Error>,
+{
+    func().map_err(|_| {
+        let msg = format!("Expected '{}' to be a valid string (at {})", name, pos);
+        AssertionError(msg)
+    })
+}
+
+#[macro_export]
+macro_rules! assert_that {
+    ($name:expr, $actual:tt == $expected:tt, $pos:expr) => {
+        $crate::assert::is_equal_to($name, $expected, $actual, $pos)
+    };
+    ($name:expr, $actual:tt != $expected:tt , $pos:expr) => {
+        $crate::assert::is_not_equal_to($name, $expected, $actual, $pos)
+    };
+    ($name:expr, $actual:tt < $expected:tt, $pos:expr) => {
+        $crate::assert::is_less_than($name, $expected, $actual, $pos)
+    };
+    ($name:expr, $actual:tt <= $expected:tt, $pos:expr) => {
+        $crate::assert::is_less_than_or_equal_to($name, $expected, $actual, $pos)
+    };
+    ($name:expr, $actual:tt > $expected:tt, $pos:expr) => {
+        $crate::assert::is_greater_than($name, $expected, $actual, $pos)
+    };
+    ($name:expr, $actual:tt >= $expected:tt, $pos:expr) => {
+        $crate::assert::is_greater_than_or_equal_to($name, $expected, $actual, $pos)
+    };
+    ($name:expr, $expected_min:tt <= $actual:tt <= $expected_max:tt, $pos:expr) => {
+        $crate::assert::is_between($name, $expected_min, $expected_max, $actual, $pos)
+    };
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn is_equal_to() {
+        assert_that!("foo", 1 == 1, 0).unwrap();
+        let err = assert_that!("foo", 2 == 1, 0).unwrap_err();
+        assert_eq!(
+            format!("{:#?}", err),
+            "Expected 'foo' == 1, but was 2 (at 0)"
+        );
+    }
+
+    #[test]
+    fn is_not_equal_to() {
+        assert_that!("foo", 2 != 1, 0).unwrap();
+        let err = assert_that!("foo", 1 != 1, 0).unwrap_err();
+        assert_eq!(format!("{:#?}", err), "Expected 'foo' != 1, but was (at 0)");
+    }
+
+    #[test]
+    fn is_less_than() {
+        assert_that!("foo", 1 < 2, 0).unwrap();
+        let err = assert_that!("foo", 2 < 1, 0).unwrap_err();
+        assert_eq!(
+            format!("{:#?}", err),
+            "Expected 'foo' < 1, but was 2 (at 0)"
+        );
+    }
+
+    #[test]
+    fn is_less_than_or_equal_to() {
+        assert_that!("foo", 1 <= 2, 0).unwrap();
+        assert_that!("foo", 2 <= 2, 0).unwrap();
+        let err = assert_that!("foo", 3 <= 2, 0).unwrap_err();
+        assert_eq!(
+            format!("{:#?}", err),
+            "Expected 'foo' <= 2, but was 3 (at 0)"
+        );
+    }
+
+    #[test]
+    fn is_greater_than() {
+        assert_that!("foo", 2 > 1, 0).unwrap();
+        let err = assert_that!("foo", 1 > 2, 0).unwrap_err();
+        assert_eq!(
+            format!("{:#?}", err),
+            "Expected 'foo' > 2, but was 1 (at 0)"
+        );
+    }
+
+    #[test]
+    fn is_greater_than_or_equal_to() {
+        assert_that!("foo", 3 >= 2, 0).unwrap();
+        assert_that!("foo", 2 >= 2, 0).unwrap();
+        let err = assert_that!("foo", 1 >= 2, 0).unwrap_err();
+        assert_eq!(
+            format!("{:#?}", err),
+            "Expected 'foo' >= 2, but was 1 (at 0)"
+        );
+    }
+
+    #[test]
+    fn is_between() {
+        assert_that!("foo", 1 <= 1 <= 2, 0).unwrap();
+        assert_that!("foo", 1 <= 2 <= 2, 0).unwrap();
+        let err = assert_that!("foo", 1 <= 3 <= 2, 0).unwrap_err();
+        assert_eq!(
+            format!("{:#?}", err),
+            "Expected 1 <= 'foo' <= 2, but was 3 (at 0)"
+        );
+    }
+}
