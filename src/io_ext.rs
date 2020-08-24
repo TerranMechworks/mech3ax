@@ -4,6 +4,7 @@ use std::mem::MaybeUninit;
 pub trait ReadHelper {
     fn read_u32(&mut self) -> Result<u32>;
     fn read_i32(&mut self) -> Result<i32>;
+    fn read_f32(&mut self) -> Result<f32>;
     fn read_struct<S>(&mut self) -> Result<S>;
 }
 
@@ -21,6 +22,12 @@ where
         let mut buf = [0; 4];
         self.read_exact(&mut buf)?;
         Ok(i32::from_le_bytes(buf))
+    }
+
+    fn read_f32(&mut self) -> Result<f32> {
+        let mut buf = [0; 4];
+        self.read_exact(&mut buf)?;
+        Ok(f32::from_le_bytes(buf))
     }
 
     fn read_struct<S>(&mut self) -> Result<S> {
@@ -42,6 +49,7 @@ where
 pub trait WriteHelper {
     fn write_u32(&mut self, value: u32) -> Result<()>;
     fn write_i32(&mut self, value: i32) -> Result<()>;
+    fn write_f32(&mut self, value: f32) -> Result<()>;
     fn write_struct<S>(&mut self, value: &S) -> Result<()>;
 }
 
@@ -55,6 +63,11 @@ where
     }
 
     fn write_i32(&mut self, value: i32) -> Result<()> {
+        let buf = value.to_le_bytes();
+        self.write_all(&buf)
+    }
+
+    fn write_f32(&mut self, value: f32) -> Result<()> {
         let buf = value.to_le_bytes();
         self.write_all(&buf)
     }
@@ -106,6 +119,16 @@ mod tests {
         let mut output = Cursor::new(vec![]);
         output.write_i32(-559038737).unwrap();
         assert_eq!(expected, output.read_all());
+    }
+
+    #[test]
+    fn f32_roundtrip() {
+        let expected = -1.0f32;
+        let mut cursor = Cursor::new(vec![]);
+        cursor.write_f32(expected).unwrap();
+        cursor.set_position(0);
+        let actual = cursor.read_f32().unwrap();
+        assert_eq!(expected, actual);
     }
 
     #[derive(Debug, PartialEq)]

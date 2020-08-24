@@ -2,6 +2,7 @@ pub mod archive;
 mod assert;
 pub mod interp;
 mod io_ext;
+pub mod reader;
 mod serde;
 mod size;
 mod string;

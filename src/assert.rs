@@ -11,10 +11,11 @@ impl Debug for AssertionError {
 
 type Result<T> = ::std::result::Result<T, AssertionError>;
 
-pub fn is_equal_to<S, T>(name: S, expected: T, actual: T, pos: u64) -> Result<()>
+pub fn is_equal_to<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
 where
     S: Display,
     T: PartialEq + PartialOrd + Debug,
+    U: Display,
 {
     if actual == expected {
         Ok(())
@@ -28,10 +29,11 @@ where
 }
 
 #[allow(dead_code)]
-pub fn is_not_equal_to<S, T>(name: S, expected: T, actual: T, pos: u64) -> Result<()>
+pub fn is_not_equal_to<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
 where
     S: Display,
     T: PartialEq + PartialOrd + Debug,
+    U: Display,
 {
     if actual != expected {
         Ok(())
@@ -41,10 +43,11 @@ where
     }
 }
 
-pub fn is_less_than<S, T>(name: S, expected: T, actual: T, pos: u64) -> Result<()>
+pub fn is_less_than<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
 where
     S: Display,
     T: PartialEq + PartialOrd + Debug,
+    U: Display,
 {
     if actual < expected {
         Ok(())
@@ -57,10 +60,11 @@ where
     }
 }
 
-pub fn is_less_than_or_equal_to<S, T>(name: S, expected: T, actual: T, pos: u64) -> Result<()>
+pub fn is_less_than_or_equal_to<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
 where
     S: Display,
     T: PartialEq + PartialOrd + Debug,
+    U: Display,
 {
     if actual <= expected {
         Ok(())
@@ -74,10 +78,11 @@ where
 }
 
 #[allow(dead_code)]
-pub fn is_greater_than<S, T>(name: S, expected: T, actual: T, pos: u64) -> Result<()>
+pub fn is_greater_than<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
 where
     S: Display,
     T: PartialEq + PartialOrd + Debug,
+    U: Display,
 {
     if actual > expected {
         Ok(())
@@ -91,10 +96,11 @@ where
 }
 
 #[allow(dead_code)]
-pub fn is_greater_than_or_equal_to<S, T>(name: S, expected: T, actual: T, pos: u64) -> Result<()>
+pub fn is_greater_than_or_equal_to<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
 where
     S: Display,
     T: PartialEq + PartialOrd + Debug,
+    U: Display,
 {
     if actual >= expected {
         Ok(())
@@ -108,16 +114,17 @@ where
 }
 
 #[allow(dead_code)]
-pub fn is_between<S, T>(
+pub fn is_between<S, T, U>(
     name: S,
     expected_min: T,
     expected_max: T,
     actual: T,
-    pos: u64,
+    pos: U,
 ) -> Result<()>
 where
     S: Display,
     T: PartialEq + PartialOrd + Debug,
+    U: Display,
 {
     if expected_min <= actual && actual <= expected_max {
         Ok(())
@@ -130,9 +137,10 @@ where
     }
 }
 
-pub fn assert_utf8<S, F, T>(name: S, pos: u64, func: F) -> Result<T>
+pub fn assert_utf8<S, U, F, T>(name: S, pos: U, func: F) -> Result<T>
 where
     S: Display,
+    U: Display,
     F: FnOnce() -> ::std::result::Result<T, ::std::str::Utf8Error>,
 {
     func().map_err(|_| {
