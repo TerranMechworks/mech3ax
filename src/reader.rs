@@ -1,19 +1,10 @@
 use crate::assert::{assert_utf8, AssertionError};
 use crate::io_ext::{ReadHelper, WriteHelper};
-use crate::{Error, Result};
-use ::serde::{Deserialize, Serialize};
+use crate::Result;
+use std::convert::TryInto;
 use std::io::{Read, Write};
 
-//use serde_json::Value;
-
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Value {
-    Int(i32),
-    Float(f32),
-    String(String),
-    List(Vec<Value>),
-    Null,
-}
+use serde_json::{Number, Value};
 
 fn read_value<R>(read: &mut R, offset: &mut usize) -> Result<Value>
 where
@@ -26,12 +17,12 @@ where
         1 => {
             let value = read.read_i32()?;
             *offset += 4;
-            Ok(Value::Int(value))
+            Ok(Value::Number(Number::from(value)))
         }
         2 => {
             let value = read.read_f32()?;
             *offset += 4;
-            Ok(Value::Float(value))
+            Ok(Value::Number(Number::from_f64(value as f64).unwrap()))
         }
         3 => {
             let count = read.read_u32()? as usize;
@@ -55,7 +46,7 @@ where
                     .into_iter()
                     .map(|_| read_value(read, offset))
                     .collect::<Result<Vec<_>>>()?;
-                Ok(Value::List(value))
+                Ok(Value::Array(value))
             }
         }
         _ => {
@@ -63,7 +54,7 @@ where
                 "Expected valid value type, but was {} (at {})",
                 value_type, *offset
             );
-            Err(Error::Assert(AssertionError(msg)))
+            Err(AssertionError(msg))?
         }
     }
 }
@@ -76,18 +67,26 @@ where
     read_value(read, &mut offset)
 }
 
+fn invalid_number(num: Number) -> AssertionError {
+    AssertionError(format!("Expected valid number, but was {}", num))
+}
+
 fn write_value<W>(write: &mut W, value: Value) -> Result<()>
 where
     W: Write,
 {
     match value {
-        Value::Int(int) => {
-            write.write_u32(1)?;
-            write.write_i32(int)?;
-        }
-        Value::Float(float) => {
-            write.write_u32(2)?;
-            write.write_f32(float)?;
+        Value::Number(num) => {
+            if let Some(int) = num.as_i64() {
+                let int = int.try_into().map_err(|_| invalid_number(num))?;
+                write.write_u32(1)?;
+                write.write_i32(int)?;
+            } else if let Some(float) = num.as_f64() {
+                write.write_u32(2)?;
+                write.write_f32(float as f32)?;
+            } else {
+                Err(invalid_number(num))?
+            }
         }
         Value::String(str) => {
             write.write_u32(3)?;
@@ -100,7 +99,7 @@ where
             write.write_u32(4)?;
             write.write_u32(1)?; // count
         }
-        Value::List(list) => {
+        Value::Array(list) => {
             write.write_u32(4)?;
             let count = list.len() as u32 + 1;
             write.write_u32(count)?;
@@ -108,6 +107,10 @@ where
             for item in list.into_iter() {
                 write_value(write, item)?;
             }
+        }
+        _ => {
+            let msg = format!("Expected valid value type, but was {}", value);
+            Err(AssertionError(msg))?
         }
     };
     Ok(())

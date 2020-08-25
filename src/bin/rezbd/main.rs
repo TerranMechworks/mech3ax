@@ -1,7 +1,7 @@
 use clap::Clap;
 use mech3rs::archive::{write_archive, Entry};
 use mech3rs::interp::{write_interp, Script};
-use mech3rs::reader::{write_reader, Value};
+use mech3rs::reader::write_reader;
 use std::fs::File;
 use std::io::{Cursor, Read};
 use zip::read::ZipArchive;
@@ -90,7 +90,7 @@ fn reader(opts: ZipOpts) -> Result<()> {
             let mut file = zip.by_name(&name)?;
             let mut buf = Vec::new();
             file.read_to_end(&mut buf)?;
-            let value = serde_json::from_slice::<Value>(&buf)?;
+            let value = serde_json::from_slice(&buf)?;
 
             let mut buf = Vec::new();
             let mut cursor = Cursor::new(&mut buf);
