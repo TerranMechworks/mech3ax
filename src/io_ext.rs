@@ -5,6 +5,7 @@ pub trait ReadHelper {
     fn read_u32(&mut self) -> Result<u32>;
     fn read_i32(&mut self) -> Result<i32>;
     fn read_f32(&mut self) -> Result<f32>;
+    fn read_u16(&mut self) -> Result<u16>;
     fn read_struct<S>(&mut self) -> Result<S>;
 }
 
@@ -30,6 +31,12 @@ where
         Ok(f32::from_le_bytes(buf))
     }
 
+    fn read_u16(&mut self) -> Result<u16> {
+        let mut buf = [0; 2];
+        self.read_exact(&mut buf)?;
+        Ok(u16::from_le_bytes(buf))
+    }
+
     fn read_struct<S>(&mut self) -> Result<S> {
         let size = std::mem::size_of::<S>();
         unsafe {
@@ -50,6 +57,7 @@ pub trait WriteHelper {
     fn write_u32(&mut self, value: u32) -> Result<()>;
     fn write_i32(&mut self, value: i32) -> Result<()>;
     fn write_f32(&mut self, value: f32) -> Result<()>;
+    fn write_u16(&mut self, value: u16) -> Result<()>;
     fn write_struct<S>(&mut self, value: &S) -> Result<()>;
 }
 
@@ -68,6 +76,11 @@ where
     }
 
     fn write_f32(&mut self, value: f32) -> Result<()> {
+        let buf = value.to_le_bytes();
+        self.write_all(&buf)
+    }
+
+    fn write_u16(&mut self, value: u16) -> Result<()> {
         let buf = value.to_le_bytes();
         self.write_all(&buf)
     }

@@ -13,6 +13,8 @@ base64 = "0.12.3"
 clap = "3.0.0-beta.1"
 zip = "0.5.6"
 chrono = { version = "0.4.15", features= ["serde"] }
+pelite = "0.8.1"
+encoding = "0.2.33"
 
 [dev-dependencies]
 # matches = "0.1.8"

@@ -2,6 +2,7 @@ pub mod archive;
 mod assert;
 pub mod interp;
 mod io_ext;
+pub mod messages;
 pub mod reader;
 mod serde;
 mod size;
@@ -11,6 +12,7 @@ mod string;
 pub enum Error {
     IO(std::io::Error),
     Assert(assert::AssertionError),
+    PeLite(pelite::Error),
 }
 
 impl From<std::io::Error> for Error {
@@ -22,6 +24,12 @@ impl From<std::io::Error> for Error {
 impl From<assert::AssertionError> for Error {
     fn from(err: assert::AssertionError) -> Self {
         Self::Assert(err)
+    }
+}
+
+impl From<pelite::Error> for Error {
+    fn from(err: pelite::Error) -> Self {
+        Self::PeLite(err)
     }
 }
 

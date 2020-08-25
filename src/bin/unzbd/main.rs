@@ -1,6 +1,7 @@
 use clap::Clap;
 use mech3rs::archive::read_archive;
 use mech3rs::interp::read_interp;
+use mech3rs::messages::read_messages;
 use mech3rs::reader::read_reader;
 use std::fs::File;
 use std::io::{Cursor, Write};
@@ -32,6 +33,7 @@ enum SubCommand {
     Sound(ZipOpts),
     Interp(JsonOpts),
     Reader(ZipOpts),
+    Messages(JsonOpts),
 }
 
 fn sound(opts: ZipOpts) -> Result<()> {
@@ -96,6 +98,16 @@ fn reader(opts: ZipOpts) -> Result<()> {
     Ok(())
 }
 
+fn messages(opts: JsonOpts) -> Result<()> {
+    let mut input = File::open(opts.input)?;
+    let mut output = File::create(opts.output)?;
+
+    let messages = read_messages(&mut input)?;
+    let data = serde_json::to_vec_pretty(&messages)?;
+    output.write_all(&data)?;
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
 
@@ -103,5 +115,6 @@ fn main() -> Result<()> {
         SubCommand::Sound(zip_opts) => sound(zip_opts),
         SubCommand::Interp(json_opts) => interp(json_opts),
         SubCommand::Reader(zip_opts) => reader(zip_opts),
+        SubCommand::Messages(json_opts) => messages(json_opts),
     }
 }
