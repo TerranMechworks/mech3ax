@@ -113,6 +113,12 @@ fn read_message_table(data: &[u8]) -> Result<HashMap<u32, String>> {
 fn read_zlocids(data: &[u8], mem_start: u32, mem_end: u32) -> Result<Vec<(u32, String)>> {
     let mut read = Cursor::new(data);
 
+    // skip the CRT initialization section
+    for i in 0..4 {
+        let initterm = read.read_u32()?;
+        assert_that!("initterm", initterm == 0, i * 4)?;
+    }
+
     // the table of message offsets and message table IDs is written backwards, highest
     // address first.
     let mut entry_table = Vec::new();
@@ -126,12 +132,8 @@ fn read_zlocids(data: &[u8], mem_start: u32, mem_end: u32) -> Result<Vec<(u32, S
         }
 
         let entry_id = read.read_u32()?;
-
-        // the first few elements can be zeroed out (table padding?)
-        if mem_offset != 0 {
-            let relative_offset = (mem_offset - mem_start) as usize;
-            entry_table.push((entry_id, relative_offset));
-        }
+        let relative_offset = (mem_offset - mem_start) as usize;
+        entry_table.push((entry_id, relative_offset));
     }
 
     entry_table
