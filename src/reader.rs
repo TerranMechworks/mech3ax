@@ -64,7 +64,9 @@ where
     R: Read,
 {
     let mut offset = 0;
-    read_value(read, &mut offset)
+    let value = read_value(read, &mut offset);
+    read.assert_end()?;
+    value
 }
 
 fn invalid_number(num: Number) -> AssertionError {

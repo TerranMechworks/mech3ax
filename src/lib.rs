@@ -1,5 +1,6 @@
 pub mod archive;
 mod assert;
+mod image;
 pub mod interp;
 mod io_ext;
 pub mod messages;
@@ -7,6 +8,7 @@ pub mod reader;
 mod serde;
 mod size;
 mod string;
+pub mod textures;
 
 #[derive(Debug)]
 pub enum Error {

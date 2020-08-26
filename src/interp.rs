@@ -83,7 +83,7 @@ where
         })
         .collect::<Result<Vec<_>>>()?;
 
-    script_info
+    let scripts = script_info
         .into_iter()
         .map(|(name, last_modified, start)| {
             assert_that!("entry start", start == offset, offset)?;
@@ -94,7 +94,10 @@ where
                 lines,
             })
         })
-        .collect::<Result<Vec<_>>>()
+        .collect::<Result<Vec<_>>>();
+
+    read.assert_end()?;
+    scripts
 }
 
 fn write_script(lines: Vec<String>) -> (u32, Vec<(u32, Vec<u8>)>) {

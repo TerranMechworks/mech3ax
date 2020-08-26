@@ -1,3 +1,4 @@
+use crate::assert::AssertionError;
 use std::io::{Read, Result, Write};
 use std::mem::MaybeUninit;
 
@@ -7,6 +8,7 @@ pub trait ReadHelper {
     fn read_f32(&mut self) -> Result<f32>;
     fn read_u16(&mut self) -> Result<u16>;
     fn read_struct<S>(&mut self) -> Result<S>;
+    fn assert_end(&mut self) -> crate::Result<()>;
 }
 
 impl<R> ReadHelper for R
@@ -49,6 +51,14 @@ where
                     Err(e)
                 }
             }
+        }
+    }
+
+    fn assert_end(&mut self) -> crate::Result<()> {
+        let mut buf = [0; 1];
+        match self.read(&mut buf)? {
+            0 => Ok(()),
+            _ => Err(AssertionError("Expected all data to be read".to_owned()))?,
         }
     }
 }

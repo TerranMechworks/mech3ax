@@ -4,6 +4,8 @@ version = "0.1.0"
 authors = ["Toby Fleming <tobywf@users.noreply.github.com>"]
 edition = "2018"
 
+build = "build.rs"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -12,9 +14,11 @@ serde_json = "1.0"
 base64 = "0.12.3"
 clap = "3.0.0-beta.1"
 zip = "0.5.6"
-chrono = { version = "0.4.15", features= ["serde"] }
+chrono = { version = "0.4.15", features = ["serde"] }
 pelite = "0.8.1"
 encoding = "0.2.33"
+image = {version = "0.23.8", features = ["png"] }
+bitflags = "1.0"
 
 [dev-dependencies]
 # matches = "0.1.8"
@@ -31,3 +35,9 @@ test = false
 path = "src/bin/rezbd/main.rs"
 name = "rezbd"
 test = false
+
+[profile.dev]
+opt-level = 3
+
+[profile.release]
+opt-level = 3

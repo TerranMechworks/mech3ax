@@ -1,8 +1,10 @@
 use clap::Clap;
+use image::ImageOutputFormat;
 use mech3rs::archive::read_archive;
 use mech3rs::interp::read_interp;
 use mech3rs::messages::read_messages;
 use mech3rs::reader::read_reader;
+use mech3rs::textures::read_textures;
 use std::fs::File;
 use std::io::{Cursor, Write};
 use zip::write::{FileOptions, ZipWriter};
@@ -34,6 +36,7 @@ enum SubCommand {
     Interp(JsonOpts),
     Reader(ZipOpts),
     Messages(JsonOpts),
+    Textures(ZipOpts),
 }
 
 fn sound(opts: ZipOpts) -> Result<()> {
@@ -108,6 +111,35 @@ fn messages(opts: JsonOpts) -> Result<()> {
     Ok(())
 }
 
+fn textures(opts: ZipOpts) -> Result<()> {
+    let mut input = File::open(opts.input)?;
+    let output = File::create(opts.output)?;
+
+    let mut zip = ZipWriter::new(output);
+    let options = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
+
+    let manifest = read_textures(&mut input)?
+        .into_iter()
+        .map(|(info, image)| {
+            let name = format!("{}.png", info.name);
+            let mut data = Vec::new();
+            image.write_to(&mut data, ImageOutputFormat::Png)?;
+
+            zip.start_file(name, options)?;
+            zip.write_all(&data)?;
+            Ok(info)
+        })
+        .collect::<Result<Vec<_>>>()?;
+
+    let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+    let data = serde_json::to_vec_pretty(&manifest)?;
+    zip.start_file("manifest.json", options)?;
+    zip.write_all(&data)?;
+    zip.finish()?;
+
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
 
@@ -116,5 +148,6 @@ fn main() -> Result<()> {
         SubCommand::Interp(json_opts) => interp(json_opts),
         SubCommand::Reader(zip_opts) => reader(zip_opts),
         SubCommand::Messages(json_opts) => messages(json_opts),
+        SubCommand::Textures(zip_opts) => textures(zip_opts),
     }
 }

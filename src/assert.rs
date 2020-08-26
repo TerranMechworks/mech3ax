@@ -151,26 +151,64 @@ where
 
 #[macro_export]
 macro_rules! assert_that {
-    ($name:expr, $actual:tt == $expected:tt, $pos:expr) => {
+    ($name:expr, $actual:tt == $expected:expr, $pos:expr) => {
         $crate::assert::is_equal_to($name, $expected, $actual, $pos)
     };
-    ($name:expr, $actual:tt != $expected:tt , $pos:expr) => {
+    ($name:expr, $actual_struct:ident.$actual_field:tt == $expected:expr, $pos:expr) => {
+        $crate::assert::is_equal_to($name, $expected, $actual_struct.$actual_field, $pos)
+    };
+    ($name:expr, $actual:tt != $expected:expr , $pos:expr) => {
         $crate::assert::is_not_equal_to($name, $expected, $actual, $pos)
     };
-    ($name:expr, $actual:tt < $expected:tt, $pos:expr) => {
+    ($name:expr, $actual_struct:ident.$actual_field:tt != $expected:expr, $pos:expr) => {
+        $crate::assert::is_not_equal_to($name, $expected, $actual_struct.$actual_field, $pos)
+    };
+    ($name:expr, $actual:tt < $expected:expr, $pos:expr) => {
         $crate::assert::is_less_than($name, $expected, $actual, $pos)
     };
+    ($name:expr, $actual_struct:ident.$actual_field:tt < $expected:expr, $pos:expr) => {
+        $crate::assert::is_less_than($name, $expected, $actual_struct.$actual_field, $pos)
+    };
+    // this expected has to be tt, otherwise between won't work
     ($name:expr, $actual:tt <= $expected:tt, $pos:expr) => {
         $crate::assert::is_less_than_or_equal_to($name, $expected, $actual, $pos)
     };
-    ($name:expr, $actual:tt > $expected:tt, $pos:expr) => {
+    ($name:expr, $actual_struct:ident.$actual_field:tt <= $expected:expr, $pos:expr) => {
+        $crate::assert::is_less_than_or_equal_to(
+            $name,
+            $expected,
+            $actual_struct.$actual_field,
+            $pos,
+        )
+    };
+    ($name:expr, $actual:tt > $expected:expr, $pos:expr) => {
         $crate::assert::is_greater_than($name, $expected, $actual, $pos)
     };
-    ($name:expr, $actual:tt >= $expected:tt, $pos:expr) => {
+    ($name:expr, $actual_struct:ident.$actual_field:tt > $expected:expr, $pos:expr) => {
+        $crate::assert::is_greater_than($name, $expected, $actual_struct.$actual_field, $pos)
+    };
+    ($name:expr, $actual:tt >= $expected:expr, $pos:expr) => {
         $crate::assert::is_greater_than_or_equal_to($name, $expected, $actual, $pos)
     };
-    ($name:expr, $expected_min:tt <= $actual:tt <= $expected_max:tt, $pos:expr) => {
+    ($name:expr, $actual_struct:ident.$actual_field:tt >= $expected:expr, $pos:expr) => {
+        $crate::assert::is_greater_than_or_equal_to(
+            $name,
+            $expected,
+            $actual_struct.$actual_field,
+            $pos,
+        )
+    };
+    ($name:expr, $expected_min:tt <= $actual:tt <= $expected_max:expr, $pos:expr) => {
         $crate::assert::is_between($name, $expected_min, $expected_max, $actual, $pos)
+    };
+    ($name:expr, $expected_min:tt <= $actual_struct:ident.$actual_field:tt <= $expected_max:expr, $pos:expr) => {
+        $crate::assert::is_between(
+            $name,
+            $expected_min,
+            $expected_max,
+            $actual_struct.$actual_field,
+            $pos,
+        )
     };
 }
 
