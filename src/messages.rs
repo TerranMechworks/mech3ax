@@ -1,7 +1,6 @@
 use crate::assert::{assert_utf8, AssertionError};
 use crate::io_ext::ReadHelper;
 use crate::{assert_that, Result};
-use ::serde::{Deserialize, Serialize};
 use encoding::all::WINDOWS_1252;
 use encoding::{DecoderTrap, Encoding};
 use pelite::pe32::{Pe, PeFile};
@@ -11,13 +10,7 @@ use std::io::{Cursor, Read};
 
 const DLL_BASE_ADDRESS: u32 = 0x10000000;
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Message {
-    pub name: String,
-    pub value: Option<String>,
-}
-
-pub fn read_messages<R>(read: &mut R) -> Result<Vec<Message>>
+pub fn read_messages<R>(read: &mut R) -> Result<HashMap<String, Option<String>>>
 where
     R: Read,
 {
@@ -45,11 +38,8 @@ where
 
     let merged = message_ids
         .into_iter()
-        .map(|(entry_id, name)| Message {
-            name,
-            value: messages.remove(&entry_id),
-        })
-        .collect();
+        .map(|(entry_id, name)| (name, messages.remove(&entry_id)))
+        .collect::<HashMap<_, _>>();
 
     Ok(merged)
 }
