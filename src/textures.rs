@@ -7,7 +7,7 @@ use crate::io_ext::{ReadHelper, WriteHelper};
 use crate::serde::opt_base64;
 use crate::size::ReprSize;
 use crate::string::{str_from_c, str_to_c};
-use crate::{assert_that, static_assert_size, Result};
+use crate::{assert_that, static_assert_size, Error, Result};
 use ::serde::{Deserialize, Serialize};
 use image::{DynamicImage, RgbImage, RgbaImage};
 use std::io::{Read, Write};
@@ -220,18 +220,31 @@ where
     Ok((info, image))
 }
 
-pub fn read_textures<R>(read: &mut R) -> Result<Vec<(TextureInfo, DynamicImage)>>
+fn assert_upcast<T>(result: std::result::Result<T, AssertionError>) -> Result<T> {
+    result.map_err(|e| Error::Assert(e))
+}
+
+pub fn read_textures<R, F, E>(
+    read: &mut R,
+    mut save_texture: F,
+) -> std::result::Result<Vec<TextureInfo>, E>
 where
     R: Read,
+    F: FnMut(&str, DynamicImage) -> std::result::Result<(), E>,
+    E: From<std::io::Error> + From<Error>,
 {
     let header = read.read_struct::<Header>()?;
-    assert_that!("field 00", header.zero00 == 0, 0)?;
-    assert_that!("has entries", header.has_entries == 1, 4)?;
+    assert_upcast(assert_that!("field 00", header.zero00 == 0, 0))?;
+    assert_upcast(assert_that!("has entries", header.has_entries == 1, 4))?;
     // global palette support isn't implemented (never seen)
-    assert_that!("global palette count", header.global_palette_count == 0, 8)?;
-    assert_that!("texture count", header.texture_count > 0, 12)?;
-    assert_that!("field 16", header.zero16 == 0, 16)?;
-    assert_that!("field 20", header.zero20 == 0, 20)?;
+    assert_upcast(assert_that!(
+        "global palette count",
+        header.global_palette_count == 0,
+        8
+    ))?;
+    assert_upcast(assert_that!("texture count", header.texture_count > 0, 12))?;
+    assert_upcast(assert_that!("field 16", header.zero16 == 0, 16))?;
+    assert_upcast(assert_that!("field 20", header.zero20 == 0, 20))?;
 
     let mut offset = Header::SIZE;
     let tex_table = (0..header.texture_count)
@@ -252,10 +265,16 @@ where
     let textures = tex_table
         .into_iter()
         .map(|(name, start_offset)| {
-            assert_that!("texture offset", start_offset == offset, offset)?;
-            read_texture(read, name, &mut offset)
+            assert_upcast(assert_that!(
+                "texture offset",
+                start_offset == offset,
+                offset
+            ))?;
+            let (info, image) = read_texture(read, name, &mut offset)?;
+            save_texture(&info.name, image)?;
+            Ok(info)
         })
-        .collect::<Result<Vec<_>>>();
+        .collect::<std::result::Result<Vec<_>, E>>();
 
     read.assert_end()?;
     textures
@@ -401,11 +420,17 @@ where
     Ok(())
 }
 
-pub fn write_textures<W>(write: &mut W, textures: Vec<(TextureInfo, DynamicImage)>) -> Result<()>
+pub fn write_textures<W, F, E>(
+    write: &mut W,
+    texture_infos: Vec<TextureInfo>,
+    mut load_texture: F,
+) -> std::result::Result<(), E>
 where
     W: Write,
+    F: FnMut(&str) -> std::result::Result<DynamicImage, E>,
+    E: From<std::io::Error> + From<Error>,
 {
-    let count = textures.len() as u32;
+    let count = texture_infos.len() as u32;
     let header = Header {
         zero00: 0,
         has_entries: 1,
@@ -418,7 +443,7 @@ where
 
     let mut offset = Header::SIZE + count * Entry::SIZE;
 
-    for (info, _) in &textures {
+    for info in &texture_infos {
         let mut name = [0; 32];
         str_to_c(&info.name, &mut name);
         let entry = Entry {
@@ -430,7 +455,8 @@ where
         offset += calc_length(&info);
     }
 
-    for (info, image) in textures {
+    for info in texture_infos {
+        let image = load_texture(&info.name)?;
         write_texture(write, info, image)?;
     }
 

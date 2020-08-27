@@ -4,7 +4,7 @@ use mech3rs::archive::read_archive;
 use mech3rs::interp::read_interp;
 use mech3rs::messages::read_messages;
 use mech3rs::reader::read_reader;
-use mech3rs::textures::read_textures;
+use mech3rs::textures::{read_textures, TextureInfo};
 use std::fs::File;
 use std::io::{Cursor, Write};
 use zip::write::{FileOptions, ZipWriter};
@@ -118,21 +118,17 @@ fn textures(opts: ZipOpts) -> Result<()> {
     let mut zip = ZipWriter::new(output);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
 
-    let manifest = read_textures(&mut input)?
-        .into_iter()
-        .map(|(info, image)| {
-            let name = format!("{}.png", info.name);
-            let mut data = Vec::new();
-            image.write_to(&mut data, ImageOutputFormat::Png)?;
+    let manifest: Result<Vec<TextureInfo>> = read_textures(&mut input, |name, image| {
+        let name = format!("{}.png", name);
+        let mut data = Vec::new();
+        image.write_to(&mut data, ImageOutputFormat::Png)?;
 
-            zip.start_file(name, options)?;
-            zip.write_all(&data)?;
-            Ok(info)
-        })
-        .collect::<Result<Vec<_>>>()?;
-
+        zip.start_file(name, options)?;
+        zip.write_all(&data)?;
+        Ok(())
+    });
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
-    let data = serde_json::to_vec_pretty(&manifest)?;
+    let data = serde_json::to_vec_pretty(&manifest?)?;
     zip.start_file("manifest.json", options)?;
     zip.write_all(&data)?;
     zip.finish()?;

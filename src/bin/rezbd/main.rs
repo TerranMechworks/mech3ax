@@ -121,24 +121,18 @@ fn textures(opts: ZipOpts) -> Result<()> {
     let mut zip = ZipArchive::new(input)?;
     let manifest = texture_manifest_from_zip(&mut zip)?;
 
-    let textures = manifest
-        .into_iter()
-        .map(|entry| {
-            let name = format!("{}.png", entry.name);
-            let mut file = zip.by_name(&name)?;
-            let mut buf = Vec::new();
-            file.read_to_end(&mut buf)?;
+    let result: Result<()> = write_textures(&mut output, manifest, |name| {
+        let name = format!("{}.png", name);
+        let mut file = zip.by_name(&name)?;
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
 
-            let mut reader = image::io::Reader::new(Cursor::new(buf));
-            reader.set_format(image::ImageFormat::Png);
-            let image = reader.decode()?;
-
-            Ok((entry, image))
-        })
-        .collect::<Result<Vec<_>>>()?;
-
-    write_textures(&mut output, textures)?;
-    Ok(())
+        let mut reader = image::io::Reader::new(Cursor::new(buf));
+        reader.set_format(image::ImageFormat::Png);
+        let image = reader.decode()?;
+        Ok(image)
+    });
+    result
 }
 
 fn main() -> Result<()> {
