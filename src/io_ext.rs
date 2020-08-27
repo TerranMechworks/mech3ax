@@ -1,4 +1,4 @@
-use crate::assert::AssertionError;
+use crate::assert::{assert_utf8, AssertionError};
 use std::io::{Read, Result, Write};
 use std::mem::MaybeUninit;
 
@@ -9,6 +9,7 @@ pub trait ReadHelper {
     fn read_u16(&mut self) -> Result<u16>;
     fn read_struct<S>(&mut self) -> Result<S>;
     fn assert_end(&mut self) -> crate::Result<()>;
+    fn read_string(&mut self, offset: &mut usize) -> crate::Result<String>;
 }
 
 impl<R> ReadHelper for R
@@ -61,6 +62,16 @@ where
             _ => Err(AssertionError("Expected all data to be read".to_owned()))?,
         }
     }
+
+    fn read_string(&mut self, offset: &mut usize) -> crate::Result<String> {
+        let count = self.read_u32()? as usize;
+        *offset += 4;
+        let mut buf = vec![0u8; count];
+        self.read_exact(&mut buf)?;
+        let value = assert_utf8("value", *offset, || std::str::from_utf8(&buf))?;
+        *offset += count;
+        Ok(value.to_owned())
+    }
 }
 
 pub trait WriteHelper {
@@ -69,6 +80,7 @@ pub trait WriteHelper {
     fn write_f32(&mut self, value: f32) -> Result<()>;
     fn write_u16(&mut self, value: u16) -> Result<()>;
     fn write_struct<S>(&mut self, value: &S) -> Result<()>;
+    fn write_string(&mut self, value: String) -> crate::Result<()>;
 }
 
 impl<W> WriteHelper for W
@@ -99,6 +111,14 @@ where
         let size = std::mem::size_of::<S>();
         let buf = unsafe { std::slice::from_raw_parts(value as *const S as *const u8, size) };
         self.write_all(buf)
+    }
+
+    fn write_string(&mut self, value: String) -> crate::Result<()> {
+        let buf = value.into_bytes();
+        let count = buf.len() as u32;
+        self.write_u32(count)?;
+        self.write_all(&buf)?;
+        Ok(())
     }
 }
 
@@ -154,6 +174,17 @@ mod tests {
         assert_eq!(expected, actual);
     }
 
+    #[test]
+    fn u16_roundtrip() {
+        let expected = vec![0xEF, 0xBE];
+        let mut input = Cursor::new(expected.clone());
+        assert_eq!(48879, input.read_u16().unwrap());
+
+        let mut output = Cursor::new(vec![]);
+        output.write_u16(48879).unwrap();
+        assert_eq!(expected, output.read_all());
+    }
+
     #[derive(Debug, PartialEq)]
     #[repr(C)]
     struct TestStruct {
@@ -177,5 +208,17 @@ mod tests {
         cursor.set_position(0);
         let actual: TestStruct = cursor.read_struct().unwrap();
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn string_roundtrip() {
+        let expected = "Hello World".to_owned();
+        let mut cursor = Cursor::new(vec![]);
+        cursor.write_string(expected.clone()).unwrap();
+        cursor.set_position(0);
+        let mut offset = 0;
+        let actual = cursor.read_string(&mut offset).unwrap();
+        assert_eq!(expected, actual);
+        assert_eq!(offset, expected.len() + 4);
     }
 }

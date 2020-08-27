@@ -1,4 +1,4 @@
-use crate::assert::{assert_utf8, AssertionError};
+use crate::assert::AssertionError;
 use crate::io_ext::{ReadHelper, WriteHelper};
 use crate::Result;
 use std::convert::TryInto;
@@ -25,13 +25,8 @@ where
             Ok(Value::Number(Number::from_f64(value as f64).unwrap()))
         }
         3 => {
-            let count = read.read_u32()? as usize;
-            *offset += 4;
-            let mut buf = vec![0u8; count];
-            read.read_exact(&mut buf)?;
-            let value = assert_utf8("value", *offset, || std::str::from_utf8(&buf))?;
-            *offset += count;
-            Ok(Value::String(value.to_owned()))
+            let value = read.read_string(offset)?;
+            Ok(Value::String(value))
         }
         4 => {
             // count is one bigger, because the engine stores the count as an
@@ -92,10 +87,7 @@ where
         }
         Value::String(str) => {
             write.write_u32(3)?;
-            let buf = str.into_bytes();
-            let count = buf.len() as u32;
-            write.write_u32(count)?;
-            write.write_all(&buf)?;
+            write.write_string(str)?;
         }
         Value::Null => {
             write.write_u32(4)?;
