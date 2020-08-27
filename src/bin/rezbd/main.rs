@@ -1,6 +1,7 @@
 use clap::Clap;
 use mech3rs::archive::{write_archive, Entry};
 use mech3rs::interp::{write_interp, Script};
+use mech3rs::motion::{write_motion, Motion};
 use mech3rs::reader::write_reader;
 use mech3rs::textures::{write_textures, TextureInfo};
 use std::fs::File;
@@ -34,6 +35,7 @@ enum SubCommand {
     Interp(JsonOpts),
     Reader(ZipOpts),
     Textures(ZipOpts),
+    Motion(ZipOpts),
 }
 
 fn archive_manifest_from_zip(zip: &mut ZipArchive<File>) -> Result<Vec<Entry>> {
@@ -122,13 +124,36 @@ fn textures(opts: ZipOpts) -> Result<()> {
     result
 }
 
+fn motion(opts: ZipOpts) -> Result<()> {
+    let input = File::open(opts.input)?;
+    let mut output = File::create(opts.output)?;
+
+    let mut zip = ZipArchive::new(input)?;
+    let entries = archive_manifest_from_zip(&mut zip)?;
+
+    write_archive(&mut output, entries, |name| {
+        let name = format!("{}.json", name);
+
+        let mut file = zip.by_name(&name)?;
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+        let motion = serde_json::from_slice::<Motion>(&buf)?;
+
+        let mut buf = Vec::new();
+        let mut cursor = Cursor::new(&mut buf);
+        write_motion(&mut cursor, motion)?;
+        Ok(buf)
+    })
+}
+
 fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
 
     match opts.subcmd {
-        SubCommand::Sound(zip_opts) => sound(zip_opts),
-        SubCommand::Interp(json_opts) => interp(json_opts),
-        SubCommand::Reader(zip_opts) => reader(zip_opts),
-        SubCommand::Textures(zip_opts) => textures(zip_opts),
+        SubCommand::Sound(opts) => sound(opts),
+        SubCommand::Interp(opts) => interp(opts),
+        SubCommand::Reader(opts) => reader(opts),
+        SubCommand::Textures(opts) => textures(opts),
+        SubCommand::Motion(opts) => motion(opts),
     }
 }

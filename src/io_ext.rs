@@ -2,6 +2,16 @@ use crate::assert::{assert_utf8, AssertionError};
 use std::io::{Read, Result, Write};
 use std::mem::MaybeUninit;
 
+pub trait FromUsize {
+    fn from_usize(value: usize) -> Self;
+}
+
+impl FromUsize for usize {
+    fn from_usize(value: usize) -> Self {
+        value
+    }
+}
+
 pub trait ReadHelper {
     fn read_u32(&mut self) -> Result<u32>;
     fn read_i32(&mut self) -> Result<i32>;
@@ -9,7 +19,9 @@ pub trait ReadHelper {
     fn read_u16(&mut self) -> Result<u16>;
     fn read_struct<S>(&mut self) -> Result<S>;
     fn assert_end(&mut self) -> crate::Result<()>;
-    fn read_string(&mut self, offset: &mut usize) -> crate::Result<String>;
+    fn read_string<T>(&mut self, offset: &mut T) -> crate::Result<String>
+    where
+        T: std::ops::AddAssign + FromUsize + std::fmt::Display + Copy;
 }
 
 impl<R> ReadHelper for R
@@ -63,13 +75,16 @@ where
         }
     }
 
-    fn read_string(&mut self, offset: &mut usize) -> crate::Result<String> {
+    fn read_string<T>(&mut self, offset: &mut T) -> crate::Result<String>
+    where
+        T: std::ops::AddAssign + FromUsize + std::fmt::Display + Copy,
+    {
         let count = self.read_u32()? as usize;
-        *offset += 4;
+        *offset += T::from_usize(4usize);
         let mut buf = vec![0u8; count];
         self.read_exact(&mut buf)?;
         let value = assert_utf8("value", *offset, || std::str::from_utf8(&buf))?;
-        *offset += count;
+        *offset += T::from_usize(count);
         Ok(value.to_owned())
     }
 }

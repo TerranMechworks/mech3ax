@@ -4,6 +4,7 @@ mod image;
 pub mod interp;
 mod io_ext;
 pub mod messages;
+pub mod motion;
 pub mod reader;
 mod serde;
 mod size;
