@@ -41,7 +41,7 @@ where
 
     (0..count)
         .map(|_| {
-            let entry = read.read_struct::<EntryC>()?;
+            let entry: EntryC = read.read_struct()?;
 
             let entry_start = entry.start as u64;
             let entry_len = entry.length as u64;

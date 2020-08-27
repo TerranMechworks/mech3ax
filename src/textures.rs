@@ -145,7 +145,7 @@ fn read_texture<R>(
 where
     R: Read,
 {
-    let tex_info = read.read_struct::<Info>()?;
+    let tex_info: Info = read.read_struct()?;
     assert_that!("field 08", tex_info.zero08 == 0, *offset + 8)?;
     let palette_count = tex_info.palette_count;
     let mut info = convert_info_from_c(name, tex_info, *offset)?;
@@ -233,7 +233,7 @@ where
     F: FnMut(&str, DynamicImage) -> std::result::Result<(), E>,
     E: From<std::io::Error> + From<Error>,
 {
-    let header = read.read_struct::<Header>()?;
+    let header: Header = read.read_struct()?;
     assert_upcast(assert_that!("field 00", header.zero00 == 0, 0))?;
     assert_upcast(assert_that!("has entries", header.has_entries == 1, 4))?;
     // global palette support isn't implemented (never seen)
@@ -250,7 +250,7 @@ where
     let tex_table = (0..header.texture_count)
         .into_iter()
         .map(|_| {
-            let entry = read.read_struct::<Entry>()?;
+            let entry: Entry = read.read_struct()?;
             assert_that!(
                 "global palette index",
                 entry.palette_index == -1,

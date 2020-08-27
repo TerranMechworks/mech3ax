@@ -171,11 +171,11 @@ mod tests {
         };
 
         let mut cursor = Cursor::new(vec![]);
-        cursor.write_struct::<TestStruct>(&expected).unwrap();
+        cursor.write_struct(&expected).unwrap();
         assert_eq!(std::mem::size_of::<TestStruct>() as u64, cursor.position());
 
         cursor.set_position(0);
-        let actual = cursor.read_struct::<TestStruct>().unwrap();
+        let actual: TestStruct = cursor.read_struct().unwrap();
         assert_eq!(expected, actual);
     }
 }

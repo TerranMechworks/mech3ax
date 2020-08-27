@@ -75,7 +75,7 @@ where
     let script_info = (0..count)
         .into_iter()
         .map(|_| {
-            let entry = read.read_struct::<EntryC>()?;
+            let entry: EntryC = read.read_struct()?;
             let name = assert_utf8("name", offset, || str_from_c(&entry.name))?;
             let last_modified = Utc.timestamp(entry.last_modified as i64, 0);
             offset += EntryC::SIZE as u64;
