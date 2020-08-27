@@ -46,16 +46,13 @@ fn sound(opts: ZipOpts) -> Result<()> {
     let mut zip = ZipWriter::new(output);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
 
-    let manifest = read_archive(&mut input)?
-        .into_iter()
-        .map(|(entry, data)| {
-            zip.start_file(entry.name.clone(), options)?;
-            zip.write_all(&data)?;
-            Ok(entry)
-        })
-        .collect::<Result<Vec<_>>>()?;
+    let manifest: Result<_> = read_archive(&mut input, |name, data| {
+        zip.start_file(name, options)?;
+        zip.write_all(&data)?;
+        Ok(())
+    });
 
-    let data = serde_json::to_vec_pretty(&manifest)?;
+    let data = serde_json::to_vec_pretty(&manifest?)?;
     zip.start_file("manifest.json", options)?;
     zip.write_all(&data)?;
     zip.finish()?;
@@ -80,20 +77,16 @@ fn reader(opts: ZipOpts) -> Result<()> {
     let mut zip = ZipWriter::new(output);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
-    let manifest = read_archive(&mut input)?
-        .into_iter()
-        .map(|(entry, data)| {
-            let name = entry.name.clone().replace(".zrd", ".json");
-            let root = read_reader(&mut Cursor::new(data))?;
-            let data = serde_json::to_vec_pretty(&root)?;
+    let manifest: Result<_> = read_archive(&mut input, |name, data| {
+        let name = name.clone().replace(".zrd", ".json");
+        let root = read_reader(&mut Cursor::new(data))?;
+        let data = serde_json::to_vec_pretty(&root)?;
 
-            zip.start_file(name, options)?;
-            zip.write_all(&data)?;
-            Ok(entry)
-        })
-        .collect::<Result<Vec<_>>>()?;
-
-    let data = serde_json::to_vec_pretty(&manifest)?;
+        zip.start_file(name, options)?;
+        zip.write_all(&data)?;
+        Ok(())
+    });
+    let data = serde_json::to_vec_pretty(&manifest?)?;
     zip.start_file("manifest.json", options)?;
     zip.write_all(&data)?;
     zip.finish()?;

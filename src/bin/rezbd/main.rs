@@ -49,20 +49,14 @@ fn sound(opts: ZipOpts) -> Result<()> {
     let mut output = File::create(opts.output)?;
 
     let mut zip = ZipArchive::new(input)?;
-    let manifest = archive_manifest_from_zip(&mut zip)?;
+    let entries = archive_manifest_from_zip(&mut zip)?;
 
-    let entries = manifest
-        .into_iter()
-        .map(|entry| {
-            let mut file = zip.by_name(&entry.name)?;
-            let mut buf = Vec::new();
-            file.read_to_end(&mut buf)?;
-            Ok((entry, buf))
-        })
-        .collect::<Result<Vec<_>>>()?;
-
-    write_archive(&mut output, entries)?;
-    Ok(())
+    write_archive(&mut output, entries, |name| {
+        let mut file = zip.by_name(&name)?;
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+        Ok(buf)
+    })
 }
 
 fn interp(opts: JsonOpts) -> Result<()> {
@@ -82,28 +76,21 @@ fn reader(opts: ZipOpts) -> Result<()> {
     let mut output = File::create(opts.output)?;
 
     let mut zip = ZipArchive::new(input)?;
-    let manifest = archive_manifest_from_zip(&mut zip)?;
+    let entries = archive_manifest_from_zip(&mut zip)?;
 
-    let entries = manifest
-        .into_iter()
-        .map(|entry| {
-            let name = entry.name.clone().replace(".zrd", ".json");
+    write_archive(&mut output, entries, |name| {
+        let name = name.clone().replace(".zrd", ".json");
 
-            let mut file = zip.by_name(&name)?;
-            let mut buf = Vec::new();
-            file.read_to_end(&mut buf)?;
-            let value = serde_json::from_slice(&buf)?;
+        let mut file = zip.by_name(&name)?;
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+        let value = serde_json::from_slice(&buf)?;
 
-            let mut buf = Vec::new();
-            let mut cursor = Cursor::new(&mut buf);
-            write_reader(&mut cursor, value)?;
-
-            Ok((entry, buf))
-        })
-        .collect::<Result<Vec<_>>>()?;
-
-    write_archive(&mut output, entries)?;
-    Ok(())
+        let mut buf = Vec::new();
+        let mut cursor = Cursor::new(&mut buf);
+        write_reader(&mut cursor, value)?;
+        Ok(buf)
+    })
 }
 
 fn texture_manifest_from_zip(zip: &mut ZipArchive<File>) -> Result<Vec<TextureInfo>> {

@@ -3,7 +3,7 @@ use crate::io_ext::{ReadHelper, WriteHelper};
 use crate::serde::base64;
 use crate::size::ReprSize;
 use crate::string::{bytes_to_c, str_from_c, str_to_c};
-use crate::{assert_that, static_assert_size, Result};
+use crate::{assert_that, static_assert_size, Error, Result};
 use ::serde::{Deserialize, Serialize};
 use std::io::{Read, Seek, SeekFrom, Write};
 
@@ -62,9 +62,11 @@ where
         .collect::<Result<Vec<_>>>()
 }
 
-pub fn read_archive<R>(read: &mut R) -> Result<Vec<(Entry, Vec<u8>)>>
+pub fn read_archive<R, F, E>(read: &mut R, mut save_file: F) -> std::result::Result<Vec<Entry>, E>
 where
     R: Read + Seek,
+    F: FnMut(&str, Vec<u8>) -> std::result::Result<(), E>,
+    E: From<std::io::Error> + From<Error>,
 {
     let entries = read_table(read)?;
     entries
@@ -73,13 +75,13 @@ where
             read.seek(SeekFrom::Start(start))?;
             let mut buffer = vec![0; length as usize];
             read.read_exact(&mut buffer)?;
-            let entry = Entry {
+            save_file(&name, buffer)?;
+            Ok(Entry {
                 name: name.to_owned(),
                 garbage,
-            };
-            Ok((entry, buffer))
+            })
         })
-        .collect::<Result<Vec<_>>>()
+        .collect::<std::result::Result<Vec<_>, E>>()
 }
 
 fn entry_to_c(entry: Entry, start: u32, length: u32) -> EntryC {
@@ -96,22 +98,30 @@ fn entry_to_c(entry: Entry, start: u32, length: u32) -> EntryC {
     }
 }
 
-pub fn write_archive<W>(write: &mut W, entries: Vec<(Entry, Vec<u8>)>) -> Result<()>
+pub fn write_archive<W, F, E>(
+    write: &mut W,
+    entries: Vec<Entry>,
+    mut load_file: F,
+) -> std::result::Result<(), E>
 where
     W: Write,
+    F: FnMut(&str) -> std::result::Result<Vec<u8>, E>,
+    E: From<std::io::Error> + From<Error>,
 {
     let mut offset = 0;
     let count = entries.len() as u32;
 
     let transformed = entries
         .into_iter()
-        .map(|(entry, data)| {
-            let entry_c = entry_to_c(entry, offset, data.len() as u32);
-            offset += entry_c.length;
+        .map(|entry| {
+            let data = load_file(&entry.name)?;
             write.write_all(&data)?;
+            let length = data.len() as u32;
+            let entry_c = entry_to_c(entry, offset, length);
+            offset += length;
             Ok(entry_c)
         })
-        .collect::<Result<Vec<_>>>()?;
+        .collect::<std::result::Result<Vec<_>, E>>()?;
 
     for entry in transformed.into_iter() {
         write.write_struct::<EntryC>(&entry)?
