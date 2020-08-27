@@ -1,3 +1,4 @@
+use image::error::ImageError;
 use mech3rs::Error as MechError;
 use serde_json::Error as SerdeError;
 use std::io::Error as IOError;
@@ -9,6 +10,7 @@ pub enum Error {
     Zip(ZipError),
     Serde(SerdeError),
     Mech(MechError),
+    Image(ImageError),
 }
 
 impl From<IOError> for Error {
@@ -32,6 +34,12 @@ impl From<MechError> for Error {
 impl From<SerdeError> for Error {
     fn from(err: SerdeError) -> Self {
         Self::Serde(err)
+    }
+}
+
+impl From<ImageError> for Error {
+    fn from(err: ImageError) -> Self {
+        Self::Image(err)
     }
 }
 

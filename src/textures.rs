@@ -1,12 +1,16 @@
 use crate::assert::{assert_utf8, AssertionError};
-use crate::image::{pal8to888, pal8to888a, rgb565to888, rgb565to888a, simple_alpha};
-use crate::io_ext::ReadHelper;
+use crate::image::{
+    pal8to888, pal8to888a, rgb565to888, rgb565to888a, rgb888ato565, rgb888atopal8, rgb888to565,
+    rgb888topal8, simple_alpha,
+};
+use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::serde::opt_base64;
 use crate::size::ReprSize;
-use crate::string::str_from_c;
+use crate::string::{str_from_c, str_to_c};
 use crate::{assert_that, static_assert_size, Result};
 use ::serde::{Deserialize, Serialize};
 use image::{DynamicImage, RgbImage, RgbaImage};
-use std::io::Read;
+use std::io::{Read, Write};
 
 #[repr(C)]
 struct Header {
@@ -75,14 +79,15 @@ pub struct TextureInfo {
     pub alpha: TextureAlpha,
     pub width: u16,
     pub height: u16,
-    pub palette_count: u16,
     pub stretch: TextureStretch,
     pub image_loaded: bool,
     pub alpha_loaded: bool,
     pub palette_loaded: bool,
+    #[serde(with = "opt_base64")]
+    pub palette: Option<Vec<u8>>,
 }
 
-fn convert_flags(name: String, tex_info: Info, offset: u32) -> Result<TextureInfo> {
+fn convert_info_from_c(name: String, tex_info: Info, offset: u32) -> Result<TextureInfo> {
     let bitflags = TexFlags::from_bits(tex_info.flags).unwrap();
     // one byte per pixel support isn't implemented
     let bytes_per_pixel2 = bitflags.contains(TexFlags::BYTES_PER_PIXEL2);
@@ -124,11 +129,11 @@ fn convert_flags(name: String, tex_info: Info, offset: u32) -> Result<TextureInf
         alpha,
         width: tex_info.width,
         height: tex_info.height,
-        palette_count: tex_info.palette_count,
         stretch,
         image_loaded: bitflags.contains(TexFlags::IMAGE_LOADED),
         alpha_loaded: bitflags.contains(TexFlags::ALPHA_LOADED),
         palette_loaded: bitflags.contains(TexFlags::PALETTE_LOADED),
+        palette: None,
     })
 }
 
@@ -142,7 +147,8 @@ where
 {
     let tex_info = read.read_struct::<Info>()?;
     assert_that!("field 08", tex_info.zero08 == 0, *offset + 8)?;
-    let info = convert_flags(name, tex_info, *offset)?;
+    let palette_count = tex_info.palette_count;
+    let mut info = convert_info_from_c(name, tex_info, *offset)?;
     *offset += Info::SIZE;
 
     let width = info.width as u32;
@@ -150,7 +156,7 @@ where
     let size32 = width * height;
     let size = size32 as usize;
 
-    let image = if info.palette_count == 0 {
+    let image = if palette_count == 0 {
         let mut image_data = vec![0u8; size * 2];
         read.read_exact(&mut image_data)?;
         *offset += size32 * 2;
@@ -194,18 +200,21 @@ where
             None
         };
 
-        let mut palette_data = vec![0u8; info.palette_count as usize * 2];
+        let mut palette_data = vec![0u8; palette_count as usize * 2];
         read.read_exact(&mut palette_data)?;
-        *offset += info.palette_count as u32 * 2;
+        *offset += palette_count as u32 * 2;
         let palette_data = rgb565to888(palette_data);
 
-        if let Some(alpha) = alpha_data {
-            let image_data = pal8to888a(index_data, palette_data, alpha);
+        let image = if let Some(alpha) = alpha_data {
+            let image_data = pal8to888a(index_data, &palette_data, alpha);
             DynamicImage::ImageRgba8(RgbaImage::from_raw(width, height, image_data).unwrap())
         } else {
-            let image_data = pal8to888(index_data, palette_data);
+            let image_data = pal8to888(index_data, &palette_data);
             DynamicImage::ImageRgb8(RgbImage::from_raw(width, height, image_data).unwrap())
-        }
+        };
+
+        info.palette = Some(palette_data);
+        image
     };
 
     Ok((info, image))
@@ -250,4 +259,180 @@ where
 
     read.assert_end()?;
     textures
+}
+
+fn calc_length(info: &TextureInfo) -> u32 {
+    let mut length = Info::SIZE;
+    let size = (info.width as u32) * (info.height as u32);
+
+    if let Some(palette) = &info.palette {
+        length += size;
+        if info.alpha == TextureAlpha::Full {
+            length += size;
+        }
+        length += (palette.len() * 2 / 3) as u32;
+    } else {
+        length += size * 2;
+        if info.alpha == TextureAlpha::Full {
+            length += size;
+        }
+    }
+
+    length
+}
+
+fn convert_info_to_c(info: &TextureInfo) -> Info {
+    let mut bitflags = TexFlags::BYTES_PER_PIXEL2;
+    if info.image_loaded {
+        bitflags |= TexFlags::IMAGE_LOADED;
+    }
+    if info.alpha_loaded {
+        bitflags |= TexFlags::ALPHA_LOADED;
+    }
+    if info.palette_loaded {
+        bitflags |= TexFlags::PALETTE_LOADED;
+    }
+
+    match info.alpha {
+        TextureAlpha::None => {
+            bitflags |= TexFlags::NO_ALPHA;
+        }
+        TextureAlpha::Simple => {
+            bitflags |= TexFlags::HAS_ALPHA;
+        }
+        TextureAlpha::Full => {
+            bitflags |= TexFlags::HAS_ALPHA;
+            bitflags |= TexFlags::FULL_ALPHA;
+        }
+    }
+
+    let stretch = match info.stretch {
+        TextureStretch::None => 0,
+        TextureStretch::Vertical => 1,
+        TextureStretch::Horizontal => 2,
+        TextureStretch::Both => 3,
+    };
+
+    let palette_count = info
+        .palette
+        .as_ref()
+        .map(|palette| (palette.len() / 3) as u16)
+        .unwrap_or(0);
+
+    Info {
+        flags: bitflags.bits(),
+        width: info.width,
+        height: info.height,
+        zero08: 0,
+        palette_count,
+        stretch,
+    }
+}
+
+fn write_texture<W>(write: &mut W, info: TextureInfo, image: DynamicImage) -> Result<()>
+where
+    W: Write,
+{
+    let tex_info = convert_info_to_c(&info);
+    write.write_struct(&tex_info)?;
+
+    if let Some(palette) = info.palette {
+        match image {
+            DynamicImage::ImageRgb8(img) => {
+                assert_eq!(
+                    info.alpha,
+                    TextureAlpha::None,
+                    "Unexpected image format for {}",
+                    info.name
+                );
+                let image_data = rgb888topal8(img.into_raw(), &palette);
+                write.write_all(&image_data)?;
+                let palette_data = rgb888to565(palette);
+                write.write_all(&palette_data)?;
+            }
+            DynamicImage::ImageRgba8(img) => {
+                assert_ne!(
+                    info.alpha,
+                    TextureAlpha::None,
+                    "Unexpected image format for {}",
+                    info.name
+                );
+                let (image_data, alpha_data) = rgb888atopal8(img.into_raw(), &palette);
+                write.write_all(&image_data)?;
+                // throw away the simple alpha
+                if info.alpha == TextureAlpha::Full {
+                    write.write_all(&alpha_data)?;
+                }
+                let palette_data = rgb888to565(palette);
+                write.write_all(&palette_data)?;
+            }
+            _ => panic!("Unexpected image format for {}", info.name),
+        };
+    } else {
+        match image {
+            DynamicImage::ImageRgb8(img) => {
+                assert_eq!(
+                    info.alpha,
+                    TextureAlpha::None,
+                    "Unexpected image format for {}",
+                    info.name
+                );
+                let image_data = rgb888to565(img.into_raw());
+                write.write_all(&image_data)?;
+            }
+            DynamicImage::ImageRgba8(img) => {
+                assert_ne!(
+                    info.alpha,
+                    TextureAlpha::None,
+                    "Unexpected image format for {}",
+                    info.name
+                );
+                let (image_data, alpha_data) = rgb888ato565(img.into_raw());
+                write.write_all(&image_data)?;
+                // throw away the simple alpha
+                if info.alpha == TextureAlpha::Full {
+                    write.write_all(&alpha_data)?;
+                }
+            }
+            _ => panic!("Unexpected image format for {}", info.name),
+        };
+    };
+
+    Ok(())
+}
+
+pub fn write_textures<W>(write: &mut W, textures: Vec<(TextureInfo, DynamicImage)>) -> Result<()>
+where
+    W: Write,
+{
+    let count = textures.len() as u32;
+    let header = Header {
+        zero00: 0,
+        has_entries: 1,
+        global_palette_count: 0,
+        texture_count: count,
+        zero16: 0,
+        zero20: 0,
+    };
+    write.write_struct(&header)?;
+
+    let mut offset = Header::SIZE + count * Entry::SIZE;
+
+    for (info, _) in &textures {
+        let mut name = [0; 32];
+        str_to_c(&info.name, &mut name);
+        let entry = Entry {
+            name,
+            start_offset: offset,
+            palette_index: -1,
+        };
+        write.write_struct(&entry)?;
+        offset += calc_length(&info);
+    }
+
+    for (info, image) in textures {
+        write_texture(write, info, image)?;
+    }
+
+    Ok(())
 }
