@@ -12,6 +12,7 @@ mod serde;
 mod size;
 mod string;
 pub mod textures;
+mod types;
 
 #[derive(Debug)]
 pub enum Error {

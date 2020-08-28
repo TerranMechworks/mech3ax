@@ -1,5 +1,6 @@
 use crate::io_ext::{FromUsize, ReadHelper, WriteHelper};
 use crate::size::ReprSize;
+use crate::types::{Vec3, Vec4};
 use crate::{assert_that, static_assert_size, Result};
 use ::serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
@@ -18,19 +19,9 @@ struct Header {
 static_assert_size!(Header, 24);
 
 #[derive(Debug, Serialize, Deserialize)]
-#[repr(C)]
-pub struct Vector(f32, f32, f32);
-static_assert_size!(Vector, 12);
-
-#[derive(Debug, Serialize, Deserialize)]
-#[repr(C)]
-pub struct Quarternion(f32, f32, f32, f32);
-static_assert_size!(Quarternion, 16);
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct Frame {
-    translation: Vector,
-    rotation: Quarternion,
+    translation: Vec3,
+    rotation: Vec4,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -71,20 +62,20 @@ where
             let translations = (0..frame_count)
                 .into_iter()
                 .map(|_| {
-                    let value = read.read_struct::<Vector>()?;
+                    let value = read.read_struct::<Vec3>()?;
                     Ok(value)
                 })
                 .collect::<Result<Vec<_>>>()?;
-            offset += Vector::SIZE * frame_count;
+            offset += Vec3::SIZE * frame_count;
 
             let rotations = (0..frame_count)
                 .into_iter()
                 .map(|_| {
-                    let value = read.read_struct::<Quarternion>()?;
+                    let value = read.read_struct::<Vec4>()?;
                     Ok(value)
                 })
                 .collect::<Result<Vec<_>>>()?;
-            offset += Quarternion::SIZE * frame_count;
+            offset += Vec4::SIZE * frame_count;
 
             let frames = translations
                 .into_iter()
