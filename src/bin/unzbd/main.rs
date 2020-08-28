@@ -2,6 +2,8 @@ use clap::Clap;
 use image::ImageOutputFormat;
 use mech3rs::archive::read_archive;
 use mech3rs::interp::read_interp;
+use mech3rs::materials::read_materials;
+use mech3rs::mechlib::{read_format, read_version};
 use mech3rs::messages::read_messages;
 use mech3rs::motion::read_motion;
 use mech3rs::reader::read_reader;
@@ -39,6 +41,7 @@ enum SubCommand {
     Messages(JsonOpts),
     Textures(ZipOpts),
     Motion(ZipOpts),
+    Mechlib(ZipOpts),
 }
 
 fn sound(opts: ZipOpts) -> Result<()> {
@@ -156,6 +159,49 @@ fn motion(opts: ZipOpts) -> Result<()> {
     Ok(())
 }
 
+fn mechlib(opts: ZipOpts) -> Result<()> {
+    let mut input = File::open(opts.input)?;
+    let output = File::create(opts.output)?;
+
+    let mut zip = ZipWriter::new(output);
+    let deflated = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+    let stored = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
+
+    let manifest: Result<_> = read_archive(&mut input, |name, data| {
+        let result = match name {
+            "format" => read_format(&mut Cursor::new(data)),
+            "version" => read_version(&mut Cursor::new(data)),
+            "materials" => {
+                let materials = read_materials(&mut Cursor::new(data))?;
+                let data = serde_json::to_vec_pretty(&materials)?;
+
+                zip.start_file("materials.json", deflated)?;
+                zip.write_all(&data)?;
+                Ok(())
+            }
+            _ => {
+                let name = name.clone().replace(".flt", ".json");
+                /*
+                let root = read_mech(&mut cursor)?;
+                let data = serde_json::to_vec_pretty(&root)?;
+                */
+                zip.start_file(name, stored)?;
+                zip.write_all(&data)?;
+                Ok(())
+            }
+        };
+        result?;
+        Ok(())
+    });
+
+    let data = serde_json::to_vec_pretty(&manifest?)?;
+    zip.start_file("manifest.json", deflated)?;
+    zip.write_all(&data)?;
+    zip.finish()?;
+
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
 
@@ -166,5 +212,6 @@ fn main() -> Result<()> {
         SubCommand::Messages(opts) => messages(opts),
         SubCommand::Textures(opts) => textures(opts),
         SubCommand::Motion(opts) => motion(opts),
+        SubCommand::Mechlib(opts) => mechlib(opts),
     }
 }

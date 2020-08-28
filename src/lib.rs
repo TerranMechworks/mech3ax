@@ -3,6 +3,8 @@ mod assert;
 mod image;
 pub mod interp;
 mod io_ext;
+pub mod materials;
+pub mod mechlib;
 pub mod messages;
 pub mod motion;
 pub mod reader;

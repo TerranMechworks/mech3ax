@@ -1,6 +1,8 @@
 use clap::Clap;
 use mech3rs::archive::{write_archive, Entry};
 use mech3rs::interp::{write_interp, Script};
+use mech3rs::materials::{write_materials, Material};
+use mech3rs::mechlib::{write_format, write_version};
 use mech3rs::motion::{write_motion, Motion};
 use mech3rs::reader::write_reader;
 use mech3rs::textures::{write_textures, TextureInfo};
@@ -36,6 +38,7 @@ enum SubCommand {
     Reader(ZipOpts),
     Textures(ZipOpts),
     Motion(ZipOpts),
+    Mechlib(ZipOpts),
 }
 
 fn archive_manifest_from_zip(zip: &mut ZipArchive<File>) -> Result<Vec<Entry>> {
@@ -146,6 +149,45 @@ fn motion(opts: ZipOpts) -> Result<()> {
     })
 }
 
+fn mechlib(opts: ZipOpts) -> Result<()> {
+    let input = File::open(opts.input)?;
+    let mut output = File::create(opts.output)?;
+
+    let mut zip = ZipArchive::new(input)?;
+    let entries = archive_manifest_from_zip(&mut zip)?;
+
+    write_archive(&mut output, entries, |name| match name {
+        "format" => {
+            let mut buf = Vec::new();
+            write_format(&mut buf)?;
+            Ok(buf)
+        }
+        "version" => {
+            let mut buf = Vec::new();
+            write_version(&mut buf)?;
+            Ok(buf)
+        }
+        "materials" => {
+            let mut file = zip.by_name("materials.json")?;
+            let mut buf = Vec::new();
+            file.read_to_end(&mut buf)?;
+            let motion = serde_json::from_slice::<Vec<Material>>(&buf)?;
+
+            let mut buf = Vec::new();
+            let mut cursor = Cursor::new(&mut buf);
+            write_materials(&mut cursor, motion)?;
+            Ok(buf)
+        }
+        _ => {
+            let name = name.clone().replace(".flt", ".json");
+            let mut file = zip.by_name(&name)?;
+            let mut buf = Vec::new();
+            file.read_to_end(&mut buf)?;
+            Ok(buf)
+        }
+    })
+}
+
 fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
 
@@ -155,5 +197,6 @@ fn main() -> Result<()> {
         SubCommand::Reader(opts) => reader(opts),
         SubCommand::Textures(opts) => textures(opts),
         SubCommand::Motion(opts) => motion(opts),
+        SubCommand::Mechlib(opts) => mechlib(opts),
     }
 }
