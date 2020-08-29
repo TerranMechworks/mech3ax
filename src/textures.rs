@@ -6,7 +6,7 @@ use crate::image::{
 use crate::io_ext::{ReadHelper, WriteHelper};
 use crate::serde::opt_base64;
 use crate::size::ReprSize;
-use crate::string::{str_from_c, str_to_c};
+use crate::string::{str_from_c_padded, str_to_c_padded};
 use crate::{assert_that, static_assert_size, Error, Result};
 use ::serde::{Deserialize, Serialize};
 use image::{DynamicImage, RgbImage, RgbaImage};
@@ -259,9 +259,9 @@ where
                 entry.palette_index == -1,
                 offset + 36
             )?;
-            let name = assert_utf8("name", offset, || str_from_c(&entry.name))?;
+            let name = assert_utf8("name", offset, || str_from_c_padded(&entry.name))?;
             offset += Entry::SIZE;
-            Ok((name.to_owned(), entry.start_offset))
+            Ok((name, entry.start_offset))
         })
         .collect::<Result<Vec<_>>>()?;
 
@@ -448,7 +448,7 @@ where
 
     for info in &texture_infos {
         let mut name = [0; 32];
-        str_to_c(&info.name, &mut name);
+        str_to_c_padded(&info.name, &mut name);
         let entry = Entry {
             name,
             start_offset: offset,

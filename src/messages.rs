@@ -1,5 +1,6 @@
 use crate::assert::{assert_utf8, AssertionError};
 use crate::io_ext::ReadHelper;
+use crate::string::str_from_c_sized;
 use crate::{assert_that, Result};
 use encoding::all::WINDOWS_1252;
 use encoding::{DecoderTrap, Encoding};
@@ -152,7 +153,7 @@ fn read_zlocids(data: &[u8], mem_start: u32, mem_end: u32) -> Result<Vec<(u32, S
 
             let message_name =
                 assert_utf8(format!("message {}", entry_id), relative_start, || {
-                    std::str::from_utf8(&data[relative_start..relative_end])
+                    str_from_c_sized(&data[relative_start..relative_end])
                 })?;
 
             Ok((entry_id, message_name.to_owned()))

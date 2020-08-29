@@ -2,7 +2,7 @@ use crate::assert::assert_utf8;
 use crate::io_ext::{ReadHelper, WriteHelper};
 use crate::serde::base64;
 use crate::size::ReprSize;
-use crate::string::{bytes_to_c, str_from_c, str_to_c};
+use crate::string::{bytes_to_c, str_from_c_padded, str_to_c_padded};
 use crate::{assert_that, static_assert_size, Error, Result};
 use ::serde::{Deserialize, Serialize};
 use std::io::{Read, Seek, SeekFrom, Write};
@@ -49,15 +49,10 @@ where
 
             assert_that!("entry start", entry_start < entry_end, pos + 0)?;
             assert_that!("entry end", entry_end <= table_start, pos + 4)?;
-            let entry_name = assert_utf8("entry name", pos + 8, || str_from_c(&entry.name))?;
+            let entry_name = assert_utf8("entry name", pos + 8, || str_from_c_padded(&entry.name))?;
 
             pos += EntryC::SIZE as u64;
-            Ok((
-                entry_name.to_owned(),
-                entry_start,
-                entry_len,
-                entry.garbage.to_vec(),
-            ))
+            Ok((entry_name, entry_start, entry_len, entry.garbage.to_vec()))
         })
         .collect::<Result<Vec<_>>>()
 }
@@ -86,7 +81,7 @@ where
 
 fn entry_to_c(entry: Entry, start: u32, length: u32) -> EntryC {
     let mut name = [0; 64];
-    str_to_c(entry.name, &mut name);
+    str_to_c_padded(entry.name, &mut name);
     let mut garbage = [0; 76];
     bytes_to_c(entry.garbage, &mut garbage);
 

@@ -1,4 +1,5 @@
 use crate::assert::{assert_utf8, AssertionError};
+use crate::string::str_from_c_sized;
 use std::io::{Read, Result, Write};
 use std::mem::MaybeUninit;
 
@@ -83,7 +84,7 @@ where
         *offset += T::from_usize(4usize);
         let mut buf = vec![0u8; count];
         self.read_exact(&mut buf)?;
-        let value = assert_utf8("value", *offset, || std::str::from_utf8(&buf))?;
+        let value = assert_utf8("value", *offset, || str_from_c_sized(&buf))?;
         *offset += T::from_usize(count);
         Ok(value.to_owned())
     }
@@ -140,7 +141,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::string::str_to_c;
+    use crate::string::str_to_c_padded;
     use std::io::Cursor;
 
     trait ReadAll {
@@ -210,7 +211,7 @@ mod tests {
     #[test]
     fn struct_roundtrip() {
         let mut name = [0u8; 32];
-        str_to_c("Hello World", &mut name);
+        str_to_c_padded("Hello World", &mut name);
         let expected = TestStruct {
             name,
             int: 3735928559,

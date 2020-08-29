@@ -1,7 +1,7 @@
 use crate::assert::assert_utf8;
 use crate::io_ext::{ReadHelper, WriteHelper};
 use crate::size::ReprSize;
-use crate::string::{str_from_c, str_to_c};
+use crate::string::{str_from_c_padded, str_from_c_sized, str_to_c_padded};
 use crate::{assert_that, static_assert_size, Result};
 use ::serde::{Deserialize, Serialize};
 use chrono::{DateTime, TimeZone, Utc};
@@ -55,8 +55,8 @@ where
         let last = buf.pop().unwrap();
         assert_that!("command end", last == 32, *offset)?;
 
-        let command = assert_utf8("command", *offset, || std::str::from_utf8(&buf))?;
-        lines.push(command.to_owned());
+        let command = assert_utf8("command", *offset, || str_from_c_sized(&buf))?;
+        lines.push(command);
     }
     Ok(lines)
 }
@@ -76,10 +76,10 @@ where
         .into_iter()
         .map(|_| {
             let entry: EntryC = read.read_struct()?;
-            let name = assert_utf8("name", offset, || str_from_c(&entry.name))?;
+            let name = assert_utf8("name", offset, || str_from_c_padded(&entry.name))?;
             let last_modified = Utc.timestamp(entry.last_modified as i64, 0);
             offset += EntryC::SIZE as u64;
-            Ok((name.into(), last_modified, entry.start as u64))
+            Ok((name, last_modified, entry.start as u64))
         })
         .collect::<Result<Vec<_>>>()?;
 
@@ -137,7 +137,7 @@ where
         .into_iter()
         .map(|script| {
             let mut name = [0; 120];
-            str_to_c(script.name, &mut name);
+            str_to_c_padded(script.name, &mut name);
             let last_modified = script.last_modified.timestamp() as u32;
             let entry = EntryC {
                 name,

@@ -1,4 +1,4 @@
-pub fn str_to_c<S>(str: S, fill: &mut [u8])
+pub fn str_to_c_padded<S>(str: S, fill: &mut [u8])
 where
     S: Into<String>,
 {
@@ -14,7 +14,30 @@ pub fn bytes_to_c(bytes: Vec<u8>, fill: &mut [u8]) {
     fill.copy_from_slice(&copy);
 }
 
-pub fn str_from_c(raw: &[u8]) -> std::result::Result<&str, std::str::Utf8Error> {
-    let len = raw.iter().position(|&c| c == b'\0').unwrap_or(raw.len());
-    std::str::from_utf8(&raw[0..len])
+pub enum ConversionError {
+    Utf8(std::str::Utf8Error),
+    PaddingError(String),
+}
+
+pub fn str_from_c_padded(buf: &[u8]) -> Result<String, ConversionError> {
+    let len = buf.len();
+    let zero = if let Some(zero) = buf.iter().position(|&c| c == 0) {
+        if buf[zero..len].iter().any(|&c| c != 0) {
+            return Err(ConversionError::PaddingError("zeroes".to_owned()));
+        }
+        zero
+    } else {
+        len
+    };
+    match std::str::from_utf8(&buf[0..zero]) {
+        Ok(str) => Ok(str.to_owned()),
+        Err(e) => Err(ConversionError::Utf8(e)),
+    }
+}
+
+pub fn str_from_c_sized(buf: &[u8]) -> Result<String, ConversionError> {
+    match std::str::from_utf8(&buf) {
+        Ok(str) => Ok(str.to_owned()),
+        Err(err) => Err(crate::string::ConversionError::Utf8(err)),
+    }
 }

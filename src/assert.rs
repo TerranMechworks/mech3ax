@@ -1,3 +1,4 @@
+use crate::string::ConversionError;
 use std::cmp::{PartialEq, PartialOrd};
 use std::fmt::{self, Debug, Display};
 
@@ -158,10 +159,18 @@ pub fn assert_utf8<S, U, F, T>(name: S, pos: U, func: F) -> Result<T>
 where
     S: Display,
     U: Display,
-    F: FnOnce() -> ::std::result::Result<T, ::std::str::Utf8Error>,
+    F: FnOnce() -> ::std::result::Result<T, ConversionError>,
 {
-    func().map_err(|_| {
-        let msg = format!("Expected '{}' to be a valid string (at {})", name, pos);
+    func().map_err(|err| {
+        let msg = match err {
+            ConversionError::PaddingError(padding) => format!(
+                "Expected '{}' to padded with {} (at {})",
+                name, padding, pos
+            ),
+            ConversionError::Utf8(_) => {
+                format!("Expected '{}' to be a valid string (at {})", name, pos)
+            }
+        };
         AssertionError(msg)
     })
 }
