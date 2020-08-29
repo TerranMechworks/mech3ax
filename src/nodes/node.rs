@@ -1,12 +1,12 @@
 use super::flags::NodeBitFlags;
-use super::object3d::read_object3d;
-use super::types::{NodeType, NodeVariants};
+use super::object3d::{node_object3d, read_object3d, write_object3d};
+use super::types::{Node, NodeType, NodeVariants};
 use super::wrappers::WrappedNode;
 use crate::assert::{assert_utf8, AssertionError};
-use crate::io_ext::ReadHelper;
-use crate::string::str_from_c_node_name;
+use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::string::{str_from_c_node_name, str_to_c_node_name};
 use crate::{assert_that, static_assert_size, Result};
-use std::io::Read;
+use std::io::{Read, Write};
 
 #[repr(C)]
 pub struct NodeC {
@@ -150,5 +150,62 @@ where
     match node_type {
         NodeType::OBJECT3D => Ok(WrappedNode::Object3d(read_object3d(read, node, offset)?)),
         _ => panic!("other node types unimplemented"),
+    }
+}
+
+fn write_variant<W>(write: &mut W, node_type: NodeType, variant: NodeVariants) -> Result<()>
+where
+    W: Write,
+{
+    let mut name = [0; 36];
+    str_to_c_node_name(variant.name, &mut name);
+
+    let (area_partition_x, area_partition_y) = variant.area_partition.unwrap_or((-1, -1));
+    let parent_count = if variant.has_parent { 1 } else { 0 };
+
+    write.write_struct(&NodeC {
+        name,
+        flags: variant.flags.bits(),
+        zero040: 0,
+        unk044: variant.unk044,
+        zone_id: variant.zone_id,
+        node_type: node_type as u32,
+        data_ptr: variant.data_ptr,
+        mesh_index: variant.mesh_index,
+        environment_data: 0,
+        action_priority: 1,
+        action_callback: 0,
+        area_partition_x,
+        area_partition_y,
+        parent_count,
+        parent_array_ptr: variant.parent_array_ptr,
+        children_count: variant.children_count,
+        children_array_ptr: variant.children_array_ptr,
+        zero100: 0,
+        zero104: 0,
+        zero108: 0,
+        zero112: 0,
+        unk116: variant.unk116,
+        unk140: variant.unk140,
+        unk164: variant.unk164,
+        zero188: 0,
+        zero192: 0,
+        unk196: variant.unk196,
+        zero200: 0,
+        zero204: 0,
+    })?;
+    Ok(())
+}
+
+pub fn write_node<W>(write: &mut W, node: &Node) -> Result<()>
+where
+    W: Write,
+{
+    match node {
+        Node::Object3d(object3d) => {
+            let variant = node_object3d(object3d);
+            write_variant(write, NodeType::OBJECT3D, variant)?;
+            write_object3d(write, object3d)
+        }
     }
 }

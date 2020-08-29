@@ -2,7 +2,7 @@ use clap::Clap;
 use mech3rs::archive::{write_archive, Entry};
 use mech3rs::interp::{write_interp, Script};
 use mech3rs::materials::{write_materials, Material};
-use mech3rs::mechlib::{write_format, write_version};
+use mech3rs::mechlib::{write_format, write_model, write_version, Model};
 use mech3rs::motion::{write_motion, Motion};
 use mech3rs::reader::write_reader;
 use mech3rs::textures::{write_textures, TextureInfo};
@@ -184,11 +184,16 @@ fn mechlib(opts: ZipOpts) -> Result<()> {
             write_materials(&mut cursor, motion)?;
             Ok(buf)
         }
-        _ => {
-            let name = name.clone().replace(".flt", ".json");
+        other => {
+            let name = other.clone().replace(".flt", ".json");
             let mut file = zip.by_name(&name)?;
             let mut buf = Vec::new();
             file.read_to_end(&mut buf)?;
+            let model = serde_json::from_slice::<Model>(&buf)?;
+
+            let mut buf = Vec::new();
+            let mut cursor = Cursor::new(&mut buf);
+            write_model(&mut cursor, &model)?;
             Ok(buf)
         }
     })

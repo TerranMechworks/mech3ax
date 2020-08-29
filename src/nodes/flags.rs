@@ -46,29 +46,29 @@ fn bool_false(value: &bool) -> bool {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct NodeFlags {
-    #[serde(skip_serializing_if = "bool_false")]
+    #[serde(skip_serializing_if = "bool_false", default)]
     pub altitude_surface: bool,
-    #[serde(skip_serializing_if = "bool_false")]
+    #[serde(skip_serializing_if = "bool_false", default)]
     pub intersect_surface: bool,
-    #[serde(skip_serializing_if = "bool_false")]
+    #[serde(skip_serializing_if = "bool_false", default)]
     pub intersect_bbox: bool,
-    #[serde(skip_serializing_if = "bool_false")]
+    #[serde(skip_serializing_if = "bool_false", default)]
     pub landmark: bool,
-    #[serde(skip_serializing_if = "bool_false")]
+    #[serde(skip_serializing_if = "bool_false", default)]
     pub unk08: bool,
-    #[serde(skip_serializing_if = "bool_false")]
+    #[serde(skip_serializing_if = "bool_false", default)]
     pub has_mesh: bool,
-    #[serde(skip_serializing_if = "bool_false")]
+    #[serde(skip_serializing_if = "bool_false", default)]
     pub unk10: bool,
-    #[serde(skip_serializing_if = "bool_false")]
+    #[serde(skip_serializing_if = "bool_false", default)]
     pub unk15: bool,
-    #[serde(skip_serializing_if = "bool_false")]
+    #[serde(skip_serializing_if = "bool_false", default)]
     pub can_modify: bool,
-    #[serde(skip_serializing_if = "bool_false")]
+    #[serde(skip_serializing_if = "bool_false", default)]
     pub clip_to: bool,
-    #[serde(skip_serializing_if = "bool_false")]
+    #[serde(skip_serializing_if = "bool_false", default)]
     pub unk25: bool,
-    #[serde(skip_serializing_if = "bool_false")]
+    #[serde(skip_serializing_if = "bool_false", default)]
     pub unk28: bool,
 }
 
@@ -91,8 +91,8 @@ impl From<NodeBitFlags> for NodeFlags {
     }
 }
 
-impl From<NodeFlags> for NodeBitFlags {
-    fn from(flags: NodeFlags) -> Self {
+impl From<&NodeFlags> for NodeBitFlags {
+    fn from(flags: &NodeFlags) -> Self {
         let mut bitflags = Self::BASE;
         if flags.altitude_surface {
             bitflags |= NodeBitFlags::ALTITUDE_SURFACE;

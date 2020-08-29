@@ -1,5 +1,4 @@
 use super::flags::NodeBitFlags;
-use crate::mesh::Mesh;
 use crate::types::{Matrix, Vec3};
 use serde::{Deserialize, Serialize};
 
@@ -53,7 +52,8 @@ pub struct Object3d {
     pub zone_id: u32,
     pub area_partition: AreaPartition,
     pub transformation: Option<Transformation>,
-    pub mesh: Option<Mesh>,
+    pub matrix_signs: u32,
+    pub mesh_index: i32,
     pub parent: Option<u32>,
     pub children: Option<Vec<Node>>,
     pub data_ptr: u32,

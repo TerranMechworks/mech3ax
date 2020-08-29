@@ -16,7 +16,6 @@ where
     fill.copy_from_slice(&buf);
 }
 
-#[allow(dead_code)]
 pub fn str_to_c_node_name<S>(str: S, fill: &mut [u8])
 where
     S: Into<String>,
@@ -64,7 +63,6 @@ pub fn str_from_c_sized(buf: &[u8]) -> Result<String, ConversionError> {
     }
 }
 
-#[allow(dead_code)]
 pub fn str_from_c_node_name(buf: &[u8]) -> Result<String, ConversionError> {
     let len = buf.len();
     let mut compare = Vec::from(DEFAULT_NODE_NAME.as_bytes());

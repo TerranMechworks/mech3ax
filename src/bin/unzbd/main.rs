@@ -164,8 +164,7 @@ fn mechlib(opts: ZipOpts) -> Result<()> {
     let output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipWriter::new(output);
-    let deflated = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
-    let stored = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
+    let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
     let manifest: Result<_> = read_archive(&mut input, |name, data| {
         let result = match name {
@@ -175,16 +174,16 @@ fn mechlib(opts: ZipOpts) -> Result<()> {
                 let materials = read_materials(&mut Cursor::new(data))?;
                 let data = serde_json::to_vec_pretty(&materials)?;
 
-                zip.start_file("materials.json", deflated)?;
+                zip.start_file("materials.json", options)?;
                 zip.write_all(&data)?;
                 Ok(())
             }
-            _ => {
-                let name = name.clone().replace(".flt", ".json");
+            other => {
+                let name = other.clone().replace(".flt", ".json");
                 let root = read_model(&mut Cursor::new(data))?;
                 let data = serde_json::to_vec_pretty(&root)?;
 
-                zip.start_file(name, stored)?;
+                zip.start_file(name, options)?;
                 zip.write_all(&data)?;
                 Ok(())
             }
@@ -194,7 +193,7 @@ fn mechlib(opts: ZipOpts) -> Result<()> {
     });
 
     let data = serde_json::to_vec_pretty(&manifest?)?;
-    zip.start_file("manifest.json", deflated)?;
+    zip.start_file("manifest.json", options)?;
     zip.write_all(&data)?;
     zip.finish()?;
 

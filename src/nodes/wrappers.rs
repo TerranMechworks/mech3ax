@@ -4,7 +4,6 @@ pub struct Object3dWrapper {
     pub wrapped: Object3d,
     pub has_parent: bool,
     pub children_count: u32,
-    pub mesh_index: i32,
 }
 
 pub enum WrappedNode {

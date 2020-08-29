@@ -1,9 +1,9 @@
-use crate::io_ext::ReadHelper;
+use crate::io_ext::{ReadHelper, WriteHelper};
 use crate::size::ReprSize;
 use crate::types::{Vec2, Vec3};
 use crate::{assert_that, static_assert_size, Result};
 use ::serde::{Deserialize, Serialize};
-use std::io::Read;
+use std::io::{Read, Write};
 
 #[repr(C)]
 struct PolygonC {
@@ -209,7 +209,7 @@ fn assert_mesh_info(mesh: MeshC, offset: u32) -> Result<WrappedMesh> {
         unk72: mesh.unk72,
         unk76: mesh.unk76,
         unk80: mesh.unk80,
-        unk84: mesh.unk80,
+        unk84: mesh.unk84,
     };
 
     Ok(WrappedMesh {
@@ -393,4 +393,151 @@ where
     mesh.lights = read_lights(read, offset, wrapped.light_count)?;
     mesh.polygons = read_polygons(read, offset, wrapped.polygon_count)?;
     Ok(mesh)
+}
+
+pub fn write_mesh_info<W>(write: &mut W, mesh: &Mesh) -> Result<()>
+where
+    W: Write,
+{
+    let file_ptr = if mesh.file_ptr { 1 } else { 0 };
+    let unk04 = if mesh.unk04 { 1 } else { 0 };
+
+    write.write_struct(&MeshC {
+        file_ptr,
+        unk04,
+        unk08: mesh.unk08,
+        parent_count: mesh.parent_count,
+        polygon_count: mesh.polygons.len() as u32,
+        vertex_count: mesh.vertices.len() as u32,
+        normal_count: mesh.normals.len() as u32,
+        morph_count: mesh.morphs.len() as u32,
+        light_count: mesh.lights.len() as u32,
+        zero36: 0,
+        unk40: mesh.unk40,
+        unk44: mesh.unk44,
+        zero48: 0,
+        polygons_ptr: mesh.polygons_ptr,
+        vertices_ptr: mesh.vertices_ptr,
+        normals_ptr: mesh.normals_ptr,
+        lights_ptr: mesh.lights_ptr,
+        morphs_ptr: mesh.morphs_ptr,
+        unk72: mesh.unk72,
+        unk76: mesh.unk76,
+        unk80: mesh.unk80,
+        unk84: mesh.unk84,
+        zero88: 0,
+    })?;
+    Ok(())
+}
+
+fn write_vec3s<W>(write: &mut W, vecs: &[Vec3]) -> Result<()>
+where
+    W: Write,
+{
+    for vec in vecs {
+        write.write_struct(vec)?;
+    }
+    Ok(())
+}
+
+fn write_lights<W>(write: &mut W, lights: &[Light]) -> Result<()>
+where
+    W: Write,
+{
+    for light in lights {
+        write.write_struct(&LightC {
+            unk00: light.unk00,
+            unk04: light.unk04,
+            unk08: light.unk08,
+            extra_count: light.extra.len() as u32,
+            unk16: light.unk16,
+            unk20: light.unk20,
+            unk24: light.unk24,
+            unk28: light.unk28,
+            unk32: light.unk32,
+            unk36: light.unk36,
+            unk40: light.unk40,
+            ptr: light.ptr,
+            unk48: light.unk48,
+            unk52: light.unk52,
+            unk56: light.unk56,
+            unk60: light.unk60,
+            unk64: light.unk64,
+            unk68: light.unk68,
+            unk72: light.unk72,
+        })?;
+    }
+    for light in lights {
+        write_vec3s(write, &light.extra)?;
+    }
+    Ok(())
+}
+
+fn write_u32s<W>(write: &mut W, values: &[u32]) -> Result<()>
+where
+    W: Write,
+{
+    for value in values {
+        write.write_u32(*value)?;
+    }
+    Ok(())
+}
+
+fn write_uvs<W>(write: &mut W, uv_coords: &[Vec2]) -> Result<()>
+where
+    W: Write,
+{
+    for uv in uv_coords {
+        write.write_struct(&Vec2(uv.0, 1.0 - uv.1))?;
+    }
+    Ok(())
+}
+
+fn write_polygons<W>(write: &mut W, polygons: &[Polygon]) -> Result<()>
+where
+    W: Write,
+{
+    for polygon in polygons {
+        let mut vertex_info = polygon.vertex_indices.len() as u32;
+        if polygon.unk_bit {
+            vertex_info |= 0x100;
+        }
+        if polygon.vtx_bit {
+            vertex_info |= 0x200;
+        }
+        write.write_struct(&PolygonC {
+            vertex_info,
+            unk04: polygon.unk04,
+            vertices_ptr: polygon.vertices_ptr,
+            normals_ptr: polygon.normals_ptr,
+            uvs_ptr: polygon.uvs_ptr,
+            colors_ptr: polygon.colors_ptr,
+            unk_ptr: polygon.unk_ptr,
+            texture_index: polygon.texture_index,
+            texture_info: polygon.texture_info,
+        })?;
+    }
+    for polygon in polygons {
+        write_u32s(write, &polygon.vertex_indices)?;
+        if let Some(normal_indices) = &polygon.normal_indices {
+            write_u32s(write, normal_indices)?;
+        }
+        if let Some(uv_coords) = &polygon.uv_coords {
+            write_uvs(write, uv_coords)?;
+        }
+        write_vec3s(write, &polygon.vertex_colors)?;
+    }
+    Ok(())
+}
+
+pub fn write_mesh_data<W>(write: &mut W, mesh: &Mesh) -> Result<()>
+where
+    W: Write,
+{
+    write_vec3s(write, &mesh.vertices)?;
+    write_vec3s(write, &mesh.normals)?;
+    write_vec3s(write, &mesh.morphs)?;
+    write_lights(write, &mesh.lights)?;
+    write_polygons(write, &mesh.polygons)?;
+    Ok(())
 }
