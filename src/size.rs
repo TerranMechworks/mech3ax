@@ -11,7 +11,7 @@ macro_rules! static_assert_size {
             const SIZE: u32 = $size;
 
             fn _static_assert_size() {
-                const _: [(); 0] = [(); (::std::mem::size_of::<$type>() != $size) as usize];
+                const _: [(); $size as usize] = [(); ::std::mem::size_of::<$type>()];
             }
         }
     };

@@ -77,7 +77,6 @@ where
     }
 }
 
-#[allow(dead_code)]
 pub fn is_greater_than<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
 where
     S: Display,
@@ -137,6 +136,24 @@ where
     }
 }
 
+#[allow(dead_code)]
+pub fn is_in<S, T, U>(name: S, haystack: &[T], needle: &T, pos: U) -> Result<()>
+where
+    S: Display,
+    T: PartialEq + Debug,
+    U: Display,
+{
+    if haystack.contains(needle) {
+        Ok(())
+    } else {
+        let msg = format!(
+            "Expected '{}' to be in {:#?}, but was {:#?} (at {})",
+            name, haystack, needle, pos
+        );
+        Err(AssertionError(msg))
+    }
+}
+
 pub fn assert_utf8<S, U, F, T>(name: S, pos: U, func: F) -> Result<T>
 where
     S: Display,
@@ -147,6 +164,27 @@ where
         let msg = format!("Expected '{}' to be a valid string (at {})", name, pos);
         AssertionError(msg)
     })
+}
+
+#[allow(dead_code)]
+pub fn assert_all_zero<S, U>(name: S, pos: U, buf: &[u8]) -> Result<()>
+where
+    S: Display,
+    U: Display,
+{
+    let mut iter = buf.iter().enumerate();
+
+    if !iter.all(|(_, &v)| v == 0) {
+        let index = iter.next().map(|(i, _)| i).unwrap_or(buf.len() - 1);
+        let value = buf[index];
+        let msg = format!(
+            "Expected '{}' to be zero, but byte {} was {:02X} (at {})",
+            name, index, value, pos
+        );
+        Err(AssertionError(msg))
+    } else {
+        Ok(())
+    }
 }
 
 #[macro_export]
@@ -209,6 +247,21 @@ macro_rules! assert_that {
             $actual_struct.$actual_field,
             $pos,
         )
+    };
+    ($name:expr, -$expected_min:tt <= $actual_struct:ident.$actual_field:tt <= $expected_max:expr, $pos:expr) => {
+        $crate::assert::is_between(
+            $name,
+            -$expected_min,
+            $expected_max,
+            $actual_struct.$actual_field,
+            $pos,
+        )
+    };
+    ($name:expr, $actual:tt in $haystack:expr, $pos:expr) => {
+        $crate::assert::is_in($name, $haystack, $actual, $pos)
+    };
+    ($name:expr, $actual_struct:ident.$actual_field:tt in $haystack:expr, $pos:expr) => {
+        $crate::assert::is_in($name, $haystack, $actual_struct.$actual_field, $pos)
     };
 }
 
