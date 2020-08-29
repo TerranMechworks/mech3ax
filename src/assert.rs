@@ -29,7 +29,6 @@ where
     }
 }
 
-#[allow(dead_code)]
 pub fn is_not_equal_to<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
 where
     S: Display,
@@ -113,7 +112,6 @@ where
     }
 }
 
-#[allow(dead_code)]
 pub fn is_between<S, T, U>(
     name: S,
     expected_min: T,
@@ -137,7 +135,6 @@ where
     }
 }
 
-#[allow(dead_code)]
 pub fn is_in<S, T, U>(name: S, haystack: &[T], needle: &T, pos: U) -> Result<()>
 where
     S: Display,
@@ -152,6 +149,22 @@ where
             name, haystack, needle, pos
         );
         Err(AssertionError(msg))
+    }
+}
+
+pub fn is_bool<S, U>(name: S, actual: u32, pos: U) -> Result<bool>
+where
+    S: Display,
+    U: Display,
+{
+    if actual > 1 {
+        let msg = format!(
+            "Expected '{}' to be 0 or 1, but was {} (at {})",
+            name, actual, pos
+        );
+        Err(AssertionError(msg))
+    } else {
+        Ok(actual == 1)
     }
 }
 
@@ -175,7 +188,6 @@ where
     })
 }
 
-#[allow(dead_code)]
 pub fn assert_all_zero<S, U>(name: S, pos: U, buf: &[u8]) -> Result<()>
 where
     S: Display,
@@ -267,10 +279,13 @@ macro_rules! assert_that {
         )
     };
     ($name:expr, $actual:tt in $haystack:expr, $pos:expr) => {
-        $crate::assert::is_in($name, $haystack, $actual, $pos)
+        $crate::assert::is_in($name, &$haystack, &$actual, $pos)
     };
     ($name:expr, $actual_struct:ident.$actual_field:tt in $haystack:expr, $pos:expr) => {
-        $crate::assert::is_in($name, $haystack, $actual_struct.$actual_field, $pos)
+        $crate::assert::is_in($name, &$haystack, &$actual_struct.$actual_field, $pos)
+    };
+    ($name:expr, bool $actual:expr, $pos:expr) => {
+        $crate::assert::is_bool($name, $actual, $pos)
     };
 }
 

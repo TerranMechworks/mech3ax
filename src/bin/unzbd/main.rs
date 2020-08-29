@@ -3,7 +3,7 @@ use image::ImageOutputFormat;
 use mech3rs::archive::read_archive;
 use mech3rs::interp::read_interp;
 use mech3rs::materials::read_materials;
-use mech3rs::mechlib::{read_format, read_version};
+use mech3rs::mechlib::{read_format, read_model, read_version};
 use mech3rs::messages::read_messages;
 use mech3rs::motion::read_motion;
 use mech3rs::reader::read_reader;
@@ -181,10 +181,9 @@ fn mechlib(opts: ZipOpts) -> Result<()> {
             }
             _ => {
                 let name = name.clone().replace(".flt", ".json");
-                /*
-                let root = read_mech(&mut cursor)?;
+                let root = read_model(&mut Cursor::new(data))?;
                 let data = serde_json::to_vec_pretty(&root)?;
-                */
+
                 zip.start_file(name, stored)?;
                 zip.write_all(&data)?;
                 Ok(())
