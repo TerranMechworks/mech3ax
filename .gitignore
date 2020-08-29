@@ -4,3 +4,5 @@ Cargo.lock
 *.zbd
 *.zip
 *.json
+__pycache__/
+/.mypy_cache
