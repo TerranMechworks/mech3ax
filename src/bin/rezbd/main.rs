@@ -7,7 +7,7 @@ use mech3rs::motion::{write_motion, Motion};
 use mech3rs::reader::write_reader;
 use mech3rs::textures::{write_textures, TextureInfo};
 use std::fs::File;
-use std::io::{Cursor, Read};
+use std::io::{BufReader, BufWriter, Cursor, Read, Seek};
 use zip::read::ZipArchive;
 
 mod errors;
@@ -41,7 +41,10 @@ enum SubCommand {
     Mechlib(ZipOpts),
 }
 
-fn archive_manifest_from_zip(zip: &mut ZipArchive<File>) -> Result<Vec<Entry>> {
+fn archive_manifest_from_zip<T>(zip: &mut ZipArchive<T>) -> Result<Vec<Entry>>
+where
+    T: Read + Seek,
+{
     let mut file = zip.by_name("manifest.json")?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
@@ -50,8 +53,8 @@ fn archive_manifest_from_zip(zip: &mut ZipArchive<File>) -> Result<Vec<Entry>> {
 }
 
 fn sound(opts: ZipOpts) -> Result<()> {
-    let input = File::open(opts.input)?;
-    let mut output = File::create(opts.output)?;
+    let input = BufReader::new(File::open(opts.input)?);
+    let mut output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipArchive::new(input)?;
     let entries = archive_manifest_from_zip(&mut zip)?;
@@ -65,8 +68,8 @@ fn sound(opts: ZipOpts) -> Result<()> {
 }
 
 fn interp(opts: JsonOpts) -> Result<()> {
-    let mut input = File::open(opts.input)?;
-    let mut output = File::create(opts.output)?;
+    let mut input = BufReader::new(File::open(opts.input)?);
+    let mut output = BufWriter::new(File::create(opts.output)?);
 
     let mut buf = Vec::new();
     input.read_to_end(&mut buf)?;
@@ -77,8 +80,8 @@ fn interp(opts: JsonOpts) -> Result<()> {
 }
 
 fn reader(opts: ZipOpts) -> Result<()> {
-    let input = File::open(opts.input)?;
-    let mut output = File::create(opts.output)?;
+    let input = BufReader::new(File::open(opts.input)?);
+    let mut output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipArchive::new(input)?;
     let entries = archive_manifest_from_zip(&mut zip)?;
@@ -98,7 +101,10 @@ fn reader(opts: ZipOpts) -> Result<()> {
     })
 }
 
-fn texture_manifest_from_zip(zip: &mut ZipArchive<File>) -> Result<Vec<TextureInfo>> {
+fn texture_manifest_from_zip<T>(zip: &mut ZipArchive<T>) -> Result<Vec<TextureInfo>>
+where
+    T: Read + Seek,
+{
     let mut file = zip.by_name("manifest.json")?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
@@ -107,8 +113,8 @@ fn texture_manifest_from_zip(zip: &mut ZipArchive<File>) -> Result<Vec<TextureIn
 }
 
 fn textures(opts: ZipOpts) -> Result<()> {
-    let input = File::open(opts.input)?;
-    let mut output = File::create(opts.output)?;
+    let input = BufReader::new(File::open(opts.input)?);
+    let mut output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipArchive::new(input)?;
     let manifest = texture_manifest_from_zip(&mut zip)?;
@@ -128,8 +134,8 @@ fn textures(opts: ZipOpts) -> Result<()> {
 }
 
 fn motion(opts: ZipOpts) -> Result<()> {
-    let input = File::open(opts.input)?;
-    let mut output = File::create(opts.output)?;
+    let input = BufReader::new(File::open(opts.input)?);
+    let mut output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipArchive::new(input)?;
     let entries = archive_manifest_from_zip(&mut zip)?;
@@ -150,8 +156,8 @@ fn motion(opts: ZipOpts) -> Result<()> {
 }
 
 fn mechlib(opts: ZipOpts) -> Result<()> {
-    let input = File::open(opts.input)?;
-    let mut output = File::create(opts.output)?;
+    let input = BufReader::new(File::open(opts.input)?);
+    let mut output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipArchive::new(input)?;
     let entries = archive_manifest_from_zip(&mut zip)?;

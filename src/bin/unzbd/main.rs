@@ -9,7 +9,7 @@ use mech3rs::motion::read_motion;
 use mech3rs::reader::read_reader;
 use mech3rs::textures::{read_textures, TextureInfo};
 use std::fs::File;
-use std::io::{Cursor, Write};
+use std::io::{BufReader, BufWriter, Cursor, Write};
 use zip::write::{FileOptions, ZipWriter};
 
 mod errors;
@@ -45,8 +45,8 @@ enum SubCommand {
 }
 
 fn sound(opts: ZipOpts) -> Result<()> {
-    let mut input = File::open(opts.input)?;
-    let output = File::create(opts.output)?;
+    let mut input = BufReader::new(File::open(opts.input)?);
+    let output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipWriter::new(output);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
@@ -66,8 +66,8 @@ fn sound(opts: ZipOpts) -> Result<()> {
 }
 
 fn interp(opts: JsonOpts) -> Result<()> {
-    let mut input = File::open(opts.input)?;
-    let mut output = File::create(opts.output)?;
+    let mut input = BufReader::new(File::open(opts.input)?);
+    let mut output = BufWriter::new(File::create(opts.output)?);
 
     let scripts = read_interp(&mut input)?;
     let data = serde_json::to_vec_pretty(&scripts)?;
@@ -76,8 +76,8 @@ fn interp(opts: JsonOpts) -> Result<()> {
 }
 
 fn reader(opts: ZipOpts) -> Result<()> {
-    let mut input = File::open(opts.input)?;
-    let output = File::create(opts.output)?;
+    let mut input = BufReader::new(File::open(opts.input)?);
+    let output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipWriter::new(output);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
@@ -100,8 +100,8 @@ fn reader(opts: ZipOpts) -> Result<()> {
 }
 
 fn messages(opts: JsonOpts) -> Result<()> {
-    let mut input = File::open(opts.input)?;
-    let mut output = File::create(opts.output)?;
+    let mut input = BufReader::new(File::open(opts.input)?);
+    let mut output = BufWriter::new(File::create(opts.output)?);
 
     let messages = read_messages(&mut input)?;
     let data = serde_json::to_vec_pretty(&messages)?;
@@ -110,8 +110,8 @@ fn messages(opts: JsonOpts) -> Result<()> {
 }
 
 fn textures(opts: ZipOpts) -> Result<()> {
-    let mut input = File::open(opts.input)?;
-    let output = File::create(opts.output)?;
+    let mut input = BufReader::new(File::open(opts.input)?);
+    let output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipWriter::new(output);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
@@ -135,8 +135,8 @@ fn textures(opts: ZipOpts) -> Result<()> {
 }
 
 fn motion(opts: ZipOpts) -> Result<()> {
-    let mut input = File::open(opts.input)?;
-    let output = File::create(opts.output)?;
+    let mut input = BufReader::new(File::open(opts.input)?);
+    let output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipWriter::new(output);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
@@ -160,8 +160,8 @@ fn motion(opts: ZipOpts) -> Result<()> {
 }
 
 fn mechlib(opts: ZipOpts) -> Result<()> {
-    let mut input = File::open(opts.input)?;
-    let output = File::create(opts.output)?;
+    let mut input = BufReader::new(File::open(opts.input)?);
+    let output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipWriter::new(output);
     let deflated = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
