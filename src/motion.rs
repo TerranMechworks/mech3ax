@@ -62,7 +62,7 @@ where
             let translations = (0..frame_count)
                 .into_iter()
                 .map(|_| {
-                    let value = read.read_struct::<Vec3>()?;
+                    let value: Vec3 = read.read_struct()?;
                     Ok(value)
                 })
                 .collect::<Result<Vec<_>>>()?;
@@ -71,7 +71,7 @@ where
             let rotations = (0..frame_count)
                 .into_iter()
                 .map(|_| {
-                    let value = read.read_struct::<Vec4>()?;
+                    let value: Vec4 = read.read_struct()?;
                     Ok(value)
                 })
                 .collect::<Result<Vec<_>>>()?;

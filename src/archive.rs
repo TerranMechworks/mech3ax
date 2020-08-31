@@ -119,7 +119,7 @@ where
         .collect::<std::result::Result<Vec<_>, E>>()?;
 
     for entry in transformed.into_iter() {
-        write.write_struct::<EntryC>(&entry)?
+        write.write_struct(&entry)?
     }
 
     write.write_u32(VERSION)?;

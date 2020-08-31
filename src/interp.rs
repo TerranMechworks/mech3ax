@@ -144,7 +144,7 @@ where
                 last_modified,
                 start: offset,
             };
-            write.write_struct::<EntryC>(&entry)?;
+            write.write_struct(&entry)?;
 
             let (size, lines) = write_script(&script.lines);
             offset += size;

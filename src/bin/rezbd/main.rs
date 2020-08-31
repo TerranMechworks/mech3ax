@@ -1,10 +1,8 @@
 use clap::Clap;
 use mech3rs::archive::{write_archive, Entry};
 use mech3rs::interp::{write_interp, Script};
-use mech3rs::mechlib::{
-    write_format, write_materials, write_model, write_version, Material, Model,
-};
-use mech3rs::motion::{write_motion, Motion};
+use mech3rs::mechlib::{write_format, write_materials, write_model, write_version, Material};
+use mech3rs::motion::write_motion;
 use mech3rs::reader::write_reader;
 use mech3rs::textures::{write_textures, TextureInfo};
 use std::fs::File;
@@ -49,7 +47,7 @@ where
     let mut file = zip.by_name("manifest.json")?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
-    let manifest = serde_json::from_slice::<Vec<Entry>>(&buf)?;
+    let manifest = serde_json::from_slice(&buf)?;
     Ok(manifest)
 }
 
@@ -74,7 +72,7 @@ fn interp(opts: JsonOpts) -> Result<()> {
 
     let mut buf = Vec::new();
     input.read_to_end(&mut buf)?;
-    let scripts = serde_json::from_slice::<Vec<Script>>(&buf)?;
+    let scripts: Vec<Script> = serde_json::from_slice(&buf)?;
 
     write_interp(&mut output, &scripts)?;
     Ok(())
@@ -109,7 +107,7 @@ where
     let mut file = zip.by_name("manifest.json")?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
-    let manifest = serde_json::from_slice::<Vec<TextureInfo>>(&buf)?;
+    let manifest = serde_json::from_slice(&buf)?;
     Ok(manifest)
 }
 
@@ -147,7 +145,7 @@ fn motion(opts: ZipOpts) -> Result<()> {
         let mut file = zip.by_name(&name)?;
         let mut buf = Vec::new();
         file.read_to_end(&mut buf)?;
-        let motion = serde_json::from_slice::<Motion>(&buf)?;
+        let motion = serde_json::from_slice(&buf)?;
 
         let mut buf = Vec::new();
         let mut cursor = Cursor::new(&mut buf);
@@ -178,7 +176,7 @@ fn mechlib(opts: ZipOpts) -> Result<()> {
             let mut file = zip.by_name("materials.json")?;
             let mut buf = Vec::new();
             file.read_to_end(&mut buf)?;
-            let materials = serde_json::from_slice::<Vec<Material>>(&buf)?;
+            let materials: Vec<Material> = serde_json::from_slice(&buf)?;
 
             let mut buf = Vec::new();
             let mut cursor = Cursor::new(&mut buf);
@@ -190,7 +188,7 @@ fn mechlib(opts: ZipOpts) -> Result<()> {
             let mut file = zip.by_name(&name)?;
             let mut buf = Vec::new();
             file.read_to_end(&mut buf)?;
-            let model = serde_json::from_slice::<Model>(&buf)?;
+            let model = serde_json::from_slice(&buf)?;
 
             let mut buf = Vec::new();
             let mut cursor = Cursor::new(&mut buf);

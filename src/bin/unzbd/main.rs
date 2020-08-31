@@ -6,7 +6,7 @@ use mech3rs::mechlib::{read_format, read_materials, read_model, read_version};
 use mech3rs::messages::read_messages;
 use mech3rs::motion::read_motion;
 use mech3rs::reader::read_reader;
-use mech3rs::textures::{read_textures, TextureInfo};
+use mech3rs::textures::read_textures;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Cursor, Write};
 use zip::write::{FileOptions, ZipWriter};
@@ -115,7 +115,7 @@ fn textures(opts: ZipOpts) -> Result<()> {
     let mut zip = ZipWriter::new(output);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
 
-    let manifest: Result<Vec<TextureInfo>> = read_textures(&mut input, |name, image| {
+    let manifest: Result<Vec<_>> = read_textures(&mut input, |name, image| {
         let name = format!("{}.png", name);
         let mut data = Vec::new();
         image.write_to(&mut data, ImageOutputFormat::Png)?;
