@@ -22,21 +22,47 @@ struct MaterialC {
 }
 static_assert_size!(MaterialC, 40);
 
+fn pointer_zero(pointer: &u32) -> bool {
+    *pointer == 0
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CycleData {
+    info_ptr: u32,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TexturedMaterial {
-    texture: String,
-    pointer: u32,
+    pub texture: String,
+    // the GameZ data doesn't use the pointer (it stores the texture name index)
+    #[serde(skip_serializing_if = "pointer_zero", default)]
+    pub pointer: u32,
+    // the Mechlib data doesn't have cycled textures
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub cycle: Option<CycleData>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ColoredMaterial {
-    color: (f32, f32, f32),
-    unk00: u8,
+    pub color: (f32, f32, f32),
+    pub unk00: u8,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Material {
     Textured(TexturedMaterial),
+    Colored(ColoredMaterial),
+}
+
+#[derive(Debug)]
+pub struct RawTexturedMaterial {
+    pub pointer: u32,
+    pub cycle_ptr: Option<u32>,
+}
+
+#[derive(Debug)]
+pub enum RawMaterial {
+    Textured(RawTexturedMaterial),
     Colored(ColoredMaterial),
 }
 
@@ -50,7 +76,7 @@ bitflags::bitflags! {
     }
 }
 
-fn read_material<R>(read: &mut R, offset: &mut u32) -> Result<Material>
+pub fn read_material<R>(read: &mut R, offset: &mut u32) -> Result<RawMaterial>
 where
     R: Read,
 {
@@ -67,7 +93,6 @@ where
     let flag_free = bitflags.contains(MaterialFlags::FREE);
 
     assert_that!("flag unknown", flag_unknown == false, *offset + 1)?;
-    assert_that!("flag cycled", flag_cycled == false, *offset + 1)?;
     assert_that!("flag always", flag_always == true, *offset + 1)?;
     assert_that!("flag free", flag_free == false, *offset + 1)?;
 
@@ -75,7 +100,6 @@ where
     assert_that!("field 24", material.unk24 == 0.5, *offset + 24)?;
     assert_that!("field 28", material.unk28 == 0.5, *offset + 28)?;
     assert_that!("field 32", material.unk32 == 0, *offset + 32)?;
-    assert_that!("cycle ptr", material.cycle_ptr == 0, *offset + 36)?;
 
     let material = if bitflags.contains(MaterialFlags::TEXTURED) {
         assert_that!("field 00", material.unk00 == 0xFF, *offset + 0)?;
@@ -84,19 +108,27 @@ where
         assert_that!("color g", material.green == 255.0, *offset + 8)?;
         assert_that!("color b", material.blue == 255.0, *offset + 12)?;
 
+        let cycle_ptr = if flag_cycled {
+            Some(material.cycle_ptr)
+        } else {
+            assert_that!("cycle ptr", material.cycle_ptr == 0, *offset + 36)?;
+            None
+        };
+
         *offset += MaterialC::SIZE;
-        let texture = read.read_string(offset)?;
-        Material::Textured(TexturedMaterial {
-            texture,
+        RawMaterial::Textured(RawTexturedMaterial {
             pointer: material.pointer,
+            cycle_ptr,
         })
     } else {
         //assert_that!("field 00", material.unk00 == 0x00, *offset + 0)?;
         assert_that!("rgb", material.rgb == 0x0000, *offset + 2)?;
         assert_that!("pointer", material.pointer == 0, *offset + 16)?;
+        assert_that!("flag cycled", flag_cycled == false, *offset + 1)?;
+        assert_that!("cycle ptr", material.cycle_ptr == 0, *offset + 36)?;
 
         *offset += MaterialC::SIZE;
-        Material::Colored(ColoredMaterial {
+        RawMaterial::Colored(ColoredMaterial {
             color: (material.red, material.green, material.blue),
             unk00: material.unk00,
         })
@@ -104,28 +136,20 @@ where
     Ok(material)
 }
 
-pub fn read_materials<R>(read: &mut R) -> Result<Vec<Material>>
-where
-    R: Read,
-{
-    let count = read.read_u32()?;
-    let mut offset = 0;
-    let materials = (0..count)
-        .into_iter()
-        .map(|_| read_material(read, &mut offset))
-        .collect::<Result<Vec<_>>>()?;
-    read.assert_end()?;
-    Ok(materials)
-}
-
-pub fn write_material<W>(write: &mut W, material: Material) -> Result<()>
+pub fn write_material<W>(write: &mut W, material: &Material) -> Result<()>
 where
     W: Write,
 {
-    let (mat_c, texture) = match material {
+    let mat_c = match material {
         Material::Textured(material) => {
-            let bitflags = MaterialFlags::ALWAYS | MaterialFlags::TEXTURED;
-            let mat_c = MaterialC {
+            let mut bitflags = MaterialFlags::ALWAYS | MaterialFlags::TEXTURED;
+            let cycle_ptr = if let Some(cycle) = &material.cycle {
+                bitflags |= MaterialFlags::CYCLED;
+                cycle.info_ptr
+            } else {
+                0
+            };
+            MaterialC {
                 unk00: 0xFF,
                 flags: bitflags.bits(),
                 rgb: 0x7FFF,
@@ -137,14 +161,13 @@ where
                 unk24: 0.5,
                 unk28: 0.5,
                 unk32: 0,
-                cycle_ptr: 0,
-            };
-            (mat_c, Some(material.texture))
+                cycle_ptr,
+            }
         }
         Material::Colored(material) => {
             let bitflags = MaterialFlags::ALWAYS;
             let (red, green, blue) = material.color;
-            let mat_c = MaterialC {
+            MaterialC {
                 unk00: material.unk00,
                 flags: bitflags.bits(),
                 rgb: 0x0000,
@@ -157,24 +180,9 @@ where
                 unk28: 0.5,
                 unk32: 0,
                 cycle_ptr: 0,
-            };
-            (mat_c, None)
+            }
         }
     };
     write.write_struct(&mat_c)?;
-    if let Some(texture) = texture {
-        write.write_string(texture)?;
-    };
-    Ok(())
-}
-
-pub fn write_materials<W>(write: &mut W, materials: Vec<Material>) -> Result<()>
-where
-    W: Write,
-{
-    write.write_u32(materials.len() as u32)?;
-    for material in materials {
-        write_material(write, material)?;
-    }
     Ok(())
 }

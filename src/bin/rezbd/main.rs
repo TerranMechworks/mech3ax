@@ -1,8 +1,9 @@
 use clap::Clap;
 use mech3rs::archive::{write_archive, Entry};
 use mech3rs::interp::{write_interp, Script};
-use mech3rs::materials::{write_materials, Material};
-use mech3rs::mechlib::{write_format, write_model, write_version, Model};
+use mech3rs::mechlib::{
+    write_format, write_materials, write_model, write_version, Material, Model,
+};
 use mech3rs::motion::{write_motion, Motion};
 use mech3rs::reader::write_reader;
 use mech3rs::textures::{write_textures, TextureInfo};

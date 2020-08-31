@@ -1,4 +1,5 @@
 use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::materials::{read_material, write_material, RawMaterial, TexturedMaterial};
 use crate::mesh::{read_mesh_data, read_mesh_info, write_mesh_data, write_mesh_info, Mesh};
 use crate::nodes::{
     read_node as read_node_wrapped, write_node as write_node_wrapped, Node, WrappedNode,
@@ -6,6 +7,8 @@ use crate::nodes::{
 use crate::{assert_that, Result};
 use ::serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
+
+pub type Material = crate::materials::Material;
 
 const VERSION: u32 = 27;
 const FORMAT: u32 = 1;
@@ -47,6 +50,54 @@ where
     W: Write,
 {
     write.write_u32(FORMAT)?;
+    Ok(())
+}
+
+pub fn read_materials<R>(read: &mut R) -> Result<Vec<Material>>
+where
+    R: Read,
+{
+    let count = read.read_u32()?;
+    let mut offset = 0;
+    let materials = (0..count)
+        .into_iter()
+        .map(|_| {
+            let prev = offset;
+            let material = read_material(read, &mut offset)?;
+            Ok(match material {
+                RawMaterial::Textured(mat) => {
+                    // mechlib materials cannot have cycled textures
+                    assert_that!("cycle ptr", mat.cycle_ptr == None, prev + 36)?;
+                    // mechlib materials store the texture name immediately after
+                    let texture = read.read_string(&mut offset)?;
+                    Material::Textured(TexturedMaterial {
+                        texture,
+                        pointer: mat.pointer,
+                        cycle: None,
+                    })
+                }
+                RawMaterial::Colored(mat) => Material::Colored(mat),
+            })
+        })
+        .collect::<Result<Vec<_>>>()?;
+    read.assert_end()?;
+    Ok(materials)
+}
+
+pub fn write_materials<W>(write: &mut W, materials: Vec<Material>) -> Result<()>
+where
+    W: Write,
+{
+    write.write_u32(materials.len() as u32)?;
+    for material in materials {
+        write_material(write, &material)?;
+        if let Material::Textured(textured) = material {
+            if textured.cycle.is_some() {
+                panic!("mechlib materials cannot have cycled textures");
+            }
+            write.write_string(textured.texture)?;
+        }
+    }
     Ok(())
 }
 
