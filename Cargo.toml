@@ -21,7 +21,7 @@ image = {version = "0.23.8", features = ["png"] }
 bitflags = "1.0"
 
 [dev-dependencies]
-# matches = "0.1.8"
+matches = "0.1.8"
 
 [lib]
 doctest = false

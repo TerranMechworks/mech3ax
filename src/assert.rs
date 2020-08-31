@@ -183,6 +183,9 @@ where
             ConversionError::Utf8(_) => {
                 format!("Expected '{}' to be a valid string (at {})", name, pos)
             }
+            ConversionError::Unterminated => {
+                format!("Expected '{}' to be zero-terminated (at {})", name, pos)
+            }
         };
         AssertionError(msg)
     })

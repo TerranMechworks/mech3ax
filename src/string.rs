@@ -38,21 +38,22 @@ where
 pub enum ConversionError {
     Utf8(std::str::Utf8Error),
     PaddingError(String),
+    Unterminated,
 }
 
 pub fn str_from_c_padded(buf: &[u8]) -> Result<String, ConversionError> {
     let len = buf.len();
-    let zero = if let Some(zero) = buf.iter().position(|&c| c == 0) {
+    if let Some(zero) = buf.iter().position(|&c| c == 0) {
         if buf[zero..len].iter().any(|&c| c != 0) {
-            return Err(ConversionError::PaddingError("zeroes".to_owned()));
+            Err(ConversionError::PaddingError("zeroes".to_owned()))
+        } else {
+            match std::str::from_utf8(&buf[0..zero]) {
+                Ok(str) => Ok(str.to_owned()),
+                Err(e) => Err(ConversionError::Utf8(e)),
+            }
         }
-        zero
     } else {
-        len
-    };
-    match std::str::from_utf8(&buf[0..zero]) {
-        Ok(str) => Ok(str.to_owned()),
-        Err(e) => Err(ConversionError::Utf8(e)),
+        Err(ConversionError::Unterminated)
     }
 }
 
@@ -68,28 +69,29 @@ pub fn str_from_c_node_name(buf: &[u8]) -> Result<String, ConversionError> {
     let mut compare = Vec::from(DEFAULT_NODE_NAME.as_bytes());
     compare.resize(len, 0);
 
-    let zero = if let Some(zero) = buf.iter().position(|&c| c == 0) {
+    if let Some(zero) = buf.iter().position(|&c| c == 0) {
         if buf
             .iter()
             .zip(compare.iter())
             .skip(zero + 1)
             .any(|(&c, &d)| c != d)
         {
-            return Err(ConversionError::PaddingError("node name".to_owned()));
+            Err(ConversionError::PaddingError("node name".to_owned()))
+        } else {
+            match std::str::from_utf8(&buf[0..zero]) {
+                Ok(str) => Ok(str.to_owned()),
+                Err(e) => Err(ConversionError::Utf8(e)),
+            }
         }
-        zero
     } else {
-        len
-    };
-    match std::str::from_utf8(&buf[0..zero]) {
-        Ok(str) => Ok(str.to_owned()),
-        Err(e) => Err(ConversionError::Utf8(e)),
+        Err(ConversionError::Unterminated)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use matches::assert_matches;
 
     #[test]
     fn str_from_c_padded_with_zeros() {
@@ -106,8 +108,8 @@ mod tests {
 
     #[test]
     fn str_from_c_padded_at_length() {
-        let result = str_from_c_padded("spam eggs".to_owned().as_bytes()).unwrap();
-        assert_eq!(result, "spam eggs");
+        let err = str_from_c_padded("spam eggs".to_owned().as_bytes()).unwrap_err();
+        assert_matches!(err, ConversionError::Unterminated);
     }
 
     #[test]
@@ -119,7 +121,8 @@ mod tests {
 
     #[test]
     fn str_from_c_padded_with_non_zero() {
-        str_from_c_padded("spam eggs\0ham".to_owned().as_bytes()).unwrap_err();
+        let err = str_from_c_padded("spam eggs\0ham".to_owned().as_bytes()).unwrap_err();
+        assert_matches!(err, ConversionError::PaddingError(_));
     }
 
     #[test]
@@ -138,8 +141,8 @@ mod tests {
 
     #[test]
     fn str_from_c_node_name_at_length() {
-        let result = str_from_c_node_name("spam eggs".to_owned().as_bytes()).unwrap();
-        assert_eq!(result, "spam eggs");
+        let err = str_from_c_node_name("spam eggs".to_owned().as_bytes()).unwrap_err();
+        assert_matches!(err, ConversionError::Unterminated);
     }
 
     #[test]
@@ -151,6 +154,7 @@ mod tests {
 
     #[test]
     fn str_from_c_node_name_with_zeros() {
-        str_from_c_node_name("spam eggs\0\0\0\0".to_owned().as_bytes()).unwrap_err();
+        let err = str_from_c_node_name("spam eggs\0\0\0\0".to_owned().as_bytes()).unwrap_err();
+        assert_matches!(err, ConversionError::PaddingError(_));
     }
 }
