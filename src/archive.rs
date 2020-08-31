@@ -79,11 +79,11 @@ where
         .collect::<std::result::Result<Vec<_>, E>>()
 }
 
-fn entry_to_c(entry: Entry, start: u32, length: u32) -> EntryC {
+fn entry_to_c(entry: &Entry, start: u32, length: u32) -> EntryC {
     let mut name = [0; 64];
-    str_to_c_padded(entry.name, &mut name);
+    str_to_c_padded(&entry.name, &mut name);
     let mut garbage = [0; 76];
-    bytes_to_c(entry.garbage, &mut garbage);
+    bytes_to_c(&entry.garbage, &mut garbage);
 
     EntryC {
         start,
@@ -95,7 +95,7 @@ fn entry_to_c(entry: Entry, start: u32, length: u32) -> EntryC {
 
 pub fn write_archive<W, F, E>(
     write: &mut W,
-    entries: Vec<Entry>,
+    entries: &[Entry],
     mut load_file: F,
 ) -> std::result::Result<(), E>
 where

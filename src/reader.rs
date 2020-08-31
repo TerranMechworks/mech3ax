@@ -64,11 +64,11 @@ where
     value
 }
 
-fn invalid_number(num: Number) -> AssertionError {
+fn invalid_number(num: &Number) -> AssertionError {
     AssertionError(format!("Expected valid number, but was {}", num))
 }
 
-fn write_value<W>(write: &mut W, value: Value) -> Result<()>
+fn write_value<W>(write: &mut W, value: &Value) -> Result<()>
 where
     W: Write,
 {
@@ -85,9 +85,9 @@ where
                 Err(invalid_number(num))?
             }
         }
-        Value::String(str) => {
+        Value::String(string) => {
             write.write_u32(3)?;
-            write.write_string(str)?;
+            write.write_string(&string)?;
         }
         Value::Null => {
             write.write_u32(4)?;
@@ -110,7 +110,7 @@ where
     Ok(())
 }
 
-pub fn write_reader<W>(write: &mut W, value: Value) -> Result<()>
+pub fn write_reader<W>(write: &mut W, value: &Value) -> Result<()>
 where
     W: Write,
 {

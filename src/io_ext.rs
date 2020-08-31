@@ -96,7 +96,7 @@ pub trait WriteHelper {
     fn write_f32(&mut self, value: f32) -> Result<()>;
     fn write_u16(&mut self, value: u16) -> Result<()>;
     fn write_struct<S>(&mut self, value: &S) -> Result<()>;
-    fn write_string(&mut self, value: String) -> crate::Result<()>;
+    fn write_string(&mut self, value: &str) -> crate::Result<()>;
 }
 
 impl<W> WriteHelper for W
@@ -129,8 +129,8 @@ where
         self.write_all(buf)
     }
 
-    fn write_string(&mut self, value: String) -> crate::Result<()> {
-        let buf = value.into_bytes();
+    fn write_string(&mut self, value: &str) -> crate::Result<()> {
+        let buf = value.as_bytes();
         let count = buf.len() as u32;
         self.write_u32(count)?;
         self.write_all(&buf)?;
@@ -230,7 +230,7 @@ mod tests {
     fn string_roundtrip() {
         let expected = "Hello World".to_owned();
         let mut cursor = Cursor::new(vec![]);
-        cursor.write_string(expected.clone()).unwrap();
+        cursor.write_string(&expected).unwrap();
         cursor.set_position(0);
         let mut offset = 0;
         let actual = cursor.read_string(&mut offset).unwrap();

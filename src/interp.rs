@@ -100,12 +100,12 @@ where
     scripts
 }
 
-fn write_script(lines: Vec<String>) -> (u32, Vec<(u32, Vec<u8>)>) {
+fn write_script(lines: &[String]) -> (u32, Vec<(u32, Vec<u8>)>) {
     let mut size = 0;
     let transformed = lines
         .into_iter()
         .map(|line| {
-            let mut buf = line.into_bytes();
+            let mut buf = Vec::from(line.as_bytes());
             buf.push(32); // add "zero" terminator
             let mut zero_count = 0;
             for v in &mut buf {
@@ -123,7 +123,7 @@ fn write_script(lines: Vec<String>) -> (u32, Vec<(u32, Vec<u8>)>) {
     (size, transformed)
 }
 
-pub fn write_interp<W>(write: &mut W, scripts: Vec<Script>) -> Result<()>
+pub fn write_interp<W>(write: &mut W, scripts: &[Script]) -> Result<()>
 where
     W: Write,
 {
@@ -137,7 +137,7 @@ where
         .into_iter()
         .map(|script| {
             let mut name = [0; 120];
-            str_to_c_padded(script.name, &mut name);
+            str_to_c_padded(&script.name, &mut name);
             let last_modified = script.last_modified.timestamp() as u32;
             let entry = EntryC {
                 name,
@@ -146,7 +146,7 @@ where
             };
             write.write_struct::<EntryC>(&entry)?;
 
-            let (size, lines) = write_script(script.lines);
+            let (size, lines) = write_script(&script.lines);
             offset += size;
             Ok(lines)
         })

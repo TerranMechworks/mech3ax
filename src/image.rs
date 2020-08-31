@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 include!(concat!(env!("OUT_DIR"), "/lerp.rs"));
 
-pub fn rgb565to888(src: Vec<u8>) -> Vec<u8> {
+pub fn rgb565to888(src: &[u8]) -> Vec<u8> {
     let src_len = src.len();
     let dst_len = src_len * 3 / 2;
     let mut dst = vec![0; dst_len];
@@ -29,7 +29,7 @@ pub fn rgb565to888(src: Vec<u8>) -> Vec<u8> {
     dst
 }
 
-pub fn rgb565to888a(src: Vec<u8>, alpha: Vec<u8>) -> Vec<u8> {
+pub fn rgb565to888a(src: &[u8], alpha: &[u8]) -> Vec<u8> {
     let src_len = src.len();
     assert_eq!(src_len / 2, alpha.len()); // sanity
     let dst_len = src_len * 2;
@@ -87,7 +87,7 @@ pub fn simple_alpha(src: &[u8]) -> Vec<u8> {
     dst
 }
 
-pub fn pal8to888(indices: Vec<u8>, palette: &[u8]) -> Vec<u8> {
+pub fn pal8to888(indices: &[u8], palette: &[u8]) -> Vec<u8> {
     let src_len = indices.len();
     let dst_len = src_len * 3;
     let mut dst = vec![0; dst_len];
@@ -112,7 +112,7 @@ pub fn pal8to888(indices: Vec<u8>, palette: &[u8]) -> Vec<u8> {
     dst
 }
 
-pub fn pal8to888a(indices: Vec<u8>, palette: &[u8], alpha: Vec<u8>) -> Vec<u8> {
+pub fn pal8to888a(indices: &[u8], palette: &[u8], alpha: &[u8]) -> Vec<u8> {
     let src_len = indices.len();
     assert_eq!(src_len, alpha.len()); // sanity
     let dst_len = src_len * 4;
@@ -139,7 +139,7 @@ pub fn pal8to888a(indices: Vec<u8>, palette: &[u8], alpha: Vec<u8>) -> Vec<u8> {
     dst
 }
 
-pub fn rgb888to565(src: Vec<u8>) -> Vec<u8> {
+pub fn rgb888to565(src: &[u8]) -> Vec<u8> {
     let src_len = src.len();
     let dst_len = src_len * 2 / 3;
     let mut dst = vec![0; dst_len];
@@ -166,7 +166,7 @@ pub fn rgb888to565(src: Vec<u8>) -> Vec<u8> {
     dst
 }
 
-pub fn rgb888ato565(src: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
+pub fn rgb888ato565(src: &[u8]) -> (Vec<u8>, Vec<u8>) {
     let src_len = src.len();
     let dst_len = src_len / 2;
     let alpha_len = src_len / 4;
@@ -198,7 +198,7 @@ pub fn rgb888ato565(src: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     (dst, alpha)
 }
 
-pub fn rgb888topal8(src: Vec<u8>, palette: &[u8]) -> Vec<u8> {
+pub fn rgb888topal8(src: &[u8], palette: &[u8]) -> Vec<u8> {
     let mut color_map = HashMap::new();
     let mut i = 0;
     let mut j = 0u8;
@@ -239,7 +239,7 @@ pub fn rgb888topal8(src: Vec<u8>, palette: &[u8]) -> Vec<u8> {
     dst
 }
 
-pub fn rgb888atopal8(src: Vec<u8>, palette: &[u8]) -> (Vec<u8>, Vec<u8>) {
+pub fn rgb888atopal8(src: &[u8], palette: &[u8]) -> (Vec<u8>, Vec<u8>) {
     let mut color_map = HashMap::new();
     let mut i = 0;
     let mut j = 0u8;

@@ -180,10 +180,10 @@ where
         };
 
         if let Some(alpha) = alpha_data {
-            let image_data = rgb565to888a(image_data, alpha);
+            let image_data = rgb565to888a(&image_data, &alpha);
             DynamicImage::ImageRgba8(RgbaImage::from_raw(width, height, image_data).unwrap())
         } else {
-            let image_data = rgb565to888(image_data);
+            let image_data = rgb565to888(&image_data);
             DynamicImage::ImageRgb8(RgbImage::from_raw(width, height, image_data).unwrap())
         }
     } else {
@@ -206,13 +206,13 @@ where
         let mut palette_data = vec![0u8; palette_count as usize * 2];
         read.read_exact(&mut palette_data)?;
         *offset += palette_count as u32 * 2;
-        let palette_data = rgb565to888(palette_data);
+        let palette_data = rgb565to888(&palette_data);
 
         let image = if let Some(alpha) = alpha_data {
-            let image_data = pal8to888a(index_data, &palette_data, alpha);
+            let image_data = pal8to888a(&index_data, &palette_data, &alpha);
             DynamicImage::ImageRgba8(RgbaImage::from_raw(width, height, image_data).unwrap())
         } else {
-            let image_data = pal8to888(index_data, &palette_data);
+            let image_data = pal8to888(&index_data, &palette_data);
             DynamicImage::ImageRgb8(RgbImage::from_raw(width, height, image_data).unwrap())
         };
 
@@ -351,14 +351,14 @@ fn convert_info_to_c(info: &TextureInfo) -> Info {
     }
 }
 
-fn write_texture<W>(write: &mut W, info: TextureInfo, image: DynamicImage) -> Result<()>
+fn write_texture<W>(write: &mut W, info: &TextureInfo, image: DynamicImage) -> Result<()>
 where
     W: Write,
 {
     let tex_info = convert_info_to_c(&info);
     write.write_struct(&tex_info)?;
 
-    if let Some(palette) = info.palette {
+    if let Some(palette) = &info.palette {
         match image {
             DynamicImage::ImageRgb8(img) => {
                 assert_eq!(
@@ -367,7 +367,7 @@ where
                     "Unexpected image format for {}",
                     info.name
                 );
-                let image_data = rgb888topal8(img.into_raw(), &palette);
+                let image_data = rgb888topal8(&img.into_raw(), &palette);
                 write.write_all(&image_data)?;
                 let palette_data = rgb888to565(palette);
                 write.write_all(&palette_data)?;
@@ -379,7 +379,7 @@ where
                     "Unexpected image format for {}",
                     info.name
                 );
-                let (image_data, alpha_data) = rgb888atopal8(img.into_raw(), &palette);
+                let (image_data, alpha_data) = rgb888atopal8(&img.into_raw(), &palette);
                 write.write_all(&image_data)?;
                 // throw away the simple alpha
                 if info.alpha == TextureAlpha::Full {
@@ -399,7 +399,7 @@ where
                     "Unexpected image format for {}",
                     info.name
                 );
-                let image_data = rgb888to565(img.into_raw());
+                let image_data = rgb888to565(&img.into_raw());
                 write.write_all(&image_data)?;
             }
             DynamicImage::ImageRgba8(img) => {
@@ -409,7 +409,7 @@ where
                     "Unexpected image format for {}",
                     info.name
                 );
-                let (image_data, alpha_data) = rgb888ato565(img.into_raw());
+                let (image_data, alpha_data) = rgb888ato565(&img.into_raw());
                 write.write_all(&image_data)?;
                 // throw away the simple alpha
                 if info.alpha == TextureAlpha::Full {
@@ -425,7 +425,7 @@ where
 
 pub fn write_textures<W, F, E>(
     write: &mut W,
-    texture_infos: Vec<TextureInfo>,
+    texture_infos: &[TextureInfo],
     mut load_texture: F,
 ) -> std::result::Result<(), E>
 where
@@ -446,7 +446,7 @@ where
 
     let mut offset = Header::SIZE + count * Entry::SIZE;
 
-    for info in &texture_infos {
+    for info in texture_infos {
         let mut name = [0; 32];
         str_to_c_padded(&info.name, &mut name);
         let entry = Entry {

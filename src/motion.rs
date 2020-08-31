@@ -97,7 +97,7 @@ where
     })
 }
 
-pub fn write_motion<W>(write: &mut W, motion: Motion) -> Result<()>
+pub fn write_motion<W>(write: &mut W, motion: &Motion) -> Result<()>
 where
     W: Write,
 {
@@ -111,15 +111,15 @@ where
     };
     write.write_struct(&header)?;
 
-    for (part_name, frames) in motion.parts {
+    for (part_name, frames) in &motion.parts {
         write.write_string(part_name)?;
         write.write_u32(12)?; // flag
 
-        for frame in &frames {
+        for frame in frames {
             write.write_struct(&frame.translation)?;
         }
 
-        for frame in &frames {
+        for frame in frames {
             write.write_struct(&frame.rotation)?;
         }
     }

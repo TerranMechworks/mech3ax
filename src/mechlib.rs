@@ -84,18 +84,18 @@ where
     Ok(materials)
 }
 
-pub fn write_materials<W>(write: &mut W, materials: Vec<Material>) -> Result<()>
+pub fn write_materials<W>(write: &mut W, materials: &[Material]) -> Result<()>
 where
     W: Write,
 {
     write.write_u32(materials.len() as u32)?;
     for material in materials {
-        write_material(write, &material)?;
+        write_material(write, material)?;
         if let Material::Textured(textured) = material {
             if textured.cycle.is_some() {
                 panic!("mechlib materials cannot have cycled textures");
             }
-            write.write_string(textured.texture)?;
+            write.write_string(&textured.texture)?;
         }
     }
     Ok(())

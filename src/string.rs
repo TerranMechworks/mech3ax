@@ -1,5 +1,5 @@
-pub fn bytes_to_c(bytes: Vec<u8>, fill: &mut [u8]) {
-    let mut buf = bytes.clone();
+pub fn bytes_to_c(bytes: &[u8], fill: &mut [u8]) {
+    let mut buf = Vec::from(bytes);
     buf.resize(fill.len(), 0);
     fill.copy_from_slice(&buf);
 }

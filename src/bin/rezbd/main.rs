@@ -60,7 +60,7 @@ fn sound(opts: ZipOpts) -> Result<()> {
     let mut zip = ZipArchive::new(input)?;
     let entries = archive_manifest_from_zip(&mut zip)?;
 
-    write_archive(&mut output, entries, |name| {
+    write_archive(&mut output, &entries, |name| {
         let mut file = zip.by_name(&name)?;
         let mut buf = Vec::new();
         file.read_to_end(&mut buf)?;
@@ -76,7 +76,7 @@ fn interp(opts: JsonOpts) -> Result<()> {
     input.read_to_end(&mut buf)?;
     let scripts = serde_json::from_slice::<Vec<Script>>(&buf)?;
 
-    write_interp(&mut output, scripts)?;
+    write_interp(&mut output, &scripts)?;
     Ok(())
 }
 
@@ -87,7 +87,7 @@ fn reader(opts: ZipOpts) -> Result<()> {
     let mut zip = ZipArchive::new(input)?;
     let entries = archive_manifest_from_zip(&mut zip)?;
 
-    write_archive(&mut output, entries, |name| {
+    write_archive(&mut output, &entries, |name| {
         let name = name.clone().replace(".zrd", ".json");
 
         let mut file = zip.by_name(&name)?;
@@ -97,7 +97,7 @@ fn reader(opts: ZipOpts) -> Result<()> {
 
         let mut buf = Vec::new();
         let mut cursor = Cursor::new(&mut buf);
-        write_reader(&mut cursor, value)?;
+        write_reader(&mut cursor, &value)?;
         Ok(buf)
     })
 }
@@ -120,7 +120,7 @@ fn textures(opts: ZipOpts) -> Result<()> {
     let mut zip = ZipArchive::new(input)?;
     let manifest = texture_manifest_from_zip(&mut zip)?;
 
-    let result: Result<()> = write_textures(&mut output, manifest, |name| {
+    let result: Result<()> = write_textures(&mut output, &manifest, |name| {
         let name = format!("{}.png", name);
         let mut file = zip.by_name(&name)?;
         let mut buf = Vec::new();
@@ -141,7 +141,7 @@ fn motion(opts: ZipOpts) -> Result<()> {
     let mut zip = ZipArchive::new(input)?;
     let entries = archive_manifest_from_zip(&mut zip)?;
 
-    write_archive(&mut output, entries, |name| {
+    write_archive(&mut output, &entries, |name| {
         let name = format!("{}.json", name);
 
         let mut file = zip.by_name(&name)?;
@@ -151,7 +151,7 @@ fn motion(opts: ZipOpts) -> Result<()> {
 
         let mut buf = Vec::new();
         let mut cursor = Cursor::new(&mut buf);
-        write_motion(&mut cursor, motion)?;
+        write_motion(&mut cursor, &motion)?;
         Ok(buf)
     })
 }
@@ -163,7 +163,7 @@ fn mechlib(opts: ZipOpts) -> Result<()> {
     let mut zip = ZipArchive::new(input)?;
     let entries = archive_manifest_from_zip(&mut zip)?;
 
-    write_archive(&mut output, entries, |name| match name {
+    write_archive(&mut output, &entries, |name| match name {
         "format" => {
             let mut buf = Vec::new();
             write_format(&mut buf)?;
@@ -178,11 +178,11 @@ fn mechlib(opts: ZipOpts) -> Result<()> {
             let mut file = zip.by_name("materials.json")?;
             let mut buf = Vec::new();
             file.read_to_end(&mut buf)?;
-            let motion = serde_json::from_slice::<Vec<Material>>(&buf)?;
+            let materials = serde_json::from_slice::<Vec<Material>>(&buf)?;
 
             let mut buf = Vec::new();
             let mut cursor = Cursor::new(&mut buf);
-            write_materials(&mut cursor, motion)?;
+            write_materials(&mut cursor, &materials)?;
             Ok(buf)
         }
         other => {
