@@ -53,7 +53,6 @@ where
                 *offset += CycleInfoC::SIZE;
 
                 let textures = (0..info.count1)
-                    .into_iter()
                     .map(|_| {
                         let texture_index = read.read_u32()? as usize;
                         assert_that!("texture index", texture_index < textures.len(), *offset)?;
@@ -107,7 +106,6 @@ where
 
     // read materials without cycle data
     let materials = (0..count)
-        .into_iter()
         .map(|index| {
             let material = read_material(read, offset)?;
 

@@ -2,8 +2,10 @@ use std::env;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::Path;
+use vergen::{generate_cargo_keys, ConstantsFlags};
 
-fn main() {
+#[allow(clippy::identity_op)]
+fn lerp() {
     let path = Path::new(&env::var("OUT_DIR").unwrap()).join("lerp.rs");
     let mut file = BufWriter::new(File::create(&path).unwrap());
 
@@ -36,4 +38,9 @@ fn main() {
         writeln!(&mut file, "    {},", color).unwrap();
     }
     writeln!(&mut file, "];").unwrap();
+}
+
+fn main() {
+    generate_cargo_keys(ConstantsFlags::all()).unwrap();
+    lerp();
 }

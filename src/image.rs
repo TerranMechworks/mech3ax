@@ -204,9 +204,7 @@ pub fn rgb888topal8(src: &[u8], palette: &[u8]) -> Vec<u8> {
     let mut j = 0u8;
     loop {
         let color = (palette[i + 0], palette[i + 1], palette[i + 2]);
-        if !color_map.contains_key(&color) {
-            color_map.insert(color, j);
-        }
+        color_map.entry(color).or_insert(j);
 
         i += 3;
 
@@ -245,9 +243,7 @@ pub fn rgb888atopal8(src: &[u8], palette: &[u8]) -> (Vec<u8>, Vec<u8>) {
     let mut j = 0u8;
     loop {
         let color = (palette[i + 0], palette[i + 1], palette[i + 2]);
-        if !color_map.contains_key(&color) {
-            color_map.insert(color, j);
-        }
+        color_map.entry(color).or_insert(j);
 
         i += 3;
 

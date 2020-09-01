@@ -170,7 +170,7 @@ where
             let matrix = tr
                 .matrix
                 .as_ref()
-                .map(|matrix| matrix.clone())
+                .cloned()
                 .unwrap_or_else(|| euler_to_matrix(&tr.rotation));
             (32, tr.rotation.clone(), tr.translation.clone(), matrix)
         })

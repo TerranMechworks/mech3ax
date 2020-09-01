@@ -51,7 +51,6 @@ where
     let frame_count = header.frame_count + 1;
     let mut offset = Header::SIZE;
     let parts = (0..header.part_count)
-        .into_iter()
         .map(|_| {
             let part_name = read.read_string(&mut offset)?;
             let flag = read.read_u32()?;
@@ -60,7 +59,6 @@ where
             offset += 4;
 
             let translations = (0..frame_count)
-                .into_iter()
                 .map(|_| {
                     let value: Vec3 = read.read_struct()?;
                     Ok(value)
@@ -69,7 +67,6 @@ where
             offset += Vec3::SIZE * frame_count;
 
             let rotations = (0..frame_count)
-                .into_iter()
                 .map(|_| {
                     let value: Vec4 = read.read_struct()?;
                     Ok(value)

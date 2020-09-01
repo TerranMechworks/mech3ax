@@ -38,7 +38,6 @@ where
                 Ok(Value::Null)
             } else {
                 let value = (0..count)
-                    .into_iter()
                     .map(|_| read_value(read, offset))
                     .collect::<Result<Vec<_>>>()?;
                 Ok(Value::Array(value))
@@ -49,7 +48,7 @@ where
                 "Expected valid value type, but was {} (at {})",
                 value_type, *offset
             );
-            Err(AssertionError(msg))?
+            Err(AssertionError(msg).into())
         }
     }
 }
@@ -82,7 +81,7 @@ where
                 write.write_u32(2)?;
                 write.write_f32(float as f32)?;
             } else {
-                Err(invalid_number(num))?
+                return Err(invalid_number(num).into());
             }
         }
         Value::String(string) => {
@@ -98,13 +97,13 @@ where
             let count = list.len() as u32 + 1;
             write.write_u32(count)?;
 
-            for item in list.into_iter() {
+            for item in list.iter() {
                 write_value(write, item)?;
             }
         }
         _ => {
             let msg = format!("Expected valid value type, but was {}", value);
-            Err(AssertionError(msg))?
+            return Err(AssertionError(msg).into());
         }
     };
     Ok(())

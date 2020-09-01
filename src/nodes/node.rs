@@ -46,11 +46,13 @@ fn assert_node(node: NodeC, offset: u32) -> Result<(NodeType, NodeVariants)> {
     // invariants for every node type
 
     let name = assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name))?;
-    let flags = NodeBitFlags::from_bits(node.flags).ok_or(AssertionError(format!(
-        "Expected valid flag, but was {:08X} (at {})",
-        node.flags,
-        offset + 36
-    )))?;
+    let flags = NodeBitFlags::from_bits(node.flags).ok_or_else(|| {
+        AssertionError(format!(
+            "Expected valid flag, but was {:08X} (at {})",
+            node.flags,
+            offset + 36
+        ))
+    })?;
     let node_type = match node.node_type {
         value if value == NodeType::EMPTY as u32 => NodeType::EMPTY,
         value if value == NodeType::CAMERA as u32 => NodeType::CAMERA,
@@ -66,7 +68,7 @@ fn assert_node(node: NodeC, offset: u32) -> Result<(NodeType, NodeVariants)> {
                 value,
                 offset + 52
             );
-            return Err(AssertionError(msg))?;
+            return Err(AssertionError(msg).into());
         }
     };
 

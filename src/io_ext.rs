@@ -60,6 +60,7 @@ where
         Ok(i16::from_le_bytes(buf))
     }
 
+    #[allow(clippy::uninit_assumed_init)]
     fn read_struct<S>(&mut self) -> Result<S> {
         let size = std::mem::size_of::<S>();
         unsafe {
@@ -79,7 +80,7 @@ where
         let mut buf = [0; 1];
         match self.read(&mut buf)? {
             0 => Ok(()),
-            _ => Err(AssertionError("Expected all data to be read".to_owned()))?,
+            _ => Err(AssertionError("Expected all data to be read".to_owned()).into()),
         }
     }
 
@@ -93,7 +94,7 @@ where
         self.read_exact(&mut buf)?;
         let value = assert_utf8("value", *offset, || str_from_c_sized(&buf))?;
         *offset += T::from_usize(count);
-        Ok(value.to_owned())
+        Ok(value)
     }
 }
 

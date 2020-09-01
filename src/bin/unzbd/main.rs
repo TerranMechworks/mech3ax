@@ -15,7 +15,15 @@ use zip::write::{FileOptions, ZipWriter};
 mod errors;
 use errors::Result;
 
+const VERSION: &str = concat!(
+    env!("VERGEN_COMMIT_DATE"),
+    " (",
+    env!("VERGEN_SHA_SHORT"),
+    ")"
+);
+
 #[derive(Clap)]
+#[clap(version = VERSION)]
 struct Opts {
     #[clap(subcommand)]
     subcmd: SubCommand,
@@ -23,30 +31,45 @@ struct Opts {
 
 #[derive(Clap)]
 struct ZipOpts {
+    #[clap(about = "The source ZBD path")]
     input: String,
+    #[clap(about = "The destination ZIP path (will be overwritten)")]
     output: String,
 }
 
 #[derive(Clap)]
 struct JsonOpts {
+    #[clap(about = "The source ZBD path")]
     input: String,
+    #[clap(about = "The destination JSON path (will be overwritten)")]
     output: String,
 }
 
 #[derive(Clap)]
 enum SubCommand {
+    #[clap(about = "Prints license information")]
     License,
-    Sound(ZipOpts),
+    #[clap(about = "Extract 'sounds*.zbd' archives to ZIP")]
+    Sounds(ZipOpts),
+    #[clap(about = "Extract 'interp.zbd' files to JSON")]
     Interp(JsonOpts),
+    #[clap(about = "Extract 'reader*.zbd' archives to ZIP")]
     Reader(ZipOpts),
+    #[clap(about = "Extract 'Mech3Msg.dll' files to JSON")]
     Messages(JsonOpts),
+    #[clap(
+        about = "Extract 'rimage.zbd', 'rmechtex*.zbd', 'rtexture*.zbd', 'texture*.zbd' archives to ZIP"
+    )]
     Textures(ZipOpts),
+    #[clap(about = "Extract 'motion.zbd' archives to ZIP")]
     Motion(ZipOpts),
+    #[clap(about = "Extract 'mechlib.zbd' archives to ZIP")]
     Mechlib(ZipOpts),
+    #[clap(about = "Extract 'gamez.zbd' archives to ZIP")]
     Gamez(ZipOpts),
 }
 
-fn sound(opts: ZipOpts) -> Result<()> {
+fn sounds(opts: ZipOpts) -> Result<()> {
     let mut input = BufReader::new(File::open(opts.input)?);
     let output = BufWriter::new(File::create(opts.output)?);
 
@@ -85,7 +108,7 @@ fn reader(opts: ZipOpts) -> Result<()> {
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
     let manifest: Result<_> = read_archive(&mut input, |name, data| {
-        let name = name.clone().replace(".zrd", ".json");
+        let name = name.replace(".zrd", ".json");
         let root = read_reader(&mut Cursor::new(data))?;
         let data = serde_json::to_vec_pretty(&root)?;
 
@@ -181,7 +204,7 @@ fn mechlib(opts: ZipOpts) -> Result<()> {
                 Ok(())
             }
             other => {
-                let name = other.clone().replace(".flt", ".json");
+                let name = other.replace(".flt", ".json");
                 let root = read_model(&mut Cursor::new(data))?;
                 let data = serde_json::to_vec_pretty(&root)?;
 
@@ -231,7 +254,7 @@ fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
 
     match opts.subcmd {
-        SubCommand::Sound(opts) => sound(opts),
+        SubCommand::Sounds(opts) => sounds(opts),
         SubCommand::Interp(opts) => interp(opts),
         SubCommand::Reader(opts) => reader(opts),
         SubCommand::Messages(opts) => messages(opts),
@@ -245,7 +268,7 @@ fn main() -> Result<()> {
 
 fn license() -> Result<()> {
     print!(
-        r#"
+        r#"\
 mech3rs extracts assets from the MechWarrior 3 game.
 Copyright (C) 2015-2020  Toby Fleming
 
@@ -261,7 +284,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    "#
+"#
     );
     Ok(())
 }

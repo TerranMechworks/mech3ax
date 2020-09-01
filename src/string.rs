@@ -4,7 +4,7 @@ pub fn bytes_to_c(bytes: &[u8], fill: &mut [u8]) {
     fill.copy_from_slice(&buf);
 }
 
-const DEFAULT_NODE_NAME: &'static str = "Default_node_name";
+const DEFAULT_NODE_NAME: &str = "Default_node_name";
 
 pub fn str_to_c_padded<S>(str: S, fill: &mut [u8])
 where
@@ -137,7 +137,7 @@ pub fn str_from_c_suffix(buf: &[u8]) -> Result<String, ConversionError> {
                 Err(e) => Err(ConversionError::Utf8(e)),
             }
         }
-        _ => return Err(ConversionError::Unterminated),
+        _ => Err(ConversionError::Unterminated),
     }
 }
 

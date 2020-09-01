@@ -1,3 +1,5 @@
+#![warn(clippy::all, clippy::cargo)]
+#![allow(clippy::identity_op, clippy::multiple_crate_versions)]
 pub mod archive;
 mod assert;
 pub mod gamez;

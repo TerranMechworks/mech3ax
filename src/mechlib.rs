@@ -60,7 +60,6 @@ where
     let count = read.read_u32()?;
     let mut offset = 0;
     let materials = (0..count)
-        .into_iter()
         .map(|_| {
             let prev = offset;
             let material = read_material(read, &mut offset)?;
@@ -121,7 +120,6 @@ where
 
             object3d.children = if wrapped.children_count > 0 {
                 let children = (0..wrapped.children_count)
-                    .into_iter()
                     .map(|_| read_node(read, offset, meshes))
                     .collect::<Result<Vec<_>>>()?;
                 Some(children)

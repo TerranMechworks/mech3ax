@@ -25,6 +25,7 @@ pub struct Entry {
     pub garbage: Vec<u8>,
 }
 
+#[allow(clippy::type_complexity)]
 fn read_table<R>(read: &mut R) -> Result<Vec<(String, u64, u64, Vec<u8>)>>
 where
     R: Read + Seek,
@@ -71,10 +72,7 @@ where
             let mut buffer = vec![0; length as usize];
             read.read_exact(&mut buffer)?;
             save_file(&name, buffer)?;
-            Ok(Entry {
-                name: name.to_owned(),
-                garbage,
-            })
+            Ok(Entry { name, garbage })
         })
         .collect::<std::result::Result<Vec<_>, E>>()
 }
@@ -107,7 +105,7 @@ where
     let count = entries.len() as u32;
 
     let transformed = entries
-        .into_iter()
+        .iter()
         .map(|entry| {
             let data = load_file(&entry.name)?;
             write.write_all(&data)?;

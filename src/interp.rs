@@ -73,7 +73,6 @@ where
     let mut offset = 12;
 
     let script_info = (0..count)
-        .into_iter()
         .map(|_| {
             let entry: EntryC = read.read_struct()?;
             let name = assert_utf8("name", offset, || str_from_c_padded(&entry.name))?;
@@ -103,7 +102,7 @@ where
 fn write_script(lines: &[String]) -> (u32, Vec<(u32, Vec<u8>)>) {
     let mut size = 0;
     let transformed = lines
-        .into_iter()
+        .iter()
         .map(|line| {
             let mut buf = Vec::from(line.as_bytes());
             buf.push(32); // add "zero" terminator
@@ -134,7 +133,7 @@ where
 
     let mut offset = 12 + count * EntryC::SIZE;
     let transformed = scripts
-        .into_iter()
+        .iter()
         .map(|script| {
             let mut name = [0; 120];
             str_to_c_padded(&script.name, &mut name);

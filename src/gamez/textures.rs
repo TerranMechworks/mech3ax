@@ -21,7 +21,6 @@ where
     R: Read,
 {
     (0..count)
-        .into_iter()
         .map(|_| {
             let info: TextureInfoC = read.read_struct()?;
             // not sure what this is. a pointer to the previous texture in the global

@@ -24,18 +24,17 @@ where
 
     let mut messages = read_message_table(entry.bytes()?)?;
 
-    let data_header = pe
+    let data_section = pe
         .section_headers()
-        .into_iter()
-        .find(|&header| header.Name.to_string() == ".data")
-        .ok_or(AssertionError(
-            "Expected DLL to contain a data directory".to_owned(),
-        ))?;
+        // TODO: replace with `.by_name()` in next version (https://github.com/CasualX/pelite/pull/237)
+        .iter()
+        .find(|&section| &section.Name == b".data\0\0\0")
+        .ok_or_else(|| AssertionError("Expected DLL to contain a data directory".to_owned()))?;
 
-    let data = pe.get_section_bytes(data_header)?;
+    let data = pe.get_section_bytes(data_section)?;
 
-    let offset = data_header.VirtualAddress + DLL_BASE_ADDRESS;
-    let message_ids = read_zlocids(data, offset, offset + data_header.VirtualSize)?;
+    let offset = data_section.VirtualAddress + DLL_BASE_ADDRESS;
+    let message_ids = read_zlocids(data, offset, offset + data_section.VirtualSize)?;
 
     let merged = message_ids
         .into_iter()
@@ -47,16 +46,14 @@ where
 
 fn find_message_table(resources: Resources) -> Result<DataEntry> {
     // English, German, French - the only locales I know MechWarrior 3 was released to
-    for locale_id in vec!["#1033", "#1031", "#1036"] {
+    for locale_id in &["#1033", "#1031", "#1036"] {
         let path = format!("/Message Tables/#1/{}", locale_id.to_owned());
         if let Ok(entry) = resources.find_data(&path) {
             return Ok(entry);
         }
     }
 
-    Err(AssertionError(
-        "Expected DLL to contain a message table".to_owned(),
-    ))?
+    Err(AssertionError("Expected DLL to contain a message table".to_owned()).into())
 }
 
 fn read_message_table(data: &[u8]) -> Result<HashMap<u32, String>> {
@@ -156,7 +153,7 @@ fn read_zlocids(data: &[u8], mem_start: u32, mem_end: u32) -> Result<Vec<(u32, S
                     str_from_c_sized(&data[relative_start..relative_end])
                 })?;
 
-            Ok((entry_id, message_name.to_owned()))
+            Ok((entry_id, message_name))
         })
         .collect::<Result<Vec<_>>>()
 }

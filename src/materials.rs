@@ -89,11 +89,13 @@ where
     R: Read,
 {
     let material: MaterialC = read.read_struct()?;
-    let bitflags = MaterialFlags::from_bits(material.flags).ok_or(AssertionError(format!(
-        "Expected valid flag, but was {:X} (at {})",
-        material.flags,
-        *offset + 1
-    )))?;
+    let bitflags = MaterialFlags::from_bits(material.flags).ok_or_else(|| {
+        AssertionError(format!(
+            "Expected valid flag, but was {:X} (at {})",
+            material.flags,
+            *offset + 1
+        ))
+    })?;
 
     let flag_unknown = bitflags.contains(MaterialFlags::UNKNOWN);
     let flag_cycled = bitflags.contains(MaterialFlags::CYCLED);

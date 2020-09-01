@@ -88,10 +88,12 @@ pub struct TextureInfo {
 }
 
 fn convert_info_from_c(name: String, tex_info: Info, offset: u32) -> Result<TextureInfo> {
-    let bitflags = TexFlags::from_bits(tex_info.flags).ok_or(AssertionError(format!(
-        "Expected valid flag, but was {:X} (at {})",
-        tex_info.flags, offset
-    )))?;
+    let bitflags = TexFlags::from_bits(tex_info.flags).ok_or_else(|| {
+        AssertionError(format!(
+            "Expected valid flag, but was {:X} (at {})",
+            tex_info.flags, offset
+        ))
+    })?;
     // one byte per pixel support isn't implemented
     let bytes_per_pixel2 = bitflags.contains(TexFlags::BYTES_PER_PIXEL2);
     assert_that!("2 bytes per pixel", bytes_per_pixel2 == true, offset)?;
@@ -120,11 +122,14 @@ fn convert_info_from_c(name: String, tex_info: Info, offset: u32) -> Result<Text
         1 => TextureStretch::Vertical,
         2 => TextureStretch::Horizontal,
         3 => TextureStretch::Both,
-        v => Err(AssertionError(format!(
-            "Expected valid texture stretch, but was {} (at {})",
-            v,
-            offset + 16
-        )))?,
+        v => {
+            let msg = format!(
+                "Expected valid texture stretch, but was {} (at {})",
+                v,
+                offset + 16
+            );
+            return Err(AssertionError(msg).into());
+        }
     };
 
     Ok(TextureInfo {
@@ -224,7 +229,7 @@ where
 }
 
 fn assert_upcast<T>(result: std::result::Result<T, AssertionError>) -> Result<T> {
-    result.map_err(|e| Error::Assert(e))
+    result.map_err(Error::Assert)
 }
 
 pub fn read_textures<R, F, E>(
@@ -251,7 +256,6 @@ where
 
     let mut offset = Header::SIZE;
     let tex_table = (0..header.texture_count)
-        .into_iter()
         .map(|_| {
             let entry: Entry = read.read_struct()?;
             assert_that!(

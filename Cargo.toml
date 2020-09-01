@@ -3,10 +3,17 @@ name = "mech3rs"
 version = "0.1.0"
 authors = ["Toby Fleming <tobywf@users.noreply.github.com>"]
 edition = "2018"
+description = "mech3rs converts assets from the 1998 MechWarrior 3 game to modern formats and back"
+readme = "README.md"
+license-file = "LICENSE"
+repository = "https://github.com/tobywf/mech3rs"
+keywords = ["cli", "MechWarrior", "reverse engineering"]
+categories = ["game-development", "parser-implementations"]
+publish = false
 
+autoexamples = false
+autobenches = false
 build = "build.rs"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -22,6 +29,9 @@ bitflags = "1.0"
 
 [dev-dependencies]
 matches = "0.1.8"
+
+[build-dependencies]
+vergen = "3.1.0"
 
 [lib]
 doctest = false
@@ -41,3 +51,5 @@ opt-level = 3
 
 [profile.release]
 opt-level = 3
+lto = true
+codegen-units = 1

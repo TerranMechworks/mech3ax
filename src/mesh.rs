@@ -238,7 +238,6 @@ where
 {
     *offset += Vec3::SIZE * count;
     (0..count)
-        .into_iter()
         .map(|_| {
             let result: Vec3 = read.read_struct()?;
             Ok(result)
@@ -251,7 +250,6 @@ where
     R: Read,
 {
     let lights = (0..count)
-        .into_iter()
         .map(|_| {
             let result: LightC = read.read_struct()?;
             Ok(result)
@@ -331,7 +329,6 @@ where
 {
     *offset += 4 * count;
     (0..count)
-        .into_iter()
         .map(|_| {
             let result = read.read_u32()?;
             Ok(result)
@@ -345,7 +342,6 @@ where
 {
     *offset += Vec2::SIZE * count;
     (0..count)
-        .into_iter()
         .map(|_| {
             let mut result: Vec2 = read.read_struct()?;
             result.1 = 1.0 - result.1;
@@ -359,7 +355,6 @@ where
     R: Read,
 {
     (0..count)
-        .into_iter()
         .map(|_| {
             let poly: PolygonC = read.read_struct()?;
             let result = assert_polygon(poly, *offset)?;
