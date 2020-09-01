@@ -5,7 +5,7 @@ use std::io::Error as IOError;
 use zip::result::ZipError;
 
 #[derive(Debug)]
-pub enum Error {
+pub(crate) enum Error {
     IO(IOError),
     Zip(ZipError),
     Serde(SerdeError),
@@ -43,4 +43,4 @@ impl From<ImageError> for Error {
     }
 }
 
-pub type Result<T> = ::std::result::Result<T, Error>;
+pub(crate) type Result<T> = ::std::result::Result<T, Error>;
