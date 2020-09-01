@@ -34,6 +34,20 @@ where
     fill.copy_from_slice(&buf);
 }
 
+pub fn str_to_c_suffix<S>(str: S, fill: &mut [u8])
+where
+    S: Into<String>,
+{
+    let mut buf = str.into().into_bytes();
+    buf.resize(fill.len(), 0);
+    // does not have to be zero-terminated (if a '.' is in the filename, but easiest
+    // to gloss over that)
+    if let Some(pos) = buf.iter().position(|&c| c == 46) {
+        buf[pos] = 0;
+    }
+    fill.copy_from_slice(&buf);
+}
+
 #[derive(Debug)]
 pub enum ConversionError {
     Utf8(std::str::Utf8Error),
@@ -85,6 +99,45 @@ pub fn str_from_c_node_name(buf: &[u8]) -> Result<String, ConversionError> {
         }
     } else {
         Err(ConversionError::Unterminated)
+    }
+}
+
+pub fn str_from_c_suffix(buf: &[u8]) -> Result<String, ConversionError> {
+    let len = buf.len();
+    let mut iter = buf.iter();
+    let pos1 = iter.position(|&c| c == 0);
+    let pos2 = iter.position(|&c| c == 0);
+
+    let mut copy = Vec::from(buf);
+    match (pos1, pos2) {
+        (Some(zero1), Some(zero2)) => {
+            let zero = if zero2 == 0 {
+                // no suffix
+                zero1
+            } else {
+                // restore suffix by replacing zero with '.'
+                copy[zero1] = 46;
+                zero1 + zero2 + 1
+            };
+            if buf[zero..len].iter().any(|&c| c != 0) {
+                Err(ConversionError::PaddingError("zeroes".to_owned()))
+            } else {
+                match std::str::from_utf8(&copy[0..zero]) {
+                    Ok(str) => Ok(str.to_owned()),
+                    Err(e) => Err(ConversionError::Utf8(e)),
+                }
+            }
+        }
+        (Some(zero1), None) => {
+            // restore suffix by replacing zero with '.'
+            copy[zero1] = 46;
+            // no padding/cut off
+            match std::str::from_utf8(&copy) {
+                Ok(str) => Ok(str.to_owned()),
+                Err(e) => Err(ConversionError::Utf8(e)),
+            }
+        }
+        _ => return Err(ConversionError::Unterminated),
     }
 }
 
@@ -155,6 +208,50 @@ mod tests {
     #[test]
     fn str_from_c_node_name_with_zeros() {
         let err = str_from_c_node_name("spam eggs\0\0\0\0".to_owned().as_bytes()).unwrap_err();
+        assert_matches!(err, ConversionError::PaddingError(_));
+    }
+
+    #[test]
+    fn str_from_c_suffix_with_suffix() {
+        let result = str_from_c_suffix("foo bar\0tif\0".to_owned().as_bytes()).unwrap();
+        assert_eq!(result, "foo bar.tif");
+    }
+
+    #[test]
+    fn str_to_c_suffix_with_suffix() {
+        let mut buf = [0; 12];
+        str_to_c_suffix("foo bar.tif", &mut buf);
+        assert_eq!(buf, "foo bar\0tif\0".to_owned().as_bytes());
+    }
+
+    #[test]
+    fn str_from_c_suffix_no_suffix() {
+        let result = str_from_c_suffix("foo bar\0\0".to_owned().as_bytes()).unwrap();
+        assert_eq!(result, "foo bar");
+    }
+
+    #[test]
+    fn str_to_c_suffix_no_suffix() {
+        let mut buf = [0; 9];
+        str_to_c_suffix("foo bar", &mut buf);
+        assert_eq!(buf, "foo bar\0\0".to_owned().as_bytes());
+    }
+
+    #[test]
+    fn str_from_c_suffix_completely_unterminated() {
+        let err = str_from_c_suffix("foo bar".to_owned().as_bytes()).unwrap_err();
+        assert_matches!(err, ConversionError::Unterminated);
+    }
+
+    #[test]
+    fn str_from_c_suffix_with_suffix_unterminated() {
+        let result = str_from_c_suffix("foo bar\0tif".to_owned().as_bytes()).unwrap();
+        assert_eq!(result, "foo bar.tif");
+    }
+
+    #[test]
+    fn str_from_c_suffix_with_suffix_with_non_zeros() {
+        let err = str_from_c_suffix("foo bar\0tif\0ham\0".to_owned().as_bytes()).unwrap_err();
         assert_matches!(err, ConversionError::PaddingError(_));
     }
 }

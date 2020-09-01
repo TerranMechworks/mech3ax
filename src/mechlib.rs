@@ -74,6 +74,7 @@ where
                         texture,
                         pointer: mat.pointer,
                         cycle: None,
+                        unk32: mat.unk32,
                     })
                 }
                 RawMaterial::Colored(mat) => Material::Colored(mat),

@@ -21,6 +21,7 @@ struct MaterialC {
     cycle_ptr: u32,
 }
 static_assert_size!(MaterialC, 40);
+pub const MATERIAL_C_SIZE: u32 = MaterialC::SIZE;
 
 fn pointer_zero(pointer: &u32) -> bool {
     *pointer == 0
@@ -28,7 +29,12 @@ fn pointer_zero(pointer: &u32) -> bool {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CycleData {
-    info_ptr: u32,
+    pub textures: Vec<String>,
+    pub unk00: bool,
+    pub unk04: u32,
+    pub unk12: f32,
+    pub info_ptr: u32,
+    pub data_ptr: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -40,6 +46,7 @@ pub struct TexturedMaterial {
     // the Mechlib data doesn't have cycled textures
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub cycle: Option<CycleData>,
+    pub unk32: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -58,6 +65,7 @@ pub enum Material {
 pub struct RawTexturedMaterial {
     pub pointer: u32,
     pub cycle_ptr: Option<u32>,
+    pub unk32: u32,
 }
 
 #[derive(Debug)]
@@ -99,7 +107,6 @@ where
     assert_that!("field 20", material.unk20 == 0.0, *offset + 20)?;
     assert_that!("field 24", material.unk24 == 0.5, *offset + 24)?;
     assert_that!("field 28", material.unk28 == 0.5, *offset + 28)?;
-    assert_that!("field 32", material.unk32 == 0, *offset + 32)?;
 
     let material = if bitflags.contains(MaterialFlags::TEXTURED) {
         assert_that!("field 00", material.unk00 == 0xFF, *offset + 0)?;
@@ -119,12 +126,13 @@ where
         RawMaterial::Textured(RawTexturedMaterial {
             pointer: material.pointer,
             cycle_ptr,
+            unk32: material.unk32,
         })
     } else {
-        //assert_that!("field 00", material.unk00 == 0x00, *offset + 0)?;
+        assert_that!("flag cycled", flag_cycled == false, *offset + 1)?;
         assert_that!("rgb", material.rgb == 0x0000, *offset + 2)?;
         assert_that!("pointer", material.pointer == 0, *offset + 16)?;
-        assert_that!("flag cycled", flag_cycled == false, *offset + 1)?;
+        assert_that!("field 32", material.unk32 == 0, *offset + 32)?;
         assert_that!("cycle ptr", material.cycle_ptr == 0, *offset + 36)?;
 
         *offset += MaterialC::SIZE;
@@ -160,7 +168,7 @@ where
                 unk20: 0.0,
                 unk24: 0.5,
                 unk28: 0.5,
-                unk32: 0,
+                unk32: material.unk32,
                 cycle_ptr,
             }
         }
@@ -184,5 +192,85 @@ where
         }
     };
     write.write_struct(&mat_c)?;
+    Ok(())
+}
+
+pub fn read_materials_zero<R>(read: &mut R, offset: &mut u32, start: i16, end: i16) -> Result<()>
+where
+    R: Read,
+{
+    for index in start..end {
+        let material: MaterialC = read.read_struct()?;
+        assert_that!("field 00", material.unk00 == 0, *offset + 0)?;
+        assert_that!(
+            "flag",
+            material.flags == MaterialFlags::FREE.bits(),
+            *offset + 1
+        )?;
+        assert_that!("rgb", material.rgb == 0x0000, *offset + 2)?;
+        assert_that!("color r", material.red == 0.0, *offset + 4)?;
+        assert_that!("color g", material.green == 0.0, *offset + 8)?;
+        assert_that!("color b", material.blue == 0.0, *offset + 12)?;
+        assert_that!("pointer", material.pointer == 0, *offset + 16)?;
+        assert_that!("field 20", material.unk20 == 0.0, *offset + 20)?;
+        assert_that!("field 24", material.unk24 == 0.0, *offset + 24)?;
+        assert_that!("field 28", material.unk28 == 0.0, *offset + 28)?;
+        assert_that!("field 32", material.unk32 == 0, *offset + 32)?;
+        assert_that!("cycle ptr", material.cycle_ptr == 0, *offset + 36)?;
+        *offset += MaterialC::SIZE;
+
+        let mut expected_index1 = index - 1;
+        if expected_index1 < start {
+            expected_index1 = -1;
+        }
+        let actual_index1 = read.read_i16()?;
+        assert_that!("mat index 1", actual_index1 == expected_index1, *offset)?;
+        *offset += 2;
+
+        let mut expected_index2 = index + 1;
+        if expected_index2 >= end {
+            expected_index2 = -1;
+        }
+        let actual_index2 = read.read_i16()?;
+        assert_that!("mat index 2", actual_index2 == expected_index2, *offset)?;
+        *offset += 2;
+    }
+    Ok(())
+}
+
+pub fn write_materials_zero<W>(write: &mut W, start: i16, end: i16) -> Result<()>
+where
+    W: Write,
+{
+    let material = MaterialC {
+        unk00: 0,
+        flags: MaterialFlags::FREE.bits(),
+        rgb: 0x0000,
+        red: 0.0,
+        green: 0.0,
+        blue: 0.0,
+        pointer: 0,
+        unk20: 0.0,
+        unk24: 0.0,
+        unk28: 0.0,
+        unk32: 0,
+        cycle_ptr: 0,
+    };
+
+    for index in start..end {
+        write.write_struct(&material)?;
+
+        let mut index1 = index - 1;
+        if index1 < start {
+            index1 = -1;
+        }
+        write.write_i16(index1)?;
+
+        let mut index2 = index + 1;
+        if index2 >= end {
+            index2 = -1;
+        }
+        write.write_i16(index2)?;
+    }
     Ok(())
 }

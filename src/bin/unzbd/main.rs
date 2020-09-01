@@ -1,6 +1,7 @@
 use clap::Clap;
 use image::ImageOutputFormat;
 use mech3rs::archive::read_archive;
+use mech3rs::gamez::read_gamez;
 use mech3rs::interp::read_interp;
 use mech3rs::mechlib::{read_format, read_materials, read_model, read_version};
 use mech3rs::messages::read_messages;
@@ -42,6 +43,7 @@ enum SubCommand {
     Textures(ZipOpts),
     Motion(ZipOpts),
     Mechlib(ZipOpts),
+    Gamez(ZipOpts),
 }
 
 fn sound(opts: ZipOpts) -> Result<()> {
@@ -200,6 +202,31 @@ fn mechlib(opts: ZipOpts) -> Result<()> {
     Ok(())
 }
 
+fn gamez(opts: ZipOpts) -> Result<()> {
+    let mut input = BufReader::new(File::open(opts.input)?);
+    let output = BufWriter::new(File::create(opts.output)?);
+
+    let mut zip = ZipWriter::new(output);
+    let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+
+    let gamez = read_gamez(&mut input)?;
+
+    let data = serde_json::to_vec_pretty(&gamez.metadata)?;
+    zip.start_file("metadata.json", options)?;
+    zip.write_all(&data)?;
+
+    let data = serde_json::to_vec_pretty(&gamez.textures)?;
+    zip.start_file("textures.json", options)?;
+    zip.write_all(&data)?;
+
+    let data = serde_json::to_vec_pretty(&gamez.materials)?;
+    zip.start_file("materials.json", options)?;
+    zip.write_all(&data)?;
+
+    zip.finish()?;
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
 
@@ -211,12 +238,14 @@ fn main() -> Result<()> {
         SubCommand::Textures(opts) => textures(opts),
         SubCommand::Motion(opts) => motion(opts),
         SubCommand::Mechlib(opts) => mechlib(opts),
+        SubCommand::Gamez(opts) => gamez(opts),
         SubCommand::License => license(),
     }
 }
 
 fn license() -> Result<()> {
-    print!(r#"
+    print!(
+        r#"
 mech3rs extracts assets from the MechWarrior 3 game.
 Copyright (C) 2015-2020  Toby Fleming
 
@@ -232,6 +261,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    "#);
+    "#
+    );
     Ok(())
 }

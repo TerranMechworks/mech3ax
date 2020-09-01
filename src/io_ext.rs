@@ -18,6 +18,7 @@ pub trait ReadHelper {
     fn read_i32(&mut self) -> Result<i32>;
     fn read_f32(&mut self) -> Result<f32>;
     fn read_u16(&mut self) -> Result<u16>;
+    fn read_i16(&mut self) -> Result<i16>;
     fn read_struct<S>(&mut self) -> Result<S>;
     fn assert_end(&mut self) -> crate::Result<()>;
     fn read_string<T>(&mut self, offset: &mut T) -> crate::Result<String>
@@ -51,6 +52,12 @@ where
         let mut buf = [0; 2];
         self.read_exact(&mut buf)?;
         Ok(u16::from_le_bytes(buf))
+    }
+
+    fn read_i16(&mut self) -> Result<i16> {
+        let mut buf = [0; 2];
+        self.read_exact(&mut buf)?;
+        Ok(i16::from_le_bytes(buf))
     }
 
     fn read_struct<S>(&mut self) -> Result<S> {
@@ -95,6 +102,7 @@ pub trait WriteHelper {
     fn write_i32(&mut self, value: i32) -> Result<()>;
     fn write_f32(&mut self, value: f32) -> Result<()>;
     fn write_u16(&mut self, value: u16) -> Result<()>;
+    fn write_i16(&mut self, value: i16) -> Result<()>;
     fn write_struct<S>(&mut self, value: &S) -> Result<()>;
     fn write_string(&mut self, value: &str) -> crate::Result<()>;
 }
@@ -119,6 +127,11 @@ where
     }
 
     fn write_u16(&mut self, value: u16) -> Result<()> {
+        let buf = value.to_le_bytes();
+        self.write_all(&buf)
+    }
+
+    fn write_i16(&mut self, value: i16) -> Result<()> {
         let buf = value.to_le_bytes();
         self.write_all(&buf)
     }
@@ -198,6 +211,17 @@ mod tests {
 
         let mut output = Cursor::new(vec![]);
         output.write_u16(48879).unwrap();
+        assert_eq!(expected, output.read_all());
+    }
+
+    #[test]
+    fn i16_roundtrip() {
+        let expected = vec![0xEF, 0xBE];
+        let mut input = Cursor::new(expected.clone());
+        assert_eq!(-16657, input.read_i16().unwrap());
+
+        let mut output = Cursor::new(vec![]);
+        output.write_i16(-16657).unwrap();
         assert_eq!(expected, output.read_all());
     }
 

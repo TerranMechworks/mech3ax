@@ -1,7 +1,10 @@
 use clap::Clap;
 use mech3rs::archive::{write_archive, Entry};
+use mech3rs::gamez::{write_gamez, GameZ, Material as GameZMat, Metadata};
 use mech3rs::interp::{write_interp, Script};
-use mech3rs::mechlib::{write_format, write_materials, write_model, write_version, Material};
+use mech3rs::mechlib::{
+    write_format, write_materials, write_model, write_version, Material as MechlibMat,
+};
 use mech3rs::motion::write_motion;
 use mech3rs::reader::write_reader;
 use mech3rs::textures::{write_textures, TextureInfo};
@@ -39,6 +42,7 @@ enum SubCommand {
     Textures(ZipOpts),
     Motion(ZipOpts),
     Mechlib(ZipOpts),
+    Gamez(ZipOpts),
 }
 
 fn archive_manifest_from_zip<T>(zip: &mut ZipArchive<T>) -> Result<Vec<Entry>>
@@ -177,7 +181,7 @@ fn mechlib(opts: ZipOpts) -> Result<()> {
             let mut file = zip.by_name("materials.json")?;
             let mut buf = Vec::new();
             file.read_to_end(&mut buf)?;
-            let materials: Vec<Material> = serde_json::from_slice(&buf)?;
+            let materials: Vec<MechlibMat> = serde_json::from_slice(&buf)?;
 
             let mut buf = Vec::new();
             let mut cursor = Cursor::new(&mut buf);
@@ -199,6 +203,47 @@ fn mechlib(opts: ZipOpts) -> Result<()> {
     })
 }
 
+fn gamez(opts: ZipOpts) -> Result<()> {
+    let input = BufReader::new(File::open(opts.input)?);
+    let mut output = BufWriter::new(File::create(opts.output)?);
+
+    let mut zip = ZipArchive::new(input)?;
+
+    let metadata = {
+        let mut file = zip.by_name("metadata.json")?;
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+        let metadata: Metadata = serde_json::from_slice(&buf)?;
+        metadata
+    };
+
+    let textures = {
+        let mut file = zip.by_name("textures.json")?;
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+        let metadata: Vec<String> = serde_json::from_slice(&buf)?;
+        metadata
+    };
+
+    let materials = {
+        let mut file = zip.by_name("materials.json")?;
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+        let materials: Vec<GameZMat> = serde_json::from_slice(&buf)?;
+        materials
+    };
+
+    write_gamez(
+        &mut output,
+        &GameZ {
+            metadata,
+            textures,
+            materials,
+        },
+    )?;
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
 
@@ -209,12 +254,14 @@ fn main() -> Result<()> {
         SubCommand::Textures(opts) => textures(opts),
         SubCommand::Motion(opts) => motion(opts),
         SubCommand::Mechlib(opts) => mechlib(opts),
+        SubCommand::Gamez(opts) => gamez(opts),
         SubCommand::License => license(),
     }
 }
 
 fn license() -> Result<()> {
-    print!(r#"
+    print!(
+        r#"
 mech3rs extracts assets from the MechWarrior 3 game.
 Copyright (C) 2015-2020  Toby Fleming
 
@@ -230,6 +277,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    "#);
+    "#
+    );
     Ok(())
 }

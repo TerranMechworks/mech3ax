@@ -1,5 +1,6 @@
 pub mod archive;
 mod assert;
+pub mod gamez;
 mod image;
 pub mod interp;
 mod io_ext;
