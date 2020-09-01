@@ -96,7 +96,7 @@ where
 {
     let info: MaterialInfoC = read.read_struct()?;
     assert_that!("mat array size", 0 <= info.array_size <= i16::MAX as i32, *offset + 0)?;
-    assert_that!("mat count", 0 <= info.count <= i16::MAX as i32, *offset + 0)?;
+    assert_that!("mat count", 0 <= info.count <= info.array_size, *offset + 0)?;
     assert_that!("mat index max", info.index_max == info.count, *offset + 8)?;
     assert_that!("mat field 12", info.unknown == info.count - 1, *offset + 12)?;
     *offset += MaterialInfoC::SIZE;
@@ -213,8 +213,8 @@ where
     Ok(())
 }
 
-pub fn size_materials(array_size: u32, materials: &[Material]) -> u32 {
-    let mut size = MaterialInfoC::SIZE + (MATERIAL_C_SIZE + 2 + 2) * array_size;
+pub fn size_materials(array_size: i16, materials: &[Material]) -> u32 {
+    let mut size = MaterialInfoC::SIZE + (MATERIAL_C_SIZE + 2 + 2) * array_size as u32;
     for material in materials {
         if let Material::Textured(mat) = material {
             if let Some(cycle) = &mat.cycle {

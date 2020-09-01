@@ -64,6 +64,7 @@ struct MeshC {
     zero88: u32,
 }
 static_assert_size!(MeshC, 92);
+pub const MESH_C_SIZE: u32 = MeshC::SIZE;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Mesh {
@@ -535,4 +536,113 @@ where
     write_lights(write, &mesh.lights)?;
     write_polygons(write, &mesh.polygons)?;
     Ok(())
+}
+
+pub fn read_mesh_infos_zero<R>(read: &mut R, offset: &mut u32, start: i32, end: i32) -> Result<()>
+where
+    R: Read,
+{
+    for index in start..end {
+        let mesh: MeshC = read.read_struct()?;
+        assert_that!("file_ptr", mesh.file_ptr == 0, *offset + 0)?;
+        assert_that!("unk04", mesh.unk04 == 0, *offset + 4)?;
+        assert_that!("unk08", mesh.unk08 == 0, *offset + 8)?;
+        assert_that!("parent_count", mesh.parent_count == 0, *offset + 12)?;
+        assert_that!("polygon_count", mesh.polygon_count == 0, *offset + 16)?;
+        assert_that!("vertex_count", mesh.vertex_count == 0, *offset + 20)?;
+        assert_that!("normal_count", mesh.normal_count == 0, *offset + 24)?;
+        assert_that!("morph_count", mesh.morph_count == 0, *offset + 28)?;
+        assert_that!("light_count", mesh.light_count == 0, *offset + 32)?;
+        assert_that!("zero36", mesh.zero36 == 0, *offset + 36)?;
+        assert_that!("unk40", mesh.unk40 == 0.0, *offset + 40)?;
+        assert_that!("unk44", mesh.unk44 == 0.0, *offset + 44)?;
+        assert_that!("zero48", mesh.zero48 == 0, *offset + 48)?;
+        assert_that!("polygons_ptr", mesh.polygons_ptr == 0, *offset + 52)?;
+        assert_that!("vertices_ptr", mesh.vertices_ptr == 0, *offset + 56)?;
+        assert_that!("normals_ptr", mesh.normals_ptr == 0, *offset + 60)?;
+        assert_that!("lights_ptr", mesh.lights_ptr == 0, *offset + 64)?;
+        assert_that!("morphs_ptr", mesh.morphs_ptr == 0, *offset + 68)?;
+        assert_that!("unk72", mesh.unk72 == 0.0, *offset + 72)?;
+        assert_that!("unk76", mesh.unk76 == 0.0, *offset + 76)?;
+        assert_that!("unk80", mesh.unk80 == 0.0, *offset + 80)?;
+        assert_that!("unk84", mesh.unk84 == 0.0, *offset + 84)?;
+        assert_that!("zero88", mesh.zero88 == 0, *offset + 88)?;
+        *offset += MeshC::SIZE;
+
+        let mut expected_index = index + 1;
+        if expected_index == end {
+            expected_index = -1;
+        }
+        let actual_index = read.read_i32()?;
+        assert_that!("mesh index", actual_index == expected_index, *offset)?;
+        *offset += 4;
+    }
+    Ok(())
+}
+
+pub fn write_mesh_infos_zero<W>(write: &mut W, start: i32, end: i32) -> Result<()>
+where
+    W: Write,
+{
+    let mesh = MeshC {
+        file_ptr: 0,
+        unk04: 0,
+        unk08: 0,
+        parent_count: 0,
+        polygon_count: 0,
+        vertex_count: 0,
+        normal_count: 0,
+        morph_count: 0,
+        light_count: 0,
+        zero36: 0,
+        unk40: 0.0,
+        unk44: 0.0,
+        zero48: 0,
+        polygons_ptr: 0,
+        vertices_ptr: 0,
+        normals_ptr: 0,
+        lights_ptr: 0,
+        morphs_ptr: 0,
+        unk72: 0.0,
+        unk76: 0.0,
+        unk80: 0.0,
+        unk84: 0.0,
+        zero88: 0,
+    };
+
+    for index in start..end {
+        write.write_struct(&mesh)?;
+
+        let mut expected_index = index + 1;
+        if expected_index == end {
+            expected_index = -1;
+        }
+        write.write_i32(expected_index)?;
+    }
+    Ok(())
+}
+
+pub fn size_mesh(mesh: &Mesh) -> u32 {
+    let mut size =
+        Vec3::SIZE * (mesh.vertices.len() + mesh.normals.len() + mesh.morphs.len()) as u32;
+    for light in &mesh.lights {
+        size += LightC::SIZE + Vec3::SIZE * light.extra.len() as u32;
+    }
+    for polygon in &mesh.polygons {
+        size += PolygonC::SIZE
+            + 4 * polygon.vertex_indices.len() as u32
+            + 4 * polygon
+                .normal_indices
+                .as_ref()
+                .map(|v| v.len() as u32)
+                .unwrap_or(0)
+            + Vec2::SIZE
+                * polygon
+                    .uv_coords
+                    .as_ref()
+                    .map(|v| v.len() as u32)
+                    .unwrap_or(0)
+            + Vec3::SIZE * polygon.vertex_colors.len() as u32;
+    }
+    size
 }

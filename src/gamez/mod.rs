@@ -1,4 +1,5 @@
 mod materials;
+mod meshes;
 mod textures;
 
 use crate::io_ext::{ReadHelper, WriteHelper};
@@ -8,12 +9,12 @@ use ::serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 pub type Material = crate::materials::Material;
+pub type Mesh = crate::mesh::Mesh;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Metadata {
     material_array_size: i16,
-    mesh_array_size: u32,
-    mesh_count: u32,
+    meshes_array_size: i32,
     node_array_size: u32,
     node_data_count: u32,
 }
@@ -40,6 +41,7 @@ pub struct GameZ {
     pub metadata: Metadata,
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
+    pub meshes: Vec<Mesh>,
 }
 
 pub fn read_gamez<R>(read: &mut R) -> Result<GameZ>
@@ -64,19 +66,21 @@ where
     )?;
     let (materials, material_array_size) = materials::read_materials(read, &mut offset, &textures)?;
     assert_that!("meshes offset", offset == header.meshes_offset, offset)?;
+    let (meshes, mesh_array_size) = meshes::read_meshes(read, &mut offset, header.nodes_offset)?;
+    assert_that!("nodes offset", offset == header.nodes_offset, offset)?;
     // read.assert_end()?;
 
     let metadata = Metadata {
         material_array_size,
-        mesh_array_size: 0,
-        mesh_count: 0,
+        meshes_array_size: mesh_array_size,
         node_array_size: header.node_array_size,
         node_data_count: 0,
     };
     Ok(GameZ {
+        metadata,
         textures,
         materials,
-        metadata,
+        meshes,
     })
 }
 
@@ -86,11 +90,14 @@ where
 {
     let texture_count = gamez.textures.len() as u32;
     let material_array_size = gamez.metadata.material_array_size;
+    let meshes_array_size = gamez.metadata.meshes_array_size;
 
     let textures_offset = HeaderC::SIZE;
     let materials_offset = textures_offset + textures::size_texture_infos(texture_count);
     let meshes_offset =
-        materials_offset + materials::size_materials(material_array_size as u32, &gamez.materials);
+        materials_offset + materials::size_materials(material_array_size, &gamez.materials);
+    let (nodes_offset, mesh_offsets) =
+        meshes::size_meshes(meshes_offset, meshes_array_size, &gamez.meshes);
 
     write.write_struct(&HeaderC {
         signature: SIGNATURE,
@@ -100,8 +107,8 @@ where
         materials_offset,
         meshes_offset,
         node_array_size: gamez.metadata.node_array_size,
-        node_count: 0,
-        nodes_offset: 0xEFBEADDE,
+        node_count: 0xEFBEADDE,
+        nodes_offset: nodes_offset,
     })?;
 
     textures::write_texture_infos(write, &gamez.textures)?;
@@ -111,5 +118,6 @@ where
         &gamez.materials,
         material_array_size,
     )?;
+    meshes::write_meshes(write, &gamez.meshes, &mesh_offsets, meshes_array_size)?;
     Ok(())
 }

@@ -214,6 +214,10 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
     zip.start_file("materials.json", options)?;
     zip.write_all(&data)?;
 
+    let data = serde_json::to_vec_pretty(&gamez.meshes)?;
+    zip.start_file("meshes.json", options)?;
+    zip.write_all(&data)?;
+
     zip.finish()?;
     Ok(())
 }
