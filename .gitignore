@@ -6,3 +6,5 @@ Cargo.lock
 *.json
 __pycache__/
 /.mypy_cache
+README.html
+TODO.txt
