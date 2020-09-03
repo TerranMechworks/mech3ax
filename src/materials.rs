@@ -47,12 +47,14 @@ pub struct TexturedMaterial {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub cycle: Option<CycleData>,
     pub unk32: u32,
+    pub flag: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ColoredMaterial {
     pub color: (f32, f32, f32),
     pub unk00: u8,
+    pub unk32: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -66,6 +68,7 @@ pub struct RawTexturedMaterial {
     pub pointer: u32,
     pub cycle_ptr: Option<u32>,
     pub unk32: u32,
+    pub flag: bool,
 }
 
 #[derive(Debug)]
@@ -102,7 +105,6 @@ where
     let flag_always = bitflags.contains(MaterialFlags::ALWAYS);
     let flag_free = bitflags.contains(MaterialFlags::FREE);
 
-    assert_that!("flag unknown", flag_unknown == false, *offset + 1)?;
     assert_that!("flag always", flag_always == true, *offset + 1)?;
     assert_that!("flag free", flag_free == false, *offset + 1)?;
 
@@ -129,18 +131,20 @@ where
             pointer: material.pointer,
             cycle_ptr,
             unk32: material.unk32,
+            flag: flag_unknown,
         })
     } else {
+        assert_that!("flag unknown", flag_unknown == false, *offset + 1)?;
         assert_that!("flag cycled", flag_cycled == false, *offset + 1)?;
         assert_that!("rgb", material.rgb == 0x0000, *offset + 2)?;
         assert_that!("pointer", material.pointer == 0, *offset + 16)?;
-        assert_that!("field 32", material.unk32 == 0, *offset + 32)?;
         assert_that!("cycle ptr", material.cycle_ptr == 0, *offset + 36)?;
 
         *offset += MaterialC::SIZE;
         RawMaterial::Colored(ColoredMaterial {
             color: (material.red, material.green, material.blue),
             unk00: material.unk00,
+            unk32: material.unk32,
         })
     };
     Ok(material)
@@ -153,6 +157,9 @@ where
     let mat_c = match material {
         Material::Textured(material) => {
             let mut bitflags = MaterialFlags::ALWAYS | MaterialFlags::TEXTURED;
+            if material.flag {
+                bitflags |= MaterialFlags::UNKNOWN;
+            }
             let cycle_ptr = if let Some(cycle) = &material.cycle {
                 bitflags |= MaterialFlags::CYCLED;
                 cycle.info_ptr
@@ -188,7 +195,7 @@ where
                 unk20: 0.0,
                 unk24: 0.5,
                 unk28: 0.5,
-                unk32: 0,
+                unk32: material.unk32,
                 cycle_ptr: 0,
             }
         }

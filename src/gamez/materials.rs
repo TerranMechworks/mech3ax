@@ -80,6 +80,7 @@ where
                 pointer: mat.pointer,
                 cycle,
                 unk32: mat.unk32,
+                flag: mat.flag,
             })
         }
         RawMaterial::Colored(mat) => Material::Colored(mat),
