@@ -151,7 +151,27 @@ fn assert_node(node: NodeC, offset: u32) -> Result<(NodeType, NodeVariants)> {
     Ok((node_type, variants))
 }
 
-pub fn read_node_info<R>(read: &mut R, offset: &mut u32) -> Result<Option<NodeVariant>>
+pub fn read_node_info_mechlib<R>(read: &mut R, offset: &mut u32) -> Result<NodeVariant>
+where
+    R: Read,
+{
+    let node: NodeC = read.read_struct()?;
+    let (node_type, node) = assert_node(node, *offset)?;
+    let variant = match node_type {
+        NodeType::CAMERA => camera::assert_variants(node, *offset)?,
+        NodeType::DISPLAY => display::assert_variants(node, *offset)?,
+        NodeType::EMPTY => empty::assert_variants(node, *offset)?,
+        NodeType::LIGHT => light::assert_variants(node, *offset)?,
+        NodeType::LOD => lod::assert_variants(node, *offset)?,
+        NodeType::OBJECT3D => object3d::assert_variants(node, *offset, true)?,
+        NodeType::WINDOW => window::assert_variants(node, *offset)?,
+        NodeType::WORLD => world::assert_variants(node, *offset)?,
+    };
+    *offset += NodeC::SIZE;
+    Ok(variant)
+}
+
+pub fn read_node_info_gamez<R>(read: &mut R, offset: &mut u32) -> Result<Option<NodeVariant>>
 where
     R: Read,
 {
@@ -168,7 +188,7 @@ where
             NodeType::EMPTY => empty::assert_variants(node, *offset)?,
             NodeType::LIGHT => light::assert_variants(node, *offset)?,
             NodeType::LOD => lod::assert_variants(node, *offset)?,
-            NodeType::OBJECT3D => object3d::assert_variants(node, *offset)?,
+            NodeType::OBJECT3D => object3d::assert_variants(node, *offset, false)?,
             NodeType::WINDOW => window::assert_variants(node, *offset)?,
             NodeType::WORLD => world::assert_variants(node, *offset)?,
         };

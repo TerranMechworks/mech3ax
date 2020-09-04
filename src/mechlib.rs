@@ -3,7 +3,7 @@ use crate::io_ext::{ReadHelper, WriteHelper};
 use crate::materials::{read_material, write_material, RawMaterial, TexturedMaterial};
 use crate::mesh::{read_mesh_data, read_mesh_info, write_mesh_data, write_mesh_info, Mesh};
 use crate::nodes::{
-    read_node_data, read_node_info, write_node_data, write_node_info, Node, WrappedNode,
+    read_node_data, read_node_info_mechlib, write_node_data, write_node_info, Node, WrappedNode,
 };
 use crate::{assert_that, Result};
 use ::serde::{Deserialize, Serialize};
@@ -107,14 +107,7 @@ fn read_node_and_mesh<R>(read: &mut R, offset: &mut u32, meshes: &mut Vec<Mesh>)
 where
     R: Read,
 {
-    let variant = match read_node_info(read, offset)? {
-        None => {
-            return Err(
-                AssertionError(format!("Expected no zero nodes, but was (at {})", *offset)).into(),
-            )
-        }
-        Some(variant) => variant,
-    };
+    let variant = read_node_info_mechlib(read, offset)?;
     match read_node_data(read, offset, variant)? {
         WrappedNode::Object3d(wrapped) => {
             let mut object3d = wrapped.wrapped;

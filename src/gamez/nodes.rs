@@ -1,7 +1,7 @@
 use crate::assert::AssertionError;
 use crate::io_ext::{ReadHelper, WriteHelper};
 use crate::nodes::{
-    read_node_data, read_node_info, read_node_info_zero, size_node, write_node_data,
+    read_node_data, read_node_info_gamez, read_node_info_zero, size_node, write_node_data,
     write_node_info, write_node_info_zero, Node, NodeVariant, WrappedNode, NODE_C_SIZE,
 };
 use crate::{assert_that, Result};
@@ -18,7 +18,7 @@ where
     // read after the provided count. so, we basically have to check the entire array
     let mut actual_count = array_size;
     for i in 0..array_size {
-        let variant = read_node_info(read, offset)?;
+        let variant = read_node_info_gamez(read, offset)?;
         let actual_index = read.read_u32()?;
         *offset += 4;
         match variant {

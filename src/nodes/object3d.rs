@@ -25,7 +25,11 @@ struct Object3dC {
 }
 static_assert_size!(Object3dC, 144);
 
-pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
+pub fn assert_variants(
+    node: NodeVariants,
+    offset: u32,
+    mesh_index_is_ptr: bool,
+) -> Result<NodeVariant> {
     // cannot assert name
     let contains_base = node.flags.contains(NodeBitFlags::BASE);
     assert_that!("object3d flags", contains_base == true, offset + 36)?;
@@ -34,10 +38,18 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
         assert_that!("object3d zone id", 1 <= node.zone_id <= 80, offset + 48)?;
     }
     assert_that!("object3d data ptr", node.data_ptr != 0, offset + 56)?;
-    if node.flags.contains(NodeBitFlags::HAS_MESH) {
-        assert_that!("mesh index", node.mesh_index >= 0, offset + 60)?;
+    if mesh_index_is_ptr {
+        if node.flags.contains(NodeBitFlags::HAS_MESH) {
+            assert_that!("mesh index", node.mesh_index > 0, offset + 60)?;
+        } else {
+            assert_that!("mesh index", node.mesh_index == 0, offset + 60)?;
+        }
     } else {
-        assert_that!("mesh index", node.mesh_index == -1, offset + 60)?;
+        if node.flags.contains(NodeBitFlags::HAS_MESH) {
+            assert_that!("mesh index", node.mesh_index >= 0, offset + 60)?;
+        } else {
+            assert_that!("mesh index", node.mesh_index == -1, offset + 60)?;
+        }
     }
     // can have area partition, parent, children
     assert_that!("object3d field 196", node.unk196 == 160, offset + 196)?;
