@@ -1,8 +1,9 @@
+use crate::assert::AssertionError;
 use crate::io_ext::{ReadHelper, WriteHelper};
 use crate::materials::{read_material, write_material, RawMaterial, TexturedMaterial};
 use crate::mesh::{read_mesh_data, read_mesh_info, write_mesh_data, write_mesh_info, Mesh};
 use crate::nodes::{
-    read_node as read_node_wrapped, write_node as write_node_wrapped, Node, WrappedNode,
+    read_node_data, read_node_info, write_node_data, write_node_info, Node, WrappedNode,
 };
 use crate::{assert_that, Result};
 use ::serde::{Deserialize, Serialize};
@@ -102,11 +103,12 @@ where
     Ok(())
 }
 
-fn read_node<R>(read: &mut R, offset: &mut u32, meshes: &mut Vec<Mesh>) -> Result<Node>
+fn read_node_and_mesh<R>(read: &mut R, offset: &mut u32, meshes: &mut Vec<Mesh>) -> Result<Node>
 where
     R: Read,
 {
-    match read_node_wrapped(read, offset)? {
+    let variant = read_node_info(read, offset)?;
+    match read_node_data(read, offset, variant)? {
         WrappedNode::Object3d(wrapped) => {
             let mut object3d = wrapped.wrapped;
             if object3d.mesh_index != 0 {
@@ -119,17 +121,13 @@ where
             // the mechlib data doesn't read/write parents
             object3d.parent = if wrapped.has_parent { Some(0) } else { None };
 
-            object3d.children = if wrapped.children_count > 0 {
-                let children = (0..wrapped.children_count)
-                    .map(|_| read_node(read, offset, meshes))
-                    .collect::<Result<Vec<_>>>()?;
-                Some(children)
-            } else {
-                None
-            };
+            object3d.children = (0..wrapped.children_count)
+                .map(|_| read_node_and_mesh(read, offset, meshes))
+                .collect::<Result<Vec<_>>>()?;
 
             Ok(Node::Object3d(object3d))
         }
+        _ => Err(AssertionError("Expected only Object3d nodes in mechlib".to_owned()).into()),
     }
 }
 
@@ -139,16 +137,22 @@ where
 {
     let mut offset = 0;
     let mut meshes = vec![];
-    let root = read_node(read, &mut offset, &mut meshes)?;
+    let root = read_node_and_mesh(read, &mut offset, &mut meshes)?;
     read.assert_end()?;
     Ok(Model { root, meshes })
 }
 
-fn write_node<W>(write: &mut W, node: &Node, meshes: &[Mesh], mesh_index: &mut usize) -> Result<()>
+fn write_node_and_mesh<W>(
+    write: &mut W,
+    node: &Node,
+    meshes: &[Mesh],
+    mesh_index: &mut usize,
+) -> Result<()>
 where
     W: Write,
 {
-    write_node_wrapped(write, node)?;
+    write_node_info(write, node)?;
+    write_node_data(write, node)?;
     match node {
         Node::Object3d(object3d) => {
             if object3d.mesh_index != 0 {
@@ -158,14 +162,13 @@ where
                 *mesh_index += 1;
             }
 
-            if let Some(children) = &object3d.children {
-                for child in children {
-                    write_node(write, child, meshes, mesh_index)?;
-                }
+            for child in &object3d.children {
+                write_node_and_mesh(write, child, meshes, mesh_index)?;
             }
+            Ok(())
         }
+        _ => Err(AssertionError("Expected only Object3d nodes in mechlib".to_owned()).into()),
     }
-    Ok(())
 }
 
 pub fn write_model<W>(write: &mut W, model: &Model) -> Result<()>
@@ -173,5 +176,5 @@ where
     W: Write,
 {
     let mut mesh_index = 0;
-    write_node(write, &model.root, &model.meshes, &mut mesh_index)
+    write_node_and_mesh(write, &model.root, &model.meshes, &mut mesh_index)
 }

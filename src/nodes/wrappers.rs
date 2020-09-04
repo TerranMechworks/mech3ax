@@ -1,11 +1,18 @@
-use super::types::Object3d;
+use super::types::{Camera, Display, Empty, Light, Lod, Object3d, Window, World};
 
-pub struct Object3dWrapper {
-    pub wrapped: Object3d,
+pub struct Wrapper<T> {
+    pub wrapped: T,
     pub has_parent: bool,
     pub children_count: u32,
 }
 
 pub enum WrappedNode {
-    Object3d(Object3dWrapper),
+    Camera(Camera),
+    Display(Display),
+    Empty(Empty),
+    Light(Light),
+    Lod(Wrapper<Lod>),
+    Object3d(Wrapper<Object3d>),
+    Window(Window),
+    World(Wrapper<World>),
 }

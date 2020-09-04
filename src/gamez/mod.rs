@@ -1,5 +1,6 @@
 mod materials;
 mod meshes;
+mod nodes;
 mod textures;
 
 use crate::io_ext::{ReadHelper, WriteHelper};
@@ -10,6 +11,7 @@ use std::io::{Read, Write};
 
 pub type Material = crate::materials::Material;
 pub type Mesh = crate::mesh::Mesh;
+pub type Node = crate::nodes::Node;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Metadata {
@@ -42,6 +44,7 @@ pub struct GameZ {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
     pub meshes: Vec<Mesh>,
+    pub nodes: Vec<Node>,
 }
 
 pub fn read_gamez<R>(read: &mut R) -> Result<GameZ>
@@ -68,19 +71,21 @@ where
     assert_that!("meshes offset", offset == header.meshes_offset, offset)?;
     let (meshes, mesh_array_size) = meshes::read_meshes(read, &mut offset, header.nodes_offset)?;
     assert_that!("nodes offset", offset == header.nodes_offset, offset)?;
-    // read.assert_end()?;
+    let nodes = nodes::read_nodes(read, &mut offset, header.node_count, header.node_array_size)?;
+    read.assert_end()?;
 
     let metadata = Metadata {
         material_array_size,
         meshes_array_size: mesh_array_size,
         node_array_size: header.node_array_size,
-        node_data_count: 0,
+        node_data_count: header.node_count,
     };
     Ok(GameZ {
         metadata,
         textures,
         materials,
         meshes,
+        nodes,
     })
 }
 
@@ -107,8 +112,8 @@ where
         materials_offset,
         meshes_offset,
         node_array_size: gamez.metadata.node_array_size,
-        node_count: 0xEFBEADDE,
-        nodes_offset: nodes_offset,
+        node_count: gamez.metadata.node_data_count,
+        nodes_offset,
     })?;
 
     textures::write_texture_infos(write, &gamez.textures)?;
@@ -119,5 +124,11 @@ where
         material_array_size,
     )?;
     meshes::write_meshes(write, &gamez.meshes, &mesh_offsets, meshes_array_size)?;
+    nodes::write_nodes(
+        write,
+        &gamez.nodes,
+        gamez.metadata.node_array_size,
+        nodes_offset,
+    )?;
     Ok(())
 }

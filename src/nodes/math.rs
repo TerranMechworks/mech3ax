@@ -1,6 +1,5 @@
 use crate::types::{Matrix, Vec3};
 
-pub const IDENTITY_MATRIX: Matrix = Matrix(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 pub const PI: f32 = std::f64::consts::PI as f32;
 
 pub fn euler_to_matrix(rotation: &Vec3) -> Matrix {
@@ -84,4 +83,26 @@ pub fn apply_zero_signs(matrix: &Matrix, signs: u32) -> Matrix {
         apply_zero_sign(matrix.7, signs, 7),
         apply_zero_sign(matrix.8, signs, 8),
     )
+}
+
+#[inline]
+fn approx_sqrt(value: f32) -> f32 {
+    let cast = i32::from_ne_bytes(value.to_ne_bytes());
+    let approx = (cast >> 1) + 0x1FC00000;
+    f32::from_ne_bytes(approx.to_ne_bytes())
+}
+
+#[inline]
+pub fn partition_diag(unk20: f32, unk32: f32) -> f32 {
+    // must perform this calculation with doubles to avoid loss of precision
+    let temp1 = (unk32 as f64 - unk20 as f64) * 0.5;
+    let temp2 = 128.0 * 128.0 + temp1 * temp1 + 128.0 * 128.0;
+    approx_sqrt(temp2 as f32)
+}
+
+#[inline]
+pub fn cotangent(value: f32) -> f32 {
+    // must perform this calculation with doubles to avoid loss of precision
+    let temp = 1.0 / (value as f64).tan();
+    temp as f32
 }

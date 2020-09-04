@@ -53,8 +53,8 @@ class Tester:
             zip_path = output_base / "soundsL.zip"
             output_zbd = output_base / "soundsL.zbd"
 
-            self.unzbd("sound", input_zbd, zip_path)
-            self.rezbd("sound", zip_path, output_zbd)
+            self.unzbd("sounds", input_zbd, zip_path)
+            self.rezbd("sounds", zip_path, output_zbd)
             self.compare(input_zbd, output_zbd)
 
             print(name, "soundsH.zbd")
@@ -62,8 +62,8 @@ class Tester:
             zip_path = output_base / "soundsH.zip"
             output_zbd = output_base / "soundsH.zbd"
 
-            self.unzbd("sound", input_zbd, zip_path)
-            self.rezbd("sound", zip_path, output_zbd)
+            self.unzbd("sounds", input_zbd, zip_path)
+            self.rezbd("sounds", zip_path, output_zbd)
             self.compare(input_zbd, output_zbd)
 
     def test_interp(self) -> None:
@@ -158,7 +158,6 @@ class Tester:
     def test_gamez(self) -> None:
         print("--- GAMEZ ---")
         for name, zbd_dir, output_base in self.versions:
-
             output_dir = output_base / "gamez"
             output_dir.mkdir(exist_ok=True)
 

@@ -1,5 +1,5 @@
 use mech3rs::archive::{write_archive, Entry};
-use mech3rs::gamez::{write_gamez, GameZ, Material as GameZMat, Mesh, Metadata};
+use mech3rs::gamez::{write_gamez, GameZ, Material as GameZMat, Mesh, Metadata, Node};
 use mech3rs::interp::{write_interp, Script};
 use mech3rs::mechlib::{
     write_format, write_materials, write_model, write_version, Material as MechlibMat,
@@ -233,6 +233,14 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
         materials
     };
 
+    let nodes = {
+        let mut file = zip.by_name("nodes.json")?;
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+        let materials: Vec<Node> = serde_json::from_slice(&buf)?;
+        materials
+    };
+
     write_gamez(
         &mut output,
         &GameZ {
@@ -240,6 +248,7 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
             textures,
             materials,
             meshes,
+            nodes,
         },
     )?;
     Ok(())

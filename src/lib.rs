@@ -6,6 +6,7 @@ pub mod gamez;
 mod image;
 pub mod interp;
 mod io_ext;
+mod light;
 pub mod materials;
 pub mod mechlib;
 mod mesh;

@@ -1,8 +1,7 @@
 use super::flags::NodeBitFlags;
-use super::math::{apply_zero_signs, euler_to_matrix, extract_zero_signs, IDENTITY_MATRIX, PI};
-use super::node::NodeC;
-use super::types::{NodeVariants, Object3d, Transformation, ZONE_DEFAULT};
-use super::wrappers::Object3dWrapper;
+use super::math::{apply_zero_signs, euler_to_matrix, extract_zero_signs, PI};
+use super::types::{NodeVariant, NodeVariants, Object3d, Transformation, ZONE_DEFAULT};
+use super::wrappers::Wrapper;
 use crate::assert::assert_all_zero;
 use crate::io_ext::{ReadHelper, WriteHelper};
 use crate::size::ReprSize;
@@ -26,23 +25,23 @@ struct Object3dC {
 }
 static_assert_size!(Object3dC, 144);
 
-fn assert_node_variants(node: &NodeVariants, offset: u32) -> Result<()> {
+pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     // cannot assert name
     let contains_base = node.flags.contains(NodeBitFlags::BASE);
-    assert_that!("flags", contains_base == true, offset + 36)?;
-    assert_that!("field 044", node.unk044 == 1, offset + 44)?;
+    assert_that!("object3d flags", contains_base == true, offset + 36)?;
+    assert_that!("object3d field 044", node.unk044 == 1, offset + 44)?;
     if node.zone_id != ZONE_DEFAULT {
-        assert_that!("zone id", 1 <= node.zone_id <= 80, offset + 48)?;
+        assert_that!("object3d zone id", 1 <= node.zone_id <= 80, offset + 48)?;
     }
-    assert_that!("data ptr", node.data_ptr != 0, offset + 56)?;
+    assert_that!("object3d data ptr", node.data_ptr != 0, offset + 56)?;
     if node.flags.contains(NodeBitFlags::HAS_MESH) {
-        assert_that!("mesh index", node.mesh_index > 0, offset + 60)?;
+        assert_that!("mesh index", node.mesh_index >= 0, offset + 60)?;
     } else {
-        //assert_that!("mesh index", node.mesh_index == -1, offset + 60)?;
+        assert_that!("mesh index", node.mesh_index == -1, offset + 60)?;
     }
     // can have area partition, parent, children
-    assert_that!("field 196", node.unk196 == 160, offset + 196)?;
-    Ok(())
+    assert_that!("object3d field 196", node.unk196 == 160, offset + 196)?;
+    Ok(NodeVariant::Object3d(node))
 }
 
 fn assert_object3d(object3d: Object3dC, offset: u32) -> Result<Option<Transformation>> {
@@ -56,17 +55,13 @@ fn assert_object3d(object3d: Object3dC, offset: u32) -> Result<Option<Transforma
     assert_all_zero("field 096", offset + 96, &object3d.zero096)?;
 
     let transformation = if object3d.flags == 40 {
-        assert_that!(
-            "rotation",
-            object3d.rotation == Vec3(0.0, 0.0, 0.0),
-            offset + 24
-        )?;
+        assert_that!("rotation", object3d.rotation == Vec3::EMPTY, offset + 24)?;
         assert_that!(
             "translation",
-            object3d.translation == Vec3(0.0, 0.0, 0.0),
+            object3d.translation == Vec3::EMPTY,
             offset + 84
         )?;
-        assert_that!("matrix", object3d.matrix == IDENTITY_MATRIX, offset + 48)?;
+        assert_that!("matrix", object3d.matrix == Matrix::IDENTITY, offset + 48)?;
         None
     } else {
         let rotation = object3d.rotation;
@@ -92,23 +87,16 @@ fn assert_object3d(object3d: Object3dC, offset: u32) -> Result<Option<Transforma
     Ok(transformation)
 }
 
-pub fn read_object3d<R>(
-    read: &mut R,
-    node: NodeVariants,
-    offset: &mut u32,
-) -> Result<Object3dWrapper>
+pub fn read<R>(read: &mut R, node: NodeVariants, offset: &mut u32) -> Result<Wrapper<Object3d>>
 where
     R: Read,
 {
-    assert_node_variants(&node, *offset)?;
-    *offset += NodeC::SIZE;
-
     let object3dc: Object3dC = read.read_struct()?;
     let matrix_signs = extract_zero_signs(&object3dc.matrix);
     let transformation = assert_object3d(object3dc, *offset)?;
     *offset += Object3dC::SIZE;
 
-    let object3d = Object3d {
+    let wrapped = Object3d {
         name: node.name,
         flags: node.flags.into(),
         zone_id: node.zone_id,
@@ -117,7 +105,7 @@ where
         transformation,
         matrix_signs,
         parent: None,
-        children: None,
+        children: Vec::new(),
         data_ptr: node.data_ptr,
         parent_array_ptr: node.parent_array_ptr,
         children_array_ptr: node.children_array_ptr,
@@ -126,20 +114,15 @@ where
         unk164: node.unk164,
     };
 
-    Ok(Object3dWrapper {
-        wrapped: object3d,
+    Ok(Wrapper {
+        wrapped,
         has_parent: node.has_parent,
         children_count: node.children_count,
     })
 }
 
-pub fn node_object3d(object3d: &Object3d) -> NodeVariants {
+pub fn make_variants(object3d: &Object3d) -> NodeVariants {
     let flags = NodeBitFlags::from(&object3d.flags);
-    let children_count = object3d
-        .children
-        .as_ref()
-        .map(|children| children.len() as u32)
-        .unwrap_or(0);
     NodeVariants {
         name: object3d.name.clone(),
         flags,
@@ -150,7 +133,7 @@ pub fn node_object3d(object3d: &Object3d) -> NodeVariants {
         area_partition: object3d.area_partition,
         has_parent: object3d.parent.is_some(),
         parent_array_ptr: object3d.parent_array_ptr,
-        children_count,
+        children_count: object3d.children.len() as u32,
         children_array_ptr: object3d.children_array_ptr,
         unk116: object3d.unk116,
         unk140: object3d.unk140,
@@ -159,7 +142,7 @@ pub fn node_object3d(object3d: &Object3d) -> NodeVariants {
     }
 }
 
-pub fn write_object3d<W>(write: &mut W, object3d: &Object3d) -> Result<()>
+pub fn write<W>(write: &mut W, object3d: &Object3d) -> Result<()>
 where
     W: Write,
 {
@@ -172,14 +155,9 @@ where
                 .as_ref()
                 .cloned()
                 .unwrap_or_else(|| euler_to_matrix(&tr.rotation));
-            (32, tr.rotation.clone(), tr.translation.clone(), matrix)
+            (32, tr.rotation, tr.translation, matrix)
         })
-        .unwrap_or((
-            40,
-            Vec3(0.0, 0.0, 0.0),
-            Vec3(0.0, 0.0, 0.0),
-            IDENTITY_MATRIX,
-        ));
+        .unwrap_or((40, Vec3::EMPTY, Vec3::EMPTY, Matrix::IDENTITY));
 
     let matrix = apply_zero_signs(&matrix, object3d.matrix_signs);
 
@@ -197,4 +175,9 @@ where
         zero096: [0u8; 48],
     })?;
     Ok(())
+}
+
+pub fn size(object3d: &Object3d) -> u32 {
+    let parent_size = if object3d.parent.is_some() { 4 } else { 0 };
+    Object3dC::SIZE + parent_size + 4 * object3d.children.len() as u32
 }
