@@ -107,7 +107,14 @@ fn read_node_and_mesh<R>(read: &mut R, offset: &mut u32, meshes: &mut Vec<Mesh>)
 where
     R: Read,
 {
-    let variant = read_node_info(read, offset)?;
+    let variant = match read_node_info(read, offset)? {
+        None => {
+            return Err(
+                AssertionError(format!("Expected no zero nodes, but was (at {})", *offset)).into(),
+            )
+        }
+        Some(variant) => variant,
+    };
     match read_node_data(read, offset, variant)? {
         WrappedNode::Object3d(wrapped) => {
             let mut object3d = wrapped.wrapped;

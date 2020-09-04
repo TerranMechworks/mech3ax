@@ -71,7 +71,7 @@ where
     assert_that!("meshes offset", offset == header.meshes_offset, offset)?;
     let (meshes, mesh_array_size) = meshes::read_meshes(read, &mut offset, header.nodes_offset)?;
     assert_that!("nodes offset", offset == header.nodes_offset, offset)?;
-    let nodes = nodes::read_nodes(read, &mut offset, header.node_count, header.node_array_size)?;
+    let nodes = nodes::read_nodes(read, &mut offset, header.node_array_size)?;
     read.assert_end()?;
 
     let metadata = Metadata {

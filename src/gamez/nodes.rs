@@ -7,41 +7,55 @@ use crate::nodes::{
 use crate::{assert_that, Result};
 use std::io::{Read, Write};
 
-pub fn read_nodes<R>(
-    read: &mut R,
-    offset: &mut u32,
-    count: u32,
-    array_size: u32,
-) -> Result<Vec<Node>>
+pub fn read_nodes<R>(read: &mut R, offset: &mut u32, array_size: u32) -> Result<Vec<Node>>
 where
     R: Read,
 {
     let end_offset = *offset + NODE_C_SIZE * array_size + 4 * array_size;
 
+    let mut variants = Vec::new();
     // the node_count is wildly inaccurate for some files, and there are more nodes to
     // read after the provided count. so, we basically have to check the entire array
-    let mut variants = Vec::new();
-    for i in 0..count {
+    let mut actual_count = array_size;
+    for i in 0..array_size {
         let variant = read_node_info(read, offset)?;
-        let index = read.read_u32()?;
+        let actual_index = read.read_u32()?;
         *offset += 4;
-        match &variant {
-            NodeVariant::World(_, _, _) => {
-                assert_that!("node data position", i == 0, *offset)?;
+        match variant {
+            None => {
+                let mut expected_index = i + 1;
+                if expected_index == array_size {
+                    // we'll never know why???
+                    expected_index = 0xFFFFFF
+                }
+                assert_that!("node zero index", actual_index == expected_index, *offset)?;
+
+                actual_count = i + 1;
+                break;
             }
-            NodeVariant::Window(_) => {
-                assert_that!("node data position", i == 1, *offset)?;
+            Some(mut variant) => {
+                match &mut variant {
+                    NodeVariant::World(_, _, _) => {
+                        assert_that!("node data position", i == 0, *offset)?;
+                    }
+                    NodeVariant::Window(_) => {
+                        assert_that!("node data position", i == 1, *offset)?;
+                    }
+                    NodeVariant::Camera(_) => {
+                        assert_that!("node data position", i == 2, *offset)?;
+                    }
+                    NodeVariant::Empty(empty) => {
+                        assert_that!("empty ref index", 4 <= actual_index <= array_size, *offset)?;
+                        empty.parent = actual_index;
+                    }
+                    _ => {}
+                }
+                variants.push((variant, actual_index));
             }
-            NodeVariant::Camera(_) => {
-                assert_that!("node data position", i == 2, *offset)?;
-            }
-            _ => {}
         }
-        variants.push((variant, index));
-        // TODO: break
     }
 
-    for i in count..array_size {
+    for i in actual_count..array_size {
         read_node_info_zero(read, offset)?;
         let actual_index = read.read_u32()?;
         *offset += 4;
@@ -58,12 +72,9 @@ where
 
     let nodes = variants
         .into_iter()
-        .map(|(mut variant, index)| {
-            match &mut variant {
-                NodeVariant::Empty(empty) => {
-                    assert_that!("empty ref index", 4 <= index <= array_size, *offset)?;
-                    empty.parent = index;
-                }
+        .map(|(variant, index)| {
+            match &variant {
+                NodeVariant::Empty(_) => {}
                 _ => {
                     // it's more likely our read logic is wrong than this data being wrong
                     let actual = *offset;

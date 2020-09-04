@@ -151,23 +151,29 @@ fn assert_node(node: NodeC, offset: u32) -> Result<(NodeType, NodeVariants)> {
     Ok((node_type, variants))
 }
 
-pub fn read_node_info<R>(read: &mut R, offset: &mut u32) -> Result<NodeVariant>
+pub fn read_node_info<R>(read: &mut R, offset: &mut u32) -> Result<Option<NodeVariant>>
 where
     R: Read,
 {
     let node: NodeC = read.read_struct()?;
-    let prev = *offset;
-    *offset += NodeC::SIZE;
-    let (node_type, node) = assert_node(node, prev)?;
-    match node_type {
-        NodeType::CAMERA => Ok(camera::assert_variants(node, prev)?),
-        NodeType::DISPLAY => Ok(display::assert_variants(node, prev)?),
-        NodeType::EMPTY => Ok(empty::assert_variants(node, prev)?),
-        NodeType::LIGHT => Ok(light::assert_variants(node, prev)?),
-        NodeType::LOD => Ok(lod::assert_variants(node, prev)?),
-        NodeType::OBJECT3D => Ok(object3d::assert_variants(node, prev)?),
-        NodeType::WINDOW => Ok(window::assert_variants(node, prev)?),
-        NodeType::WORLD => Ok(world::assert_variants(node, prev)?),
+    if node.name[0] == 0 {
+        assert_node_info_zero(node, *offset)?;
+        *offset += NodeC::SIZE;
+        Ok(None)
+    } else {
+        let (node_type, node) = assert_node(node, *offset)?;
+        let variant = match node_type {
+            NodeType::CAMERA => camera::assert_variants(node, *offset)?,
+            NodeType::DISPLAY => display::assert_variants(node, *offset)?,
+            NodeType::EMPTY => empty::assert_variants(node, *offset)?,
+            NodeType::LIGHT => light::assert_variants(node, *offset)?,
+            NodeType::LOD => lod::assert_variants(node, *offset)?,
+            NodeType::OBJECT3D => object3d::assert_variants(node, *offset)?,
+            NodeType::WINDOW => window::assert_variants(node, *offset)?,
+            NodeType::WORLD => world::assert_variants(node, *offset)?,
+        };
+        *offset += NodeC::SIZE;
+        Ok(Some(variant))
     }
 }
 
@@ -316,44 +322,49 @@ pub fn size_node(node: &Node) -> u32 {
     }
 }
 
+fn assert_node_info_zero(node: NodeC, offset: u32) -> Result<()> {
+    assert_all_zero("name", offset + 0, &node.name)?;
+    assert_that!("flags", node.flags == 0, offset + 36)?;
+    assert_that!("flags", node.node_type == 0, offset + 40)?;
+    assert_that!("field 040", node.zero040 == 0, offset + 40)?;
+    assert_that!("field 044", node.unk044 == 0, offset + 44)?;
+    assert_that!("zone id", node.zone_id == 0, offset + 48)?;
+    assert_that!("data ptr", node.data_ptr == 0, offset + 56)?;
+    assert_that!("mesh index", node.mesh_index == -1, offset + 60)?;
+    assert_that!("env data", node.environment_data == 0, offset + 64)?;
+    assert_that!("action prio", node.action_priority == 0, offset + 68)?;
+    assert_that!("faction cb", node.action_callback == 0, offset + 72)?;
+    assert_that!("area partition x", node.area_partition_x == 0, offset + 76)?;
+    assert_that!("area partition y", node.area_partition_y == 0, offset + 80)?;
+    assert_that!("parent count", node.parent_count == 0, offset + 84)?;
+    assert_that!("parent array ptr", node.parent_array_ptr == 0, offset + 88)?;
+    assert_that!("children count", node.children_count == 0, offset + 92)?;
+    assert_that!(
+        "children array ptr",
+        node.children_array_ptr == 0,
+        offset + 96
+    )?;
+    assert_that!("field 100", node.zero100 == 0, offset + 100)?;
+    assert_that!("field 104", node.zero104 == 0, offset + 104)?;
+    assert_that!("field 108", node.zero108 == 0, offset + 108)?;
+    assert_that!("field 112", node.zero112 == 0, offset + 112)?;
+    assert_that!("block 1", node.unk116 == BLOCK_EMPTY, offset + 116)?;
+    assert_that!("block 2", node.unk140 == BLOCK_EMPTY, offset + 140)?;
+    assert_that!("block 3", node.unk164 == BLOCK_EMPTY, offset + 164)?;
+    assert_that!("field 188", node.zero188 == 0, offset + 188)?;
+    assert_that!("field 192", node.zero192 == 0, offset + 192)?;
+    assert_that!("field 196", node.unk196 == 0, offset + 196)?;
+    assert_that!("field 200", node.zero200 == 0, offset + 200)?;
+    assert_that!("field 204", node.zero204 == 0, offset + 204)?;
+    Ok(())
+}
+
 pub fn read_node_info_zero<R>(read: &mut R, offset: &mut u32) -> Result<()>
 where
     R: Read,
 {
     let node: NodeC = read.read_struct()?;
-    assert_all_zero("name", *offset + 0, &node.name)?;
-    assert_that!("flags", node.flags == 0, *offset + 36)?;
-    assert_that!("flags", node.node_type == 0, *offset + 40)?;
-    assert_that!("field 040", node.zero040 == 0, *offset + 40)?;
-    assert_that!("field 044", node.unk044 == 0, *offset + 44)?;
-    assert_that!("zone id", node.zone_id == 0, *offset + 48)?;
-    assert_that!("data ptr", node.data_ptr == 0, *offset + 56)?;
-    assert_that!("mesh index", node.mesh_index == -1, *offset + 60)?;
-    assert_that!("env data", node.environment_data == 0, *offset + 64)?;
-    assert_that!("action prio", node.action_priority == 0, *offset + 68)?;
-    assert_that!("faction cb", node.action_callback == 0, *offset + 72)?;
-    assert_that!("area partition x", node.area_partition_x == 0, *offset + 76)?;
-    assert_that!("area partition y", node.area_partition_y == 0, *offset + 80)?;
-    assert_that!("parent count", node.parent_count == 0, *offset + 84)?;
-    assert_that!("parent array ptr", node.parent_array_ptr == 0, *offset + 88)?;
-    assert_that!("children count", node.children_count == 0, *offset + 92)?;
-    assert_that!(
-        "children array ptr",
-        node.children_array_ptr == 0,
-        *offset + 96
-    )?;
-    assert_that!("field 100", node.zero100 == 0, *offset + 100)?;
-    assert_that!("field 104", node.zero104 == 0, *offset + 104)?;
-    assert_that!("field 108", node.zero108 == 0, *offset + 108)?;
-    assert_that!("field 112", node.zero112 == 0, *offset + 112)?;
-    assert_that!("block 1", node.unk116 == BLOCK_EMPTY, *offset + 116)?;
-    assert_that!("block 2", node.unk140 == BLOCK_EMPTY, *offset + 140)?;
-    assert_that!("block 3", node.unk164 == BLOCK_EMPTY, *offset + 164)?;
-    assert_that!("field 188", node.zero188 == 0, *offset + 188)?;
-    assert_that!("field 192", node.zero192 == 0, *offset + 192)?;
-    assert_that!("field 196", node.unk196 == 0, *offset + 196)?;
-    assert_that!("field 200", node.zero200 == 0, *offset + 200)?;
-    assert_that!("field 204", node.zero204 == 0, *offset + 204)?;
+    assert_node_info_zero(node, *offset)?;
     *offset += NodeC::SIZE;
     Ok(())
 }
