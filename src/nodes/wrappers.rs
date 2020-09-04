@@ -6,13 +6,13 @@ pub struct Wrapper<T> {
     pub children_count: u32,
 }
 
-pub enum WrappedNode {
+pub enum WrappedNode<T> {
     Camera(Camera),
     Display(Display),
     Empty(Empty),
     Light(Light),
     Lod(Wrapper<Lod>),
-    Object3d(Wrapper<Object3d>),
+    Object3d(Wrapper<Object3d<T>>),
     Window(Window),
     World(Wrapper<World>),
 }

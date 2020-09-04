@@ -3,7 +3,8 @@ use crate::io_ext::{ReadHelper, WriteHelper};
 use crate::materials::{read_material, write_material, RawMaterial, TexturedMaterial};
 use crate::mesh::{read_mesh_data, read_mesh_info, write_mesh_data, write_mesh_info, Mesh};
 use crate::nodes::{
-    read_node_data, read_node_info_mechlib, write_node_data, write_node_info, Node, WrappedNode,
+    read_node_data, read_node_info_mechlib, write_node_data, write_node_info, Node as BaseNode,
+    WrappedNode,
 };
 use crate::{assert_that, Result};
 use ::serde::{Deserialize, Serialize};
@@ -13,6 +14,9 @@ pub type Material = crate::materials::Material;
 
 const VERSION: u32 = 27;
 const FORMAT: u32 = 1;
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Node(BaseNode<Node>);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Model {
@@ -125,7 +129,7 @@ where
                 .map(|_| read_node_and_mesh(read, offset, meshes))
                 .collect::<Result<Vec<_>>>()?;
 
-            Ok(Node::Object3d(object3d))
+            Ok(Node(BaseNode::Object3d(object3d)))
         }
         _ => Err(AssertionError("Expected only Object3d nodes in mechlib".to_owned()).into()),
     }
@@ -151,10 +155,10 @@ fn write_node_and_mesh<W>(
 where
     W: Write,
 {
-    write_node_info(write, node)?;
-    write_node_data(write, node)?;
-    match node {
-        Node::Object3d(object3d) => {
+    write_node_info(write, &node.0)?;
+    write_node_data(write, &node.0)?;
+    match &node.0 {
+        BaseNode::Object3d(object3d) => {
             if object3d.mesh_index != 0 {
                 let mesh = &meshes[*mesh_index];
                 write_mesh_info(write, mesh)?;

@@ -107,7 +107,7 @@ pub struct Transformation {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Object3d {
+pub struct Object3d<T> {
     pub name: String,
     pub transformation: Option<Transformation>,
     pub matrix_signs: u32,
@@ -117,7 +117,7 @@ pub struct Object3d {
     pub area_partition: AreaPartition,
     pub mesh_index: i32,
     pub parent: Option<u32>,
-    pub children: Vec<Node>,
+    pub children: Vec<T>,
 
     pub data_ptr: u32,
     pub parent_array_ptr: u32,
@@ -161,13 +161,13 @@ pub struct World {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum Node {
+pub enum Node<T> {
     Camera(Camera),
     Display(Display),
     Empty(Empty),
     Light(Light),
     Lod(Lod),
-    Object3d(Object3d),
+    Object3d(Object3d<T>),
     Window(Window),
     World(World),
 }

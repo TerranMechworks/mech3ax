@@ -11,7 +11,7 @@ use std::io::{Read, Write};
 
 pub type Material = crate::materials::Material;
 pub type Mesh = crate::mesh::Mesh;
-pub type Node = crate::nodes::Node;
+pub type Node = crate::nodes::Node<u32>;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Metadata {

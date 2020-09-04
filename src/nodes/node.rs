@@ -197,11 +197,11 @@ where
     }
 }
 
-pub fn read_node_data<R>(
+pub fn read_node_data<R, T>(
     read: &mut R,
     offset: &mut u32,
     variant: NodeVariant,
-) -> Result<WrappedNode>
+) -> Result<WrappedNode<T>>
 where
     R: Read,
 {
@@ -273,7 +273,7 @@ where
     Ok(())
 }
 
-pub fn write_node_info<W>(write: &mut W, node: &Node) -> Result<()>
+pub fn write_node_info<W, T>(write: &mut W, node: &Node<T>) -> Result<()>
 where
     W: Write,
 {
@@ -313,7 +313,7 @@ where
     }
 }
 
-pub fn write_node_data<W>(write: &mut W, node: &Node) -> Result<()>
+pub fn write_node_data<W, T>(write: &mut W, node: &Node<T>) -> Result<()>
 where
     W: Write,
 {
@@ -329,7 +329,7 @@ where
     }
 }
 
-pub fn size_node(node: &Node) -> u32 {
+pub fn size_node<T>(node: &Node<T>) -> u32 {
     match node {
         Node::Camera(_) => camera::size(),
         Node::Empty(_) => empty::size(),

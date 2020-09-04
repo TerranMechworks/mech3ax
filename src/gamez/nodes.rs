@@ -7,7 +7,7 @@ use crate::nodes::{
 use crate::{assert_that, Result};
 use std::io::{Read, Write};
 
-pub fn read_nodes<R>(read: &mut R, offset: &mut u32, array_size: u32) -> Result<Vec<Node>>
+pub fn read_nodes<R>(read: &mut R, offset: &mut u32, array_size: u32) -> Result<Vec<Node<u32>>>
 where
     R: Read,
 {
@@ -110,8 +110,7 @@ where
                     } else {
                         None
                     };
-                    /*object3d.children = */
-                    (0..wrapped_obj.children_count)
+                    object3d.children = (0..wrapped_obj.children_count)
                         .map(|_| {
                             let child = read.read_u32()?;
                             *offset += 4;
@@ -140,7 +139,7 @@ where
     Ok(nodes)
 }
 
-fn assert_area_partitions(nodes: &[Node], offset: u32) -> Result<()> {
+fn assert_area_partitions(nodes: &[Node<u32>], offset: u32) -> Result<()> {
     let (x_count, y_count) =
         if let Node::World(world) = nodes.first().expect("Expected to have read some nodes") {
             (
@@ -168,7 +167,12 @@ fn assert_area_partitions(nodes: &[Node], offset: u32) -> Result<()> {
     Ok(())
 }
 
-pub fn write_nodes<W>(write: &mut W, nodes: &[Node], array_size: u32, offset: u32) -> Result<()>
+pub fn write_nodes<W>(
+    write: &mut W,
+    nodes: &[Node<u32>],
+    array_size: u32,
+    offset: u32,
+) -> Result<()>
 where
     W: Write,
 {
@@ -208,9 +212,8 @@ where
                 if let Some(parent) = object3d.parent {
                     write.write_u32(parent)?;
                 }
-                for _ in &object3d.children {
-                    // TODO: fixme
-                    write.write_u32(0xEFBEADDE)?;
+                for child in &object3d.children {
+                    write.write_u32(*child)?;
                 }
             }
             Node::World(world) => {

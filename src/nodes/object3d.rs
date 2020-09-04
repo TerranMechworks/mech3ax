@@ -25,6 +25,7 @@ struct Object3dC {
 }
 static_assert_size!(Object3dC, 144);
 
+#[allow(clippy::collapsible_if)]
 pub fn assert_variants(
     node: NodeVariants,
     offset: u32,
@@ -99,7 +100,11 @@ fn assert_object3d(object3d: Object3dC, offset: u32) -> Result<Option<Transforma
     Ok(transformation)
 }
 
-pub fn read<R>(read: &mut R, node: NodeVariants, offset: &mut u32) -> Result<Wrapper<Object3d>>
+pub fn read<R, T>(
+    read: &mut R,
+    node: NodeVariants,
+    offset: &mut u32,
+) -> Result<Wrapper<Object3d<T>>>
 where
     R: Read,
 {
@@ -133,7 +138,7 @@ where
     })
 }
 
-pub fn make_variants(object3d: &Object3d) -> NodeVariants {
+pub fn make_variants<T>(object3d: &Object3d<T>) -> NodeVariants {
     let flags = NodeBitFlags::from(&object3d.flags);
     NodeVariants {
         name: object3d.name.clone(),
@@ -154,7 +159,7 @@ pub fn make_variants(object3d: &Object3d) -> NodeVariants {
     }
 }
 
-pub fn write<W>(write: &mut W, object3d: &Object3d) -> Result<()>
+pub fn write<W, T>(write: &mut W, object3d: &Object3d<T>) -> Result<()>
 where
     W: Write,
 {
@@ -189,7 +194,7 @@ where
     Ok(())
 }
 
-pub fn size(object3d: &Object3d) -> u32 {
+pub fn size<T>(object3d: &Object3d<T>) -> u32 {
     let parent_size = if object3d.parent.is_some() { 4 } else { 0 };
     Object3dC::SIZE + parent_size + 4 * object3d.children.len() as u32
 }
