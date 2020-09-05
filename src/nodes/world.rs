@@ -3,7 +3,7 @@ use super::math::partition_diag;
 use super::range::Range;
 use super::types::{Area, NodeVariant, NodeVariants, Partition, World, BLOCK_EMPTY, ZONE_DEFAULT};
 use super::wrappers::Wrapper;
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::size::ReprSize;
 use crate::types::{Vec2, Vec3};
 use crate::{assert_that, static_assert_size, Result};
@@ -115,7 +115,7 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     ))
 }
 
-fn read_partition<R>(read: &mut R, offset: &mut u32, x: i32, y: i32) -> Result<Partition>
+fn read_partition<R>(read: &mut CountingReader<R>, x: i32, y: i32) -> Result<Partition>
 where
     R: Read,
 {
@@ -123,30 +123,34 @@ where
     let xf = x as f32;
     let yf = y as f32;
 
-    assert_that!("partition field 00", partition.flags == 0x100, *offset + 0)?;
-    assert_that!("partition field 04", partition.mone04 == -1, *offset + 4)?;
+    assert_that!(
+        "partition field 00",
+        partition.flags == 0x100,
+        read.prev + 0
+    )?;
+    assert_that!("partition field 04", partition.mone04 == -1, read.prev + 4)?;
 
-    assert_that!("partition field 56", partition.zero56 == 0, *offset + 56)?;
-    assert_that!("partition field 64", partition.zero64 == 0, *offset + 64)?;
-    assert_that!("partition field 68", partition.zero68 == 0, *offset + 68)?;
+    assert_that!("partition field 56", partition.zero56 == 0, read.prev + 56)?;
+    assert_that!("partition field 64", partition.zero64 == 0, read.prev + 64)?;
+    assert_that!("partition field 68", partition.zero68 == 0, read.prev + 68)?;
 
-    assert_that!("partition x", partition.part_x == xf, *offset + 8)?;
-    assert_that!("partition y", partition.part_y == yf, *offset + 12)?;
+    assert_that!("partition x", partition.part_x == xf, read.prev + 8)?;
+    assert_that!("partition y", partition.part_y == yf, read.prev + 12)?;
 
-    assert_that!("partition field 16", partition.unk16 == xf, *offset + 16)?;
+    assert_that!("partition field 16", partition.unk16 == xf, read.prev + 16)?;
     // unk20
     assert_that!(
         "partition field 24",
         partition.unk24 == yf - 256.0,
-        *offset + 24
+        read.prev + 24
     )?;
     assert_that!(
         "partition field 28",
         partition.unk28 == xf + 256.0,
-        *offset + 28
+        read.prev + 28
     )?;
     // unk32
-    assert_that!("partition field 36", partition.unk36 == yf, *offset + 36)?;
+    assert_that!("partition field 36", partition.unk36 == yf, read.prev + 36)?;
 
     // this is set through an extremely convoluted calculation starting with:
     //   unk40 = unk16 + (unk28 - unk16) * 0.5
@@ -155,7 +159,7 @@ where
     assert_that!(
         "partition field 40",
         partition.unk40 == xf + 128.0,
-        *offset + 40
+        read.prev + 40
     )?;
 
     // this is set through an extremely convoluted calculation starting with:
@@ -165,7 +169,7 @@ where
     // all values, but some are ever so slightly off (lowest bits in the
     // single precision floating point numbers differ), so i suspect this
     // calculation is more complicated.
-    // assert_that!("partition field 44", partition.unk44 == expected, *offset + 44)?;
+    // assert_that!("partition field 44", partition.unk44 == expected, read.prev + 44)?;
 
     // this is set through an extremely convoluted calculation starting with:
     //   unk48 = unk24 + (unk36 - unk24) * 0.5
@@ -174,7 +178,7 @@ where
     assert_that!(
         "partition field 48",
         partition.unk48 == yf - 128.0,
-        *offset + 48
+        read.prev + 48
     )?; // two[2]
 
     // this is set through an extremely convoluted calculation starting with:
@@ -189,25 +193,19 @@ where
     assert_that!(
         "partition field 52",
         partition.unk52 == expected,
-        *offset + 52
+        read.prev + 52
     )?;
 
     let unk = Vec3(partition.unk20, partition.unk32, partition.unk44);
 
     let nodes = if partition.count == 0 {
-        assert_that!("partition ptr", partition.ptr == 0, *offset + 60)?;
-        *offset += PartitionC::SIZE;
+        assert_that!("partition ptr", partition.ptr == 0, read.prev + 60)?;
         Vec::new()
     } else {
-        assert_that!("partition ptr", partition.ptr != 0, *offset + 60)?;
-        *offset += PartitionC::SIZE;
+        assert_that!("partition ptr", partition.ptr != 0, read.prev + 60)?;
         (0..partition.count)
-            .map(|_| {
-                let node = read.read_u32()?;
-                *offset += 4;
-                Ok(node)
-            })
-            .collect::<Result<Vec<_>>>()?
+            .map(|_| read.read_u32())
+            .collect::<std::io::Result<Vec<_>>>()?
     };
 
     Ok(Partition {
@@ -220,8 +218,7 @@ where
 }
 
 fn read_partitions<R>(
-    read: &mut R,
-    offset: &mut u32,
+    read: &mut CountingReader<R>,
     area_x: Range,
     area_y: Range,
 ) -> Result<Vec<Vec<Partition>>>
@@ -232,7 +229,7 @@ where
         .map(|y| {
             area_x
                 .clone()
-                .map(|x| read_partition(read, offset, x, y))
+                .map(|x| read_partition(read, x, y))
                 .collect::<Result<Vec<_>>>()
         })
         .collect::<Result<Vec<_>>>()
@@ -407,25 +404,22 @@ fn assert_world(world: &WorldC, offset: u32) -> Result<(Area, Range, Range, bool
 }
 
 pub fn read<R>(
-    read: &mut R,
+    read: &mut CountingReader<R>,
     data_ptr: u32,
     children_count: u32,
     children_array_ptr: u32,
-    offset: &mut u32,
 ) -> Result<Wrapper<World>>
 where
     R: Read,
 {
     let world: WorldC = read.read_struct()?;
-    let (area, area_x, area_y, fudge_count) = assert_world(&world, *offset)?;
-    *offset += WorldC::SIZE;
+    let (area, area_x, area_y, fudge_count) = assert_world(&world, read.prev)?;
 
     // read as a result of world.children_count (always 1, not node.children_count!)
     let world_child_value = read.read_u32()?;
-    *offset += 4;
     // read as a result of world.zero172 (always 0, i.e. nothing to do)
 
-    let partitions = read_partitions(read, offset, area_x, area_y)?;
+    let partitions = read_partitions(read, area_x, area_y)?;
 
     let wrapped = World {
         area,

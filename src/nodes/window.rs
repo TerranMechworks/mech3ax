@@ -1,7 +1,7 @@
 use super::flags::NodeBitFlags;
 use super::types::{NodeVariant, NodeVariants, Window, BLOCK_EMPTY, ZONE_DEFAULT};
 use crate::assert::assert_all_zero;
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::size::ReprSize;
 use crate::{assert_that, static_assert_size, Result};
 use std::io::{Read, Write};
@@ -52,21 +52,20 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     Ok(NodeVariant::Window(node.data_ptr))
 }
 
-pub fn read<R>(read: &mut R, data_ptr: u32, offset: &mut u32) -> Result<Window>
+pub fn read<R>(read: &mut CountingReader<R>, data_ptr: u32) -> Result<Window>
 where
     R: Read,
 {
     let window: WindowC = read.read_struct()?;
-    assert_that!("origin x", window.origin_x == 0, *offset + 0)?;
-    assert_that!("origin y", window.origin_y == 0, *offset + 4)?;
-    assert_that!("resolution", window.resolution == (320, 200), *offset + 8)?;
-    assert_all_zero("field 016", *offset + 16, &window.zero016)?;
-    assert_that!("buffer index", window.buffer_index == -1, *offset + 228)?;
-    assert_that!("buffer ptr", window.buffer_ptr == 0, *offset + 232)?;
-    assert_that!("zero236", window.zero236 == 0, *offset + 236)?;
-    assert_that!("zero240", window.zero240 == 0, *offset + 240)?;
-    assert_that!("zero244", window.zero244 == 0, *offset + 244)?;
-    *offset += WindowC::SIZE;
+    assert_that!("origin x", window.origin_x == 0, read.prev + 0)?;
+    assert_that!("origin y", window.origin_y == 0, read.prev + 4)?;
+    assert_that!("resolution", window.resolution == (320, 200), read.prev + 8)?;
+    assert_all_zero("field 016", read.prev + 16, &window.zero016)?;
+    assert_that!("buffer index", window.buffer_index == -1, read.prev + 228)?;
+    assert_that!("buffer ptr", window.buffer_ptr == 0, read.prev + 232)?;
+    assert_that!("zero236", window.zero236 == 0, read.prev + 236)?;
+    assert_that!("zero240", window.zero240 == 0, read.prev + 240)?;
+    assert_that!("zero244", window.zero244 == 0, read.prev + 244)?;
 
     Ok(Window {
         resolution: window.resolution,

@@ -3,7 +3,7 @@ use crate::image::{
     pal8to888, pal8to888a, rgb565to888, rgb565to888a, rgb888ato565, rgb888atopal8, rgb888to565,
     rgb888topal8, simple_alpha,
 };
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::serde::opt_base64;
 use crate::size::ReprSize;
 use crate::string::{str_from_c_padded, str_to_c_padded};
@@ -146,18 +146,16 @@ fn convert_info_from_c(name: String, tex_info: Info, offset: u32) -> Result<Text
 }
 
 fn read_texture<R>(
-    read: &mut R,
+    read: &mut CountingReader<R>,
     name: String,
-    offset: &mut u32,
 ) -> Result<(TextureInfo, DynamicImage)>
 where
     R: Read,
 {
     let tex_info: Info = read.read_struct()?;
-    assert_that!("field 08", tex_info.zero08 == 0, *offset + 8)?;
+    assert_that!("field 08", tex_info.zero08 == 0, read.prev + 8)?;
     let palette_count = tex_info.palette_count;
-    let mut info = convert_info_from_c(name, tex_info, *offset)?;
-    *offset += Info::SIZE;
+    let mut info = convert_info_from_c(name, tex_info, read.prev + 0)?;
 
     let width = info.width as u32;
     let height = info.height as u32;
@@ -167,7 +165,6 @@ where
     let image = if palette_count == 0 {
         let mut image_data = vec![0u8; size * 2];
         read.read_exact(&mut image_data)?;
-        *offset += size32 * 2;
 
         let alpha_data = if info.alpha == TextureAlpha::Simple {
             Some(simple_alpha(&image_data))
@@ -178,7 +175,6 @@ where
         let alpha_data = if info.alpha == TextureAlpha::Full {
             let mut buf = vec![0; size];
             read.read_exact(&mut buf)?;
-            *offset += size32;
             Some(buf)
         } else {
             alpha_data
@@ -194,12 +190,10 @@ where
     } else {
         let mut index_data = vec![0u8; size];
         read.read_exact(&mut index_data)?;
-        *offset += size32;
 
         let alpha_data = if info.alpha == TextureAlpha::Full {
             let mut buf = vec![0; size];
             read.read_exact(&mut buf)?;
-            *offset += size32;
             Some(buf)
         } else {
             // palette images never seem to have simple alpha. even if they did, how
@@ -210,7 +204,6 @@ where
 
         let mut palette_data = vec![0u8; palette_count as usize * 2];
         read.read_exact(&mut palette_data)?;
-        *offset += palette_count as u32 * 2;
         let palette_data = rgb565to888(&palette_data);
 
         let image = if let Some(alpha) = alpha_data {
@@ -233,7 +226,7 @@ fn assert_upcast<T>(result: std::result::Result<T, AssertionError>) -> Result<T>
 }
 
 pub fn read_textures<R, F, E>(
-    read: &mut R,
+    read: &mut CountingReader<R>,
     mut save_texture: F,
 ) -> std::result::Result<Vec<TextureInfo>, E>
 where
@@ -242,29 +235,35 @@ where
     E: From<std::io::Error> + From<Error>,
 {
     let header: Header = read.read_struct()?;
-    assert_upcast(assert_that!("field 00", header.zero00 == 0, 0))?;
-    assert_upcast(assert_that!("has entries", header.has_entries == 1, 4))?;
+    assert_upcast(assert_that!("field 00", header.zero00 == 0, read.prev + 0))?;
+    assert_upcast(assert_that!(
+        "has entries",
+        header.has_entries == 1,
+        read.prev + 4
+    ))?;
     // global palette support isn't implemented (never seen)
     assert_upcast(assert_that!(
         "global palette count",
         header.global_palette_count == 0,
         8
     ))?;
-    assert_upcast(assert_that!("texture count", header.texture_count > 0, 12))?;
-    assert_upcast(assert_that!("field 16", header.zero16 == 0, 16))?;
-    assert_upcast(assert_that!("field 20", header.zero20 == 0, 20))?;
+    assert_upcast(assert_that!(
+        "texture count",
+        header.texture_count > 0,
+        read.prev + 12
+    ))?;
+    assert_upcast(assert_that!("field 16", header.zero16 == 0, read.prev + 16))?;
+    assert_upcast(assert_that!("field 20", header.zero20 == 0, read.prev + 20))?;
 
-    let mut offset = Header::SIZE;
     let tex_table = (0..header.texture_count)
         .map(|_| {
             let entry: Entry = read.read_struct()?;
             assert_that!(
                 "global palette index",
                 entry.palette_index == -1,
-                offset + 36
+                read.prev + 36
             )?;
-            let name = assert_utf8("name", offset, || str_from_c_padded(&entry.name))?;
-            offset += Entry::SIZE;
+            let name = assert_utf8("name", read.prev + 0, || str_from_c_padded(&entry.name))?;
             Ok((name, entry.start_offset))
         })
         .collect::<Result<Vec<_>>>()?;
@@ -274,10 +273,10 @@ where
         .map(|(name, start_offset)| {
             assert_upcast(assert_that!(
                 "texture offset",
-                start_offset == offset,
-                offset
+                start_offset == read.offset,
+                read.offset
             ))?;
-            let (info, image) = read_texture(read, name, &mut offset)?;
+            let (info, image) = read_texture(read, name)?;
             save_texture(&info.name, image)?;
             Ok(info)
         })

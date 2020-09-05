@@ -1,4 +1,4 @@
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::materials::{
     read_material, read_materials_zero, write_material, write_materials_zero, CycleData, Material,
     RawMaterial, TexturedMaterial, MATERIAL_C_SIZE,
@@ -29,8 +29,7 @@ struct CycleInfoC {
 static_assert_size!(CycleInfoC, 28);
 
 fn read_cycle<R>(
-    read: &mut R,
-    offset: &mut u32,
+    read: &mut CountingReader<R>,
     material: RawMaterial,
     textures: &[String],
 ) -> Result<Material>
@@ -40,23 +39,21 @@ where
     Ok(match material {
         RawMaterial::Textured(mat) => {
             let texture_index = mat.pointer as usize;
-            assert_that!("texture index", texture_index < textures.len(), *offset)?;
+            assert_that!("texture index", texture_index < textures.len(), read.offset)?;
             let texture = textures[texture_index].clone();
 
             let cycle = if let Some(info_ptr) = mat.cycle_ptr {
                 let info: CycleInfoC = read.read_struct()?;
-                let unk00 = assert_that!("field 00", bool info.unk00, *offset + 0)?;
-                assert_that!("field 08", info.zero08 == 0, *offset + 8)?;
-                assert_that!("field 12", 2.0 <= info.unk12 <= 16.0, *offset + 12)?;
-                assert_that!("cycle count", info.count1 == info.count2, *offset + 20)?;
-                assert_that!("cycle data ptr", info.data_ptr != 0, *offset + 24)?;
-                *offset += CycleInfoC::SIZE;
+                let unk00 = assert_that!("field 00", bool info.unk00, read.prev + 0)?;
+                assert_that!("field 08", info.zero08 == 0, read.prev + 8)?;
+                assert_that!("field 12", 2.0 <= info.unk12 <= 16.0, read.prev + 12)?;
+                assert_that!("cycle count", info.count1 == info.count2, read.prev + 20)?;
+                assert_that!("cycle data ptr", info.data_ptr != 0, read.prev + 24)?;
 
                 let textures = (0..info.count1)
                     .map(|_| {
                         let texture_index = read.read_u32()? as usize;
-                        assert_that!("texture index", texture_index < textures.len(), *offset)?;
-                        *offset += 4;
+                        assert_that!("texture index", texture_index < textures.len(), read.prev)?;
                         let texture = textures[texture_index].clone();
                         Ok(texture)
                     })
@@ -88,19 +85,21 @@ where
 }
 
 pub fn read_materials<R>(
-    read: &mut R,
-    offset: &mut u32,
+    read: &mut CountingReader<R>,
     textures: &[String],
 ) -> Result<(Vec<Material>, i16)>
 where
     R: Read,
 {
     let info: MaterialInfoC = read.read_struct()?;
-    assert_that!("mat array size", 0 <= info.array_size <= i16::MAX as i32, *offset + 0)?;
-    assert_that!("mat count", 0 <= info.count <= info.array_size, *offset + 0)?;
-    assert_that!("mat index max", info.index_max == info.count, *offset + 8)?;
-    assert_that!("mat field 12", info.unknown == info.count - 1, *offset + 12)?;
-    *offset += MaterialInfoC::SIZE;
+    assert_that!("mat array size", 0 <= info.array_size <= i16::MAX as i32, read.prev + 0)?;
+    assert_that!("mat count", 0 <= info.count <= info.array_size, read.prev + 0)?;
+    assert_that!("mat index max", info.index_max == info.count, read.prev + 8)?;
+    assert_that!(
+        "mat field 12",
+        info.unknown == info.count - 1,
+        read.prev + 12
+    )?;
 
     let count = info.count as i16;
     let array_size = info.array_size as i16;
@@ -108,34 +107,32 @@ where
     // read materials without cycle data
     let materials = (0..count)
         .map(|index| {
-            let material = read_material(read, offset)?;
+            let material = read_material(read)?;
 
             let mut expected_index1 = index + 1;
             if expected_index1 >= count {
                 expected_index1 = -1;
             }
             let actual_index1 = read.read_i16()?;
-            assert_that!("mat index 1", actual_index1 == expected_index1, *offset)?;
-            *offset += 2;
+            assert_that!("mat index 1", actual_index1 == expected_index1, read.prev)?;
 
             let mut expected_index2 = index - 1;
             if expected_index2 < 0 {
                 expected_index2 = -1;
             }
             let actual_index2 = read.read_i16()?;
-            assert_that!("mat index 2", actual_index2 == expected_index2, *offset)?;
-            *offset += 2;
+            assert_that!("mat index 2", actual_index2 == expected_index2, read.prev)?;
 
             Ok(material)
         })
         .collect::<Result<Vec<_>>>()?;
 
-    read_materials_zero(read, offset, count, array_size)?;
+    read_materials_zero(read, count, array_size)?;
 
     // now read cycle data
     let materials = materials
         .into_iter()
-        .map(|material| read_cycle(read, offset, material, textures))
+        .map(|material| read_cycle(read, material, textures))
         .collect::<Result<Vec<_>>>()?;
 
     Ok((materials, array_size))

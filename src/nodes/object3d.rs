@@ -3,7 +3,7 @@ use super::math::{apply_zero_signs, euler_to_matrix, extract_zero_signs, PI};
 use super::types::{NodeVariant, NodeVariants, Object3d, Transformation, ZONE_DEFAULT};
 use super::wrappers::Wrapper;
 use crate::assert::assert_all_zero;
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::size::ReprSize;
 use crate::types::{Matrix, Vec3};
 use crate::{assert_that, static_assert_size, Result};
@@ -100,18 +100,13 @@ fn assert_object3d(object3d: Object3dC, offset: u32) -> Result<Option<Transforma
     Ok(transformation)
 }
 
-pub fn read<R, T>(
-    read: &mut R,
-    node: NodeVariants,
-    offset: &mut u32,
-) -> Result<Wrapper<Object3d<T>>>
+pub fn read<R, T>(read: &mut CountingReader<R>, node: NodeVariants) -> Result<Wrapper<Object3d<T>>>
 where
     R: Read,
 {
     let object3dc: Object3dC = read.read_struct()?;
     let matrix_signs = extract_zero_signs(&object3dc.matrix);
-    let transformation = assert_object3d(object3dc, *offset)?;
-    *offset += Object3dC::SIZE;
+    let transformation = assert_object3d(object3dc, read.prev)?;
 
     let wrapped = Object3d {
         name: node.name,

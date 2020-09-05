@@ -1,5 +1,5 @@
 use crate::assert::AssertionError;
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::size::ReprSize;
 use crate::{assert_that, static_assert_size, Result};
 use ::serde::{Deserialize, Serialize};
@@ -87,7 +87,7 @@ bitflags::bitflags! {
     }
 }
 
-pub fn read_material<R>(read: &mut R, offset: &mut u32) -> Result<RawMaterial>
+pub fn read_material<R>(read: &mut CountingReader<R>) -> Result<RawMaterial>
 where
     R: Read,
 {
@@ -96,7 +96,7 @@ where
         AssertionError(format!(
             "Expected valid flag, but was {:X} (at {})",
             material.flags,
-            *offset + 1
+            read.prev + 1
         ))
     })?;
 
@@ -105,28 +105,27 @@ where
     let flag_always = bitflags.contains(MaterialFlags::ALWAYS);
     let flag_free = bitflags.contains(MaterialFlags::FREE);
 
-    assert_that!("flag always", flag_always == true, *offset + 1)?;
-    assert_that!("flag free", flag_free == false, *offset + 1)?;
+    assert_that!("flag always", flag_always == true, read.prev + 1)?;
+    assert_that!("flag free", flag_free == false, read.prev + 1)?;
 
-    assert_that!("field 20", material.unk20 == 0.0, *offset + 20)?;
-    assert_that!("field 24", material.unk24 == 0.5, *offset + 24)?;
-    assert_that!("field 28", material.unk28 == 0.5, *offset + 28)?;
+    assert_that!("field 20", material.unk20 == 0.0, read.prev + 20)?;
+    assert_that!("field 24", material.unk24 == 0.5, read.prev + 24)?;
+    assert_that!("field 28", material.unk28 == 0.5, read.prev + 28)?;
 
     let material = if bitflags.contains(MaterialFlags::TEXTURED) {
-        assert_that!("field 00", material.unk00 == 0xFF, *offset + 0)?;
-        assert_that!("rgb", material.rgb == 0x7FFF, *offset + 2)?;
-        assert_that!("color r", material.red == 255.0, *offset + 4)?;
-        assert_that!("color g", material.green == 255.0, *offset + 8)?;
-        assert_that!("color b", material.blue == 255.0, *offset + 12)?;
+        assert_that!("field 00", material.unk00 == 0xFF, read.prev + 0)?;
+        assert_that!("rgb", material.rgb == 0x7FFF, read.prev + 2)?;
+        assert_that!("color r", material.red == 255.0, read.prev + 4)?;
+        assert_that!("color g", material.green == 255.0, read.prev + 8)?;
+        assert_that!("color b", material.blue == 255.0, read.prev + 12)?;
 
         let cycle_ptr = if flag_cycled {
             Some(material.cycle_ptr)
         } else {
-            assert_that!("cycle ptr", material.cycle_ptr == 0, *offset + 36)?;
+            assert_that!("cycle ptr", material.cycle_ptr == 0, read.prev + 36)?;
             None
         };
 
-        *offset += MaterialC::SIZE;
         RawMaterial::Textured(RawTexturedMaterial {
             pointer: material.pointer,
             cycle_ptr,
@@ -134,13 +133,12 @@ where
             flag: flag_unknown,
         })
     } else {
-        assert_that!("flag unknown", flag_unknown == false, *offset + 1)?;
-        assert_that!("flag cycled", flag_cycled == false, *offset + 1)?;
-        assert_that!("rgb", material.rgb == 0x0000, *offset + 2)?;
-        assert_that!("pointer", material.pointer == 0, *offset + 16)?;
-        assert_that!("cycle ptr", material.cycle_ptr == 0, *offset + 36)?;
+        assert_that!("flag unknown", flag_unknown == false, read.prev + 1)?;
+        assert_that!("flag cycled", flag_cycled == false, read.prev + 1)?;
+        assert_that!("rgb", material.rgb == 0x0000, read.prev + 2)?;
+        assert_that!("pointer", material.pointer == 0, read.prev + 16)?;
+        assert_that!("cycle ptr", material.cycle_ptr == 0, read.prev + 36)?;
 
-        *offset += MaterialC::SIZE;
         RawMaterial::Colored(ColoredMaterial {
             color: (material.red, material.green, material.blue),
             unk00: material.unk00,
@@ -204,45 +202,42 @@ where
     Ok(())
 }
 
-pub fn read_materials_zero<R>(read: &mut R, offset: &mut u32, start: i16, end: i16) -> Result<()>
+pub fn read_materials_zero<R>(read: &mut CountingReader<R>, start: i16, end: i16) -> Result<()>
 where
     R: Read,
 {
     for index in start..end {
         let material: MaterialC = read.read_struct()?;
-        assert_that!("field 00", material.unk00 == 0, *offset + 0)?;
+        assert_that!("field 00", material.unk00 == 0, read.prev + 0)?;
         assert_that!(
             "flag",
             material.flags == MaterialFlags::FREE.bits(),
-            *offset + 1
+            read.prev + 1
         )?;
-        assert_that!("rgb", material.rgb == 0x0000, *offset + 2)?;
-        assert_that!("color r", material.red == 0.0, *offset + 4)?;
-        assert_that!("color g", material.green == 0.0, *offset + 8)?;
-        assert_that!("color b", material.blue == 0.0, *offset + 12)?;
-        assert_that!("pointer", material.pointer == 0, *offset + 16)?;
-        assert_that!("field 20", material.unk20 == 0.0, *offset + 20)?;
-        assert_that!("field 24", material.unk24 == 0.0, *offset + 24)?;
-        assert_that!("field 28", material.unk28 == 0.0, *offset + 28)?;
-        assert_that!("field 32", material.unk32 == 0, *offset + 32)?;
-        assert_that!("cycle ptr", material.cycle_ptr == 0, *offset + 36)?;
-        *offset += MaterialC::SIZE;
+        assert_that!("rgb", material.rgb == 0x0000, read.prev + 2)?;
+        assert_that!("color r", material.red == 0.0, read.prev + 4)?;
+        assert_that!("color g", material.green == 0.0, read.prev + 8)?;
+        assert_that!("color b", material.blue == 0.0, read.prev + 12)?;
+        assert_that!("pointer", material.pointer == 0, read.prev + 16)?;
+        assert_that!("field 20", material.unk20 == 0.0, read.prev + 20)?;
+        assert_that!("field 24", material.unk24 == 0.0, read.prev + 24)?;
+        assert_that!("field 28", material.unk28 == 0.0, read.prev + 28)?;
+        assert_that!("field 32", material.unk32 == 0, read.prev + 32)?;
+        assert_that!("cycle ptr", material.cycle_ptr == 0, read.prev + 36)?;
 
         let mut expected_index1 = index - 1;
         if expected_index1 < start {
             expected_index1 = -1;
         }
         let actual_index1 = read.read_i16()?;
-        assert_that!("mat index 1", actual_index1 == expected_index1, *offset)?;
-        *offset += 2;
+        assert_that!("mat index 1", actual_index1 == expected_index1, read.prev)?;
 
         let mut expected_index2 = index + 1;
         if expected_index2 >= end {
             expected_index2 = -1;
         }
         let actual_index2 = read.read_i16()?;
-        assert_that!("mat index 2", actual_index2 == expected_index2, *offset)?;
-        *offset += 2;
+        assert_that!("mat index 2", actual_index2 == expected_index2, read.prev)?;
     }
     Ok(())
 }

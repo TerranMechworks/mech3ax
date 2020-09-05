@@ -1,5 +1,5 @@
 use crate::assert::AssertionError;
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::materials::{read_material, write_material, RawMaterial, TexturedMaterial};
 use crate::mesh::{read_mesh_data, read_mesh_info, write_mesh_data, write_mesh_info, Mesh};
 use crate::nodes::{
@@ -24,21 +24,21 @@ pub struct Model {
     meshes: Vec<Mesh>,
 }
 
-pub fn read_version<R>(read: &mut R) -> Result<()>
+pub fn read_version<R>(read: &mut CountingReader<R>) -> Result<()>
 where
     R: Read,
 {
     let version = read.read_u32()?;
-    assert_that!("version", version == VERSION, 0)?;
+    assert_that!("version", version == VERSION, read.prev)?;
     read.assert_end()
 }
 
-pub fn read_format<R>(read: &mut R) -> Result<()>
+pub fn read_format<R>(read: &mut CountingReader<R>) -> Result<()>
 where
     R: Read,
 {
     let format = read.read_u32()?;
-    assert_that!("format", format == FORMAT, 0)?;
+    assert_that!("format", format == FORMAT, read.prev)?;
     read.assert_end()
 }
 
@@ -58,22 +58,20 @@ where
     Ok(())
 }
 
-pub fn read_materials<R>(read: &mut R) -> Result<Vec<Material>>
+pub fn read_materials<R>(read: &mut CountingReader<R>) -> Result<Vec<Material>>
 where
     R: Read,
 {
     let count = read.read_u32()?;
-    let mut offset = 0;
     let materials = (0..count)
         .map(|_| {
-            let prev = offset;
-            let material = read_material(read, &mut offset)?;
+            let material = read_material(read)?;
             Ok(match material {
                 RawMaterial::Textured(mat) => {
                     // mechlib materials cannot have cycled textures
-                    assert_that!("cycle ptr", mat.cycle_ptr == None, prev + 36)?;
+                    assert_that!("cycle ptr", mat.cycle_ptr == None, read.prev + 36)?;
                     // mechlib materials store the texture name immediately after
-                    let texture = read.read_string(&mut offset)?;
+                    let texture = read.read_string()?;
                     Material::Textured(TexturedMaterial {
                         texture,
                         pointer: mat.pointer,
@@ -107,17 +105,17 @@ where
     Ok(())
 }
 
-fn read_node_and_mesh<R>(read: &mut R, offset: &mut u32, meshes: &mut Vec<Mesh>) -> Result<Node>
+fn read_node_and_mesh<R>(read: &mut CountingReader<R>, meshes: &mut Vec<Mesh>) -> Result<Node>
 where
     R: Read,
 {
-    let variant = read_node_info_mechlib(read, offset)?;
-    match read_node_data(read, offset, variant)? {
+    let variant = read_node_info_mechlib(read)?;
+    match read_node_data(read, variant)? {
         WrappedNode::Object3d(wrapped) => {
             let mut object3d = wrapped.wrapped;
             if object3d.mesh_index != 0 {
-                let wrapped_mesh = read_mesh_info(read, offset)?;
-                let mesh = read_mesh_data(read, offset, wrapped_mesh)?;
+                let wrapped_mesh = read_mesh_info(read)?;
+                let mesh = read_mesh_data(read, wrapped_mesh)?;
                 meshes.push(mesh);
             }
 
@@ -126,7 +124,7 @@ where
             object3d.parent = if wrapped.has_parent { Some(0) } else { None };
 
             object3d.children = (0..wrapped.children_count)
-                .map(|_| read_node_and_mesh(read, offset, meshes))
+                .map(|_| read_node_and_mesh(read, meshes))
                 .collect::<Result<Vec<_>>>()?;
 
             Ok(Node(BaseNode::Object3d(object3d)))
@@ -135,13 +133,12 @@ where
     }
 }
 
-pub fn read_model<R>(read: &mut R) -> Result<Model>
+pub fn read_model<R>(read: &mut CountingReader<R>) -> Result<Model>
 where
     R: Read,
 {
-    let mut offset = 0;
     let mut meshes = vec![];
-    let root = read_node_and_mesh(read, &mut offset, &mut meshes)?;
+    let root = read_node_and_mesh(read, &mut meshes)?;
     read.assert_end()?;
     Ok(Model { root, meshes })
 }

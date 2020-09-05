@@ -2,7 +2,7 @@ use super::flags::NodeBitFlags;
 use super::types::{Lod, NodeVariant, NodeVariants, BLOCK_EMPTY, ZONE_DEFAULT};
 use super::wrappers::Wrapper;
 use crate::assert::assert_all_zero;
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::size::ReprSize;
 use crate::types::Vec2;
 use crate::{assert_that, static_assert_size, Result};
@@ -73,13 +73,12 @@ fn assert_lod(lod: LodC, offset: u32) -> Result<(bool, Vec2, f32, Option<u32>)> 
     Ok((level, Vec2(range_near, lod.range_far), lod.unk60, unk76))
 }
 
-pub fn read<R>(read: &mut R, node: NodeVariants, offset: &mut u32) -> Result<Wrapper<Lod>>
+pub fn read<R>(read: &mut CountingReader<R>, node: NodeVariants) -> Result<Wrapper<Lod>>
 where
     R: Read,
 {
     let lod: LodC = read.read_struct()?;
-    let (level, range, unk60, unk76) = assert_lod(lod, *offset)?;
-    *offset += LodC::SIZE;
+    let (level, range, unk60, unk76) = assert_lod(lod, read.prev)?;
 
     let wrapped = Lod {
         name: node.name,

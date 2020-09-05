@@ -7,6 +7,7 @@ use mech3rs::messages::read_messages;
 use mech3rs::motion::read_motion;
 use mech3rs::reader::read_reader;
 use mech3rs::textures::read_textures;
+use mech3rs::CountingReader;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Cursor, Write};
 use zip::write::{FileOptions, ZipWriter};
@@ -38,13 +39,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 }
 
 pub(crate) fn sounds(opts: ZipOpts) -> Result<()> {
-    let mut input = BufReader::new(File::open(opts.input)?);
+    let mut input = CountingReader::new(BufReader::new(File::open(opts.input)?));
     let output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipWriter::new(output);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
 
-    let manifest: Result<_> = read_archive(&mut input, |name, data| {
+    let manifest: Result<_> = read_archive(&mut input, |name, data, _offset| {
         zip.start_file(name, options)?;
         zip.write_all(&data)?;
         Ok(())
@@ -59,7 +60,7 @@ pub(crate) fn sounds(opts: ZipOpts) -> Result<()> {
 }
 
 pub(crate) fn interp(opts: JsonOpts) -> Result<()> {
-    let mut input = BufReader::new(File::open(opts.input)?);
+    let mut input = CountingReader::new(BufReader::new(File::open(opts.input)?));
     let mut output = BufWriter::new(File::create(opts.output)?);
 
     let scripts = read_interp(&mut input)?;
@@ -69,15 +70,18 @@ pub(crate) fn interp(opts: JsonOpts) -> Result<()> {
 }
 
 pub(crate) fn reader(opts: ZipOpts) -> Result<()> {
-    let mut input = BufReader::new(File::open(opts.input)?);
+    let mut input = CountingReader::new(BufReader::new(File::open(opts.input)?));
     let output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipWriter::new(output);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
-    let manifest: Result<_> = read_archive(&mut input, |name, data| {
+    let manifest: Result<_> = read_archive(&mut input, |name, data, offset| {
         let name = name.replace(".zrd", ".json");
-        let root = read_reader(&mut Cursor::new(data))?;
+        let mut read = CountingReader::new(Cursor::new(data));
+        // translate to absolute offset
+        read.offset = offset;
+        let root = read_reader(&mut read)?;
         let data = serde_json::to_vec_pretty(&root)?;
 
         zip.start_file(name, options)?;
@@ -103,7 +107,7 @@ pub(crate) fn messages(opts: JsonOpts) -> Result<()> {
 }
 
 pub(crate) fn textures(opts: ZipOpts) -> Result<()> {
-    let mut input = BufReader::new(File::open(opts.input)?);
+    let mut input = CountingReader::new(BufReader::new(File::open(opts.input)?));
     let output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipWriter::new(output);
@@ -128,15 +132,18 @@ pub(crate) fn textures(opts: ZipOpts) -> Result<()> {
 }
 
 pub(crate) fn motion(opts: ZipOpts) -> Result<()> {
-    let mut input = BufReader::new(File::open(opts.input)?);
+    let mut input = CountingReader::new(BufReader::new(File::open(opts.input)?));
     let output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipWriter::new(output);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
-    let manifest: Result<_> = read_archive(&mut input, |name, data| {
+    let manifest: Result<_> = read_archive(&mut input, |name, data, offset| {
         let name = format!("{}.json", name);
-        let root = read_motion(&mut Cursor::new(data))?;
+        let mut read = CountingReader::new(Cursor::new(data));
+        // translate to absolute offset
+        read.offset = offset;
+        let root = read_motion(&mut read)?;
         let data = serde_json::to_vec_pretty(&root)?;
 
         zip.start_file(name, options)?;
@@ -153,18 +160,21 @@ pub(crate) fn motion(opts: ZipOpts) -> Result<()> {
 }
 
 pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
-    let mut input = BufReader::new(File::open(opts.input)?);
+    let mut input = CountingReader::new(BufReader::new(File::open(opts.input)?));
     let output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipWriter::new(output);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
-    let manifest: Result<_> = read_archive(&mut input, |name, data| {
+    let manifest: Result<_> = read_archive(&mut input, |name, data, offset| {
+        let mut read = CountingReader::new(Cursor::new(data));
+        // translate to absolute offset
+        read.offset = offset;
         let result = match name {
-            "format" => read_format(&mut Cursor::new(data)),
-            "version" => read_version(&mut Cursor::new(data)),
+            "format" => read_format(&mut read),
+            "version" => read_version(&mut read),
             "materials" => {
-                let materials = read_materials(&mut Cursor::new(data))?;
+                let materials = read_materials(&mut read)?;
                 let data = serde_json::to_vec_pretty(&materials)?;
 
                 zip.start_file("materials.json", options)?;
@@ -173,7 +183,7 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
             }
             other => {
                 let name = other.replace(".flt", ".json");
-                let root = read_model(&mut Cursor::new(data))?;
+                let root = read_model(&mut read)?;
                 let data = serde_json::to_vec_pretty(&root)?;
 
                 zip.start_file(name, options)?;
@@ -194,7 +204,7 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
 }
 
 pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
-    let mut input = BufReader::new(File::open(opts.input)?);
+    let mut input = CountingReader::new(BufReader::new(File::open(opts.input)?));
     let output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipWriter::new(output);

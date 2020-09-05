@@ -1,5 +1,4 @@
-use crate::io_ext::{FromUsize, ReadHelper, WriteHelper};
-use crate::size::ReprSize;
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::types::{Vec3, Vec4};
 use crate::{assert_that, static_assert_size, Result};
 use ::serde::{Deserialize, Serialize};
@@ -32,47 +31,31 @@ pub struct Motion {
     frame_count: u32,
 }
 
-impl FromUsize for u32 {
-    fn from_usize(value: usize) -> Self {
-        value as Self
-    }
-}
-
-pub fn read_motion<R>(read: &mut R) -> Result<Motion>
+pub fn read_motion<R>(read: &mut CountingReader<R>) -> Result<Motion>
 where
     R: Read,
 {
     let header: Header = read.read_struct()?;
-    assert_that!("version", header.version == VERSION, 0)?;
-    assert_that!("loop time", header.loop_time > 0.0, 4)?;
-    assert_that!("field 16", header.minus_one == -1.0, 16)?;
-    assert_that!("field 20", header.plus_one == 1.0, 20)?;
+    assert_that!("version", header.version == VERSION, read.prev + 0)?;
+    assert_that!("loop time", header.loop_time > 0.0, read.prev + 4)?;
+    assert_that!("field 16", header.minus_one == -1.0, read.prev + 16)?;
+    assert_that!("field 20", header.plus_one == 1.0, read.prev + 20)?;
 
     let frame_count = header.frame_count + 1;
-    let mut offset = Header::SIZE;
     let parts = (0..header.part_count)
         .map(|_| {
-            let part_name = read.read_string(&mut offset)?;
+            let part_name = read.read_string()?;
             let flag = read.read_u32()?;
             // 8 = translation, 4 = rotation, 2 = scaling (never in motion.zbd)
-            assert_that!("flag", flag == 12, offset)?;
-            offset += 4;
+            assert_that!("flag", flag == 12, read.prev)?;
 
             let translations = (0..frame_count)
-                .map(|_| {
-                    let value: Vec3 = read.read_struct()?;
-                    Ok(value)
-                })
-                .collect::<Result<Vec<_>>>()?;
-            offset += Vec3::SIZE * frame_count;
+                .map(|_| read.read_struct())
+                .collect::<std::io::Result<Vec<_>>>()?;
 
             let rotations = (0..frame_count)
-                .map(|_| {
-                    let value: Vec4 = read.read_struct()?;
-                    Ok(value)
-                })
-                .collect::<Result<Vec<_>>>()?;
-            offset += Vec4::SIZE * frame_count;
+                .map(|_| read.read_struct())
+                .collect::<std::io::Result<Vec<_>>>()?;
 
             let frames = translations
                 .into_iter()

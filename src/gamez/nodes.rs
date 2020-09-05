@@ -1,5 +1,5 @@
 use crate::assert::AssertionError;
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::nodes::{
     read_node_data, read_node_info_gamez, read_node_info_zero, size_node, write_node_data,
     write_node_info, write_node_info_zero, Node, NodeVariant, WrappedNode, NODE_C_SIZE,
@@ -7,20 +7,20 @@ use crate::nodes::{
 use crate::{assert_that, Result};
 use std::io::{Read, Write};
 
-pub fn read_nodes<R>(read: &mut R, offset: &mut u32, array_size: u32) -> Result<Vec<Node<u32>>>
+pub fn read_nodes<R>(read: &mut CountingReader<R>, array_size: u32) -> Result<Vec<Node<u32>>>
 where
     R: Read,
 {
-    let end_offset = *offset + NODE_C_SIZE * array_size + 4 * array_size;
+    let end_offset = read.offset + NODE_C_SIZE * array_size + 4 * array_size;
 
     let mut variants = Vec::new();
     // the node_count is wildly inaccurate for some files, and there are more nodes to
     // read after the provided count. so, we basically have to check the entire array
     let mut actual_count = array_size;
     for i in 0..array_size {
-        let variant = read_node_info_gamez(read, offset)?;
+        let node_info_pos = read.offset;
+        let variant = read_node_info_gamez(read)?;
         let actual_index = read.read_u32()?;
-        *offset += 4;
         match variant {
             None => {
                 let mut expected_index = i + 1;
@@ -28,7 +28,7 @@ where
                     // we'll never know why???
                     expected_index = 0xFFFFFF
                 }
-                assert_that!("node zero index", actual_index == expected_index, *offset)?;
+                assert_that!("node zero index", actual_index == expected_index, read.prev)?;
 
                 actual_count = i + 1;
                 break;
@@ -36,16 +36,16 @@ where
             Some(mut variant) => {
                 match &mut variant {
                     NodeVariant::World(_, _, _) => {
-                        assert_that!("node data position", i == 0, *offset)?;
+                        assert_that!("node data position", i == 0, node_info_pos)?;
                     }
                     NodeVariant::Window(_) => {
-                        assert_that!("node data position", i == 1, *offset)?;
+                        assert_that!("node data position", i == 1, node_info_pos)?;
                     }
                     NodeVariant::Camera(_) => {
-                        assert_that!("node data position", i == 2, *offset)?;
+                        assert_that!("node data position", i == 2, node_info_pos)?;
                     }
                     NodeVariant::Empty(empty) => {
-                        assert_that!("empty ref index", 4 <= actual_index <= array_size, *offset)?;
+                        assert_that!("empty ref index", 4 <= actual_index <= array_size, read.prev)?;
                         empty.parent = actual_index;
                     }
                     _ => {}
@@ -56,19 +56,18 @@ where
     }
 
     for i in actual_count..array_size {
-        read_node_info_zero(read, offset)?;
+        read_node_info_zero(read)?;
         let actual_index = read.read_u32()?;
-        *offset += 4;
 
         let mut expected_index = i + 1;
         if expected_index == array_size {
             // we'll never know why???
             expected_index = 0xFFFFFF
         }
-        assert_that!("node zero index", actual_index == expected_index, *offset)?;
+        assert_that!("node zero index", actual_index == expected_index, read.prev)?;
     }
 
-    assert_that!("node info end", end_offset == *offset, *offset)?;
+    assert_that!("node info end", end_offset == read.offset, read.offset)?;
 
     let nodes = variants
         .into_iter()
@@ -77,11 +76,10 @@ where
                 NodeVariant::Empty(_) => {}
                 _ => {
                     // it's more likely our read logic is wrong than this data being wrong
-                    let actual = *offset;
-                    assert_that!("node data offset", actual == index, *offset)?;
+                    assert_that!("node data offset", index == read.offset, read.offset)?;
                 }
             }
-            match read_node_data(read, offset, variant)? {
+            match read_node_data(read, variant)? {
                 WrappedNode::Camera(camera) => Ok(Node::Camera(camera)),
                 WrappedNode::Display(display) => Ok(Node::Display(display)),
                 WrappedNode::Empty(empty) => Ok(Node::Empty(empty)),
@@ -90,44 +88,29 @@ where
                 WrappedNode::Lod(wrapped_lod) => {
                     let mut lod = wrapped_lod.wrapped;
                     lod.parent = read.read_u32()?;
-                    *offset += 4;
                     lod.children = (0..wrapped_lod.children_count)
-                        .map(|_| {
-                            let child = read.read_u32()?;
-                            *offset += 4;
-                            Ok(child)
-                        })
-                        .collect::<Result<Vec<_>>>()?;
+                        .map(|_| read.read_u32())
+                        .collect::<std::io::Result<Vec<_>>>()?;
                     Ok(Node::Lod(lod))
                 }
                 WrappedNode::Object3d(wrapped_obj) => {
                     let mut object3d = wrapped_obj.wrapped;
 
                     object3d.parent = if wrapped_obj.has_parent {
-                        let parent = read.read_u32()?;
-                        *offset += 4;
-                        Some(parent)
+                        Some(read.read_u32()?)
                     } else {
                         None
                     };
                     object3d.children = (0..wrapped_obj.children_count)
-                        .map(|_| {
-                            let child = read.read_u32()?;
-                            *offset += 4;
-                            Ok(child)
-                        })
-                        .collect::<Result<Vec<_>>>()?;
+                        .map(|_| read.read_u32())
+                        .collect::<std::io::Result<Vec<_>>>()?;
                     Ok(Node::Object3d(object3d))
                 }
                 WrappedNode::World(wrapped_world) => {
                     let mut world = wrapped_world.wrapped;
                     world.children = (0..wrapped_world.children_count)
-                        .map(|_| {
-                            let child = read.read_u32()?;
-                            *offset += 4;
-                            Ok(child)
-                        })
-                        .collect::<Result<Vec<_>>>()?;
+                        .map(|_| read.read_u32())
+                        .collect::<std::io::Result<Vec<_>>>()?;
                     Ok(Node::World(world))
                 }
             }
@@ -135,7 +118,7 @@ where
         .collect::<Result<Vec<_>>>()?;
 
     read.assert_end()?;
-    assert_area_partitions(&nodes, *offset)?;
+    assert_area_partitions(&nodes, read.offset)?;
     Ok(nodes)
 }
 

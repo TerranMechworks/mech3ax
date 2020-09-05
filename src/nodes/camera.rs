@@ -2,7 +2,7 @@ use super::flags::NodeBitFlags;
 use super::math::cotangent;
 use super::types::{Camera, NodeVariant, NodeVariants, BLOCK_EMPTY, ZONE_DEFAULT};
 use crate::assert::assert_all_zero;
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::size::ReprSize;
 use crate::types::{Matrix, Vec2, Vec3};
 use crate::{assert_that, static_assert_size, Result};
@@ -193,13 +193,12 @@ fn assert_camera(camera: CameraC, offset: u32) -> Result<(Vec2, Vec2)> {
     Ok((camera.clip, camera.fov))
 }
 
-pub fn read<R>(read: &mut R, data_ptr: u32, offset: &mut u32) -> Result<Camera>
+pub fn read<R>(read: &mut CountingReader<R>, data_ptr: u32) -> Result<Camera>
 where
     R: Read,
 {
     let camera: CameraC = read.read_struct()?;
-    let (clip, fov) = assert_camera(camera, *offset)?;
-    *offset += CameraC::SIZE;
+    let (clip, fov) = assert_camera(camera, read.prev)?;
 
     Ok(Camera {
         clip,

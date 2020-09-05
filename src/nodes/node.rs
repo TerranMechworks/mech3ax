@@ -10,7 +10,7 @@ use super::window;
 use super::world;
 use super::wrappers::WrappedNode;
 use crate::assert::{assert_all_zero, assert_utf8, AssertionError};
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::size::ReprSize;
 use crate::string::{str_from_c_node_name, str_to_c_node_name};
 use crate::{assert_that, static_assert_size, Result};
@@ -151,80 +151,65 @@ fn assert_node(node: NodeC, offset: u32) -> Result<(NodeType, NodeVariants)> {
     Ok((node_type, variants))
 }
 
-pub fn read_node_info_mechlib<R>(read: &mut R, offset: &mut u32) -> Result<NodeVariant>
+pub fn read_node_info_mechlib<R>(read: &mut CountingReader<R>) -> Result<NodeVariant>
 where
     R: Read,
 {
     let node: NodeC = read.read_struct()?;
-    let (node_type, node) = assert_node(node, *offset)?;
-    let variant = match node_type {
-        NodeType::CAMERA => camera::assert_variants(node, *offset)?,
-        NodeType::DISPLAY => display::assert_variants(node, *offset)?,
-        NodeType::EMPTY => empty::assert_variants(node, *offset)?,
-        NodeType::LIGHT => light::assert_variants(node, *offset)?,
-        NodeType::LOD => lod::assert_variants(node, *offset)?,
-        NodeType::OBJECT3D => object3d::assert_variants(node, *offset, true)?,
-        NodeType::WINDOW => window::assert_variants(node, *offset)?,
-        NodeType::WORLD => world::assert_variants(node, *offset)?,
-    };
-    *offset += NodeC::SIZE;
-    Ok(variant)
+    let (node_type, node) = assert_node(node, read.prev)?;
+    match node_type {
+        NodeType::CAMERA => camera::assert_variants(node, read.prev),
+        NodeType::DISPLAY => display::assert_variants(node, read.prev),
+        NodeType::EMPTY => empty::assert_variants(node, read.prev),
+        NodeType::LIGHT => light::assert_variants(node, read.prev),
+        NodeType::LOD => lod::assert_variants(node, read.prev),
+        NodeType::OBJECT3D => object3d::assert_variants(node, read.prev, true),
+        NodeType::WINDOW => window::assert_variants(node, read.prev),
+        NodeType::WORLD => world::assert_variants(node, read.prev),
+    }
 }
 
-pub fn read_node_info_gamez<R>(read: &mut R, offset: &mut u32) -> Result<Option<NodeVariant>>
+pub fn read_node_info_gamez<R>(read: &mut CountingReader<R>) -> Result<Option<NodeVariant>>
 where
     R: Read,
 {
     let node: NodeC = read.read_struct()?;
     if node.name[0] == 0 {
-        assert_node_info_zero(node, *offset)?;
-        *offset += NodeC::SIZE;
+        assert_node_info_zero(node, read.prev)?;
         Ok(None)
     } else {
-        let (node_type, node) = assert_node(node, *offset)?;
+        let (node_type, node) = assert_node(node, read.prev)?;
         let variant = match node_type {
-            NodeType::CAMERA => camera::assert_variants(node, *offset)?,
-            NodeType::DISPLAY => display::assert_variants(node, *offset)?,
-            NodeType::EMPTY => empty::assert_variants(node, *offset)?,
-            NodeType::LIGHT => light::assert_variants(node, *offset)?,
-            NodeType::LOD => lod::assert_variants(node, *offset)?,
-            NodeType::OBJECT3D => object3d::assert_variants(node, *offset, false)?,
-            NodeType::WINDOW => window::assert_variants(node, *offset)?,
-            NodeType::WORLD => world::assert_variants(node, *offset)?,
+            NodeType::CAMERA => camera::assert_variants(node, read.prev)?,
+            NodeType::DISPLAY => display::assert_variants(node, read.prev)?,
+            NodeType::EMPTY => empty::assert_variants(node, read.prev)?,
+            NodeType::LIGHT => light::assert_variants(node, read.prev)?,
+            NodeType::LOD => lod::assert_variants(node, read.prev)?,
+            NodeType::OBJECT3D => object3d::assert_variants(node, read.prev, false)?,
+            NodeType::WINDOW => window::assert_variants(node, read.prev)?,
+            NodeType::WORLD => world::assert_variants(node, read.prev)?,
         };
-        *offset += NodeC::SIZE;
         Ok(Some(variant))
     }
 }
 
 pub fn read_node_data<R, T>(
-    read: &mut R,
-    offset: &mut u32,
+    read: &mut CountingReader<R>,
     variant: NodeVariant,
 ) -> Result<WrappedNode<T>>
 where
     R: Read,
 {
     match variant {
-        NodeVariant::Camera(data_ptr) => {
-            Ok(WrappedNode::Camera(camera::read(read, data_ptr, offset)?))
-        }
-        NodeVariant::Display(data_ptr) => {
-            Ok(WrappedNode::Display(display::read(read, data_ptr, offset)?))
-        }
+        NodeVariant::Camera(data_ptr) => Ok(WrappedNode::Camera(camera::read(read, data_ptr)?)),
+        NodeVariant::Display(data_ptr) => Ok(WrappedNode::Display(display::read(read, data_ptr)?)),
         NodeVariant::Empty(empty) => Ok(WrappedNode::Empty(empty)),
-        NodeVariant::Light(data_ptr) => {
-            Ok(WrappedNode::Light(light::read(read, data_ptr, offset)?))
-        }
-        NodeVariant::Lod(node) => Ok(WrappedNode::Lod(lod::read(read, node, offset)?)),
-        NodeVariant::Object3d(node) => {
-            Ok(WrappedNode::Object3d(object3d::read(read, node, offset)?))
-        }
-        NodeVariant::Window(data_ptr) => {
-            Ok(WrappedNode::Window(window::read(read, data_ptr, offset)?))
-        }
+        NodeVariant::Light(data_ptr) => Ok(WrappedNode::Light(light::read(read, data_ptr)?)),
+        NodeVariant::Lod(node) => Ok(WrappedNode::Lod(lod::read(read, node)?)),
+        NodeVariant::Object3d(node) => Ok(WrappedNode::Object3d(object3d::read(read, node)?)),
+        NodeVariant::Window(data_ptr) => Ok(WrappedNode::Window(window::read(read, data_ptr)?)),
         NodeVariant::World(data_ptr, children_count, children_array_ptr) => Ok(WrappedNode::World(
-            world::read(read, data_ptr, children_count, children_array_ptr, offset)?,
+            world::read(read, data_ptr, children_count, children_array_ptr)?,
         )),
     }
 }
@@ -379,14 +364,12 @@ fn assert_node_info_zero(node: NodeC, offset: u32) -> Result<()> {
     Ok(())
 }
 
-pub fn read_node_info_zero<R>(read: &mut R, offset: &mut u32) -> Result<()>
+pub fn read_node_info_zero<R>(read: &mut CountingReader<R>) -> Result<()>
 where
     R: Read,
 {
     let node: NodeC = read.read_struct()?;
-    assert_node_info_zero(node, *offset)?;
-    *offset += NodeC::SIZE;
-    Ok(())
+    assert_node_info_zero(node, read.prev)
 }
 
 pub fn write_node_info_zero<W>(write: &mut W) -> Result<()>

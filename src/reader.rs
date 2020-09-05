@@ -1,64 +1,49 @@
 use crate::assert::AssertionError;
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::Result;
 use std::convert::TryInto;
 use std::io::{Read, Write};
 
 use serde_json::{Number, Value};
 
-fn read_value<R>(read: &mut R, offset: &mut usize) -> Result<Value>
+fn read_value<R>(read: &mut CountingReader<R>) -> Result<Value>
 where
     R: Read,
 {
-    let value_type = read.read_u32()?;
-    *offset += 4;
-
-    match value_type {
-        1 => {
-            let value = read.read_i32()?;
-            *offset += 4;
-            Ok(Value::Number(Number::from(value)))
-        }
-        2 => {
-            let value = read.read_f32()?;
-            *offset += 4;
-            Ok(Value::Number(Number::from_f64(value as f64).unwrap()))
-        }
-        3 => {
-            let value = read.read_string(offset)?;
-            Ok(Value::String(value))
-        }
+    match read.read_u32()? {
+        1 => Ok(Value::Number(Number::from(read.read_i32()?))),
+        2 => Ok(Value::Number(
+            Number::from_f64(read.read_f32()? as f64).unwrap(),
+        )),
+        3 => Ok(Value::String(read.read_string()?)),
         4 => {
             // count is one bigger, because the engine stores the count as an
             // integer node as the first item of the list
             let count = read.read_u32()? - 1;
-            *offset += 4;
-
             if count == 0 {
                 Ok(Value::Null)
             } else {
                 let value = (0..count)
-                    .map(|_| read_value(read, offset))
+                    .map(|_| read_value(read))
                     .collect::<Result<Vec<_>>>()?;
                 Ok(Value::Array(value))
             }
         }
-        _ => {
+        value_type => {
             let msg = format!(
                 "Expected valid value type, but was {} (at {})",
-                value_type, *offset
+                value_type, read.prev
             );
             Err(AssertionError(msg).into())
         }
     }
 }
 
-pub fn read_reader<R>(read: &mut R) -> Result<Value>
+pub fn read_reader<R>(read: &mut CountingReader<R>) -> Result<Value>
 where
     R: Read,
 {
-    let mut offset = 0;
-    let value = read_value(read, &mut offset);
+    let value = read_value(read);
     read.assert_end()?;
     value
 }

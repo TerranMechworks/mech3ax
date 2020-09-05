@@ -1,4 +1,4 @@
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::mesh::{
     read_mesh_data, read_mesh_info, read_mesh_infos_zero, size_mesh, write_mesh_data,
     write_mesh_info, write_mesh_infos_zero, Mesh, MESH_C_SIZE,
@@ -15,34 +15,36 @@ struct MeshesInfoC {
 }
 static_assert_size!(MeshesInfoC, 12);
 
-pub fn read_meshes<R>(read: &mut R, offset: &mut u32, end_offset: u32) -> Result<(Vec<Mesh>, i32)>
+pub fn read_meshes<R>(read: &mut CountingReader<R>, end_offset: u32) -> Result<(Vec<Mesh>, i32)>
 where
     R: Read,
 {
     let info: MeshesInfoC = read.read_struct()?;
-    assert_that!("mat count", info.count < info.array_size, *offset + 0)?;
-    assert_that!("mesh index max", info.index_max == info.count, *offset + 8)?;
-    *offset += MeshesInfoC::SIZE;
+    assert_that!("mat count", info.count < info.array_size, read.prev + 0)?;
+    assert_that!(
+        "mesh index max",
+        info.index_max == info.count,
+        read.prev + 8
+    )?;
 
-    let mut prev_offset = *offset;
+    let mut prev_offset = read.offset;
     let meshes = (0..info.count)
         .map(|_| {
-            let wrapped_mesh = read_mesh_info(read, offset)?;
+            let wrapped_mesh = read_mesh_info(read)?;
             let mesh_offset = read.read_u32()?;
-            assert_that!("mesh offset", prev_offset <= mesh_offset <= end_offset, *offset)?;
-            *offset += 4;
+            assert_that!("mesh offset", prev_offset <= mesh_offset <= end_offset, read.prev)?;
             prev_offset = mesh_offset;
             Ok((wrapped_mesh, mesh_offset))
         })
         .collect::<Result<Vec<_>>>()?;
 
-    read_mesh_infos_zero(read, offset, info.count, info.array_size)?;
+    read_mesh_infos_zero(read, info.count, info.array_size)?;
 
     let meshes = meshes
         .into_iter()
         .map(|(wrapped_mesh, mesh_offset)| {
-            assert_that!("mesh offset", mesh_offset == *offset, *offset)?;
-            let mesh = read_mesh_data(read, offset, wrapped_mesh)?;
+            assert_that!("mesh offset", mesh_offset == read.offset, read.offset)?;
+            let mesh = read_mesh_data(read, wrapped_mesh)?;
             Ok(mesh)
         })
         .collect::<Result<Vec<_>>>()?;

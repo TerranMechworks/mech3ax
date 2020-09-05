@@ -3,7 +3,7 @@ mod meshes;
 mod nodes;
 mod textures;
 
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::size::ReprSize;
 use crate::{assert_that, static_assert_size, Result};
 use ::serde::{Deserialize, Serialize};
@@ -47,7 +47,7 @@ pub struct GameZ {
     pub nodes: Vec<Node>,
 }
 
-pub fn read_gamez<R>(read: &mut R) -> Result<GameZ>
+pub fn read_gamez<R>(read: &mut CountingReader<R>) -> Result<GameZ>
 where
     R: Read,
 {
@@ -58,20 +58,30 @@ where
     assert_that!("texture count", header.texture_count < 4096, 8)?;
     assert_that!("node count", header.node_count < header.node_array_size, 28)?;
 
-    let mut offset = HeaderC::SIZE;
-
-    assert_that!("textures offset", offset == header.textures_offset, offset)?;
-    let textures = textures::read_texture_infos(read, &mut offset, header.texture_count)?;
+    assert_that!(
+        "textures offset",
+        read.offset == header.textures_offset,
+        read.offset
+    )?;
+    let textures = textures::read_texture_infos(read, header.texture_count)?;
     assert_that!(
         "materials offset",
-        offset == header.materials_offset,
-        offset
+        read.offset == header.materials_offset,
+        read.offset
     )?;
-    let (materials, material_array_size) = materials::read_materials(read, &mut offset, &textures)?;
-    assert_that!("meshes offset", offset == header.meshes_offset, offset)?;
-    let (meshes, mesh_array_size) = meshes::read_meshes(read, &mut offset, header.nodes_offset)?;
-    assert_that!("nodes offset", offset == header.nodes_offset, offset)?;
-    let nodes = nodes::read_nodes(read, &mut offset, header.node_array_size)?;
+    let (materials, material_array_size) = materials::read_materials(read, &textures)?;
+    assert_that!(
+        "meshes offset",
+        read.offset == header.meshes_offset,
+        read.offset
+    )?;
+    let (meshes, mesh_array_size) = meshes::read_meshes(read, header.nodes_offset)?;
+    assert_that!(
+        "nodes offset",
+        read.offset == header.nodes_offset,
+        read.offset
+    )?;
+    let nodes = nodes::read_nodes(read, header.node_array_size)?;
     read.assert_end()?;
 
     let metadata = Metadata {

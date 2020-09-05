@@ -1,4 +1,4 @@
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::size::ReprSize;
 use crate::types::{Vec2, Vec3};
 use crate::{assert_that, static_assert_size, Result};
@@ -223,45 +223,34 @@ fn assert_mesh_info(mesh: MeshC, offset: u32) -> Result<WrappedMesh> {
     })
 }
 
-pub fn read_mesh_info<R>(read: &mut R, offset: &mut u32) -> Result<WrappedMesh>
+pub fn read_mesh_info<R>(read: &mut CountingReader<R>) -> Result<WrappedMesh>
 where
     R: Read,
 {
     let mesh: MeshC = read.read_struct()?;
-    let wrapped = assert_mesh_info(mesh, *offset)?;
-    *offset += MeshC::SIZE;
+    let wrapped = assert_mesh_info(mesh, read.prev)?;
     Ok(wrapped)
 }
 
-fn read_vec3s<R>(read: &mut R, offset: &mut u32, count: u32) -> Result<Vec<Vec3>>
+fn read_vec3s<R>(read: &mut CountingReader<R>, count: u32) -> std::io::Result<Vec<Vec3>>
 where
     R: Read,
 {
-    *offset += Vec3::SIZE * count;
-    (0..count)
-        .map(|_| {
-            let result: Vec3 = read.read_struct()?;
-            Ok(result)
-        })
-        .collect()
+    (0..count).map(|_| read.read_struct()).collect()
 }
 
-fn read_lights<R>(read: &mut R, offset: &mut u32, count: u32) -> Result<Vec<Light>>
+fn read_lights<R>(read: &mut CountingReader<R>, count: u32) -> Result<Vec<Light>>
 where
     R: Read,
 {
     let lights = (0..count)
-        .map(|_| {
-            let result: LightC = read.read_struct()?;
-            Ok(result)
-        })
-        .collect::<Result<Vec<_>>>()?;
-    *offset += LightC::SIZE * count;
+        .map(|_| read.read_struct())
+        .collect::<std::io::Result<Vec<LightC>>>()?;
 
     lights
         .into_iter()
         .map(|light| {
-            let extra = read_vec3s(read, offset, light.extra_count)?;
+            let extra = read_vec3s(read, light.extra_count)?;
             Ok(Light {
                 unk00: light.unk00,
                 unk04: light.unk04,
@@ -284,7 +273,7 @@ where
                 unk72: light.unk72,
             })
         })
-        .collect()
+        .collect::<Result<Vec<_>>>()
 }
 
 fn assert_polygon(poly: PolygonC, offset: u32) -> Result<(u32, bool, bool, Polygon)> {
@@ -324,24 +313,17 @@ fn assert_polygon(poly: PolygonC, offset: u32) -> Result<(u32, bool, bool, Polyg
     Ok((verts_in_poly, has_normals, has_uvs, polygon))
 }
 
-fn read_u32s<R>(read: &mut R, offset: &mut u32, count: u32) -> Result<Vec<u32>>
+fn read_u32s<R>(read: &mut CountingReader<R>, count: u32) -> std::io::Result<Vec<u32>>
 where
     R: Read,
 {
-    *offset += 4 * count;
-    (0..count)
-        .map(|_| {
-            let result = read.read_u32()?;
-            Ok(result)
-        })
-        .collect()
+    (0..count).map(|_| read.read_u32()).collect()
 }
 
-fn read_uvs<R>(read: &mut R, offset: &mut u32, count: u32) -> Result<Vec<Vec2>>
+fn read_uvs<R>(read: &mut CountingReader<R>, count: u32) -> std::io::Result<Vec<Vec2>>
 where
     R: Read,
 {
-    *offset += Vec2::SIZE * count;
     (0..count)
         .map(|_| {
             let mut result: Vec2 = read.read_struct()?;
@@ -351,43 +333,42 @@ where
         .collect()
 }
 
-fn read_polygons<R>(read: &mut R, offset: &mut u32, count: u32) -> Result<Vec<Polygon>>
+fn read_polygons<R>(read: &mut CountingReader<R>, count: u32) -> Result<Vec<Polygon>>
 where
     R: Read,
 {
     (0..count)
         .map(|_| {
             let poly: PolygonC = read.read_struct()?;
-            let result = assert_polygon(poly, *offset)?;
-            *offset += PolygonC::SIZE;
+            let result = assert_polygon(poly, read.prev)?;
             Ok(result)
         })
         .collect::<Result<Vec<_>>>()?
         .into_iter()
         .map(|(verts_in_poly, has_normals, has_uvs, mut polygon)| {
-            polygon.vertex_indices = read_u32s(read, offset, verts_in_poly)?;
+            polygon.vertex_indices = read_u32s(read, verts_in_poly)?;
             if has_normals {
-                polygon.normal_indices = Some(read_u32s(read, offset, verts_in_poly)?);
+                polygon.normal_indices = Some(read_u32s(read, verts_in_poly)?);
             }
             if has_uvs {
-                polygon.uv_coords = Some(read_uvs(read, offset, verts_in_poly)?);
+                polygon.uv_coords = Some(read_uvs(read, verts_in_poly)?);
             }
-            polygon.vertex_colors = read_vec3s(read, offset, verts_in_poly)?;
+            polygon.vertex_colors = read_vec3s(read, verts_in_poly)?;
             Ok(polygon)
         })
         .collect()
 }
 
-pub fn read_mesh_data<R>(read: &mut R, offset: &mut u32, wrapped: WrappedMesh) -> Result<Mesh>
+pub fn read_mesh_data<R>(read: &mut CountingReader<R>, wrapped: WrappedMesh) -> Result<Mesh>
 where
     R: Read,
 {
     let mut mesh = wrapped.mesh;
-    mesh.vertices = read_vec3s(read, offset, wrapped.vertex_count)?;
-    mesh.normals = read_vec3s(read, offset, wrapped.normal_count)?;
-    mesh.morphs = read_vec3s(read, offset, wrapped.morph_count)?;
-    mesh.lights = read_lights(read, offset, wrapped.light_count)?;
-    mesh.polygons = read_polygons(read, offset, wrapped.polygon_count)?;
+    mesh.vertices = read_vec3s(read, wrapped.vertex_count)?;
+    mesh.normals = read_vec3s(read, wrapped.normal_count)?;
+    mesh.morphs = read_vec3s(read, wrapped.morph_count)?;
+    mesh.lights = read_lights(read, wrapped.light_count)?;
+    mesh.polygons = read_polygons(read, wrapped.polygon_count)?;
     Ok(mesh)
 }
 
@@ -538,44 +519,42 @@ where
     Ok(())
 }
 
-pub fn read_mesh_infos_zero<R>(read: &mut R, offset: &mut u32, start: i32, end: i32) -> Result<()>
+pub fn read_mesh_infos_zero<R>(read: &mut CountingReader<R>, start: i32, end: i32) -> Result<()>
 where
     R: Read,
 {
     for index in start..end {
         let mesh: MeshC = read.read_struct()?;
-        assert_that!("file_ptr", mesh.file_ptr == 0, *offset + 0)?;
-        assert_that!("unk04", mesh.unk04 == 0, *offset + 4)?;
-        assert_that!("unk08", mesh.unk08 == 0, *offset + 8)?;
-        assert_that!("parent_count", mesh.parent_count == 0, *offset + 12)?;
-        assert_that!("polygon_count", mesh.polygon_count == 0, *offset + 16)?;
-        assert_that!("vertex_count", mesh.vertex_count == 0, *offset + 20)?;
-        assert_that!("normal_count", mesh.normal_count == 0, *offset + 24)?;
-        assert_that!("morph_count", mesh.morph_count == 0, *offset + 28)?;
-        assert_that!("light_count", mesh.light_count == 0, *offset + 32)?;
-        assert_that!("zero36", mesh.zero36 == 0, *offset + 36)?;
-        assert_that!("unk40", mesh.unk40 == 0.0, *offset + 40)?;
-        assert_that!("unk44", mesh.unk44 == 0.0, *offset + 44)?;
-        assert_that!("zero48", mesh.zero48 == 0, *offset + 48)?;
-        assert_that!("polygons_ptr", mesh.polygons_ptr == 0, *offset + 52)?;
-        assert_that!("vertices_ptr", mesh.vertices_ptr == 0, *offset + 56)?;
-        assert_that!("normals_ptr", mesh.normals_ptr == 0, *offset + 60)?;
-        assert_that!("lights_ptr", mesh.lights_ptr == 0, *offset + 64)?;
-        assert_that!("morphs_ptr", mesh.morphs_ptr == 0, *offset + 68)?;
-        assert_that!("unk72", mesh.unk72 == 0.0, *offset + 72)?;
-        assert_that!("unk76", mesh.unk76 == 0.0, *offset + 76)?;
-        assert_that!("unk80", mesh.unk80 == 0.0, *offset + 80)?;
-        assert_that!("unk84", mesh.unk84 == 0.0, *offset + 84)?;
-        assert_that!("zero88", mesh.zero88 == 0, *offset + 88)?;
-        *offset += MeshC::SIZE;
+        assert_that!("file_ptr", mesh.file_ptr == 0, read.prev + 0)?;
+        assert_that!("unk04", mesh.unk04 == 0, read.prev + 4)?;
+        assert_that!("unk08", mesh.unk08 == 0, read.prev + 8)?;
+        assert_that!("parent_count", mesh.parent_count == 0, read.prev + 12)?;
+        assert_that!("polygon_count", mesh.polygon_count == 0, read.prev + 16)?;
+        assert_that!("vertex_count", mesh.vertex_count == 0, read.prev + 20)?;
+        assert_that!("normal_count", mesh.normal_count == 0, read.prev + 24)?;
+        assert_that!("morph_count", mesh.morph_count == 0, read.prev + 28)?;
+        assert_that!("light_count", mesh.light_count == 0, read.prev + 32)?;
+        assert_that!("zero36", mesh.zero36 == 0, read.prev + 36)?;
+        assert_that!("unk40", mesh.unk40 == 0.0, read.prev + 40)?;
+        assert_that!("unk44", mesh.unk44 == 0.0, read.prev + 44)?;
+        assert_that!("zero48", mesh.zero48 == 0, read.prev + 48)?;
+        assert_that!("polygons_ptr", mesh.polygons_ptr == 0, read.prev + 52)?;
+        assert_that!("vertices_ptr", mesh.vertices_ptr == 0, read.prev + 56)?;
+        assert_that!("normals_ptr", mesh.normals_ptr == 0, read.prev + 60)?;
+        assert_that!("lights_ptr", mesh.lights_ptr == 0, read.prev + 64)?;
+        assert_that!("morphs_ptr", mesh.morphs_ptr == 0, read.prev + 68)?;
+        assert_that!("unk72", mesh.unk72 == 0.0, read.prev + 72)?;
+        assert_that!("unk76", mesh.unk76 == 0.0, read.prev + 76)?;
+        assert_that!("unk80", mesh.unk80 == 0.0, read.prev + 80)?;
+        assert_that!("unk84", mesh.unk84 == 0.0, read.prev + 84)?;
+        assert_that!("zero88", mesh.zero88 == 0, read.prev + 88)?;
 
         let mut expected_index = index + 1;
         if expected_index == end {
             expected_index = -1;
         }
         let actual_index = read.read_i32()?;
-        assert_that!("mesh index", actual_index == expected_index, *offset)?;
-        *offset += 4;
+        assert_that!("mesh index", actual_index == expected_index, read.prev)?;
     }
     Ok(())
 }

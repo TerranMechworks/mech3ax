@@ -1,5 +1,5 @@
 use crate::assert::assert_utf8;
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::serde::base64;
 use crate::size::ReprSize;
 use crate::string::{bytes_to_c, str_from_c_padded, str_to_c_padded};
@@ -26,7 +26,7 @@ pub struct Entry {
 }
 
 #[allow(clippy::type_complexity)]
-fn read_table<R>(read: &mut R) -> Result<Vec<(String, u64, u64, Vec<u8>)>>
+fn read_table<R>(read: &mut CountingReader<R>) -> Result<Vec<(String, u32, u32, Vec<u8>)>>
 where
     R: Read + Seek,
 {
@@ -37,41 +37,44 @@ where
     let count = read.read_u32()?;
 
     let offset: i64 = 8 + (count * EntryC::SIZE) as i64;
-    let table_start = read.seek(SeekFrom::End(-offset))?;
-    let mut pos = table_start;
+    let table_start = read.seek(SeekFrom::End(-offset))? as u32;
 
     (0..count)
         .map(|_| {
             let entry: EntryC = read.read_struct()?;
 
-            let entry_start = entry.start as u64;
-            let entry_len = entry.length as u64;
+            let entry_start = entry.start;
+            let entry_len = entry.length;
             let entry_end = entry_start + entry_len;
 
-            assert_that!("entry start", entry_start < entry_end, pos + 0)?;
-            assert_that!("entry end", entry_end <= table_start, pos + 4)?;
-            let entry_name = assert_utf8("entry name", pos + 8, || str_from_c_padded(&entry.name))?;
+            assert_that!("entry start", entry_start < entry_end, read.prev + 0)?;
+            assert_that!("entry end", entry_end <= table_start, read.prev + 4)?;
+            let entry_name = assert_utf8("entry name", read.prev + 8, || {
+                str_from_c_padded(&entry.name)
+            })?;
 
-            pos += EntryC::SIZE as u64;
             Ok((entry_name, entry_start, entry_len, entry.garbage.to_vec()))
         })
         .collect::<Result<Vec<_>>>()
 }
 
-pub fn read_archive<R, F, E>(read: &mut R, mut save_file: F) -> std::result::Result<Vec<Entry>, E>
+pub fn read_archive<R, F, E>(
+    read: &mut CountingReader<R>,
+    mut save_file: F,
+) -> std::result::Result<Vec<Entry>, E>
 where
     R: Read + Seek,
-    F: FnMut(&str, Vec<u8>) -> std::result::Result<(), E>,
+    F: FnMut(&str, Vec<u8>, u32) -> std::result::Result<(), E>,
     E: From<std::io::Error> + From<Error>,
 {
     let entries = read_table(read)?;
     entries
         .into_iter()
         .map(|(name, start, length, garbage)| {
-            read.seek(SeekFrom::Start(start))?;
+            read.seek(SeekFrom::Start(start as u64))?;
             let mut buffer = vec![0; length as usize];
             read.read_exact(&mut buffer)?;
-            save_file(&name, buffer)?;
+            save_file(&name, buffer, read.prev)?;
             Ok(Entry { name, garbage })
         })
         .collect::<std::result::Result<Vec<_>, E>>()

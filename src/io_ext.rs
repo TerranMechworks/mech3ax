@@ -1,67 +1,64 @@
 use crate::assert::{assert_utf8, AssertionError};
 use crate::string::str_from_c_sized;
-use std::io::{Read, Result, Write};
+use std::io::{Read, Result, Seek, SeekFrom, Write};
 use std::mem::MaybeUninit;
 
-pub trait FromUsize {
-    fn from_usize(value: usize) -> Self;
+pub struct CountingReader<R: Read> {
+    read: R,
+    pub offset: u32,
+    pub prev: u32,
 }
 
-impl FromUsize for usize {
-    fn from_usize(value: usize) -> Self {
-        value
+impl<R: Read> CountingReader<R> {
+    pub fn new(read: R) -> Self {
+        Self {
+            read,
+            offset: 0,
+            prev: 0,
+        }
     }
-}
 
-pub trait ReadHelper {
-    fn read_u32(&mut self) -> Result<u32>;
-    fn read_i32(&mut self) -> Result<i32>;
-    fn read_f32(&mut self) -> Result<f32>;
-    fn read_u16(&mut self) -> Result<u16>;
-    fn read_i16(&mut self) -> Result<i16>;
-    fn read_struct<S>(&mut self) -> Result<S>;
-    fn assert_end(&mut self) -> crate::Result<()>;
-    fn read_string<T>(&mut self, offset: &mut T) -> crate::Result<String>
-    where
-        T: std::ops::AddAssign + FromUsize + std::fmt::Display + Copy;
-}
+    pub fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> {
+        if let Err(err) = self.read.read_exact(buf) {
+            return Err(err);
+        }
+        self.prev = self.offset;
+        self.offset += buf.len() as u32;
+        Ok(())
+    }
 
-impl<R> ReadHelper for R
-where
-    R: Read,
-{
-    fn read_u32(&mut self) -> Result<u32> {
+    pub fn read_u32(&mut self) -> Result<u32> {
         let mut buf = [0; 4];
         self.read_exact(&mut buf)?;
         Ok(u32::from_le_bytes(buf))
     }
 
-    fn read_i32(&mut self) -> Result<i32> {
+    pub fn read_i32(&mut self) -> Result<i32> {
         let mut buf = [0; 4];
         self.read_exact(&mut buf)?;
         Ok(i32::from_le_bytes(buf))
     }
 
-    fn read_f32(&mut self) -> Result<f32> {
+    pub fn read_f32(&mut self) -> Result<f32> {
         let mut buf = [0; 4];
         self.read_exact(&mut buf)?;
         Ok(f32::from_le_bytes(buf))
     }
 
-    fn read_u16(&mut self) -> Result<u16> {
+    pub fn read_u16(&mut self) -> Result<u16> {
         let mut buf = [0; 2];
         self.read_exact(&mut buf)?;
         Ok(u16::from_le_bytes(buf))
     }
 
-    fn read_i16(&mut self) -> Result<i16> {
+    pub fn read_i16(&mut self) -> Result<i16> {
         let mut buf = [0; 2];
         self.read_exact(&mut buf)?;
         Ok(i16::from_le_bytes(buf))
     }
 
     #[allow(clippy::uninit_assumed_init)]
-    fn read_struct<S>(&mut self) -> Result<S> {
+    pub fn read_struct<S>(&mut self) -> Result<S> {
         let size = std::mem::size_of::<S>();
         unsafe {
             let mut mem = MaybeUninit::uninit().assume_init();
@@ -76,25 +73,50 @@ where
         }
     }
 
-    fn assert_end(&mut self) -> crate::Result<()> {
+    pub fn assert_end(&mut self) -> crate::Result<()> {
         let mut buf = [0; 1];
-        match self.read(&mut buf)? {
+        match self.read.read(&mut buf)? {
             0 => Ok(()),
             _ => Err(AssertionError("Expected all data to be read".to_owned()).into()),
         }
     }
 
-    fn read_string<T>(&mut self, offset: &mut T) -> crate::Result<String>
-    where
-        T: std::ops::AddAssign + FromUsize + std::fmt::Display + Copy,
-    {
+    pub fn read_string(&mut self) -> crate::Result<String> {
         let count = self.read_u32()? as usize;
-        *offset += T::from_usize(4usize);
         let mut buf = vec![0u8; count];
         self.read_exact(&mut buf)?;
-        let value = assert_utf8("value", *offset, || str_from_c_sized(&buf))?;
-        *offset += T::from_usize(count);
+        let value = assert_utf8("value", self.offset, || str_from_c_sized(&buf))?;
         Ok(value)
+    }
+}
+
+impl<R: Read + Seek> Seek for CountingReader<R> {
+    fn seek(&mut self, pos: SeekFrom) -> Result<u64> {
+        let offset = self.read.seek(pos)?;
+        self.offset = offset as u32;
+        Ok(offset)
+    }
+}
+
+pub trait ReadHelper {
+    fn read_u32(&mut self) -> Result<u32>;
+    fn read_u16(&mut self) -> Result<u16>;
+}
+
+impl<R> ReadHelper for R
+where
+    R: Read,
+{
+    fn read_u32(&mut self) -> Result<u32> {
+        let mut buf = [0; 4];
+        self.read_exact(&mut buf)?;
+        Ok(u32::from_le_bytes(buf))
+    }
+
+    fn read_u16(&mut self) -> Result<u16> {
+        let mut buf = [0; 2];
+        self.read_exact(&mut buf)?;
+        Ok(u16::from_le_bytes(buf))
     }
 }
 
@@ -175,7 +197,7 @@ mod tests {
     #[test]
     fn u32_roundtrip() {
         let expected = vec![0xEF, 0xBE, 0xAD, 0xDE];
-        let mut input = Cursor::new(expected.clone());
+        let mut input = CountingReader::new(Cursor::new(expected.clone()));
         assert_eq!(3735928559, input.read_u32().unwrap());
 
         let mut output = Cursor::new(vec![]);
@@ -186,7 +208,7 @@ mod tests {
     #[test]
     fn i32_roundtrip() {
         let expected = vec![0xEF, 0xBE, 0xAD, 0xDE];
-        let mut input = Cursor::new(expected.clone());
+        let mut input = CountingReader::new(Cursor::new(expected.clone()));
         assert_eq!(-559038737, input.read_i32().unwrap());
 
         let mut output = Cursor::new(vec![]);
@@ -200,14 +222,15 @@ mod tests {
         let mut cursor = Cursor::new(vec![]);
         cursor.write_f32(expected).unwrap();
         cursor.set_position(0);
-        let actual = cursor.read_f32().unwrap();
+        let mut reader = CountingReader::new(cursor);
+        let actual = reader.read_f32().unwrap();
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn u16_roundtrip() {
         let expected = vec![0xEF, 0xBE];
-        let mut input = Cursor::new(expected.clone());
+        let mut input = CountingReader::new(Cursor::new(expected.clone()));
         assert_eq!(48879, input.read_u16().unwrap());
 
         let mut output = Cursor::new(vec![]);
@@ -218,7 +241,7 @@ mod tests {
     #[test]
     fn i16_roundtrip() {
         let expected = vec![0xEF, 0xBE];
-        let mut input = Cursor::new(expected.clone());
+        let mut input = CountingReader::new(Cursor::new(expected.clone()));
         assert_eq!(-16657, input.read_i16().unwrap());
 
         let mut output = Cursor::new(vec![]);
@@ -247,7 +270,8 @@ mod tests {
         assert_eq!(std::mem::size_of::<TestStruct>() as u64, cursor.position());
 
         cursor.set_position(0);
-        let actual: TestStruct = cursor.read_struct().unwrap();
+        let mut reader = CountingReader::new(cursor);
+        let actual: TestStruct = reader.read_struct().unwrap();
         assert_eq!(expected, actual);
     }
 
@@ -257,9 +281,9 @@ mod tests {
         let mut cursor = Cursor::new(vec![]);
         cursor.write_string(&expected).unwrap();
         cursor.set_position(0);
-        let mut offset = 0;
-        let actual = cursor.read_string(&mut offset).unwrap();
+        let mut reader = CountingReader::new(cursor);
+        let actual = reader.read_string().unwrap();
         assert_eq!(expected, actual);
-        assert_eq!(offset, expected.len() + 4);
+        assert_eq!(reader.offset as usize, expected.len() + 4);
     }
 }

@@ -1,6 +1,6 @@
 use super::flags::NodeBitFlags;
 use super::types::{Display, NodeVariant, NodeVariants, BLOCK_EMPTY, ZONE_DEFAULT};
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::size::ReprSize;
 use crate::types::Vec3;
 use crate::{assert_that, static_assert_size, Result};
@@ -50,20 +50,23 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     Ok(NodeVariant::Display(node.data_ptr))
 }
 
-pub fn read<R>(read: &mut R, data_ptr: u32, offset: &mut u32) -> Result<Display>
+pub fn read<R>(read: &mut CountingReader<R>, data_ptr: u32) -> Result<Display>
 where
     R: Read,
 {
     let display: DisplayC = read.read_struct()?;
-    assert_that!("origin x", display.origin_x == 0, *offset + 0)?;
-    assert_that!("origin y", display.origin_y == 0, *offset + 4)?;
-    assert_that!("resolution", display.resolution == (640, 400), *offset + 8)?;
+    assert_that!("origin x", display.origin_x == 0, read.prev + 0)?;
+    assert_that!("origin y", display.origin_y == 0, read.prev + 4)?;
+    assert_that!(
+        "resolution",
+        display.resolution == (640, 400),
+        read.prev + 8
+    )?;
     assert_that!(
         "clear color",
         display.clear_color == CLEAR_COLOR,
-        *offset + 16
+        read.prev + 16
     )?;
-    *offset += DisplayC::SIZE;
 
     Ok(Display {
         resolution: display.resolution,

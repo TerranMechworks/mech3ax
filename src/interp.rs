@@ -1,5 +1,5 @@
 use crate::assert::assert_utf8;
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::size::ReprSize;
 use crate::string::{str_from_c_padded, str_from_c_sized, str_to_c_padded};
 use crate::{assert_that, static_assert_size, Result};
@@ -25,7 +25,7 @@ pub struct Script {
     pub lines: Vec<String>,
 }
 
-fn read_script<R>(read: &mut R, offset: &mut u64) -> Result<Vec<String>>
+fn read_script<R>(read: &mut CountingReader<R>, offset: &mut u64) -> Result<Vec<String>>
 where
     R: Read,
 {
@@ -61,7 +61,7 @@ where
     Ok(lines)
 }
 
-pub fn read_interp<R>(read: &mut R) -> Result<Vec<Script>>
+pub fn read_interp<R>(read: &mut CountingReader<R>) -> Result<Vec<Script>>
 where
     R: Read,
 {

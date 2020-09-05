@@ -1,7 +1,7 @@
 use super::flags::NodeBitFlags;
 use super::types::{Block, Light, NodeVariant, NodeVariants, BLOCK_EMPTY, ZONE_DEFAULT};
 use crate::assert::{assert_all_zero, AssertionError};
-use crate::io_ext::{ReadHelper, WriteHelper};
+use crate::io_ext::{CountingReader, WriteHelper};
 use crate::light::LightFlags;
 use crate::size::ReprSize;
 use crate::types::{Vec2, Vec3};
@@ -109,18 +109,16 @@ fn assert_light(light: &LightC, offset: u32) -> Result<()> {
     Ok(())
 }
 
-pub fn read<R>(read: &mut R, data_ptr: u32, offset: &mut u32) -> Result<Light>
+pub fn read<R>(read: &mut CountingReader<R>, data_ptr: u32) -> Result<Light>
 where
     R: Read,
 {
     let light: LightC = read.read_struct()?;
-    assert_light(&light, *offset)?;
-    *offset += LightC::SIZE;
+    assert_light(&light, read.prev)?;
 
     // read as a result of parent_count, but is always 0
     let zero = read.read_u32()?;
-    assert_that!("parent value", zero == 0, *offset)?;
-    *offset += 4;
+    assert_that!("parent value", zero == 0, read.prev)?;
 
     Ok(Light {
         direction: light.direction,
