@@ -4,7 +4,7 @@ use crate::materials::{
     RawMaterial, TexturedMaterial, MATERIAL_C_SIZE,
 };
 use crate::size::ReprSize;
-use crate::{assert_that, static_assert_size, Result};
+use crate::{assert_that, bool_c, static_assert_size, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -144,7 +144,7 @@ where
 {
     if let Material::Textured(mat) = material {
         if let Some(cycle) = &mat.cycle {
-            let unk00 = if cycle.unk00 { 1 } else { 0 };
+            let unk00 = bool_c!(cycle.unk00);
             let count = cycle.textures.len() as u32;
             write.write_struct(&CycleInfoC {
                 unk00,

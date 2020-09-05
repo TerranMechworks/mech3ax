@@ -13,7 +13,7 @@ use crate::assert::{assert_all_zero, assert_utf8, AssertionError};
 use crate::io_ext::{CountingReader, WriteHelper};
 use crate::size::ReprSize;
 use crate::string::{str_from_c_node_name, str_to_c_node_name};
-use crate::{assert_that, static_assert_size, Result};
+use crate::{assert_that, bool_c, static_assert_size, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -222,7 +222,6 @@ where
     str_to_c_node_name(variant.name, &mut name);
 
     let (area_partition_x, area_partition_y) = variant.area_partition.unwrap_or((-1, -1));
-    let parent_count = if variant.has_parent { 1 } else { 0 };
 
     write.write_struct(&NodeC {
         name,
@@ -238,7 +237,7 @@ where
         action_callback: 0,
         area_partition_x,
         area_partition_y,
-        parent_count,
+        parent_count: bool_c!(variant.has_parent),
         parent_array_ptr: variant.parent_array_ptr,
         children_count: variant.children_count,
         children_array_ptr: variant.children_array_ptr,

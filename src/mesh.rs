@@ -1,7 +1,7 @@
 use crate::io_ext::{CountingReader, WriteHelper};
 use crate::size::ReprSize;
 use crate::types::{Vec2, Vec3};
-use crate::{assert_that, static_assert_size, Result};
+use crate::{assert_that, bool_c, static_assert_size, Result};
 use ::serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
@@ -376,12 +376,9 @@ pub fn write_mesh_info<W>(write: &mut W, mesh: &Mesh) -> Result<()>
 where
     W: Write,
 {
-    let file_ptr = if mesh.file_ptr { 1 } else { 0 };
-    let unk04 = if mesh.unk04 { 1 } else { 0 };
-
     write.write_struct(&MeshC {
-        file_ptr,
-        unk04,
+        file_ptr: bool_c!(mesh.file_ptr),
+        unk04: bool_c!(mesh.unk04),
         unk08: mesh.unk08,
         parent_count: mesh.parent_count,
         polygon_count: mesh.polygons.len() as u32,

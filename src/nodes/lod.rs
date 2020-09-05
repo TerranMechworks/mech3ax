@@ -5,7 +5,7 @@ use crate::assert::assert_all_zero;
 use crate::io_ext::{CountingReader, WriteHelper};
 use crate::size::ReprSize;
 use crate::types::Vec2;
-use crate::{assert_that, static_assert_size, Result};
+use crate::{assert_that, bool_c, static_assert_size, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -127,11 +127,8 @@ pub fn write<W>(write: &mut W, lod: &Lod) -> Result<()>
 where
     W: Write,
 {
-    let level = if lod.level { 1 } else { 0 };
-    let unk72 = if lod.unk76.is_some() { 1 } else { 0 };
-
     write.write_struct(&LodC {
-        level,
+        level: bool_c!(lod.level),
         range_near_sq: lod.range.0 * lod.range.0,
         range_far: lod.range.1,
         range_far_sq: lod.range.1 * lod.range.1,
@@ -139,7 +136,7 @@ where
         unk60: lod.unk60,
         unk64: lod.unk60 * lod.unk60,
         one68: 1,
-        unk72,
+        unk72: bool_c!(lod.unk76.is_some()),
         unk76: lod.unk76.unwrap_or(0),
     })?;
     Ok(())

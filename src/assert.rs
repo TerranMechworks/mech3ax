@@ -292,6 +292,17 @@ macro_rules! assert_that {
     };
 }
 
+#[macro_export]
+macro_rules! bool_c {
+    ($value:expr) => {
+        if $value {
+            1
+        } else {
+            0
+        }
+    };
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
