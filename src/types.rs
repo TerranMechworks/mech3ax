@@ -24,6 +24,10 @@ impl Vec3 {
 pub struct Vec4(pub f32, pub f32, pub f32, pub f32);
 static_assert_size!(Vec4, 16);
 
+impl Vec4 {
+    pub const EMPTY: Vec4 = Vec4(0.0, 0.0, 0.0, 0.0);
+}
+
 #[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone)]
 #[repr(C)]
 pub struct Matrix(

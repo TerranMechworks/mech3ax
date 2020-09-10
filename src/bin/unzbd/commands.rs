@@ -1,4 +1,5 @@
 use image::ImageOutputFormat;
+use mech3rs::anim::read_anim;
 use mech3rs::archive::read_archive;
 use mech3rs::gamez::read_gamez;
 use mech3rs::interp::read_interp;
@@ -230,6 +231,28 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
 
     let data = serde_json::to_vec_pretty(&gamez.nodes)?;
     zip.start_file("nodes.json", options)?;
+    zip.write_all(&data)?;
+
+    zip.finish()?;
+    Ok(())
+}
+
+pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
+    let mut input = CountingReader::new(BufReader::new(File::open(opts.input)?));
+    let output = BufWriter::new(File::create(opts.output)?);
+
+    let mut zip = ZipWriter::new(output);
+    let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+
+    let metadata = read_anim(&mut input, |file_name, anim_def| -> Result<()> {
+        let data = serde_json::to_vec_pretty(anim_def)?;
+        zip.start_file(file_name, options)?;
+        zip.write_all(&data)?;
+        Ok(())
+    })?;
+
+    let data = serde_json::to_vec_pretty(&metadata)?;
+    zip.start_file("metadata.json", options)?;
     zip.write_all(&data)?;
 
     zip.finish()?;

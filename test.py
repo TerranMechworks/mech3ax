@@ -174,6 +174,25 @@ class Tester:
                 self.rezbd("gamez", zip_path, output_zbd)
                 self.compare(input_zbd, output_zbd)
 
+    def test_anim(self) -> None:
+        print("--- ANIM ---")
+        for name, zbd_dir, output_base in self.versions:
+            output_dir = output_base / "anim"
+            output_dir.mkdir(exist_ok=True)
+
+            for input_zbd in sorted(zbd_dir.rglob("anim.zbd")):
+                rel_path = input_zbd.relative_to(zbd_dir)
+                mission = rel_path.parent.name
+                zip_name = f"{mission}-{input_zbd.stem}.zip"
+                zbd_name = f"{mission}-{input_zbd.stem}.zbd"
+
+                zip_path = output_dir / zip_name
+                output_zbd = output_dir / zbd_name
+                print(name, mission, input_zbd.name)
+                self.unzbd("anim", input_zbd, zip_path)
+                self.rezbd("anim", zip_path, output_zbd)
+                self.compare(input_zbd, output_zbd)
+
 
 def main() -> None:
     parser = ArgumentParser()
@@ -189,14 +208,15 @@ def main() -> None:
     build = "release" if args.release else "debug"
     print("running", build)
     tester = Tester(args.versions_dir, args.output_dir, build)
-    tester.test_sounds()
-    tester.test_interp()
-    tester.test_resources()
-    tester.test_reader()
-    tester.test_mechlib()
-    tester.test_motion()
-    tester.test_textures()
-    tester.test_gamez()
+    # tester.test_sounds()
+    # tester.test_interp()
+    # tester.test_resources()
+    # tester.test_reader()
+    # tester.test_mechlib()
+    # tester.test_motion()
+    # tester.test_textures()
+    # tester.test_gamez()
+    tester.test_anim()
     tester.print_miscompares()
 
 

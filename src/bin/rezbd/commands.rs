@@ -1,3 +1,4 @@
+use mech3rs::anim::{write_anim, AnimDef, AnimMetadata};
 use mech3rs::archive::{write_archive, Entry};
 use mech3rs::gamez::{write_gamez, GameZ, Material as GameZMat, Mesh, Metadata, Node};
 use mech3rs::interp::{write_interp, Script};
@@ -251,5 +252,30 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
             nodes,
         },
     )?;
+    Ok(())
+}
+
+pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
+    let input = BufReader::new(File::open(opts.input)?);
+    let mut output = BufWriter::new(File::create(opts.output)?);
+
+    let mut zip = ZipArchive::new(input)?;
+
+    let metadata = {
+        let mut file = zip.by_name("metadata.json")?;
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+        let metadata: AnimMetadata = serde_json::from_slice(&buf)?;
+        metadata
+    };
+
+    write_anim(&mut output, &metadata, |file_name| -> Result<AnimDef> {
+        let mut file = zip.by_name(file_name)?;
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+        log::trace!("Loading JSON '{}'", file_name);
+        let anim_def: AnimDef = serde_json::from_slice(&buf)?;
+        Ok(anim_def)
+    })?;
     Ok(())
 }

@@ -219,6 +219,12 @@ macro_rules! assert_that {
     ($name:expr, $actual_struct:ident.$actual_field:tt == $expected:expr, $pos:expr) => {
         $crate::assert::is_equal_to($name, $expected, $actual_struct.$actual_field, $pos)
     };
+    ($name:expr, ($actual:expr) == $expected:expr, $pos:expr) => {
+        $crate::assert::is_equal_to($name, $expected, $actual, $pos)
+    };
+    ($name:expr, &$actual:tt == $expected:expr, $pos:expr) => {
+        $crate::assert::is_equal_to($name, $expected, &$actual, $pos)
+    };
     ($name:expr, $actual:tt != $expected:expr , $pos:expr) => {
         $crate::assert::is_not_equal_to($name, $expected, $actual, $pos)
     };
@@ -262,6 +268,9 @@ macro_rules! assert_that {
     };
     ($name:expr, $expected_min:tt <= $actual:tt <= $expected_max:expr, $pos:expr) => {
         $crate::assert::is_between($name, $expected_min, $expected_max, $actual, $pos)
+    };
+    ($name:expr, -$expected_min:tt <= $actual:tt <= $expected_max:expr, $pos:expr) => {
+        $crate::assert::is_between($name, -$expected_min, $expected_max, $actual, $pos)
     };
     ($name:expr, $expected_min:tt <= $actual_struct:ident.$actual_field:tt <= $expected_max:expr, $pos:expr) => {
         $crate::assert::is_between(

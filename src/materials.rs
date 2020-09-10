@@ -94,7 +94,7 @@ where
     let material: MaterialC = read.read_struct()?;
     let bitflags = MaterialFlags::from_bits(material.flags).ok_or_else(|| {
         AssertionError(format!(
-            "Expected valid flag, but was {:X} (at {})",
+            "Expected valid material flags, but was 0x{:02X} (at {})",
             material.flags,
             read.prev + 1
         ))

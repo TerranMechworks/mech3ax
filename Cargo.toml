@@ -26,6 +26,10 @@ pelite = "0.8.1"
 encoding = "0.2.33"
 image = {version = "0.23.8", default-features = false, features = ["png"] }
 bitflags = "1.0"
+num-traits = "0.2"
+num-derive = "0.3"
+log = "0.4"
+simple_logger = "1.9.0"
 
 [dev-dependencies]
 matches = "0.1.8"

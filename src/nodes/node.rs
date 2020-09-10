@@ -57,7 +57,7 @@ fn assert_node(node: NodeC, offset: u32) -> Result<(NodeType, NodeVariants)> {
     let name = assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name))?;
     let flags = NodeBitFlags::from_bits(node.flags).ok_or_else(|| {
         AssertionError(format!(
-            "Expected valid flag, but was {:08X} (at {})",
+            "Expected valid node flags, but was 0x{:08X} (at {})",
             node.flags,
             offset + 36
         ))

@@ -1,4 +1,5 @@
 use crate::assert::{assert_utf8, AssertionError};
+use crate::size::ReprSize;
 use crate::string::str_from_c_sized;
 use std::io::{Read, Result, Seek, SeekFrom, Write};
 use std::mem::MaybeUninit;
@@ -126,8 +127,9 @@ pub trait WriteHelper {
     fn write_f32(&mut self, value: f32) -> Result<()>;
     fn write_u16(&mut self, value: u16) -> Result<()>;
     fn write_i16(&mut self, value: i16) -> Result<()>;
-    fn write_struct<S>(&mut self, value: &S) -> Result<()>;
+    fn write_struct<S: ReprSize>(&mut self, value: &S) -> Result<()>;
     fn write_string(&mut self, value: &str) -> crate::Result<()>;
+    fn write_zeros(&mut self, count: u32) -> Result<()>;
 }
 
 impl<W> WriteHelper for W
@@ -159,7 +161,7 @@ where
         self.write_all(&buf)
     }
 
-    fn write_struct<S>(&mut self, value: &S) -> Result<()> {
+    fn write_struct<S: ReprSize>(&mut self, value: &S) -> Result<()> {
         let size = std::mem::size_of::<S>();
         let buf = unsafe { std::slice::from_raw_parts(value as *const S as *const u8, size) };
         self.write_all(buf)
@@ -171,6 +173,11 @@ where
         self.write_u32(count)?;
         self.write_all(&buf)?;
         Ok(())
+    }
+
+    fn write_zeros(&mut self, count: u32) -> Result<()> {
+        let buf = vec![0; count as usize];
+        self.write_all(&buf)
     }
 }
 
@@ -255,6 +262,7 @@ mod tests {
         name: [u8; 32],
         int: u32,
     }
+    crate::static_assert_size!(TestStruct, 36);
 
     #[test]
     fn struct_roundtrip() {

@@ -1,6 +1,6 @@
 use crate::types::{Matrix, Vec3};
 
-pub const PI: f32 = std::f64::consts::PI as f32;
+pub const PI: f32 = std::f32::consts::PI;
 
 pub fn euler_to_matrix(rotation: &Vec3) -> Matrix {
     let x = -rotation.0;

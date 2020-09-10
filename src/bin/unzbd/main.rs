@@ -3,6 +3,7 @@ mod errors;
 
 use clap::Clap;
 use errors::Result;
+use simple_logger::SimpleLogger;
 
 const VERSION: &str = concat!(
     env!("VERGEN_COMMIT_DATE"),
@@ -56,9 +57,12 @@ enum SubCommand {
     Mechlib(ZipOpts),
     #[clap(about = "Extract 'gamez.zbd' archives to ZIP")]
     Gamez(ZipOpts),
+    #[clap(about = "Extract 'anim.zbd' archives to ZIP")]
+    Anim(ZipOpts),
 }
 
 fn main() -> Result<()> {
+    SimpleLogger::from_env().init().unwrap();
     let opts: Opts = Opts::parse();
     match opts.subcmd {
         SubCommand::Sounds(opts) => commands::sounds(opts),
@@ -69,6 +73,7 @@ fn main() -> Result<()> {
         SubCommand::Motion(opts) => commands::motion(opts),
         SubCommand::Mechlib(opts) => commands::mechlib(opts),
         SubCommand::Gamez(opts) => commands::gamez(opts),
+        SubCommand::Anim(opts) => commands::anim(opts),
         SubCommand::License => commands::license(),
     }
 }

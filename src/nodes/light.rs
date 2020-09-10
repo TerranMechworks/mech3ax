@@ -82,7 +82,7 @@ fn assert_light(light: &LightC, offset: u32) -> Result<()> {
 
     let flags = LightFlags::from_bits(light.flags).ok_or_else(|| {
         AssertionError(format!(
-            "Expected valid flag, but was {:X} (at {})",
+            "Expected valid light flags, but was 0x{:08X} (at {})",
             light.flags,
             offset + 176
         ))

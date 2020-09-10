@@ -1,5 +1,6 @@
 #![warn(clippy::all, clippy::cargo)]
 #![allow(clippy::identity_op, clippy::multiple_crate_versions)]
+pub mod anim;
 pub mod archive;
 mod assert;
 pub mod gamez;
@@ -14,6 +15,7 @@ pub mod messages;
 pub mod motion;
 mod nodes;
 pub mod reader;
+mod sequence_event;
 mod serde;
 mod size;
 mod string;

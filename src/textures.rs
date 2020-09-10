@@ -90,7 +90,7 @@ pub struct TextureInfo {
 fn convert_info_from_c(name: String, tex_info: Info, offset: u32) -> Result<TextureInfo> {
     let bitflags = TexFlags::from_bits(tex_info.flags).ok_or_else(|| {
         AssertionError(format!(
-            "Expected valid flag, but was {:X} (at {})",
+            "Expected valid texture flags, but was 0x{:08X} (at {})",
             tex_info.flags, offset
         ))
     })?;
