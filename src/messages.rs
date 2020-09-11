@@ -4,8 +4,9 @@ use crate::string::str_from_c_sized;
 use crate::{assert_that, Result};
 use encoding::all::WINDOWS_1252;
 use encoding::{DecoderTrap, Encoding};
+use log::trace;
 use pelite::pe32::{Pe, PeFile};
-use pelite::resources::{DataEntry, Resources};
+use pelite::resources::{DataEntry, FindError, Name, Resources};
 use std::collections::HashMap;
 use std::io::{Cursor, Read};
 
@@ -19,16 +20,17 @@ where
     read.read_to_end(&mut buf)?;
 
     let pe = PeFile::from_bytes(&buf)?;
+
     let resources = pe.resources()?;
-    let entry = find_message_table(resources)?;
+    trace!("Resources: {}", resources.to_string());
+    let entry = find_message_table(resources)
+        .map_err(|_| AssertionError("Expected DLL to contain a message table".to_owned()))?;
 
     let mut messages = read_message_table(entry.bytes()?)?;
 
     let data_section = pe
         .section_headers()
-        // TODO: replace with `.by_name()` in next version (https://github.com/CasualX/pelite/pull/237)
-        .iter()
-        .find(|&section| &section.Name == b".data\0\0\0")
+        .by_name(".data")
         .ok_or_else(|| AssertionError("Expected DLL to contain a data directory".to_owned()))?;
 
     let data = pe.get_section_bytes(data_section)?;
@@ -44,16 +46,12 @@ where
     Ok(merged)
 }
 
-fn find_message_table(resources: Resources) -> Result<DataEntry> {
-    // English, German, French - the only locales I know MechWarrior 3 was released to
-    for locale_id in &["#1033", "#1031", "#1036"] {
-        let path = format!("/Message Tables/#1/{}", locale_id.to_owned());
-        if let Ok(entry) = resources.find_data(&path) {
-            return Ok(entry);
-        }
-    }
-
-    Err(AssertionError("Expected DLL to contain a message table".to_owned()).into())
+fn find_message_table(resources: Resources) -> std::result::Result<DataEntry, FindError> {
+    resources
+        .root()?
+        .get_dir(Name::Id(11))?
+        .first_dir()?
+        .first_data()
 }
 
 fn read_message_table(data: &[u8]) -> Result<HashMap<u32, String>> {
