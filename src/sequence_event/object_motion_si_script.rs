@@ -5,7 +5,7 @@ use crate::io_ext::{CountingReader, WriteHelper};
 use crate::serde::base64;
 use crate::size::ReprSize;
 use crate::string::bytes_to_c;
-// use crate::types::{Vec3, Vec4};
+use crate::types::{Vec3, Vec4};
 use crate::{assert_that, static_assert_size, Result};
 use ::serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
@@ -31,51 +31,42 @@ static_assert_size!(FrameC, 12);
 
 #[repr(C)]
 struct TranslateDataC {
-    // initial: Vec3,
-    // lerp: Vec3,
-    // unk: [u8; 52],
-    unk: [u8; 76],
+    value: Vec3,
+    unk: [u8; 64],
 }
 static_assert_size!(TranslateDataC, 76);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TranslateData {
-    // pub initial: Vec3,
-    // pub lerp: Vec3,
+    pub value: Vec3,
     #[serde(with = "base64")]
     pub unk: Vec<u8>,
 }
 
 #[repr(C)]
 struct RotateDataC {
-    // initial: Vec4,
-    // lerp: Vec3,
-    // unk: [u8; 48],
-    unk: [u8; 76],
+    value: Vec4,
+    unk: [u8; 60],
 }
 static_assert_size!(RotateDataC, 76);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RotateData {
-    // pub initial: Vec4,
-    // pub lerp: Vec3,
+    pub value: Vec4,
     #[serde(with = "base64")]
     pub unk: Vec<u8>,
 }
 
 #[repr(C)]
 struct ScaleDataC {
-    // initial: Vec3,
-    // lerp: Vec3,
-    // unk: [u8; 52],
-    unk: [u8; 76],
+    value: Vec3,
+    unk: [u8; 64],
 }
 static_assert_size!(ScaleDataC, 76);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ScaleData {
-    // pub initial: Vec3,
-    // pub lerp: Vec3,
+    pub value: Vec3,
     #[serde(with = "base64")]
     pub unk: Vec<u8>,
 }
@@ -133,8 +124,7 @@ fn read_frame<R: Read>(read: &mut CountingReader<R>) -> Result<ObjectMotionSiFra
     let translation = if flags.contains(FrameFlags::TRANSLATE) {
         let translation: TranslateDataC = read.read_struct()?;
         Some(TranslateData {
-            // initial: translation.initial,
-            // lerp: translation.lerp,
+            value: translation.value,
             unk: translation.unk.to_vec(),
         })
     } else {
@@ -144,8 +134,7 @@ fn read_frame<R: Read>(read: &mut CountingReader<R>) -> Result<ObjectMotionSiFra
     let rotation = if flags.contains(FrameFlags::ROTATE) {
         let rotation: RotateDataC = read.read_struct()?;
         Some(RotateData {
-            // initial: rotation.initial,
-            // lerp: rotation.lerp,
+            value: rotation.value,
             unk: rotation.unk.to_vec(),
         })
     } else {
@@ -155,8 +144,7 @@ fn read_frame<R: Read>(read: &mut CountingReader<R>) -> Result<ObjectMotionSiFra
     let scale = if flags.contains(FrameFlags::SCALE) {
         let scale: ScaleDataC = read.read_struct()?;
         Some(ScaleData {
-            // initial: scale.initial,
-            // lerp: scale.lerp,
+            value: scale.value,
             unk: scale.unk.to_vec(),
         })
     } else {
@@ -248,32 +236,26 @@ impl ScriptObject for ObjectMotionSiScript {
             })?;
 
             if let Some(translation) = &frame.translation {
-                // let mut unk = [0; 52];
-                let mut unk = [0; 76];
+                let mut unk = [0; 64];
                 bytes_to_c(&translation.unk, &mut unk);
                 write.write_struct(&TranslateDataC {
-                    // initial: translation.initial,
-                    // lerp: translation.lerp,
+                    value: translation.value,
                     unk,
                 })?;
             }
             if let Some(rotation) = &frame.rotation {
-                // let mut unk = [0; 48];
-                let mut unk = [0; 76];
+                let mut unk = [0; 60];
                 bytes_to_c(&rotation.unk, &mut unk);
                 write.write_struct(&RotateDataC {
-                    // initial: rotation.initial,
-                    // lerp: rotation.lerp,
+                    value: rotation.value,
                     unk,
                 })?;
             }
             if let Some(scale) = &frame.scale {
-                // let mut unk = [0; 52];
-                let mut unk = [0; 76];
+                let mut unk = [0; 64];
                 bytes_to_c(&scale.unk, &mut unk);
                 write.write_struct(&ScaleDataC {
-                    // initial: scale.initial,
-                    // lerp: scale.lerp,
+                    value: scale.value,
                     unk,
                 })?;
             }
