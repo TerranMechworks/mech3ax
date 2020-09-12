@@ -12,12 +12,12 @@ use std::io::{Read, Write};
 
 #[repr(C)]
 struct ScriptHeaderC {
-    node_index: u32,
-    count: u32,
-    zero08: f32,
-    zero12: f32,
-    zero16: u32,
-    zero20: u32,
+    node_index: u32, // 00
+    count: u32,      // 04
+    zero08: f32,     // 08
+    zero12: f32,     // 12
+    zero16: u32,     // 16
+    zero20: u32,     // 20
 }
 static_assert_size!(ScriptHeaderC, 24);
 
@@ -93,7 +93,7 @@ pub struct ObjectMotionSiFrame {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ObjectMotionSiScript {
-    pub node_index: u32,
+    pub node: String,
     pub frames: Vec<ObjectMotionSiFrame>,
 }
 
@@ -164,11 +164,11 @@ impl ScriptObject for ObjectMotionSiScript {
     const INDEX: u8 = 12;
     const SIZE: u32 = u32::MAX;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         let end_offset = read.offset + size;
         let header: ScriptHeaderC = read.read_struct()?;
 
-        // TODO: translate node_index?
+        let node = anim_def.node_from_index(header.node_index as usize, read.prev + 0)?;
         assert_that!(
             "object motion si script field 08",
             header.zero08 == 0.0,
@@ -200,16 +200,14 @@ impl ScriptObject for ObjectMotionSiScript {
             read.offset
         )?;
 
-        Ok(ObjectMotionSiScript {
-            node_index: header.node_index,
-            frames,
-        })
+        Ok(ObjectMotionSiScript { node, frames })
     }
 
-    fn write<W: Write>(&self, write: &mut W, _anim_def: &AnimDef) -> Result<()> {
+    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+        let node_index = anim_def.node_to_index(&self.node)? as u32;
         let count = self.frames.len() as u32;
         write.write_struct(&ScriptHeaderC {
-            node_index: self.node_index,
+            node_index,
             count,
             zero08: 0.0,
             zero12: 0.0,
