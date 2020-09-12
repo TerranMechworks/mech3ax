@@ -3,7 +3,7 @@ on:
   push:
     branches:
     - master
-    - workflow_test
+    - workflow_check
   pull_request:
     branches:
     - master

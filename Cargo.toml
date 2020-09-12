@@ -5,7 +5,7 @@ authors = ["Toby Fleming <tobywf@users.noreply.github.com>"]
 edition = "2018"
 description = "mech3rs converts assets from the 1998 MechWarrior 3 game to modern formats and back"
 readme = "README.md"
-license-file = "LICENSE"
+license-file = "LICENSE.txt"
 repository = "https://github.com/tobywf/mech3rs"
 keywords = ["cli", "MechWarrior", "reverse engineering"]
 categories = ["game-development", "parser-implementations"]
@@ -56,4 +56,5 @@ opt-level = 3
 [profile.release]
 opt-level = 3
 lto = true
-codegen-units = 1
+# the Windows build breaks when this is enabled
+# codegen-units = 1

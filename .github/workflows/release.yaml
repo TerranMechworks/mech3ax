@@ -1,0 +1,162 @@
+# "Inspired" by RipGrep
+# https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/release.yml
+name: Release
+on:
+  push:
+    branches:
+    - workflow_release
+    tags:
+    - 'v[0-9]+.[0-9]+.[0-9]+'
+jobs:
+  create-release:
+    name: create-release
+    runs-on: ubuntu-latest
+    # env:
+    #   # Set to force version number for testing
+    #   VERSION: v0.0.0-TEST
+    steps:
+      - name: Create artifacts directory
+        run: mkdir artifacts
+      - name: Get the release version from the tag
+        if: env.VERSION == ''
+        run: |
+          echo "::set-env name=VERSION::${GITHUB_REF#refs/tags/}"
+          echo "version is: ${{ env.VERSION }}"
+      - name: Get the data
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+      - name: Create GitHub release
+        id: release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.VERSION }}
+          release_name: ${{ env.VERSION }} (${{ steps.date.outputs.date }})
+          draft: true
+      - name: Save release upload URL to artifact
+        run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
+      - name: Save version number to artifact
+        run: echo "${{ env.VERSION }}" > artifacts/release-version
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: artifacts
+          path: artifacts
+
+  build-release:
+    name: build-release
+    needs: ['create-release']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 12
+    env:
+      # Emit backtraces on panics.
+      RUST_BACKTRACE: 1
+    strategy:
+      matrix:
+        build: [linux-gnu, macos, win-msvc]
+        include:
+        - build: linux-gnu
+          os: ubuntu-latest
+          target: x86_64-unknown-linux-gnu
+        - build: macos
+          os: macos-latest
+          target: x86_64-apple-darwin
+        - build: win-msvc
+          os: windows-2019
+          target: x86_64-pc-windows-msvc
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+        target: ${{ matrix.target }}
+    - name: Get release download URL
+      uses: actions/download-artifact@v1
+      with:
+        name: artifacts
+        path: artifacts
+    - name: Set release upload URL and release version
+      id: release
+      shell: bash
+      run: |
+        release_upload_url="$(cat artifacts/release-upload-url)"
+        echo "::set-output name=upload_url::$release_upload_url"
+        echo "release upload url: $release_upload_url"
+        release_version="$(cat artifacts/release-version)"
+        echo "::set-output name=version::$release_version"
+        echo "release version: $release_version"
+    - name: Build release binary
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --verbose --release --target "${{ matrix.target }}"
+    - name: Build archive
+      id: build
+      shell: bash
+      run: |
+        staging="mech3ax-${{ steps.release.outputs.version }}"
+        mkdir "$staging"
+        archive="$staging-${{ matrix.target }}"
+        cp {README.md,LICENSE.txt} "$staging/"
+        if [ "${{ matrix.os }}" = "windows-2019" ]; then
+          cp target/${{ matrix.target }}/release/{unzbd,rezbd}.exe "$staging/"
+          7z a "$archive.zip" "$staging"
+          echo "::set-output name=asset::$archive.zip"
+        else
+          cp target/${{ matrix.target }}/release/{unzbd,rezbd} "$staging/"
+          tar czvf "$archive.tar.gz" "$staging"
+          echo "::set-output name=asset::$archive.tar.gz"
+        fi
+    - name: Upload release archive
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.release.outputs.upload_url }}
+        asset_path: ${{ steps.build.outputs.asset }}
+        asset_name: ${{ steps.build.outputs.asset }}
+        asset_content_type: application/octet-stream
+
+  package-source:
+    name: package-source
+    needs: ['create-release']
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Get release download URL
+      uses: actions/download-artifact@v1
+      with:
+        name: artifacts
+        path: artifacts
+    - name: Set release upload URL and release version
+      id: release
+      shell: bash
+      run: |
+        release_upload_url="$(cat artifacts/release-upload-url)"
+        echo "::set-output name=upload_url::$release_upload_url"
+        echo "release upload url: $release_upload_url"
+        release_version="$(cat artifacts/release-version)"
+        echo "::set-output name=version::$release_version"
+        echo "release version: $release_version"
+    - name: Build archive
+      id: build
+      shell: bash
+      run: |
+        archive="mech3ax-${{ steps.release.outputs.version }}-source.tar.gz"
+        git archive --output "$archive" HEAD
+        echo "::set-output name=asset::$archive"
+    - name: Upload release archive
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.release.outputs.upload_url }}
+        asset_path: ${{ steps.build.outputs.asset }}
+        asset_name: ${{ steps.build.outputs.asset }}
+        asset_content_type: application/octet-stream
