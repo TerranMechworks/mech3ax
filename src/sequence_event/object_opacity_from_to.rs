@@ -39,7 +39,7 @@ impl ScriptObject for ObjectOpacityFromTo {
         )?;
         let object_opacity: ObjectOpacityFromToC = read.read_struct()?;
         let node = anim_def.node_from_index(object_opacity.node_index as usize, read.prev + 0)?;
-        // TODO: is opacity 0.0 for state -1?
+        // the opacity value is independent from the state; e.g. for -1, opacity is not necessarily 0.0
         assert_that!("object opacity from state", object_opacity.from_state in [-1, 0, 1], read.prev + 4)?;
         assert_that!("object opacity to state", object_opacity.to_state in [-1, 0, 1], read.prev + 6)?;
         assert_that!("object opacity from value", 0.0 <= object_opacity.from_value <= 1.0, read.prev + 8)?;
