@@ -148,7 +148,7 @@ where
     Ok(material)
 }
 
-pub fn write_material<W>(write: &mut W, material: &Material) -> Result<()>
+pub fn write_material<W>(write: &mut W, material: &Material, pointer: Option<u32>) -> Result<()>
 where
     W: Write,
 {
@@ -171,7 +171,9 @@ where
                 red: 255.0,
                 green: 255.0,
                 blue: 255.0,
-                pointer: material.pointer,
+                // this allows GameZ to override the pointer with the texture index
+                // (without mutating the material)
+                pointer: pointer.unwrap_or(material.pointer),
                 unk20: 0.0,
                 unk24: 0.5,
                 unk28: 0.5,

@@ -73,8 +73,8 @@ where
 
             Material::Textured(TexturedMaterial {
                 texture,
-                // TODO: since this stores the index of the texture name, zero it out
-                pointer: mat.pointer,
+                // since this stores the index of the texture name, zero it out
+                pointer: 0,
                 cycle,
                 unk32: mat.unk32,
                 flag: mat.flag,
@@ -187,7 +187,17 @@ where
 
     let count = materials.len() as i16;
     for (i, material) in materials.iter().enumerate() {
-        write_material(write, &material)?;
+        let pointer = if let Material::Textured(textured) = material {
+            // reconstruct the texture index
+            let texture_index = textures
+                .iter()
+                .position(|tex| tex == &textured.texture)
+                .expect("Texture name not found");
+            Some(texture_index as u32)
+        } else {
+            None
+        };
+        write_material(write, material, pointer)?;
 
         let index = i as i16;
         let mut index1 = index + 1;

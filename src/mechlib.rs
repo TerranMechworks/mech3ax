@@ -94,7 +94,7 @@ where
 {
     write.write_u32(materials.len() as u32)?;
     for material in materials {
-        write_material(write, material)?;
+        write_material(write, material, None)?;
         if let Material::Textured(textured) = material {
             if textured.cycle.is_some() {
                 panic!("mechlib materials cannot have cycled textures");
