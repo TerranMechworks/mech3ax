@@ -3,7 +3,7 @@ use super::support::*;
 use super::types::*;
 use crate::assert::{assert_all_zero, assert_utf8, AssertionError};
 use crate::io_ext::{CountingReader, WriteHelper};
-use crate::sequence_event::{read_events, size_events, write_events};
+use crate::sequence_event::{read_events, size_events, write_events, EventData};
 use crate::size::ReprSize;
 use crate::string::{str_from_c_padded, str_from_c_partition, str_to_c_padded, str_to_c_partition};
 use crate::types::Vec2;
@@ -535,7 +535,6 @@ pub fn read_anim_def<R: Read>(read: &mut CountingReader<R>) -> Result<(AnimDef, 
         network_log,
         save_log,
         has_callbacks: flags.contains(AnimDefFlags::HAS_CALLBACKS),
-        callback_count: 0,
         reset_time,
         health: anim_def.max_health,
         proximity_damage: flags.contains(AnimDefFlags::PROXIMITY_DAMAGE),
@@ -575,17 +574,23 @@ pub fn read_anim_def<R: Read>(read: &mut CountingReader<R>) -> Result<(AnimDef, 
 
     result.sequences = read_sequence_defs(read, &result, anim_def.seq_def_count)?;
 
-    /*
-        TODO: validate callbacks
-        # the Callback script object checks if callbacks are allowed, but i also
-        # want to catch the case where the flag might've been set, but no callbacks
-        # were in the scripts
-        if anim_def.has_callback:
-            assert_gt("callbacks", 0, anim_def.callback_count, data_offset + 148)
+    // the Callback event checks if callbacks are allowed, but i also wanted to catch
+    // the case where the flag might've been set, but no callbacks exists
+    let mut expect_callbacks = false;
+    for seq in &result.sequences {
+        for event in &seq.events {
+            if let EventData::Callback(_) = event.data {
+                expect_callbacks = true;
+                break;
+            }
+        }
+    }
 
-        # don't need this value any more
-        anim_def.callback_count = 0
-    */
+    assert_that!(
+        "anim_def has callbacks",
+        result.has_callbacks == expect_callbacks,
+        prev + 148
+    )?;
 
     let anim_ptr = AnimPtr {
         file_name,

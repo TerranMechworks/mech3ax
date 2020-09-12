@@ -88,7 +88,6 @@ pub struct AnimDef {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub save_log: Option<bool>,
     pub has_callbacks: bool, // = False
-    pub callback_count: u32, // = 0
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub reset_time: Option<f32>,
     pub health: f32,            // = 0.0
