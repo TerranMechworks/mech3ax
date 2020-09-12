@@ -7,6 +7,7 @@ mod animation;
 mod call_animation;
 mod call_object_connector;
 mod control_flow;
+mod delta;
 mod detonate_weapon;
 mod fbfx_color_from_to;
 mod fog_state;

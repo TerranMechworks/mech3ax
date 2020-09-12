@@ -1,10 +1,12 @@
+use super::delta::{dec_f32, delta};
 use super::ScriptObject;
 use crate::anim::AnimDef;
 use crate::io_ext::{CountingReader, WriteHelper};
+use crate::serde::bool_false;
 use crate::size::ReprSize;
 use crate::types::Vec4;
 use crate::{assert_that, static_assert_size, Result};
-use serde::{Deserialize, Serialize};
+use ::serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -25,28 +27,14 @@ struct FbFxColorFromToC {
 }
 static_assert_size!(FbFxColorFromToC, 52);
 
-fn bool_false(value: &bool) -> bool {
-    !value
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FrameBufferEffectColor {
     pub from: Vec4,
     pub to: Vec4,
     pub runtime: f32,
+    // this value can be safely ignored, but is required for binary accuracy
     #[serde(skip_serializing_if = "bool_false", default)]
     pub fudge_alpha: bool,
-}
-
-#[inline]
-fn delta(to: f32, from: f32, runtime: f32) -> f32 {
-    (to - from) / runtime
-}
-
-#[inline]
-fn dec_f32(value: f32) -> f32 {
-    let dec = u32::from_ne_bytes(value.to_ne_bytes()) - 1;
-    f32::from_ne_bytes(dec.to_ne_bytes())
 }
 
 impl ScriptObject for FrameBufferEffectColor {

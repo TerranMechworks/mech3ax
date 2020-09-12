@@ -1,3 +1,7 @@
+pub fn bool_false(value: &bool) -> bool {
+    !value
+}
+
 pub mod base64 {
     use serde::{de, Deserialize, Deserializer, Serializer};
     pub fn serialize<S>(bytes: &[u8], serializer: S) -> Result<S::Ok, S::Error>

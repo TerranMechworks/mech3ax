@@ -1,4 +1,5 @@
-use serde::{Deserialize, Serialize};
+use crate::serde::bool_false;
+use ::serde::{Deserialize, Serialize};
 
 bitflags::bitflags! {
     pub struct NodeBitFlags: u32 {
@@ -38,10 +39,6 @@ bitflags::bitflags! {
         const BASE = Self::ACTIVE.bits | Self::TREE_VALID.bits | Self::ID_ZONE_CHECK.bits;
         const DEFAULT = Self::BASE.bits | Self::ALTITUDE_SURFACE.bits | Self::INTERSECT_SURFACE.bits;
     }
-}
-
-fn bool_false(value: &bool) -> bool {
-    !value
 }
 
 #[derive(Debug, Serialize, Deserialize)]
