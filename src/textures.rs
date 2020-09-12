@@ -10,6 +10,8 @@ use crate::string::{str_from_c_padded, str_to_c_padded};
 use crate::{assert_that, static_assert_size, Error, Result};
 use ::serde::{Deserialize, Serialize};
 use image::{DynamicImage, RgbImage, RgbaImage};
+use num_derive::FromPrimitive;
+use num_traits::FromPrimitive;
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -65,12 +67,13 @@ pub enum TextureAlpha {
     Full,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, FromPrimitive, Copy, Clone)]
+#[repr(u16)]
 pub enum TextureStretch {
-    None,
-    Vertical,
-    Horizontal,
-    Both,
+    None = 0,
+    Vertical = 1,
+    Horizontal = 2,
+    Both = 3,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -117,20 +120,13 @@ fn convert_info_from_c(name: String, tex_info: Info, offset: u32) -> Result<Text
         }
     };
 
-    let stretch = match tex_info.stretch {
-        0 => TextureStretch::None,
-        1 => TextureStretch::Vertical,
-        2 => TextureStretch::Horizontal,
-        3 => TextureStretch::Both,
-        v => {
-            let msg = format!(
-                "Expected valid texture stretch, but was {} (at {})",
-                v,
-                offset + 16
-            );
-            return Err(AssertionError(msg).into());
-        }
-    };
+    let stretch = FromPrimitive::from_u16(tex_info.stretch).ok_or_else(|| {
+        AssertionError(format!(
+            "Expected valid texture stretch, but was {} (at {})",
+            tex_info.stretch,
+            offset + 16
+        ))
+    })?;
 
     Ok(TextureInfo {
         name,
@@ -331,13 +327,6 @@ fn convert_info_to_c(info: &TextureInfo) -> Info {
         }
     }
 
-    let stretch = match info.stretch {
-        TextureStretch::None => 0,
-        TextureStretch::Vertical => 1,
-        TextureStretch::Horizontal => 2,
-        TextureStretch::Both => 3,
-    };
-
     let palette_count = info
         .palette
         .as_ref()
@@ -350,7 +339,7 @@ fn convert_info_to_c(info: &TextureInfo) -> Info {
         height: info.height,
         zero08: 0,
         palette_count,
-        stretch,
+        stretch: info.stretch as u16,
     }
 }
 

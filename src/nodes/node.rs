@@ -18,10 +18,10 @@ use std::io::{Read, Write};
 
 #[repr(C)]
 struct NodeC {
-    name: [u8; 36],
-    flags: u32, // 036
-    zero040: u32,
-    unk044: u32,
+    name: [u8; 36],          // 000
+    flags: u32,              // 036
+    zero040: u32,            // 040
+    unk044: u32,             // 044
     zone_id: u32,            // 048
     node_type: u32,          // 052
     data_ptr: u32,           // 056

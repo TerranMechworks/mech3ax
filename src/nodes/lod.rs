@@ -14,12 +14,12 @@ struct LodC {
     range_near_sq: f32, // 04
     range_far: f32,     // 08
     range_far_sq: f32,  // 12
-    zero16: [u8; 44],
-    unk60: f32,
-    unk64: f32,
-    one68: u32,
-    unk72: u32,
-    unk76: u32,
+    zero16: [u8; 44],   // 16
+    unk60: f32,         // 60
+    unk64: f32,         // 64
+    one68: u32,         // 68
+    unk72: u32,         // 72
+    unk76: u32,         // 76
 }
 static_assert_size!(LodC, 80);
 

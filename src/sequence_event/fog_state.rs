@@ -26,7 +26,7 @@ bitflags::bitflags! {
 
 #[repr(C)]
 struct FogStateC {
-    name: [u8; 32],
+    name: [u8; 32], // 00
     flags: u32,     // 32
     fog_type: u32,  // 36
     color: Vec3,    // 40

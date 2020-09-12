@@ -98,7 +98,7 @@ pub fn str_from_c_padded(buf: &[u8]) -> Result<String, ConversionError> {
 pub fn str_from_c_sized(buf: &[u8]) -> Result<String, ConversionError> {
     match std::str::from_utf8(&buf) {
         Ok(str) => Ok(str.to_owned()),
-        Err(err) => Err(crate::string::ConversionError::Utf8(err)),
+        Err(err) => Err(ConversionError::Utf8(err)),
     }
 }
 

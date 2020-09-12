@@ -5,6 +5,7 @@ use ::serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 const VERSION: u32 = 4;
+const FLAGS: u32 = 8 | 4;
 
 #[repr(C)]
 struct Header {
@@ -45,9 +46,9 @@ where
     let parts = (0..header.part_count)
         .map(|_| {
             let part_name = read.read_string()?;
-            let flag = read.read_u32()?;
+            let flags = read.read_u32()?;
             // 8 = translation, 4 = rotation, 2 = scaling (never in motion.zbd)
-            assert_that!("flag", flag == 12, read.prev)?;
+            assert_that!("flag", flags == FLAGS, read.prev)?;
 
             let translations = (0..frame_count)
                 .map(|_| read.read_struct())
@@ -93,7 +94,7 @@ where
 
     for (part_name, frames) in &motion.parts {
         write.write_string(part_name)?;
-        write.write_u32(12)?; // flag
+        write.write_u32(FLAGS)?;
 
         for frame in frames {
             write.write_struct(&frame.translation)?;

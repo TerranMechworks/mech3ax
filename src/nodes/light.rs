@@ -10,14 +10,14 @@ use std::io::{Read, Write};
 
 #[repr(C)]
 struct LightC {
-    direction: Vec3,   // 000
-    translation: Vec3, // 012
-    zero024: [u8; 112],
-    one136: f32,
-    zero140: f32,
-    zero144: f32,
-    zero148: f32,
-    zero152: f32,
+    direction: Vec3,    // 000
+    translation: Vec3,  // 012
+    zero024: [u8; 112], // 024
+    one136: f32,        // 136
+    zero140: f32,       // 140
+    zero144: f32,       // 144
+    zero148: f32,       // 148
+    zero152: f32,       // 152
     diffuse: f32,       // 156
     ambient: f32,       // 160
     color: Vec3,        // 164

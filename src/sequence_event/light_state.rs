@@ -16,7 +16,7 @@ const INPUT_NODE_INDEX: u32 = -200i32 as u32;
 
 #[repr(C)]
 struct LightStateC {
-    name: [u8; 32],
+    name: [u8; 32],    // 00
     light_index: u32,  // 32
     flags: u32,        // 36
     active_state: u32, // 40

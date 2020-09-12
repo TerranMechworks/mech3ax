@@ -44,16 +44,16 @@ struct WorldC {
     virt_partition_x_count: u32,          // 136
     virt_partition_y_count: u32,          // 140
     virt_partition_ptr: u32,              // 144
-    one148: f32,
-    one152: f32,
-    one156: f32,
-    children_count: u32, // 160
-    children_ptr: u32,   // 164
-    lights_ptr: u32,     // 168
-    zero172: u32,
-    zero176: u32,
-    zero180: u32,
-    zero184: u32,
+    one148: f32,                          // 148
+    one152: f32,                          // 152
+    one156: f32,                          // 156
+    children_count: u32,                  // 160
+    children_ptr: u32,                    // 164
+    lights_ptr: u32,                      // 168
+    zero172: u32,                         // 172
+    zero176: u32,                         // 176
+    zero180: u32,                         // 180
+    zero184: u32,                         // 184
 }
 static_assert_size!(WorldC, 188);
 

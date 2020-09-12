@@ -94,7 +94,7 @@ fn read_message_table(data: &[u8]) -> Result<HashMap<u32, String>> {
                 }
             }
 
-            // All the English, German, and French locale IDs map to the same CP
+            // all the English, German, and French locale IDs map to the same CP
             let message_contents = WINDOWS_1252
                 .decode(&buf, DecoderTrap::Strict)
                 .map_err(|err| AssertionError(err.into()))?;
@@ -115,8 +115,6 @@ fn read_zlocids(data: &[u8], mem_start: u32, mem_end: u32) -> Result<Vec<(u32, S
         assert_that!("initterm", initterm == 0, i * 4)?;
     }
 
-    // the table of message offsets and message table IDs is written backwards, highest
-    // address first.
     let mut entry_table = Vec::new();
     loop {
         let mem_offset = read.read_u32()?;
@@ -132,6 +130,8 @@ fn read_zlocids(data: &[u8], mem_start: u32, mem_end: u32) -> Result<Vec<(u32, S
         entry_table.push((entry_id, relative_offset));
     }
 
+    // the table of message offsets and message table IDs is written backwards, highest
+    // address first.
     entry_table
         .into_iter()
         .rev()
