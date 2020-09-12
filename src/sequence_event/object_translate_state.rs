@@ -8,11 +8,14 @@ use crate::{assert_that, static_assert_size, Result};
 use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
+const INPUT_NODE_INDEX: u16 = -200i16 as u16;
+
 #[repr(C)]
 struct ObjectTranslateStateC {
-    at_node_matrix: u32,
-    translate: Vec3,
-    node_index: u32,
+    zero00: u32,        // 00
+    translate: Vec3,    // 04
+    node_index: u16,    // 16
+    at_node_index: u16, // 18
 }
 static_assert_size!(ObjectTranslateStateC, 20);
 
@@ -20,7 +23,8 @@ static_assert_size!(ObjectTranslateStateC, 20);
 pub struct ObjectTranslateState {
     pub node: String,
     pub translate: Vec3,
-    pub node_index: i32,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub at_node: Option<String>,
 }
 
 impl ScriptObject for ObjectTranslateState {
@@ -36,29 +40,43 @@ impl ScriptObject for ObjectTranslateState {
         let object_translate_state: ObjectTranslateStateC = read.read_struct()?;
         assert_that!(
             "object translate state field 00",
-            object_translate_state.at_node_matrix == 0,
+            object_translate_state.zero00 == 0,
             read.prev + 0
         )?;
-        // TODO: figure this out
-        let node_index = object_translate_state.node_index as i32;
-        let node = if node_index < 1 {
-            INPUT_NODE.to_owned()
+
+        let node =
+            anim_def.node_from_index(object_translate_state.node_index as usize, read.prev + 16)?;
+        let at_node = if object_translate_state.at_node_index == INPUT_NODE_INDEX {
+            Some(INPUT_NODE.to_owned())
         } else {
-            anim_def.node_from_index(object_translate_state.node_index as usize, read.prev + 16)?
+            assert_that!(
+                "object translate state at node",
+                object_translate_state.at_node_index == 0,
+                read.prev + 18
+            )?;
+            None
         };
 
         Ok(Self {
             node,
             translate: object_translate_state.translate,
-            node_index,
+            at_node,
         })
     }
 
-    fn write<W: Write>(&self, write: &mut W, _anim_def: &AnimDef) -> Result<()> {
+    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+        let node_index = anim_def.node_to_index(&self.node)? as u16;
+        let at_node_index = if let Some(at_node) = &self.at_node {
+            assert_that!("object translate state at node", at_node == INPUT_NODE, 0)?;
+            INPUT_NODE_INDEX
+        } else {
+            0
+        };
         write.write_struct(&ObjectTranslateStateC {
-            at_node_matrix: 0,
+            zero00: 0,
             translate: self.translate,
-            node_index: self.node_index as u32,
+            node_index,
+            at_node_index,
         })?;
         Ok(())
     }
