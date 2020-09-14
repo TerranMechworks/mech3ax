@@ -186,11 +186,11 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
             let mut file = zip.by_name(&name)?;
             let mut buf = Vec::new();
             file.read_to_end(&mut buf)?;
-            let model = serde_json::from_slice(&buf)?;
+            let mut model = serde_json::from_slice(&buf)?;
 
             let mut buf = Vec::new();
             let mut cursor = Cursor::new(&mut buf);
-            write_model(&mut cursor, &model)?;
+            write_model(&mut cursor, &mut model)?;
             Ok(buf)
         }
     })

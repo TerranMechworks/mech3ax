@@ -22,6 +22,7 @@ struct Node(BaseNode<Node>);
 pub struct Model {
     root: Node,
     meshes: Vec<Mesh>,
+    mesh_ptrs: Vec<i32>,
 }
 
 pub fn read_version<R>(read: &mut CountingReader<R>) -> Result<()>
@@ -105,7 +106,12 @@ where
     Ok(())
 }
 
-fn read_node_and_mesh<R>(read: &mut CountingReader<R>, meshes: &mut Vec<Mesh>) -> Result<Node>
+fn read_node_and_mesh<R>(
+    read: &mut CountingReader<R>,
+    index: &mut i32,
+    meshes: &mut Vec<Mesh>,
+    mesh_ptrs: &mut Vec<i32>,
+) -> Result<Node>
 where
     R: Read,
 {
@@ -114,9 +120,16 @@ where
         WrappedNode::Object3d(wrapped) => {
             let mut object3d = wrapped.wrapped;
             if object3d.mesh_index != 0 {
+                // preserve the pointer, store the new index
+                mesh_ptrs.push(object3d.mesh_index);
+                object3d.mesh_index = *index;
+                *index += 1;
+
                 let wrapped_mesh = read_mesh_info(read)?;
                 let mesh = read_mesh_data(read, wrapped_mesh)?;
                 meshes.push(mesh);
+            } else {
+                object3d.mesh_index = -1;
             }
 
             // we have to apply this, so data is written out correctly again, even if
@@ -124,7 +137,7 @@ where
             object3d.parent = if wrapped.has_parent { Some(0) } else { None };
 
             object3d.children = (0..wrapped.children_count)
-                .map(|_| read_node_and_mesh(read, meshes))
+                .map(|_| read_node_and_mesh(read, index, meshes, mesh_ptrs))
                 .collect::<Result<Vec<_>>>()?;
 
             Ok(Node(BaseNode::Object3d(object3d)))
@@ -137,45 +150,71 @@ pub fn read_model<R>(read: &mut CountingReader<R>) -> Result<Model>
 where
     R: Read,
 {
-    let mut meshes = vec![];
-    let root = read_node_and_mesh(read, &mut meshes)?;
+    let mut index = 0i32;
+    let mut meshes = Vec::new();
+    let mut mesh_ptrs = Vec::new();
+    let root = read_node_and_mesh(read, &mut index, &mut meshes, &mut mesh_ptrs)?;
     read.assert_end()?;
-    Ok(Model { root, meshes })
+    Ok(Model {
+        root,
+        meshes,
+        mesh_ptrs,
+    })
 }
 
 fn write_node_and_mesh<W>(
     write: &mut W,
-    node: &Node,
+    node: &mut Node,
     meshes: &[Mesh],
-    mesh_index: &mut usize,
+    mesh_ptrs: &[i32],
 ) -> Result<()>
 where
     W: Write,
 {
+    let mesh_index = match &mut node.0 {
+        BaseNode::Object3d(object3d) => {
+            // preserve mesh_index
+            let mesh_index = object3d.mesh_index;
+            // if the mesh_index isn't -1, then we need to restore the correct pointer
+            // before the node is written out
+            object3d.mesh_index = if mesh_index > -1 {
+                mesh_ptrs[mesh_index as usize]
+            } else {
+                0
+            };
+            mesh_index
+        }
+        _ => {
+            return Err(AssertionError("Expected only Object3d nodes in mechlib".to_owned()).into())
+        }
+    };
+
     write_node_info(write, &node.0)?;
     write_node_data(write, &node.0)?;
-    match &node.0 {
+
+    match &mut node.0 {
         BaseNode::Object3d(object3d) => {
-            if object3d.mesh_index != 0 {
-                let mesh = &meshes[*mesh_index];
+            // if mesh_index isn't -1, then we need to write out the mesh, too
+            if mesh_index > -1 {
+                let mesh = &meshes[mesh_index as usize];
                 write_mesh_info(write, mesh)?;
                 write_mesh_data(write, mesh)?;
-                *mesh_index += 1;
             }
 
-            for child in &object3d.children {
-                write_node_and_mesh(write, child, meshes, mesh_index)?;
+            for child in object3d.children.iter_mut() {
+                write_node_and_mesh(write, child, meshes, mesh_ptrs)?;
             }
-            Ok(())
         }
-        _ => Err(AssertionError("Expected only Object3d nodes in mechlib".to_owned()).into()),
+        _ => {
+            return Err(AssertionError("Expected only Object3d nodes in mechlib".to_owned()).into())
+        }
     }
+    Ok(())
 }
 
-pub fn write_model<W>(write: &mut W, model: &Model) -> Result<()>
+pub fn write_model<W>(write: &mut W, model: &mut Model) -> Result<()>
 where
     W: Write,
 {
-    let mut mesh_index = 0;
-    write_node_and_mesh(write, &model.root, &model.meshes, &mut mesh_index)
+    write_node_and_mesh(write, &mut model.root, &model.meshes, &model.mesh_ptrs)
 }
