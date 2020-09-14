@@ -53,8 +53,8 @@ cmp "original/zbd/interp.zbd" "interp.zbd"
 On Windows, you can use either the command line (`cmd.exe`) or Powershell (which I'd recommend):
 
 ```powershell
-PS> unzbd.exe interp "C:\Program Files (x86)\MechWarrior 3\zbd\interp.zbd" ".\interp.zip"
-PS> rezbd.exe interp ".\interp.zip" ".\interp.zbd"
+PS> unzbd.exe interp "C:\Program Files (x86)\MechWarrior 3\zbd\interp.zbd" ".\interp.json"
+PS> rezbd.exe interp ".\interp.json" ".\interp.zbd"
 PS> comp /M "C:\Program Files (x86)\MechWarrior 3\zbd\interp.zbd" ".\interp.zbd"
 Comparing C:\Program Files (x86)\MechWarrior 3\zbd\interp.zbd and .\interp.zbd...
 Files compare OK
@@ -71,6 +71,34 @@ Provided subcommands:
 * `mechlib` (produces a `*.zip` file)
 * `anim` (produces a `*.zip` file)
 * `gamez` (produces a `*.zip` file)
+
+## Blender scripts
+
+Blender 2.90 or higher is recommended. Blender's APIs do change, so you may need to use a version closely matching that one. It will definitely *not* work with versions below 2.80, but if you have success running it with newer versions, let me know so I can update this README.
+
+This is a bit tricky to get running, because of the dependencies. Your install location may vary. Naturally, you can specify the absolute path. It's easier if the Blender executable can be found. For macOS (and Linux), this can be achieved by an alias in your shell's profile, e.g. `.bashrc`:
+
+```bash
+alias blender="/Applications/Blender.app/Contents/MacOS/Blender"
+```
+
+For Windows/PowerShell, you can add an alias to the appropriate `profile.ps1`:
+
+```powershell
+New-Alias blender "C:\Program Files\Blender Foundation\Blender\blender.exe"
+```
+
+Assuming the above, and you have extracted the mechlib files and mech textures to the same directory, you can run:
+
+```bash
+blender \
+    --background \
+    --factory-startup \
+    --python mechlib2blend.py \
+    -- dir_with_mechlib_zip_and_rmechtex_zip/ "madcat"
+```
+
+(The syntax for invoking the script will also be slightly different using PowerShell)
 
 ## Development
 
