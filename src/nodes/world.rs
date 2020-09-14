@@ -82,10 +82,11 @@ struct PartitionC {
 static_assert_size!(PartitionC, 72);
 
 const FOG_STATE_LINEAR: u32 = 1;
+const WORLD_NAME: &str = "world1";
 
 pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     let name = &node.name;
-    assert_that!("world name", name == "world1", offset + 0)?;
+    assert_that!("world name", name == WORLD_NAME, offset + 0)?;
     assert_that!(
         "world flags",
         node.flags == NodeBitFlags::DEFAULT,
@@ -422,6 +423,7 @@ where
     let partitions = read_partitions(read, area_x, area_y)?;
 
     let wrapped = World {
+        name: WORLD_NAME.to_owned(),
         area,
         partitions,
         area_partition_x_count: world.virt_partition_x_count,
@@ -445,7 +447,7 @@ where
 
 pub fn make_variants(world: &World) -> NodeVariants {
     NodeVariants {
-        name: "world1".to_owned(),
+        name: WORLD_NAME.to_owned(),
         flags: NodeBitFlags::DEFAULT,
         unk044: 0,
         zone_id: ZONE_DEFAULT,

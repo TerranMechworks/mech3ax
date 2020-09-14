@@ -44,6 +44,7 @@ pub struct NodeVariants {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Camera {
+    pub name: String,
     pub clip: Vec2,
     pub fov: Vec2,
     pub data_ptr: u32,
@@ -51,6 +52,7 @@ pub struct Camera {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Display {
+    pub name: String,
     pub resolution: (u32, u32),
     pub clear_color: Vec3,
     pub data_ptr: u32,
@@ -70,6 +72,7 @@ pub struct Empty {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Light {
+    pub name: String,
     pub direction: Vec3,
     pub diffuse: f32,
     pub ambient: f32,
@@ -129,6 +132,7 @@ pub struct Object3d<T> {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Window {
+    pub name: String,
     pub resolution: (u32, u32),
     pub data_ptr: u32,
 }
@@ -144,6 +148,7 @@ pub struct Partition {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct World {
+    pub name: String,
     pub area: Area,
     pub partitions: Vec<Vec<Partition>>,
     pub area_partition_x_count: u32,

@@ -32,10 +32,11 @@ struct LightC {
 static_assert_size!(LightC, 208);
 
 const BLOCK_LIGHT: Block = (1.0, 1.0, -2.0, 2.0, 2.0, -1.0);
+const LIGHT_NAME: &str = "sunlight";
 
 pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     let name = &node.name;
-    assert_that!("light name", name == "sunlight", offset + 0)?;
+    assert_that!("light name", name == LIGHT_NAME, offset + 0)?;
     assert_that!(
         "light flags",
         node.flags == NodeBitFlags::DEFAULT | NodeBitFlags::UNK08,
@@ -121,6 +122,7 @@ where
     assert_that!("parent value", zero == 0, read.prev)?;
 
     Ok(Light {
+        name: LIGHT_NAME.to_owned(),
         direction: light.direction,
         diffuse: light.diffuse,
         ambient: light.ambient,
@@ -133,7 +135,7 @@ where
 
 pub fn make_variants(light: &Light) -> NodeVariants {
     NodeVariants {
-        name: "sunlight".to_owned(),
+        name: LIGHT_NAME.to_owned(),
         flags: NodeBitFlags::DEFAULT | NodeBitFlags::UNK08,
         unk044: 0,
         zone_id: ZONE_DEFAULT,

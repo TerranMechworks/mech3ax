@@ -50,9 +50,11 @@ struct CameraC {
 }
 static_assert_size!(CameraC, 488);
 
+const CAMERA_NAME: &str = "camera1";
+
 pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     let name = &node.name;
-    assert_that!("camera name", name == "camera1", offset + 0)?;
+    assert_that!("camera name", name == CAMERA_NAME, offset + 0)?;
     assert_that!(
         "camera flags",
         node.flags == NodeBitFlags::DEFAULT,
@@ -201,6 +203,7 @@ where
     let (clip, fov) = assert_camera(camera, read.prev)?;
 
     Ok(Camera {
+        name: CAMERA_NAME.to_owned(),
         clip,
         fov,
         data_ptr,
@@ -209,7 +212,7 @@ where
 
 pub fn make_variants(camera: &Camera) -> NodeVariants {
     NodeVariants {
-        name: "camera1".to_owned(),
+        name: CAMERA_NAME.to_owned(),
         flags: NodeBitFlags::DEFAULT,
         unk044: 0,
         zone_id: ZONE_DEFAULT,

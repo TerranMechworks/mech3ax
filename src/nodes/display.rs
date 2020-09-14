@@ -17,10 +17,11 @@ static_assert_size!(DisplayC, 28);
 
 #[allow(clippy::excessive_precision)]
 const CLEAR_COLOR: Vec3 = Vec3(0.3919999897480011, 0.3919999897480011, 1.0);
+const DISPLAY_NAME: &str = "display";
 
 pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     let name = &node.name;
-    assert_that!("display name", name == "display", offset + 0)?;
+    assert_that!("display name", name == DISPLAY_NAME, offset + 0)?;
     assert_that!(
         "display flags",
         node.flags == NodeBitFlags::DEFAULT,
@@ -69,6 +70,7 @@ where
     )?;
 
     Ok(Display {
+        name: DISPLAY_NAME.to_owned(),
         resolution: display.resolution,
         clear_color: display.clear_color,
         data_ptr,
@@ -77,7 +79,7 @@ where
 
 pub fn make_variants(display: &Display) -> NodeVariants {
     NodeVariants {
-        name: "display".to_owned(),
+        name: DISPLAY_NAME.to_owned(),
         flags: NodeBitFlags::DEFAULT,
         unk044: 0,
         zone_id: ZONE_DEFAULT,

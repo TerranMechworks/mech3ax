@@ -20,9 +20,11 @@ struct WindowC {
 }
 static_assert_size!(WindowC, 248);
 
+const WINDOW_NAME: &str = "window1";
+
 pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     let name = &node.name;
-    assert_that!("window name", name == "window1", offset + 0)?;
+    assert_that!("window name", name == WINDOW_NAME, offset + 0)?;
     assert_that!(
         "window flags",
         node.flags == NodeBitFlags::DEFAULT,
@@ -68,6 +70,7 @@ where
     assert_that!("zero244", window.zero244 == 0, read.prev + 244)?;
 
     Ok(Window {
+        name: WINDOW_NAME.to_owned(),
         resolution: window.resolution,
         data_ptr,
     })
@@ -75,7 +78,7 @@ where
 
 pub fn make_variants(window: &Window) -> NodeVariants {
     NodeVariants {
-        name: "window1".to_owned(),
+        name: WINDOW_NAME.to_owned(),
         flags: NodeBitFlags::DEFAULT,
         unk044: 0,
         zone_id: ZONE_DEFAULT,
