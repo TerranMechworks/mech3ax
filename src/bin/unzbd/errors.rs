@@ -1,5 +1,5 @@
 use image::error::ImageError;
-use mech3rs::Error as MechError;
+use mech3ax::Error as MechError;
 use serde_json::Error as SerdeError;
 use std::io::Error as IOError;
 use zip::result::ZipError;

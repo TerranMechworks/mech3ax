@@ -1,12 +1,12 @@
 [package]
-name = "mech3rs"
+name = "mech3ax"
 version = "0.1.0"
 authors = ["Toby Fleming <tobywf@users.noreply.github.com>"]
 edition = "2018"
-description = "mech3rs converts assets from the 1998 MechWarrior 3 game to modern formats and back"
+description = "mech3ax converts assets from the 1998 MechWarrior 3 game to modern formats and back"
 readme = "README.md"
 license-file = "LICENSE.txt"
-repository = "https://github.com/tobywf/mech3rs"
+repository = "https://github.com/tobywf/mech3ax"
 keywords = ["cli", "MechWarrior", "reverse engineering"]
 categories = ["game-development", "parser-implementations"]
 publish = false

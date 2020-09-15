@@ -1,14 +1,14 @@
 use image::ImageOutputFormat;
-use mech3rs::anim::read_anim;
-use mech3rs::archive::read_archive;
-use mech3rs::gamez::read_gamez;
-use mech3rs::interp::read_interp;
-use mech3rs::mechlib::{read_format, read_materials, read_model, read_version};
-use mech3rs::messages::read_messages;
-use mech3rs::motion::read_motion;
-use mech3rs::reader::read_reader;
-use mech3rs::textures::read_textures;
-use mech3rs::CountingReader;
+use mech3ax::anim::read_anim;
+use mech3ax::archive::read_archive;
+use mech3ax::gamez::read_gamez;
+use mech3ax::interp::read_interp;
+use mech3ax::mechlib::{read_format, read_materials, read_model, read_version};
+use mech3ax::messages::read_messages;
+use mech3ax::motion::read_motion;
+use mech3ax::reader::read_reader;
+use mech3ax::textures::read_textures;
+use mech3ax::CountingReader;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Cursor, Write};
 use zip::write::{FileOptions, ZipWriter};
@@ -19,7 +19,7 @@ use crate::{JsonOpts, ZipOpts};
 pub(crate) fn license() -> Result<()> {
     print!(
         r#"\
-mech3rs extracts assets from the MechWarrior 3 game.
+mech3ax extracts assets from the MechWarrior 3 game.
 Copyright (C) 2015-2020  Toby Fleming
 
 This program is free software: you can redistribute it and/or modify

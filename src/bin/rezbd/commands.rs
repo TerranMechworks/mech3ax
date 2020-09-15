@@ -1,13 +1,13 @@
-use mech3rs::anim::{write_anim, AnimDef, AnimMetadata};
-use mech3rs::archive::{write_archive, Entry};
-use mech3rs::gamez::{write_gamez, GameZ, Material as GameZMat, Mesh, Metadata, Node};
-use mech3rs::interp::{write_interp, Script};
-use mech3rs::mechlib::{
+use mech3ax::anim::{write_anim, AnimDef, AnimMetadata};
+use mech3ax::archive::{write_archive, Entry};
+use mech3ax::gamez::{write_gamez, GameZ, Material as GameZMat, Mesh, Metadata, Node};
+use mech3ax::interp::{write_interp, Script};
+use mech3ax::mechlib::{
     write_format, write_materials, write_model, write_version, Material as MechlibMat,
 };
-use mech3rs::motion::write_motion;
-use mech3rs::reader::write_reader;
-use mech3rs::textures::{write_textures, TextureInfo};
+use mech3ax::motion::write_motion;
+use mech3ax::reader::write_reader;
+use mech3ax::textures::{write_textures, TextureInfo};
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Cursor, Read, Seek};
 use zip::read::ZipArchive;
@@ -18,7 +18,7 @@ use crate::{JsonOpts, ZipOpts};
 pub(crate) fn license() -> Result<()> {
     print!(
         r#"\
-mech3rs extracts assets from the MechWarrior 3 game.
+mech3ax extracts assets from the MechWarrior 3 game.
 Copyright (C) 2015-2020  Toby Fleming
 
 This program is free software: you can redistribute it and/or modify
