@@ -13,7 +13,7 @@ Various versions of the MechWarror 3 base game have been tested (including US ve
 The conversions are binary-accurate, so converting from a `*.zbd` file and then back to a `*.zbd` file produces the same file.
 
 - Sound archives (`sounds*.zbd`) containing sound effects to ZIP archives of WAV files - note the background music is streamed from the CD and never installed
-- Interpreter scripts (`interp.zbd`) to a JSON file - these small, intepreted scripts drive which files the engine loads
+- Interpreter scripts (`interp.zbd`) to a JSON file - these small, interpreted scripts drive which files the engine loads
 - All image/texture archives (`rimage.zbd`, `rmechtex*.zbd`, `rtexture*.zbd`, `texture*.zbd`) to ZIP archives of PNG files
 - Reader archives (`reader*.zbd`) containing game data to ZIP archives of JSON files
 - Motion data (`motion.zbd`) containing 'mech animation data to ZIP archives of JSON files - because the model data is not very well understood, applying the animations isn't perfect. Some limbs have incorrect translations; it's possible these aren't meant to be applied
@@ -99,6 +99,21 @@ blender \
 ```
 
 (The syntax for invoking the script will also be slightly different using PowerShell)
+
+## Changelog
+
+### [0.2.0] - 2020-09-14
+
+* Blender script for 'mechs (`mechlib`/Blender)
+* Output all names from nodes, even if they have a fixed name (`gamez`)
+* Write out `mesh_index`, and store mesh pointers separately (`mechlib`) - breaking change
+* Lookup texture index from texture name instead of storing it (`gamez`)
+* Calculate delta values instead of storing them in "Object Opacity From To" and "Fbfx Color From To" (`anim`)
+* Unpack useful data in "Object Motion SI Script" (`anim`)
+
+### [0.1.0] - 2020-09-12
+
+* Initial release
 
 ## Development
 
