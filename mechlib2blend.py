@@ -617,6 +617,9 @@ def main() -> None:
     if args.motion:
         # normalize mech_1 low poly models
         name = args.mech_name.strip("_1")
+        # in reader.zbd, the vulture uses the madcat animations
+        if name == "vulture":
+            name = "madcat"
         with ZipFile(args.motion) as zipfile:
             for fileinfo in zipfile.filelist:
                 if not fileinfo.filename.startswith(name):
