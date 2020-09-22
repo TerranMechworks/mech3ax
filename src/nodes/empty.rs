@@ -2,8 +2,30 @@ use super::flags::NodeBitFlags;
 use super::types::{Empty, NodeVariant, NodeVariants, ZONE_DEFAULT};
 use crate::{assert_that, Result};
 
+const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::BASE;
+const NEVER_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
+    NodeBitFlags::LANDMARK.bits()
+        | NodeBitFlags::HAS_MESH.bits()
+        | NodeBitFlags::UNK15.bits()
+        | NodeBitFlags::CAN_MODIFY.bits()
+        | NodeBitFlags::CLIP_TO.bits(),
+);
+
 pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     // cannot assert name
+    let const_flags = node.flags & (ALWAYS_PRESENT | NEVER_PRESENT);
+    assert_that!("empty flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
+    // variable
+    /*
+    const ALTITUDE_SURFACE = 1 << 3;
+    const INTERSECT_SURFACE = 1 << 4;
+    const INTERSECT_BBOX = 1 << 5;
+    const UNK08 = 1 << 8;
+    const UNK10 = 1 << 10;
+    const UNK25 = 1 << 25;
+    const UNK28 = 1 << 28;
+    */
+
     assert_that!("empty field 044", node.unk044 in [1, 3, 5, 7], offset + 56)?;
     assert_that!("empty zone id", node.zone_id in [1, ZONE_DEFAULT], offset + 56)?;
     assert_that!("empty data ptr", node.data_ptr == 0, offset + 56)?;

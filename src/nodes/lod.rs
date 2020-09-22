@@ -23,10 +23,29 @@ struct LodC {
 }
 static_assert_size!(LodC, 80);
 
+const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
+    NodeBitFlags::BASE.bits() | NodeBitFlags::UNK08.bits() | NodeBitFlags::UNK10.bits(),
+);
+const NEVER_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
+    NodeBitFlags::LANDMARK.bits()
+        | NodeBitFlags::HAS_MESH.bits()
+        | NodeBitFlags::CAN_MODIFY.bits()
+        | NodeBitFlags::CLIP_TO.bits()
+        | NodeBitFlags::UNK28.bits(),
+);
+
 pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     // cannot assert name
-    let contains_base = node.flags.contains(NodeBitFlags::BASE);
-    assert_that!("lod flags", contains_base == true, offset + 36)?;
+    let const_flags = node.flags & (ALWAYS_PRESENT | NEVER_PRESENT);
+    assert_that!("empty flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
+    // variable
+    /*
+    const ALTITUDE_SURFACE = 1 << 3;
+    const INTERSECT_SURFACE = 1 << 4;
+    const INTERSECT_BBOX = 1 << 5;
+    const UNK15 = 1 << 15;
+    const UNK25 = 1 << 25;
+    */
 
     assert_that!("lod field 044", node.unk044 == 1, offset + 44)?;
     if node.zone_id != ZONE_DEFAULT {

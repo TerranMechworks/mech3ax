@@ -11,19 +11,23 @@ use std::io::{Read, Write};
 
 #[repr(C)]
 struct Object3dC {
-    flags: u32,
-    opacity: f32,
-    zero008: f32,
-    zero012: f32,
-    zero016: f32,
-    zero020: f32,
+    flags: u32,        // 000
+    opacity: f32,      // 004
+    zero008: f32,      // 008
+    zero012: f32,      // 012
+    zero016: f32,      // 016
+    zero020: f32,      // 020
     rotation: Vec3,    // 024
     scale: Vec3,       // 032
     matrix: Matrix,    // 048
     translation: Vec3, // 084
-    zero096: [u8; 48],
+    zero096: [u8; 48], // 096
 }
 static_assert_size!(Object3dC, 144);
+
+const ALWAYS_PRESENT: NodeBitFlags =
+    NodeBitFlags::from_bits_truncate(NodeBitFlags::BASE.bits() | NodeBitFlags::UNK25.bits());
+const NEVER_PRESENT: NodeBitFlags = NodeBitFlags::UNK28;
 
 #[allow(clippy::collapsible_if)]
 pub fn assert_variants(
@@ -32,8 +36,22 @@ pub fn assert_variants(
     mesh_index_is_ptr: bool,
 ) -> Result<NodeVariant> {
     // cannot assert name
-    let contains_base = node.flags.contains(NodeBitFlags::BASE);
-    assert_that!("object3d flags", contains_base == true, offset + 36)?;
+    let const_flags = node.flags & (ALWAYS_PRESENT | NEVER_PRESENT);
+    assert_that!("empty flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
+    // variable
+    /*
+    const ALTITUDE_SURFACE = 1 << 3;
+    const INTERSECT_SURFACE = 1 << 4;
+    const INTERSECT_BBOX = 1 << 5;
+    const LANDMARK = 1 << 7;
+    const UNK08 = 1 << 8;
+    const HAS_MESH = 1 << 9;
+    const UNK10 = 1 << 10;
+    const UNK15 = 1 << 15;
+    const CAN_MODIFY = 1 << 16;
+    const CLIP_TO = 1 << 17;
+    */
+
     assert_that!("object3d field 044", node.unk044 == 1, offset + 44)?;
     if node.zone_id != ZONE_DEFAULT {
         assert_that!("object3d zone id", 1 <= node.zone_id <= 80, offset + 48)?;
@@ -41,15 +59,15 @@ pub fn assert_variants(
     assert_that!("object3d data ptr", node.data_ptr != 0, offset + 56)?;
     if mesh_index_is_ptr {
         if node.flags.contains(NodeBitFlags::HAS_MESH) {
-            assert_that!("mesh index", node.mesh_index > 0, offset + 60)?;
+            assert_that!("object3d mesh index", node.mesh_index > 0, offset + 60)?;
         } else {
-            assert_that!("mesh index", node.mesh_index == 0, offset + 60)?;
+            assert_that!("object3d mesh index", node.mesh_index == 0, offset + 60)?;
         }
     } else {
         if node.flags.contains(NodeBitFlags::HAS_MESH) {
-            assert_that!("mesh index", node.mesh_index >= 0, offset + 60)?;
+            assert_that!("object3d mesh index", node.mesh_index >= 0, offset + 60)?;
         } else {
-            assert_that!("mesh index", node.mesh_index == -1, offset + 60)?;
+            assert_that!("object3d mesh index", node.mesh_index == -1, offset + 60)?;
         }
     }
     // can have area partition, parent, children
