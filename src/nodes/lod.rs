@@ -43,7 +43,7 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     const ALTITUDE_SURFACE = 1 << 3;
     const INTERSECT_SURFACE = 1 << 4;
     const INTERSECT_BBOX = 1 << 5;
-    const UNK15 = 1 << 15;
+    const TERRAIN = 1 << 15;
     const UNK25 = 1 << 25;
     */
 

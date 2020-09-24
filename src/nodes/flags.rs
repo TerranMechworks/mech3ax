@@ -18,7 +18,7 @@ bitflags::bitflags! {
         // const UNK12 = 1 << 12;
         // const UNK13 = 1 << 13;
         // const UNK14 = 1 << 14;
-        const UNK15 = 1 << 15;
+        const TERRAIN = 1 << 15;
         const CAN_MODIFY = 1 << 16;
         const CLIP_TO = 1 << 17;
         // const UNK18 = 1 << 18;
@@ -58,7 +58,7 @@ pub struct NodeFlags {
     #[serde(skip_serializing_if = "bool_false", default)]
     pub unk10: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
-    pub unk15: bool,
+    pub terrain: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
     pub can_modify: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
@@ -79,7 +79,7 @@ impl From<NodeBitFlags> for NodeFlags {
             unk08: flags.contains(NodeBitFlags::UNK08),
             has_mesh: flags.contains(NodeBitFlags::HAS_MESH),
             unk10: flags.contains(NodeBitFlags::UNK10),
-            unk15: flags.contains(NodeBitFlags::UNK15),
+            terrain: flags.contains(NodeBitFlags::TERRAIN),
             can_modify: flags.contains(NodeBitFlags::CAN_MODIFY),
             clip_to: flags.contains(NodeBitFlags::CLIP_TO),
             unk25: flags.contains(NodeBitFlags::UNK25),
@@ -112,8 +112,8 @@ impl From<&NodeFlags> for NodeBitFlags {
         if flags.unk10 {
             bitflags |= NodeBitFlags::UNK10;
         }
-        if flags.unk15 {
-            bitflags |= NodeBitFlags::UNK15;
+        if flags.terrain {
+            bitflags |= NodeBitFlags::TERRAIN;
         }
         if flags.can_modify {
             bitflags |= NodeBitFlags::CAN_MODIFY;

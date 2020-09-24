@@ -47,7 +47,7 @@ pub fn assert_variants(
     const UNK08 = 1 << 8;
     const HAS_MESH = 1 << 9;
     const UNK10 = 1 << 10;
-    const UNK15 = 1 << 15;
+    const TERRAIN = 1 << 15;
     const CAN_MODIFY = 1 << 16;
     const CLIP_TO = 1 << 17;
     */

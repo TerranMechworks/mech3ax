@@ -6,7 +6,7 @@ const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::BASE;
 const NEVER_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     NodeBitFlags::LANDMARK.bits()
         | NodeBitFlags::HAS_MESH.bits()
-        | NodeBitFlags::UNK15.bits()
+        | NodeBitFlags::TERRAIN.bits()
         | NodeBitFlags::CAN_MODIFY.bits()
         | NodeBitFlags::CLIP_TO.bits(),
 );
