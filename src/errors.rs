@@ -1,16 +1,18 @@
 use image::error::ImageError;
 use mech3rs::Error as MechError;
 use serde_json::Error as SerdeError;
+use std::ffi::NulError;
 use std::io::Error as IOError;
-use zip::result::ZipError;
+use std::str::Utf8Error;
 
 #[derive(Debug)]
 pub(crate) enum Error {
     IO(IOError),
-    Zip(ZipError),
     Serde(SerdeError),
     Mech(MechError),
     Image(ImageError),
+    Nul(NulError),
+    Utf8(Utf8Error),
 }
 
 impl From<IOError> for Error {
@@ -19,9 +21,9 @@ impl From<IOError> for Error {
     }
 }
 
-impl From<ZipError> for Error {
-    fn from(err: ZipError) -> Self {
-        Self::Zip(err)
+impl From<NulError> for Error {
+    fn from(err: NulError) -> Self {
+        Self::Nul(err)
     }
 }
 
@@ -40,6 +42,12 @@ impl From<SerdeError> for Error {
 impl From<ImageError> for Error {
     fn from(err: ImageError) -> Self {
         Self::Image(err)
+    }
+}
+
+impl From<Utf8Error> for Error {
+    fn from(err: Utf8Error) -> Self {
+        Self::Utf8(err)
     }
 }
 

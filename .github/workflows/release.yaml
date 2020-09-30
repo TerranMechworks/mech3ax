@@ -48,7 +48,7 @@ jobs:
     name: build-release
     needs: ['create-release']
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 12
+    timeout-minutes: 15
     env:
       # Emit backtraces on panics.
       RUST_BACKTRACE: 1
@@ -105,10 +105,16 @@ jobs:
         cp {README.md,LICENSE.txt,mechlib2blend.py} "$staging/"
         if [ "${{ matrix.os }}" = "windows-2019" ]; then
           cp target/${{ matrix.target }}/release/{unzbd,rezbd}.exe "$staging/"
+          cp target/${{ matrix.target }}/release/mech3ax.dll "$staging/"
           7z a "$archive.zip" "$staging"
           echo "::set-output name=asset::$archive.zip"
         else
           cp target/${{ matrix.target }}/release/{unzbd,rezbd} "$staging/"
+          if [ "${{ matrix.os }}" = "macos-latest" ]; then
+            cp target/${{ matrix.target }}/release/libmech3ax.dylib "$staging/"
+          else
+            cp target/${{ matrix.target }}/release/libmech3ax.so "$staging/"
+          fi
           tar czvf "$archive.tar.gz" "$staging"
           echo "::set-output name=asset::$archive.tar.gz"
         fi

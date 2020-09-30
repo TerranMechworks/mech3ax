@@ -23,17 +23,17 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --all-targets --profile=test
+          args: --all --all-targets --profile=test
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
         with:
           command: fmt
-          args: -- --check
+          args: --all -- --check
       - name: Run cargo test
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --all-targets --no-fail-fast
+          args:  --all --all-targets --no-fail-fast
       - name: Run cargo clippy
         uses: actions-rs/cargo@v1
         with:
