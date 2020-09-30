@@ -106,6 +106,15 @@ blender \
 
 ## Changelog
 
+### [0.3.0] - 2020-09-29
+
+* Assert and drop the last motion frame, as it's the same as the first (`motion`)
+* Improvements to the Blender scripts for motion constraints and still chickenwalkers (Blender)
+* Include Blender script in release archives
+* Validate Empty, Lod, and Object3d node flags more strictly (`gamez`)
+* Node flag 15 seems to be terrain (`gamez`) - breaking change
+* Add C FFI library (`mech3ax.dll`/`libmech3ax.so`/`libmech3ax.dylib`)
+
 ### [0.2.0] - 2020-09-14
 
 * Blender script for 'mechs (`mechlib`/Blender)
