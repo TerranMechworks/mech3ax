@@ -72,7 +72,7 @@ pub extern "stdcall" fn interp(filename: *const c_char, callback: InterpCb) -> *
         let filename = ptr_to_string(filename)?;
         let mut input = CountingReader::new(BufReader::new(File::open(filename)?));
         let scripts = read_interp(&mut input)?;
-        let data = serde_json::to_vec_pretty(&scripts)?;
+        let data = serde_json::to_vec(&scripts)?;
         callback(data.as_ptr(), data.len());
         Ok(())
     })
@@ -92,7 +92,7 @@ pub extern "stdcall" fn reader(filename: *const c_char, callback: ReaderCb) -> *
             // translate to absolute offset
             read.offset = offset;
             let root = read_reader(&mut read)?;
-            let data = serde_json::to_vec_pretty(&root)?;
+            let data = serde_json::to_vec(&root)?;
 
             let name = CString::new(name)?;
             let ptr = name.as_ptr();
@@ -113,7 +113,7 @@ pub extern "stdcall" fn messages(filename: *const c_char, callback: MessagesCb) 
         let filename = ptr_to_string(filename)?;
         let mut input = BufReader::new(File::open(filename)?);
         let messages = read_messages(&mut input)?;
-        let data = serde_json::to_vec_pretty(&messages)?;
+        let data = serde_json::to_vec(&messages)?;
         callback(data.as_ptr(), data.len());
         Ok(())
     })
@@ -156,7 +156,7 @@ pub extern "stdcall" fn motion(filename: *const c_char, callback: MotionCb) -> *
             // translate to absolute offset
             read.offset = offset;
             let root = read_motion(&mut read)?;
-            let data = serde_json::to_vec_pretty(&root)?;
+            let data = serde_json::to_vec(&root)?;
 
             let name = CString::new(name)?;
             let ptr = name.as_ptr();
@@ -189,14 +189,14 @@ pub extern "stdcall" fn mechlib(filename: *const c_char, callback: MechlibCb) ->
                 "version" => read_version(&mut read),
                 "materials" => {
                     let materials = read_materials(&mut read)?;
-                    let data = serde_json::to_vec_pretty(&materials)?;
+                    let data = serde_json::to_vec(&materials)?;
 
                     callback(ptr, data.as_ptr(), data.len());
                     Ok(())
                 }
                 _ => {
                     let root = read_model(&mut read)?;
-                    let data = serde_json::to_vec_pretty(&root)?;
+                    let data = serde_json::to_vec(&root)?;
 
                     callback(ptr, data.as_ptr(), data.len());
                     Ok(())
@@ -227,7 +227,7 @@ pub extern "stdcall" fn gamez(filename: *const c_char, callback: GamezCb) -> *co
         let filename = ptr_to_string(filename)?;
         let mut input = CountingReader::new(BufReader::new(File::open(filename)?));
         let gamez = read_gamez(&mut input)?;
-        let data = serde_json::to_vec_pretty(&GameZ {
+        let data = serde_json::to_vec(&GameZ {
             textures: gamez.textures,
             materials: gamez.materials,
             meshes: gamez.meshes,
@@ -247,7 +247,7 @@ pub extern "stdcall" fn anim(filename: *const c_char, callback: AnimCb) -> *cons
         let filename = ptr_to_string(filename)?;
         let mut input = CountingReader::new(BufReader::new(File::open(filename)?));
         let result: Result<_> = read_anim(&mut input, |name, anim_def| -> Result<()> {
-            let data = serde_json::to_vec_pretty(&anim_def)?;
+            let data = serde_json::to_vec(&anim_def)?;
 
             let name = CString::new(name)?;
             let ptr = name.as_ptr();
