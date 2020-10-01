@@ -106,6 +106,11 @@ blender \
 
 ## Changelog
 
+### [0.3.1] - 2020-09-30
+
+* Save memory by not pretty-printing JSON (C FFI lib)
+* Write texture info manifest to callback (C FFI lib)
+
 ### [0.3.0] - 2020-09-29
 
 * Assert and drop the last motion frame, as it's the same as the first (`motion`)
