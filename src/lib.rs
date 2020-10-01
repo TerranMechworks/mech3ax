@@ -137,7 +137,12 @@ pub extern "stdcall" fn textures(filename: *const c_char, callback: TextureCb) -
             callback(ptr, data.as_ptr(), data.len());
             Ok(())
         });
-        result?;
+        let tex_infos = result?;
+        let data = serde_json::to_vec(&tex_infos)?;
+
+        let name = CString::new("manifest.json")?;
+        let ptr = name.as_ptr();
+        callback(ptr, data.as_ptr(), data.len());
         Ok(())
     })
 }
