@@ -2,7 +2,7 @@
 
 MechWarrior 3 Asset Extractor (`mech3ax`) is a cross-platform, GPLv3 project to extract assets from the 1998 MechWarrior 3 game to modern formats and back. It has been tested on Windows, macOS, and Linux (Ubuntu).
 
-Obviously, this is an unofficial fan effort and not connected to the developers or publishers.
+Obviously, this is an unofficial fan effort and not connected to the developers or publishers. [Join us on Discord](https://discord.gg/Be53gMy)!
 
 [![The Annihilator 'Mech running](.github/mech_annihilator_run.gif)](https://imgur.com/a/H5pB1Vd)
 
@@ -105,6 +105,10 @@ blender \
 `--mechtex` and `--motion` are optional. If `--mechtex` is specified, textures are extracted, applied, and packed into the `.blend` file. If `--motion` is specified, mech motions/animations are loaded and applied to the model.
 
 ## Changelog
+
+### [0.3.2] - 2020-10-13
+
+* Easier modding support for textures; don't require a ZIP and update image width and height automatically (`rezbd`)
 
 ### [0.3.1] - 2020-09-30
 
