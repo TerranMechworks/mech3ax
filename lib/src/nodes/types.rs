@@ -1,5 +1,6 @@
 use super::flags::NodeBitFlags;
 use crate::types::{Matrix, Vec2, Vec3};
+use num_derive::FromPrimitive;
 use serde::{Deserialize, Serialize};
 
 pub const ZONE_DEFAULT: u32 = 255;
@@ -11,7 +12,7 @@ pub type Area = (i32, i32, i32, i32);
 
 pub const BLOCK_EMPTY: Block = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, FromPrimitive, Copy, Clone)]
 #[repr(u32)]
 pub enum NodeType {
     EMPTY = 0,

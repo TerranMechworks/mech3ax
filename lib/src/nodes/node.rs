@@ -14,6 +14,7 @@ use crate::io_ext::{CountingReader, WriteHelper};
 use crate::size::ReprSize;
 use crate::string::{str_from_c_node_name, str_to_c_node_name};
 use crate::{assert_that, bool_c, static_assert_size, Result};
+use num_traits::FromPrimitive;
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -62,24 +63,13 @@ fn assert_node(node: NodeC, offset: u32) -> Result<(NodeType, NodeVariants)> {
             offset + 36
         ))
     })?;
-    let node_type = match node.node_type {
-        value if value == NodeType::EMPTY as u32 => NodeType::EMPTY,
-        value if value == NodeType::CAMERA as u32 => NodeType::CAMERA,
-        value if value == NodeType::WORLD as u32 => NodeType::WORLD,
-        value if value == NodeType::WINDOW as u32 => NodeType::WINDOW,
-        value if value == NodeType::DISPLAY as u32 => NodeType::DISPLAY,
-        value if value == NodeType::OBJECT3D as u32 => NodeType::OBJECT3D,
-        value if value == NodeType::LOD as u32 => NodeType::LOD,
-        value if value == NodeType::LIGHT as u32 => NodeType::LIGHT,
-        value => {
-            let msg = format!(
-                "Expected valid node type, but was {} (at {})",
-                value,
-                offset + 52
-            );
-            return Err(AssertionError(msg).into());
-        }
-    };
+    let node_type = FromPrimitive::from_u32(node.node_type).ok_or_else(|| {
+        AssertionError(format!(
+            "Expected valid node type, but was {} (at {})",
+            node.node_type,
+            offset + 52
+        ))
+    })?;
 
     assert_that!("field 040", node.zero040 == 0, offset + 40)?;
 
