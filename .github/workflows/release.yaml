@@ -11,33 +11,28 @@ jobs:
   create-release:
     name: create-release
     runs-on: ubuntu-latest
-    # env:
-    #   # Set to force version number for testing
-    #   VERSION: v0.0.0-TEST
     steps:
       - name: Create artifacts directory
         run: mkdir artifacts
       - name: Get the release version from the tag
-        if: env.VERSION == ''
-        run: |
-          echo "::set-env name=VERSION::${GITHUB_REF#refs/tags/}"
-          echo "version is: ${{ env.VERSION }}"
-      - name: Get the data
+        id: version
+        run: echo "::set-output name=version::${GITHUB_REF#refs/tags/}"
+      - name: Get the date
         id: date
-        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+        run: echo "::set-output name=date::$(env TZ=':America/Los_Angeles' date +'%Y-%m-%d')"
       - name: Create GitHub release
         id: release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ env.VERSION }}
-          release_name: ${{ env.VERSION }} (${{ steps.date.outputs.date }})
+          tag_name: ${{ steps.version.outputs.version }}
+          release_name: ${{ steps.version.outputs.version }} (${{ steps.date.outputs.date }})
           draft: true
       - name: Save release upload URL to artifact
         run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
       - name: Save version number to artifact
-        run: echo "${{ env.VERSION }}" > artifacts/release-version
+        run: echo "${{ steps.version.outputs.version }}" > artifacts/release-version
       - name: Upload artifacts
         uses: actions/upload-artifact@v1
         with:
