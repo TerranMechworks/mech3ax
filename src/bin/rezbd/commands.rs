@@ -1,5 +1,5 @@
 use mech3rs::anim::{write_anim, AnimDef, AnimMetadata};
-use mech3rs::archive::{write_archive, Entry};
+use mech3rs::archive::{write_archive, Entry, Mode, Version};
 use mech3rs::gamez::{write_gamez, GameZ, Material as GameZMat, Mesh, Metadata, Node};
 use mech3rs::interp::{write_interp, Script};
 use mech3rs::mechlib::{
@@ -49,19 +49,29 @@ where
     Ok(manifest)
 }
 
-pub(crate) fn sounds(opts: ZipOpts) -> Result<()> {
+pub(crate) fn sounds(opts: ZipOpts, is_pm: bool) -> Result<()> {
     let input = BufReader::new(File::open(opts.input)?);
     let mut output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipArchive::new(input)?;
     let entries = archive_manifest_from_zip(&mut zip)?;
+    let version = if is_pm {
+        Version::Two(Mode::Sounds)
+    } else {
+        Version::One
+    };
 
-    write_archive(&mut output, &entries, |name| {
-        let mut file = zip.by_name(&name)?;
-        let mut buf = Vec::new();
-        file.read_to_end(&mut buf)?;
-        Ok(buf)
-    })
+    write_archive(
+        &mut output,
+        &entries,
+        |name| {
+            let mut file = zip.by_name(&name)?;
+            let mut buf = Vec::new();
+            file.read_to_end(&mut buf)?;
+            Ok(buf)
+        },
+        version,
+    )
 }
 
 pub(crate) fn interp(opts: JsonOpts) -> Result<()> {
@@ -76,26 +86,36 @@ pub(crate) fn interp(opts: JsonOpts) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn reader(opts: ZipOpts) -> Result<()> {
+pub(crate) fn reader(opts: ZipOpts, is_pm: bool) -> Result<()> {
     let input = BufReader::new(File::open(opts.input)?);
     let mut output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipArchive::new(input)?;
     let entries = archive_manifest_from_zip(&mut zip)?;
+    let version = if is_pm {
+        Version::Two(Mode::Reader)
+    } else {
+        Version::One
+    };
 
-    write_archive(&mut output, &entries, |name| {
-        let name = name.replace(".zrd", ".json");
+    write_archive(
+        &mut output,
+        &entries,
+        |name| {
+            let name = name.replace(".zrd", ".json");
 
-        let mut file = zip.by_name(&name)?;
-        let mut buf = Vec::new();
-        file.read_to_end(&mut buf)?;
-        let value = serde_json::from_slice(&buf)?;
+            let mut file = zip.by_name(&name)?;
+            let mut buf = Vec::new();
+            file.read_to_end(&mut buf)?;
+            let value = serde_json::from_slice(&buf)?;
 
-        let mut buf = Vec::new();
-        let mut cursor = Cursor::new(&mut buf);
-        write_reader(&mut cursor, &value)?;
-        Ok(buf)
-    })
+            let mut buf = Vec::new();
+            let mut cursor = Cursor::new(&mut buf);
+            write_reader(&mut cursor, &value)?;
+            Ok(buf)
+        },
+        version,
+    )
 }
 
 fn texture_manifest_from_zip<T>(zip: &mut ZipArchive<T>) -> Result<Vec<TextureInfo>>
@@ -130,70 +150,90 @@ pub(crate) fn textures(opts: ZipOpts) -> Result<()> {
     result
 }
 
-pub(crate) fn motion(opts: ZipOpts) -> Result<()> {
+pub(crate) fn motion(opts: ZipOpts, is_pm: bool) -> Result<()> {
     let input = BufReader::new(File::open(opts.input)?);
     let mut output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipArchive::new(input)?;
     let entries = archive_manifest_from_zip(&mut zip)?;
+    let version = if is_pm {
+        Version::Two(Mode::Motion)
+    } else {
+        Version::One
+    };
 
-    write_archive(&mut output, &entries, |name| {
-        let name = format!("{}.json", name);
+    write_archive(
+        &mut output,
+        &entries,
+        |name| {
+            let name = format!("{}.json", name);
 
-        let mut file = zip.by_name(&name)?;
-        let mut buf = Vec::new();
-        file.read_to_end(&mut buf)?;
-        let motion = serde_json::from_slice(&buf)?;
-
-        let mut buf = Vec::new();
-        let mut cursor = Cursor::new(&mut buf);
-        write_motion(&mut cursor, &motion)?;
-        Ok(buf)
-    })
-}
-
-pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
-    let input = BufReader::new(File::open(opts.input)?);
-    let mut output = BufWriter::new(File::create(opts.output)?);
-
-    let mut zip = ZipArchive::new(input)?;
-    let entries = archive_manifest_from_zip(&mut zip)?;
-
-    write_archive(&mut output, &entries, |name| match name {
-        "format" => {
-            let mut buf = Vec::new();
-            write_format(&mut buf)?;
-            Ok(buf)
-        }
-        "version" => {
-            let mut buf = Vec::new();
-            write_version(&mut buf)?;
-            Ok(buf)
-        }
-        "materials" => {
-            let mut file = zip.by_name("materials.json")?;
-            let mut buf = Vec::new();
-            file.read_to_end(&mut buf)?;
-            let materials: Vec<MechlibMat> = serde_json::from_slice(&buf)?;
-
-            let mut buf = Vec::new();
-            let mut cursor = Cursor::new(&mut buf);
-            write_materials(&mut cursor, &materials)?;
-            Ok(buf)
-        }
-        other => {
-            let name = other.replace(".flt", ".json");
             let mut file = zip.by_name(&name)?;
             let mut buf = Vec::new();
             file.read_to_end(&mut buf)?;
-            let mut model = serde_json::from_slice(&buf)?;
+            let motion = serde_json::from_slice(&buf)?;
 
             let mut buf = Vec::new();
             let mut cursor = Cursor::new(&mut buf);
-            write_model(&mut cursor, &mut model)?;
+            write_motion(&mut cursor, &motion)?;
             Ok(buf)
-        }
-    })
+        },
+        version,
+    )
+}
+
+pub(crate) fn mechlib(opts: ZipOpts, is_pm: bool) -> Result<()> {
+    let input = BufReader::new(File::open(opts.input)?);
+    let mut output = BufWriter::new(File::create(opts.output)?);
+
+    let mut zip = ZipArchive::new(input)?;
+    let entries = archive_manifest_from_zip(&mut zip)?;
+    let version = if is_pm {
+        Version::Two(Mode::Sounds)
+    } else {
+        Version::One
+    };
+
+    write_archive(
+        &mut output,
+        &entries,
+        |name| match name {
+            "format" => {
+                let mut buf = Vec::new();
+                write_format(&mut buf)?;
+                Ok(buf)
+            }
+            "version" => {
+                let mut buf = Vec::new();
+                write_version(&mut buf, is_pm)?;
+                Ok(buf)
+            }
+            "materials" => {
+                let mut file = zip.by_name("materials.json")?;
+                let mut buf = Vec::new();
+                file.read_to_end(&mut buf)?;
+                let materials: Vec<MechlibMat> = serde_json::from_slice(&buf)?;
+
+                let mut buf = Vec::new();
+                let mut cursor = Cursor::new(&mut buf);
+                write_materials(&mut cursor, &materials)?;
+                Ok(buf)
+            }
+            other => {
+                let name = other.replace(".flt", ".json");
+                let mut file = zip.by_name(&name)?;
+                let mut buf = Vec::new();
+                file.read_to_end(&mut buf)?;
+                let mut model = serde_json::from_slice(&buf)?;
+
+                let mut buf = Vec::new();
+                let mut cursor = Cursor::new(&mut buf);
+                write_model(&mut cursor, &mut model)?;
+                Ok(buf)
+            }
+        },
+        version,
+    )
 }
 
 pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {

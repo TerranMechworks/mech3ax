@@ -12,7 +12,8 @@ use std::io::{Read, Write};
 
 pub type Material = crate::materials::Material;
 
-const VERSION: u32 = 27;
+const VERSION_MW: u32 = 27;
+const VERSION_PM: u32 = 41;
 const FORMAT: u32 = 1;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -25,12 +26,13 @@ pub struct Model {
     mesh_ptrs: Vec<i32>,
 }
 
-pub fn read_version<R>(read: &mut CountingReader<R>) -> Result<()>
+pub fn read_version<R>(read: &mut CountingReader<R>, is_pm: bool) -> Result<()>
 where
     R: Read,
 {
-    let version = read.read_u32()?;
-    assert_that!("version", version == VERSION, read.prev)?;
+    let actual = read.read_u32()?;
+    let expected = if is_pm { VERSION_PM } else { VERSION_MW };
+    assert_that!("version", actual == expected, read.prev)?;
     read.assert_end()
 }
 
@@ -43,11 +45,11 @@ where
     read.assert_end()
 }
 
-pub fn write_version<W>(write: &mut W) -> Result<()>
+pub fn write_version<W>(write: &mut W, is_pm: bool) -> Result<()>
 where
     W: Write,
 {
-    write.write_u32(VERSION)?;
+    write.write_u32(if is_pm { VERSION_PM } else { VERSION_MW })?;
     Ok(())
 }
 

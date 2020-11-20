@@ -2,6 +2,7 @@
 pub mod anim;
 pub mod archive;
 mod assert;
+mod crc32;
 pub mod gamez;
 mod image;
 pub mod interp;

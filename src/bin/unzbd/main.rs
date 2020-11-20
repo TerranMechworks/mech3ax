@@ -17,6 +17,8 @@ const VERSION: &str = concat!(
 struct Opts {
     #[clap(subcommand)]
     subcmd: SubCommand,
+    #[clap(long = "pm", about = "Pirate's Moon")]
+    is_pm: bool,
 }
 
 #[derive(Clap)]
@@ -64,14 +66,15 @@ enum SubCommand {
 fn main() -> Result<()> {
     SimpleLogger::from_env().init().unwrap();
     let opts: Opts = Opts::parse();
+    let is_pm = opts.is_pm;
     match opts.subcmd {
-        SubCommand::Sounds(opts) => commands::sounds(opts),
+        SubCommand::Sounds(opts) => commands::sounds(opts, is_pm),
         SubCommand::Interp(opts) => commands::interp(opts),
-        SubCommand::Reader(opts) => commands::reader(opts),
+        SubCommand::Reader(opts) => commands::reader(opts, is_pm),
         SubCommand::Messages(opts) => commands::messages(opts),
         SubCommand::Textures(opts) => commands::textures(opts),
-        SubCommand::Motion(opts) => commands::motion(opts),
-        SubCommand::Mechlib(opts) => commands::mechlib(opts),
+        SubCommand::Motion(opts) => commands::motion(opts, is_pm),
+        SubCommand::Mechlib(opts) => commands::mechlib(opts, is_pm),
         SubCommand::Gamez(opts) => commands::gamez(opts),
         SubCommand::Anim(opts) => commands::anim(opts),
         SubCommand::License => commands::license(),

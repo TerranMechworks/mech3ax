@@ -1,4 +1,5 @@
 use crate::assert::assert_utf8;
+use crate::crc32::{crc32_update, CRC32_INIT};
 use crate::io_ext::{CountingReader, WriteHelper};
 use crate::serde::base64;
 use crate::size::ReprSize;
@@ -7,7 +8,21 @@ use crate::{assert_that, static_assert_size, Error, Result};
 use ::serde::{Deserialize, Serialize};
 use std::io::{Read, Seek, SeekFrom, Write};
 
-const VERSION: u32 = 1;
+const VERSION_MW: u32 = 1;
+const VERSION_PM: u32 = 2;
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum Mode {
+    Reader,
+    Sounds,
+    Motion,
+}
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum Version {
+    One,
+    Two(Mode),
+}
 
 #[repr(C)]
 struct EntryC {
@@ -26,20 +41,43 @@ pub struct Entry {
 }
 
 #[allow(clippy::type_complexity)]
-fn read_table<R>(read: &mut CountingReader<R>) -> Result<Vec<(String, u32, u32, Vec<u8>)>>
+fn read_table<R>(
+    read: &mut CountingReader<R>,
+    version: Version,
+) -> Result<(Vec<(String, u32, u32, Vec<u8>)>, u32)>
 where
     R: Read + Seek,
 {
-    let pos = read.seek(SeekFrom::End(-8))?;
+    let (count, start, checksum) = match version {
+        Version::One => {
+            let pos = read.seek(SeekFrom::End(-8))?;
 
-    let version = read.read_u32()?;
-    assert_that!("version", version == VERSION, pos + 4)?;
-    let count = read.read_u32()?;
+            let version = read.read_u32()?;
+            assert_that!("archive version", version == VERSION_MW, pos + 4)?;
+            let count = read.read_u32()?;
+            (count, 8, 0)
+        }
+        Version::Two(mode) => {
+            let pos = read.seek(SeekFrom::End(-12))?;
 
-    let offset: i64 = 8 + (count * EntryC::SIZE) as i64;
+            let version = read.read_u32()?;
+            assert_that!("archive version", version == VERSION_PM, pos + 4)?;
+            let count = read.read_u32()?;
+            let checksum = read.read_u32()?;
+
+            if mode != Mode::Reader {
+                assert_that!("archive checksum", checksum == 0, pos + 8)?;
+            }
+
+            (count, 12, checksum)
+        }
+    };
+
+    let offset: i64 = start + (count * EntryC::SIZE) as i64;
     let table_start = read.seek(SeekFrom::End(-offset))? as u32;
 
-    (0..count)
+    let motion_haxx = matches!(version, Version::Two(Mode::Motion));
+    let mut entries = (0..count)
         .map(|_| {
             let entry: EntryC = read.read_struct()?;
 
@@ -49,35 +87,65 @@ where
 
             assert_that!("entry start", entry_start < entry_end, read.prev + 0)?;
             assert_that!("entry end", entry_end <= table_start, read.prev + 4)?;
+            if motion_haxx {
+                assert_that!("entry length", entry_len == 1, read.prev + 4)?;
+            }
+
             let entry_name = assert_utf8("entry name", read.prev + 8, || {
                 str_from_c_padded(&entry.name)
             })?;
 
             Ok((entry_name, entry_start, entry_len, entry.garbage.to_vec()))
         })
-        .collect::<Result<Vec<_>>>()
+        .collect::<Result<Vec<_>>>()?;
+
+    if motion_haxx {
+        // whyyyyy? because the length is always 1, we have to backfill this...
+        // i guess the engine just jumps to the location and reads it.
+        let mut previous = table_start;
+        entries = entries
+            .into_iter()
+            .rev()
+            .map(|(name, start, _len, garbage)| {
+                let len = previous - start;
+                previous = start;
+                (name, start, len, garbage)
+            })
+            .collect();
+        entries.reverse();
+    }
+
+    Ok((entries, checksum))
 }
 
 pub fn read_archive<R, F, E>(
     read: &mut CountingReader<R>,
     mut save_file: F,
+    version: Version,
 ) -> std::result::Result<Vec<Entry>, E>
 where
     R: Read + Seek,
     F: FnMut(&str, Vec<u8>, u32) -> std::result::Result<(), E>,
     E: From<std::io::Error> + From<Error>,
 {
-    let entries = read_table(read)?;
-    entries
+    let (entries, checksum) = read_table(read, version)?;
+    let mut crc = CRC32_INIT;
+    let entries = entries
         .into_iter()
         .map(|(name, start, length, garbage)| {
             read.seek(SeekFrom::Start(start as u64))?;
             let mut buffer = vec![0; length as usize];
             read.read_exact(&mut buffer)?;
+            crc = crc32_update(crc, &buffer);
             save_file(&name, buffer, read.prev)?;
             Ok(Entry { name, garbage })
         })
-        .collect::<std::result::Result<Vec<_>, E>>()
+        .collect::<std::result::Result<Vec<_>, E>>()?;
+
+    if matches!(version, Version::Two(Mode::Reader)) {
+        assert_that!("archive checksum", crc == checksum, read.offset).map_err(Error::from)?;
+    }
+    Ok(entries)
 }
 
 fn entry_to_c(entry: &Entry, start: u32, length: u32) -> EntryC {
@@ -98,6 +166,7 @@ pub fn write_archive<W, F, E>(
     write: &mut W,
     entries: &[Entry],
     mut load_file: F,
+    version: Version,
 ) -> std::result::Result<(), E>
 where
     W: Write,
@@ -106,15 +175,21 @@ where
 {
     let mut offset = 0;
     let count = entries.len() as u32;
+    let mut crc = 0;
 
     let transformed = entries
         .iter()
         .map(|entry| {
             let data = load_file(&entry.name)?;
             write.write_all(&data)?;
-            let length = data.len() as u32;
+            crc = crc32_update(crc, &data);
+            let len = data.len() as u32;
+            let length = match version {
+                Version::Two(Mode::Motion) => 1,
+                _ => len,
+            };
             let entry_c = entry_to_c(entry, offset, length);
-            offset += length;
+            offset += len;
             Ok(entry_c)
         })
         .collect::<std::result::Result<Vec<_>, E>>()?;
@@ -123,7 +198,21 @@ where
         write.write_struct(&entry)?
     }
 
-    write.write_u32(VERSION)?;
-    write.write_u32(count)?;
+    match version {
+        Version::One => {
+            write.write_u32(VERSION_MW)?;
+            write.write_u32(count)?;
+        }
+        Version::Two(Mode::Reader) => {
+            write.write_u32(VERSION_PM)?;
+            write.write_u32(count)?;
+            write.write_u32(crc)?;
+        }
+        Version::Two(_) => {
+            write.write_u32(VERSION_PM)?;
+            write.write_u32(count)?;
+            write.write_u32(0)?;
+        }
+    }
     Ok(())
 }

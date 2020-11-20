@@ -6,7 +6,7 @@ mod panic;
 use errors::Result;
 use image::ImageOutputFormat;
 use mech3rs::anim::read_anim;
-use mech3rs::archive::read_archive;
+use mech3rs::archive::{read_archive, Version};
 use mech3rs::gamez::{read_gamez, Material, Mesh, Node};
 use mech3rs::interp::read_interp;
 use mech3rs::mechlib::{read_format, read_materials, read_model, read_version};
@@ -52,12 +52,16 @@ pub extern "stdcall" fn sounds(filename: *const c_char, callback: SoundCb) -> *c
     err_to_c(|| {
         let filename = ptr_to_string(filename)?;
         let mut input = CountingReader::new(BufReader::new(File::open(filename)?));
-        let result: Result<_> = read_archive(&mut input, |name, data, _offset| {
-            let name = CString::new(name)?;
-            let ptr = name.as_ptr();
-            callback(ptr, data.as_ptr(), data.len());
-            Ok(())
-        });
+        let result: Result<_> = read_archive(
+            &mut input,
+            |name, data, _offset| {
+                let name = CString::new(name)?;
+                let ptr = name.as_ptr();
+                callback(ptr, data.as_ptr(), data.len());
+                Ok(())
+            },
+            Version::One,
+        );
         result?;
         Ok(())
     })
@@ -87,18 +91,22 @@ pub extern "stdcall" fn reader(filename: *const c_char, callback: ReaderCb) -> *
     err_to_c(|| {
         let filename = ptr_to_string(filename)?;
         let mut input = CountingReader::new(BufReader::new(File::open(filename)?));
-        let result: Result<_> = read_archive(&mut input, |name, data, offset| {
-            let mut read = CountingReader::new(Cursor::new(data));
-            // translate to absolute offset
-            read.offset = offset;
-            let root = read_reader(&mut read)?;
-            let data = serde_json::to_vec(&root)?;
+        let result: Result<_> = read_archive(
+            &mut input,
+            |name, data, offset| {
+                let mut read = CountingReader::new(Cursor::new(data));
+                // translate to absolute offset
+                read.offset = offset;
+                let root = read_reader(&mut read)?;
+                let data = serde_json::to_vec(&root)?;
 
-            let name = CString::new(name)?;
-            let ptr = name.as_ptr();
-            callback(ptr, data.as_ptr(), data.len());
-            Ok(())
-        });
+                let name = CString::new(name)?;
+                let ptr = name.as_ptr();
+                callback(ptr, data.as_ptr(), data.len());
+                Ok(())
+            },
+            Version::One,
+        );
         result?;
         Ok(())
     })
@@ -156,18 +164,22 @@ pub extern "stdcall" fn motion(filename: *const c_char, callback: MotionCb) -> *
     err_to_c(|| {
         let filename = ptr_to_string(filename)?;
         let mut input = CountingReader::new(BufReader::new(File::open(filename)?));
-        let result: Result<_> = read_archive(&mut input, |name, data, offset| {
-            let mut read = CountingReader::new(Cursor::new(data));
-            // translate to absolute offset
-            read.offset = offset;
-            let root = read_motion(&mut read)?;
-            let data = serde_json::to_vec(&root)?;
+        let result: Result<_> = read_archive(
+            &mut input,
+            |name, data, offset| {
+                let mut read = CountingReader::new(Cursor::new(data));
+                // translate to absolute offset
+                read.offset = offset;
+                let root = read_motion(&mut read)?;
+                let data = serde_json::to_vec(&root)?;
 
-            let name = CString::new(name)?;
-            let ptr = name.as_ptr();
-            callback(ptr, data.as_ptr(), data.len());
-            Ok(())
-        });
+                let name = CString::new(name)?;
+                let ptr = name.as_ptr();
+                callback(ptr, data.as_ptr(), data.len());
+                Ok(())
+            },
+            Version::One,
+        );
         result?;
         Ok(())
     })
@@ -182,33 +194,37 @@ pub extern "stdcall" fn mechlib(filename: *const c_char, callback: MechlibCb) ->
     err_to_c(|| {
         let filename = ptr_to_string(filename)?;
         let mut input = CountingReader::new(BufReader::new(File::open(filename)?));
-        let result: Result<_> = read_archive(&mut input, |name, data, offset| {
-            let mut read = CountingReader::new(Cursor::new(data));
-            // translate to absolute offset
-            read.offset = offset;
+        let result: Result<_> = read_archive(
+            &mut input,
+            |name, data, offset| {
+                let mut read = CountingReader::new(Cursor::new(data));
+                // translate to absolute offset
+                read.offset = offset;
 
-            let name_c = CString::new(name)?;
-            let ptr = name_c.as_ptr();
-            match name {
-                "format" => read_format(&mut read),
-                "version" => read_version(&mut read),
-                "materials" => {
-                    let materials = read_materials(&mut read)?;
-                    let data = serde_json::to_vec(&materials)?;
+                let name_c = CString::new(name)?;
+                let ptr = name_c.as_ptr();
+                match name {
+                    "format" => read_format(&mut read),
+                    "version" => read_version(&mut read, false),
+                    "materials" => {
+                        let materials = read_materials(&mut read)?;
+                        let data = serde_json::to_vec(&materials)?;
 
-                    callback(ptr, data.as_ptr(), data.len());
-                    Ok(())
-                }
-                _ => {
-                    let root = read_model(&mut read)?;
-                    let data = serde_json::to_vec(&root)?;
+                        callback(ptr, data.as_ptr(), data.len());
+                        Ok(())
+                    }
+                    _ => {
+                        let root = read_model(&mut read)?;
+                        let data = serde_json::to_vec(&root)?;
 
-                    callback(ptr, data.as_ptr(), data.len());
-                    Ok(())
-                }
-            }?;
-            Ok(())
-        });
+                        callback(ptr, data.as_ptr(), data.len());
+                        Ok(())
+                    }
+                }?;
+                Ok(())
+            },
+            Version::One,
+        );
         result?;
         Ok(())
     })
