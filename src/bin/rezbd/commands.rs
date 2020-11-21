@@ -7,7 +7,7 @@ use mech3rs::mechlib::{
 };
 use mech3rs::motion::write_motion;
 use mech3rs::reader::write_reader;
-use mech3rs::textures::{write_textures, TextureInfo};
+use mech3rs::textures::{write_textures, Manifest};
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Cursor, Read, Seek};
 use zip::read::ZipArchive;
@@ -118,7 +118,7 @@ pub(crate) fn reader(opts: ZipOpts, is_pm: bool) -> Result<()> {
     )
 }
 
-fn texture_manifest_from_zip<T>(zip: &mut ZipArchive<T>) -> Result<Vec<TextureInfo>>
+fn texture_manifest_from_zip<T>(zip: &mut ZipArchive<T>) -> Result<Manifest>
 where
     T: Read + Seek,
 {

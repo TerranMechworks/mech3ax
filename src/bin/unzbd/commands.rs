@@ -132,17 +132,17 @@ pub(crate) fn textures(opts: ZipOpts) -> Result<()> {
     let mut zip = ZipWriter::new(output);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
 
-    let manifest: Result<Vec<_>> = read_textures(&mut input, |name, image| {
+    let manifest = read_textures(&mut input, |name, image| {
         let name = format!("{}.png", name);
         let mut data = Vec::new();
         image.write_to(&mut data, ImageOutputFormat::Png)?;
 
         zip.start_file(name, options)?;
         zip.write_all(&data)?;
-        Ok(())
-    });
+        Result::Ok(())
+    })?;
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
-    let data = serde_json::to_vec_pretty(&manifest?)?;
+    let data = serde_json::to_vec_pretty(&manifest)?;
     zip.start_file("manifest.json", options)?;
     zip.write_all(&data)?;
     zip.finish()?;

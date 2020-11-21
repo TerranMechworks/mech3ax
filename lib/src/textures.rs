@@ -4,7 +4,7 @@ use crate::image::{
     rgb888topal8, simple_alpha,
 };
 use crate::io_ext::{CountingReader, WriteHelper};
-use crate::serde::opt_base64;
+use crate::serde::base64;
 use crate::size::ReprSize;
 use crate::string::{str_from_c_padded, str_to_c_padded};
 use crate::{assert_that, static_assert_size, Error, Result};
@@ -18,7 +18,7 @@ use std::io::{Read, Write};
 struct Header {
     zero00: u32,
     has_entries: u32,
-    global_palette_count: u32,
+    global_palette_count: i32,
     texture_count: u32,
     zero16: u32,
     zero20: u32,
@@ -35,12 +35,12 @@ static_assert_size!(Entry, 40);
 
 #[repr(C)]
 struct Info {
-    flags: u32,
-    width: u16,
-    height: u16,
-    zero08: u32,
-    palette_count: u16,
-    stretch: u16,
+    flags: u32,         // 00
+    width: u16,         // 04
+    height: u16,        // 06
+    zero08: u32,        // 08
+    palette_count: u16, // 12
+    stretch: u16,       // 14
 }
 static_assert_size!(Info, 16);
 
@@ -77,6 +77,14 @@ pub enum TextureStretch {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[repr(u16)]
+pub enum TexturePalette {
+    None,
+    Local(#[serde(with = "base64")] Vec<u8>),
+    Global(i32, u16),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct TextureInfo {
     pub name: String,
     pub alpha: TextureAlpha,
@@ -86,11 +94,21 @@ pub struct TextureInfo {
     pub image_loaded: bool,
     pub alpha_loaded: bool,
     pub palette_loaded: bool,
-    #[serde(with = "opt_base64")]
-    pub palette: Option<Vec<u8>>,
+    pub palette: TexturePalette,
 }
 
-fn convert_info_from_c(name: String, tex_info: Info, offset: u32) -> Result<TextureInfo> {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Manifest {
+    pub texture_infos: Vec<TextureInfo>,
+    pub global_palettes: Vec<Vec<u8>>,
+}
+
+fn convert_info_from_c(
+    name: String,
+    tex_info: Info,
+    global_palette: Option<(i32, &Vec<u8>)>,
+    offset: u32,
+) -> Result<TextureInfo> {
     let bitflags = TexFlags::from_bits(tex_info.flags).ok_or_else(|| {
         AssertionError(format!(
             "Expected valid texture flags, but was 0x{:08X} (at {})",
@@ -100,9 +118,8 @@ fn convert_info_from_c(name: String, tex_info: Info, offset: u32) -> Result<Text
     // one byte per pixel support isn't implemented
     let bytes_per_pixel2 = bitflags.contains(TexFlags::BYTES_PER_PIXEL2);
     assert_that!("2 bytes per pixel", bytes_per_pixel2 == true, offset)?;
-    // global palette support isn't implemented
-    let global_palette = bitflags.contains(TexFlags::GLOBAL_PALETTE);
-    assert_that!("global palette", global_palette == false, offset)?;
+    let has_gp = bitflags.contains(TexFlags::GLOBAL_PALETTE);
+    assert_that!("global palette", has_gp == global_palette.is_some(), offset)?;
 
     let no_alpha = bitflags.contains(TexFlags::NO_ALPHA);
     let has_alpha = bitflags.contains(TexFlags::HAS_ALPHA);
@@ -137,13 +154,14 @@ fn convert_info_from_c(name: String, tex_info: Info, offset: u32) -> Result<Text
         image_loaded: bitflags.contains(TexFlags::IMAGE_LOADED),
         alpha_loaded: bitflags.contains(TexFlags::ALPHA_LOADED),
         palette_loaded: bitflags.contains(TexFlags::PALETTE_LOADED),
-        palette: None,
+        palette: TexturePalette::None, // set this later
     })
 }
 
 fn read_texture<R>(
     read: &mut CountingReader<R>,
     name: String,
+    global_palette: Option<(i32, &Vec<u8>)>,
 ) -> Result<(TextureInfo, DynamicImage)>
 where
     R: Read,
@@ -151,7 +169,7 @@ where
     let tex_info: Info = read.read_struct()?;
     assert_that!("field 08", tex_info.zero08 == 0, read.prev + 8)?;
     let palette_count = tex_info.palette_count;
-    let mut info = convert_info_from_c(name, tex_info, read.prev + 0)?;
+    let mut info = convert_info_from_c(name, tex_info, global_palette, read.prev + 0)?;
 
     let width = info.width as u32;
     let height = info.height as u32;
@@ -187,31 +205,39 @@ where
         let mut index_data = vec![0u8; size];
         read.read_exact(&mut index_data)?;
 
-        let alpha_data = if info.alpha == TextureAlpha::Full {
-            let mut buf = vec![0; size];
-            read.read_exact(&mut buf)?;
-            Some(buf)
-        } else {
-            // palette images never seem to have simple alpha. even if they did, how
-            // would you know which pixel was transparent? the first? the last? some
-            // color?
-            None
+        let alpha_data = match &info.alpha {
+            TextureAlpha::Full => {
+                let mut buf = vec![0; size];
+                read.read_exact(&mut buf)?;
+                Some(buf)
+            }
+            // TODO: skipping this for now, how would you know which pixel was
+            // transparent? the first? the last? some color?
+            TextureAlpha::Simple => None,
+            TextureAlpha::None => None,
         };
 
-        let mut palette_data = vec![0u8; palette_count as usize * 2];
-        read.read_exact(&mut palette_data)?;
-        let palette_data = rgb565to888(&palette_data);
-
-        let image = if let Some(alpha) = alpha_data {
-            let image_data = pal8to888a(&index_data, &palette_data, &alpha);
-            DynamicImage::ImageRgba8(RgbaImage::from_raw(width, height, image_data).unwrap())
-        } else {
-            let image_data = pal8to888(&index_data, &palette_data);
-            DynamicImage::ImageRgb8(RgbImage::from_raw(width, height, image_data).unwrap())
+        let convert_image = |palette| {
+            if let Some(alpha) = alpha_data {
+                let image_data = pal8to888a(&index_data, palette, &alpha);
+                DynamicImage::ImageRgba8(RgbaImage::from_raw(width, height, image_data).unwrap())
+            } else {
+                let image_data = pal8to888(&index_data, palette);
+                DynamicImage::ImageRgb8(RgbImage::from_raw(width, height, image_data).unwrap())
+            }
         };
 
-        info.palette = Some(palette_data);
-        image
+        if let Some((palette_index, palette_data)) = global_palette {
+            info.palette = TexturePalette::Global(palette_index, palette_count);
+            convert_image(&palette_data[0..(palette_count as usize) * 3])
+        } else {
+            let mut palette_data = vec![0u8; palette_count as usize * 2];
+            read.read_exact(&mut palette_data)?;
+            let palette_data = rgb565to888(&palette_data);
+            let image = convert_image(&palette_data);
+            info.palette = TexturePalette::Local(palette_data);
+            image
+        }
     };
 
     Ok((info, image))
@@ -224,7 +250,7 @@ fn assert_upcast<T>(result: std::result::Result<T, AssertionError>) -> Result<T>
 pub fn read_textures<R, F, E>(
     read: &mut CountingReader<R>,
     mut save_texture: F,
-) -> std::result::Result<Vec<TextureInfo>, E>
+) -> std::result::Result<Manifest, E>
 where
     R: Read,
     F: FnMut(&str, DynamicImage) -> std::result::Result<(), E>,
@@ -237,11 +263,10 @@ where
         header.has_entries == 1,
         read.prev + 4
     ))?;
-    // global palette support isn't implemented (never seen)
     assert_upcast(assert_that!(
         "global palette count",
-        header.global_palette_count == 0,
-        8
+        header.global_palette_count >= 0,
+        read.prev + 8
     ))?;
     assert_upcast(assert_that!(
         "texture count",
@@ -251,51 +276,77 @@ where
     assert_upcast(assert_that!("field 16", header.zero16 == 0, read.prev + 16))?;
     assert_upcast(assert_that!("field 20", header.zero20 == 0, read.prev + 20))?;
 
+    let palette_index_max = header.global_palette_count - 1;
     let tex_table = (0..header.texture_count)
         .map(|_| {
             let entry: Entry = read.read_struct()?;
             assert_that!(
                 "global palette index",
-                entry.palette_index == -1,
+                -1 <= entry.palette_index <= palette_index_max,
                 read.prev + 36
             )?;
             let name = assert_utf8("name", read.prev + 0, || str_from_c_padded(&entry.name))?;
-            Ok((name, entry.start_offset))
+            Ok((name, entry.start_offset, entry.palette_index))
         })
         .collect::<Result<Vec<_>>>()?;
 
-    let textures = tex_table
+    let global_palettes = (0..header.global_palette_count)
+        .map(|_| {
+            let mut palette_data = vec![0u8; 512];
+            read.read_exact(&mut palette_data)?;
+            Ok(rgb565to888(&palette_data))
+        })
+        .collect::<std::result::Result<Vec<_>, E>>()?;
+
+    let texture_infos = tex_table
         .into_iter()
-        .map(|(name, start_offset)| {
+        .map(|(name, start_offset, palette_index)| {
             assert_upcast(assert_that!(
                 "texture offset",
-                start_offset == read.offset,
+                read.offset == start_offset,
                 read.offset
             ))?;
-            let (info, image) = read_texture(read, name)?;
+            let global_palette = if palette_index > -1 {
+                Some((palette_index, &global_palettes[palette_index as usize]))
+            } else {
+                None
+            };
+            let (info, image) = read_texture(read, name, global_palette)?;
             save_texture(&info.name, image)?;
             Ok(info)
         })
-        .collect::<std::result::Result<Vec<_>, E>>();
+        .collect::<std::result::Result<Vec<_>, E>>()?;
 
     read.assert_end()?;
-    textures
+    Ok(Manifest {
+        texture_infos,
+        global_palettes,
+    })
 }
 
 fn calc_length(info: &TextureInfo) -> u32 {
     let mut length = Info::SIZE;
     let size = (info.width as u32) * (info.height as u32);
 
-    if let Some(palette) = &info.palette {
-        length += size;
-        if info.alpha == TextureAlpha::Full {
+    match &info.palette {
+        TexturePalette::Local(palette) => {
             length += size;
+            if info.alpha == TextureAlpha::Full {
+                length += size;
+            }
+            length += (palette.len() * 2 / 3) as u32;
         }
-        length += (palette.len() * 2 / 3) as u32;
-    } else {
-        length += size * 2;
-        if info.alpha == TextureAlpha::Full {
+        TexturePalette::Global(_, _) => {
             length += size;
+            if info.alpha == TextureAlpha::Full {
+                length += size;
+            }
+        }
+        TexturePalette::None => {
+            length += size * 2;
+            if info.alpha == TextureAlpha::Full {
+                length += size;
+            }
         }
     }
 
@@ -327,11 +378,14 @@ fn convert_info_to_c(info: &TextureInfo) -> Info {
         }
     }
 
-    let palette_count = info
-        .palette
-        .as_ref()
-        .map(|palette| (palette.len() / 3) as u16)
-        .unwrap_or(0);
+    let palette_count = match &info.palette {
+        TexturePalette::Local(palette) => (palette.len() / 3) as u16,
+        TexturePalette::Global(_, palette_count) => {
+            bitflags |= TexFlags::GLOBAL_PALETTE;
+            *palette_count
+        }
+        TexturePalette::None => 0,
+    };
 
     Info {
         flags: bitflags.bits(),
@@ -343,73 +397,109 @@ fn convert_info_to_c(info: &TextureInfo) -> Info {
     }
 }
 
-fn write_texture<W>(write: &mut W, info: &TextureInfo, image: DynamicImage) -> Result<()>
+fn write_texture<W>(
+    write: &mut W,
+    info: &TextureInfo,
+    image: DynamicImage,
+    global_palettes: &[Vec<u8>],
+) -> Result<()>
 where
     W: Write,
 {
     let tex_info = convert_info_to_c(&info);
     write.write_struct(&tex_info)?;
 
-    if let Some(palette) = &info.palette {
-        match image {
-            DynamicImage::ImageRgb8(img) => {
-                assert_eq!(
-                    info.alpha,
-                    TextureAlpha::None,
-                    "Unexpected image format for {}",
-                    info.name
-                );
-                let image_data = rgb888topal8(&img.into_raw(), &palette);
-                write.write_all(&image_data)?;
-                let palette_data = rgb888to565(palette);
-                write.write_all(&palette_data)?;
-            }
-            DynamicImage::ImageRgba8(img) => {
-                assert_ne!(
-                    info.alpha,
-                    TextureAlpha::None,
-                    "Unexpected image format for {}",
-                    info.name
-                );
-                let (image_data, alpha_data) = rgb888atopal8(&img.into_raw(), &palette);
-                write.write_all(&image_data)?;
-                // throw away the simple alpha
-                if info.alpha == TextureAlpha::Full {
+    match &info.palette {
+        TexturePalette::Local(palette) => {
+            match image {
+                DynamicImage::ImageRgb8(img) => {
+                    assert_eq!(
+                        info.alpha,
+                        TextureAlpha::None,
+                        "Unexpected image format for {}",
+                        info.name
+                    );
+                    let image_data = rgb888topal8(&img.into_raw(), &palette);
+                    write.write_all(&image_data)?;
+                    let palette_data = rgb888to565(palette);
+                    write.write_all(&palette_data)?;
+                }
+                DynamicImage::ImageRgba8(img) => {
+                    assert_ne!(
+                        info.alpha,
+                        TextureAlpha::None,
+                        "Unexpected image format for {}",
+                        info.name
+                    );
+                    let (image_data, alpha_data) = rgb888atopal8(&img.into_raw(), &palette);
+                    write.write_all(&image_data)?;
+                    // throw away the simple alpha
+                    if info.alpha == TextureAlpha::Full {
+                        write.write_all(&alpha_data)?;
+                    }
+                    let palette_data = rgb888to565(palette);
+                    write.write_all(&palette_data)?;
+                }
+                _ => panic!("Unexpected image format for {}", info.name),
+            };
+        }
+        TexturePalette::Global(palette_index, palette_count) => {
+            let count = (*palette_count as usize) * 3;
+            let palette = &global_palettes[*palette_index as usize][0..count];
+            match image {
+                DynamicImage::ImageRgb8(img) => {
+                    assert_ne!(
+                        info.alpha,
+                        TextureAlpha::Full,
+                        "Unexpected image format for {}",
+                        info.name
+                    );
+                    let image_data = rgb888topal8(&img.into_raw(), &palette);
+                    write.write_all(&image_data)?;
+                }
+                DynamicImage::ImageRgba8(img) => {
+                    assert_eq!(
+                        info.alpha,
+                        TextureAlpha::Full,
+                        "Unexpected image format for {}",
+                        info.name
+                    );
+                    let (image_data, alpha_data) = rgb888atopal8(&img.into_raw(), &palette);
+                    write.write_all(&image_data)?;
                     write.write_all(&alpha_data)?;
                 }
-                let palette_data = rgb888to565(palette);
-                write.write_all(&palette_data)?;
-            }
-            _ => panic!("Unexpected image format for {}", info.name),
-        };
-    } else {
-        match image {
-            DynamicImage::ImageRgb8(img) => {
-                assert_eq!(
-                    info.alpha,
-                    TextureAlpha::None,
-                    "Unexpected image format for {}",
-                    info.name
-                );
-                let image_data = rgb888to565(&img.into_raw());
-                write.write_all(&image_data)?;
-            }
-            DynamicImage::ImageRgba8(img) => {
-                assert_ne!(
-                    info.alpha,
-                    TextureAlpha::None,
-                    "Unexpected image format for {}",
-                    info.name
-                );
-                let (image_data, alpha_data) = rgb888ato565(&img.into_raw());
-                write.write_all(&image_data)?;
-                // throw away the simple alpha
-                if info.alpha == TextureAlpha::Full {
-                    write.write_all(&alpha_data)?;
+                _ => panic!("Unexpected image format for {}", info.name),
+            };
+        }
+        TexturePalette::None => {
+            match image {
+                DynamicImage::ImageRgb8(img) => {
+                    assert_eq!(
+                        info.alpha,
+                        TextureAlpha::None,
+                        "Unexpected image format for {}",
+                        info.name
+                    );
+                    let image_data = rgb888to565(&img.into_raw());
+                    write.write_all(&image_data)?;
                 }
-            }
-            _ => panic!("Unexpected image format for {}", info.name),
-        };
+                DynamicImage::ImageRgba8(img) => {
+                    assert_ne!(
+                        info.alpha,
+                        TextureAlpha::None,
+                        "Unexpected image format for {}",
+                        info.name
+                    );
+                    let (image_data, alpha_data) = rgb888ato565(&img.into_raw());
+                    write.write_all(&image_data)?;
+                    // throw away the simple alpha
+                    if info.alpha == TextureAlpha::Full {
+                        write.write_all(&alpha_data)?;
+                    }
+                }
+                _ => panic!("Unexpected image format for {}", info.name),
+            };
+        }
     };
 
     Ok(())
@@ -417,7 +507,7 @@ where
 
 pub fn write_textures<W, F, E>(
     write: &mut W,
-    texture_infos: &[TextureInfo],
+    manifest: &Manifest,
     mut load_texture: F,
 ) -> std::result::Result<(), E>
 where
@@ -425,34 +515,44 @@ where
     F: FnMut(&str) -> std::result::Result<DynamicImage, E>,
     E: From<std::io::Error> + From<Error>,
 {
-    let count = texture_infos.len() as u32;
+    let texture_count = manifest.texture_infos.len() as u32;
+    let global_palette_count = manifest.global_palettes.len() as i32;
     let header = Header {
         zero00: 0,
         has_entries: 1,
-        global_palette_count: 0,
-        texture_count: count,
+        global_palette_count,
+        texture_count,
         zero16: 0,
         zero20: 0,
     };
     write.write_struct(&header)?;
 
-    let mut offset = Header::SIZE + count * Entry::SIZE;
+    let mut offset = Header::SIZE + texture_count * Entry::SIZE + global_palette_count as u32 * 512;
 
-    for info in texture_infos {
+    for info in &manifest.texture_infos {
         let mut name = [0; 32];
         str_to_c_padded(&info.name, &mut name);
+        let palette_index = match &info.palette {
+            TexturePalette::Global(palette_index, _) => *palette_index,
+            _ => -1,
+        };
         let entry = Entry {
             name,
             start_offset: offset,
-            palette_index: -1,
+            palette_index,
         };
         write.write_struct(&entry)?;
         offset += calc_length(&info);
     }
 
-    for info in texture_infos {
+    for palette in &manifest.global_palettes {
+        let palette_data = rgb888to565(palette);
+        write.write_all(&palette_data)?;
+    }
+
+    for info in &manifest.texture_infos {
         let image = load_texture(&info.name)?;
-        write_texture(write, info, image)?;
+        write_texture(write, info, image, &manifest.global_palettes)?;
     }
 
     Ok(())
