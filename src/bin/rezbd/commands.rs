@@ -13,7 +13,7 @@ use std::io::{BufReader, BufWriter, Cursor, Read, Seek};
 use zip::read::ZipArchive;
 
 use crate::errors::Result;
-use crate::{JsonOpts, ZipOpts};
+use crate::{JsonOpts, ZipOpts, ZipOptsPm};
 
 pub(crate) fn license() -> Result<()> {
     print!(
@@ -49,13 +49,13 @@ where
     Ok(manifest)
 }
 
-pub(crate) fn sounds(opts: ZipOpts, is_pm: bool) -> Result<()> {
+pub(crate) fn sounds(opts: ZipOptsPm) -> Result<()> {
     let input = BufReader::new(File::open(opts.input)?);
     let mut output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipArchive::new(input)?;
     let entries = archive_manifest_from_zip(&mut zip)?;
-    let version = if is_pm {
+    let version = if opts.is_pm {
         Version::Two(Mode::Sounds)
     } else {
         Version::One
@@ -86,13 +86,13 @@ pub(crate) fn interp(opts: JsonOpts) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn reader(opts: ZipOpts, is_pm: bool) -> Result<()> {
+pub(crate) fn reader(opts: ZipOptsPm) -> Result<()> {
     let input = BufReader::new(File::open(opts.input)?);
     let mut output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipArchive::new(input)?;
     let entries = archive_manifest_from_zip(&mut zip)?;
-    let version = if is_pm {
+    let version = if opts.is_pm {
         Version::Two(Mode::Reader)
     } else {
         Version::One
@@ -150,13 +150,13 @@ pub(crate) fn textures(opts: ZipOpts) -> Result<()> {
     result
 }
 
-pub(crate) fn motion(opts: ZipOpts, is_pm: bool) -> Result<()> {
+pub(crate) fn motion(opts: ZipOptsPm) -> Result<()> {
     let input = BufReader::new(File::open(opts.input)?);
     let mut output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipArchive::new(input)?;
     let entries = archive_manifest_from_zip(&mut zip)?;
-    let version = if is_pm {
+    let version = if opts.is_pm {
         Version::Two(Mode::Motion)
     } else {
         Version::One
@@ -182,17 +182,18 @@ pub(crate) fn motion(opts: ZipOpts, is_pm: bool) -> Result<()> {
     )
 }
 
-pub(crate) fn mechlib(opts: ZipOpts, is_pm: bool) -> Result<()> {
+pub(crate) fn mechlib(opts: ZipOptsPm) -> Result<()> {
     let input = BufReader::new(File::open(opts.input)?);
     let mut output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipArchive::new(input)?;
     let entries = archive_manifest_from_zip(&mut zip)?;
-    let version = if is_pm {
+    let version = if opts.is_pm {
         Version::Two(Mode::Sounds)
     } else {
         Version::One
     };
+    let is_pm = opts.is_pm;
 
     write_archive(
         &mut output,

@@ -17,8 +17,6 @@ const VERSION: &str = concat!(
 struct Opts {
     #[clap(subcommand)]
     subcmd: SubCommand,
-    #[clap(long = "pm", about = "Pirate's Moon")]
-    is_pm: bool,
 }
 
 #[derive(Clap)]
@@ -27,6 +25,16 @@ struct ZipOpts {
     input: String,
     #[clap(about = "The destination ZIP path (will be overwritten)")]
     output: String,
+}
+
+#[derive(Clap)]
+struct ZipOptsPm {
+    #[clap(about = "The source ZBD path")]
+    input: String,
+    #[clap(about = "The destination ZIP path (will be overwritten)")]
+    output: String,
+    #[clap(long = "pm", about = "Pirate's Moon")]
+    is_pm: bool,
 }
 
 #[derive(Clap)]
@@ -42,11 +50,11 @@ enum SubCommand {
     #[clap(about = "Prints license information")]
     License,
     #[clap(about = "Extract 'sounds*.zbd' archives to ZIP")]
-    Sounds(ZipOpts),
+    Sounds(ZipOptsPm),
     #[clap(about = "Extract 'interp.zbd' files to JSON")]
     Interp(JsonOpts),
     #[clap(about = "Extract 'reader*.zbd' archives to ZIP")]
-    Reader(ZipOpts),
+    Reader(ZipOptsPm),
     #[clap(about = "Extract 'Mech3Msg.dll' files to JSON")]
     Messages(JsonOpts),
     #[clap(
@@ -54,9 +62,9 @@ enum SubCommand {
     )]
     Textures(ZipOpts),
     #[clap(about = "Extract 'motion.zbd' archives to ZIP")]
-    Motion(ZipOpts),
+    Motion(ZipOptsPm),
     #[clap(about = "Extract 'mechlib.zbd' archives to ZIP")]
-    Mechlib(ZipOpts),
+    Mechlib(ZipOptsPm),
     #[clap(about = "Extract 'gamez.zbd' archives to ZIP")]
     Gamez(ZipOpts),
     #[clap(about = "Extract 'anim.zbd' archives to ZIP")]
@@ -66,15 +74,14 @@ enum SubCommand {
 fn main() -> Result<()> {
     SimpleLogger::from_env().init().unwrap();
     let opts: Opts = Opts::parse();
-    let is_pm = opts.is_pm;
     match opts.subcmd {
-        SubCommand::Sounds(opts) => commands::sounds(opts, is_pm),
+        SubCommand::Sounds(opts) => commands::sounds(opts),
         SubCommand::Interp(opts) => commands::interp(opts),
-        SubCommand::Reader(opts) => commands::reader(opts, is_pm),
+        SubCommand::Reader(opts) => commands::reader(opts),
         SubCommand::Messages(opts) => commands::messages(opts),
         SubCommand::Textures(opts) => commands::textures(opts),
-        SubCommand::Motion(opts) => commands::motion(opts, is_pm),
-        SubCommand::Mechlib(opts) => commands::mechlib(opts, is_pm),
+        SubCommand::Motion(opts) => commands::motion(opts),
+        SubCommand::Mechlib(opts) => commands::mechlib(opts),
         SubCommand::Gamez(opts) => commands::gamez(opts),
         SubCommand::Anim(opts) => commands::anim(opts),
         SubCommand::License => commands::license(),

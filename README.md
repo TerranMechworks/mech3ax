@@ -8,7 +8,7 @@ Obviously, this is an unofficial fan effort and not connected to the developers 
 
 ## Currently supported
 
-Various versions of the MechWarror 3 base game have been tested (including US versions 1.0/1.1/1.2/Gold Edition, German version 1.0, with and without patches). If you are in possession of any other versions, especially the French versions, please get in touch! The expansion, Pirate's Moon, is not supported.
+Various versions of the MechWarror 3 base game have been tested (including US versions 1.0/1.1/1.2/Gold Edition, German version 1.0, with and without patches). If you are in possession of any other versions, especially the French versions, please get in touch! The expansion, Pirate's Moon, has limited support.
 
 The conversions are binary-accurate, so converting from a `*.zbd` file and then back to a `*.zbd` file produces the same file.
 
@@ -24,7 +24,7 @@ The conversions are binary-accurate, so converting from a `*.zbd` file and then 
 
 Not supported (yet?):
 
-- The Pirate's Moon expansion
+- The Pirate's Moon expansion (specifically `mechlib.zbd`, `anim.zbd`, and `gamez.zbd`)
 - The demo likely won't ever be supported, because it uses different versions/data structures
 - Background music/ambient tracks [can be extracted from the CD](https://github.com/tobywf/mech3re/blob/master/02-ambient-tracks.ipynb) using e.g. [ExactAudioCopy](http://www.exactaudiocopy.de/) or other programs, so it isn't worth re-inventing this
 - Similarly, video files [can be converted using `ffmpeg`](https://github.com/tobywf/mech3re/blob/master/03-video-files.ipynb) to modern codecs, or played back using [VLC media player](https://www.videolan.org/vlc/)
@@ -105,6 +105,10 @@ blender \
 `--mechtex` and `--motion` are optional. If `--mechtex` is specified, textures are extracted, applied, and packed into the `.blend` file. If `--motion` is specified, mech motions/animations are loaded and applied to the model.
 
 ## Changelog
+
+### [0.3.3] - unreleased
+
+* Pirate's Moon support for sounds, readers, motion, and textures
 
 ### [0.3.2] - 2020-10-13
 

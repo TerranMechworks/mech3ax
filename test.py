@@ -29,13 +29,13 @@ class Tester:
     def unzbd(self, command: str, one: Path, two: Path, is_pm: bool = False) -> None:
         cmd = [self.unzbd_exe, command, str(one), str(two)]
         if is_pm:
-            cmd.insert(1, "--pm")
+            cmd.append("--pm")
         subprocess.run(cmd, check=True)
 
     def rezbd(self, command: str, one: Path, two: Path, is_pm: bool = False) -> None:
         cmd = [self.rezbd_exe, command, str(one), str(two)]
         if is_pm:
-            cmd.insert(1, "--pm")
+            cmd.append("--pm")
         subprocess.run(cmd, check=True)
 
     def compare(self, one: Path, two: Path) -> None:

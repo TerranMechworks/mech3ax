@@ -14,7 +14,7 @@ use std::io::{BufReader, BufWriter, Cursor, Write};
 use zip::write::{FileOptions, ZipWriter};
 
 use crate::errors::Result;
-use crate::{JsonOpts, ZipOpts};
+use crate::{JsonOpts, ZipOpts, ZipOptsPm};
 
 pub(crate) fn license() -> Result<()> {
     print!(
@@ -39,13 +39,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     Ok(())
 }
 
-pub(crate) fn sounds(opts: ZipOpts, is_pm: bool) -> Result<()> {
+pub(crate) fn sounds(opts: ZipOptsPm) -> Result<()> {
     let mut input = CountingReader::new(BufReader::new(File::open(opts.input)?));
     let output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipWriter::new(output);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
-    let version = if is_pm {
+    let version = if opts.is_pm {
         Version::Two(Mode::Sounds)
     } else {
         Version::One
@@ -79,13 +79,13 @@ pub(crate) fn interp(opts: JsonOpts) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn reader(opts: ZipOpts, is_pm: bool) -> Result<()> {
+pub(crate) fn reader(opts: ZipOptsPm) -> Result<()> {
     let mut input = CountingReader::new(BufReader::new(File::open(opts.input)?));
     let output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipWriter::new(output);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
-    let version = if is_pm {
+    let version = if opts.is_pm {
         Version::Two(Mode::Reader)
     } else {
         Version::One
@@ -150,13 +150,13 @@ pub(crate) fn textures(opts: ZipOpts) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn motion(opts: ZipOpts, is_pm: bool) -> Result<()> {
+pub(crate) fn motion(opts: ZipOptsPm) -> Result<()> {
     let mut input = CountingReader::new(BufReader::new(File::open(opts.input)?));
     let output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipWriter::new(output);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
-    let version = if is_pm {
+    let version = if opts.is_pm {
         Version::Two(Mode::Motion)
     } else {
         Version::One
@@ -187,17 +187,18 @@ pub(crate) fn motion(opts: ZipOpts, is_pm: bool) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn mechlib(opts: ZipOpts, is_pm: bool) -> Result<()> {
+pub(crate) fn mechlib(opts: ZipOptsPm) -> Result<()> {
     let mut input = CountingReader::new(BufReader::new(File::open(opts.input)?));
     let output = BufWriter::new(File::create(opts.output)?);
 
     let mut zip = ZipWriter::new(output);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
-    let version = if is_pm {
+    let version = if opts.is_pm {
         Version::Two(Mode::Sounds)
     } else {
         Version::One
     };
+    let is_pm = opts.is_pm;
 
     let manifest: Result<_> = read_archive(
         &mut input,
