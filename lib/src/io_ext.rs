@@ -5,7 +5,7 @@ use std::io::{Read, Result, Seek, SeekFrom, Write};
 use std::mem::MaybeUninit;
 
 pub struct CountingReader<R: Read> {
-    read: R,
+    inner: R,
     pub offset: u32,
     pub prev: u32,
 }
@@ -13,14 +13,26 @@ pub struct CountingReader<R: Read> {
 impl<R: Read> CountingReader<R> {
     pub fn new(read: R) -> Self {
         Self {
-            read,
+            inner: read,
             offset: 0,
             prev: 0,
         }
     }
 
+    pub fn into_inner(self) -> R {
+        self.inner
+    }
+
+    pub fn get_ref(&self) -> &R {
+        &self.inner
+    }
+
+    pub fn get_mut(&mut self) -> &mut R {
+        &mut self.inner
+    }
+
     pub fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> {
-        if let Err(err) = self.read.read_exact(buf) {
+        if let Err(err) = self.inner.read_exact(buf) {
             return Err(err);
         }
         self.prev = self.offset;
@@ -76,7 +88,7 @@ impl<R: Read> CountingReader<R> {
 
     pub fn assert_end(&mut self) -> crate::Result<()> {
         let mut buf = [0; 1];
-        match self.read.read(&mut buf)? {
+        match self.inner.read(&mut buf)? {
             0 => Ok(()),
             _ => Err(AssertionError("Expected all data to be read".to_owned()).into()),
         }
@@ -93,7 +105,7 @@ impl<R: Read> CountingReader<R> {
 
 impl<R: Read + Seek> Seek for CountingReader<R> {
     fn seek(&mut self, pos: SeekFrom) -> Result<u64> {
-        let offset = self.read.seek(pos)?;
+        let offset = self.inner.seek(pos)?;
         self.offset = offset as u32;
         Ok(offset)
     }
