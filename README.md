@@ -109,6 +109,9 @@ blender \
 ### [0.3.3] - unreleased
 
 * Pirate's Moon support for sounds, readers, motion, and textures
+* To support Pirate's Moon textures, the `manifest.json` format has been slightly altered (`unzbd`, `rezbd`, C FFI lib) - breaking change
+* Fixed off-by-one error when dumping messages (`Mech3Msg.dll`)
+* Allow message table IDs to be dumped, for use with the [Mech3Msg](https://github.com/tobywf/mech3msg) replacement project
 
 ### [0.3.2] - 2020-10-13
 
@@ -153,4 +156,4 @@ pre-commit install
 
 ## License
 
-MechWarrior 3 Asset Extractor is GPLv3 licensed. Please see `LICENSE`.
+MechWarrior 3 Asset Extractor is GPLv3 licensed. Please see `LICENSE.txt`.

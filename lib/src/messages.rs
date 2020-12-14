@@ -12,7 +12,7 @@ use std::io::{Cursor, Read};
 
 const DLL_BASE_ADDRESS: u32 = 0x10000000;
 
-pub fn read_messages<R>(read: &mut R) -> Result<HashMap<String, Option<String>>>
+pub fn read_messages<R>(read: &mut R) -> Result<Vec<(String, u32, String)>>
 where
     R: Read,
 {
@@ -38,12 +38,15 @@ where
     let offset = data_section.VirtualAddress + DLL_BASE_ADDRESS;
     let message_ids = read_zlocids(data, offset, offset + data_section.VirtualSize)?;
 
-    let merged = message_ids
+    message_ids
         .into_iter()
-        .map(|(entry_id, name)| (name, messages.remove(&entry_id)))
-        .collect::<HashMap<_, _>>();
-
-    Ok(merged)
+        .map(|(entry_id, name)| {
+            let message = messages.remove(&entry_id).ok_or_else(|| {
+                AssertionError(format!("Message \"{}\" ({}) not found", &name, entry_id))
+            })?;
+            Ok((name, entry_id, message))
+        })
+        .collect()
 }
 
 fn find_message_table(resources: Resources) -> std::result::Result<DataEntry, FindError> {
@@ -70,7 +73,7 @@ fn read_message_table(data: &[u8]) -> Result<HashMap<u32, String>> {
     let mut entries = HashMap::new();
     for (low_id, high_id, offset_to_entries) in table {
         read.set_position(offset_to_entries as u64);
-        for entry_id in low_id..high_id {
+        for entry_id in low_id..high_id + 1 {
             let length = read.read_u16()? - 4;
             let flags = read.read_u16()?;
 

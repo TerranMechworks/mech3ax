@@ -9,12 +9,13 @@ use mech3rs::motion::read_motion;
 use mech3rs::reader::read_reader;
 use mech3rs::textures::read_textures;
 use mech3rs::CountingReader;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Cursor, Write};
 use zip::write::{FileOptions, ZipWriter};
 
 use crate::errors::Result;
-use crate::{JsonOpts, ZipOpts, ZipOptsPm};
+use crate::{JsonOpts, MsgOpts, ZipOpts, ZipOptsPm};
 
 pub(crate) fn license() -> Result<()> {
     print!(
@@ -115,12 +116,22 @@ pub(crate) fn reader(opts: ZipOptsPm) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn messages(opts: JsonOpts) -> Result<()> {
+pub(crate) fn messages(opts: MsgOpts) -> Result<()> {
     let mut input = BufReader::new(File::open(opts.input)?);
     let mut output = BufWriter::new(File::create(opts.output)?);
 
-    let messages = read_messages(&mut input)?;
-    let data = serde_json::to_vec_pretty(&messages)?;
+    let mut messages = read_messages(&mut input)?;
+
+    let data = if opts.dump_ids {
+        messages.sort_by(|a, b| a.1.cmp(&b.1));
+        serde_json::to_vec_pretty(&messages)?
+    } else {
+        let map: HashMap<_, _> = messages
+            .into_iter()
+            .map(|(key, _mid, msg)| (key, msg))
+            .collect();
+        serde_json::to_vec_pretty(&map)?
+    };
     output.write_all(&data)?;
     Ok(())
 }

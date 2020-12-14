@@ -46,6 +46,16 @@ struct JsonOpts {
 }
 
 #[derive(Clap)]
+struct MsgOpts {
+    #[clap(about = "The source Mech3Msg.dll path")]
+    input: String,
+    #[clap(about = "The destination JSON path (will be overwritten)")]
+    output: String,
+    #[clap(long = "dump-ids", about = "Dump message IDs")]
+    dump_ids: bool,
+}
+
+#[derive(Clap)]
 enum SubCommand {
     #[clap(about = "Prints license information")]
     License,
@@ -56,7 +66,7 @@ enum SubCommand {
     #[clap(about = "Extract 'reader*.zbd' archives to ZIP")]
     Reader(ZipOptsPm),
     #[clap(about = "Extract 'Mech3Msg.dll' files to JSON")]
-    Messages(JsonOpts),
+    Messages(MsgOpts),
     #[clap(
         about = "Extract 'rimage.zbd', 'rmechtex*.zbd', 'rtexture*.zbd', 'texture*.zbd' archives to ZIP"
     )]
