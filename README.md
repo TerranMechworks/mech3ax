@@ -102,16 +102,32 @@ blender \
     "supernova"
 ```
 
-`--mechtex` and `--motion` are optional. If `--mechtex` is specified, textures are extracted, applied, and packed into the `.blend` file. If `--motion` is specified, mech motions/animations are loaded and applied to the model.
+where `--mechtex` and `--motion` are optional. If `--mechtex` is specified, textures are extracted, applied, and packed into the `.blend` file. If `--motion` is specified, mech motions/animations are loaded and applied to the model.
+
+Assuming the above, and you have extracted the gamez files, game textures, and mech textures to the same directory, you can run:
+
+```bash
+blender \
+    --background \
+    --factory-startup \
+    --python "gamez2blend.py" \
+    -- \
+    "gamez.zip" \
+    --rtexture "c1-rtexture.zip" \
+    --rmechtex "rmechtex.zip"
+```
+
+where `--rtexture` and `--rmechtex` are optional.
 
 ## Changelog
 
-### [0.3.3] - unreleased
+### [0.4.0] - 2020-12-23
 
 * Pirate's Moon support for sounds, readers, motion, and textures
 * To support Pirate's Moon textures, the `manifest.json` format has been slightly altered (`unzbd`, `rezbd`, C FFI lib) - breaking change
 * Fixed off-by-one error when dumping messages (`Mech3Msg.dll`)
 * Allow message table IDs to be dumped, for use with the [Mech3Msg](https://github.com/tobywf/mech3msg) replacement project
+* Blender script for GameZ worlds
 
 ### [0.3.2] - 2020-10-13
 
