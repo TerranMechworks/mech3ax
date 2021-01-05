@@ -120,7 +120,7 @@ pub extern "stdcall" fn messages(filename: *const c_char, callback: MessagesCb) 
     err_to_c(|| {
         let filename = ptr_to_string(filename)?;
         let mut input = BufReader::new(File::open(filename)?);
-        let messages = read_messages(&mut input)?;
+        let messages = read_messages(&mut input, None)?;
         let data = serde_json::to_vec(&messages)?;
         callback(data.as_ptr(), data.len());
         Ok(())

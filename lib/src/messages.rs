@@ -12,7 +12,7 @@ use std::io::{Cursor, Read};
 
 const DLL_BASE_ADDRESS: u32 = 0x10000000;
 
-pub fn read_messages<R>(read: &mut R) -> Result<Vec<(String, u32, String)>>
+pub fn read_messages<R>(read: &mut R, skip_data: Option<u64>) -> Result<Vec<(String, u32, String)>>
 where
     R: Read,
 {
@@ -36,9 +36,9 @@ where
     let data = pe.get_section_bytes(data_section)?;
 
     let offset = data_section.VirtualAddress + DLL_BASE_ADDRESS;
-    let message_ids = read_zlocids(data, offset, offset + data_section.VirtualSize)?;
+    let message_ids = read_zlocids(data, skip_data, offset, offset + data_section.VirtualSize)?;
 
-    message_ids
+    let merged = message_ids
         .into_iter()
         .map(|(entry_id, name)| {
             let message = messages.remove(&entry_id).ok_or_else(|| {
@@ -46,7 +46,10 @@ where
             })?;
             Ok((name, entry_id, message))
         })
-        .collect()
+        .collect::<Result<Vec<_>>>()?;
+
+    assert_that!("all message table strings used", 0 == messages.len(), 0)?;
+    Ok(merged)
 }
 
 fn find_message_table(resources: Resources) -> std::result::Result<DataEntry, FindError> {
@@ -109,13 +112,22 @@ fn read_message_table(data: &[u8]) -> Result<HashMap<u32, String>> {
     Ok(entries)
 }
 
-fn read_zlocids(data: &[u8], mem_start: u32, mem_end: u32) -> Result<Vec<(u32, String)>> {
+fn read_zlocids(
+    data: &[u8],
+    skip: Option<u64>,
+    mem_start: u32,
+    mem_end: u32,
+) -> Result<Vec<(u32, String)>> {
     let mut read = Cursor::new(data);
 
     // skip the CRT initialization section
-    for i in 0..4 {
-        let initterm = read.read_u32()?;
-        assert_that!("initterm", initterm == 0, i * 4)?;
+    if let Some(pos) = skip {
+        read.set_position(pos);
+    } else {
+        for i in 0..4 {
+            let initterm = read.read_u32()?;
+            assert_that!("initterm", initterm == 0, i * 4)?;
+        }
     }
 
     let mut entry_table = Vec::new();
@@ -141,12 +153,8 @@ fn read_zlocids(data: &[u8], mem_start: u32, mem_end: u32) -> Result<Vec<(u32, S
         .map(|(entry_id, relative_start)| {
             let mut relative_end = relative_start;
 
-            loop {
-                if data[relative_end] != 0 {
-                    relative_end += 1;
-                } else {
-                    break;
-                }
+            while data[relative_end] != 0 {
+                relative_end += 1;
             }
 
             let message_name =

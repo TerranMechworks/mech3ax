@@ -121,6 +121,10 @@ where `--rtexture` and `--rmechtex` are optional.
 
 ## Changelog
 
+### [0.4.1] - unreleased
+
+* Allow arbitrary `.data` section/CRT initialization skip for message DLLs to support Recoil's `messages.dll` (hidden in CLI)
+
 ### [0.4.0] - 2020-12-23
 
 * Pirate's Moon support for sounds, readers, motion, and textures

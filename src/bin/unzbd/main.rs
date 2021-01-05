@@ -53,6 +53,8 @@ struct MsgOpts {
     output: String,
     #[clap(long = "dump-ids", about = "Dump message IDs")]
     dump_ids: bool,
+    #[clap(long = "skip-data", hidden = true)]
+    skip_data: Option<u64>,
 }
 
 #[derive(Clap)]

@@ -120,7 +120,7 @@ pub(crate) fn messages(opts: MsgOpts) -> Result<()> {
     let mut input = BufReader::new(File::open(opts.input)?);
     let mut output = BufWriter::new(File::create(opts.output)?);
 
-    let mut messages = read_messages(&mut input)?;
+    let mut messages = read_messages(&mut input, opts.skip_data)?;
 
     let data = if opts.dump_ids {
         messages.sort_by(|a, b| a.1.cmp(&b.1));
