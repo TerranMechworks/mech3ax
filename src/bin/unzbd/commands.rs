@@ -120,13 +120,13 @@ pub(crate) fn messages(opts: MsgOpts) -> Result<()> {
     let mut input = BufReader::new(File::open(opts.input)?);
     let mut output = BufWriter::new(File::create(opts.output)?);
 
-    let mut messages = read_messages(&mut input, opts.skip_data)?;
+    let messages = read_messages(&mut input, opts.skip_data)?;
 
     let data = if opts.dump_ids {
-        messages.sort_by(|a, b| a.1.cmp(&b.1));
         serde_json::to_vec_pretty(&messages)?
     } else {
         let map: HashMap<_, _> = messages
+            .entries
             .into_iter()
             .map(|(key, _mid, msg)| (key, msg))
             .collect();

@@ -2,6 +2,7 @@ use crate::assert::{assert_utf8, AssertionError};
 use crate::io_ext::ReadHelper;
 use crate::string::str_from_c_sized;
 use crate::{assert_that, Result};
+use ::serde::{Deserialize, Serialize};
 use encoding::all::WINDOWS_1252;
 use encoding::{DecoderTrap, Encoding};
 use log::trace;
@@ -12,7 +13,13 @@ use std::io::{Cursor, Read};
 
 const DLL_BASE_ADDRESS: u32 = 0x10000000;
 
-pub fn read_messages<R>(read: &mut R, skip_data: Option<u64>) -> Result<Vec<(String, u32, String)>>
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Messages {
+    pub language_id: u32,
+    pub entries: Vec<(String, u32, String)>,
+}
+
+pub fn read_messages<R>(read: &mut R, skip_data: Option<u64>) -> Result<Messages>
 where
     R: Read,
 {
@@ -23,7 +30,7 @@ where
 
     let resources = pe.resources()?;
     trace!("Resources: {}", resources.to_string());
-    let entry = find_message_table(resources)
+    let (language_id, entry) = find_message_table(resources)
         .map_err(|_| AssertionError("Expected DLL to contain a message table".to_owned()))?;
 
     let mut messages = read_message_table(entry.bytes()?)?;
@@ -38,7 +45,7 @@ where
     let offset = data_section.VirtualAddress + DLL_BASE_ADDRESS;
     let message_ids = read_zlocids(data, skip_data, offset, offset + data_section.VirtualSize)?;
 
-    let merged = message_ids
+    let mut entries = message_ids
         .into_iter()
         .map(|(entry_id, name)| {
             let message = messages.remove(&entry_id).ok_or_else(|| {
@@ -49,15 +56,28 @@ where
         .collect::<Result<Vec<_>>>()?;
 
     assert_that!("all message table strings used", 0 == messages.len(), 0)?;
-    Ok(merged)
+
+    entries.reverse();
+    Ok(Messages {
+        language_id,
+        entries,
+    })
 }
 
-fn find_message_table(resources: Resources) -> std::result::Result<DataEntry, FindError> {
-    resources
+fn find_message_table(resources: Resources) -> std::result::Result<(u32, DataEntry), FindError> {
+    let dir = resources
         .root()?
-        .get_dir(Name::Id(11))?
-        .first_dir()?
-        .first_data()
+        .get_dir(Name::Id(11))? // RT_MESSAGETABLE
+        .first_dir()?;
+    let entry = dir.entries().next().ok_or(FindError::NotFound)?;
+    // for a message table, the name/ID is the language id
+    let language_id = if let Name::Id(language_id) = entry.name()? {
+        language_id
+    } else {
+        return Err(FindError::NotFound);
+    };
+    let data = entry.entry()?.data().ok_or(FindError::UnDirectory)?;
+    Ok((language_id, data))
 }
 
 fn remove_trailing(buf: &mut Vec<u8>) -> std::result::Result<(), AssertionError> {
