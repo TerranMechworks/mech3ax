@@ -60,6 +60,38 @@ fn find_message_table(resources: Resources) -> std::result::Result<DataEntry, Fi
         .first_data()
 }
 
+fn remove_trailing(buf: &mut Vec<u8>) -> std::result::Result<(), AssertionError> {
+    // remove from back: \0 (0, multiple), \n (10, single), and \r (13, single)
+    loop {
+        match buf.last() {
+            Some(0) => buf.pop(),
+            Some(_) => break,
+            None => return Err(AssertionError(format!("Message table: ran out of chars"))),
+        };
+    }
+    match buf.pop() {
+        Some(10) => {}
+        Some(actual) => {
+            return Err(AssertionError(format!(
+                "Message table: expected trailing \n, was {}",
+                actual
+            )))
+        }
+        None => return Err(AssertionError(format!("Message table: ran out of chars"))),
+    };
+    match buf.pop() {
+        Some(13) => {}
+        Some(actual) => {
+            return Err(AssertionError(format!(
+                "Message table: expected trailing \r, was {}",
+                actual
+            )))
+        }
+        None => return Err(AssertionError(format!("Message table: ran out of chars"))),
+    };
+    Ok(())
+}
+
 fn read_message_table(data: &[u8]) -> Result<HashMap<u32, String>> {
     let mut read = Cursor::new(data);
     let count = read.read_u32()?;
@@ -83,24 +115,9 @@ fn read_message_table(data: &[u8]) -> Result<HashMap<u32, String>> {
             assert_that!("unicode flags", flags == 0x0000, offset_to_entries)?;
             let mut buf = vec![0; length as usize];
             read.read_exact(&mut buf)?;
+            remove_trailing(&mut buf)?;
 
-            // remove trailing \0 (0), \n (10), and \r (13)
-            loop {
-                match buf.pop() {
-                    Some(0) => {}
-                    Some(10) => {}
-                    Some(13) => {}
-                    Some(char) => {
-                        buf.push(char);
-                        break;
-                    }
-                    None => {
-                        break;
-                    }
-                }
-            }
-
-            // all the English, German, and French locale IDs map to the same CP
+            // all the English, German, and French locale IDs map to the same codepage (1251)
             let message_contents = WINDOWS_1252
                 .decode(&buf, DecoderTrap::Strict)
                 .map_err(|err| AssertionError(err.into()))?;
