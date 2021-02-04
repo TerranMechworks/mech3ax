@@ -27,6 +27,7 @@ pub enum Error {
     IO(std::io::Error),
     Assert(assert::AssertionError),
     PeLite(pelite::Error),
+    InvalidImageFormat(String),
 }
 
 impl From<std::io::Error> for Error {

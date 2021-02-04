@@ -1,8 +1,8 @@
-use image::{DynamicImage, GenericImageView, ImageFormat};
-use mech3rs::textures::{write_textures, Manifest};
+use image::{ColorType, DynamicImage, GenericImageView, ImageFormat};
+use mech3rs::textures::{write_textures, Manifest, TextureAlpha};
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{BufReader, BufWriter, Error, ErrorKind, Read};
+use std::io::{BufReader, BufWriter, ErrorKind};
 use std::path::Path;
 
 use crate::errors::Result;
@@ -10,9 +10,7 @@ use crate::JsonOpts;
 
 pub(crate) fn textures(opts: JsonOpts) -> Result<()> {
     let path = Path::new(&opts.input);
-    let mut input = BufReader::new(File::open(path)?);
-    let mut buf = Vec::new();
-    input.read_to_end(&mut buf)?;
+    let buf = std::fs::read(path)?;
     let mut manifest: Manifest = serde_json::from_slice(&buf)?;
     let parent = path.parent().expect("Manifest path must have a parent");
 
@@ -25,19 +23,32 @@ pub(crate) fn textures(opts: JsonOpts) -> Result<()> {
             path.set_extension("png");
             let mut reader = image::io::Reader::new(BufReader::new(File::open(path)?));
             reader.set_format(ImageFormat::Png);
-            let image = reader.decode()?;
+            let mut image = reader.decode()?;
             let (width, height) = image.dimensions();
             info.width = width as u16;
             info.height = height as u16;
+            if info.alpha == TextureAlpha::None && image.color() == ColorType::Rgba8 {
+                println!("WARNING: removing alpha from '{}'", info.name);
+                image = DynamicImage::ImageRgb8(image.to_rgb8());
+            }
             Ok((info.name.clone(), image))
         })
         .collect::<Result<_>>()?;
 
-    let mut output = BufWriter::new(File::create(opts.output)?);
+    let result = {
+        let mut output = BufWriter::new(File::create(&opts.output)?);
 
-    write_textures(&mut output, &manifest, |name| {
-        images
-            .remove(name)
-            .ok_or_else(|| Error::new(ErrorKind::NotFound, name.to_string()).into())
-    })
+        write_textures(&mut output, &manifest, |name| {
+            images
+                .remove(name)
+                .ok_or_else(|| std::io::Error::new(ErrorKind::NotFound, name.to_string()).into())
+        })
+    };
+
+    if result.is_err() {
+        println!("Error occurred, removing invalid output ZBD...");
+        let _ = std::fs::remove_file(&opts.output);
+    }
+
+    result
 }
