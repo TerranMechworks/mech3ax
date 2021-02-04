@@ -31,7 +31,7 @@ Not supported (yet?):
 
 ## Future work and how to get involved
 
-Currently, my focus is improved parsing of GameZ archives, and other remaining unknow fields in structures. There is an [awesome MechWarrior 3 Discord group](https://discord.gg/gnacUBB), and of course the [r/Mechwarrior subreddit](https://www.reddit.com/r/mechwarrior/).
+Currently, my focus is improved parsing save games, and other remaining unknown fields in structures. There is an [awesome MechWarrior 3 Discord group](https://discord.gg/gnacUBB), and of course the [r/Mechwarrior subreddit](https://www.reddit.com/r/mechwarrior/).
 
 ## How to use
 
@@ -121,10 +121,11 @@ where `--rtexture` and `--rmechtex` are optional.
 
 ## Changelog
 
-### [0.4.1] - unreleased
+### [0.4.1] - 2020-02-03
 
 * Allow arbitrary `.data` section/CRT initialization skip for message DLLs to support Recoil's `messages.dll` (hidden in CLI)
 * Messages `--dump-ids`/JSON format changed to include the language ID - breaking change
+* Better texture/image support for modding, e.g. automatically strip alpha channels, errors over panics (`rezbd`)
 
 ### [0.4.0] - 2020-12-23
 
