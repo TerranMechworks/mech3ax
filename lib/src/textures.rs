@@ -413,7 +413,8 @@ where
         TexturePalette::Local(palette) => {
             match image {
                 DynamicImage::ImageRgb8(img) => {
-                    if info.alpha != TextureAlpha::None {
+                    // TODO: alpha is currently skipped for palette images
+                    if info.alpha == TextureAlpha::Full {
                         let msg = format!(
                             "Unexpected image format for \"{}\" (expected alpha)",
                             info.name
@@ -426,7 +427,7 @@ where
                     write.write_all(&palette_data)?;
                 }
                 DynamicImage::ImageRgba8(img) => {
-                    if info.alpha == TextureAlpha::None {
+                    if info.alpha != TextureAlpha::Full {
                         let msg = format!(
                             "Unexpected image format for \"{}\" (expected no alpha)",
                             info.name
@@ -457,7 +458,8 @@ where
             let palette = &global_palettes[*palette_index as usize][0..count];
             match image {
                 DynamicImage::ImageRgb8(img) => {
-                    if info.alpha != TextureAlpha::None {
+                    // TODO: alpha is currently skipped for palette images
+                    if info.alpha == TextureAlpha::Full {
                         let msg = format!(
                             "Unexpected image format for \"{}\" (expected alpha)",
                             info.name
@@ -468,7 +470,7 @@ where
                     write.write_all(&image_data)?;
                 }
                 DynamicImage::ImageRgba8(img) => {
-                    if info.alpha == TextureAlpha::None {
+                    if info.alpha != TextureAlpha::Full {
                         let msg = format!(
                             "Unexpected image format for \"{}\" (expected no alpha)",
                             info.name
