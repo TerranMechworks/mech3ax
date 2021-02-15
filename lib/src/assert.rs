@@ -1,4 +1,5 @@
 use crate::string::ConversionError;
+use num_traits::AsPrimitive;
 use std::cmp::{PartialEq, PartialOrd};
 use std::fmt::{self, Debug, Display};
 
@@ -171,17 +172,22 @@ where
 pub fn assert_utf8<S, U, F, T>(name: S, pos: U, func: F) -> Result<T>
 where
     S: Display,
-    U: Display,
+    U: AsPrimitive<usize>,
     F: FnOnce() -> ::std::result::Result<T, ConversionError>,
 {
     func().map_err(|err| {
+        let pos = pos.as_();
         let msg = match err {
             ConversionError::PaddingError(padding) => format!(
                 "Expected '{}' to padded with {} (at {})",
                 name, padding, pos
             ),
-            ConversionError::Utf8(_) => {
-                format!("Expected '{}' to be a valid string (at {})", name, pos)
+            ConversionError::NonAscii(index) => {
+                format!(
+                    "Expected '{}' to be a valid string (at {})",
+                    name,
+                    pos + index
+                )
             }
             ConversionError::Unterminated => {
                 format!("Expected '{}' to be zero-terminated (at {})", name, pos)

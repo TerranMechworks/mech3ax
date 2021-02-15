@@ -44,7 +44,9 @@ where
     R: Read,
 {
     let value = read_value(read);
-    read.assert_end()?;
+    if value.is_ok() {
+        read.assert_end()?;
+    }
     value
 }
 

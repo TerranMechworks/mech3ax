@@ -90,7 +90,9 @@ impl<R: Read> CountingReader<R> {
         let mut buf = [0; 1];
         match self.inner.read(&mut buf)? {
             0 => Ok(()),
-            _ => Err(AssertionError("Expected all data to be read".to_owned()).into()),
+            _ => Err(
+                AssertionError(format!("Expected all data to be read (at {})", self.offset)).into(),
+            ),
         }
     }
 
@@ -98,7 +100,7 @@ impl<R: Read> CountingReader<R> {
         let count = self.read_u32()? as usize;
         let mut buf = vec![0u8; count];
         self.read_exact(&mut buf)?;
-        let value = assert_utf8("value", self.offset, || str_from_c_sized(&buf))?;
+        let value = assert_utf8("value", self.prev, || str_from_c_sized(&buf))?;
         Ok(value)
     }
 }
