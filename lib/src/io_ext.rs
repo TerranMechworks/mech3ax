@@ -182,6 +182,11 @@ where
     }
 
     fn write_string(&mut self, value: &str) -> crate::Result<()> {
+        if !value.is_ascii() {
+            return Err(crate::Error::Assert(AssertionError(
+                "Expected ASCII string".to_owned(),
+            )));
+        }
         let buf = value.as_bytes();
         let count = buf.len() as u32;
         self.write_u32(count)?;
