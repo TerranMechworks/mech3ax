@@ -1,3 +1,5 @@
+use crate::{JsonOpts, ZipOpts, ZipOptsPm};
+use anyhow::Result;
 use mech3rs::anim::{write_anim, AnimDef, AnimMetadata};
 use mech3rs::archive::{write_archive, Entry, Mode, Version};
 use mech3rs::gamez::{write_gamez, GameZ, Material as GameZMat, Mesh, Metadata, Node};
@@ -11,9 +13,6 @@ use mech3rs::textures::{write_textures, Manifest};
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Cursor, Read, Seek};
 use zip::read::ZipArchive;
-
-use crate::errors::Result;
-use crate::{JsonOpts, ZipOpts, ZipOptsPm};
 
 pub(crate) fn license() -> Result<()> {
     print!(

@@ -1,12 +1,11 @@
+use crate::JsonOpts;
+use anyhow::Result;
 use image::{ColorType, DynamicImage, GenericImageView, ImageFormat};
 use mech3rs::textures::{write_textures, Manifest, TextureAlpha};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, ErrorKind};
 use std::path::Path;
-
-use crate::errors::Result;
-use crate::JsonOpts;
 
 pub(crate) fn textures(opts: JsonOpts) -> Result<()> {
     let path = Path::new(&opts.input);

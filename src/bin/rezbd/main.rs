@@ -1,9 +1,8 @@
 mod commands;
-mod errors;
 mod modding;
 
+use anyhow::Result;
 use clap::Clap;
-use errors::Result;
 use simple_logger::SimpleLogger;
 
 const VERSION: &str = concat!(

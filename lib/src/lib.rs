@@ -22,30 +22,27 @@ mod string;
 pub mod textures;
 mod types;
 
-#[derive(Debug)]
+use thiserror::Error;
+
+#[derive(Debug, Error)]
 pub enum Error {
-    IO(std::io::Error),
-    Assert(assert::AssertionError),
-    PeLite(pelite::Error),
-    InvalidImageFormat(String),
-}
-
-impl From<std::io::Error> for Error {
-    fn from(err: std::io::Error) -> Self {
-        Self::IO(err)
-    }
-}
-
-impl From<assert::AssertionError> for Error {
-    fn from(err: assert::AssertionError) -> Self {
-        Self::Assert(err)
-    }
-}
-
-impl From<pelite::Error> for Error {
-    fn from(err: pelite::Error) -> Self {
-        Self::PeLite(err)
-    }
+    #[error(transparent)]
+    IO(#[from] std::io::Error),
+    #[error(transparent)]
+    Assert(#[from] assert::AssertionError),
+    #[error(transparent)]
+    PeLite(#[from] pelite::Error),
+    #[error("Unexpected alpha channel for \"{name}\" (expected {expected} alpha, found {actual})")]
+    InvalidAlphaChannel {
+        name: String,
+        expected: String,
+        actual: String,
+    },
+    #[error("Unexpected image format for \"{name}\" ({color:?} is not supported)")]
+    InvalidImageFormat {
+        name: String,
+        color: ::image::ColorType,
+    },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

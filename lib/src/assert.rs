@@ -2,11 +2,19 @@ use crate::string::ConversionError;
 use num_traits::AsPrimitive;
 use std::cmp::{PartialEq, PartialOrd};
 use std::fmt::{self, Debug, Display};
+use thiserror::Error;
 
+#[derive(Error)]
 pub struct AssertionError(pub String);
 
 impl Debug for AssertionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl Display for AssertionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }

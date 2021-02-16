@@ -26,6 +26,7 @@ zip = { version = "0.5.10", default-features = false, features = ["deflate"] }
 image = {version = "0.23.13", default-features = false, features = ["png"] }
 log = "0.4"
 simple_logger = "1.11.0"
+anyhow = "1.0"
 
 [build-dependencies]
 vergen = "3.2.0"

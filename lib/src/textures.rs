@@ -254,9 +254,9 @@ pub fn read_textures<R, F, E>(
 where
     R: Read,
     F: FnMut(&str, DynamicImage) -> std::result::Result<(), E>,
-    E: From<std::io::Error> + From<Error>,
+    E: From<Error>,
 {
-    let header: Header = read.read_struct()?;
+    let header: Header = read.read_struct().map_err(|e| Error::IO(e))?;
     assert_upcast(assert_that!("field 00", header.zero00 == 0, read.prev + 0))?;
     assert_upcast(assert_that!(
         "has entries",
@@ -293,7 +293,8 @@ where
     let global_palettes = (0..header.global_palette_count)
         .map(|_| {
             let mut palette_data = vec![0u8; 512];
-            read.read_exact(&mut palette_data)?;
+            read.read_exact(&mut palette_data)
+                .map_err(|e| Error::IO(e))?;
             Ok(rgb565to888(&palette_data))
         })
         .collect::<std::result::Result<Vec<_>, E>>()?;
@@ -397,6 +398,19 @@ fn convert_info_to_c(info: &TextureInfo) -> Info {
     }
 }
 
+fn invalid_alpha(name: &str, expected: &str, actual: &TextureAlpha) -> Error {
+    let actual = match actual {
+        TextureAlpha::None => "no",
+        TextureAlpha::Full => "full",
+        TextureAlpha::Simple => "simple",
+    };
+    Error::InvalidAlphaChannel {
+        name: name.to_owned(),
+        expected: expected.to_owned(),
+        actual: actual.to_owned(),
+    }
+}
+
 fn write_texture<W>(
     write: &mut W,
     info: &TextureInfo,
@@ -415,11 +429,7 @@ where
                 DynamicImage::ImageRgb8(img) => {
                     // TODO: alpha is currently skipped for palette images
                     if info.alpha == TextureAlpha::Full {
-                        let msg = format!(
-                            "Unexpected image format for \"{}\" (expected alpha)",
-                            info.name
-                        );
-                        return Err(Error::InvalidImageFormat(msg));
+                        return Err(invalid_alpha(&info.name, "no or simple", &info.alpha));
                     }
                     let image_data = rgb888topal8(&img.into_raw(), &palette);
                     write.write_all(&image_data)?;
@@ -428,11 +438,7 @@ where
                 }
                 DynamicImage::ImageRgba8(img) => {
                     if info.alpha != TextureAlpha::Full {
-                        let msg = format!(
-                            "Unexpected image format for \"{}\" (expected no alpha)",
-                            info.name
-                        );
-                        return Err(Error::InvalidImageFormat(msg));
+                        return Err(invalid_alpha(&info.name, "full", &info.alpha));
                     }
                     let (image_data, alpha_data) = rgb888atopal8(&img.into_raw(), &palette);
                     write.write_all(&image_data)?;
@@ -444,12 +450,10 @@ where
                     write.write_all(&palette_data)?;
                 }
                 _ => {
-                    let msg = format!(
-                        "Unexpected image format for \"{}\" ({:#?} is not supported)",
-                        info.name,
-                        image.color()
-                    );
-                    return Err(Error::InvalidImageFormat(msg));
+                    return Err(Error::InvalidImageFormat {
+                        name: info.name.to_owned(),
+                        color: image.color(),
+                    })
                 }
             };
         }
@@ -460,34 +464,24 @@ where
                 DynamicImage::ImageRgb8(img) => {
                     // TODO: alpha is currently skipped for palette images
                     if info.alpha == TextureAlpha::Full {
-                        let msg = format!(
-                            "Unexpected image format for \"{}\" (expected alpha)",
-                            info.name
-                        );
-                        return Err(Error::InvalidImageFormat(msg));
+                        return Err(invalid_alpha(&info.name, "no or simple", &info.alpha));
                     }
                     let image_data = rgb888topal8(&img.into_raw(), &palette);
                     write.write_all(&image_data)?;
                 }
                 DynamicImage::ImageRgba8(img) => {
                     if info.alpha != TextureAlpha::Full {
-                        let msg = format!(
-                            "Unexpected image format for \"{}\" (expected no alpha)",
-                            info.name
-                        );
-                        return Err(Error::InvalidImageFormat(msg));
+                        return Err(invalid_alpha(&info.name, "full", &info.alpha));
                     }
                     let (image_data, alpha_data) = rgb888atopal8(&img.into_raw(), &palette);
                     write.write_all(&image_data)?;
                     write.write_all(&alpha_data)?;
                 }
                 _ => {
-                    let msg = format!(
-                        "Unexpected image format for \"{}\" ({:#?} is not supported)",
-                        info.name,
-                        image.color()
-                    );
-                    return Err(Error::InvalidImageFormat(msg));
+                    return Err(Error::InvalidImageFormat {
+                        name: info.name.to_owned(),
+                        color: image.color(),
+                    })
                 }
             };
         }
@@ -495,22 +489,14 @@ where
             match image {
                 DynamicImage::ImageRgb8(img) => {
                     if info.alpha != TextureAlpha::None {
-                        let msg = format!(
-                            "Unexpected image format for \"{}\" (expected alpha)",
-                            info.name
-                        );
-                        return Err(Error::InvalidImageFormat(msg));
+                        return Err(invalid_alpha(&info.name, "no", &info.alpha));
                     }
                     let image_data = rgb888to565(&img.into_raw());
                     write.write_all(&image_data)?;
                 }
                 DynamicImage::ImageRgba8(img) => {
                     if info.alpha == TextureAlpha::None {
-                        let msg = format!(
-                            "Unexpected image format for \"{}\" (expected no alpha)",
-                            info.name
-                        );
-                        return Err(Error::InvalidImageFormat(msg));
+                        return Err(invalid_alpha(&info.name, "simple or full", &info.alpha));
                     }
                     let (image_data, alpha_data) = rgb888ato565(&img.into_raw());
                     write.write_all(&image_data)?;
@@ -520,12 +506,10 @@ where
                     }
                 }
                 _ => {
-                    let msg = format!(
-                        "Unexpected image format for \"{}\" ({:#?} is not supported)",
-                        info.name,
-                        image.color()
-                    );
-                    return Err(Error::InvalidImageFormat(msg));
+                    return Err(Error::InvalidImageFormat {
+                        name: info.name.to_owned(),
+                        color: image.color(),
+                    })
                 }
             };
         }

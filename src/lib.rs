@@ -1,9 +1,8 @@
 #![warn(clippy::all, clippy::cargo)]
 #![allow(clippy::identity_op, clippy::cargo_common_metadata)]
-mod errors;
 mod panic;
 
-use errors::Result;
+use anyhow::Result;
 use image::ImageOutputFormat;
 use mech3rs::anim::read_anim;
 use mech3rs::archive::{read_archive, Version};

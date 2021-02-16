@@ -1,3 +1,5 @@
+use crate::{JsonOpts, MsgOpts, ZipOpts, ZipOptsPm};
+use anyhow::Result;
 use image::ImageOutputFormat;
 use mech3rs::anim::read_anim;
 use mech3rs::archive::{read_archive, Mode, Version};
@@ -13,9 +15,6 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Cursor, Write};
 use zip::write::{FileOptions, ZipWriter};
-
-use crate::errors::Result;
-use crate::{JsonOpts, MsgOpts, ZipOpts, ZipOptsPm};
 
 pub(crate) fn license() -> Result<()> {
     print!(
@@ -143,14 +142,14 @@ pub(crate) fn textures(opts: ZipOpts) -> Result<()> {
     let mut zip = ZipWriter::new(output);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
 
-    let manifest = read_textures(&mut input, |name, image| {
+    let manifest = read_textures::<_, _, anyhow::Error>(&mut input, |name, image| {
         let name = format!("{}.png", name);
         let mut data = Vec::new();
         image.write_to(&mut data, ImageOutputFormat::Png)?;
 
         zip.start_file(name, options)?;
         zip.write_all(&data)?;
-        Result::Ok(())
+        Ok(())
     })?;
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
     let data = serde_json::to_vec_pretty(&manifest)?;
