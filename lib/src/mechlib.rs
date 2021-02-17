@@ -12,9 +12,9 @@ use std::io::{Read, Write};
 
 pub type Material = crate::materials::Material;
 
-const VERSION_MW: u32 = 27;
-const VERSION_PM: u32 = 41;
-const FORMAT: u32 = 1;
+pub const VERSION_MW: u32 = 27;
+pub const VERSION_PM: u32 = 41;
+pub const FORMAT: u32 = 1;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Node(BaseNode<Node>);

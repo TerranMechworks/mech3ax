@@ -38,7 +38,7 @@ static_assert_size!(HeaderC, 36);
 const SIGNATURE: u32 = 0x02971222;
 const VERSION: u32 = 27;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct GameZ {
     pub metadata: Metadata,
     pub textures: Vec<String>,

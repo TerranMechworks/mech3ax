@@ -49,9 +49,11 @@ test = false
 
 [profile.dev]
 opt-level = 3
+panic = "unwind"
 
 [profile.release]
 opt-level = 3
+panic = "unwind"
 lto = true
 # the Windows build breaks when this is enabled
 # codegen-units = 1
