@@ -3,6 +3,7 @@ mod modding;
 
 use anyhow::Result;
 use clap::Clap;
+use mech3rs::archive::{Mode, Version};
 use simple_logger::SimpleLogger;
 
 const VERSION: &str = concat!(
@@ -25,20 +26,22 @@ struct ZipOpts {
     input: String,
     #[clap(about = "The destination ZBD path (will be overwritten)")]
     output: String,
-}
-
-#[derive(Clap)]
-struct ZipOptsPm {
-    #[clap(about = "The source ZIP path")]
-    input: String,
-    #[clap(about = "The destination ZBD path (will be overwritten)")]
-    output: String,
     #[clap(long = "pm", about = "Pirate's Moon")]
     is_pm: bool,
 }
 
+impl ZipOpts {
+    fn version(&self, mode: Mode) -> Version {
+        if self.is_pm {
+            Version::Two(mode)
+        } else {
+            Version::One
+        }
+    }
+}
+
 #[derive(Clap)]
-struct JsonOpts {
+struct InterpOpts {
     #[clap(about = "The source JSON path")]
     input: String,
     #[clap(about = "The destination ZBD path (will be overwritten)")]
@@ -46,7 +49,7 @@ struct JsonOpts {
 }
 
 #[derive(Clap)]
-struct ModOpts {
+struct TextureOpts {
     #[clap(about = "The source ZIP path")]
     input: String,
     #[clap(about = "The destination ZBD path (will be overwritten)")]
@@ -63,19 +66,19 @@ enum SubCommand {
     #[clap(about = "Prints license information")]
     License,
     #[clap(about = "Reconstruct 'sounds*.zbd' archives from ZIP")]
-    Sounds(ZipOptsPm),
+    Sounds(ZipOpts),
     #[clap(about = "Reconstruct 'interp.zbd' files from JSON")]
-    Interp(JsonOpts),
+    Interp(InterpOpts),
     #[clap(about = "Reconstruct 'reader*.zbd' archives from ZIP")]
-    Reader(ZipOptsPm),
+    Reader(ZipOpts),
     #[clap(
         about = "Reconstruct 'rimage.zbd', 'rmechtex*.zbd', 'rtexture*.zbd', 'texture*.zbd' archives from ZIP"
     )]
-    Textures(ModOpts),
+    Textures(TextureOpts),
     #[clap(about = "Reconstruct 'motion.zbd' archives from ZIP")]
-    Motion(ZipOptsPm),
+    Motion(ZipOpts),
     #[clap(about = "Reconstruct 'mechlib.zbd' archives from ZIP")]
-    Mechlib(ZipOptsPm),
+    Mechlib(ZipOpts),
     #[clap(about = "Reconstruct 'gamez.zbd' archives from ZIP")]
     Gamez(ZipOpts),
     #[clap(about = "Reconstruct 'anim.zbd' archives from ZIP")]
@@ -89,16 +92,16 @@ fn main() -> Result<()> {
         SubCommand::Sounds(opts) => commands::sounds(opts),
         SubCommand::Interp(opts) => commands::interp(opts),
         SubCommand::Reader(opts) => commands::reader(opts),
-        SubCommand::Textures(ModOpts {
+        SubCommand::Textures(TextureOpts {
             input,
             output,
             modding: false,
-        }) => commands::textures(ZipOpts { input, output }),
-        SubCommand::Textures(ModOpts {
+        }) => commands::textures(input, output),
+        SubCommand::Textures(TextureOpts {
             input,
             output,
             modding: true,
-        }) => modding::textures(JsonOpts { input, output }),
+        }) => modding::textures(input, output),
         SubCommand::Motion(opts) => commands::motion(opts),
         SubCommand::Mechlib(opts) => commands::mechlib(opts),
         SubCommand::Gamez(opts) => commands::gamez(opts),

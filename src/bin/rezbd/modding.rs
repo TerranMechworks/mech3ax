@@ -1,4 +1,3 @@
-use crate::JsonOpts;
 use anyhow::Result;
 use image::{ColorType, DynamicImage, GenericImageView, ImageFormat};
 use mech3rs::textures::{write_textures, Manifest, TextureAlpha};
@@ -7,8 +6,8 @@ use std::fs::File;
 use std::io::{BufReader, BufWriter, ErrorKind};
 use std::path::Path;
 
-pub(crate) fn textures(opts: JsonOpts) -> Result<()> {
-    let path = Path::new(&opts.input);
+pub(crate) fn textures(input: String, output: String) -> Result<()> {
+    let path = Path::new(&input);
     let buf = std::fs::read(path)?;
     let mut manifest: Manifest = serde_json::from_slice(&buf)?;
     let parent = path.parent().expect("Manifest path must have a parent");
@@ -35,7 +34,7 @@ pub(crate) fn textures(opts: JsonOpts) -> Result<()> {
         .collect::<Result<_>>()?;
 
     let result = {
-        let mut output = BufWriter::new(File::create(&opts.output)?);
+        let mut output = BufWriter::new(File::create(&output)?);
 
         write_textures(&mut output, &manifest, |name| {
             images
@@ -46,7 +45,7 @@ pub(crate) fn textures(opts: JsonOpts) -> Result<()> {
 
     if result.is_err() {
         println!("Error occurred, removing invalid output ZBD...");
-        let _ = std::fs::remove_file(&opts.output);
+        let _ = std::fs::remove_file(&output);
     }
 
     result
