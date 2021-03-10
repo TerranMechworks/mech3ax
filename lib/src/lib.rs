@@ -1,7 +1,7 @@
 #![allow(clippy::identity_op, clippy::cargo_common_metadata)]
 pub mod anim;
 pub mod archive;
-mod assert;
+pub mod assert;
 mod crc32;
 pub mod gamez;
 mod image;

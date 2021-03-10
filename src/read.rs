@@ -1,5 +1,6 @@
 use crate::error::err_to_c;
 use crate::filename_to_string;
+use crate::wave::WaveFile;
 use anyhow::{bail, Context, Result};
 use image::ImageOutputFormat;
 use mech3rs::archive::{Mode, Version};
@@ -16,6 +17,8 @@ fn buf_reader(ptr: *const c_char) -> Result<BufReader<File>> {
 
 type DataCb = extern "stdcall" fn(*const u8, usize);
 type NameDataCb = extern "stdcall" fn(*const u8, usize, *const u8, usize) -> i32;
+type WaveArchiveCb = extern "stdcall" fn(*const u8, usize, i32, i32, *const f32, usize) -> i32;
+type WaveFileCb = extern "stdcall" fn(i32, i32, *const f32, usize) -> i32;
 
 #[no_mangle]
 pub extern "stdcall" fn read_interp(filename: *const c_char, _is_pm: i32, callback: DataCb) -> i32 {
@@ -269,6 +272,64 @@ pub extern "stdcall" fn read_anim(
         let ret = callback(name.as_ptr(), name.len(), data.as_ptr(), data.len());
         if ret != 0 {
             bail!("callback returned {} on \"{}\"", ret, name);
+        }
+        Ok(())
+    })
+}
+
+#[no_mangle]
+pub extern "stdcall" fn read_sounds_as_wav(
+    filename: *const c_char,
+    is_pm: i32,
+    callback: WaveArchiveCb,
+) -> i32 {
+    err_to_c(|| {
+        let version = if is_pm == 0 {
+            Version::One
+        } else {
+            Version::Two(Mode::Sounds)
+        };
+        let input = buf_reader(filename)?;
+        let mut read = CountingReader::new(input);
+        let _entries = mech3rs::archive::read_archive(
+            &mut read,
+            |name, data, offset| {
+                let mut read = CountingReader::new(Cursor::new(data));
+                read.offset = offset;
+                let wave = WaveFile::new(&mut read)?;
+                let ret = callback(
+                    name.as_ptr(),
+                    name.len(),
+                    wave.channels,
+                    wave.frequency,
+                    wave.samples.as_ptr(),
+                    wave.samples.len(),
+                );
+                if ret != 0 {
+                    bail!("callback returned {} on \"{}\"", ret, name);
+                }
+                Ok(())
+            },
+            version,
+        )?;
+        Ok(())
+    })
+}
+
+#[no_mangle]
+pub extern "stdcall" fn read_sound_as_wav(filename: *const c_char, callback: WaveFileCb) -> i32 {
+    err_to_c(|| {
+        let input = buf_reader(filename)?;
+        let mut read = CountingReader::new(input);
+        let wave = WaveFile::new(&mut read)?;
+        let ret = callback(
+            wave.channels,
+            wave.frequency,
+            wave.samples.as_ptr(),
+            wave.samples.len(),
+        );
+        if ret != 0 {
+            bail!("callback returned {}", ret);
         }
         Ok(())
     })
