@@ -86,7 +86,11 @@ fn remove_trailing(buf: &mut Vec<u8>) -> std::result::Result<(), AssertionError>
         match buf.last() {
             Some(0) => buf.pop(),
             Some(_) => break,
-            None => return Err(AssertionError(format!("Message table: ran out of chars"))),
+            None => {
+                return Err(AssertionError(
+                    "Message table: ran out of chars".to_string(),
+                ))
+            }
         };
     }
     match buf.pop() {
@@ -97,7 +101,11 @@ fn remove_trailing(buf: &mut Vec<u8>) -> std::result::Result<(), AssertionError>
                 actual
             )))
         }
-        None => return Err(AssertionError(format!("Message table: ran out of chars"))),
+        None => {
+            return Err(AssertionError(
+                "Message table: ran out of chars".to_string(),
+            ))
+        }
     };
     match buf.pop() {
         Some(13) => {}
@@ -107,7 +115,11 @@ fn remove_trailing(buf: &mut Vec<u8>) -> std::result::Result<(), AssertionError>
                 actual
             )))
         }
-        None => return Err(AssertionError(format!("Message table: ran out of chars"))),
+        None => {
+            return Err(AssertionError(
+                "Message table: ran out of chars".to_string(),
+            ))
+        }
     };
     Ok(())
 }

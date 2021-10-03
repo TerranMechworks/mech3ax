@@ -148,14 +148,14 @@ where
     let node: NodeC = read.read_struct()?;
     let (node_type, node) = assert_node(node, read.prev)?;
     match node_type {
-        NodeType::CAMERA => camera::assert_variants(node, read.prev),
-        NodeType::DISPLAY => display::assert_variants(node, read.prev),
-        NodeType::EMPTY => empty::assert_variants(node, read.prev),
-        NodeType::LIGHT => light::assert_variants(node, read.prev),
-        NodeType::LOD => lod::assert_variants(node, read.prev),
-        NodeType::OBJECT3D => object3d::assert_variants(node, read.prev, true),
-        NodeType::WINDOW => window::assert_variants(node, read.prev),
-        NodeType::WORLD => world::assert_variants(node, read.prev),
+        NodeType::Camera => camera::assert_variants(node, read.prev),
+        NodeType::Display => display::assert_variants(node, read.prev),
+        NodeType::Empty => empty::assert_variants(node, read.prev),
+        NodeType::Light => light::assert_variants(node, read.prev),
+        NodeType::LoD => lod::assert_variants(node, read.prev),
+        NodeType::Object3d => object3d::assert_variants(node, read.prev, true),
+        NodeType::Window => window::assert_variants(node, read.prev),
+        NodeType::World => world::assert_variants(node, read.prev),
     }
 }
 
@@ -170,14 +170,14 @@ where
     } else {
         let (node_type, node) = assert_node(node, read.prev)?;
         let variant = match node_type {
-            NodeType::CAMERA => camera::assert_variants(node, read.prev)?,
-            NodeType::DISPLAY => display::assert_variants(node, read.prev)?,
-            NodeType::EMPTY => empty::assert_variants(node, read.prev)?,
-            NodeType::LIGHT => light::assert_variants(node, read.prev)?,
-            NodeType::LOD => lod::assert_variants(node, read.prev)?,
-            NodeType::OBJECT3D => object3d::assert_variants(node, read.prev, false)?,
-            NodeType::WINDOW => window::assert_variants(node, read.prev)?,
-            NodeType::WORLD => world::assert_variants(node, read.prev)?,
+            NodeType::Camera => camera::assert_variants(node, read.prev)?,
+            NodeType::Display => display::assert_variants(node, read.prev)?,
+            NodeType::Empty => empty::assert_variants(node, read.prev)?,
+            NodeType::Light => light::assert_variants(node, read.prev)?,
+            NodeType::LoD => lod::assert_variants(node, read.prev)?,
+            NodeType::Object3d => object3d::assert_variants(node, read.prev, false)?,
+            NodeType::Window => window::assert_variants(node, read.prev)?,
+            NodeType::World => world::assert_variants(node, read.prev)?,
         };
         Ok(Some(variant))
     }
@@ -254,35 +254,35 @@ where
     match node {
         Node::Camera(camera) => {
             let variant = camera::make_variants(camera);
-            write_variant(write, NodeType::CAMERA, variant)
+            write_variant(write, NodeType::Camera, variant)
         }
         Node::Display(display) => {
             let variant = display::make_variants(display);
-            write_variant(write, NodeType::DISPLAY, variant)
+            write_variant(write, NodeType::Display, variant)
         }
         Node::Empty(empty) => {
             let variant = empty::make_variants(empty);
-            write_variant(write, NodeType::EMPTY, variant)
+            write_variant(write, NodeType::Empty, variant)
         }
         Node::Light(light) => {
             let variant = light::make_variants(light);
-            write_variant(write, NodeType::LIGHT, variant)
+            write_variant(write, NodeType::Light, variant)
         }
         Node::Lod(lod) => {
             let variant = lod::make_variants(lod);
-            write_variant(write, NodeType::LOD, variant)
+            write_variant(write, NodeType::LoD, variant)
         }
         Node::Object3d(object3d) => {
             let variant = object3d::make_variants(object3d);
-            write_variant(write, NodeType::OBJECT3D, variant)
+            write_variant(write, NodeType::Object3d, variant)
         }
         Node::Window(window) => {
             let variant = window::make_variants(window);
-            write_variant(write, NodeType::WINDOW, variant)
+            write_variant(write, NodeType::Window, variant)
         }
         Node::World(world) => {
             let variant = world::make_variants(world);
-            write_variant(write, NodeType::WORLD, variant)
+            write_variant(write, NodeType::World, variant)
         }
     }
 }

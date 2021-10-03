@@ -2,8 +2,8 @@ mod commands;
 
 use anyhow::Result;
 use clap::Clap;
+use env_logger::Env;
 use mech3rs::archive::{Mode, Version};
-use simple_logger::SimpleLogger;
 
 const VERSION: &str = concat!(
     env!("VERGEN_COMMIT_DATE"),
@@ -94,7 +94,8 @@ enum SubCommand {
 }
 
 fn main() -> Result<()> {
-    SimpleLogger::from_env().init().unwrap();
+    let env = Env::default().default_filter_or("warn");
+    env_logger::Builder::from_env(env).init();
     let opts: Opts = Opts::parse();
     match opts.subcmd {
         SubCommand::Sounds(opts) => commands::sounds(opts),

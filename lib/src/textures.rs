@@ -256,7 +256,7 @@ where
     F: FnMut(&str, DynamicImage) -> std::result::Result<(), E>,
     E: From<Error>,
 {
-    let header: Header = read.read_struct().map_err(|e| Error::IO(e))?;
+    let header: Header = read.read_struct().map_err(Error::IO)?;
     assert_upcast(assert_that!("field 00", header.zero00 == 0, read.prev + 0))?;
     assert_upcast(assert_that!(
         "has entries",
@@ -293,8 +293,7 @@ where
     let global_palettes = (0..header.global_palette_count)
         .map(|_| {
             let mut palette_data = vec![0u8; 512];
-            read.read_exact(&mut palette_data)
-                .map_err(|e| Error::IO(e))?;
+            read.read_exact(&mut palette_data).map_err(Error::IO)?;
             Ok(rgb565to888(&palette_data))
         })
         .collect::<std::result::Result<Vec<_>, E>>()?;
@@ -420,7 +419,7 @@ fn write_texture<W>(
 where
     W: Write,
 {
-    let tex_info = convert_info_to_c(&info);
+    let tex_info = convert_info_to_c(info);
     write.write_struct(&tex_info)?;
 
     match &info.palette {
@@ -431,7 +430,7 @@ where
                     if info.alpha == TextureAlpha::Full {
                         return Err(invalid_alpha(&info.name, "no or simple", &info.alpha));
                     }
-                    let image_data = rgb888topal8(&img.into_raw(), &palette);
+                    let image_data = rgb888topal8(&img.into_raw(), palette);
                     write.write_all(&image_data)?;
                     let palette_data = rgb888to565(palette);
                     write.write_all(&palette_data)?;
@@ -440,7 +439,7 @@ where
                     if info.alpha != TextureAlpha::Full {
                         return Err(invalid_alpha(&info.name, "full", &info.alpha));
                     }
-                    let (image_data, alpha_data) = rgb888atopal8(&img.into_raw(), &palette);
+                    let (image_data, alpha_data) = rgb888atopal8(&img.into_raw(), palette);
                     write.write_all(&image_data)?;
                     // throw away the simple alpha
                     if info.alpha == TextureAlpha::Full {
@@ -466,14 +465,14 @@ where
                     if info.alpha == TextureAlpha::Full {
                         return Err(invalid_alpha(&info.name, "no or simple", &info.alpha));
                     }
-                    let image_data = rgb888topal8(&img.into_raw(), &palette);
+                    let image_data = rgb888topal8(&img.into_raw(), palette);
                     write.write_all(&image_data)?;
                 }
                 DynamicImage::ImageRgba8(img) => {
                     if info.alpha != TextureAlpha::Full {
                         return Err(invalid_alpha(&info.name, "full", &info.alpha));
                     }
-                    let (image_data, alpha_data) = rgb888atopal8(&img.into_raw(), &palette);
+                    let (image_data, alpha_data) = rgb888atopal8(&img.into_raw(), palette);
                     write.write_all(&image_data)?;
                     write.write_all(&alpha_data)?;
                 }
@@ -555,7 +554,7 @@ where
             palette_index,
         };
         write.write_struct(&entry)?;
-        offset += calc_length(&info);
+        offset += calc_length(info);
     }
 
     for palette in &manifest.global_palettes {

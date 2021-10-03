@@ -12,17 +12,17 @@ pub type Area = (i32, i32, i32, i32);
 
 pub const BLOCK_EMPTY: Block = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, FromPrimitive, Copy, Clone)]
+#[derive(Debug, PartialEq, FromPrimitive, Copy, Clone)]
 #[repr(u32)]
 pub enum NodeType {
-    EMPTY = 0,
-    CAMERA = 1,
-    WORLD = 2,
-    WINDOW = 3,
-    DISPLAY = 4,
-    OBJECT3D = 5,
-    LOD = 6,
-    LIGHT = 9,
+    Empty = 0,
+    Camera = 1,
+    World = 2,
+    Window = 3,
+    Display = 4,
+    Object3d = 5,
+    LoD = 6,
+    Light = 9,
 }
 
 pub struct NodeVariants {

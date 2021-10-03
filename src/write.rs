@@ -29,7 +29,7 @@ pub extern "C" fn write_interp(
         }
         let buf = unsafe { std::slice::from_raw_parts(data, len) };
         let scripts: Vec<mech3rs::interp::Script> =
-            serde_json::from_slice(&buf).context("Failed to parse interpreter data")?;
+            serde_json::from_slice(buf).context("Failed to parse interpreter data")?;
 
         let mut write = buf_writer(filename)?;
         mech3rs::interp::write_interp(&mut write, &scripts)
@@ -258,7 +258,7 @@ pub extern "C" fn write_gamez(
         }
         let buf = unsafe { std::slice::from_raw_parts(data, len) };
         let gamez: mech3rs::gamez::GameZ =
-            serde_json::from_slice(&buf).context("Failed to parse GameZ data")?;
+            serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
         let mut write = buf_writer(filename)?;
         mech3rs::gamez::write_gamez(&mut write, &gamez).context("Failed to write GameZ data")
     })

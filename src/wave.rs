@@ -124,8 +124,8 @@ fn read_data_chunk<R: Read>(
     // Unity seems to want samples, i.e. channels are left interleaved.
     let sample_count = (chunk_size / bytes_per_sample) as _;
     match format.bits_per_sample {
-        8 => return read_samples_8bit(read, sample_count, format),
-        16 => return read_samples_16bit(read, sample_count, format),
+        8 => read_samples_8bit(read, sample_count, format),
+        16 => read_samples_16bit(read, sample_count, format),
         bps => bail!("Unsupported bit depth {}", bps),
     }
 }

@@ -57,7 +57,7 @@ fn crc32() {
             if (crc & 0x80000000) == 0x80000000 {
                 crc = (crc << 1) ^ 0x04C11DB7;
             } else {
-                crc = crc << 1;
+                crc <<= 1;
             }
         }
         writeln!(&mut file, "    0x{:08X},", crc).unwrap();

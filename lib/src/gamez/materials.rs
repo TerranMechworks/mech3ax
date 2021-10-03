@@ -216,7 +216,7 @@ where
     write_materials_zero(write, count, array_size)?;
 
     for material in materials {
-        write_cycle(write, textures, &material)?;
+        write_cycle(write, textures, material)?;
     }
     Ok(())
 }

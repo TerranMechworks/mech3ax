@@ -29,7 +29,7 @@ const ALWAYS_PRESENT: NodeBitFlags =
     NodeBitFlags::from_bits_truncate(NodeBitFlags::BASE.bits() | NodeBitFlags::UNK25.bits());
 const NEVER_PRESENT: NodeBitFlags = NodeBitFlags::UNK28;
 
-#[allow(clippy::collapsible_if)]
+#[allow(clippy::collapsible_else_if)]
 pub fn assert_variants(
     node: NodeVariants,
     offset: u32,

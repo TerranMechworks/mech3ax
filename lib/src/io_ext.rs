@@ -190,7 +190,7 @@ where
         let buf = value.as_bytes();
         let count = buf.len() as u32;
         self.write_u32(count)?;
-        self.write_all(&buf)?;
+        self.write_all(buf)?;
         Ok(())
     }
 

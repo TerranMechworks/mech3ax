@@ -73,7 +73,7 @@ where
         }
         Value::String(string) => {
             write.write_u32(3)?;
-            write.write_string(&string)?;
+            write.write_string(string)?;
         }
         Value::Null => {
             write.write_u32(4)?;
