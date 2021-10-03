@@ -12,27 +12,44 @@ jobs:
     name: create-release
     runs-on: ubuntu-latest
     steps:
+      - name: Get the branch and tag
+        id: info
+        shell: bash
+        run: |
+          branch="${GITHUB_REF#refs/heads/}"
+          echo "branch: $branch"
+          if [[ "$branch" == "workflow_release" ]]; then
+            version="TEST-0.0.0"
+            draft="true"
+          else
+            version="${GITHUB_REF#refs/tags/}"
+            draft="false"
+          fi
+          date=$(env TZ=':America/Los_Angeles' date +'%Y-%m-%d')
+          echo "version: $version, draft: $draft, date: $date"
+          echo "::set-output name=version::$version"
+          echo "::set-output name=draft::$draft"
+          echo "::set-output name=date::$date"
+
       - name: Create artifacts directory
         run: mkdir artifacts
-      - name: Get the release version from the tag
-        id: version
-        run: echo "::set-output name=version::${GITHUB_REF#refs/tags/}"
-      - name: Get the date
-        id: date
-        run: echo "::set-output name=date::$(env TZ=':America/Los_Angeles' date +'%Y-%m-%d')"
+
       - name: Create GitHub release
         id: release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.version.outputs.version }}
-          release_name: ${{ steps.version.outputs.version }} (${{ steps.date.outputs.date }})
-          draft: true
+          tag_name: ${{ steps.info.outputs.version }}
+          release_name: ${{ steps.info.outputs.version }} (${{ steps.info.outputs.date }})
+          draft: ${{ steps.info.outputs.draft }}
+
       - name: Save release upload URL to artifact
         run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
+
       - name: Save version number to artifact
-        run: echo "${{ steps.version.outputs.version }}" > artifacts/release-version
+        run: echo "${{ steps.info.outputs.version }}" > artifacts/release-version
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v1
         with:
