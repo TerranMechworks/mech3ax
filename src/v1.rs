@@ -40,11 +40,11 @@ where
     }
 }
 
-type SoundCb = extern "stdcall" fn(*const c_char, *const u8, usize);
+type SoundCb = extern "C" fn(*const c_char, *const u8, usize);
 
 // filename is borrowed, return value is borrowed
 #[no_mangle]
-pub extern "stdcall" fn sounds(filename: *const c_char, callback: SoundCb) -> *const c_char {
+pub extern "C" fn sounds(filename: *const c_char, callback: SoundCb) -> *const c_char {
     err_to_c(|| {
         let filename = ptr_to_string(filename)?;
         let mut input = CountingReader::new(BufReader::new(File::open(filename)?));
@@ -63,11 +63,11 @@ pub extern "stdcall" fn sounds(filename: *const c_char, callback: SoundCb) -> *c
     })
 }
 
-type InterpCb = extern "stdcall" fn(*const u8, usize);
+type InterpCb = extern "C" fn(*const u8, usize);
 
 // filename is borrowed, return value is borrowed
 #[no_mangle]
-pub extern "stdcall" fn interp(filename: *const c_char, callback: InterpCb) -> *const c_char {
+pub extern "C" fn interp(filename: *const c_char, callback: InterpCb) -> *const c_char {
     err_to_c(|| {
         let filename = ptr_to_string(filename)?;
         let mut input = CountingReader::new(BufReader::new(File::open(filename)?));
@@ -79,11 +79,11 @@ pub extern "stdcall" fn interp(filename: *const c_char, callback: InterpCb) -> *
 }
 
 // filename will be .zrd!
-type ReaderCb = extern "stdcall" fn(*const c_char, *const u8, usize);
+type ReaderCb = extern "C" fn(*const c_char, *const u8, usize);
 
 // filename is borrowed, return value is borrowed
 #[no_mangle]
-pub extern "stdcall" fn reader(filename: *const c_char, callback: ReaderCb) -> *const c_char {
+pub extern "C" fn reader(filename: *const c_char, callback: ReaderCb) -> *const c_char {
     err_to_c(|| {
         let filename = ptr_to_string(filename)?;
         let mut input = CountingReader::new(BufReader::new(File::open(filename)?));
@@ -108,11 +108,11 @@ pub extern "stdcall" fn reader(filename: *const c_char, callback: ReaderCb) -> *
     })
 }
 
-type MessagesCb = extern "stdcall" fn(*const u8, usize);
+type MessagesCb = extern "C" fn(*const u8, usize);
 
 // filename is borrowed, return value is borrowed
 #[no_mangle]
-pub extern "stdcall" fn messages(filename: *const c_char, callback: MessagesCb) -> *const c_char {
+pub extern "C" fn messages(filename: *const c_char, callback: MessagesCb) -> *const c_char {
     err_to_c(|| {
         let filename = ptr_to_string(filename)?;
         let mut input = BufReader::new(File::open(filename)?);
@@ -124,11 +124,11 @@ pub extern "stdcall" fn messages(filename: *const c_char, callback: MessagesCb) 
 }
 
 // filename will not end in .png!
-type TextureCb = extern "stdcall" fn(*const c_char, *const u8, usize);
+type TextureCb = extern "C" fn(*const c_char, *const u8, usize);
 
 // filename is borrowed, return value is borrowed
 #[no_mangle]
-pub extern "stdcall" fn textures(filename: *const c_char, callback: TextureCb) -> *const c_char {
+pub extern "C" fn textures(filename: *const c_char, callback: TextureCb) -> *const c_char {
     err_to_c(|| {
         let filename = ptr_to_string(filename)?;
         let mut input = CountingReader::new(BufReader::new(File::open(filename)?));
@@ -152,11 +152,11 @@ pub extern "stdcall" fn textures(filename: *const c_char, callback: TextureCb) -
 }
 
 // filename will not end in .json!
-type MotionCb = extern "stdcall" fn(*const c_char, *const u8, usize);
+type MotionCb = extern "C" fn(*const c_char, *const u8, usize);
 
 // filename is borrowed, return value is borrowed
 #[no_mangle]
-pub extern "stdcall" fn motion(filename: *const c_char, callback: MotionCb) -> *const c_char {
+pub extern "C" fn motion(filename: *const c_char, callback: MotionCb) -> *const c_char {
     err_to_c(|| {
         let filename = ptr_to_string(filename)?;
         let mut input = CountingReader::new(BufReader::new(File::open(filename)?));
@@ -182,11 +182,11 @@ pub extern "stdcall" fn motion(filename: *const c_char, callback: MotionCb) -> *
 }
 
 // filename will end in .flt (except for materials)!
-type MechlibCb = extern "stdcall" fn(*const c_char, *const u8, usize);
+type MechlibCb = extern "C" fn(*const c_char, *const u8, usize);
 
 // filename is borrowed, return value is borrowed
 #[no_mangle]
-pub extern "stdcall" fn mechlib(filename: *const c_char, callback: MechlibCb) -> *const c_char {
+pub extern "C" fn mechlib(filename: *const c_char, callback: MechlibCb) -> *const c_char {
     err_to_c(|| {
         let filename = ptr_to_string(filename)?;
         let mut input = CountingReader::new(BufReader::new(File::open(filename)?));
@@ -226,7 +226,7 @@ pub extern "stdcall" fn mechlib(filename: *const c_char, callback: MechlibCb) ->
     })
 }
 
-type GamezCb = extern "stdcall" fn(*const u8, usize);
+type GamezCb = extern "C" fn(*const u8, usize);
 
 // the lib GameZ implementation is not serializable on purpose
 #[derive(Debug, Serialize, Deserialize)]
@@ -239,7 +239,7 @@ struct GameZ {
 
 // filename is borrowed, return value is borrowed
 #[no_mangle]
-pub extern "stdcall" fn gamez(filename: *const c_char, callback: GamezCb) -> *const c_char {
+pub extern "C" fn gamez(filename: *const c_char, callback: GamezCb) -> *const c_char {
     err_to_c(|| {
         let filename = ptr_to_string(filename)?;
         let mut input = CountingReader::new(BufReader::new(File::open(filename)?));
@@ -255,11 +255,11 @@ pub extern "stdcall" fn gamez(filename: *const c_char, callback: GamezCb) -> *co
     })
 }
 
-type AnimCb = extern "stdcall" fn(*const c_char, *const u8, usize);
+type AnimCb = extern "C" fn(*const c_char, *const u8, usize);
 
 // filename is borrowed, return value is borrowed
 #[no_mangle]
-pub extern "stdcall" fn anim(filename: *const c_char, callback: AnimCb) -> *const c_char {
+pub extern "C" fn anim(filename: *const c_char, callback: AnimCb) -> *const c_char {
     err_to_c(|| {
         let filename = ptr_to_string(filename)?;
         let mut input = CountingReader::new(BufReader::new(File::open(filename)?));

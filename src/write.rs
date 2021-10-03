@@ -14,10 +14,10 @@ fn buf_writer(ptr: *const c_char) -> Result<BufWriter<File>> {
     Ok(BufWriter::new(file))
 }
 
-type NameBufferCb = extern "stdcall" fn(*const u8, usize, *mut CallbackBuffer) -> i32;
+type NameBufferCb = extern "C" fn(*const u8, usize, *mut CallbackBuffer) -> i32;
 
 #[no_mangle]
-pub extern "stdcall" fn write_interp(
+pub extern "C" fn write_interp(
     filename: *const c_char,
     _is_pm: i32,
     data: *const u8,
@@ -87,7 +87,7 @@ fn write_sounds_transform(_name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
 }
 
 #[no_mangle]
-pub extern "stdcall" fn write_sounds(
+pub extern "C" fn write_sounds(
     filename: *const c_char,
     is_pm: i32,
     entries_ptr: *const u8,
@@ -116,7 +116,7 @@ fn write_reader_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
 }
 
 #[no_mangle]
-pub extern "stdcall" fn write_reader(
+pub extern "C" fn write_reader(
     filename: *const c_char,
     is_pm: i32,
     entries_ptr: *const u8,
@@ -145,7 +145,7 @@ fn write_motion_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
 }
 
 #[no_mangle]
-pub extern "stdcall" fn write_motion(
+pub extern "C" fn write_motion(
     filename: *const c_char,
     is_pm: i32,
     entries_ptr: *const u8,
@@ -188,7 +188,7 @@ fn write_mechlib_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
 }
 
 #[no_mangle]
-pub extern "stdcall" fn write_mechlib(
+pub extern "C" fn write_mechlib(
     filename: *const c_char,
     is_pm: i32,
     entries_ptr: *const u8,
@@ -215,7 +215,7 @@ fn parse_manifest(ptr: *const u8, len: usize) -> Result<mech3rs::textures::Manif
 }
 
 #[no_mangle]
-pub extern "stdcall" fn write_textures(
+pub extern "C" fn write_textures(
     filename: *const c_char,
     manifest_ptr: *const u8,
     manifest_len: usize,
@@ -246,7 +246,7 @@ pub extern "stdcall" fn write_textures(
 }
 
 #[no_mangle]
-pub extern "stdcall" fn write_gamez(
+pub extern "C" fn write_gamez(
     filename: *const c_char,
     _is_pm: i32,
     data: *const u8,

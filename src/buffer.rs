@@ -11,11 +11,7 @@ impl CallbackBuffer {
 }
 
 #[no_mangle]
-pub extern "stdcall" fn buffer_set_data(
-    buffer: *mut CallbackBuffer,
-    pointer: *const u8,
-    length: usize,
-) {
+pub extern "C" fn buffer_set_data(buffer: *mut CallbackBuffer, pointer: *const u8, length: usize) {
     if buffer.is_null() || pointer.is_null() {
         return;
     }

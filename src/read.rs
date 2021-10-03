@@ -15,13 +15,13 @@ fn buf_reader(ptr: *const c_char) -> Result<BufReader<File>> {
     Ok(BufReader::new(file))
 }
 
-type DataCb = extern "stdcall" fn(*const u8, usize);
-type NameDataCb = extern "stdcall" fn(*const u8, usize, *const u8, usize) -> i32;
-type WaveArchiveCb = extern "stdcall" fn(*const u8, usize, i32, i32, *const f32, usize) -> i32;
-type WaveFileCb = extern "stdcall" fn(i32, i32, *const f32, usize) -> i32;
+type DataCb = extern "C" fn(*const u8, usize);
+type NameDataCb = extern "C" fn(*const u8, usize, *const u8, usize) -> i32;
+type WaveArchiveCb = extern "C" fn(*const u8, usize, i32, i32, *const f32, usize) -> i32;
+type WaveFileCb = extern "C" fn(i32, i32, *const f32, usize) -> i32;
 
 #[no_mangle]
-pub extern "stdcall" fn read_interp(filename: *const c_char, _is_pm: i32, callback: DataCb) -> i32 {
+pub extern "C" fn read_interp(filename: *const c_char, _is_pm: i32, callback: DataCb) -> i32 {
     err_to_c(move || {
         let input = buf_reader(filename)?;
         let mut read = CountingReader::new(input);
@@ -34,7 +34,7 @@ pub extern "stdcall" fn read_interp(filename: *const c_char, _is_pm: i32, callba
 }
 
 #[no_mangle]
-pub extern "stdcall" fn read_messages(filename: *const c_char, callback: DataCb) -> i32 {
+pub extern "C" fn read_messages(filename: *const c_char, callback: DataCb) -> i32 {
     err_to_c(|| {
         let mut read = buf_reader(filename)?;
         let messages = mech3rs::messages::read_messages(&mut read, None)
@@ -88,11 +88,7 @@ fn read_sound_transform(_name: &str, data: Vec<u8>, _offset: u32) -> Result<Vec<
 }
 
 #[no_mangle]
-pub extern "stdcall" fn read_sounds(
-    filename: *const c_char,
-    is_pm: i32,
-    callback: NameDataCb,
-) -> i32 {
+pub extern "C" fn read_sounds(filename: *const c_char, is_pm: i32, callback: NameDataCb) -> i32 {
     read_archive(
         Mode::Sounds,
         filename,
@@ -113,11 +109,7 @@ fn read_reader_transform(name: &str, data: Vec<u8>, offset: u32) -> Result<Vec<u
 
 // filename returned by data callback will be .zrd!
 #[no_mangle]
-pub extern "stdcall" fn read_reader(
-    filename: *const c_char,
-    is_pm: i32,
-    callback: NameDataCb,
-) -> i32 {
+pub extern "C" fn read_reader(filename: *const c_char, is_pm: i32, callback: NameDataCb) -> i32 {
     read_archive(
         Mode::Reader,
         filename,
@@ -138,11 +130,7 @@ fn read_motion_transform(name: &str, data: Vec<u8>, offset: u32) -> Result<Vec<u
 
 // callback filename will not end in .json!
 #[no_mangle]
-pub extern "stdcall" fn read_motion(
-    filename: *const c_char,
-    is_pm: i32,
-    callback: NameDataCb,
-) -> i32 {
+pub extern "C" fn read_motion(filename: *const c_char, is_pm: i32, callback: NameDataCb) -> i32 {
     read_archive(
         Mode::Motion,
         filename,
@@ -183,11 +171,7 @@ fn read_mechlib_transform(name: &str, data: Vec<u8>, offset: u32) -> Result<Vec<
 
 // callback filename will end in .flt (except for format, version, materials)!
 #[no_mangle]
-pub extern "stdcall" fn read_mechlib(
-    filename: *const c_char,
-    is_pm: i32,
-    callback: NameDataCb,
-) -> i32 {
+pub extern "C" fn read_mechlib(filename: *const c_char, is_pm: i32, callback: NameDataCb) -> i32 {
     read_archive(
         Mode::Sounds,
         filename,
@@ -199,7 +183,7 @@ pub extern "stdcall" fn read_mechlib(
 
 // callback filename will not end in .png! last call will be the manifest
 #[no_mangle]
-pub extern "stdcall" fn read_textures(filename: *const c_char, callback: NameDataCb) -> i32 {
+pub extern "C" fn read_textures(filename: *const c_char, callback: NameDataCb) -> i32 {
     err_to_c(|| {
         let input = buf_reader(filename)?;
         let mut read = CountingReader::new(input);
@@ -227,7 +211,7 @@ pub extern "stdcall" fn read_textures(filename: *const c_char, callback: NameDat
 }
 
 #[no_mangle]
-pub extern "stdcall" fn read_gamez(filename: *const c_char, is_pm: i32, callback: DataCb) -> i32 {
+pub extern "C" fn read_gamez(filename: *const c_char, is_pm: i32, callback: DataCb) -> i32 {
     err_to_c(|| {
         if is_pm != 0 {
             bail!("Pirate's Moon support for Gamez isn't implemented yet");
@@ -245,11 +229,7 @@ pub extern "stdcall" fn read_gamez(filename: *const c_char, is_pm: i32, callback
 
 // last call will be the metadata
 #[no_mangle]
-pub extern "stdcall" fn read_anim(
-    filename: *const c_char,
-    is_pm: i32,
-    callback: NameDataCb,
-) -> i32 {
+pub extern "C" fn read_anim(filename: *const c_char, is_pm: i32, callback: NameDataCb) -> i32 {
     err_to_c(|| {
         if is_pm != 0 {
             bail!("Pirate's Moon support for Anim isn't implemented yet");
@@ -278,7 +258,7 @@ pub extern "stdcall" fn read_anim(
 }
 
 #[no_mangle]
-pub extern "stdcall" fn read_sounds_as_wav(
+pub extern "C" fn read_sounds_as_wav(
     filename: *const c_char,
     is_pm: i32,
     callback: WaveArchiveCb,
@@ -317,7 +297,7 @@ pub extern "stdcall" fn read_sounds_as_wav(
 }
 
 #[no_mangle]
-pub extern "stdcall" fn read_sound_as_wav(filename: *const c_char, callback: WaveFileCb) -> i32 {
+pub extern "C" fn read_sound_as_wav(filename: *const c_char, callback: WaveFileCb) -> i32 {
     err_to_c(|| {
         let input = buf_reader(filename)?;
         let mut read = CountingReader::new(input);
