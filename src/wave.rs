@@ -42,7 +42,7 @@ fn read_fmt_chunk<R: Read>(read: &mut CountingReader<R>, chunk_size: u32) -> Res
     let format_tag = read.read_u16()?;
     assert_that!("format tag", format_tag == WAVE_FORMAT_PCM, read.prev)?;
     // this is only valid for PCM files
-    assert_that!("format chunk size", chunk_size == 16, read.prev - 4)?;
+    assert_that!("format chunk size", chunk_size in [16, 18], read.prev - 4)?;
     let channels = read.read_u16()? as _;
     // aka. SamplesPerSec, sample rate, sampling rate. Unity calls this frequency
     // this should be an unsigned, but Unity doesn't support that
@@ -53,6 +53,9 @@ fn read_fmt_chunk<R: Read>(read: &mut CountingReader<R>, chunk_size: u32) -> Res
     let _block_align = read.read_u16()?;
     // aka. sample size
     let bits_per_sample = read.read_u16()? as _;
+    if chunk_size != 16 {
+        let _extra_param_size = read.read_u16()?;
+    }
     Ok(Format {
         channels,
         frequency,
