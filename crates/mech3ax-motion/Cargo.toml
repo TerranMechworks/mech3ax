@@ -1,0 +1,17 @@
+[package]
+name = "mech3ax-motion"
+version = "0.0.0"
+authors = ["Toby Fleming <tobywf@users.noreply.github.com>"]
+edition = "2018"
+publish = false
+
+autoexamples = false
+autobenches = false
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+
+mech3ax-common = { path = "../mech3ax-common" }
+
+[lib]
+doctest = false

@@ -2,11 +2,12 @@ import filecmp
 import subprocess
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Literal
 
+Build = Literal["debug", "release"]
 
 class Tester:
-    def __init__(self, base_path: Path, output_base: Path, build: str = "debug"):
+    def __init__(self, base_path: Path, output_base: Path, build: Build):
         self.unzbd_exe = f"target/{build}/unzbd"
         self.rezbd_exe = f"target/{build}/rezbd"
         self.miscompares: List[Tuple[Path, Path]] = []
@@ -230,7 +231,7 @@ def main() -> None:
     parser.add_argument("--release", action="store_true")
     args = parser.parse_args()
 
-    build = "release" if args.release else "debug"
+    build: Build = "release" if args.release else "debug"
     print("running", build)
     tester = Tester(args.versions_dir, args.output_dir, build)
     tester.test_sounds()

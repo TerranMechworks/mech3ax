@@ -1,51 +1,5 @@
-[package]
-name = "mech3ax"
-version = "0.4.1"
-authors = ["Toby Fleming <tobywf@users.noreply.github.com>"]
-edition = "2018"
-description = "mech3ax converts assets from the 1998 MechWarrior 3 game to modern formats and back"
-readme = "README.md"
-license-file = "LICENSE.txt"
-repository = "https://github.com/TerranMechworks/mech3ax"
-keywords = ["cli", "MechWarrior", "reverse engineering"]
-categories = ["game-development", "parser-implementations"]
-publish = false
-
-autoexamples = false
-autobenches = false
-build = "build.rs"
-
 [workspace]
-
-[dependencies]
-mech3rs = { path = "lib" }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-clap = "3.0.0-beta.2"
-zip = { version = "0.5", default-features = false, features = ["deflate"] }
-image = {version = "0.23.14", default-features = false, features = ["png"] }
-log = "0.4"
-env_logger = { version = "0.9", default-features = false, features = ["atty", "humantime"] }
-anyhow = "1.0"
-
-[build-dependencies]
-vergen = "3.2.0"
-
-[lib]
-doctest = false
-name = "mech3ax"
-path = "src/lib.rs"
-crate-type = ["staticlib", "cdylib"]
-
-[[bin]]
-path = "src/bin/unzbd/main.rs"
-name = "unzbd"
-test = false
-
-[[bin]]
-path = "src/bin/rezbd/main.rs"
-name = "rezbd"
-test = false
+members = ["crates/*"]
 
 [profile.dev]
 opt-level = 3
