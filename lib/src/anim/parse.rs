@@ -35,12 +35,12 @@ struct AnimInfoC {
     zero00: u32,
     ptr04: u32,
     zero08: u16,
-    count: u16,
-    base_ptr: u32,
-    loc_count: u32,
-    loc_ptr: u32,
-    world_ptr: u32,
-    gravity: f32,
+    count: u16,     // 10
+    base_ptr: u32,  // 12
+    loc_count: u32, // 16
+    loc_ptr: u32,   // 20
+    world_ptr: u32, // 24
+    gravity: f32,   // 28
     zero32: u32,
     zero36: u32,
     zero40: u32,

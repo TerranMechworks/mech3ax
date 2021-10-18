@@ -120,6 +120,10 @@ fn convert_info_from_c(
     assert_that!("2 bytes per pixel", bytes_per_pixel2 == true, offset)?;
     let has_gp = bitflags.contains(TexFlags::GLOBAL_PALETTE);
     assert_that!("global palette", has_gp == global_palette.is_some(), offset)?;
+    if has_gp {
+        println!("palette count {}", tex_info.palette_count);
+        assert_that!("palette count", tex_info.palette_count > 0, offset)?;
+    }
 
     let no_alpha = bitflags.contains(TexFlags::NO_ALPHA);
     let has_alpha = bitflags.contains(TexFlags::HAS_ALPHA);
@@ -180,18 +184,14 @@ where
         let mut image_data = vec![0u8; size * 2];
         read.read_exact(&mut image_data)?;
 
-        let alpha_data = if info.alpha == TextureAlpha::Simple {
-            Some(simple_alpha(&image_data))
-        } else {
-            None
-        };
-
-        let alpha_data = if info.alpha == TextureAlpha::Full {
-            let mut buf = vec![0; size];
-            read.read_exact(&mut buf)?;
-            Some(buf)
-        } else {
-            alpha_data
+        let alpha_data = match info.alpha {
+            TextureAlpha::Simple => Some(simple_alpha(&image_data)),
+            TextureAlpha::Full => {
+                let mut buf = vec![0; size];
+                read.read_exact(&mut buf)?;
+                Some(buf)
+            }
+            TextureAlpha::None => None,
         };
 
         if let Some(alpha) = alpha_data {

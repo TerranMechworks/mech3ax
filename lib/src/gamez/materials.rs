@@ -43,6 +43,8 @@ where
             let texture = textures[texture_index].clone();
 
             let cycle = if let Some(info_ptr) = mat.cycle_ptr {
+                assert_that!("cycle info ptr", info_ptr != 0, read.prev + 0)?;
+
                 let info: CycleInfoC = read.read_struct()?;
                 let unk00 = assert_that!("field 00", bool info.unk00, read.prev + 0)?;
                 assert_that!("field 08", info.zero08 == 0, read.prev + 8)?;

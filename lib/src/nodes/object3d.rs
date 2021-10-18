@@ -59,6 +59,7 @@ pub fn assert_variants(
     assert_that!("object3d data ptr", node.data_ptr != 0, offset + 56)?;
     if mesh_index_is_ptr {
         if node.flags.contains(NodeBitFlags::HAS_MESH) {
+            // non-zero, but the memory on 32-bit is limited
             assert_that!("object3d mesh index", node.mesh_index > 0, offset + 60)?;
         } else {
             assert_that!("object3d mesh index", node.mesh_index == 0, offset + 60)?;

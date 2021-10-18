@@ -43,7 +43,7 @@ struct MeshC {
     unk04: u32,
     unk08: u32,
     parent_count: u32,  // 12
-    polygon_count: u32, //  16
+    polygon_count: u32, // 16
     vertex_count: u32,  // 20
     normal_count: u32,  // 24
     morph_count: u32,   // 28
@@ -287,6 +287,7 @@ fn assert_polygon(poly: PolygonC, offset: u32) -> Result<(u32, bool, bool, Polyg
     assert_that!("verts in poly", verts_in_poly > 0, offset + 0)?;
     assert_that!("vertices ptr", poly.vertices_ptr != 0, offset + 8)?;
 
+    // ???
     let has_normals = vtx_bit && (poly.vertices_ptr != 0);
     let has_uvs = poly.uvs_ptr != 0;
 

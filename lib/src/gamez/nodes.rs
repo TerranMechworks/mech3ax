@@ -62,7 +62,7 @@ where
         let mut expected_index = i + 1;
         if expected_index == array_size {
             // we'll never know why???
-            expected_index = 0xFFFFFF
+            expected_index = 0xFFFFFF;
         }
         assert_that!("node zero index", actual_index == expected_index, read.prev)?;
     }

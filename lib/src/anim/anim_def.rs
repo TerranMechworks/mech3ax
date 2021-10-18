@@ -79,7 +79,7 @@ struct AnimDefC {
     unknown_ptr: u32,                // 300
     activ_prereqs_ptr: u32,          // 304
     anim_refs_ptr: u32,              // 308
-    zero312: u32,                    // 321
+    zero312: u32,                    // 312
 }
 static_assert_size!(AnimDefC, 316);
 
@@ -474,7 +474,7 @@ pub fn read_anim_def<R: Read>(read: &mut CountingReader<R>) -> Result<(AnimDef, 
         None
     };
 
-    // this isn't set in any file i have (it is read like the static sound data)
+    // this isn't set in any file i have
     assert_that!(
         "anim def field 271",
         anim_def.unknown_count == 0,
@@ -560,7 +560,7 @@ pub fn read_anim_def<R: Read>(read: &mut CountingReader<R>) -> Result<(AnimDef, 
         anim_def.reset_state_events_ptr,
     )?;
 
-    // this could be zero, in which case the pointer would also be NULL (but never is)
+    // this could be zero, in which case the pointer would also be NULL? (but never is)
     assert_that!(
         "anim def seq def count",
         anim_def.seq_def_count > 0,

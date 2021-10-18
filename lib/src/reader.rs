@@ -17,8 +17,7 @@ where
         )),
         3 => Ok(Value::String(read.read_string()?)),
         4 => {
-            // count is one bigger, because the engine stores the count as an
-            // integer node as the first item of the list
+            // count is one bigger, maybe the engine stored the count as the first item?
             let count = read.read_u32()? - 1;
             if count == 0 {
                 Ok(Value::Null)

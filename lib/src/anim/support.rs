@@ -171,7 +171,7 @@ pub fn read_lights<R: Read>(read: &mut CountingReader<R>, count: u8) -> Result<V
             assert_that!("anim def light field 32", light.flags == 0, read.prev + 32)?;
             assert_that!("anim def light pointer", light.pointer != 0, read.prev + 36)?;
             // if this were non-zero, it would cause the light to be removed instead of added (???)
-            assert_that!("anim def light field 40", light.flags == 0, read.prev + 40)?;
+            assert_that!("anim def light field 40", light.zero40 == 0, read.prev + 40)?;
             Ok(NamePtr {
                 name,
                 pointer: light.pointer,

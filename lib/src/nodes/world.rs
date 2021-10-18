@@ -248,7 +248,7 @@ fn assert_world(world: &WorldC, offset: u32) -> Result<(Area, Range, Range, bool
     assert_that!("fog color", world.fog_color == Vec3::EMPTY, offset + 20)?;
     assert_that!("fog range", world.fog_range == Vec2::EMPTY, offset + 32)?;
     assert_that!(
-        "fog alti high",
+        "fog altitude",
         world.fog_altitude == Vec2::EMPTY,
         offset + 40
     )?;
@@ -509,8 +509,8 @@ fn write_partitions<W>(write: &mut W, partitions: &[Vec<Partition>]) -> Result<(
 where
     W: Write,
 {
-    for subpartitions in partitions {
-        for partition in subpartitions {
+    for sub_partitions in partitions {
+        for partition in sub_partitions {
             write_partition(write, partition)?;
         }
     }

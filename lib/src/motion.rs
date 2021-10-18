@@ -43,7 +43,7 @@ where
     assert_that!("field 16", header.minus_one == -1.0, read.prev + 16)?;
     assert_that!("field 20", header.plus_one == 1.0, read.prev + 20)?;
 
-    let frame_count = header.frame_count + 1;
+    let frame_count = header.frame_count;
     let parts = (0..header.part_count)
         .map(|_| {
             let part_name = read.read_string()?;
@@ -51,7 +51,7 @@ where
             // 8 = translation, 4 = rotation, 2 = scaling (never in motion.zbd)
             assert_that!("flag", flags == FLAGS, read.prev)?;
 
-            let mut translations = (0..frame_count)
+            let mut translations = (0..=frame_count)
                 .map(|_| read.read_struct())
                 .collect::<std::io::Result<Vec<_>>>()?;
 
@@ -71,7 +71,7 @@ where
             assert_that!("part translation first/last", first == last, read.offset)?;
             translations.pop();
 
-            let mut rotations = (0..frame_count)
+            let mut rotations = (0..=frame_count)
                 .map(|_| read.read_struct())
                 .collect::<std::io::Result<Vec<_>>>()?;
 
@@ -108,7 +108,7 @@ where
     Ok(Motion {
         loop_time: header.loop_time,
         parts,
-        frame_count: header.frame_count,
+        frame_count,
     })
 }
 
