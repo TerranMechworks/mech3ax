@@ -196,40 +196,37 @@ pub fn write_lights<W: Write>(write: &mut W, lights: &[NamePtr]) -> Result<()> {
     Ok(())
 }
 
+#[repr(C)]
+struct PufferRefC {
+    name: [u8; 32], // 00
+    flags: u32,     // 32
+    pointer: u32,   // 36
+    zero40: u32,    // 40
+}
+static_assert_size!(PufferRefC, 44);
+
 pub fn read_puffers<R: Read>(read: &mut CountingReader<R>, count: u8) -> Result<Vec<NamePtrFlags>> {
     trace!("Reading anim def puffer 0 at {}", read.offset);
     // the first entry is always zero
-    let puffer: ReaderLookupC = read.read_struct()?;
-    assert_all_zero("anim def puffer zero name", read.prev + 0, &puffer.name)?;
-    assert_that!(
-        "anim def node puffer flags",
-        puffer.flags == 0,
-        read.prev + 32
-    )?;
-    assert_that!(
-        "anim def node puffer pointer",
-        puffer.pointer == 0,
-        read.prev + 36
-    )?;
-    assert_that!(
-        "anim def node puffer field 40",
-        puffer.zero40 == 0,
-        read.prev + 40
-    )?;
+    let mut puffer = [0; PufferRefC::SIZE as usize];
+    read.read_exact(&mut puffer)?;
+    assert_all_zero("anim def puffer zero", read.prev + 0, &puffer)?;
 
     (1..count)
         .map(|i| {
             trace!("Reading anim def puffer {} at {}", i, read.offset);
-            let puffer: ReaderLookupC = read.read_struct()?;
+            let puffer: PufferRefC = read.read_struct()?;
             let name = assert_utf8("anim def puffer name", read.prev + 0, || {
                 str_from_c_padded(&puffer.name)
             })?;
+
             // TODO: what does this flag mean?
             // this is something the code does, but i'm not sure why
             // some of these values make decent floating point numbers
             let flags = puffer.flags & 0x00FFFFFF;
             assert_that!("anim def node puffer flags", flags == 0, read.prev + 32)?;
             let flags = puffer.flags >> 24;
+
             assert_that!(
                 "anim def puffer pointer",
                 puffer.pointer != 0,
