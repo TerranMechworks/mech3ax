@@ -4,7 +4,7 @@ use crate::nodes::{
     read_node_data, read_node_info_gamez, read_node_info_zero, size_node, write_node_data,
     write_node_info, write_node_info_zero, Node, NodeVariant, WrappedNode, NODE_C_SIZE,
 };
-use crate::{assert_that, Result};
+use crate::{assert_that, Error, Result};
 use std::io::{Read, Write};
 
 pub fn read_nodes<R>(read: &mut CountingReader<R>, array_size: u32) -> Result<Vec<Node<u32>>>
@@ -17,9 +17,12 @@ where
     // the node_count is wildly inaccurate for some files, and there are more nodes to
     // read after the provided count. so, we basically have to check the entire array
     let mut actual_count = array_size;
+    let mut display_node = 0;
+    let mut light_node = false;
     for i in 0..array_size {
         let node_info_pos = read.offset;
         let variant = read_node_info_gamez(read)?;
+        // this is an index for empty/zero nodes, and the offset for others
         let actual_index = read.read_u32()?;
         match variant {
             None => {
@@ -44,11 +47,37 @@ where
                     NodeVariant::Camera(_) => {
                         assert_that!("node data position", i == 2, node_info_pos)?;
                     }
+                    NodeVariant::Display(_) => {
+                        match display_node {
+                            0 => assert_that!("node data position", i == 3, node_info_pos)?,
+                            1 => assert_that!("node data position", i == 4, node_info_pos)?,
+                            _ => {
+                                return Err(Error::Assert(AssertionError(format!(
+                                    "Unexpected display node in position {} (at {})",
+                                    i, node_info_pos
+                                ))))
+                            }
+                        }
+                        display_node += 1;
+                    }
                     NodeVariant::Empty(empty) => {
+                        assert_that!("node data position", i > 3, node_info_pos)?;
                         assert_that!("empty ref index", 4 <= actual_index <= array_size, read.prev)?;
                         empty.parent = actual_index;
                     }
-                    _ => {}
+                    NodeVariant::Light(_) => {
+                        assert_that!("node data position", i > 3, node_info_pos)?;
+                        if light_node {
+                            return Err(Error::Assert(AssertionError(format!(
+                                "Unexpected light node in position {} (at {})",
+                                i, node_info_pos
+                            ))));
+                        }
+                        light_node = true;
+                    }
+                    _ => {
+                        assert_that!("node data position", i > 3, node_info_pos)?;
+                    }
                 }
                 variants.push((variant, actual_index));
             }
@@ -71,12 +100,14 @@ where
 
     let nodes = variants
         .into_iter()
-        .map(|(variant, index)| {
+        .map(|(variant, offset)| {
             match &variant {
-                NodeVariant::Empty(_) => {}
+                NodeVariant::Empty(_) => {
+                    // in the case of an empty node, the offset is used as the parent
+                    // index, and not the offset (there is no node data)
+                }
                 _ => {
-                    // it's more likely our read logic is wrong than this data being wrong
-                    assert_that!("node data offset", index == read.offset, read.offset)?;
+                    assert_that!("node data offset", offset == read.offset, read.offset)?;
                 }
             }
             match read_node_data(read, variant)? {
