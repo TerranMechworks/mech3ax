@@ -142,8 +142,10 @@ pub struct Window {
 pub struct Partition {
     pub x: i32,
     pub y: i32,
+    pub z_min: f32,
+    pub z_max: f32,
+    pub z_mid: f32,
     pub nodes: Vec<u32>,
-    pub unk: Vec3,
     pub ptr: u32,
 }
 

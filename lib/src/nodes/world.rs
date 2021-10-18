@@ -63,16 +63,16 @@ struct PartitionC {
     mone04: i32,
     part_x: f32,
     part_y: f32,
-    unk16: f32,
-    unk20: f32,
-    unk24: f32,
-    unk28: f32,
-    unk32: f32,
-    unk36: f32,
-    unk40: f32,
-    unk44: f32,
-    unk48: f32,
-    unk52: f32,
+    x_min: f32,
+    z_min: f32,
+    y_min: f32,
+    x_max: f32,
+    z_max: f32,
+    y_max: f32,
+    x_mid: f32,
+    z_mid: f32,
+    y_mid: f32,
+    diagonal: f32,
     zero56: u16,
     count: u16, // 58
     ptr: u32,   // 60
@@ -138,66 +138,46 @@ where
     assert_that!("partition x", partition.part_x == xf, read.prev + 8)?;
     assert_that!("partition y", partition.part_y == yf, read.prev + 12)?;
 
-    assert_that!("partition field 16", partition.unk16 == xf, read.prev + 16)?;
-    // unk20
+    assert_that!("partition x min", partition.x_min == xf, read.prev + 16)?;
+    // z min
     assert_that!(
-        "partition field 24",
-        partition.unk24 == yf - 256.0,
+        "partition y min",
+        partition.y_min == yf - 256.0,
         read.prev + 24
     )?;
     assert_that!(
-        "partition field 28",
-        partition.unk28 == xf + 256.0,
+        "partition x max",
+        partition.x_max == xf + 256.0,
         read.prev + 28
     )?;
-    // unk32
-    assert_that!("partition field 36", partition.unk36 == yf, read.prev + 36)?;
-
-    // this is set through an extremely convoluted calculation starting with:
-    //   unk40 = unk16 + (unk28 - unk16) * 0.5
-    // which simplifies to:
-    //   unk40 = x + 128.0
+    // z max
+    assert_that!("partition y max", partition.y_max == yf, read.prev + 36)?;
     assert_that!(
-        "partition field 40",
-        partition.unk40 == xf + 128.0,
+        "partition x mid",
+        partition.x_mid == xf + 128.0,
         read.prev + 40
     )?;
-
-    // this is set through an extremely convoluted calculation starting with:
-    //   unk44 = unk20 + (unk32 - unk20) * 0.5
-    // ... at least initially, although unk20 and unk32 would be 0.0 because
-    // calloc zeros memory. i can get this calculation to work with almost
-    // all values, but some are ever so slightly off (lowest bits in the
-    // single precision floating point numbers differ), so i suspect this
-    // calculation is more complicated.
-    // assert_that!("partition field 44", partition.unk44 == expected, read.prev + 44)?;
-
-    // this is set through an extremely convoluted calculation starting with:
-    //   unk48 = unk24 + (unk36 - unk24) * 0.5
-    // which simplifies to:
-    //   unk48 = y - 128.0
+    // z mid:
+    // this should be (z_max + z_min) * 0.5, but for a small number of partitions,
+    // maybe due to floating point errors in the original calculation, this doesn't
+    // work (lower mantissa bits don't match in 0.9% of the cases).
+    // let z_mid = (partition.z_max + partition.z_min) * 0.5;
+    // assert_that!("partition z_mid", partition.z_mid == z_mid, read.prev + 44)?;
     assert_that!(
-        "partition field 48",
-        partition.unk48 == yf - 128.0,
+        "partition y mid",
+        partition.y_mid == yf - 128.0,
         read.prev + 48
-    )?; // two[2]
-
-    // this is set through an extremely convoluted calculation starting with:
-    //   temp1 = (unk28 - unk16) * 0.5
-    //   temp2 = (unk32 - unk20) * 0.5
-    //   temp3 = (unk36 - unk24) * 0.5
-    // which simplifies to:
-    //   temp1 = 128.0
-    //   (does not simplify without knowing unk32 and unk20)
-    //   temp3 = 128.0
-    let expected = partition_diag(partition.unk20, partition.unk32);
-    assert_that!(
-        "partition field 52",
-        partition.unk52 == expected,
-        read.prev + 52
     )?;
 
-    let unk = Vec3(partition.unk20, partition.unk32, partition.unk44);
+    // since x and y always have a side of 128.0/-128.0 length respectively, and the
+    // sign doesn't matter because the values are squared, only z_min and z_max are
+    // needed for this calculation.
+    let diagonal = partition_diag(partition.z_min, partition.z_max);
+    assert_that!(
+        "partition diagonal",
+        partition.diagonal == diagonal,
+        read.prev + 52
+    )?;
 
     let nodes = if partition.count == 0 {
         assert_that!("partition ptr", partition.ptr == 0, read.prev + 60)?;
@@ -212,8 +192,10 @@ where
     Ok(Partition {
         x,
         y,
+        z_min: partition.z_min,
+        z_max: partition.z_max,
+        z_mid: partition.z_mid,
         nodes,
-        unk,
         ptr: partition.ptr,
     })
 }
@@ -471,26 +453,23 @@ where
 {
     let x = partition.x as f32;
     let y = partition.y as f32;
-    let unk20 = partition.unk.0;
-    let unk32 = partition.unk.1;
-    let unk44 = partition.unk.2;
-    let unk52 = partition_diag(unk20, unk32);
+    let diagonal = partition_diag(partition.z_min, partition.z_max);
 
     write.write_struct(&PartitionC {
         flags: 0x100,
         mone04: -1,
         part_x: x,
         part_y: y,
-        unk16: x,
-        unk20,
-        unk24: y - 256.0,
-        unk28: x + 256.0,
-        unk32,
-        unk36: y,
-        unk40: x + 128.0,
-        unk44,
-        unk48: y - 128.0,
-        unk52,
+        x_min: x,
+        z_min: partition.z_min,
+        y_min: y - 256.0,
+        x_max: x + 256.0,
+        z_max: partition.z_max,
+        y_max: y,
+        x_mid: x + 128.0,
+        z_mid: partition.z_mid,
+        y_mid: y - 128.0,
+        diagonal,
         zero56: 0,
         count: partition.nodes.len() as u16,
         ptr: partition.ptr,
