@@ -1,12 +1,11 @@
 #![warn(clippy::all, clippy::cargo)]
 use ::serde::{Deserialize, Serialize};
-use encoding::all::WINDOWS_1252;
-use encoding::{DecoderTrap, Encoding};
 use log::trace;
 use mech3ax_common::assert::{assert_utf8, AssertionError};
 use mech3ax_common::io_ext::ReadHelper;
 use mech3ax_common::string::str_from_c_sized;
 use mech3ax_common::{assert_that, Result};
+use mech3ax_encoding::windows1252_decode;
 use pelite::pe32::{Pe, PeFile};
 use pelite::resources::{DataEntry, FindError, Name, Resources};
 use std::collections::HashMap;
@@ -151,10 +150,7 @@ fn read_message_table(data: &[u8]) -> Result<HashMap<u32, String>> {
             remove_trailing(&mut buf)?;
 
             // all the English, German, and French locale IDs map to the same codepage (1251)
-            let message_contents = WINDOWS_1252
-                .decode(&buf, DecoderTrap::Strict)
-                .map_err(|err| AssertionError(err.into()))?;
-
+            let message_contents = windows1252_decode(&buf).into_owned();
             entries.insert(entry_id, message_contents);
         }
     }
