@@ -1,23 +1,28 @@
 #![warn(clippy::all, clippy::cargo)]
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
-use mech3ax_common::Result;
+use mech3ax_common::{Error, Result};
 use std::convert::TryInto;
 use std::io::{Read, Write};
 
 use serde_json::{Number, Value};
+
+const INT: u32 = 1;
+const FLOAT: u32 = 2;
+const STRING: u32 = 3;
+const LIST: u32 = 4;
 
 fn read_value<R>(read: &mut CountingReader<R>) -> Result<Value>
 where
     R: Read,
 {
     match read.read_u32()? {
-        1 => Ok(Value::Number(Number::from(read.read_i32()?))),
-        2 => Ok(Value::Number(
+        INT => Ok(Value::Number(Number::from(read.read_i32()?))),
+        FLOAT => Ok(Value::Number(
             Number::from_f64(read.read_f32()? as f64).unwrap(),
         )),
-        3 => Ok(Value::String(read.read_string()?)),
-        4 => {
+        STRING => Ok(Value::String(read.read_string()?)),
+        LIST => {
             // count is one bigger, maybe the engine stored the count as the first item?
             let count = read.read_u32()? - 1;
             if count == 0 {
@@ -34,7 +39,7 @@ where
                 "Expected valid value type, but was {} (at {})",
                 value_type, read.prev
             );
-            Err(AssertionError(msg).into())
+            Err(Error::Assert(AssertionError(msg)))
         }
     }
 }
@@ -62,25 +67,25 @@ where
         Value::Number(num) => {
             if let Some(int) = num.as_i64() {
                 let int = int.try_into().map_err(|_| invalid_number(num))?;
-                write.write_u32(1)?;
+                write.write_u32(INT)?;
                 write.write_i32(int)?;
             } else if let Some(float) = num.as_f64() {
-                write.write_u32(2)?;
+                write.write_u32(FLOAT)?;
                 write.write_f32(float as f32)?;
             } else {
-                return Err(invalid_number(num).into());
+                return Err(Error::Assert(invalid_number(num)));
             }
         }
         Value::String(string) => {
-            write.write_u32(3)?;
+            write.write_u32(STRING)?;
             write.write_string(string)?;
         }
         Value::Null => {
-            write.write_u32(4)?;
+            write.write_u32(LIST)?;
             write.write_u32(1)?; // count
         }
         Value::Array(list) => {
-            write.write_u32(4)?;
+            write.write_u32(LIST)?;
             let count = list.len() as u32 + 1;
             write.write_u32(count)?;
 
@@ -90,7 +95,7 @@ where
         }
         _ => {
             let msg = format!("Expected valid value type, but was {}", value);
-            return Err(AssertionError(msg).into());
+            return Err(Error::Assert(AssertionError(msg)));
         }
     };
     Ok(())
