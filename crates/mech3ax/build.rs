@@ -1,5 +1,7 @@
-use vergen::{generate_cargo_keys, ConstantsFlags};
+use vergen::{vergen, Config, TimestampKind};
 
 fn main() {
-    generate_cargo_keys(ConstantsFlags::all()).unwrap();
+    let mut config = Config::default();
+    *config.build_mut().kind_mut() = TimestampKind::DateOnly;
+    vergen(config).unwrap();
 }

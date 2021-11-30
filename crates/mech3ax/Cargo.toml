@@ -35,7 +35,7 @@ mech3ax-motion = { path = "../mech3ax-motion" }
 mech3ax-reader = { path = "../mech3ax-reader" }
 
 [build-dependencies]
-vergen = "3.2.0"
+vergen = { version = "5", default-features = false, features = ["build", "git"] }
 
 [lib]
 doctest = false

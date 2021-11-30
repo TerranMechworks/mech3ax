@@ -6,9 +6,9 @@ use env_logger::Env;
 use mech3ax_archive::{Mode, Version};
 
 const VERSION: &str = concat!(
-    env!("VERGEN_COMMIT_DATE"),
+    env!("VERGEN_BUILD_DATE"),
     " (",
-    env!("VERGEN_SHA_SHORT"),
+    env!("VERGEN_GIT_SEMVER"),
     ")"
 );
 
