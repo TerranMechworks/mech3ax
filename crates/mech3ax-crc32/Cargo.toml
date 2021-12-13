@@ -1,5 +1,5 @@
 [package]
-name = "mech3ax-version"
+name = "mech3ax-crc32"
 version = "0.0.0"
 authors = ["Toby Fleming <tobywf@users.noreply.github.com>"]
 edition = "2021"
@@ -10,9 +10,6 @@ autoexamples = false
 autobenches = false
 
 [dependencies]
-
-[build-dependencies]
-time = "0.3.5"
 
 [lib]
 doctest = false

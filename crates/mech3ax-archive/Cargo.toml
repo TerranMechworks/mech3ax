@@ -4,7 +4,6 @@ version = "0.0.0"
 authors = ["Toby Fleming <tobywf@users.noreply.github.com>"]
 edition = "2018"
 publish = false
-build = "build.rs"
 
 autoexamples = false
 autobenches = false
@@ -13,6 +12,7 @@ autobenches = false
 serde = { version = "1.0", features = ["derive"] }
 
 mech3ax-common = { path = "../mech3ax-common" }
+mech3ax-crc32 = { path = "../mech3ax-crc32" }
 
 [lib]
 doctest = false
