@@ -17,13 +17,14 @@ fn main() {
     let mut i = 0u8;
     for maybe_line in read.lines() {
         let line = maybe_line.unwrap();
-        if line.starts_with("#") || line.is_empty() {
+        if line.starts_with('#') || line.is_empty() {
             continue;
         }
         let mut split = line.split('\t');
         let ascii: u8 = {
             let value = split.next().unwrap();
             let src = value.trim_start();
+            #[allow(clippy::from_str_radix_10)]
             u8::from_str_radix(src, 10).unwrap()
         };
         let unicode = {
