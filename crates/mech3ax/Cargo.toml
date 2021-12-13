@@ -13,12 +13,11 @@ publish = false
 
 autoexamples = false
 autobenches = false
-build = "build.rs"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-clap = "3.0.0-beta.5"
+clap = { version = "3.0.0-beta.5", default-features = false, features = ["std", "derive", "color"] }
 zip = { version = "0.5", default-features = false, features = ["deflate"] }
 image = {version = "0.23.14", default-features = false, features = ["png"] }
 env_logger = { version = "0.9", default-features = false, features = ["atty", "humantime"] }
@@ -33,9 +32,7 @@ mech3ax-interp = { path = "../mech3ax-interp" }
 mech3ax-messages = { path = "../mech3ax-messages" }
 mech3ax-motion = { path = "../mech3ax-motion" }
 mech3ax-reader = { path = "../mech3ax-reader" }
-
-[build-dependencies]
-vergen = { version = "5", default-features = false, features = ["build", "git"] }
+mech3ax-version = { path = "../mech3ax-version" }
 
 [lib]
 doctest = false

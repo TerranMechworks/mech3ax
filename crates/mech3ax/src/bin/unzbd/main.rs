@@ -4,13 +4,7 @@ use anyhow::Result;
 use clap::Parser;
 use env_logger::Env;
 use mech3ax_archive::{Mode, Version};
-
-const VERSION: &str = concat!(
-    env!("VERGEN_BUILD_DATE"),
-    " (",
-    env!("VERGEN_GIT_SEMVER"),
-    ")"
-);
+use mech3ax_version::VERSION;
 
 #[derive(Parser)]
 #[clap(version = VERSION)]

@@ -1,0 +1,17 @@
+[package]
+name = "mech3ax-version"
+version = "0.0.0"
+authors = ["Toby Fleming <tobywf@users.noreply.github.com>"]
+edition = "2021"
+publish = false
+
+autoexamples = false
+autobenches = false
+
+[dependencies]
+
+[build-dependencies]
+vergen = { version = "5", default-features = false, features = ["build", "git"] }
+
+[lib]
+doctest = false
