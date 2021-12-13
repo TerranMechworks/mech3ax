@@ -12,10 +12,7 @@ const FLOAT: u32 = 2;
 const STRING: u32 = 3;
 const LIST: u32 = 4;
 
-fn read_value<R>(read: &mut CountingReader<R>) -> Result<Value>
-where
-    R: Read,
-{
+fn read_value(read: &mut CountingReader<impl Read>) -> Result<Value> {
     match read.read_u32()? {
         INT => Ok(Value::Number(Number::from(read.read_i32()?))),
         FLOAT => Ok(Value::Number(
@@ -44,10 +41,7 @@ where
     }
 }
 
-pub fn read_reader<R>(read: &mut CountingReader<R>) -> Result<Value>
-where
-    R: Read,
-{
+pub fn read_reader(read: &mut CountingReader<impl Read>) -> Result<Value> {
     let value = read_value(read);
     if value.is_ok() {
         read.assert_end()?;
@@ -59,10 +53,7 @@ fn invalid_number(num: &Number) -> AssertionError {
     AssertionError(format!("Expected valid number, but was {}", num))
 }
 
-fn write_value<W>(write: &mut W, value: &Value) -> Result<()>
-where
-    W: Write,
-{
+fn write_value(write: &mut impl Write, value: &Value) -> Result<()> {
     match value {
         Value::Number(num) => {
             if let Some(int) = num.as_i64() {
@@ -85,8 +76,15 @@ where
             write.write_u32(1)?; // count
         }
         Value::Array(list) => {
+            let length = list.len() + 1;
+            let count = length.try_into().map_err(|_| {
+                AssertionError(format!(
+                    "Expected list to have {} items or fewer, but was {}",
+                    u32::MAX,
+                    length
+                ))
+            })?;
             write.write_u32(LIST)?;
-            let count = list.len() as u32 + 1;
             write.write_u32(count)?;
 
             for item in list.iter() {
@@ -101,9 +99,6 @@ where
     Ok(())
 }
 
-pub fn write_reader<W>(write: &mut W, value: &Value) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_reader(write: &mut impl Write, value: &Value) -> Result<()> {
     write_value(write, value)
 }
