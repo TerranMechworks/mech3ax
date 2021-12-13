@@ -23,7 +23,6 @@ mech3ax-archive = { path = "../mech3ax-archive" }
 mech3ax-gamez = { path = "../mech3ax-gamez" }
 mech3ax-image = { path = "../mech3ax-image" }
 mech3ax-interp = { path = "../mech3ax-interp" }
-mech3ax-messages = { path = "../mech3ax-messages" }
 mech3ax-motion = { path = "../mech3ax-motion" }
 mech3ax-reader = { path = "../mech3ax-reader" }
 mech3ax-version = { path = "../mech3ax-version" }
