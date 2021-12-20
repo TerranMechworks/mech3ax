@@ -16,11 +16,11 @@ struct Opts {
 
 #[derive(Parser)]
 struct ZipOpts {
-    #[clap(about = "The source ZIP path")]
+    #[clap(help = "The source ZIP path")]
     input: String,
-    #[clap(about = "The destination ZBD path (will be overwritten)")]
+    #[clap(help = "The destination ZBD path (will be overwritten)")]
     output: String,
-    #[clap(long = "pm", about = "Pirate's Moon")]
+    #[clap(long = "pm", help = "Pirate's Moon")]
     is_pm: bool,
 }
 
@@ -36,20 +36,20 @@ impl ZipOpts {
 
 #[derive(Parser)]
 struct InterpOpts {
-    #[clap(about = "The source JSON path")]
+    #[clap(help = "The source JSON path")]
     input: String,
-    #[clap(about = "The destination ZBD path (will be overwritten)")]
+    #[clap(help = "The destination ZBD path (will be overwritten)")]
     output: String,
 }
 
 #[derive(Parser)]
 struct TextureOpts {
-    #[clap(about = "The source ZIP path")]
+    #[clap(help = "The source ZIP path")]
     input: String,
-    #[clap(about = "The destination ZBD path (will be overwritten)")]
+    #[clap(help = "The destination ZBD path (will be overwritten)")]
     output: String,
     #[clap(
-        about = "When specified, load 'manifest.json' and PNG files instead of a ZIP",
+        help = "When specified, load 'manifest.json' and PNG files instead of a ZIP",
         long
     )]
     modding: bool,

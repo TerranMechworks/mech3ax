@@ -9,8 +9,6 @@ build = "build.rs"
 autoexamples = false
 autobenches = false
 
-[dependencies]
-
 [lib]
 doctest = false
 test = false

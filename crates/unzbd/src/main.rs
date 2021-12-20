@@ -15,11 +15,11 @@ struct Opts {
 
 #[derive(Parser)]
 struct ZipOpts {
-    #[clap(about = "The source ZBD path")]
+    #[clap(help = "The source ZBD path")]
     input: String,
-    #[clap(about = "The destination ZIP path (will be overwritten)")]
+    #[clap(help = "The destination ZIP path (will be overwritten)")]
     output: String,
-    #[clap(long = "pm", about = "Pirate's Moon")]
+    #[clap(long = "pm", help = "Pirate's Moon")]
     is_pm: bool,
 }
 
@@ -35,29 +35,29 @@ impl ZipOpts {
 
 #[derive(Parser)]
 struct InterpOpts {
-    #[clap(about = "The source ZBD path")]
+    #[clap(help = "The source ZBD path")]
     input: String,
-    #[clap(about = "The destination JSON path (will be overwritten)")]
+    #[clap(help = "The destination JSON path (will be overwritten)")]
     output: String,
 }
 
 #[derive(Parser)]
 struct TextureOpts {
-    #[clap(about = "The source ZBD path")]
+    #[clap(help = "The source ZBD path")]
     input: String,
-    #[clap(about = "The destination ZIP path (will be overwritten)")]
+    #[clap(help = "The destination ZIP path (will be overwritten)")]
     output: String,
 }
 
 #[derive(Parser)]
 struct MsgOpts {
-    #[clap(about = "The source Mech3Msg.dll path")]
+    #[clap(help = "The source Mech3Msg.dll path")]
     input: String,
-    #[clap(about = "The destination JSON path (will be overwritten)")]
+    #[clap(help = "The destination JSON path (will be overwritten)")]
     output: String,
-    #[clap(long = "dump-ids", about = "Dump message IDs")]
+    #[clap(long = "dump-ids", help = "Dump message IDs")]
     dump_ids: bool,
-    #[clap(long = "skip-data", hidden = true)]
+    #[clap(long = "skip-data", hide = true)]
     skip_data: Option<u64>,
 }
 

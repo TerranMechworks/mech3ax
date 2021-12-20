@@ -11,9 +11,9 @@ autobenches = false
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-clap = { version = "3.0.0-beta.5", default-features = false, features = ["std", "derive", "color"] }
+clap = { version = "3.0.0-rc.4", default-features = false, features = ["std", "derive", "color"] }
 zip = { version = "0.5", default-features = false, features = ["deflate"] }
-image = {version = "0.23.14", default-features = false, features = ["png"] }
+image = { version = "0.23", default-features = false, features = ["png"] }
 env_logger = { version = "0.9", default-features = false, features = ["atty", "humantime"] }
 anyhow = "1.0"
 

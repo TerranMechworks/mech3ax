@@ -17,7 +17,7 @@ autobenches = false
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-image = {version = "0.23.14", default-features = false, features = ["png"] }
+image = { version = "0.23", default-features = false, features = ["png"] }
 anyhow = "1.0"
 
 mech3ax-common = { path = "../mech3ax-common" }
