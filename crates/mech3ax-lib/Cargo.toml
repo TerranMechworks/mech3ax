@@ -1,6 +1,6 @@
 [package]
-name = "mech3ax"
-version = "0.4.1"
+name = "mech3ax-lib"
+version = "0.0.0"
 authors = ["Toby Fleming <tobywf@users.noreply.github.com>"]
 edition = "2021"
 description = "mech3ax converts assets from the 1998 MechWarrior 3 game to modern formats and back"
