@@ -1,12 +1,13 @@
 #![warn(clippy::all, clippy::cargo)]
 use ::serde::{Deserialize, Serialize};
-use chrono::{DateTime, TimeZone, Utc};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::size::ReprSize;
 use mech3ax_common::string::{str_from_c_padded, str_from_c_sized, str_to_c_padded};
 use mech3ax_common::{assert_that, static_assert_size, Result};
 use std::io::{Read, Write};
+use time::OffsetDateTime;
+mod rfc3339;
 
 const SIGNATURE: u32 = 0x08971119;
 const VERSION: u32 = 7;
@@ -22,7 +23,8 @@ static_assert_size!(EntryC, 128);
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Script {
     pub name: String,
-    pub last_modified: DateTime<Utc>,
+    #[serde(with = "rfc3339")]
+    pub last_modified: OffsetDateTime,
     pub lines: Vec<String>,
 }
 
@@ -77,7 +79,8 @@ where
         .map(|_| {
             let entry: EntryC = read.read_struct()?;
             let name = assert_utf8("name", offset, || str_from_c_padded(&entry.name))?;
-            let last_modified = Utc.timestamp(entry.last_modified as i64, 0);
+            let last_modified =
+                OffsetDateTime::from_unix_timestamp(entry.last_modified as i64).unwrap();
             offset += EntryC::SIZE as u64;
             Ok((name, last_modified, entry.start as u64))
         })
@@ -138,7 +141,7 @@ where
         .map(|script| {
             let mut name = [0; 120];
             str_to_c_padded(&script.name, &mut name);
-            let last_modified = script.last_modified.timestamp() as u32;
+            let last_modified = script.last_modified.unix_timestamp() as u32;
             let entry = EntryC {
                 name,
                 last_modified,
@@ -163,3 +166,6 @@ where
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests;
