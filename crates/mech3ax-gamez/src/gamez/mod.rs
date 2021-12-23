@@ -36,7 +36,12 @@ struct HeaderC {
 static_assert_size!(HeaderC, 36);
 
 const SIGNATURE: u32 = 0x02971222;
-const VERSION: u32 = 27;
+
+#[allow(dead_code)]
+const VERSION_RECOIL: u32 = 15;
+const VERSION_MW: u32 = 27;
+#[allow(dead_code)]
+const VERSION_PM: u32 = 41;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GameZ {
@@ -54,7 +59,7 @@ where
     let header: HeaderC = read.read_struct()?;
 
     assert_that!("signature", header.signature == SIGNATURE, 0)?;
-    assert_that!("version", header.version == VERSION, 4)?;
+    assert_that!("version", header.version == VERSION_MW, 4)?;
     assert_that!("texture count", header.texture_count < 4096, 8)?;
     assert_that!("node count", header.node_count < header.node_array_size, 28)?;
 
@@ -116,7 +121,7 @@ where
 
     write.write_struct(&HeaderC {
         signature: SIGNATURE,
-        version: VERSION,
+        version: VERSION_MW,
         texture_count,
         textures_offset,
         materials_offset,

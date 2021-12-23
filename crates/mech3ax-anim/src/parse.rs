@@ -11,7 +11,13 @@ use std::convert::From;
 use std::io::{Read, Write};
 
 const SIGNATURE: u32 = 0x08170616;
-const VERSION: u32 = 39;
+
+#[allow(dead_code)]
+const VERSION_RECOIL: u32 = 28;
+const VERSION_MW: u32 = 39;
+#[allow(dead_code)]
+const VERSION_PM: u32 = 50;
+
 #[allow(clippy::excessive_precision)]
 const GRAVITY: f32 = -9.800000190734863;
 
@@ -66,7 +72,7 @@ fn read_anim_header<R: Read>(read: &mut CountingReader<R>) -> Result<Vec<AnimNam
     let signature = read.read_u32()?;
     assert_that!("signature", signature == SIGNATURE, read.prev)?;
     let version = read.read_u32()?;
-    assert_that!("version", version == VERSION, read.prev)?;
+    assert_that!("version", version == VERSION_MW, read.prev)?;
     let count = read.read_u32()?;
 
     trace!("Reading anim names at {}", read.offset);
@@ -174,7 +180,7 @@ where
 
 fn write_anim_header<W: Write>(write: &mut W, anim_names: &[AnimName]) -> Result<()> {
     write.write_u32(SIGNATURE)?;
-    write.write_u32(VERSION)?;
+    write.write_u32(VERSION_MW)?;
     write.write_u32(anim_names.len() as u32)?;
 
     for anim_name in anim_names {
