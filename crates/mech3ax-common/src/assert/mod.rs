@@ -212,8 +212,7 @@ where
 {
     let mut iter = buf.iter().enumerate();
 
-    if !iter.all(|(_, &v)| v == 0) {
-        let index = iter.next().map(|(i, _)| i).unwrap_or(buf.len() - 1);
+    if let Some((index, _)) = iter.find(|(_, &v)| v != 0) {
         let value = buf[index];
         let msg = format!(
             "Expected '{}' to be zero, but byte {} was {:02X} (at {})",

@@ -1,3 +1,5 @@
+use super::assert_all_zero;
+
 #[test]
 fn is_equal_to() {
     assert_that!("foo", 1 == 1, 0).unwrap();
@@ -65,5 +67,26 @@ fn is_between() {
     assert_eq!(
         format!("{:#?}", err),
         "Expected 1 <= 'foo' <= 2, but was 3 (at 0)"
+    );
+}
+
+#[test]
+fn all_zero_index() {
+    let err = assert_all_zero("foo", 42, &[3]).unwrap_err();
+    assert_eq!(
+        format!("{:#?}", err),
+        "Expected 'foo' to be zero, but byte 0 was 03 (at 42)"
+    );
+
+    let err = assert_all_zero("foo", 42, &[0, 3]).unwrap_err();
+    assert_eq!(
+        format!("{:#?}", err),
+        "Expected 'foo' to be zero, but byte 1 was 03 (at 42)"
+    );
+
+    let err = assert_all_zero("foo", 42, &[0, 255, 0]).unwrap_err();
+    assert_eq!(
+        format!("{:#?}", err),
+        "Expected 'foo' to be zero, but byte 1 was FF (at 42)"
     );
 }
