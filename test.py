@@ -6,10 +6,11 @@ from typing import List, Tuple, Literal
 
 Build = Literal["debug", "release"]
 
+
 class Tester:
-    def __init__(self, base_path: Path, output_base: Path, build: Build):
-        self.unzbd_exe = f"target/{build}/unzbd"
-        self.rezbd_exe = f"target/{build}/rezbd"
+    def __init__(self, base_path: Path, output_base: Path, target_dir: Path):
+        self.unzbd_exe = target_dir / "unzbd"
+        self.rezbd_exe = target_dir / "unzbd"
         self.miscompares: List[Tuple[Path, Path]] = []
         self.base_path = base_path
         output_base.mkdir(exist_ok=True)
@@ -28,13 +29,13 @@ class Tester:
             output_dir.mkdir(exist_ok=True)
 
     def unzbd(self, command: str, one: Path, two: Path, is_pm: bool = False) -> None:
-        cmd = [self.unzbd_exe, command, str(one), str(two)]
+        cmd = [str(self.unzbd_exe), command, str(one), str(two)]
         if is_pm:
             cmd.append("--pm")
         subprocess.run(cmd, check=True)
 
     def rezbd(self, command: str, one: Path, two: Path, is_pm: bool = False) -> None:
-        cmd = [self.rezbd_exe, command, str(one), str(two)]
+        cmd = [str(self.rezbd_exe), command, str(one), str(two)]
         if is_pm:
             cmd.append("--pm")
         subprocess.run(cmd, check=True)
@@ -92,7 +93,14 @@ class Tester:
             print(name, "Mech3Msg.dll")
             input_dll = zbd_dir.parent / "Mech3Msg.dll"
             output_json = output_base / "Mech3Msg.json"
-            self.unzbd("messages", input_dll, output_json)
+            cmd = [
+                str(self.unzbd_exe),
+                "messages",
+                "--dump-ids",
+                str(input_dll),
+                str(output_json),
+            ]
+            subprocess.run(cmd, check=True)
             # can't convert back to a DLL
 
     def test_textures(self) -> None:
@@ -229,21 +237,23 @@ def main() -> None:
         "output_dir", type=lambda value: Path(value).resolve(strict=True)
     )
     parser.add_argument("--release", action="store_true")
+    parser.add_argument("--target-dir", default="target")
     args = parser.parse_args()
 
     build: Build = "release" if args.release else "debug"
-    print("running", build)
-    tester = Tester(args.versions_dir, args.output_dir, build)
-    tester.test_sounds()
-    tester.test_interp()
+    target_dir = Path(args.target_dir).resolve(strict=True) / build
+    print("running", build, target_dir)
+    tester = Tester(args.versions_dir, args.output_dir, target_dir)
+    # tester.test_sounds()
+    # tester.test_interp()
     tester.test_resources()
-    tester.test_reader()
-    tester.test_mechlib()
-    tester.test_motion()
-    tester.test_textures()
-    tester.test_gamez()
-    tester.test_anim()
-    tester.print_miscompares()
+    # tester.test_reader()
+    # tester.test_mechlib()
+    # tester.test_motion()
+    # tester.test_textures()
+    # tester.test_gamez()
+    # tester.test_anim()
+    # tester.print_miscompares()
 
 
 if __name__ == "__main__":
