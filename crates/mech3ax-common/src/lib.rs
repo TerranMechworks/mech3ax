@@ -10,13 +10,33 @@ pub mod types;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
+pub enum PeError {
+    #[error("Address {value} underflows bound {bound} in section {section}")]
+    Underflow {
+        section: String,
+        value: u32,
+        bound: u32,
+    },
+    #[error("Address {value} overflows bound {bound} in section {section}")]
+    Overflow {
+        section: String,
+        value: u32,
+        bound: u32,
+    },
+    #[error(transparent)]
+    TryFrom(#[from] std::num::TryFromIntError),
+    #[error("Offset {0} would cause out-of-bounds read")]
+    ReadOutOfBounds(usize),
+}
+
+#[derive(Debug, Error)]
 pub enum Error {
     #[error(transparent)]
     IO(#[from] std::io::Error),
     #[error(transparent)]
     Assert(#[from] assert::AssertionError),
     #[error(transparent)]
-    PeLite(#[from] pelite::Error),
+    PeError(#[from] PeError),
     #[error("Unexpected alpha channel for \"{name}\" (expected {expected} alpha, found {actual})")]
     InvalidAlphaChannel {
         name: String,

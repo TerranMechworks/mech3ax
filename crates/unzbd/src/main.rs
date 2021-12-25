@@ -58,7 +58,7 @@ struct MsgOpts {
     #[clap(long = "dump-ids", help = "Dump message IDs")]
     dump_ids: bool,
     #[clap(long = "skip-data", hide = true)]
-    skip_data: Option<u64>,
+    skip_data: Option<usize>,
 }
 
 #[derive(Parser)]
