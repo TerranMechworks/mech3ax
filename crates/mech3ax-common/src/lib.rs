@@ -43,11 +43,8 @@ pub enum Error {
         expected: String,
         actual: String,
     },
-    #[error("Unexpected image format for \"{name}\" ({color:?} is not supported)")]
-    InvalidImageFormat {
-        name: String,
-        color: ::image::ColorType,
-    },
+    #[error("Unexpected image format for \"{name}\" ({color} is not supported)")]
+    InvalidImageFormat { name: String, color: String },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

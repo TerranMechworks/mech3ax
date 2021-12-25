@@ -450,7 +450,7 @@ where
                 _ => {
                     return Err(Error::InvalidImageFormat {
                         name: info.name.to_owned(),
-                        color: image.color(),
+                        color: format!("{:?}", image.color()),
                     })
                 }
             };
@@ -478,7 +478,7 @@ where
                 _ => {
                     return Err(Error::InvalidImageFormat {
                         name: info.name.to_owned(),
-                        color: image.color(),
+                        color: format!("{:?}", image.color()),
                     })
                 }
             };
@@ -506,7 +506,7 @@ where
                 _ => {
                     return Err(Error::InvalidImageFormat {
                         name: info.name.to_owned(),
-                        color: image.color(),
+                        color: format!("{:?}", image.color()),
                     })
                 }
             };
