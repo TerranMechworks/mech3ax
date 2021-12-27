@@ -1,4 +1,4 @@
-use crate::{InterpOpts, MsgOpts, ZipOpts};
+use crate::{InterpOpts, MsgOpts, ReaderOpts, ZipOpts};
 use anyhow::{bail, Context, Result};
 use image::ImageOutputFormat;
 use mech3ax_anim::read_anim;
@@ -123,8 +123,14 @@ pub(crate) fn sounds(opts: ZipOpts) -> Result<()> {
     )
 }
 
-pub(crate) fn reader(opts: ZipOpts) -> Result<()> {
-    let version = opts.version(Mode::Reader);
+pub(crate) fn reader(opts: ReaderOpts) -> Result<()> {
+    let version = match opts.is_pm {
+        false => Version::One,
+        true => match opts.skip_crc {
+            false => Version::Two(Mode::Reader),
+            true => Version::Two(Mode::ReaderBypass),
+        },
+    };
     let options = deflate_opts();
 
     _zarchive(

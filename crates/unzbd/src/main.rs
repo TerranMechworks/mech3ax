@@ -34,6 +34,22 @@ impl ZipOpts {
 }
 
 #[derive(Parser)]
+struct ReaderOpts {
+    #[clap(help = "The source ZBD path")]
+    input: String,
+    #[clap(help = "The destination ZIP path (will be overwritten)")]
+    output: String,
+    #[clap(long = "pm", help = "Pirate's Moon")]
+    is_pm: bool,
+    #[clap(
+        long = "skip-crc",
+        help = "Skip the CRC check (only for PM)",
+        hide = true
+    )]
+    skip_crc: bool,
+}
+
+#[derive(Parser)]
 struct InterpOpts {
     #[clap(help = "The source ZBD path")]
     input: String,
@@ -57,7 +73,11 @@ struct MsgOpts {
     output: String,
     #[clap(long = "dump-ids", help = "Dump message IDs")]
     dump_ids: bool,
-    #[clap(long = "skip-data", hide = true)]
+    #[clap(
+        long = "skip-data",
+        help = "Number of bytes to skip for CRT initialisation",
+        hide = true
+    )]
     skip_data: Option<usize>,
 }
 
@@ -70,7 +90,7 @@ enum SubCommand {
     #[clap(about = "Extract 'interp.zbd' files to JSON")]
     Interp(InterpOpts),
     #[clap(about = "Extract 'reader*.zbd' archives to ZIP")]
-    Reader(ZipOpts),
+    Reader(ReaderOpts),
     #[clap(about = "Extract 'Mech3Msg.dll' files to JSON")]
     Messages(MsgOpts),
     #[clap(

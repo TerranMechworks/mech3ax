@@ -18,6 +18,7 @@ pub enum Mode {
     Reader,
     Sounds,
     Motion,
+    ReaderBypass,
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -67,10 +68,12 @@ where
             let count = read.read_u32()?;
             let checksum = read.read_u32()?;
 
-            if mode != Mode::Reader {
-                assert_that!("archive checksum", checksum == 0, pos + 8)?;
+            match mode {
+                Mode::Motion | Mode::Sounds => {
+                    assert_that!("archive checksum", checksum == 0, pos + 8)?;
+                }
+                Mode::Reader | Mode::ReaderBypass => (),
             }
-
             (count, 12, checksum)
         }
     };
@@ -205,7 +208,7 @@ where
             write.write_u32(VERSION_MW)?;
             write.write_u32(count)?;
         }
-        Version::Two(Mode::Reader) => {
+        Version::Two(Mode::Reader) | Version::Two(Mode::ReaderBypass) => {
             write.write_u32(VERSION_PM)?;
             write.write_u32(count)?;
             write.write_u32(crc)?;
