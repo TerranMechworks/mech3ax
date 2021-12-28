@@ -121,6 +121,18 @@ where `--rtexture` and `--rmechtex` are optional.
 
 ## Changelog
 
+### [0.5.0] - 2021-12-27
+
+* Ensure strings are ASCII (breaking change for modding)
+* Fix incorrect image/alpha validation for palette images
+* New FFI interface with WAV parsing support
+* Figured out area partition values (breaking change)
+* Split code into multiple crates for lower rebuild times
+* General improvements to rebuild times
+* Implement simple Windows-1252 decoder
+* Implement PE (32 bit) parsing
+* Bumped Rust edition to 2021
+
 ### [0.4.1] - 2021-02-03
 
 * Allow arbitrary `.data` section/CRT initialization skip for message DLLs to support Recoil's `messages.dll` (hidden in CLI)
