@@ -121,7 +121,7 @@ where `--rtexture` and `--rmechtex` are optional.
 
 ## Changelog
 
-### [0.4.1] - 2020-02-03
+### [0.4.1] - 2021-02-03
 
 * Allow arbitrary `.data` section/CRT initialization skip for message DLLs to support Recoil's `messages.dll` (hidden in CLI)
 * Messages `--dump-ids`/JSON format changed to include the language ID - breaking change
