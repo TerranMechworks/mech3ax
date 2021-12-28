@@ -118,7 +118,7 @@ pub(crate) fn sounds(opts: ZipOpts) -> Result<()> {
         opts.input,
         opts.output,
         version,
-        "Failed to read interpreter data",
+        "Failed to read sounds data",
         |zip, name, data, _offset| zip_write(zip, options, name, &data),
     )
 }

@@ -10,7 +10,7 @@ Build = Literal["debug", "release"]
 class Tester:
     def __init__(self, base_path: Path, output_base: Path, target_dir: Path):
         self.unzbd_exe = target_dir / "unzbd"
-        self.rezbd_exe = target_dir / "unzbd"
+        self.rezbd_exe = target_dir / "rezbd"
         self.miscompares: List[Tuple[Path, Path]] = []
         self.base_path = base_path
         output_base.mkdir(exist_ok=True)
@@ -244,16 +244,16 @@ def main() -> None:
     target_dir = Path(args.target_dir).resolve(strict=True) / build
     print("running", build, target_dir)
     tester = Tester(args.versions_dir, args.output_dir, target_dir)
-    # tester.test_sounds()
-    # tester.test_interp()
+    tester.test_sounds()
+    tester.test_interp()
     tester.test_resources()
-    # tester.test_reader()
-    # tester.test_mechlib()
-    # tester.test_motion()
-    # tester.test_textures()
-    # tester.test_gamez()
-    # tester.test_anim()
-    # tester.print_miscompares()
+    tester.test_reader()
+    tester.test_mechlib()
+    tester.test_motion()
+    tester.test_textures()
+    tester.test_gamez()
+    tester.test_anim()
+    tester.print_miscompares()
 
 
 if __name__ == "__main__":
