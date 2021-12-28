@@ -2,7 +2,7 @@ import filecmp
 import subprocess
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import List, Tuple, Literal
+from typing import List, Literal, Tuple
 
 Build = Literal["debug", "release"]
 
