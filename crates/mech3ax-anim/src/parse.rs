@@ -111,17 +111,12 @@ fn read_anim_info<R: Read>(read: &mut CountingReader<R>) -> Result<(u16, u32, u3
         read.prev + 20
     )?;
     assert_that!(
-        "anim localisation count",
-        anim_info.loc_count == 0,
-        read.prev + 16
-    )?;
-    assert_that!(
         "anim world pointer",
         anim_info.world_ptr != 0,
-        read.prev + 20
+        read.prev + 24
     )?;
     // the gravity is always the same
-    assert_that!("anim gravity", anim_info.gravity == GRAVITY, read.prev + 24)?;
+    assert_that!("anim gravity", anim_info.gravity == GRAVITY, read.prev + 28)?;
     assert_that!("anim field 32", anim_info.zero32 == 0, read.prev + 32)?;
     assert_that!("anim field 36", anim_info.zero36 == 0, read.prev + 36)?;
     assert_that!("anim field 40", anim_info.zero40 == 0, read.prev + 40)?;
