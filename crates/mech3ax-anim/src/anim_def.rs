@@ -38,7 +38,7 @@ struct AnimDefC {
     anim_root_ptr: u32,              // 100
     zero104: [u8; 44],               // 104
     flags: u32,                      // 148
-    zero152: u8,                     // 152
+    status: u8,                      // 152
     activation: u8,                  // 153
     action_prio: u8,                 // 154
     two155: u8,                      // 155
@@ -292,7 +292,7 @@ pub fn read_anim_def<R: Read>(read: &mut CountingReader<R>) -> Result<(AnimDef, 
         None
     };
 
-    assert_that!("anim def field 152", anim_def.zero152 == 0, prev + 152)?;
+    assert_that!("anim def status", anim_def.status == 0, prev + 152)?;
     let activation = AnimActivation::from_u8(anim_def.activation).ok_or_else(|| {
         AssertionError(format!(
             "Expected valid anim def activation, but was {} (at {})",
@@ -758,7 +758,7 @@ pub fn write_anim_def<W: Write>(
         anim_root_ptr: anim_ptr.anim_root_ptr,
         zero104: [0; 44],
         flags: flags.bits(),
-        zero152: 0,
+        status: 0,
         activation: anim_def.activation as u8,
         action_prio: 4,
         two155: 2,
