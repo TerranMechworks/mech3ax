@@ -86,15 +86,6 @@ struct AnimDefC {
 static_assert_size!(AnimDefC, 316);
 
 #[repr(C)]
-struct ResetStateC {
-    command: [u8; 56], // 00
-    pointer: u32,      // 56
-    size: u32,         // 60
-}
-static_assert_size!(ResetStateC, 64);
-
-const RESET_SEQUENCE: &str = "RESET_SEQUENCE";
-#[repr(C)]
 struct SeqDefInfoC {
     name: [u8; 32],   // 00
     flags: u32,       // 32
@@ -103,6 +94,7 @@ struct SeqDefInfoC {
     size: u32,        // 60
 }
 static_assert_size!(SeqDefInfoC, 64);
+const RESET_SEQUENCE: &str = "RESET_SEQUENCE";
 
 pub fn read_anim_def_zero<R: Read>(read: &mut CountingReader<R>) -> Result<()> {
     // the first entry is always zero
@@ -117,7 +109,8 @@ pub fn read_anim_def_zero<R: Read>(read: &mut CountingReader<R>) -> Result<()> {
     )?;
     anim_def[153] = 0;
     assert_all_zero("anim def zero header", read.prev, &anim_def)?;
-    let mut reset_state = [0; ResetStateC::SIZE as usize];
+    // reset state
+    let mut reset_state = [0; SeqDefInfoC::SIZE as usize];
     read.read_exact(&mut reset_state)?;
     assert_all_zero("anim def zero reset state", read.prev, &reset_state)?;
     Ok(())
@@ -130,14 +123,24 @@ fn read_reset_sequence<R: Read>(
     pointer: u32,
 ) -> Result<Option<SeqDef>> {
     trace!("Reading anim def reset seq at {}", read.offset);
-    let reset_state: ResetStateC = read.read_struct()?;
-    let command = assert_utf8("anim def reset seq command", read.prev + 0, || {
-        str_from_c_padded(&reset_state.command)
+    let reset_state: SeqDefInfoC = read.read_struct()?;
+    let name = assert_utf8("anim def reset seq name", read.prev + 0, || {
+        str_from_c_padded(&reset_state.name)
     })?;
     assert_that!(
-        "anim def reset seq command",
-        &command == RESET_SEQUENCE,
+        "anim def reset seq name",
+        &name == RESET_SEQUENCE,
         read.prev + 0
+    )?;
+    assert_that!(
+        "anim def reset seq flags",
+        reset_state.flags == 0,
+        read.prev + 32
+    )?;
+    assert_all_zero(
+        "anim def reset seq field 36",
+        read.prev + 36,
+        &reset_state.zero36,
     )?;
     assert_that!(
         "anim def reset seq pointer",
@@ -619,15 +622,18 @@ pub fn write_anim_def_zero<W: Write>(write: &mut W) -> Result<()> {
     // ...except for this one byte?
     anim_def[153] = AnimActivation::OnCall as u8;
     write.write_all(&anim_def)?;
-    write.write_zeros(ResetStateC::SIZE)?;
+    // reset state
+    write.write_zeros(SeqDefInfoC::SIZE)?;
     Ok(())
 }
 
 fn write_reset_sequence<W: Write>(write: &mut W, anim_def: &AnimDef, size: u32) -> Result<()> {
-    let mut command = [0; 56];
-    str_to_c_padded(RESET_SEQUENCE, &mut command);
-    write.write_struct(&ResetStateC {
-        command,
+    let mut name = [0; 32];
+    str_to_c_padded(RESET_SEQUENCE, &mut name);
+    write.write_struct(&SeqDefInfoC {
+        name,
+        flags: 0,
+        zero36: [0; 20],
         pointer: anim_def
             .reset_sequence
             .as_ref()
