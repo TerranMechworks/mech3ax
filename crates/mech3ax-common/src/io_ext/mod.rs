@@ -122,6 +122,7 @@ impl<R: Read + Seek> Seek for CountingReader<R> {
 pub trait ReadHelper {
     fn read_u32(&mut self) -> Result<u32>;
     fn read_u16(&mut self) -> Result<u16>;
+    fn read_f32(&mut self) -> Result<f32>;
 }
 
 impl<R> ReadHelper for R
@@ -138,6 +139,12 @@ where
         let mut buf = [0; 2];
         self.read_exact(&mut buf)?;
         Ok(u16::from_le_bytes(buf))
+    }
+
+    fn read_f32(&mut self) -> Result<f32> {
+        let mut buf = [0; 4];
+        self.read_exact(&mut buf)?;
+        Ok(f32::from_le_bytes(buf))
     }
 }
 
