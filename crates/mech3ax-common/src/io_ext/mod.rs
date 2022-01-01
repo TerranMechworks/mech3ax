@@ -70,6 +70,12 @@ impl<R: Read> CountingReader<R> {
         Ok(i16::from_le_bytes(buf))
     }
 
+    pub fn read_u8(&mut self) -> Result<u8> {
+        let mut buf = [0; 1];
+        self.read_exact(&mut buf)?;
+        Ok(u8::from_le_bytes(buf))
+    }
+
     #[allow(clippy::uninit_assumed_init)]
     pub fn read_struct<S>(&mut self) -> Result<S> {
         let size = std::mem::size_of::<S>();
