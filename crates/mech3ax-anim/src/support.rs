@@ -18,7 +18,7 @@ struct ObjectC {
 }
 static_assert_size!(ObjectC, 96);
 
-pub fn read_objects<R: Read>(read: &mut CountingReader<R>, count: u8) -> Result<Vec<NamePad>> {
+pub fn read_objects(read: &mut CountingReader<impl Read>, count: u8) -> Result<Vec<NamePad>> {
     trace!("Reading anim def object 0 at {}", read.offset);
     // the first entry is always zero
     let object: ObjectC = read.read_struct()?;
@@ -50,7 +50,7 @@ pub fn read_objects<R: Read>(read: &mut CountingReader<R>, count: u8) -> Result<
         .collect()
 }
 
-pub fn write_objects<W: Write>(write: &mut W, objects: &[NamePad]) -> Result<()> {
+pub fn write_objects(write: &mut impl Write, objects: &[NamePad]) -> Result<()> {
     // the first entry is always zero
     write.write_zeros(ObjectC::SIZE)?;
     for object in objects {
@@ -75,7 +75,7 @@ struct NodeInfoC {
 }
 static_assert_size!(NodeInfoC, 40);
 
-pub fn read_nodes<R: Read>(read: &mut CountingReader<R>, count: u8) -> Result<Vec<NamePtr>> {
+pub fn read_nodes(read: &mut CountingReader<impl Read>, count: u8) -> Result<Vec<NamePtr>> {
     trace!("Reading anim def node 0 at {}", read.offset);
     // the first entry is always zero
     let node_info: NodeInfoC = read.read_struct()?;
@@ -116,7 +116,7 @@ pub fn read_nodes<R: Read>(read: &mut CountingReader<R>, count: u8) -> Result<Ve
         .collect()
 }
 
-pub fn write_nodes<W: Write>(write: &mut W, nodes: &[NamePtr]) -> Result<()> {
+pub fn write_nodes(write: &mut impl Write, nodes: &[NamePtr]) -> Result<()> {
     // the first entry is always zero
     write.write_zeros(NodeInfoC::SIZE)?;
     for node_info in nodes {
@@ -140,7 +140,7 @@ struct ReaderLookupC {
 }
 static_assert_size!(ReaderLookupC, 44);
 
-pub fn read_lights<R: Read>(read: &mut CountingReader<R>, count: u8) -> Result<Vec<NamePtr>> {
+pub fn read_lights(read: &mut CountingReader<impl Read>, count: u8) -> Result<Vec<NamePtr>> {
     trace!("Reading anim def light 0 at {}", read.offset);
     // the first entry is always zero
     let light: ReaderLookupC = read.read_struct()?;
@@ -180,7 +180,7 @@ pub fn read_lights<R: Read>(read: &mut CountingReader<R>, count: u8) -> Result<V
         .collect()
 }
 
-pub fn write_lights<W: Write>(write: &mut W, lights: &[NamePtr]) -> Result<()> {
+pub fn write_lights(write: &mut impl Write, lights: &[NamePtr]) -> Result<()> {
     // the first entry is always zero
     write.write_zeros(ReaderLookupC::SIZE)?;
     for light in lights {
@@ -205,7 +205,7 @@ struct PufferRefC {
 }
 static_assert_size!(PufferRefC, 44);
 
-pub fn read_puffers<R: Read>(read: &mut CountingReader<R>, count: u8) -> Result<Vec<NamePtrFlags>> {
+pub fn read_puffers(read: &mut CountingReader<impl Read>, count: u8) -> Result<Vec<NamePtrFlags>> {
     trace!("Reading anim def puffer 0 at {}", read.offset);
     // the first entry is always zero
     let mut puffer = [0; PufferRefC::SIZE as usize];
@@ -246,7 +246,7 @@ pub fn read_puffers<R: Read>(read: &mut CountingReader<R>, count: u8) -> Result<
         .collect()
 }
 
-pub fn write_puffers<W: Write>(write: &mut W, puffers: &[NamePtrFlags]) -> Result<()> {
+pub fn write_puffers(write: &mut impl Write, puffers: &[NamePtrFlags]) -> Result<()> {
     // the first entry is always zero
     write.write_zeros(ReaderLookupC::SIZE)?;
     for puffer in puffers {
@@ -263,8 +263,8 @@ pub fn write_puffers<W: Write>(write: &mut W, puffers: &[NamePtrFlags]) -> Resul
     Ok(())
 }
 
-pub fn read_dynamic_sounds<R: Read>(
-    read: &mut CountingReader<R>,
+pub fn read_dynamic_sounds(
+    read: &mut CountingReader<impl Read>,
     count: u8,
 ) -> Result<Vec<NamePtr>> {
     trace!("Reading anim def dynamic sound 0 at {}", read.offset);
@@ -321,7 +321,7 @@ pub fn read_dynamic_sounds<R: Read>(
         .collect()
 }
 
-pub fn write_dynamic_sounds<W: Write>(write: &mut W, dynamic_sounds: &[NamePtr]) -> Result<()> {
+pub fn write_dynamic_sounds(write: &mut impl Write, dynamic_sounds: &[NamePtr]) -> Result<()> {
     // the first entry is always zero
     write.write_zeros(ReaderLookupC::SIZE)?;
     for dynamic_sound in dynamic_sounds {
@@ -344,10 +344,7 @@ struct StaticSoundC {
 }
 static_assert_size!(StaticSoundC, 36);
 
-pub fn read_static_sounds<R: Read>(
-    read: &mut CountingReader<R>,
-    count: u8,
-) -> Result<Vec<NamePad>> {
+pub fn read_static_sounds(read: &mut CountingReader<impl Read>, count: u8) -> Result<Vec<NamePad>> {
     trace!("Reading anim def static sound 0 at {}", read.offset);
     // the first entry is always zero
     let static_sound: StaticSoundC = read.read_struct()?;
@@ -378,7 +375,7 @@ pub fn read_static_sounds<R: Read>(
         .collect()
 }
 
-pub fn write_static_sounds<W: Write>(write: &mut W, static_sounds: &[NamePad]) -> Result<()> {
+pub fn write_static_sounds(write: &mut impl Write, static_sounds: &[NamePad]) -> Result<()> {
     // the first entry is always zero
     write.write_zeros(StaticSoundC::SIZE)?;
     for static_sound in static_sounds {
@@ -397,7 +394,7 @@ struct AnimRefC {
 }
 static_assert_size!(AnimRefC, 72);
 
-pub fn read_anim_refs<R: Read>(read: &mut CountingReader<R>, count: u8) -> Result<Vec<NamePad>> {
+pub fn read_anim_refs(read: &mut CountingReader<impl Read>, count: u8) -> Result<Vec<NamePad>> {
     // the first entry... is not zero! as this is not a node list
     // there's one anim ref per CALL_ANIMATION, and there may be duplicates to
     // the same anim since multiple calls might need to be ordered
@@ -425,7 +422,7 @@ pub fn read_anim_refs<R: Read>(read: &mut CountingReader<R>, count: u8) -> Resul
         .collect()
 }
 
-pub fn write_anim_refs<W: Write>(write: &mut W, anim_refs: &[NamePad]) -> Result<()> {
+pub fn write_anim_refs(write: &mut impl Write, anim_refs: &[NamePad]) -> Result<()> {
     // the first entry... is not zero! as this is not a node list
     for anim_ref in anim_refs {
         let mut name = [0; 64];
