@@ -136,7 +136,7 @@ struct ReaderLookupC {
     name: [u8; 32], // 00
     flags: u32,     // 32
     pointer: u32,   // 36
-    zero40: u32,    // 40
+    in_world: u32,  // 40
 }
 static_assert_size!(ReaderLookupC, 44);
 
@@ -146,7 +146,7 @@ pub fn read_lights(read: &mut CountingReader<impl Read>, count: u8) -> Result<Ve
     let light: ReaderLookupC = read.read_struct()?;
     assert_all_zero("anim def light zero name", read.prev + 0, &light.name)?;
     assert_that!(
-        "anim def node light field 32",
+        "anim def node light flags",
         light.flags == 0,
         read.prev + 32
     )?;
@@ -156,8 +156,8 @@ pub fn read_lights(read: &mut CountingReader<impl Read>, count: u8) -> Result<Ve
         read.prev + 36
     )?;
     assert_that!(
-        "anim def node light field 40",
-        light.zero40 == 0,
+        "anim def node light in world",
+        light.in_world == 0,
         read.prev + 40
     )?;
 
@@ -168,10 +168,14 @@ pub fn read_lights(read: &mut CountingReader<impl Read>, count: u8) -> Result<Ve
             let name = assert_utf8("anim def light name", read.prev + 0, || {
                 str_from_c_node_name(&light.name)
             })?;
-            assert_that!("anim def light field 32", light.flags == 0, read.prev + 32)?;
+            assert_that!("anim def light flags", light.flags == 0, read.prev + 32)?;
             assert_that!("anim def light pointer", light.pointer != 0, read.prev + 36)?;
             // if this were non-zero, it would cause the light to be removed instead of added (???)
-            assert_that!("anim def light field 40", light.zero40 == 0, read.prev + 40)?;
+            assert_that!(
+                "anim def light in world",
+                light.in_world == 0,
+                read.prev + 40
+            )?;
             Ok(NamePtr {
                 name,
                 pointer: light.pointer,
@@ -190,7 +194,7 @@ pub fn write_lights(write: &mut impl Write, lights: &[NamePtr]) -> Result<()> {
             name,
             flags: 0,
             pointer: light.pointer,
-            zero40: 0,
+            in_world: 0,
         })?;
     }
     Ok(())
@@ -257,7 +261,7 @@ pub fn write_puffers(write: &mut impl Write, puffers: &[NamePtrFlags]) -> Result
             name,
             flags,
             pointer: puffer.pointer,
-            zero40: 0,
+            in_world: 0,
         })?;
     }
     Ok(())
@@ -276,7 +280,7 @@ pub fn read_dynamic_sounds(
         &dynamic_sound.name,
     )?;
     assert_that!(
-        "anim def node dynamic sound field 32",
+        "anim def node dynamic sound flags",
         dynamic_sound.flags == 0,
         read.prev + 32
     )?;
@@ -286,8 +290,8 @@ pub fn read_dynamic_sounds(
         read.prev + 36
     )?;
     assert_that!(
-        "anim def node dynamic sound field 40",
-        dynamic_sound.zero40 == 0,
+        "anim def node dynamic sound in world",
+        dynamic_sound.in_world == 0,
         read.prev + 40
     )?;
 
@@ -299,7 +303,7 @@ pub fn read_dynamic_sounds(
                 str_from_c_node_name(&dynamic_sound.name)
             })?;
             assert_that!(
-                "anim def dynamic sound field 32",
+                "anim def dynamic sound flags",
                 dynamic_sound.flags == 0,
                 read.prev + 32
             )?;
@@ -309,7 +313,7 @@ pub fn read_dynamic_sounds(
                 read.prev + 36
             )?;
             assert_that!(
-                "anim def dynamic sound field 40",
+                "anim def dynamic sound in world",
                 dynamic_sound.flags == 0,
                 read.prev + 40
             )?;
@@ -331,7 +335,7 @@ pub fn write_dynamic_sounds(write: &mut impl Write, dynamic_sounds: &[NamePtr]) 
             name,
             flags: 0,
             pointer: dynamic_sound.pointer,
-            zero40: 0,
+            in_world: 0,
         })?;
     }
     Ok(())
@@ -390,7 +394,7 @@ pub fn write_static_sounds(write: &mut impl Write, static_sounds: &[NamePad]) ->
 struct AnimRefC {
     name: [u8; 64], // 00
     zero64: u32,    // 64
-    zero68: u32,    // 68
+    pointer: u32,   // 68
 }
 static_assert_size!(AnimRefC, 72);
 
@@ -408,13 +412,13 @@ pub fn read_anim_refs(read: &mut CountingReader<impl Read>, count: u8) -> Result
                 str_from_c_partition(&anim_ref.name)
             })?;
             assert_that!(
-                "anim def anim ref zero field 64",
+                "anim def anim ref field 64",
                 anim_ref.zero64 == 0,
                 read.prev + 64
             )?;
             assert_that!(
-                "anim def anim ref zero field 68",
-                anim_ref.zero68 == 0,
+                "anim def anim ref pointer",
+                anim_ref.pointer == 0,
                 read.prev + 68
             )?;
             Ok(NamePad { name, pad })
@@ -430,7 +434,7 @@ pub fn write_anim_refs(write: &mut impl Write, anim_refs: &[NamePad]) -> Result<
         write.write_struct(&AnimRefC {
             name,
             zero64: 0,
-            zero68: 0,
+            pointer: 0,
         })?;
     }
     Ok(())
