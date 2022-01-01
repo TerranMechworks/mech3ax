@@ -25,4 +25,5 @@ mech3ax-image = { path = "../mech3ax-image" }
 mech3ax-interp = { path = "../mech3ax-interp" }
 mech3ax-motion = { path = "../mech3ax-motion" }
 mech3ax-reader = { path = "../mech3ax-reader" }
+mech3ax-saves = { path = "../mech3ax-saves" }
 mech3ax-version = { path = "../mech3ax-version" }

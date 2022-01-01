@@ -10,6 +10,7 @@ use mech3ax_image::{write_textures, Manifest};
 use mech3ax_interp::{write_interp, Script};
 use mech3ax_motion::{write_motion, Motion};
 use mech3ax_reader::write_reader;
+use mech3ax_saves::{write_activation, write_save_header, AnimActivation};
 use serde_json::Value;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Cursor, Read, Seek};
@@ -238,6 +239,36 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
     let mut write = buf_writer(opts.output)?;
     write_anim(&mut write, &metadata, |name| zip_json(&mut zip, name))
         .context("Failed to write anim data")
+}
+
+pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
+    if opts.is_pm {
+        bail!("Pirate's Moon support for savegames isn't implemented yet");
+    }
+    let version = Version::One;
+
+    _zarchive(
+        opts.input,
+        opts.output,
+        version,
+        "Failed to write savegame data",
+        |zip, name| match name {
+            "zSaveHeader" => {
+                let mut buf = Vec::with_capacity(8);
+                write_save_header(&mut buf).context("Failed to write savegame header")?;
+                Ok(buf)
+            }
+            original => {
+                let name = format!("{}.json", original);
+                let activation: AnimActivation = zip_json(zip, &name)?;
+
+                let mut buf = Vec::new();
+                write_activation(&mut buf, &activation)
+                    .with_context(|| format!("Failed to write anim activation \"{}\"", original))?;
+                Ok(buf)
+            }
+        },
+    )
 }
 
 pub(crate) fn license() -> Result<()> {

@@ -11,6 +11,7 @@ use mech3ax_interp::read_interp;
 use mech3ax_messages::read_messages;
 use mech3ax_motion::read_motion;
 use mech3ax_reader::read_reader;
+use mech3ax_saves::{read_activation, read_save_header};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Cursor, Seek, Write};
@@ -278,6 +279,38 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
     zip_json(&mut zip, options, "metadata.json", &metadata)?;
     zip.finish()?;
     Ok(())
+}
+
+pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
+    if opts.is_pm {
+        bail!("Pirate's Moon support for savegames isn't implemented yet");
+    }
+    let version = Version::One;
+    let options = deflate_opts();
+
+    _zarchive(
+        opts.input,
+        opts.output,
+        version,
+        "Failed to read savegame data",
+        |zip, name, data, offset| {
+            let mut read = CountingReader::new(Cursor::new(data));
+            // translate to absolute offset
+            read.offset = offset;
+            match name {
+                "zSaveHeader" => {
+                    read_save_header(&mut read).context("Failed to read savegame header")
+                }
+                original => {
+                    let name = format!("{}.json", original);
+                    let value = read_activation(&mut read).with_context(|| {
+                        format!("Failed to read anim activation \"{}\"", original)
+                    })?;
+                    zip_json(zip, options, &name, &value)
+                }
+            }
+        },
+    )
 }
 
 pub(crate) fn license() -> Result<()> {

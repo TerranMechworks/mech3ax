@@ -105,6 +105,8 @@ enum SubCommand {
     Gamez(ZipOpts),
     #[clap(about = "Extract 'anim.zbd' archives to ZIP")]
     Anim(ZipOpts),
+    #[clap(about = "Extract savegames '*.mw3' archives to ZIP")]
+    Savegame(ZipOpts),
 }
 
 fn main() -> Result<()> {
@@ -121,6 +123,7 @@ fn main() -> Result<()> {
         SubCommand::Mechlib(opts) => commands::mechlib(opts),
         SubCommand::Gamez(opts) => commands::gamez(opts),
         SubCommand::Anim(opts) => commands::anim(opts),
+        SubCommand::Savegame(opts) => commands::savegame(opts),
         SubCommand::License => commands::license(),
     }
 }
