@@ -127,6 +127,7 @@ where `--rtexture` and `--rmechtex` are optional.
 * ReaderLookup field 40 is likely the "in use" or "loaded into world" flag (`anim`, breaking change)
 * AnimRef field 68 is likely a pointer (`anim`, breaking change)
 * Remove ResetState structure, it's likely SeqDefInfo instead (`anim`, breaking change)
+* Make `--dump-ids` the default mode for `unzbd messages` (`unzbd`, breaking change)
 
 ### [0.5.0] - 2021-12-27
 

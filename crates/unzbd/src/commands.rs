@@ -12,7 +12,6 @@ use mech3ax_messages::read_messages;
 use mech3ax_motion::read_motion;
 use mech3ax_reader::read_reader;
 use mech3ax_saves::{read_activation, read_save_header};
-use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Cursor, Seek, Write};
 use std::path::Path;
@@ -60,26 +59,19 @@ where
 pub(crate) fn interp(opts: InterpOpts) -> Result<()> {
     let mut input = CountingReader::new(buf_reader(opts.input)?);
     let scripts = read_interp(&mut input).context("Failed to read interpreter data")?;
-    let data = serde_json::to_vec_pretty(&scripts)?;
-    std::fs::write(opts.output, data).context("Failed to write output")
+    let contents = serde_json::to_vec_pretty(&scripts)?;
+    std::fs::write(opts.output, contents).context("Failed to write output")
 }
 
 pub(crate) fn messages(opts: MsgOpts) -> Result<()> {
+    if opts.dump_ids {
+        println!("The --dump-ids flag is deprecated and will be removed in the next version");
+    }
     let mut input = buf_reader(opts.input)?;
     let messages =
         read_messages(&mut input, opts.skip_data).context("Failed to read message data")?;
-
-    let data = if opts.dump_ids {
-        serde_json::to_vec_pretty(&messages)?
-    } else {
-        let map: HashMap<_, _> = messages
-            .entries
-            .into_iter()
-            .map(|(key, _mid, msg)| (key, msg))
-            .collect();
-        serde_json::to_vec_pretty(&map)?
-    };
-    std::fs::write(opts.output, data).context("Failed to write output")
+    let contents = serde_json::to_vec_pretty(&messages)?;
+    std::fs::write(opts.output, contents).context("Failed to write output")
 }
 
 fn _zarchive<F>(

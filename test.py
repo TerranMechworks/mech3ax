@@ -1,4 +1,5 @@
 import filecmp
+import json
 import subprocess
 from argparse import ArgumentParser
 from pathlib import Path
@@ -87,8 +88,8 @@ class Tester:
             self.rezbd("interp", zip_path, output_zbd)
             self.compare(input_zbd, output_zbd)
 
-    def test_resources(self) -> None:
-        print("--- RESOURCES ---")
+    def test_messages(self) -> None:
+        print("--- MESSAGES ---")
         for name, zbd_dir, output_base in self.versions:
             print(name, "Mech3Msg.dll")
             input_dll = zbd_dir.parent / "Mech3Msg.dll"
@@ -96,12 +97,43 @@ class Tester:
             cmd = [
                 str(self.unzbd_exe),
                 "messages",
-                "--dump-ids",
                 str(input_dll),
                 str(output_json),
             ]
             subprocess.run(cmd, check=True)
             # can't convert back to a DLL
+            with output_json.open("r") as f:
+                data = json.load(f)
+
+            def _valid_messages(data: object) -> bool:
+                if not isinstance(data, dict):
+                    print("Data is not a dict:", repr(data))
+                    return False
+
+                try:
+                    language_id = data["language_id"]
+                    entries = data["entries"]
+                except KeyError as e:
+                    print("Key missing:", e)
+                    return False
+
+                if not isinstance(language_id, int):
+                    print("Language is not an int:", repr(language_id))
+                    return False
+
+                if not isinstance(entries, list):
+                    print("Entries is not a list:", repr(language_id))
+                    return False
+
+                if len(entries) < 30:
+                    print("Too few entries:", len(entries))
+                    return False
+
+                return True
+
+            if not _valid_messages(data):
+                print("*** MISMATCH ***", input_dll, output_json)
+                self.miscompares.append((input_dll, output_json))
 
     def test_textures(self) -> None:
         print("--- TEXTURES ---")
@@ -246,7 +278,7 @@ def main() -> None:
     tester = Tester(args.versions_dir, args.output_dir, target_dir)
     tester.test_sounds()
     tester.test_interp()
-    tester.test_resources()
+    tester.test_messages()
     tester.test_reader()
     tester.test_mechlib()
     tester.test_motion()
