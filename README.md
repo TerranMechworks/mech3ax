@@ -121,6 +121,13 @@ where `--rtexture` and `--rmechtex` are optional.
 
 ## Changelog
 
+### [0.5.1] - unreleased
+
+* AnimDef field 152 is likely the status (`anim`, breaking change)
+* ReaderLookup field 40 is likely the "in use" or "loaded into world" flag (`anim`, breaking change)
+* AnimRef field 68 is likely a pointer (`anim`, breaking change)
+* Remove ResetState structure, it's likely SeqDefInfo instead (`anim`, breaking change)
+
 ### [0.5.0] - 2021-12-27
 
 * Ensure strings are ASCII (breaking change for modding)
