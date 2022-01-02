@@ -50,6 +50,7 @@ pub mod base64 {
     use super::Base64Visitor;
     use serde::{Deserializer, Serializer};
 
+    #[allow(clippy::ptr_arg)]
     pub fn serialize<S>(input: &Vec<u8>, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
