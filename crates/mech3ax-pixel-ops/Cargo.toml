@@ -1,0 +1,17 @@
+[package]
+name = "mech3ax-pixel-ops"
+version = "0.0.0"
+authors = ["Toby Fleming <tobywf@users.noreply.github.com>"]
+edition = "2021"
+publish = false
+build = "build.rs"
+
+autoexamples = false
+autobenches = false
+
+[dependencies]
+
+[build-dependencies]
+
+[lib]
+doctest = false

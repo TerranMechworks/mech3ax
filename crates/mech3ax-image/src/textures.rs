@@ -1,7 +1,3 @@
-use crate::image::{
-    pal8to888, pal8to888a, rgb565to888, rgb565to888a, rgb888ato565, rgb888atopal8, rgb888to565,
-    rgb888topal8, simple_alpha,
-};
 use ::serde::{Deserialize, Serialize};
 use image::{DynamicImage, RgbImage, RgbaImage};
 use mech3ax_common::assert::{assert_utf8, AssertionError};
@@ -10,6 +6,10 @@ use mech3ax_common::serde::base64;
 use mech3ax_common::size::ReprSize;
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, static_assert_size, Error, Result};
+use mech3ax_pixel_ops::{
+    pal8to888, pal8to888a, rgb565to888, rgb565to888a, rgb888ato565, rgb888atopal8, rgb888to565,
+    rgb888topal8, simple_alpha,
+};
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
