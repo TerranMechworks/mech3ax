@@ -80,10 +80,10 @@ impl<R: Read> CountingReader<R> {
     pub fn read_struct<S>(&mut self) -> Result<S> {
         let size = std::mem::size_of::<S>();
         unsafe {
-            let mut mem = MaybeUninit::uninit().assume_init();
-            let buf = std::slice::from_raw_parts_mut(&mut mem as *mut S as *mut u8, size);
+            let mut mem = MaybeUninit::uninit();
+            let buf = std::slice::from_raw_parts_mut(mem.as_mut_ptr() as *mut u8, size);
             match self.read_exact(buf) {
-                Ok(()) => Ok(mem),
+                Ok(()) => Ok(mem.assume_init()),
                 Err(e) => {
                     std::mem::forget(mem);
                     Err(e)
