@@ -56,6 +56,14 @@ struct TextureOpts {
 }
 
 #[derive(Parser)]
+struct ZrdOpts {
+    #[clap(help = "The source JSON path")]
+    input: String,
+    #[clap(help = "The destination ZRD path (will be overwritten)")]
+    output: String,
+}
+
+#[derive(Parser)]
 enum SubCommand {
     #[clap(about = "Prints license information")]
     License,
@@ -79,6 +87,8 @@ enum SubCommand {
     Anim(ZipOpts),
     #[clap(about = "Reconstruct savegames '*.mw3' archives from ZIP")]
     Savegame(ZipOpts),
+    #[clap(about = "Reconstruct reader '*.zrd' files from JSON")]
+    Zrd(ZrdOpts),
 }
 
 fn main() -> Result<()> {
@@ -104,6 +114,7 @@ fn main() -> Result<()> {
         SubCommand::Gamez(opts) => commands::gamez(opts),
         SubCommand::Anim(opts) => commands::anim(opts),
         SubCommand::Savegame(opts) => commands::savegame(opts),
+        SubCommand::Zrd(opts) => modding::zrd(opts),
         SubCommand::License => commands::license(),
     }
 }

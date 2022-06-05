@@ -17,13 +17,13 @@ use std::io::{BufReader, BufWriter, Cursor, Read, Seek};
 use std::path::Path;
 use zip::read::ZipArchive;
 
-fn buf_reader<P: AsRef<Path>>(path: P) -> Result<BufReader<File>> {
+pub fn buf_reader<P: AsRef<Path>>(path: P) -> Result<BufReader<File>> {
     Ok(BufReader::new(
         File::open(path).context("Failed to open input")?,
     ))
 }
 
-fn buf_writer<P: AsRef<Path>>(path: P) -> Result<BufWriter<File>> {
+pub fn buf_writer<P: AsRef<Path>>(path: P) -> Result<BufWriter<File>> {
     Ok(BufWriter::new(
         File::create(path).context("Failed to create output")?,
     ))

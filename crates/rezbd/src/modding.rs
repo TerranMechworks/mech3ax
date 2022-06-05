@@ -1,6 +1,10 @@
+use crate::commands::buf_writer;
+use crate::ZrdOpts;
 use anyhow::{Context, Result};
 use image::{ColorType, DynamicImage, GenericImageView, ImageFormat};
 use mech3ax_image::{write_textures, Manifest, TextureAlpha};
+use mech3ax_reader::write_reader;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, ErrorKind};
@@ -56,4 +60,12 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
     }
 
     result
+}
+
+pub(crate) fn zrd(opts: ZrdOpts) -> Result<()> {
+    let buf = std::fs::read(opts.input).context("Failed to open input")?;
+    let value: Value = serde_json::from_slice(&buf).context("Failed to parse input")?;
+
+    let mut write = buf_writer(opts.output)?;
+    write_reader(&mut write, &value).context("Failed to write ZRD data")
 }
