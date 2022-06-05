@@ -114,7 +114,7 @@ jobs:
         staging="mech3ax-${{ steps.release.outputs.version }}"
         mkdir "$staging"
         archive="$staging-${{ matrix.target }}"
-        cp {README.md,LICENSE.txt,mechlib2blend.py,gamez2blend.py} "$staging/"
+        cp {README.md,LICENSE,mechlib2blend.py,gamez2blend.py} "$staging/"
         if [ "${{ matrix.os }}" = "windows-2019" ]; then
           cp target/${{ matrix.target }}/release/{unzbd,rezbd}.exe "$staging/"
           cp target/${{ matrix.target }}/release/mech3ax.dll "$staging/"

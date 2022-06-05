@@ -1,20 +1,28 @@
 # MechWarrior 3 Asset Extractor
 
-MechWarrior 3 Asset Extractor (`mech3ax`) is a cross-platform, GPLv3 project to extract assets from the 1998 MechWarrior 3 game to modern formats and back. It has been tested on Windows, macOS, and Linux (Ubuntu).
+MechWarrior 3 Asset Extractor (`mech3ax`) is a cross-platform, open-source project to extract assets from certain games developed by Zipper Interactive™ to modern formats and back:
 
-Obviously, this is an unofficial fan effort and not connected to the developers or publishers. [Join us on Discord](https://discord.gg/Be53gMy)!
+* the Recoil™ game (1999)
+* the MechWarrior 3™ base game (1999)
+* the MechWarrior 3 Pirate's Moon™ expansion (1999)
+
+Zipper Interactive™ was trademark or registered trademark of Sony Computer Entertainment America LLC.
+
+Obviously, this is an unofficial fan effort and not connected to the developers, publishers, or rightsholders. [Join us on MW3 Discord](https://discord.gg/Be53gMy), or the Recoil Discord!
 
 [![The Annihilator 'Mech running](.github/mech_annihilator_run.gif)](https://imgur.com/a/H5pB1Vd)
 
 ## Currently supported
 
-Various versions of the MechWarror 3 base game have been tested (including US versions 1.0/1.1/1.2/Gold Edition, German version 1.0, with and without patches). If you are in possession of any other versions, especially the French versions, please get in touch! The expansion, Pirate's Moon, has limited support.
+### MechWarrior 3
+
+Various versions of the MechWarror 3 base game have been tested (including US versions 1.0/1.1/1.2/Gold Edition, German version 1.0, each with and without the 1.2 patch). If you are in possession of any other versions, especially the French versions, please get in touch! The expansion, Pirate's Moon, has limited support (see below).
 
 The conversions are binary-accurate, so converting from a `*.zbd` file and then back to a `*.zbd` file produces the same file.
 
 - Sound archives (`sounds*.zbd`) containing sound effects to ZIP archives of WAV files - note the background music is streamed from the CD and never installed
 - Interpreter scripts (`interp.zbd`) to a JSON file - these small, interpreted scripts drive which files the engine loads
-- All image/texture archives (`rimage.zbd`, `rmechtex*.zbd`, `rtexture*.zbd`, `texture*.zbd`) to ZIP archives of PNG files
+- All image/texture packages (`rimage.zbd`, `rmechtex*.zbd`, `rtexture*.zbd`, `texture*.zbd`) to ZIP archives of PNG files
 - Reader archives (`reader*.zbd`) containing game data to ZIP archives of JSON files
 - Motion data (`motion.zbd`) containing 'mech animation data to ZIP archives of JSON files - because the model data is not very well understood, applying the animations isn't perfect. Some limbs have incorrect translations; it's possible these aren't meant to be applied
 - Mechlib archives (`mechlib.zbd`) containing 'mech models, and texture/material information to ZIP archives of JSON files
@@ -24,14 +32,18 @@ The conversions are binary-accurate, so converting from a `*.zbd` file and then 
 
 Not supported (yet?):
 
-- The Pirate's Moon expansion (specifically `mechlib.zbd`, `anim.zbd`, and `gamez.zbd`)
+- Savegame files
 - The demo likely won't ever be supported, because it uses different versions/data structures
 - Background music/ambient tracks [can be extracted from the CD](https://terranmechworks.com/mech3doc/ambient-tracks/) using e.g. [ExactAudioCopy](http://www.exactaudiocopy.de/) or other programs, so it isn't worth re-inventing this
 - Similarly, video files [can be converted using `ffmpeg`](https://terranmechworks.com/mech3doc/avi-files/) to modern codecs, or played back using [VLC media player](https://www.videolan.org/vlc/)
 
-## Future work and how to get involved
+### Pirate's Moon
 
-Currently, my focus is improved parsing save games, and other remaining unknown fields in structures. There is an [awesome MechWarrior 3 Discord group](https://discord.gg/gnacUBB), and of course the [r/Mechwarrior subreddit](https://www.reddit.com/r/mechwarrior/).
+`mechlib.zbd`, `anim.zbd`, and `gamez.zbd` files are not supported yet.
+
+### Recoil
+
+All maps (`m*.zmap`), `anim.zbd`, and `gamez.zbd` files are not supported yet.
 
 ## How to use
 
@@ -198,4 +210,4 @@ pre-commit install
 
 ## License
 
-MechWarrior 3 Asset Extractor is licensed under GPLv3. Please see [`LICENSE.txt`](LICENSE.txt).
+Licensed under the European Union Public Licence (EUPL) 1.2 ([LICENSE](LICENSE) or https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12).
