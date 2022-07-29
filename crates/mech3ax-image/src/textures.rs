@@ -1,8 +1,7 @@
-use ::serde::{Deserialize, Serialize};
+use super::{Manifest, TextureAlpha, TextureInfo, TexturePalette};
 use image::{DynamicImage, RgbImage, RgbaImage};
 use mech3ax_common::assert::{assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
-use mech3ax_common::serde::base64;
 use mech3ax_common::size::ReprSize;
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, static_assert_size, Error, Result};
@@ -10,7 +9,6 @@ use mech3ax_pixel_ops::{
     pal8to888, pal8to888a, rgb565to888, rgb565to888a, rgb888ato565, rgb888atopal8, rgb888to565,
     rgb888topal8, simple_alpha,
 };
-use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
 
@@ -58,49 +56,6 @@ bitflags::bitflags! {
         const ALPHA_LOADED = 1 << 6;
         const PALETTE_LOADED = 1 << 7;
     }
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
-pub enum TextureAlpha {
-    None,
-    Simple,
-    Full,
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, FromPrimitive, Copy, Clone)]
-#[repr(u16)]
-pub enum TextureStretch {
-    None = 0,
-    Vertical = 1,
-    Horizontal = 2,
-    Both = 3,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[repr(u16)]
-pub enum TexturePalette {
-    None,
-    Local(#[serde(with = "base64")] Vec<u8>),
-    Global(i32, u16),
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct TextureInfo {
-    pub name: String,
-    pub alpha: TextureAlpha,
-    pub width: u16,
-    pub height: u16,
-    pub stretch: TextureStretch,
-    pub image_loaded: bool,
-    pub alpha_loaded: bool,
-    pub palette_loaded: bool,
-    pub palette: TexturePalette,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Manifest {
-    pub texture_infos: Vec<TextureInfo>,
-    pub global_palettes: Vec<Vec<u8>>,
 }
 
 fn convert_info_from_c(
