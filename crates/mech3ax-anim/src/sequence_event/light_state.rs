@@ -75,7 +75,7 @@ impl ScriptObject for LightState {
         #[allow(unused_parens)]
         assert_that!(
             "light state name",
-            (&actual_name) == &expected_name,
+            &actual_name == &expected_name,
             read.prev + 32
         )?;
 

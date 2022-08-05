@@ -123,7 +123,8 @@ fn combine(
         .rev()
         .collect::<Result<Vec<_>>>()?;
 
-    assert_that!("all message table strings used", 0 == messages.len(), 0)?;
+    let remaining = messages.len();
+    assert_that!("all message table strings used", remaining == 0, 0)?;
     Ok(entries)
 }
 
