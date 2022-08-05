@@ -2,7 +2,7 @@ use super::ScriptObject;
 use crate::AnimDef;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_api_types::serde::base64;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3, Vec4};
+use mech3ax_api_types::{static_assert_size, Quaternion, ReprSize as _, Vec3};
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::bytes_to_c;
@@ -44,14 +44,14 @@ pub struct TranslateData {
 
 #[repr(C)]
 struct RotateDataC {
-    value: Vec4,
+    value: Quaternion,
     unk: [u8; 60],
 }
 static_assert_size!(RotateDataC, 76);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RotateData {
-    pub value: Vec4,
+    pub value: Quaternion,
     #[serde(with = "base64")]
     pub unk: Vec<u8>,
 }

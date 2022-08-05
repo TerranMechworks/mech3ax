@@ -1,6 +1,6 @@
 use super::ScriptObject;
 use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3, Vec4};
+use mech3ax_api_types::{static_assert_size, Quaternion, ReprSize as _, Vec3};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
@@ -115,9 +115,9 @@ pub struct ObjectMotion {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub gravity: Option<Gravity>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub translation_range_min: Option<Vec4>,
+    pub translation_range_min: Option<Quaternion>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub translation_range_max: Option<Vec4>,
+    pub translation_range_max: Option<Quaternion>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub translation: Option<(Vec3, Vec3, Vec3)>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -202,12 +202,12 @@ impl ScriptObject for ObjectMotion {
         };
 
         let translation_range_min = if flags.contains(ObjectMotionFlags::TRANSLATION_MIN) {
-            Some(Vec4(
-                object_motion.trans_range_min_1,
-                object_motion.trans_range_min_2,
-                object_motion.trans_range_min_3,
-                object_motion.trans_range_min_4,
-            ))
+            Some(Quaternion {
+                x: object_motion.trans_range_min_1,
+                y: object_motion.trans_range_min_2,
+                z: object_motion.trans_range_min_3,
+                w: object_motion.trans_range_min_4,
+            })
         } else {
             assert_that!(
                 "object motion trans range min 1",
@@ -233,12 +233,12 @@ impl ScriptObject for ObjectMotion {
         };
 
         let translation_range_max = if flags.contains(ObjectMotionFlags::TRANSLATION_MAX) {
-            Some(Vec4(
-                object_motion.trans_range_max_1,
-                object_motion.trans_range_max_2,
-                object_motion.trans_range_max_3,
-                object_motion.trans_range_max_4,
-            ))
+            Some(Quaternion {
+                x: object_motion.trans_range_max_1,
+                y: object_motion.trans_range_max_2,
+                z: object_motion.trans_range_max_3,
+                w: object_motion.trans_range_max_4,
+            })
         } else {
             assert_that!(
                 "object motion trans range max 1",
@@ -550,12 +550,12 @@ impl ScriptObject for ObjectMotion {
         if self.translation_range_min.is_some() {
             flags |= ObjectMotionFlags::TRANSLATION_MIN;
         }
-        let translation_range_min = self.translation_range_min.unwrap_or(Vec4::DEFAULT);
+        let translation_range_min = self.translation_range_min.unwrap_or(Quaternion::DEFAULT);
 
         if self.translation_range_max.is_some() {
             flags |= ObjectMotionFlags::TRANSLATION_MAX;
         }
-        let translation_range_max = self.translation_range_max.unwrap_or(Vec4::DEFAULT);
+        let translation_range_max = self.translation_range_max.unwrap_or(Quaternion::DEFAULT);
 
         let (trans_delta, trans_initial, unk100) =
             if let Some((trans_delta, trans_initial, unk100)) = &self.translation {
@@ -628,14 +628,14 @@ impl ScriptObject for ObjectMotion {
             zero008: 0.0,
             gravity,
             zero016: 0.0,
-            trans_range_min_1: translation_range_min.0,
-            trans_range_max_1: translation_range_max.0,
-            trans_range_min_2: translation_range_min.1,
-            trans_range_max_2: translation_range_max.1,
-            trans_range_min_3: translation_range_min.2,
-            trans_range_max_3: translation_range_max.2,
-            trans_range_min_4: translation_range_min.3,
-            trans_range_max_4: translation_range_max.3,
+            trans_range_min_1: translation_range_min.x,
+            trans_range_max_1: translation_range_max.x,
+            trans_range_min_2: translation_range_min.y,
+            trans_range_max_2: translation_range_max.y,
+            trans_range_min_3: translation_range_min.z,
+            trans_range_max_3: translation_range_max.z,
+            trans_range_min_4: translation_range_min.w,
+            trans_range_max_4: translation_range_max.w,
             trans_delta,
             trans_initial,
             trans_delta_copy: Vec3::DEFAULT,

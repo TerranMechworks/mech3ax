@@ -1,10 +1,10 @@
-use crate::types::{Vec3, Vec4};
+use crate::types::{Quaternion, Vec3};
 use ::serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MotionFrame {
     pub translation: Vec3,
-    pub rotation: Vec4,
+    pub rotation: Quaternion,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
