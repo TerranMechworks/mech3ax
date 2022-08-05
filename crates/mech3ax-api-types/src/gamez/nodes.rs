@@ -9,7 +9,12 @@ pub struct AreaPartition {
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
-pub struct Area(pub i32, pub i32, pub i32, pub i32);
+pub struct Area {
+    pub left: i32,
+    pub top: i32,
+    pub right: i32,
+    pub bottom: i32,
+}
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub struct Block(pub f32, pub f32, pub f32, pub f32, pub f32, pub f32);

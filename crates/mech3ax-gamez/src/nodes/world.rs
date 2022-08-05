@@ -269,7 +269,12 @@ fn assert_world(world: &WorldC, offset: u32) -> Result<(Area, Range, Range, bool
         world.area_height == height as f32,
         offset + 64
     )?;
-    let area = Area(area_left, area_top, area_right, area_bottom);
+    let area = Area {
+        left: area_left,
+        top: area_top,
+        right: area_right,
+        bottom: area_bottom,
+    };
 
     assert_that!(
         "partition max feat",
@@ -505,10 +510,10 @@ where
     if world.fudge_count {
         area_partition_count -= 1;
     }
-    let area_left = world.area.0 as f32;
-    let area_top = world.area.1 as f32;
-    let area_right = world.area.2 as f32;
-    let area_bottom = world.area.3 as f32;
+    let area_left = world.area.left as f32;
+    let area_top = world.area.top as f32;
+    let area_right = world.area.right as f32;
+    let area_bottom = world.area.bottom as f32;
     let area_width = area_right - area_left;
     let area_height = area_top - area_bottom;
 
