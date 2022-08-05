@@ -70,20 +70,40 @@ impl Quaternion {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone)]
 #[repr(C)]
-pub struct Matrix(
-    pub f32,
-    pub f32,
-    pub f32,
-    pub f32,
-    pub f32,
-    pub f32,
-    pub f32,
-    pub f32,
-    pub f32,
-);
+pub struct Matrix {
+    pub a: f32,
+    pub b: f32,
+    pub c: f32,
+    pub d: f32,
+    pub e: f32,
+    pub f: f32,
+    pub g: f32,
+    pub h: f32,
+    pub i: f32,
+}
 static_assert_size!(Matrix, 36);
 
 impl Matrix {
-    pub const EMPTY: Matrix = Matrix(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    pub const IDENTITY: Matrix = Matrix(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    pub const EMPTY: Self = Self {
+        a: 0.0,
+        b: 0.0,
+        c: 0.0,
+        d: 0.0,
+        e: 0.0,
+        f: 0.0,
+        g: 0.0,
+        h: 0.0,
+        i: 0.0,
+    };
+    pub const IDENTITY: Self = Self {
+        a: 1.0,
+        b: 0.0,
+        c: 0.0,
+        d: 0.0,
+        e: 1.0,
+        f: 0.0,
+        g: 0.0,
+        h: 0.0,
+        i: 1.0,
+    };
 }
