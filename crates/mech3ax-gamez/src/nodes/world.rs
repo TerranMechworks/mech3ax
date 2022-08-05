@@ -1,10 +1,9 @@
 use super::flags::NodeBitFlags;
 use super::math::partition_diag;
-use super::range::Range;
 use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
 use super::wrappers::Wrapper;
 use mech3ax_api_types::{
-    static_assert_size, Area, Block, Partition, ReprSize as _, Vec2, Vec3, World,
+    static_assert_size, Area, Block, Partition, Range, ReprSize as _, Vec3, World,
 };
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
@@ -18,8 +17,8 @@ struct WorldC {
     area_partition_ptr: u32,              // 012
     fog_state: u32,                       // 016
     fog_color: Vec3,                      // 020
-    fog_range: Vec2,                      // 032
-    fog_altitude: Vec2,                   // 040
+    fog_range: Range,                     // 032
+    fog_altitude: Range,                  // 040
     fog_density: f32,                     // 048
     area_left: f32,                       // 052
     area_bottom: f32,                     // 056
@@ -203,8 +202,8 @@ where
 
 fn read_partitions<R>(
     read: &mut CountingReader<R>,
-    area_x: Range,
-    area_y: Range,
+    area_x: super::range::Range,
+    area_y: super::range::Range,
 ) -> Result<Vec<Vec<Partition>>>
 where
     R: Read,
@@ -219,7 +218,10 @@ where
         .collect::<Result<Vec<_>>>()
 }
 
-fn assert_world(world: &WorldC, offset: u32) -> Result<(Area, Range, Range, bool)> {
+fn assert_world(
+    world: &WorldC,
+    offset: u32,
+) -> Result<(Area, super::range::Range, super::range::Range, bool)> {
     assert_that!("flag", world.flags == 0, offset + 0)?;
 
     // LINEAR = 1, EXPONENTIAL = 2 (never set)
@@ -229,10 +231,10 @@ fn assert_world(world: &WorldC, offset: u32) -> Result<(Area, Range, Range, bool
         offset + 16
     )?;
     assert_that!("fog color", world.fog_color == Vec3::DEFAULT, offset + 20)?;
-    assert_that!("fog range", world.fog_range == Vec2::DEFAULT, offset + 32)?;
+    assert_that!("fog range", world.fog_range == Range::DEFAULT, offset + 32)?;
     assert_that!(
         "fog altitude",
-        world.fog_altitude == Vec2::DEFAULT,
+        world.fog_altitude == Range::DEFAULT,
         offset + 40
     )?;
     assert_that!("fog density", world.fog_density == 0.0, offset + 48)?;
@@ -340,9 +342,9 @@ fn assert_world(world: &WorldC, offset: u32) -> Result<(Area, Range, Range, bool
     )?;
 
     //let area_x = range(area_left, area_right, 256);
-    let area_x = Range::new(area_left, area_right, 256);
+    let area_x = super::range::Range::new(area_left, area_right, 256);
     // because the virtual partition y size is negative, this is inverted!
-    let area_y = Range::new(area_bottom, area_top, -256);
+    let area_y = super::range::Range::new(area_bottom, area_top, -256);
 
     assert_that!(
         "vp x count",
@@ -524,8 +526,8 @@ where
         area_partition_ptr: world.area_partition_ptr,
         fog_state: FOG_STATE_LINEAR,
         fog_color: Vec3::DEFAULT,
-        fog_range: Vec2::DEFAULT,
-        fog_altitude: Vec2::DEFAULT,
+        fog_range: Range::DEFAULT,
+        fog_altitude: Range::DEFAULT,
         fog_density: 0.0,
         area_left,
         area_bottom,

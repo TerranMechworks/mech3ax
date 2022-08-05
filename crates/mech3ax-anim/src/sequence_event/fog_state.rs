@@ -1,7 +1,7 @@
 use super::utils::assert_color;
 use super::ScriptObject;
 use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec2, Vec3};
+use mech3ax_api_types::{static_assert_size, Range, ReprSize as _, Vec3};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::str_to_c_padded;
 use mech3ax_common::{assert_that, Result};
@@ -25,12 +25,12 @@ bitflags::bitflags! {
 
 #[repr(C)]
 struct FogStateC {
-    name: [u8; 32], // 00
-    flags: u32,     // 32
-    fog_type: u32,  // 36
-    color: Vec3,    // 40
-    altitude: Vec2, // 52
-    range: Vec2,    // 60
+    name: [u8; 32],  // 00
+    flags: u32,      // 32
+    fog_type: u32,   // 36
+    color: Vec3,     // 40
+    altitude: Range, // 52
+    range: Range,    // 60
 }
 static_assert_size!(FogStateC, 68);
 
@@ -47,8 +47,8 @@ pub struct FogState {
     pub name: String,
     pub fog_type: FogType,
     pub color: Vec3,
-    pub altitude: Vec2,
-    pub range: Vec2,
+    pub altitude: Range,
+    pub range: Range,
 }
 
 impl ScriptObject for FogState {

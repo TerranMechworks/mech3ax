@@ -12,6 +12,18 @@ impl Vec2 {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy)]
 #[repr(C)]
+pub struct Range {
+    pub min: f32,
+    pub max: f32,
+}
+static_assert_size!(Range, 8);
+
+impl Range {
+    pub const DEFAULT: Range = Range { min: 0.0, max: 0.0 };
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy)]
+#[repr(C)]
 pub struct Vec3(pub f32, pub f32, pub f32);
 static_assert_size!(Vec3, 12);
 

@@ -1,7 +1,7 @@
 use crate::sequence_event::Event;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_api_types::serde::base64;
-use mech3ax_api_types::Vec2;
+use mech3ax_api_types::Range;
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::{assert_that, Result};
 use num_derive::FromPrimitive;
@@ -18,7 +18,7 @@ pub enum AnimActivation {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Execution {
-    ByRange(Vec2),
+    ByRange(Range),
     ByZone,
     None,
 }

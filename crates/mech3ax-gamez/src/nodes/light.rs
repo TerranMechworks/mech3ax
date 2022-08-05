@@ -1,6 +1,6 @@
 use super::flags::NodeBitFlags;
 use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
-use mech3ax_api_types::{static_assert_size, Block, Light, ReprSize as _, Vec2, Vec3};
+use mech3ax_api_types::{static_assert_size, Block, Light, Range, ReprSize as _, Vec3};
 use mech3ax_common::assert::{assert_all_zero, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::light::LightFlags;
@@ -21,7 +21,7 @@ struct LightC {
     ambient: f32,       // 160
     color: Vec3,        // 164
     flags: u32,         // 176
-    range: Vec2,        // 180
+    range: Range,       // 180
     range_near_sq: f32, // 188
     range_far_sq: f32,  // 192
     range_inv: f32,     // 196
@@ -93,19 +93,17 @@ fn assert_light(light: &LightC, offset: u32) -> Result<()> {
     })?;
     assert_that!("flag", flags == LightFlags::DEFAULT, offset + 176)?;
 
-    let range_near = light.range.0;
-    let range_far = light.range.1;
-    assert_that!("range near", range_near > 0.0, offset + 180)?;
-    assert_that!("range far", range_far > range_near, offset + 184)?;
-    let expected = range_near * range_near;
+    assert_that!("range near", light.range.min > 0.0, offset + 180)?;
+    assert_that!("range far", light.range.max > light.range.min, offset + 184)?;
+    let expected = light.range.min * light.range.min;
     assert_that!(
         "range near sq",
         light.range_near_sq == expected,
         offset + 188
     )?;
-    let expected = range_far * range_far;
+    let expected = light.range.max * light.range.max;
     assert_that!("range far sq", light.range_far_sq == expected, offset + 192)?;
-    let expected = 1.0 / (range_far - range_near);
+    let expected = 1.0 / (light.range.max - light.range.min);
     assert_that!("range inv", light.range_inv == expected, offset + 196)?;
 
     assert_that!("parent count", light.parent_count == 1, offset + 200)?;
@@ -174,9 +172,9 @@ where
         color: light.color,
         flags: LightFlags::DEFAULT.bits(),
         range: light.range,
-        range_near_sq: light.range.0 * light.range.0,
-        range_far_sq: light.range.1 * light.range.1,
-        range_inv: 1.0 / (light.range.1 - light.range.0),
+        range_near_sq: light.range.min * light.range.min,
+        range_far_sq: light.range.max * light.range.max,
+        range_inv: 1.0 / (light.range.max - light.range.min),
         parent_count: 1,
         parent_ptr: light.parent_ptr,
     })?;

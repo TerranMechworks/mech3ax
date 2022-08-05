@@ -1,7 +1,7 @@
 use super::flags::NodeBitFlags;
 use super::math::cotangent;
 use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
-use mech3ax_api_types::{static_assert_size, Block, Camera, Matrix, ReprSize as _, Vec2, Vec3};
+use mech3ax_api_types::{static_assert_size, Block, Camera, Matrix, Range, ReprSize as _, Vec3};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
@@ -23,7 +23,7 @@ struct CameraC {
     view_vector: Vec3,   // 116
     matrix: Matrix,      // 128
     alt_translate: Vec3, // 164
-    clip: Vec2,          // 176
+    clip: Range,         // 176
     zero184: [u8; 24],
     lod_multiplier: f32,    // 208
     lod_inv_sq: f32,        // 212
@@ -31,7 +31,7 @@ struct CameraC {
     fov_v_zoom_factor: f32, // 220
     fov_h_base: f32,        // 224
     fov_v_base: f32,        // 228
-    fov: Vec2,              // 232
+    fov: Range,             // 232
     fov_h_half: f32,        // 240
     fov_v_half: f32,        // 244
     one248: u32,
@@ -83,7 +83,7 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     Ok(NodeVariant::Camera(node.data_ptr))
 }
 
-fn assert_camera(camera: CameraC, offset: u32) -> Result<(Vec2, Vec2)> {
+fn assert_camera(camera: CameraC, offset: u32) -> Result<(Range, Range)> {
     assert_that!("world index", camera.world_index == 0, offset + 0)?;
     assert_that!("window index", camera.window_index == 1, offset + 4)?;
     assert_that!("focus node xy", camera.focus_node_xy == -1, offset + 8)?;
@@ -124,10 +124,12 @@ fn assert_camera(camera: CameraC, offset: u32) -> Result<(Vec2, Vec2)> {
         offset + 164
     )?;
 
-    let clip_near_z = camera.clip.0;
-    let clip_far_z = camera.clip.1;
-    assert_that!("clip near z", clip_near_z > 0.0, offset + 176)?;
-    assert_that!("clip far z", clip_far_z > clip_near_z, offset + 180)?;
+    assert_that!("clip near z", camera.clip.min > 0.0, offset + 176)?;
+    assert_that!(
+        "clip far z",
+        camera.clip.max > camera.clip.min,
+        offset + 180
+    )?;
 
     assert_all_zero("field 184", offset + 184, &camera.zero184)?;
 
@@ -146,22 +148,22 @@ fn assert_camera(camera: CameraC, offset: u32) -> Result<(Vec2, Vec2)> {
     )?;
     assert_that!(
         "FOV H base",
-        camera.fov_h_base == camera.fov.0,
+        camera.fov_h_base == camera.fov.min,
         offset + 224
     )?;
     assert_that!(
         "FOV V base",
-        camera.fov_v_base == camera.fov.1,
+        camera.fov_v_base == camera.fov.max,
         offset + 228
     )?;
     assert_that!(
         "FOV H half",
-        camera.fov_h_half == camera.fov.0 / 2.0,
+        camera.fov_h_half == camera.fov.min / 2.0,
         offset + 240
     )?;
     assert_that!(
         "FOV V half",
-        camera.fov_v_half == camera.fov.1 / 2.0,
+        camera.fov_v_half == camera.fov.max / 2.0,
         offset + 244
     )?;
 
@@ -233,8 +235,8 @@ pub fn write<W>(write: &mut W, camera: &Camera) -> Result<()>
 where
     W: Write,
 {
-    let fov_h_half = camera.fov.0 / 2.0;
-    let fov_v_half = camera.fov.1 / 2.0;
+    let fov_h_half = camera.fov.min / 2.0;
+    let fov_v_half = camera.fov.max / 2.0;
 
     write.write_struct(&CameraC {
         world_index: 0,
@@ -257,8 +259,8 @@ where
         lod_inv_sq: 1.0,
         fov_h_zoom_factor: 1.0,
         fov_v_zoom_factor: 1.0,
-        fov_h_base: camera.fov.0,
-        fov_v_base: camera.fov.1,
+        fov_h_base: camera.fov.min,
+        fov_v_base: camera.fov.max,
         fov: camera.fov,
         fov_h_half,
         fov_v_half,

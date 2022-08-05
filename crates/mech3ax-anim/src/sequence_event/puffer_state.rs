@@ -1,7 +1,7 @@
 use super::types::AtNode;
 use super::ScriptObject;
 use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec2, Vec3};
+use mech3ax_api_types::{static_assert_size, Range, ReprSize as _, Vec3};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
@@ -24,12 +24,12 @@ struct PufferStateC {
     world_acceleration: Vec3,  // 108
     interval_type: u32,        // 120
     interval_value: f32,       // 124
-    size_range: Vec2,          // 128
-    lifetime_range: Vec2,      // 136
-    start_age_range: Vec2,     // 144
+    size_range: Range,         // 128
+    lifetime_range: Range,     // 136
+    start_age_range: Range,    // 144
     deviation_distance: f32,   // 152
-    zero156: Vec2,             // 156
-    fade_range: Vec2,          // 164
+    zero156: Range,            // 156
+    fade_range: Range,         // 164
     friction: f32,             // 172
     zero176: u32,              // 176
     zero180: u32,              // 180
@@ -122,15 +122,15 @@ pub struct PufferState {
     pub world_acceleration: Option<Vec3>,
     pub interval: Interval,
     #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub size_range: Option<Vec2>,
+    pub size_range: Option<Range>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub lifetime_range: Option<Vec2>,
+    pub lifetime_range: Option<Range>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub start_age_range: Option<Vec2>,
+    pub start_age_range: Option<Range>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub deviation_distance: Option<f32>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub fade_range: Option<Vec2>,
+    pub fade_range: Option<Range>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub friction: Option<f32>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -290,70 +290,64 @@ impl ScriptObject for PufferState {
         };
 
         let size_range = if flags.contains(PufferStateFlags::SIZE_RANGE) {
-            let size_range_min = puffer_state.size_range.0;
-            let size_range_max = puffer_state.size_range.1;
             assert_that!(
                 "puffer state size range min",
-                size_range_min > 0.0,
+                puffer_state.size_range.min > 0.0,
                 read.prev + 128
             )?;
             assert_that!(
                 "puffer state size range max",
-                size_range_max > size_range_min,
+                puffer_state.size_range.max > puffer_state.size_range.min,
                 read.prev + 132
             )?;
             Some(puffer_state.size_range)
         } else {
             assert_that!(
                 "puffer state size range",
-                puffer_state.size_range == Vec2::DEFAULT,
+                puffer_state.size_range == Range::DEFAULT,
                 read.prev + 128
             )?;
             None
         };
 
         let lifetime_range = if flags.contains(PufferStateFlags::LIFETIME_RANGE) {
-            let lifetime_range_min = puffer_state.lifetime_range.0;
-            let lifetime_range_max = puffer_state.lifetime_range.1;
             assert_that!(
                 "puffer state lifetime range min",
-                lifetime_range_min > 0.0,
+                puffer_state.lifetime_range.min > 0.0,
                 read.prev + 136
             )?;
             // TODO: this doesn't follow ordering?
             assert_that!(
                 "puffer state lifetime range max",
-                lifetime_range_max > 0.0,
+                puffer_state.lifetime_range.max > 0.0,
                 read.prev + 140
             )?;
             Some(puffer_state.lifetime_range)
         } else {
             assert_that!(
                 "puffer state lifetime range",
-                puffer_state.lifetime_range == Vec2::DEFAULT,
+                puffer_state.lifetime_range == Range::DEFAULT,
                 read.prev + 136
             )?;
             None
         };
 
         let start_age_range = if flags.contains(PufferStateFlags::START_AGE_RANGE) {
-            let start_age_range_min = puffer_state.start_age_range.0;
-            let start_age_range_max = puffer_state.start_age_range.1;
             assert_that!(
                 "puffer state start age range min",
-                start_age_range_min >= 0.0,
+                puffer_state.start_age_range.min >= 0.0,
                 read.prev + 144
             )?;
             assert_that!(
                 "puffer state start age range max",
-                start_age_range_max > start_age_range_min,
+                puffer_state.start_age_range.max > puffer_state.start_age_range.min,
                 read.prev + 148
             )?;
             Some(puffer_state.start_age_range)
         } else {
             assert_that!(
                 "puffer state start age range",
-                puffer_state.start_age_range == Vec2::DEFAULT,
+                puffer_state.start_age_range == Range::DEFAULT,
                 read.prev + 144
             )?;
             None
@@ -377,28 +371,26 @@ impl ScriptObject for PufferState {
 
         assert_that!(
             "puffer state field 156",
-            puffer_state.zero156 == Vec2::DEFAULT,
+            puffer_state.zero156 == Range::DEFAULT,
             read.prev + 156
         )?;
 
         let fade_range = if flags.contains(PufferStateFlags::FADE_RANGE) {
-            let fade_range_min = puffer_state.fade_range.0;
-            let fade_range_max = puffer_state.fade_range.1;
             assert_that!(
-                "puffer state fade range min",
-                fade_range_min > 0.0,
+                "puffer state fade range near",
+                puffer_state.fade_range.min > 0.0,
                 read.prev + 164
             )?;
             assert_that!(
                 "puffer state fade range max",
-                fade_range_max > fade_range_min,
+                puffer_state.fade_range.max > puffer_state.fade_range.min,
                 read.prev + 168
             )?;
             Some(puffer_state.fade_range)
         } else {
             assert_that!(
                 "puffer state fade range",
-                puffer_state.fade_range == Vec2::DEFAULT,
+                puffer_state.fade_range == Range::DEFAULT,
                 read.prev + 164
             )?;
             None
@@ -759,12 +751,12 @@ impl ScriptObject for PufferState {
             world_acceleration: self.world_acceleration.unwrap_or(Vec3::DEFAULT),
             interval_type,
             interval_value: self.interval.interval_value,
-            size_range: self.size_range.unwrap_or(Vec2::DEFAULT),
-            lifetime_range: self.lifetime_range.unwrap_or(Vec2::DEFAULT),
-            start_age_range: self.start_age_range.unwrap_or(Vec2::DEFAULT),
+            size_range: self.size_range.unwrap_or(Range::DEFAULT),
+            lifetime_range: self.lifetime_range.unwrap_or(Range::DEFAULT),
+            start_age_range: self.start_age_range.unwrap_or(Range::DEFAULT),
             deviation_distance: self.deviation_distance.unwrap_or(0.0),
-            zero156: Vec2::DEFAULT,
-            fade_range: self.fade_range.unwrap_or(Vec2::DEFAULT),
+            zero156: Range::DEFAULT,
+            fade_range: self.fade_range.unwrap_or(Range::DEFAULT),
             friction: self.friction.unwrap_or(0.0),
             zero176: 0,
             zero180: 0,

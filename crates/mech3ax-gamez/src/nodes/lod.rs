@@ -1,7 +1,7 @@
 use super::flags::NodeBitFlags;
 use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
 use super::wrappers::Wrapper;
-use mech3ax_api_types::{static_assert_size, Block, Lod, ReprSize as _, Vec2};
+use mech3ax_api_types::{static_assert_size, Block, Lod, Range, ReprSize as _};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, bool_c, Result};
@@ -65,7 +65,7 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     Ok(NodeVariant::Lod(node))
 }
 
-fn assert_lod(lod: LodC, offset: u32) -> Result<(bool, Vec2, f32, Option<u32>)> {
+fn assert_lod(lod: LodC, offset: u32) -> Result<(bool, Range, f32, Option<u32>)> {
     let level = assert_that!("level", bool lod.level, offset + 0)?;
     assert_that!("range near sq", 0.0 <= lod.range_near_sq <= 1000.0 * 1000.0, offset + 4)?;
     let range_near = lod.range_near_sq.sqrt();
@@ -88,7 +88,15 @@ fn assert_lod(lod: LodC, offset: u32) -> Result<(bool, Vec2, f32, Option<u32>)> 
         None
     };
 
-    Ok((level, Vec2(range_near, lod.range_far), lod.unk60, unk76))
+    Ok((
+        level,
+        Range {
+            min: range_near,
+            max: lod.range_far,
+        },
+        lod.unk60,
+        unk76,
+    ))
 }
 
 pub fn read<R>(read: &mut CountingReader<R>, node: NodeVariants) -> Result<Wrapper<Lod>>
@@ -147,9 +155,9 @@ where
 {
     write.write_struct(&LodC {
         level: bool_c!(lod.level),
-        range_near_sq: lod.range.0 * lod.range.0,
-        range_far: lod.range.1,
-        range_far_sq: lod.range.1 * lod.range.1,
+        range_near_sq: lod.range.min * lod.range.min,
+        range_far: lod.range.max,
+        range_far_sq: lod.range.max * lod.range.max,
         zero16: [0; 44],
         unk60: lod.unk60,
         unk64: lod.unk60 * lod.unk60,

@@ -2,7 +2,7 @@ use super::types::{AtNode, INPUT_NODE};
 use super::utils::assert_color;
 use super::ScriptObject;
 use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec2, Vec3};
+use mech3ax_api_types::{static_assert_size, Range, ReprSize as _, Vec3};
 use mech3ax_common::assert::{assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::light::LightFlags;
@@ -27,7 +27,7 @@ struct LightStateC {
     node_index: u32,   // 64
     translation: Vec3, // 68
     rotation: Vec3,    // 80
-    range: Vec2,       // 92
+    range: Range,      // 92
     color: Vec3,       // 100
     ambient: f32,      // 112
     diffuse: f32,      // 116
@@ -49,7 +49,7 @@ pub struct LightState {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub at_node: Option<AtNode>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub range: Option<Vec2>,
+    pub range: Option<Range>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub color: Option<Vec3>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -197,19 +197,21 @@ impl ScriptObject for LightState {
         };
 
         let range = if flags.contains(LightFlags::RANGE) {
-            let range_near = light_state.range.0;
-            let range_far = light_state.range.1;
-            assert_that!("light state range near", range_near >= 0.0, read.prev + 92)?;
+            assert_that!(
+                "light state range near",
+                light_state.range.min >= 0.0,
+                read.prev + 92
+            )?;
             assert_that!(
                 "light state range far",
-                range_far >= range_near,
+                light_state.range.max >= light_state.range.min,
                 read.prev + 96
             )?;
             Some(light_state.range)
         } else {
             assert_that!(
                 "light state range",
-                light_state.range == Vec2::DEFAULT,
+                light_state.range == Range::DEFAULT,
                 read.prev + 92
             )?;
             None
@@ -322,7 +324,7 @@ impl ScriptObject for LightState {
             node_index,
             translation,
             rotation: Vec3::DEFAULT,
-            range: self.range.unwrap_or(Vec2::DEFAULT),
+            range: self.range.unwrap_or(Range::DEFAULT),
             color: self.color.unwrap_or(Vec3::DEFAULT),
             ambient: self.ambient.unwrap_or(0.0),
             diffuse: self.diffuse.unwrap_or(0.0),

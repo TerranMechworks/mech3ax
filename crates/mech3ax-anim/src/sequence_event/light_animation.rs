@@ -1,6 +1,6 @@
 use super::ScriptObject;
 use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec2, Vec3};
+use mech3ax_api_types::{static_assert_size, Range, ReprSize as _, Vec3};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
@@ -12,7 +12,7 @@ use std::io::{Read, Write};
 struct LightAnimationC {
     name: [u8; 32],
     light_index: u32, // 32
-    range: Vec2,      // 36
+    range: Range,     // 36
     zero44: u32,
     zero48: u32,
     zero52: u32,
@@ -31,7 +31,7 @@ static_assert_size!(LightAnimationC, 100);
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LightAnimation {
     pub name: String,
-    pub range: Vec2,
+    pub range: Range,
     pub color: Vec3,
     pub runtime: f32,
 }
@@ -56,18 +56,16 @@ impl ScriptObject for LightAnimation {
             read.prev + 32
         )?;
 
-        let range_near = light_anim.range.0;
-        let range_far = light_anim.range.1;
-        if range_near >= 0.0 {
+        if light_anim.range.min >= 0.0 {
             assert_that!(
                 "light anim range far",
-                range_far >= range_near,
+                light_anim.range.max >= light_anim.range.min,
                 read.prev + 40
             )?;
         } else {
             assert_that!(
                 "light anim range far",
-                range_far <= range_near,
+                light_anim.range.max <= light_anim.range.min,
                 read.prev + 40
             )?;
         }

@@ -3,7 +3,7 @@ use super::support::*;
 use super::types::*;
 use crate::sequence_event::{read_events, size_events, write_events, EventData};
 use log::trace;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec2};
+use mech3ax_api_types::{static_assert_size, Range, ReprSize as _};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{
@@ -322,7 +322,10 @@ pub fn read_anim_def<R: Read>(read: &mut CountingReader<R>) -> Result<(AnimDef, 
             anim_def.exec_by_range_max >= anim_def.exec_by_range_min,
             prev + 156
         )?;
-        Execution::ByRange(Vec2(anim_def.exec_by_range_min, anim_def.exec_by_range_max))
+        Execution::ByRange(Range {
+            min: anim_def.exec_by_range_min,
+            max: anim_def.exec_by_range_max,
+        })
     } else {
         assert_that!(
             "anim def exec by range min",
@@ -711,7 +714,7 @@ pub fn write_anim_def<W: Write>(
         }
         Execution::ByRange(range) => {
             flags |= AnimDefFlags::EXECUTION_BY_RANGE;
-            (range.0, range.1)
+            (range.min, range.max)
         }
     };
 
