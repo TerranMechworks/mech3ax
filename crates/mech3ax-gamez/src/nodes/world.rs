@@ -1,9 +1,11 @@
 use super::flags::NodeBitFlags;
 use super::math::partition_diag;
 use super::range::Range;
-use super::types::{Area, NodeVariant, NodeVariants, Partition, World, BLOCK_EMPTY, ZONE_DEFAULT};
+use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
 use super::wrappers::Wrapper;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec2, Vec3};
+use mech3ax_api_types::{
+    static_assert_size, Area, Block, Partition, ReprSize as _, Vec2, Vec3, World,
+};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -104,9 +106,9 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     // parent array ptr is already asserted
     assert_that!("world children count", 1 <= node.children_count <= 64, offset + 92)?;
     // children array ptr is already asserted
-    assert_that!("world block 1", node.unk116 == BLOCK_EMPTY, offset + 116)?;
-    assert_that!("world block 2", node.unk140 == BLOCK_EMPTY, offset + 140)?;
-    assert_that!("world block 3", node.unk164 == BLOCK_EMPTY, offset + 164)?;
+    assert_that!("world block 1", node.unk116 == Block::EMPTY, offset + 116)?;
+    assert_that!("world block 2", node.unk140 == Block::EMPTY, offset + 140)?;
+    assert_that!("world block 3", node.unk164 == Block::EMPTY, offset + 164)?;
     assert_that!("world field 196", node.unk196 == 0, offset + 196)?;
     Ok(NodeVariant::World(
         node.data_ptr,
@@ -267,7 +269,7 @@ fn assert_world(world: &WorldC, offset: u32) -> Result<(Area, Range, Range, bool
         world.area_height == height as f32,
         offset + 64
     )?;
-    let area = (area_left, area_top, area_right, area_bottom);
+    let area = Area(area_left, area_top, area_right, area_bottom);
 
     assert_that!(
         "partition max feat",
@@ -439,9 +441,9 @@ pub fn make_variants(world: &World) -> NodeVariants {
         parent_array_ptr: 0,
         children_count: world.children.len() as u32,
         children_array_ptr: world.children_array_ptr,
-        unk116: BLOCK_EMPTY,
-        unk140: BLOCK_EMPTY,
-        unk164: BLOCK_EMPTY,
+        unk116: Block::EMPTY,
+        unk140: Block::EMPTY,
+        unk164: Block::EMPTY,
         unk196: 0,
     }
 }

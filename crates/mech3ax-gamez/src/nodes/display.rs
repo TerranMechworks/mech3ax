@@ -1,6 +1,6 @@
 use super::flags::NodeBitFlags;
-use super::types::{Display, NodeVariant, NodeVariants, BLOCK_EMPTY, ZONE_DEFAULT};
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
+use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
+use mech3ax_api_types::{static_assert_size, Block, Display, ReprSize as _, Vec3};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -43,9 +43,9 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
         offset + 92
     )?;
     // children array ptr is already asserted
-    assert_that!("display block 1", node.unk116 == BLOCK_EMPTY, offset + 116)?;
-    assert_that!("display block 2", node.unk140 == BLOCK_EMPTY, offset + 140)?;
-    assert_that!("display block 3", node.unk164 == BLOCK_EMPTY, offset + 164)?;
+    assert_that!("display block 1", node.unk116 == Block::EMPTY, offset + 116)?;
+    assert_that!("display block 2", node.unk140 == Block::EMPTY, offset + 140)?;
+    assert_that!("display block 3", node.unk164 == Block::EMPTY, offset + 164)?;
     assert_that!("display field 196", node.unk196 == 0, offset + 196)?;
     Ok(NodeVariant::Display(node.data_ptr))
 }
@@ -89,9 +89,9 @@ pub fn make_variants(display: &Display) -> NodeVariants {
         parent_array_ptr: 0,
         children_count: 0,
         children_array_ptr: 0,
-        unk116: BLOCK_EMPTY,
-        unk140: BLOCK_EMPTY,
-        unk164: BLOCK_EMPTY,
+        unk116: Block::EMPTY,
+        unk140: Block::EMPTY,
+        unk164: Block::EMPTY,
         unk196: 0,
     }
 }

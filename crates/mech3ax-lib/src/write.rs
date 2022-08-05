@@ -2,7 +2,7 @@ use crate::buffer::CallbackBuffer;
 use crate::error::err_to_c;
 use crate::filename_to_string;
 use anyhow::{bail, Context, Result};
-use mech3ax_api_types::{ArchiveEntry, Manifest, Motion, Script};
+use mech3ax_api_types::{ArchiveEntry, GameZ, Manifest, Material, Model, Motion, Script};
 use mech3ax_archive::{Mode, Version};
 use serde_json::Value;
 use std::fs::File;
@@ -168,7 +168,7 @@ fn write_mechlib_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
         "format" => Ok(data),
         "version" => Ok(data),
         "materials" => {
-            let materials: Vec<mech3ax_gamez::mechlib::Material> =
+            let materials: Vec<Material> =
                 serde_json::from_slice(&data).context("Materials data is invalid")?;
 
             let mut buf = Vec::new();
@@ -177,7 +177,7 @@ fn write_mechlib_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
             Ok(buf)
         }
         original => {
-            let mut model: mech3ax_gamez::mechlib::Model = serde_json::from_slice(&data)
+            let mut model: Model = serde_json::from_slice(&data)
                 .with_context(|| format!("Model data for \"{}\" is invalid", original))?;
 
             let mut buf = Vec::new();
@@ -258,8 +258,7 @@ pub extern "C" fn write_gamez(
             bail!("data is null");
         }
         let buf = unsafe { std::slice::from_raw_parts(data, len) };
-        let gamez: mech3ax_gamez::gamez::GameZ =
-            serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
+        let gamez: GameZ = serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
         let mut write = buf_writer(filename)?;
         mech3ax_gamez::gamez::write_gamez(&mut write, &gamez).context("Failed to write GameZ data")
     })

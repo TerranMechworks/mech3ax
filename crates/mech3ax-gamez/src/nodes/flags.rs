@@ -1,5 +1,4 @@
-use ::serde::{Deserialize, Serialize};
-use mech3ax_api_types::serde::bool_false;
+use mech3ax_api_types::NodeFlags;
 
 bitflags::bitflags! {
     pub struct NodeBitFlags: u32 {
@@ -39,34 +38,6 @@ bitflags::bitflags! {
         const BASE = Self::ACTIVE.bits | Self::TREE_VALID.bits | Self::ID_ZONE_CHECK.bits;
         const DEFAULT = Self::BASE.bits | Self::ALTITUDE_SURFACE.bits | Self::INTERSECT_SURFACE.bits;
     }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct NodeFlags {
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub altitude_surface: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub intersect_surface: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub intersect_bbox: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub landmark: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub unk08: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub has_mesh: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub unk10: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub terrain: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub can_modify: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub clip_to: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub unk25: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub unk28: bool,
 }
 
 impl From<NodeBitFlags> for NodeFlags {

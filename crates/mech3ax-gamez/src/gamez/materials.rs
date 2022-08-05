@@ -1,8 +1,8 @@
 use crate::materials::{
-    read_material, read_materials_zero, write_material, write_materials_zero, CycleData, Material,
-    RawMaterial, TexturedMaterial, MATERIAL_C_SIZE,
+    read_material, read_materials_zero, write_material, write_materials_zero, RawMaterial,
+    MATERIAL_C_SIZE,
 };
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{static_assert_size, CycleData, Material, ReprSize as _, TexturedMaterial};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, bool_c, Result};
 use std::io::{Read, Write};

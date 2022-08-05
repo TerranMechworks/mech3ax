@@ -2,12 +2,12 @@ use crate::{InterpOpts, ZipOpts};
 use anyhow::{bail, Context, Result};
 use mech3ax_anim::{write_anim, AnimMetadata};
 use mech3ax_api_types::saves::AnimActivation;
-use mech3ax_api_types::{ArchiveEntry, Manifest, Motion, Script};
-use mech3ax_archive::{write_archive, Mode, Version};
-use mech3ax_gamez::gamez::{write_gamez, GameZ, Material as GameZMat, Mesh, Metadata, Node};
-use mech3ax_gamez::mechlib::{
-    write_format, write_materials, write_model, write_version, Material as MechlibMat, Model,
+use mech3ax_api_types::{
+    ArchiveEntry, GameZ, IndexedNode, Manifest, Material, Mesh, Metadata, Model, Motion, Script,
 };
+use mech3ax_archive::{write_archive, Mode, Version};
+use mech3ax_gamez::gamez::write_gamez;
+use mech3ax_gamez::mechlib::{write_format, write_materials, write_model, write_version};
 use mech3ax_image::write_textures;
 use mech3ax_interp::write_interp;
 use mech3ax_motion::write_motion;
@@ -162,7 +162,7 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                 Ok(buf)
             }
             "materials" => {
-                let materials: Vec<MechlibMat> = zip_json(zip, "materials.json")?;
+                let materials: Vec<Material> = zip_json(zip, "materials.json")?;
 
                 let mut buf = Vec::new();
                 write_materials(&mut buf, &materials)
@@ -213,9 +213,9 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
         let mut zip = ZipArchive::new(input).context("Failed to open input")?;
         let metadata: Metadata = zip_json(&mut zip, "metadata.json")?;
         let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
-        let materials: Vec<GameZMat> = zip_json(&mut zip, "materials.json")?;
+        let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
         let meshes: Vec<Mesh> = zip_json(&mut zip, "meshes.json")?;
-        let nodes: Vec<Node> = zip_json(&mut zip, "nodes.json")?;
+        let nodes: Vec<IndexedNode> = zip_json(&mut zip, "nodes.json")?;
         GameZ {
             metadata,
             textures,

@@ -1,5 +1,4 @@
-use ::serde::{Deserialize, Serialize};
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec2, Vec3};
+use mech3ax_api_types::{static_assert_size, Mesh, MeshLight, Polygon, ReprSize as _, Vec2, Vec3};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, bool_c, Result};
 use std::io::{Read, Write};
@@ -17,24 +16,6 @@ struct PolygonC {
     texture_info: u32,
 }
 static_assert_size!(PolygonC, 36);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Polygon {
-    vertex_indices: Vec<u32>,
-    vertex_colors: Vec<Vec3>,
-    normal_indices: Option<Vec<u32>>,
-    uv_coords: Option<Vec<Vec2>>,
-    texture_index: u32,
-    texture_info: u32,
-    unk04: u32,
-    unk_bit: bool,
-    vtx_bit: bool,
-    vertices_ptr: u32,
-    normals_ptr: u32,
-    uvs_ptr: u32,
-    colors_ptr: u32,
-    unk_ptr: u32,
-}
 
 #[repr(C)]
 struct MeshC {
@@ -64,30 +45,6 @@ struct MeshC {
 }
 static_assert_size!(MeshC, 92);
 pub const MESH_C_SIZE: u32 = MeshC::SIZE;
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Mesh {
-    vertices: Vec<Vec3>,
-    normals: Vec<Vec3>,
-    morphs: Vec<Vec3>,
-    lights: Vec<Light>,
-    polygons: Vec<Polygon>,
-    polygons_ptr: u32,
-    vertices_ptr: u32,
-    normals_ptr: u32,
-    lights_ptr: u32,
-    morphs_ptr: u32,
-    file_ptr: bool,
-    unk04: bool,
-    unk08: u32,
-    parent_count: u32,
-    unk40: f32,
-    unk44: f32,
-    unk72: f32,
-    unk76: f32,
-    unk80: f32,
-    unk84: f32,
-}
 
 pub struct WrappedMesh {
     mesh: Mesh,
@@ -121,29 +78,6 @@ struct LightC {
     unk72: f32,       // 72
 }
 static_assert_size!(LightC, 76);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Light {
-    unk00: u32,
-    unk04: u32,
-    unk08: u32,
-    extra: Vec<Vec3>,
-    unk16: u32,
-    unk20: u32,
-    unk24: u32,
-    unk28: f32,
-    unk32: f32,
-    unk36: f32,
-    unk40: f32,
-    ptr: u32,
-    unk48: f32,
-    unk52: f32,
-    unk56: f32,
-    unk60: f32,
-    unk64: f32,
-    unk68: f32,
-    unk72: f32,
-}
 
 fn assert_mesh_info(mesh: MeshC, offset: u32) -> Result<WrappedMesh> {
     let file_ptr = assert_that!("file ptr", bool mesh.file_ptr, offset + 0)?;
@@ -238,7 +172,7 @@ where
     (0..count).map(|_| read.read_struct()).collect()
 }
 
-fn read_lights<R>(read: &mut CountingReader<R>, count: u32) -> Result<Vec<Light>>
+fn read_lights<R>(read: &mut CountingReader<R>, count: u32) -> Result<Vec<MeshLight>>
 where
     R: Read,
 {
@@ -250,7 +184,7 @@ where
         .into_iter()
         .map(|light| {
             let extra = read_vec3s(read, light.extra_count)?;
-            Ok(Light {
+            Ok(MeshLight {
                 unk00: light.unk00,
                 unk04: light.unk04,
                 unk08: light.unk08,
@@ -414,7 +348,7 @@ where
     Ok(())
 }
 
-fn write_lights<W>(write: &mut W, lights: &[Light]) -> Result<()>
+fn write_lights<W>(write: &mut W, lights: &[MeshLight]) -> Result<()>
 where
     W: Write,
 {

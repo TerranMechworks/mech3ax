@@ -5,11 +5,11 @@ use super::flags::NodeBitFlags;
 use super::light;
 use super::lod;
 use super::object3d;
-use super::types::{Node, NodeType, NodeVariant, NodeVariants, BLOCK_EMPTY};
+use super::types::{NodeType, NodeVariant, NodeVariants};
 use super::window;
 use super::world;
 use super::wrappers::WrappedNode;
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{static_assert_size, Block, Node, ReprSize as _};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
@@ -40,9 +40,9 @@ struct NodeC {
     zero104: u32,
     zero108: u32,
     zero112: u32,
-    unk116: (f32, f32, f32, f32, f32, f32),
-    unk140: (f32, f32, f32, f32, f32, f32),
-    unk164: (f32, f32, f32, f32, f32, f32),
+    unk116: Block,
+    unk140: Block,
+    unk164: Block,
     zero188: u32,
     zero192: u32,
     unk196: u32,
@@ -342,9 +342,9 @@ fn assert_node_info_zero(node: NodeC, offset: u32) -> Result<()> {
     assert_that!("field 104", node.zero104 == 0, offset + 104)?;
     assert_that!("field 108", node.zero108 == 0, offset + 108)?;
     assert_that!("field 112", node.zero112 == 0, offset + 112)?;
-    assert_that!("block 1", node.unk116 == BLOCK_EMPTY, offset + 116)?;
-    assert_that!("block 2", node.unk140 == BLOCK_EMPTY, offset + 140)?;
-    assert_that!("block 3", node.unk164 == BLOCK_EMPTY, offset + 164)?;
+    assert_that!("block 1", node.unk116 == Block::EMPTY, offset + 116)?;
+    assert_that!("block 2", node.unk140 == Block::EMPTY, offset + 140)?;
+    assert_that!("block 3", node.unk164 == Block::EMPTY, offset + 164)?;
     assert_that!("field 188", node.zero188 == 0, offset + 188)?;
     assert_that!("field 192", node.zero192 == 0, offset + 192)?;
     assert_that!("field 196", node.unk196 == 0, offset + 196)?;
@@ -387,9 +387,9 @@ where
         zero104: 0,
         zero108: 0,
         zero112: 0,
-        unk116: BLOCK_EMPTY,
-        unk140: BLOCK_EMPTY,
-        unk164: BLOCK_EMPTY,
+        unk116: Block::EMPTY,
+        unk140: Block::EMPTY,
+        unk164: Block::EMPTY,
         zero188: 0,
         zero192: 0,
         unk196: 0,

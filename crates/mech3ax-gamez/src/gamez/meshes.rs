@@ -1,8 +1,8 @@
 use crate::mesh::{
     read_mesh_data, read_mesh_info, read_mesh_infos_zero, size_mesh, write_mesh_data,
-    write_mesh_info, write_mesh_infos_zero, Mesh, MESH_C_SIZE,
+    write_mesh_info, write_mesh_infos_zero, MESH_C_SIZE,
 };
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{static_assert_size, Mesh, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};

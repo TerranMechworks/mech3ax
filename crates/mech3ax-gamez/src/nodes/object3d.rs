@@ -1,8 +1,10 @@
 use super::flags::NodeBitFlags;
 use super::math::{apply_zero_signs, euler_to_matrix, extract_zero_signs, PI};
-use super::types::{NodeVariant, NodeVariants, Object3d, Transformation, ZONE_DEFAULT};
+use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
 use super::wrappers::Wrapper;
-use mech3ax_api_types::{static_assert_size, Matrix, ReprSize as _, Vec3};
+use mech3ax_api_types::{
+    static_assert_size, Matrix, Object3d, ReprSize as _, Transformation, Vec3,
+};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};

@@ -1,30 +1,17 @@
-use crate::materials::{read_material, write_material, RawMaterial, TexturedMaterial};
-use crate::mesh::{read_mesh_data, read_mesh_info, write_mesh_data, write_mesh_info, Mesh};
+use crate::materials::{read_material, write_material, RawMaterial};
+use crate::mesh::{read_mesh_data, read_mesh_info, write_mesh_data, write_mesh_info};
 use crate::nodes::{
-    read_node_data, read_node_info_mechlib, write_node_data, write_node_info, Node as BaseNode,
-    WrappedNode,
+    read_node_data, read_node_info_mechlib, write_node_data, write_node_info, WrappedNode,
 };
-use ::serde::{Deserialize, Serialize};
+use mech3ax_api_types::{Material, Mesh, Model, Node, ResolvedNode, TexturedMaterial};
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
-pub type Material = crate::materials::Material;
-
 pub const VERSION_MW: u32 = 27;
 pub const VERSION_PM: u32 = 41;
 pub const FORMAT: u32 = 1;
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Node(BaseNode<Node>);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Model {
-    root: Node,
-    meshes: Vec<Mesh>,
-    mesh_ptrs: Vec<i32>,
-}
 
 pub fn read_version<R>(read: &mut CountingReader<R>, is_pm: bool) -> Result<()>
 where
@@ -113,7 +100,7 @@ fn read_node_and_mesh<R>(
     index: &mut i32,
     meshes: &mut Vec<Mesh>,
     mesh_ptrs: &mut Vec<i32>,
-) -> Result<Node>
+) -> Result<ResolvedNode>
 where
     R: Read,
 {
@@ -142,7 +129,7 @@ where
                 .map(|_| read_node_and_mesh(read, index, meshes, mesh_ptrs))
                 .collect::<Result<Vec<_>>>()?;
 
-            Ok(Node(BaseNode::Object3d(object3d)))
+            Ok(ResolvedNode(Node::Object3d(object3d)))
         }
         _ => Err(AssertionError("Expected only Object3d nodes in mechlib".to_owned()).into()),
     }
@@ -166,7 +153,7 @@ where
 
 fn write_node_and_mesh<W>(
     write: &mut W,
-    node: &mut Node,
+    node: &mut ResolvedNode,
     meshes: &[Mesh],
     mesh_ptrs: &[i32],
 ) -> Result<()>
@@ -174,7 +161,7 @@ where
     W: Write,
 {
     let mesh_index = match &mut node.0 {
-        BaseNode::Object3d(object3d) => {
+        Node::Object3d(object3d) => {
             // preserve mesh_index
             let mesh_index = object3d.mesh_index;
             // if the mesh_index isn't -1, then we need to restore the correct pointer
@@ -195,7 +182,7 @@ where
     write_node_data(write, &node.0)?;
 
     match &mut node.0 {
-        BaseNode::Object3d(object3d) => {
+        Node::Object3d(object3d) => {
             // if mesh_index isn't -1, then we need to write out the mesh, too
             if mesh_index > -1 {
                 let mesh = &meshes[mesh_index as usize];

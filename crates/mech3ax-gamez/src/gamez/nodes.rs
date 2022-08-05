@@ -1,13 +1,14 @@
 use crate::nodes::{
     read_node_data, read_node_info_gamez, read_node_info_zero, size_node, write_node_data,
-    write_node_info, write_node_info_zero, Node, NodeVariant, WrappedNode, NODE_C_SIZE,
+    write_node_info, write_node_info_zero, NodeVariant, WrappedNode, NODE_C_SIZE,
 };
+use mech3ax_api_types::{IndexedNode, Node};
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Error, Result};
 use std::io::{Read, Write};
 
-pub fn read_nodes<R>(read: &mut CountingReader<R>, array_size: u32) -> Result<Vec<Node<u32>>>
+pub fn read_nodes<R>(read: &mut CountingReader<R>, array_size: u32) -> Result<Vec<IndexedNode>>
 where
     R: Read,
 {

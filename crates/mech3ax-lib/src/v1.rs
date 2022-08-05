@@ -2,9 +2,10 @@ use crate::panic;
 use anyhow::Result;
 use image::ImageOutputFormat;
 use mech3ax_anim::read_anim;
+use mech3ax_api_types::{IndexedNode, Material, Mesh};
 use mech3ax_archive::{read_archive, Version};
 use mech3ax_common::CountingReader;
-use mech3ax_gamez::gamez::{read_gamez, Material, Mesh, Node};
+use mech3ax_gamez::gamez::read_gamez;
 use mech3ax_gamez::mechlib::{read_format, read_materials, read_model, read_version};
 use mech3ax_image::read_textures;
 use mech3ax_interp::read_interp;
@@ -230,11 +231,11 @@ type GamezCb = extern "C" fn(*const u8, usize);
 
 // the lib GameZ implementation is not serializable on purpose
 #[derive(Debug, Serialize, Deserialize)]
-struct GameZ {
+struct GameZWithoutMetadata {
     textures: Vec<String>,
     materials: Vec<Material>,
     meshes: Vec<Mesh>,
-    nodes: Vec<Node>,
+    nodes: Vec<IndexedNode>,
 }
 
 // filename is borrowed, return value is borrowed
@@ -244,7 +245,7 @@ pub extern "C" fn gamez(filename: *const c_char, callback: GamezCb) -> *const c_
         let filename = ptr_to_string(filename)?;
         let mut input = CountingReader::new(BufReader::new(File::open(filename)?));
         let gamez = read_gamez(&mut input)?;
-        let data = serde_json::to_vec(&GameZ {
+        let data = serde_json::to_vec(&GameZWithoutMetadata {
             textures: gamez.textures,
             materials: gamez.materials,
             meshes: gamez.meshes,

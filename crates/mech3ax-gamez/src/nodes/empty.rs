@@ -1,5 +1,6 @@
 use super::flags::NodeBitFlags;
-use super::types::{Empty, NodeVariant, NodeVariants, ZONE_DEFAULT};
+use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
+use mech3ax_api_types::Empty;
 use mech3ax_common::{assert_that, Result};
 
 const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::BASE;

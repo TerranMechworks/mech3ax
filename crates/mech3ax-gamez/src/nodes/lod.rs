@@ -1,7 +1,7 @@
 use super::flags::NodeBitFlags;
-use super::types::{Lod, NodeVariant, NodeVariants, BLOCK_EMPTY, ZONE_DEFAULT};
+use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
 use super::wrappers::Wrapper;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec2};
+use mech3ax_api_types::{static_assert_size, Block, Lod, ReprSize as _, Vec2};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, bool_c, Result};
@@ -58,8 +58,8 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     // always has at least one child
     assert_that!("lod children count", 1 <= node.children_count <= 32, offset + 92)?;
     // children array ptr is already asserted
-    assert_that!("lod block 1", node.unk116 != BLOCK_EMPTY, offset + 116)?;
-    assert_that!("lod block 2", node.unk140 == BLOCK_EMPTY, offset + 140)?;
+    assert_that!("lod block 1", node.unk116 != Block::EMPTY, offset + 116)?;
+    assert_that!("lod block 2", node.unk140 == Block::EMPTY, offset + 140)?;
     assert_that!("lod block 3", node.unk164 == node.unk116, offset + 164)?;
     assert_that!("lod field 196", node.unk196 == 160, offset + 196)?;
     Ok(NodeVariant::Lod(node))
@@ -135,7 +135,7 @@ pub fn make_variants(lod: &Lod) -> NodeVariants {
         children_count: lod.children.len() as u32,
         children_array_ptr: lod.children_array_ptr,
         unk116: lod.unk116,
-        unk140: BLOCK_EMPTY,
+        unk140: Block::EMPTY,
         unk164: lod.unk116,
         unk196: 160,
     }

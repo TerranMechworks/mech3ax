@@ -1,4 +1,4 @@
-use super::types::{Camera, Display, Empty, Light, Lod, Object3d, Window, World};
+use mech3ax_api_types::{Camera, Display, Empty, Light, Lod, Object3d, Window, World};
 
 pub struct Wrapper<T> {
     pub wrapped: T,

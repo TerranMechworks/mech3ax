@@ -1,5 +1,6 @@
 #![warn(clippy::all, clippy::cargo)]
 mod archive;
+mod gamez;
 mod image;
 mod interp;
 mod messages;
@@ -11,6 +12,7 @@ mod size;
 mod types;
 
 pub use archive::*;
+pub use gamez::*;
 pub use image::*;
 pub use interp::*;
 pub use messages::*;

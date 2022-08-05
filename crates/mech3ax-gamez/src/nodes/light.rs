@@ -1,6 +1,6 @@
 use super::flags::NodeBitFlags;
-use super::types::{Block, Light, NodeVariant, NodeVariants, BLOCK_EMPTY, ZONE_DEFAULT};
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec2, Vec3};
+use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
+use mech3ax_api_types::{static_assert_size, Block, Light, ReprSize as _, Vec2, Vec3};
 use mech3ax_common::assert::{assert_all_zero, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::light::LightFlags;
@@ -30,7 +30,7 @@ struct LightC {
 }
 static_assert_size!(LightC, 208);
 
-const BLOCK_LIGHT: Block = (1.0, 1.0, -2.0, 2.0, 2.0, -1.0);
+const BLOCK_LIGHT: Block = Block(1.0, 1.0, -2.0, 2.0, 2.0, -1.0);
 const LIGHT_NAME: &str = "sunlight";
 
 pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
@@ -59,8 +59,8 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     )?;
     // children array ptr is already asserted
     assert_that!("light block 1", node.unk116 == BLOCK_LIGHT, offset + 116)?;
-    assert_that!("light block 2", node.unk140 == BLOCK_EMPTY, offset + 140)?;
-    assert_that!("light block 3", node.unk164 == BLOCK_EMPTY, offset + 164)?;
+    assert_that!("light block 2", node.unk140 == Block::EMPTY, offset + 140)?;
+    assert_that!("light block 3", node.unk164 == Block::EMPTY, offset + 164)?;
     assert_that!("light field 196", node.unk196 == 0, offset + 196)?;
     Ok(NodeVariant::Light(node.data_ptr))
 }
@@ -146,8 +146,8 @@ pub fn make_variants(light: &Light) -> NodeVariants {
         children_count: 0,
         children_array_ptr: 0,
         unk116: BLOCK_LIGHT,
-        unk140: BLOCK_EMPTY,
-        unk164: BLOCK_EMPTY,
+        unk140: Block::EMPTY,
+        unk164: Block::EMPTY,
         unk196: 0,
     }
 }

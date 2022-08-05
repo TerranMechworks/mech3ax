@@ -24,7 +24,7 @@ type Result<T> = ::std::result::Result<T, AssertionError>;
 pub fn is_equal_to<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
 where
     S: Display,
-    T: PartialEq + PartialOrd + Debug,
+    T: PartialEq + Debug,
     U: Display,
 {
     if actual == expected {
@@ -41,7 +41,7 @@ where
 pub fn is_not_equal_to<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
 where
     S: Display,
-    T: PartialEq + PartialOrd + Debug,
+    T: PartialEq + Debug,
     U: Display,
 {
     if actual != expected {
@@ -55,7 +55,7 @@ where
 pub fn is_less_than<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
 where
     S: Display,
-    T: PartialEq + PartialOrd + Debug,
+    T: PartialOrd + Debug,
     U: Display,
 {
     if actual < expected {
@@ -72,7 +72,7 @@ where
 pub fn is_less_than_or_equal_to<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
 where
     S: Display,
-    T: PartialEq + PartialOrd + Debug,
+    T: PartialOrd + Debug,
     U: Display,
 {
     if actual <= expected {
@@ -89,7 +89,7 @@ where
 pub fn is_greater_than<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
 where
     S: Display,
-    T: PartialEq + PartialOrd + Debug,
+    T: PartialOrd + Debug,
     U: Display,
 {
     if actual > expected {
@@ -107,7 +107,7 @@ where
 pub fn is_greater_than_or_equal_to<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
 where
     S: Display,
-    T: PartialEq + PartialOrd + Debug,
+    T: PartialOrd + Debug,
     U: Display,
 {
     if actual >= expected {
@@ -130,7 +130,7 @@ pub fn is_between<S, T, U>(
 ) -> Result<()>
 where
     S: Display,
-    T: PartialEq + PartialOrd + Debug,
+    T: PartialOrd + Debug,
     U: Display,
 {
     if expected_min <= actual && actual <= expected_max {

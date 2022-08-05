@@ -3,23 +3,10 @@ mod meshes;
 mod nodes;
 mod textures;
 
-use ::serde::{Deserialize, Serialize};
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{static_assert_size, GameZ, Metadata, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
-
-pub type Material = crate::materials::Material;
-pub type Mesh = crate::mesh::Mesh;
-pub type Node = crate::nodes::Node<u32>;
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Metadata {
-    material_array_size: i16,
-    meshes_array_size: i32,
-    node_array_size: u32,
-    node_data_count: u32,
-}
 
 #[repr(C)]
 struct HeaderC {
@@ -42,15 +29,6 @@ const VERSION_RECOIL: u32 = 15;
 const VERSION_MW: u32 = 27;
 #[allow(dead_code)]
 const VERSION_PM: u32 = 41;
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GameZ {
-    pub metadata: Metadata,
-    pub textures: Vec<String>,
-    pub materials: Vec<Material>,
-    pub meshes: Vec<Mesh>,
-    pub nodes: Vec<Node>,
-}
 
 pub fn read_gamez<R>(read: &mut CountingReader<R>) -> Result<GameZ>
 where
