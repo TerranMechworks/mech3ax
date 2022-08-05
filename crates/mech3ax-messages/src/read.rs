@@ -3,7 +3,7 @@ use crate::pe;
 use crate::resources::read_resource_directory;
 use crate::zloc::read_zlocids;
 use log::trace;
-use mech3ax_api_types::Messages;
+use mech3ax_api_types::{MessageEntry, Messages};
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::{assert_that, Result};
 use std::collections::HashMap;
@@ -111,14 +111,18 @@ fn parse_resource_section(
 fn combine(
     message_ids: Vec<(u32, String)>,
     mut messages: HashMap<u32, String>,
-) -> Result<Vec<(String, u32, String)>> {
+) -> Result<Vec<MessageEntry>> {
     let entries = message_ids
         .into_iter()
-        .map(|(entry_id, name)| {
-            let message = messages.remove(&entry_id).ok_or_else(|| {
-                AssertionError(format!("Message \"{}\" ({}) not found", &name, entry_id))
+        .map(|(entry_id, key)| {
+            let value = messages.remove(&entry_id).ok_or_else(|| {
+                AssertionError(format!("Message \"{}\" ({}) not found", &key, entry_id))
             })?;
-            Ok((name, entry_id, message))
+            Ok(MessageEntry {
+                key,
+                id: entry_id,
+                value,
+            })
         })
         .rev()
         .collect::<Result<Vec<_>>>()?;
