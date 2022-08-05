@@ -172,8 +172,8 @@ fn assert_area_partitions(nodes: &[Node<u32>], offset: u32) -> Result<()> {
             _ => &None,
         };
         if let Some(ap) = area_partition {
-            let x = ap.0;
-            let y = ap.1;
+            let x = ap.x;
+            let y = ap.y;
             assert_that!("partition x", x < x_count, offset)?;
             assert_that!("partition y", y < y_count, offset)?;
         }

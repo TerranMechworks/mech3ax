@@ -2,9 +2,13 @@ use crate::serde::bool_false;
 use crate::types::{Matrix, Vec2, Vec3};
 use ::serde::{Deserialize, Serialize};
 
-pub type AreaPartition = Option<(i32, i32)>;
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+pub struct AreaPartition {
+    pub x: i32,
+    pub y: i32,
+}
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub struct Area(pub i32, pub i32, pub i32, pub i32);
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
@@ -93,7 +97,7 @@ pub struct Lod {
 
     pub flags: NodeFlags,
     pub zone_id: u32,
-    pub area_partition: AreaPartition,
+    pub area_partition: Option<AreaPartition>,
     pub parent: u32,
     pub children: Vec<u32>,
     pub data_ptr: u32,
@@ -117,7 +121,7 @@ pub struct Object3d<T> {
 
     pub flags: NodeFlags,
     pub zone_id: u32,
-    pub area_partition: AreaPartition,
+    pub area_partition: Option<AreaPartition>,
     pub mesh_index: i32,
     pub parent: Option<u32>,
     pub children: Vec<T>,

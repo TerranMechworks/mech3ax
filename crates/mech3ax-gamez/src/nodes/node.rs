@@ -9,7 +9,7 @@ use super::types::{NodeType, NodeVariant, NodeVariants};
 use super::window;
 use super::world;
 use super::wrappers::WrappedNode;
-use mech3ax_api_types::{static_assert_size, Block, Node, ReprSize as _};
+use mech3ax_api_types::{static_assert_size, AreaPartition, Block, Node, ReprSize as _};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
@@ -93,7 +93,10 @@ fn assert_node(node: NodeC, offset: u32) -> Result<(NodeType, NodeVariants)> {
     } else {
         assert_that!("area partition x", 0 <= node.area_partition_x <= 64, offset + 76)?;
         assert_that!("area partition y", 0 <= node.area_partition_y <= 64, offset + 80)?;
-        Some((node.area_partition_x, node.area_partition_y))
+        Some(AreaPartition {
+            x: node.area_partition_x,
+            y: node.area_partition_y,
+        })
     };
 
     // can only have one parent
@@ -211,7 +214,12 @@ where
     let mut name = [0; 36];
     str_to_c_node_name(variant.name, &mut name);
 
-    let (area_partition_x, area_partition_y) = variant.area_partition.unwrap_or((-1, -1));
+    let AreaPartition {
+        x: area_partition_x,
+        y: area_partition_y,
+    } = variant
+        .area_partition
+        .unwrap_or(AreaPartition { x: -1, y: -1 });
 
     write.write_struct(&NodeC {
         name,

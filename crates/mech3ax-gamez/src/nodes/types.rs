@@ -24,7 +24,7 @@ pub struct NodeVariants {
     pub zone_id: u32,
     pub data_ptr: u32,
     pub mesh_index: i32,
-    pub area_partition: AreaPartition,
+    pub area_partition: Option<AreaPartition>,
     pub has_parent: bool,
     pub parent_array_ptr: u32,
     pub children_count: u32,
