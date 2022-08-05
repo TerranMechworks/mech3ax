@@ -1,6 +1,7 @@
 use image::{DynamicImage, RgbImage, RgbaImage};
 use mech3ax_api_types::{
-    static_assert_size, ReprSize as _, TextureAlpha, TextureInfo, TextureManifest, TexturePalette,
+    static_assert_size, GlobalPalette, LocalPalette, ReprSize as _, TextureAlpha, TextureInfo,
+    TextureManifest, TexturePalette,
 };
 use mech3ax_common::assert::{assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
@@ -182,15 +183,20 @@ where
             }
         };
 
-        if let Some((palette_index, palette_data)) = global_palette {
-            info.palette = TexturePalette::Global(palette_index, palette_count);
+        if let Some((index, palette_data)) = global_palette {
+            let global = GlobalPalette {
+                index,
+                count: palette_count,
+            };
+            info.palette = TexturePalette::Global(global);
             convert_image(&palette_data[0..(palette_count as usize) * 3])
         } else {
             let mut palette_data = vec![0u8; palette_count as usize * 2];
             read.read_exact(&mut palette_data)?;
             let palette_data = rgb565to888(&palette_data);
             let image = convert_image(&palette_data);
-            info.palette = TexturePalette::Local(palette_data);
+            let local = LocalPalette { data: palette_data };
+            info.palette = TexturePalette::Local(local);
             image
         }
     };
@@ -284,14 +290,14 @@ fn calc_length(info: &TextureInfo) -> u32 {
     let size = (info.width as u32) * (info.height as u32);
 
     match &info.palette {
-        TexturePalette::Local(palette) => {
+        TexturePalette::Local(local) => {
             length += size;
             if info.alpha == TextureAlpha::Full {
                 length += size;
             }
-            length += (palette.len() * 2 / 3) as u32;
+            length += (local.data.len() * 2 / 3) as u32;
         }
-        TexturePalette::Global(_, _) => {
+        TexturePalette::Global(_) => {
             length += size;
             if info.alpha == TextureAlpha::Full {
                 length += size;
@@ -334,10 +340,10 @@ fn convert_info_to_c(info: &TextureInfo) -> Info {
     }
 
     let palette_count = match &info.palette {
-        TexturePalette::Local(palette) => (palette.len() / 3) as u16,
-        TexturePalette::Global(_, palette_count) => {
+        TexturePalette::Local(local) => (local.data.len() / 3) as u16,
+        TexturePalette::Global(global) => {
             bitflags |= TexFlags::GLOBAL_PALETTE;
-            *palette_count
+            global.count
         }
         TexturePalette::None => 0,
     };
@@ -378,29 +384,29 @@ where
     write.write_struct(&tex_info)?;
 
     match &info.palette {
-        TexturePalette::Local(palette) => {
+        TexturePalette::Local(local) => {
             match image {
                 DynamicImage::ImageRgb8(img) => {
                     // TODO: alpha is currently skipped for palette images
                     if info.alpha == TextureAlpha::Full {
                         return Err(invalid_alpha(&info.name, "no or simple", &info.alpha));
                     }
-                    let image_data = rgb888topal8(&img.into_raw(), palette);
+                    let image_data = rgb888topal8(&img.into_raw(), &local.data);
                     write.write_all(&image_data)?;
-                    let palette_data = rgb888to565(palette);
+                    let palette_data = rgb888to565(&local.data);
                     write.write_all(&palette_data)?;
                 }
                 DynamicImage::ImageRgba8(img) => {
                     if info.alpha != TextureAlpha::Full {
                         return Err(invalid_alpha(&info.name, "full", &info.alpha));
                     }
-                    let (image_data, alpha_data) = rgb888atopal8(&img.into_raw(), palette);
+                    let (image_data, alpha_data) = rgb888atopal8(&img.into_raw(), &local.data);
                     write.write_all(&image_data)?;
                     // throw away the simple alpha
                     if info.alpha == TextureAlpha::Full {
                         write.write_all(&alpha_data)?;
                     }
-                    let palette_data = rgb888to565(palette);
+                    let palette_data = rgb888to565(&local.data);
                     write.write_all(&palette_data)?;
                 }
                 _ => {
@@ -411,9 +417,9 @@ where
                 }
             };
         }
-        TexturePalette::Global(palette_index, palette_count) => {
-            let count = (*palette_count as usize) * 3;
-            let palette = &global_palettes[*palette_index as usize][0..count];
+        TexturePalette::Global(global) => {
+            let count = (global.count as usize) * 3;
+            let palette = &global_palettes[global.index as usize][0..count];
             match image {
                 DynamicImage::ImageRgb8(img) => {
                     // TODO: alpha is currently skipped for palette images
@@ -500,7 +506,7 @@ where
         let mut name = [0; 32];
         str_to_c_padded(&info.name, &mut name);
         let palette_index = match &info.palette {
-            TexturePalette::Global(palette_index, _) => *palette_index,
+            TexturePalette::Global(global) => global.index,
             _ => -1,
         };
         let entry = Entry {

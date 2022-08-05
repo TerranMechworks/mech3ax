@@ -19,11 +19,23 @@ pub enum TextureStretch {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct LocalPalette {
+    #[serde(with = "base64")]
+    pub data: Vec<u8>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GlobalPalette {
+    pub index: i32,
+    pub count: u16,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 #[repr(u16)]
 pub enum TexturePalette {
     None,
-    Local(#[serde(with = "base64")] Vec<u8>),
-    Global(i32, u16),
+    Local(LocalPalette),
+    Global(GlobalPalette),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
