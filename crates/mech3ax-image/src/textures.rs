@@ -1,6 +1,6 @@
 use image::{DynamicImage, RgbImage, RgbaImage};
 use mech3ax_api_types::{
-    static_assert_size, GlobalPalette, LocalPalette, ReprSize as _, TextureAlpha, TextureInfo,
+    static_assert_size, GlobalPalette, PaletteData, ReprSize as _, TextureAlpha, TextureInfo,
     TextureManifest, TexturePalette,
 };
 use mech3ax_common::assert::{assert_utf8, AssertionError};
@@ -63,7 +63,7 @@ bitflags::bitflags! {
 fn convert_info_from_c(
     name: String,
     tex_info: Info,
-    global_palette: Option<(i32, &Vec<u8>)>,
+    global_palette: Option<(i32, &PaletteData)>,
     offset: u32,
 ) -> Result<TextureInfo> {
     let bitflags = TexFlags::from_bits(tex_info.flags).ok_or_else(|| {
@@ -121,7 +121,7 @@ fn convert_info_from_c(
 fn read_texture<R>(
     read: &mut CountingReader<R>,
     name: String,
-    global_palette: Option<(i32, &Vec<u8>)>,
+    global_palette: Option<(i32, &PaletteData)>,
 ) -> Result<(TextureInfo, DynamicImage)>
 where
     R: Read,
@@ -183,19 +183,19 @@ where
             }
         };
 
-        if let Some((index, palette_data)) = global_palette {
+        if let Some((index, palette)) = global_palette {
             let global = GlobalPalette {
                 index,
                 count: palette_count,
             };
             info.palette = TexturePalette::Global(global);
-            convert_image(&palette_data[0..(palette_count as usize) * 3])
+            convert_image(&palette.data[0..(palette_count as usize) * 3])
         } else {
             let mut palette_data = vec![0u8; palette_count as usize * 2];
             read.read_exact(&mut palette_data)?;
             let palette_data = rgb565to888(&palette_data);
             let image = convert_image(&palette_data);
-            let local = LocalPalette { data: palette_data };
+            let local = PaletteData { data: palette_data };
             info.palette = TexturePalette::Local(local);
             image
         }
@@ -255,7 +255,9 @@ where
         .map(|_| {
             let mut palette_data = vec![0u8; 512];
             read.read_exact(&mut palette_data).map_err(Error::IO)?;
-            Ok(rgb565to888(&palette_data))
+            Ok(PaletteData {
+                data: rgb565to888(&palette_data),
+            })
         })
         .collect::<std::result::Result<Vec<_>, E>>()?;
 
@@ -375,7 +377,7 @@ fn write_texture<W>(
     write: &mut W,
     info: &TextureInfo,
     image: DynamicImage,
-    global_palettes: &[Vec<u8>],
+    global_palettes: &[PaletteData],
 ) -> Result<()>
 where
     W: Write,
@@ -419,7 +421,8 @@ where
         }
         TexturePalette::Global(global) => {
             let count = (global.count as usize) * 3;
-            let palette = &global_palettes[global.index as usize][0..count];
+            let palette = &global_palettes[global.index as usize];
+            let palette = &palette.data[0..count];
             match image {
                 DynamicImage::ImageRgb8(img) => {
                     // TODO: alpha is currently skipped for palette images
@@ -519,7 +522,7 @@ where
     }
 
     for palette in &manifest.global_palettes {
-        let palette_data = rgb888to565(palette);
+        let palette_data = rgb888to565(&palette.data);
         write.write_all(&palette_data)?;
     }
 
