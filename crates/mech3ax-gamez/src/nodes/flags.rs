@@ -1,5 +1,5 @@
 use ::serde::{Deserialize, Serialize};
-use mech3ax_common::serde::bool_false;
+use mech3ax_api_types::serde::bool_false;
 
 bitflags::bitflags! {
     pub struct NodeBitFlags: u32 {

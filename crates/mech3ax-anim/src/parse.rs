@@ -2,11 +2,12 @@ use super::anim_def::{read_anim_def, read_anim_def_zero, write_anim_def, write_a
 use super::types::{AnimDef, AnimPtr};
 use ::serde::{Deserialize, Serialize};
 use log::trace;
+use mech3ax_api_types::serde::base64;
+use mech3ax_api_types::static_assert_size;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
-use mech3ax_common::serde::base64;
 use mech3ax_common::string::{str_from_c_partition, str_to_c_partition};
-use mech3ax_common::{assert_that, static_assert_size, Error, Result};
+use mech3ax_common::{assert_that, Error, Result};
 use std::convert::From;
 use std::io::{Read, Write};
 

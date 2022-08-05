@@ -1,43 +1,14 @@
-use ::serde::{Deserialize, Serialize};
 use log::trace;
+use mech3ax_api_types::saves::{ActivationStatus, ActivationType, AnimActivation};
+use mech3ax_api_types::static_assert_size;
 use mech3ax_common::assert::{assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
-use mech3ax_common::serde::base64_opt;
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
-use mech3ax_common::{assert_that, static_assert_size, Result};
-use num_derive::FromPrimitive;
+use mech3ax_common::{assert_that, Result};
 use num_traits::FromPrimitive;
 use std::convert::TryInto;
 use std::io::{Cursor, Read, Write};
 use std::num::NonZeroU32;
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, FromPrimitive, Copy, Clone)]
-#[repr(u8)]
-pub enum ActivationStatus {
-    Unk1 = 1,
-    // Unk2 = 2,
-    Executed = 3,
-    Invalid = 4,
-    // Unk5 = 5,
-    // Unk6 = 6,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum ActivationType {
-    One,
-    Two(#[serde(with = "base64_opt")] Option<Vec<u8>>),
-    Five(#[serde(with = "base64_opt")] Option<Vec<u8>>),
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AnimActivation {
-    pub name: String,
-    pub node_index: Option<i32>,
-    pub status: ActivationStatus,
-    pub type_: ActivationType,
-    pub node_states: Vec<Vec<u8>>,
-    pub ptr: Option<NonZeroU32>,
-}
 
 const VALUES_SIZE: usize = 9 * 4;
 

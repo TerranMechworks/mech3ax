@@ -1,9 +1,9 @@
 use super::ScriptObject;
 use crate::AnimDef;
+use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
-use mech3ax_common::size::ReprSize;
-use mech3ax_common::{assert_that, bool_c, static_assert_size, Result};
+use mech3ax_common::{assert_that, bool_c, Result};
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 use serde::{Deserialize, Serialize};

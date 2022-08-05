@@ -2,7 +2,8 @@ use crate::buffer::CallbackBuffer;
 use crate::error::err_to_c;
 use crate::filename_to_string;
 use anyhow::{bail, Context, Result};
-use mech3ax_archive::{ArchiveEntry, Mode, Version};
+use mech3ax_api_types::{ArchiveEntry, Manifest, Motion, Script};
+use mech3ax_archive::{Mode, Version};
 use serde_json::Value;
 use std::fs::File;
 use std::io::{BufWriter, Cursor};
@@ -28,7 +29,7 @@ pub extern "C" fn write_interp(
             bail!("data is null");
         }
         let buf = unsafe { std::slice::from_raw_parts(data, len) };
-        let scripts: Vec<mech3ax_interp::Script> =
+        let scripts: Vec<Script> =
             serde_json::from_slice(buf).context("Failed to parse interpreter data")?;
 
         let mut write = buf_writer(filename)?;
@@ -135,7 +136,7 @@ pub extern "C" fn write_reader(
 }
 
 fn write_motion_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
-    let motion: mech3ax_motion::Motion = serde_json::from_slice(&data)
+    let motion: Motion = serde_json::from_slice(&data)
         .with_context(|| format!("Motion data for \"{}\" is invalid", name))?;
 
     let mut buf = Vec::new();
@@ -206,7 +207,7 @@ pub extern "C" fn write_mechlib(
     )
 }
 
-fn parse_manifest(ptr: *const u8, len: usize) -> Result<mech3ax_image::Manifest> {
+fn parse_manifest(ptr: *const u8, len: usize) -> Result<Manifest> {
     if ptr.is_null() {
         bail!("manifest is null");
     }

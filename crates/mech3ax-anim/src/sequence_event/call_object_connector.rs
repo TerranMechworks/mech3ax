@@ -1,12 +1,11 @@
 use super::types::INPUT_NODE;
 use super::ScriptObject;
 use crate::AnimDef;
+use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
-use mech3ax_common::size::ReprSize;
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
-use mech3ax_common::types::Vec3;
-use mech3ax_common::{assert_that, static_assert_size, Result};
+use mech3ax_common::{assert_that, Result};
 use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 

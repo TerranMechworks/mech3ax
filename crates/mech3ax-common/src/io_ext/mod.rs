@@ -1,6 +1,6 @@
 use crate::assert::{assert_utf8, AssertionError};
-use crate::size::ReprSize;
 use crate::string::str_from_c_sized;
+use mech3ax_api_types::ReprSize;
 use std::io::{Read, Result, Seek, SeekFrom, Write};
 use std::mem::MaybeUninit;
 

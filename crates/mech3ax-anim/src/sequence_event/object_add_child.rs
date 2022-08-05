@@ -1,8 +1,8 @@
 use super::ScriptObject;
 use crate::AnimDef;
+use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
-use mech3ax_common::size::ReprSize;
-use mech3ax_common::{assert_that, static_assert_size, Result};
+use mech3ax_common::{assert_that, Result};
 use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 

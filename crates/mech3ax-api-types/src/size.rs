@@ -7,7 +7,7 @@ pub trait ReprSize {
 macro_rules! static_assert_size {
     ($type:ty, $size:expr) => {
         #[allow(dead_code)]
-        impl $crate::size::ReprSize for $type {
+        impl $crate::ReprSize for $type {
             const SIZE: u32 = $size;
 
             fn _static_assert_size() {

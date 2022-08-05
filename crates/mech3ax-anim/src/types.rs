@@ -1,8 +1,8 @@
 use crate::sequence_event::Event;
 use ::serde::{Deserialize, Serialize};
+use mech3ax_api_types::serde::base64;
+use mech3ax_api_types::Vec2;
 use mech3ax_common::assert::AssertionError;
-use mech3ax_common::serde::base64;
-use mech3ax_common::types::Vec2;
 use mech3ax_common::{assert_that, Result};
 use num_derive::FromPrimitive;
 

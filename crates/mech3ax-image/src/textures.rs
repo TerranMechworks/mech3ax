@@ -1,10 +1,11 @@
-use super::{Manifest, TextureAlpha, TextureInfo, TexturePalette};
 use image::{DynamicImage, RgbImage, RgbaImage};
+use mech3ax_api_types::{
+    static_assert_size, Manifest, ReprSize as _, TextureAlpha, TextureInfo, TexturePalette,
+};
 use mech3ax_common::assert::{assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
-use mech3ax_common::size::ReprSize;
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
-use mech3ax_common::{assert_that, static_assert_size, Error, Result};
+use mech3ax_common::{assert_that, Error, Result};
 use mech3ax_pixel_ops::{
     pal8to888, pal8to888a, rgb565to888, rgb565to888a, rgb888ato565, rgb888atopal8, rgb888to565,
     rgb888topal8, simple_alpha,

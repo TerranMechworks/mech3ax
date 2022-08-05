@@ -8,11 +8,10 @@ publish = false
 autoexamples = false
 autobenches = false
 
-[dependencies]
-serde = { version = "1.0", features = ["derive"] }
-
-mech3ax-common = { path = "../mech3ax-common" }
-mech3ax-crc32 = { path = "../mech3ax-crc32" }
-
 [lib]
 doctest = false
+
+[dependencies]
+mech3ax-api-types = { path = "../mech3ax-api-types" }
+mech3ax-common = { path = "../mech3ax-common" }
+mech3ax-crc32 = { path = "../mech3ax-crc32" }

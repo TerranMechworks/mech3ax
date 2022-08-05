@@ -1,4 +1,4 @@
-use mech3ax_common::types::Vec3;
+use mech3ax_api_types::Vec3;
 use mech3ax_common::{assert_that, Result};
 
 pub fn assert_color(name: &str, color: &Vec3, offset: u32) -> Result<()> {

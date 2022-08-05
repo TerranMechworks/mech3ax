@@ -1,11 +1,10 @@
 use super::flags::NodeBitFlags;
 use super::types::{Lod, NodeVariant, NodeVariants, BLOCK_EMPTY, ZONE_DEFAULT};
 use super::wrappers::Wrapper;
+use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec2};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
-use mech3ax_common::size::ReprSize;
-use mech3ax_common::types::Vec2;
-use mech3ax_common::{assert_that, bool_c, static_assert_size, Result};
+use mech3ax_common::{assert_that, bool_c, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]

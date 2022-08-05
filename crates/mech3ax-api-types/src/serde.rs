@@ -1,4 +1,4 @@
-use serde::de;
+use ::serde::de;
 use std::fmt;
 
 pub fn bool_false(value: &bool) -> bool {

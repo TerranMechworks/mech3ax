@@ -1,4 +1,4 @@
-use mech3ax_common::types::Vec3;
+use mech3ax_api_types::Vec3;
 use serde::{Deserialize, Serialize};
 
 pub const INPUT_NODE: &str = "INPUT_NODE";

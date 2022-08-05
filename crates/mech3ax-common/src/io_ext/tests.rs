@@ -77,7 +77,7 @@ struct TestStruct {
     name: [u8; 32],
     int: u32,
 }
-crate::static_assert_size!(TestStruct, 36);
+mech3ax_api_types::static_assert_size!(TestStruct, 36);
 
 #[test]
 fn struct_roundtrip() {

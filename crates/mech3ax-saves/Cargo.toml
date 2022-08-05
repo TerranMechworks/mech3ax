@@ -8,14 +8,13 @@ publish = false
 autoexamples = false
 autobenches = false
 
-[dependencies]
-serde = { version = "1.0", features = ["derive"] }
-log = "0.4"
-num-traits = "0.2"
-num-derive = "0.3"
-
-mech3ax-common = { path = "../mech3ax-common" }
-
 [lib]
 doctest = false
 test = false
+
+[dependencies]
+log = "0.4"
+num-traits = "0.2"
+
+mech3ax-api-types = { path = "../mech3ax-api-types" }
+mech3ax-common = { path = "../mech3ax-common" }

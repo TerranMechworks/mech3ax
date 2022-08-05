@@ -1,9 +1,8 @@
 use super::flags::NodeBitFlags;
 use super::types::{Display, NodeVariant, NodeVariants, BLOCK_EMPTY, ZONE_DEFAULT};
+use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
-use mech3ax_common::size::ReprSize;
-use mech3ax_common::types::Vec3;
-use mech3ax_common::{assert_that, static_assert_size, Result};
+use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]

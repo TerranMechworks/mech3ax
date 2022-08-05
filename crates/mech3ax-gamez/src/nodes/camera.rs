@@ -1,11 +1,10 @@
 use super::flags::NodeBitFlags;
 use super::math::cotangent;
 use super::types::{Camera, NodeVariant, NodeVariants, BLOCK_EMPTY, ZONE_DEFAULT};
+use mech3ax_api_types::{static_assert_size, Matrix, ReprSize as _, Vec2, Vec3};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
-use mech3ax_common::size::ReprSize;
-use mech3ax_common::types::{Matrix, Vec2, Vec3};
-use mech3ax_common::{assert_that, static_assert_size, Result};
+use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]

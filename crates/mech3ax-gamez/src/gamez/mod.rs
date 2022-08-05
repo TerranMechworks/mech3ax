@@ -4,9 +4,9 @@ mod nodes;
 mod textures;
 
 use ::serde::{Deserialize, Serialize};
+use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
-use mech3ax_common::size::ReprSize;
-use mech3ax_common::{assert_that, static_assert_size, Result};
+use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
 pub type Material = crate::materials::Material;

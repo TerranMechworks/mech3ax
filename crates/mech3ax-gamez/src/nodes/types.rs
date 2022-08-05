@@ -1,5 +1,5 @@
 use super::flags::NodeBitFlags;
-use mech3ax_common::types::{Matrix, Vec2, Vec3};
+use mech3ax_api_types::{Matrix, Vec2, Vec3};
 use num_derive::FromPrimitive;
 use serde::{Deserialize, Serialize};
 

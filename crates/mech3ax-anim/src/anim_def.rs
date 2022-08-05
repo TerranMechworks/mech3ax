@@ -3,14 +3,13 @@ use super::support::*;
 use super::types::*;
 use crate::sequence_event::{read_events, size_events, write_events, EventData};
 use log::trace;
+use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec2};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
-use mech3ax_common::size::ReprSize;
 use mech3ax_common::string::{
     str_from_c_padded, str_from_c_partition, str_to_c_padded, str_to_c_partition,
 };
-use mech3ax_common::types::Vec2;
-use mech3ax_common::{assert_that, static_assert_size, Result};
+use mech3ax_common::{assert_that, Result};
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
 

@@ -1,4 +1,4 @@
-use mech3ax_common::types::{Matrix, Vec3};
+use mech3ax_api_types::{Matrix, Vec3};
 
 pub const PI: f32 = std::f32::consts::PI;
 

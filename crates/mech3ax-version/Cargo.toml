@@ -9,11 +9,11 @@ build = "build.rs"
 autoexamples = false
 autobenches = false
 
+[lib]
+doctest = false
+test = false
+
 [dependencies]
 
 [build-dependencies]
 time = "0.3.5"
-
-[lib]
-doctest = false
-test = false

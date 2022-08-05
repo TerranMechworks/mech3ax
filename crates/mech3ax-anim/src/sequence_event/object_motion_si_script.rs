@@ -1,13 +1,12 @@
 use super::ScriptObject;
 use crate::AnimDef;
 use ::serde::{Deserialize, Serialize};
+use mech3ax_api_types::serde::base64;
+use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3, Vec4};
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
-use mech3ax_common::serde::base64;
-use mech3ax_common::size::ReprSize;
 use mech3ax_common::string::bytes_to_c;
-use mech3ax_common::types::{Vec3, Vec4};
-use mech3ax_common::{assert_that, static_assert_size, Result};
+use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]

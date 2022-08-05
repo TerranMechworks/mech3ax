@@ -1,7 +1,7 @@
-use super::{Frame, Motion};
+use mech3ax_api_types::{static_assert_size, Frame, Motion};
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
-use mech3ax_common::{assert_that, static_assert_size, Result};
+use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
 const VERSION: u32 = 4;

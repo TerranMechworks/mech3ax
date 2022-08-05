@@ -9,11 +9,11 @@ use super::types::{Node, NodeType, NodeVariant, NodeVariants, BLOCK_EMPTY};
 use super::window;
 use super::world;
 use super::wrappers::WrappedNode;
+use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
-use mech3ax_common::size::ReprSize;
 use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
-use mech3ax_common::{assert_that, bool_c, static_assert_size, Result};
+use mech3ax_common::{assert_that, bool_c, Result};
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
 
