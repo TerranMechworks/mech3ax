@@ -3,9 +3,9 @@ use mech3ax_api_types::{Matrix, Vec3};
 pub const PI: f32 = std::f32::consts::PI;
 
 pub fn euler_to_matrix(rotation: &Vec3) -> Matrix {
-    let x = -rotation.0;
-    let y = -rotation.1;
-    let z = -rotation.2;
+    let x = -rotation.x;
+    let y = -rotation.y;
+    let z = -rotation.z;
 
     let (sin_x, cos_x) = x.sin_cos();
     let (sin_y, cos_y) = y.sin_cos();

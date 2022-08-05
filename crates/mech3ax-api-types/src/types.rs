@@ -15,11 +15,19 @@ impl Range {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy)]
 #[repr(C)]
-pub struct Vec3(pub f32, pub f32, pub f32);
+pub struct Vec3 {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+}
 static_assert_size!(Vec3, 12);
 
 impl Vec3 {
-    pub const DEFAULT: Vec3 = Vec3(0.0, 0.0, 0.0);
+    pub const DEFAULT: Self = Self {
+        x: 0.0,
+        y: 0.0,
+        z: 0.0,
+    };
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy)]

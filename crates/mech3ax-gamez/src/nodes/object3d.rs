@@ -30,6 +30,12 @@ const ALWAYS_PRESENT: NodeBitFlags =
     NodeBitFlags::from_bits_truncate(NodeBitFlags::BASE.bits() | NodeBitFlags::UNK25.bits());
 const NEVER_PRESENT: NodeBitFlags = NodeBitFlags::UNK28;
 
+const SCALE_ONE: Vec3 = Vec3 {
+    x: 1.0,
+    y: 1.0,
+    z: 1.0,
+};
+
 #[allow(clippy::collapsible_else_if)]
 pub fn assert_variants(
     node: NodeVariants,
@@ -84,7 +90,7 @@ fn assert_object3d(object3d: Object3dC, offset: u32) -> Result<Option<Transforma
     assert_that!("field 012", object3d.zero012 == 0.0, offset + 12)?;
     assert_that!("field 016", object3d.zero016 == 0.0, offset + 16)?;
     assert_that!("field 020", object3d.zero020 == 0.0, offset + 20)?;
-    assert_that!("scale", object3d.scale == Vec3(1.0, 1.0, 1.0), offset + 36)?;
+    assert_that!("scale", object3d.scale == SCALE_ONE, offset + 36)?;
     assert_all_zero("field 096", offset + 96, &object3d.zero096)?;
 
     let transformation = if object3d.flags == 40 {
@@ -98,9 +104,9 @@ fn assert_object3d(object3d: Object3dC, offset: u32) -> Result<Option<Transforma
         None
     } else {
         let rotation = object3d.rotation;
-        assert_that!("rotation x", -PI <= rotation.0 <= PI, offset + 24)?;
-        assert_that!("rotation y", -PI <= rotation.1 <= PI, offset + 28)?;
-        assert_that!("rotation z", -PI <= rotation.2 <= PI, offset + 32)?;
+        assert_that!("rotation x", -PI <= rotation.x <= PI, offset + 24)?;
+        assert_that!("rotation y", -PI <= rotation.y <= PI, offset + 28)?;
+        assert_that!("rotation z", -PI <= rotation.z <= PI, offset + 32)?;
         let translation = object3d.translation;
 
         let expected_matrix = euler_to_matrix(&rotation);
@@ -201,7 +207,7 @@ where
         zero016: 0.0,
         zero020: 0.0,
         rotation,
-        scale: Vec3(1.0, 1.0, 1.0),
+        scale: SCALE_ONE,
         matrix,
         translation,
         zero096: [0u8; 48],

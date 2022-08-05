@@ -53,20 +53,20 @@ impl ScriptObject for ObjectRotateState {
 
         let rotate = if object_rotate_state.flags == 0 {
             let rotate = object_rotate_state.rotate;
-            assert_that!("object rotate state x", -PI <= rotate.0 <= PI, read.prev + 4)?;
-            assert_that!("object rotate state y", -PI <= rotate.1 <= PI, read.prev + 8)?;
-            assert_that!("object rotate state z", -PI <= rotate.2 <= PI, read.prev + 12)?;
+            assert_that!("object rotate state x", -PI <= rotate.x <= PI, read.prev + 4)?;
+            assert_that!("object rotate state y", -PI <= rotate.y <= PI, read.prev + 8)?;
+            assert_that!("object rotate state z", -PI <= rotate.z <= PI, read.prev + 12)?;
             assert_that!(
                 "object rotate state at node",
                 object_rotate_state.at_node_index == 0,
                 read.prev + 18
             )?;
 
-            RotateState::Absolute(Vec3(
-                rotate.0.to_degrees(),
-                rotate.1.to_degrees(),
-                rotate.2.to_degrees(),
-            ))
+            RotateState::Absolute(Vec3 {
+                x: rotate.x.to_degrees(),
+                y: rotate.y.to_degrees(),
+                z: rotate.z.to_degrees(),
+            })
         } else {
             assert_that!(
                 "object rotate state rot",
@@ -91,11 +91,11 @@ impl ScriptObject for ObjectRotateState {
     fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
         let (flags, rotate, at_node_index) = match &self.rotate {
             RotateState::Absolute(rotate) => {
-                let rotate = Vec3(
-                    rotate.0.to_radians(),
-                    rotate.1.to_radians(),
-                    rotate.2.to_radians(),
-                );
+                let rotate = Vec3 {
+                    x: rotate.x.to_radians(),
+                    y: rotate.y.to_radians(),
+                    z: rotate.z.to_radians(),
+                };
                 (0, rotate, 0)
             }
             RotateState::AtNodeXYZ => (2, Vec3::DEFAULT, INPUT_NODE_INDEX),

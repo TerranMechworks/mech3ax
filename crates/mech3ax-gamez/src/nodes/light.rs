@@ -32,9 +32,17 @@ struct LightC {
 }
 static_assert_size!(LightC, 208);
 
-const BLOCK_LIGHT: BoundingBox = BoundingBox {
-    a: Vec3(1.0, 1.0, -2.0),
-    b: Vec3(2.0, 2.0, -1.0),
+const BBOX_LIGHT: BoundingBox = BoundingBox {
+    a: Vec3 {
+        x: 1.0,
+        y: 1.0,
+        z: -2.0,
+    },
+    b: Vec3 {
+        x: 2.0,
+        y: 2.0,
+        z: -1.0,
+    },
 };
 const LIGHT_NAME: &str = "sunlight";
 
@@ -63,7 +71,7 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
         offset + 92
     )?;
     // children array ptr is already asserted
-    assert_that!("light bbox 1", node.unk116 == BLOCK_LIGHT, offset + 116)?;
+    assert_that!("light bbox 1", node.unk116 == BBOX_LIGHT, offset + 116)?;
     assert_that!(
         "light bbox 2",
         node.unk140 == BoundingBox::EMPTY,
@@ -160,7 +168,7 @@ pub fn make_variants(light: &Light) -> NodeVariants {
         parent_array_ptr: 0,
         children_count: 0,
         children_array_ptr: 0,
-        unk116: BLOCK_LIGHT,
+        unk116: BBOX_LIGHT,
         unk140: BoundingBox::EMPTY,
         unk164: BoundingBox::EMPTY,
         unk196: 0,
