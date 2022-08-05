@@ -1,5 +1,5 @@
 use super::flags::NodeBitFlags;
-use mech3ax_api_types::{AreaPartition, Block, Empty};
+use mech3ax_api_types::{AreaPartition, BoundingBox, Empty};
 use num_derive::FromPrimitive;
 
 pub const ZONE_DEFAULT: u32 = 255;
@@ -29,9 +29,9 @@ pub struct NodeVariants {
     pub parent_array_ptr: u32,
     pub children_count: u32,
     pub children_array_ptr: u32,
-    pub unk116: Block,
-    pub unk140: Block,
-    pub unk164: Block,
+    pub unk116: BoundingBox,
+    pub unk140: BoundingBox,
+    pub unk164: BoundingBox,
     pub unk196: u32,
 }
 

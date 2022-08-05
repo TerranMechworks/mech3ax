@@ -1,6 +1,6 @@
 use super::flags::NodeBitFlags;
 use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
-use mech3ax_api_types::{static_assert_size, Block, ReprSize as _, Window};
+use mech3ax_api_types::{static_assert_size, BoundingBox, ReprSize as _, Window};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
@@ -48,9 +48,21 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
         offset + 92
     )?;
     // children array ptr is already asserted
-    assert_that!("window block 1", node.unk116 == Block::EMPTY, offset + 116)?;
-    assert_that!("window block 2", node.unk140 == Block::EMPTY, offset + 140)?;
-    assert_that!("window block 3", node.unk164 == Block::EMPTY, offset + 164)?;
+    assert_that!(
+        "window bbox 1",
+        node.unk116 == BoundingBox::EMPTY,
+        offset + 116
+    )?;
+    assert_that!(
+        "window bbox 2",
+        node.unk140 == BoundingBox::EMPTY,
+        offset + 140
+    )?;
+    assert_that!(
+        "window bbox 3",
+        node.unk164 == BoundingBox::EMPTY,
+        offset + 164
+    )?;
     assert_that!("window field 196", node.unk196 == 0, offset + 196)?;
     Ok(NodeVariant::Window(node.data_ptr))
 }
@@ -92,9 +104,9 @@ pub fn make_variants(window: &Window) -> NodeVariants {
         parent_array_ptr: 0,
         children_count: 0,
         children_array_ptr: 0,
-        unk116: Block::EMPTY,
-        unk140: Block::EMPTY,
-        unk164: Block::EMPTY,
+        unk116: BoundingBox::EMPTY,
+        unk140: BoundingBox::EMPTY,
+        unk164: BoundingBox::EMPTY,
         unk196: 0,
     }
 }

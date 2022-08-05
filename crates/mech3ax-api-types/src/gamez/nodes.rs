@@ -25,10 +25,17 @@ pub struct Area {
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
-pub struct Block(pub f32, pub f32, pub f32, pub f32, pub f32, pub f32);
+#[repr(C)]
+pub struct BoundingBox {
+    pub a: Vec3,
+    pub b: Vec3,
+}
 
-impl Block {
-    pub const EMPTY: Self = Self(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+impl BoundingBox {
+    pub const EMPTY: Self = Self {
+        a: Vec3::DEFAULT,
+        b: Vec3::DEFAULT,
+    };
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -82,9 +89,9 @@ pub struct Empty {
     pub flags: NodeFlags,
     pub unk044: u32,
     pub zone_id: u32,
-    pub unk116: Block,
-    pub unk140: Block,
-    pub unk164: Block,
+    pub unk116: BoundingBox,
+    pub unk140: BoundingBox,
+    pub unk164: BoundingBox,
     pub parent: u32,
 }
 
@@ -117,7 +124,7 @@ pub struct Lod {
     pub data_ptr: u32,
     pub parent_array_ptr: u32,
     pub children_array_ptr: u32,
-    pub unk116: Block,
+    pub unk116: BoundingBox,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -143,9 +150,9 @@ pub struct Object3d<T> {
     pub data_ptr: u32,
     pub parent_array_ptr: u32,
     pub children_array_ptr: u32,
-    pub unk116: Block,
-    pub unk140: Block,
-    pub unk164: Block,
+    pub unk116: BoundingBox,
+    pub unk140: BoundingBox,
+    pub unk164: BoundingBox,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

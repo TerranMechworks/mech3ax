@@ -3,7 +3,7 @@ use super::math::partition_diag;
 use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
 use super::wrappers::Wrapper;
 use mech3ax_api_types::{
-    static_assert_size, Area, Block, Color, Partition, Range, ReprSize as _, World,
+    static_assert_size, Area, BoundingBox, Color, Partition, Range, ReprSize as _, World,
 };
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
@@ -105,9 +105,21 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     // parent array ptr is already asserted
     assert_that!("world children count", 1 <= node.children_count <= 64, offset + 92)?;
     // children array ptr is already asserted
-    assert_that!("world block 1", node.unk116 == Block::EMPTY, offset + 116)?;
-    assert_that!("world block 2", node.unk140 == Block::EMPTY, offset + 140)?;
-    assert_that!("world block 3", node.unk164 == Block::EMPTY, offset + 164)?;
+    assert_that!(
+        "world bbox 1",
+        node.unk116 == BoundingBox::EMPTY,
+        offset + 116
+    )?;
+    assert_that!(
+        "world bbox 2",
+        node.unk140 == BoundingBox::EMPTY,
+        offset + 140
+    )?;
+    assert_that!(
+        "world bbox 3",
+        node.unk164 == BoundingBox::EMPTY,
+        offset + 164
+    )?;
     assert_that!("world field 196", node.unk196 == 0, offset + 196)?;
     Ok(NodeVariant::World(
         node.data_ptr,
@@ -448,9 +460,9 @@ pub fn make_variants(world: &World) -> NodeVariants {
         parent_array_ptr: 0,
         children_count: world.children.len() as u32,
         children_array_ptr: world.children_array_ptr,
-        unk116: Block::EMPTY,
-        unk140: Block::EMPTY,
-        unk164: Block::EMPTY,
+        unk116: BoundingBox::EMPTY,
+        unk140: BoundingBox::EMPTY,
+        unk164: BoundingBox::EMPTY,
         unk196: 0,
     }
 }

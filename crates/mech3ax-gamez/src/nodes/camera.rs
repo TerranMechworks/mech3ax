@@ -1,7 +1,9 @@
 use super::flags::NodeBitFlags;
 use super::math::cotangent;
 use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
-use mech3ax_api_types::{static_assert_size, Block, Camera, Matrix, Range, ReprSize as _, Vec3};
+use mech3ax_api_types::{
+    static_assert_size, BoundingBox, Camera, Matrix, Range, ReprSize as _, Vec3,
+};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
@@ -76,9 +78,21 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
         offset + 92
     )?;
     // children array ptr is already asserted
-    assert_that!("camera block 1", node.unk116 == Block::EMPTY, offset + 116)?;
-    assert_that!("camera block 2", node.unk140 == Block::EMPTY, offset + 140)?;
-    assert_that!("camera block 3", node.unk164 == Block::EMPTY, offset + 164)?;
+    assert_that!(
+        "camera bbox 1",
+        node.unk116 == BoundingBox::EMPTY,
+        offset + 116
+    )?;
+    assert_that!(
+        "camera bbox 2",
+        node.unk140 == BoundingBox::EMPTY,
+        offset + 140
+    )?;
+    assert_that!(
+        "camera bbox 3",
+        node.unk164 == BoundingBox::EMPTY,
+        offset + 164
+    )?;
     assert_that!("camera field 196", node.unk196 == 0, offset + 196)?;
     Ok(NodeVariant::Camera(node.data_ptr))
 }
@@ -224,9 +238,9 @@ pub fn make_variants(camera: &Camera) -> NodeVariants {
         parent_array_ptr: 0,
         children_count: 0,
         children_array_ptr: 0,
-        unk116: Block::EMPTY,
-        unk140: Block::EMPTY,
-        unk164: Block::EMPTY,
+        unk116: BoundingBox::EMPTY,
+        unk140: BoundingBox::EMPTY,
+        unk164: BoundingBox::EMPTY,
         unk196: 0,
     }
 }
