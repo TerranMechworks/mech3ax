@@ -19,23 +19,22 @@ use std::io::{Read, Write};
 
 #[repr(C)]
 struct NodeC {
-    name: [u8; 36],          // 000
-    flags: u32,              // 036
-    zero040: u32,            // 040
-    unk044: u32,             // 044
-    zone_id: u32,            // 048
-    node_type: u32,          // 052
-    data_ptr: u32,           // 056
-    mesh_index: i32,         // 060
-    environment_data: u32,   // 064
-    action_priority: u32,    // 068
-    action_callback: u32,    // 072
-    area_partition_x: i32,   // 076
-    area_partition_y: i32,   // 080
-    parent_count: u32,       // 084
-    parent_array_ptr: u32,   // 088
-    children_count: u32,     // 092
-    children_array_ptr: u32, // 096
+    name: [u8; 36],                // 000
+    flags: u32,                    // 036
+    zero040: u32,                  // 040
+    unk044: u32,                   // 044
+    zone_id: u32,                  // 048
+    node_type: u32,                // 052
+    data_ptr: u32,                 // 056
+    mesh_index: i32,               // 060
+    environment_data: u32,         // 064
+    action_priority: u32,          // 068
+    action_callback: u32,          // 072
+    area_partition: AreaPartition, // 076
+    parent_count: u32,             // 084
+    parent_array_ptr: u32,         // 088
+    children_count: u32,           // 092
+    children_array_ptr: u32,       // 096
     zero100: u32,
     zero104: u32,
     zero108: u32,
@@ -88,15 +87,12 @@ fn assert_node(node: NodeC, offset: u32) -> Result<(NodeType, NodeVariants)> {
     assert_that!("field 204", node.zero204 == 0, offset + 204)?;
 
     // assert area partition properly once we have read the world data
-    let area_partition = if node.area_partition_x == -1 || node.area_partition_y == -1 {
+    let area_partition = if node.area_partition == AreaPartition::DEFAULT {
         None
     } else {
-        assert_that!("area partition x", 0 <= node.area_partition_x <= 64, offset + 76)?;
-        assert_that!("area partition y", 0 <= node.area_partition_y <= 64, offset + 80)?;
-        Some(AreaPartition {
-            x: node.area_partition_x,
-            y: node.area_partition_y,
-        })
+        assert_that!("area partition x", 0 <= node.area_partition.x <= 64, offset + 76)?;
+        assert_that!("area partition y", 0 <= node.area_partition.y <= 64, offset + 80)?;
+        Some(node.area_partition)
     };
 
     // can only have one parent
@@ -214,12 +210,7 @@ where
     let mut name = [0; 36];
     str_to_c_node_name(variant.name, &mut name);
 
-    let AreaPartition {
-        x: area_partition_x,
-        y: area_partition_y,
-    } = variant
-        .area_partition
-        .unwrap_or(AreaPartition { x: -1, y: -1 });
+    let area_partition = variant.area_partition.unwrap_or(AreaPartition::DEFAULT);
 
     write.write_struct(&NodeC {
         name,
@@ -233,8 +224,7 @@ where
         environment_data: 0,
         action_priority: 1,
         action_callback: 0,
-        area_partition_x,
-        area_partition_y,
+        area_partition,
         parent_count: bool_c!(variant.has_parent),
         parent_array_ptr: variant.parent_array_ptr,
         children_count: variant.children_count,
@@ -336,8 +326,11 @@ fn assert_node_info_zero(node: NodeC, offset: u32) -> Result<()> {
     assert_that!("env data", node.environment_data == 0, offset + 64)?;
     assert_that!("action prio", node.action_priority == 0, offset + 68)?;
     assert_that!("faction cb", node.action_callback == 0, offset + 72)?;
-    assert_that!("area partition x", node.area_partition_x == 0, offset + 76)?;
-    assert_that!("area partition y", node.area_partition_y == 0, offset + 80)?;
+    assert_that!(
+        "area partition",
+        node.area_partition == AreaPartition::ZERO,
+        offset + 76
+    )?;
     assert_that!("parent count", node.parent_count == 0, offset + 84)?;
     assert_that!("parent array ptr", node.parent_array_ptr == 0, offset + 88)?;
     assert_that!("children count", node.children_count == 0, offset + 92)?;
@@ -385,8 +378,7 @@ where
         environment_data: 0,
         action_priority: 0,
         action_callback: 0,
-        area_partition_x: 0,
-        area_partition_y: 0,
+        area_partition: AreaPartition::ZERO,
         parent_count: 0,
         parent_array_ptr: 0,
         children_count: 0,

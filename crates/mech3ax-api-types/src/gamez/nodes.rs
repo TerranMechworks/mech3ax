@@ -1,11 +1,19 @@
 use crate::serde::bool_false;
+use crate::static_assert_size;
 use crate::types::{Matrix, Vec2, Vec3};
 use ::serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[repr(C)]
 pub struct AreaPartition {
     pub x: i32,
     pub y: i32,
+}
+static_assert_size!(AreaPartition, 8);
+
+impl AreaPartition {
+    pub const DEFAULT: Self = Self { x: -1, y: -1 };
+    pub const ZERO: Self = Self { x: 0, y: 0 };
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
@@ -20,7 +28,7 @@ pub struct Area {
 pub struct Block(pub f32, pub f32, pub f32, pub f32, pub f32, pub f32);
 
 impl Block {
-    pub const EMPTY: Block = Block(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    pub const EMPTY: Self = Self(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 }
 
 #[derive(Debug, Serialize, Deserialize)]
