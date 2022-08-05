@@ -24,6 +24,33 @@ impl Vec3 {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy)]
 #[repr(C)]
+pub struct Color {
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
+}
+static_assert_size!(Color, 12);
+
+impl Color {
+    pub const BLACK: Self = Self {
+        r: 0.0,
+        g: 0.0,
+        b: 0.0,
+    };
+    pub const WHITE_FULL: Self = Self {
+        r: 255.0,
+        g: 255.0,
+        b: 255.0,
+    };
+    pub const WHITE_NORM: Self = Self {
+        r: 1.0,
+        g: 1.0,
+        b: 1.0,
+    };
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy)]
+#[repr(C)]
 pub struct Vec4(pub f32, pub f32, pub f32, pub f32);
 static_assert_size!(Vec4, 16);
 

@@ -2,7 +2,7 @@ use super::types::{AtNode, INPUT_NODE};
 use super::utils::assert_color;
 use super::ScriptObject;
 use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, Range, ReprSize as _, Vec3};
+use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _, Vec3};
 use mech3ax_common::assert::{assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::light::LightFlags;
@@ -28,7 +28,7 @@ struct LightStateC {
     translation: Vec3, // 68
     rotation: Vec3,    // 80
     range: Range,      // 92
-    color: Vec3,       // 100
+    color: Color,      // 100
     ambient: f32,      // 112
     diffuse: f32,      // 116
 }
@@ -51,7 +51,7 @@ pub struct LightState {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub range: Option<Range>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub color: Option<Vec3>,
+    pub color: Option<Color>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub ambient: Option<f32>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -223,7 +223,7 @@ impl ScriptObject for LightState {
         } else {
             assert_that!(
                 "light state color",
-                light_state.color == Vec3::DEFAULT,
+                light_state.color == Color::BLACK,
                 read.prev + 10
             )?;
             None
@@ -325,7 +325,7 @@ impl ScriptObject for LightState {
             translation,
             rotation: Vec3::DEFAULT,
             range: self.range.unwrap_or(Range::DEFAULT),
-            color: self.color.unwrap_or(Vec3::DEFAULT),
+            color: self.color.unwrap_or(Color::BLACK),
             ambient: self.ambient.unwrap_or(0.0),
             diffuse: self.diffuse.unwrap_or(0.0),
         })?;

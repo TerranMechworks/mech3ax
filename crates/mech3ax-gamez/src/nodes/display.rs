@@ -1,6 +1,6 @@
 use super::flags::NodeBitFlags;
 use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
-use mech3ax_api_types::{static_assert_size, Block, Display, ReprSize as _, Vec3};
+use mech3ax_api_types::{static_assert_size, Block, Color, Display, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -10,12 +10,16 @@ struct DisplayC {
     origin_x: u32,
     origin_y: u32,
     resolution: (u32, u32),
-    clear_color: Vec3,
+    clear_color: Color,
 }
 static_assert_size!(DisplayC, 28);
 
 #[allow(clippy::excessive_precision)]
-const CLEAR_COLOR: Vec3 = Vec3(0.3919999897480011, 0.3919999897480011, 1.0);
+const CLEAR_COLOR: Color = Color {
+    r: 0.3919999897480011,
+    g: 0.3919999897480011,
+    b: 1.0,
+};
 const DISPLAY_NAME: &str = "display";
 
 pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {

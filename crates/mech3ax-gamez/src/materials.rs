@@ -1,4 +1,4 @@
-use mech3ax_api_types::{static_assert_size, ColoredMaterial, Material, ReprSize as _};
+use mech3ax_api_types::{static_assert_size, Color, ColoredMaterial, Material, ReprSize as _};
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
@@ -9,9 +9,7 @@ struct MaterialC {
     unk00: u8,
     flags: u8,
     rgb: u16,
-    red: f32,
-    green: f32,
-    blue: f32,
+    color: Color,
     pointer: u32,
     unk20: f32,
     unk24: f32,
@@ -74,9 +72,7 @@ where
     let material = if bitflags.contains(MaterialFlags::TEXTURED) {
         assert_that!("field 00", material.unk00 == 0xFF, read.prev + 0)?;
         assert_that!("rgb", material.rgb == 0x7FFF, read.prev + 2)?;
-        assert_that!("color r", material.red == 255.0, read.prev + 4)?;
-        assert_that!("color g", material.green == 255.0, read.prev + 8)?;
-        assert_that!("color b", material.blue == 255.0, read.prev + 12)?;
+        assert_that!("color", material.color == Color::WHITE_FULL, read.prev + 4)?;
 
         let cycle_ptr = if flag_cycled {
             Some(material.cycle_ptr)
@@ -99,7 +95,7 @@ where
         assert_that!("cycle ptr", material.cycle_ptr == 0, read.prev + 36)?;
 
         RawMaterial::Colored(ColoredMaterial {
-            color: (material.red, material.green, material.blue),
+            color: material.color,
             unk00: material.unk00,
             unk32: material.unk32,
         })
@@ -127,9 +123,7 @@ where
                 unk00: 0xFF,
                 flags: bitflags.bits(),
                 rgb: 0x7FFF,
-                red: 255.0,
-                green: 255.0,
-                blue: 255.0,
+                color: Color::WHITE_FULL,
                 // this allows GameZ to override the pointer with the texture index
                 // (without mutating the material)
                 pointer: pointer.unwrap_or(material.pointer),
@@ -142,14 +136,11 @@ where
         }
         Material::Colored(material) => {
             let bitflags = MaterialFlags::ALWAYS;
-            let (red, green, blue) = material.color;
             MaterialC {
                 unk00: material.unk00,
                 flags: bitflags.bits(),
                 rgb: 0x0000,
-                red,
-                green,
-                blue,
+                color: material.color,
                 pointer: 0,
                 unk20: 0.0,
                 unk24: 0.5,
@@ -176,9 +167,7 @@ where
             read.prev + 1
         )?;
         assert_that!("rgb", material.rgb == 0x0000, read.prev + 2)?;
-        assert_that!("color r", material.red == 0.0, read.prev + 4)?;
-        assert_that!("color g", material.green == 0.0, read.prev + 8)?;
-        assert_that!("color b", material.blue == 0.0, read.prev + 12)?;
+        assert_that!("color", material.color == Color::BLACK, read.prev + 4)?;
         assert_that!("pointer", material.pointer == 0, read.prev + 16)?;
         assert_that!("field 20", material.unk20 == 0.0, read.prev + 20)?;
         assert_that!("field 24", material.unk24 == 0.0, read.prev + 24)?;
@@ -211,9 +200,7 @@ where
         unk00: 0,
         flags: MaterialFlags::FREE.bits(),
         rgb: 0x0000,
-        red: 0.0,
-        green: 0.0,
-        blue: 0.0,
+        color: Color::BLACK,
         pointer: 0,
         unk20: 0.0,
         unk24: 0.0,

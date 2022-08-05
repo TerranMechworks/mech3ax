@@ -1,5 +1,5 @@
 use mech3ax_api_types::{
-    static_assert_size, Mesh, MeshLight, Polygon, ReprSize as _, UvCoord, Vec3,
+    static_assert_size, Color, Mesh, MeshLight, Polygon, ReprSize as _, UvCoord, Vec3,
 };
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, bool_c, Result};
@@ -174,6 +174,13 @@ where
     (0..count).map(|_| read.read_struct()).collect()
 }
 
+fn read_colors<R>(read: &mut CountingReader<R>, count: u32) -> std::io::Result<Vec<Color>>
+where
+    R: Read,
+{
+    (0..count).map(|_| read.read_struct()).collect()
+}
+
 fn read_lights<R>(read: &mut CountingReader<R>, count: u32) -> Result<Vec<MeshLight>>
 where
     R: Read,
@@ -289,7 +296,7 @@ where
             if has_uvs {
                 polygon.uv_coords = Some(read_uvs(read, verts_in_poly)?);
             }
-            polygon.vertex_colors = read_vec3s(read, verts_in_poly)?;
+            polygon.vertex_colors = read_colors(read, verts_in_poly)?;
             Ok(polygon)
         })
         .collect()
@@ -346,6 +353,16 @@ where
 {
     for vec in vecs {
         write.write_struct(vec)?;
+    }
+    Ok(())
+}
+
+fn write_colors<W>(write: &mut W, colors: &[Color]) -> Result<()>
+where
+    W: Write,
+{
+    for color in colors {
+        write.write_struct(color)?;
     }
     Ok(())
 }
@@ -436,7 +453,7 @@ where
         if let Some(uv_coords) = &polygon.uv_coords {
             write_uvs(write, uv_coords)?;
         }
-        write_vec3s(write, &polygon.vertex_colors)?;
+        write_colors(write, &polygon.vertex_colors)?;
     }
     Ok(())
 }

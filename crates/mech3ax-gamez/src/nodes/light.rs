@@ -1,6 +1,6 @@
 use super::flags::NodeBitFlags;
 use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
-use mech3ax_api_types::{static_assert_size, Block, Light, Range, ReprSize as _, Vec3};
+use mech3ax_api_types::{static_assert_size, Block, Color, Light, Range, ReprSize as _, Vec3};
 use mech3ax_common::assert::{assert_all_zero, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::light::LightFlags;
@@ -19,7 +19,7 @@ struct LightC {
     zero152: f32,       // 152
     diffuse: f32,       // 156
     ambient: f32,       // 160
-    color: Vec3,        // 164
+    color: Color,       // 164
     flags: u32,         // 176
     range: Range,       // 180
     range_near_sq: f32, // 188
@@ -82,7 +82,7 @@ fn assert_light(light: &LightC, offset: u32) -> Result<()> {
     assert_that!("diffuse", 0.0 <= light.diffuse <= 1.0, offset + 156)?;
     assert_that!("ambient", 0.0 <= light.ambient <= 1.0, offset + 160)?;
 
-    assert_that!("color", light.color == Vec3(1.0, 1.0, 1.0), offset + 164)?;
+    assert_that!("color", light.color == Color::WHITE_NORM, offset + 164)?;
 
     let flags = LightFlags::from_bits(light.flags).ok_or_else(|| {
         AssertionError(format!(

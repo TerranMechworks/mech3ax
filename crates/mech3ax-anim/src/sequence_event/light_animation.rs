@@ -1,6 +1,6 @@
 use super::ScriptObject;
 use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, Range, ReprSize as _, Vec3};
+use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
@@ -17,7 +17,7 @@ struct LightAnimationC {
     zero48: u32,
     zero52: u32,
     zero56: u32,
-    color: Vec3,
+    color: Color,
     zero72: f32,
     zero76: f32,
     zero80: f32,
@@ -32,7 +32,7 @@ static_assert_size!(LightAnimationC, 100);
 pub struct LightAnimation {
     pub name: String,
     pub range: Range,
-    pub color: Vec3,
+    pub color: Color,
     pub runtime: f32,
 }
 
@@ -91,12 +91,9 @@ impl ScriptObject for LightAnimation {
             read.prev + 56
         )?;
 
-        let red = light_anim.color.0;
-        let green = light_anim.color.1;
-        let blue = light_anim.color.2;
-        assert_that!("light anim color red", -5.0 <= red <= 5.0, read.prev + 60)?;
-        assert_that!("light anim color green", -5.0 <= green <= 5.0, read.prev + 64)?;
-        assert_that!("light anim color blue", -5.0 <= blue <= 5.0, read.prev + 68)?;
+        assert_that!("light anim color red", -5.0 <= light_anim.color.r <= 5.0, read.prev + 60)?;
+        assert_that!("light anim color green", -5.0 <= light_anim.color.g <= 5.0, read.prev + 64)?;
+        assert_that!("light anim color blue", -5.0 <= light_anim.color.b <= 5.0, read.prev + 68)?;
 
         assert_that!(
             "light anim field 72",

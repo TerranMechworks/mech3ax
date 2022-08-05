@@ -3,7 +3,7 @@ use super::math::partition_diag;
 use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
 use super::wrappers::Wrapper;
 use mech3ax_api_types::{
-    static_assert_size, Area, Block, Partition, Range, ReprSize as _, Vec3, World,
+    static_assert_size, Area, Block, Color, Partition, Range, ReprSize as _, World,
 };
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
@@ -16,7 +16,7 @@ struct WorldC {
     area_partition_count: u32,            // 008
     area_partition_ptr: u32,              // 012
     fog_state: u32,                       // 016
-    fog_color: Vec3,                      // 020
+    fog_color: Color,                     // 020
     fog_range: Range,                     // 032
     fog_altitude: Range,                  // 040
     fog_density: f32,                     // 048
@@ -230,7 +230,7 @@ fn assert_world(
         world.fog_state == FOG_STATE_LINEAR,
         offset + 16
     )?;
-    assert_that!("fog color", world.fog_color == Vec3::DEFAULT, offset + 20)?;
+    assert_that!("fog color", world.fog_color == Color::BLACK, offset + 20)?;
     assert_that!("fog range", world.fog_range == Range::DEFAULT, offset + 32)?;
     assert_that!(
         "fog altitude",
@@ -525,7 +525,7 @@ where
         area_partition_count,
         area_partition_ptr: world.area_partition_ptr,
         fog_state: FOG_STATE_LINEAR,
-        fog_color: Vec3::DEFAULT,
+        fog_color: Color::BLACK,
         fog_range: Range::DEFAULT,
         fog_altitude: Range::DEFAULT,
         fog_density: 0.0,

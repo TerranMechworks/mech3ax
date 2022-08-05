@@ -1,6 +1,6 @@
 use crate::serde::bool_false;
 use crate::static_assert_size;
-use crate::types::{Matrix, Range, Vec3};
+use crate::types::{Color, Matrix, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
@@ -71,7 +71,7 @@ pub struct Camera {
 pub struct Display {
     pub name: String,
     pub resolution: (u32, u32),
-    pub clear_color: Vec3,
+    pub clear_color: Color,
     pub data_ptr: u32,
 }
 
@@ -93,7 +93,7 @@ pub struct Light {
     pub direction: Vec3,
     pub diffuse: f32,
     pub ambient: f32,
-    pub color: Vec3,
+    pub color: Color,
     pub range: Range,
     pub parent_ptr: u32,
     pub data_ptr: u32,

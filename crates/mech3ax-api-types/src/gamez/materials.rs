@@ -1,4 +1,5 @@
 use crate::serde::pointer_zero;
+use crate::types::Color;
 use ::serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -26,7 +27,7 @@ pub struct TexturedMaterial {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ColoredMaterial {
-    pub color: (f32, f32, f32),
+    pub color: Color,
     pub unk00: u8,
     pub unk32: u32,
 }
