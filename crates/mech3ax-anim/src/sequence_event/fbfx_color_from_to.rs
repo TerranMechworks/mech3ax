@@ -3,10 +3,29 @@ use super::ScriptObject;
 use crate::AnimDef;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_api_types::serde::bool_false;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec4};
+use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy)]
+#[repr(C)]
+pub struct Rgba {
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
+    pub a: f32,
+}
+static_assert_size!(Rgba, 16);
+
+impl Rgba {
+    pub const DEFAULT: Self = Self {
+        r: 0.0,
+        g: 0.0,
+        b: 0.0,
+        a: 0.0,
+    };
+}
 
 #[repr(C)]
 struct FbFxColorFromToC {
@@ -28,8 +47,8 @@ static_assert_size!(FbFxColorFromToC, 52);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FrameBufferEffectColor {
-    pub from: Vec4,
-    pub to: Vec4,
+    pub from: Rgba,
+    pub to: Rgba,
     pub runtime: f32,
     // this value can be safely ignored, but is required for binary accuracy
     #[serde(skip_serializing_if = "bool_false", default)]
@@ -106,40 +125,45 @@ impl ScriptObject for FrameBufferEffectColor {
         )?;
 
         Ok(Self {
-            from: Vec4(
-                fbfx.from_red,
-                fbfx.from_green,
-                fbfx.from_blue,
-                fbfx.from_alpha,
-            ),
-            to: Vec4(fbfx.to_red, fbfx.to_green, fbfx.to_blue, fbfx.to_alpha),
+            from: Rgba {
+                r: fbfx.from_red,
+                g: fbfx.from_green,
+                b: fbfx.from_blue,
+                a: fbfx.from_alpha,
+            },
+            to: Rgba {
+                r: fbfx.to_red,
+                g: fbfx.to_green,
+                b: fbfx.to_blue,
+                a: fbfx.to_alpha,
+            },
             runtime: fbfx.runtime,
             fudge_alpha,
         })
     }
 
     fn write<W: Write>(&self, write: &mut W, _anim_def: &AnimDef) -> Result<()> {
-        let delta_red = delta(self.to.0, self.from.0, self.runtime);
-        let delta_green = delta(self.to.1, self.from.1, self.runtime);
-        let delta_blue = delta(self.to.2, self.from.2, self.runtime);
+        let delta_red = delta(self.to.r, self.from.r, self.runtime);
+        let delta_green = delta(self.to.g, self.from.g, self.runtime);
+        let delta_blue = delta(self.to.b, self.from.b, self.runtime);
         let runtime = if self.fudge_alpha {
             dec_f32(self.runtime)
         } else {
             self.runtime
         };
-        let delta_alpha = delta(self.to.3, self.from.3, runtime);
+        let delta_alpha = delta(self.to.a, self.from.a, runtime);
         write.write_struct(&FbFxColorFromToC {
-            from_red: self.from.0,
-            to_red: self.to.0,
+            from_red: self.from.r,
+            to_red: self.to.r,
             delta_red,
-            from_green: self.from.1,
-            to_green: self.to.1,
+            from_green: self.from.g,
+            to_green: self.to.g,
             delta_green,
-            from_blue: self.from.2,
-            to_blue: self.to.2,
+            from_blue: self.from.b,
+            to_blue: self.to.b,
             delta_blue,
-            from_alpha: self.from.3,
-            to_alpha: self.to.3,
+            from_alpha: self.from.a,
+            to_alpha: self.to.a,
             delta_alpha,
             runtime: self.runtime,
         })?;
