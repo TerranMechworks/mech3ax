@@ -1,4 +1,4 @@
-use mech3ax_api_types::{static_assert_size, Motion, MotionFrame};
+use mech3ax_api_types::{static_assert_size, Motion, MotionFrame, MotionPart};
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
@@ -84,9 +84,12 @@ where
                     rotation,
                 })
                 .collect();
-            Ok((part_name, frames))
+            Ok(MotionPart {
+                name: part_name,
+                frames,
+            })
         })
-        .collect::<Result<Vec<(String, Vec<MotionFrame>)>>>()?;
+        .collect::<Result<Vec<_>>>()?;
 
     read.assert_end()?;
 
@@ -111,19 +114,25 @@ where
     };
     write.write_struct(&header)?;
 
-    for (part_name, frames) in &motion.parts {
-        write.write_string(part_name)?;
+    for part in &motion.parts {
+        write.write_string(&part.name)?;
         write.write_u32(FLAGS)?;
 
-        for frame in frames {
+        let first = part.frames.first();
+
+        for frame in &part.frames {
             write.write_struct(&frame.translation)?;
         }
-        write.write_struct(&frames[0].translation)?;
+        if let Some(first) = first {
+            write.write_struct(&first.translation)?;
+        }
 
-        for frame in frames {
+        for frame in &part.frames {
             write.write_struct(&frame.rotation)?;
         }
-        write.write_struct(&frames[0].rotation)?;
+        if let Some(first) = first {
+            write.write_struct(&first.rotation)?;
+        }
     }
     Ok(())
 }

@@ -8,9 +8,14 @@ pub struct MotionFrame {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct MotionPart {
+    pub name: String,
+    pub frames: Vec<MotionFrame>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Motion {
     pub loop_time: f32,
-    // need to preserve order
-    pub parts: Vec<(String, Vec<MotionFrame>)>,
+    pub parts: Vec<MotionPart>,
     pub frame_count: u32,
 }
