@@ -1,4 +1,6 @@
-use mech3ax_api_types::{static_assert_size, Mesh, MeshLight, Polygon, ReprSize as _, Vec2, Vec3};
+use mech3ax_api_types::{
+    static_assert_size, Mesh, MeshLight, Polygon, ReprSize as _, UvCoord, Vec3,
+};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, bool_c, Result};
 use std::io::{Read, Write};
@@ -254,15 +256,15 @@ where
     (0..count).map(|_| read.read_u32()).collect()
 }
 
-fn read_uvs<R>(read: &mut CountingReader<R>, count: u32) -> std::io::Result<Vec<Vec2>>
+fn read_uvs<R>(read: &mut CountingReader<R>, count: u32) -> std::io::Result<Vec<UvCoord>>
 where
     R: Read,
 {
     (0..count)
         .map(|_| {
-            let mut result: Vec2 = read.read_struct()?;
-            result.1 = 1.0 - result.1;
-            Ok(result)
+            let u = read.read_f32()?;
+            let v = read.read_f32()?;
+            Ok(UvCoord { u, v: 1.0 - v })
         })
         .collect()
 }
@@ -391,12 +393,13 @@ where
     Ok(())
 }
 
-fn write_uvs<W>(write: &mut W, uv_coords: &[Vec2]) -> Result<()>
+fn write_uvs<W>(write: &mut W, uv_coords: &[UvCoord]) -> Result<()>
 where
     W: Write,
 {
     for uv in uv_coords {
-        write.write_struct(&Vec2(uv.0, 1.0 - uv.1))?;
+        write.write_f32(uv.u)?;
+        write.write_f32(1.0 - uv.v)?;
     }
     Ok(())
 }
@@ -546,7 +549,7 @@ pub fn size_mesh(mesh: &Mesh) -> u32 {
                 .as_ref()
                 .map(|v| v.len() as u32)
                 .unwrap_or(0)
-            + Vec2::SIZE
+            + UvCoord::SIZE
                 * polygon
                     .uv_coords
                     .as_ref()

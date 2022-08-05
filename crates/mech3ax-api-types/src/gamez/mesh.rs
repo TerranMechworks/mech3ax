@@ -1,12 +1,21 @@
-use crate::types::{Vec2, Vec3};
+use crate::static_assert_size;
+use crate::types::Vec3;
 use ::serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy)]
+#[repr(C)]
+pub struct UvCoord {
+    pub u: f32,
+    pub v: f32,
+}
+static_assert_size!(UvCoord, 8);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Polygon {
     pub vertex_indices: Vec<u32>,
     pub vertex_colors: Vec<Vec3>,
     pub normal_indices: Option<Vec<u32>>,
-    pub uv_coords: Option<Vec<Vec2>>,
+    pub uv_coords: Option<Vec<UvCoord>>,
     pub texture_index: u32,
     pub texture_info: u32,
     pub unk04: u32,

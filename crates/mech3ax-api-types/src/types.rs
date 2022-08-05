@@ -3,15 +3,6 @@ use ::serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy)]
 #[repr(C)]
-pub struct Vec2(pub f32, pub f32);
-static_assert_size!(Vec2, 8);
-
-impl Vec2 {
-    pub const DEFAULT: Vec2 = Vec2(0.0, 0.0);
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy)]
-#[repr(C)]
 pub struct Range {
     pub min: f32,
     pub max: f32,
