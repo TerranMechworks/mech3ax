@@ -97,8 +97,8 @@ fn read_samples_16bit<R: Read>(
     let mut data = vec![0i16; sample_count];
     {
         let len = data.len() * std::mem::size_of::<i16>();
-        let mut buf = unsafe { std::slice::from_raw_parts_mut(data.as_mut_ptr() as _, len) };
-        read.read_exact(&mut buf)?;
+        let buf = unsafe { std::slice::from_raw_parts_mut(data.as_mut_ptr() as _, len) };
+        read.read_exact(buf)?;
     }
     let samples = data
         .into_iter()

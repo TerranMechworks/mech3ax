@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::cargo)]
 mod archive;
 mod image;
 mod interp;

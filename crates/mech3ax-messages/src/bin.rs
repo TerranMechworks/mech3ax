@@ -5,6 +5,8 @@ type Result<T> = ::std::result::Result<T, Error>;
 /// Types whose values can be initialized from bytes, regardless of the bit
 /// patterns in the bytes.
 ///
+/// # Safety
+///
 /// This is quite subtle. Types must be at least Copy, so that std::ptr::read's
 /// requirements are upheld. Copy is however not sufficient. For example, a
 /// structure containing a bool wouldn't be able to implement this trait, since

@@ -1,3 +1,5 @@
+#![warn(clippy::all, clippy::cargo)]
+
 include!(concat!(env!("OUT_DIR"), "/crc32.rs"));
 
 pub const CRC32_INIT: u32 = 0x00000000;

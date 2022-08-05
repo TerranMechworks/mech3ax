@@ -1,3 +1,5 @@
+#![warn(clippy::all, clippy::cargo)]
+
 use std::borrow::Cow;
 
 include!(concat!(env!("OUT_DIR"), "/index-windows-1252.rs"));
