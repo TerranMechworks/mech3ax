@@ -6,6 +6,8 @@ use ::serde::{Deserialize, Serialize};
 use mech3ax_common::serde::base64;
 use num_derive::FromPrimitive;
 
+pub use textures::{read_textures, write_textures};
+
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub enum TextureAlpha {
     None,
@@ -48,5 +50,3 @@ pub struct Manifest {
     pub texture_infos: Vec<TextureInfo>,
     pub global_palettes: Vec<Vec<u8>>,
 }
-
-pub use textures::{read_textures, write_textures};
