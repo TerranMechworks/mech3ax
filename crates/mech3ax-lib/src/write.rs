@@ -2,7 +2,7 @@ use crate::buffer::CallbackBuffer;
 use crate::error::err_to_c;
 use crate::filename_to_string;
 use anyhow::{bail, Context, Result};
-use mech3ax_api_types::{ArchiveEntry, GameZ, Manifest, Material, Model, Motion, Script};
+use mech3ax_api_types::{ArchiveEntry, GameZ, Material, Model, Motion, Script, TextureManifest};
 use mech3ax_archive::{Mode, Version};
 use serde_json::Value;
 use std::fs::File;
@@ -207,7 +207,7 @@ pub extern "C" fn write_mechlib(
     )
 }
 
-fn parse_manifest(ptr: *const u8, len: usize) -> Result<Manifest> {
+fn parse_manifest(ptr: *const u8, len: usize) -> Result<TextureManifest> {
     if ptr.is_null() {
         bail!("manifest is null");
     }

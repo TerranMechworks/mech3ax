@@ -3,7 +3,8 @@ use anyhow::{bail, Context, Result};
 use mech3ax_anim::{write_anim, AnimMetadata};
 use mech3ax_api_types::saves::AnimActivation;
 use mech3ax_api_types::{
-    ArchiveEntry, GameZ, IndexedNode, Manifest, Material, Mesh, Metadata, Model, Motion, Script,
+    ArchiveEntry, GameZ, GameZMetadata, IndexedNode, Material, Mesh, Model, Motion, Script,
+    TextureManifest,
 };
 use mech3ax_archive::{write_archive, Mode, Version};
 use mech3ax_gamez::gamez::write_gamez;
@@ -186,7 +187,7 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
 pub(crate) fn textures(input: String, output: String) -> Result<()> {
     let input = buf_reader(&input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
-    let manifest: Manifest = zip_json(&mut zip, "manifest.json")?;
+    let manifest: TextureManifest = zip_json(&mut zip, "manifest.json")?;
 
     let mut write = buf_writer(output)?;
     write_textures::<_, _, anyhow::Error>(&mut write, &manifest, |original| {
@@ -211,7 +212,7 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
     let gamez = {
         let input = buf_reader(&opts.input)?;
         let mut zip = ZipArchive::new(input).context("Failed to open input")?;
-        let metadata: Metadata = zip_json(&mut zip, "metadata.json")?;
+        let metadata: GameZMetadata = zip_json(&mut zip, "metadata.json")?;
         let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
         let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
         let meshes: Vec<Mesh> = zip_json(&mut zip, "meshes.json")?;

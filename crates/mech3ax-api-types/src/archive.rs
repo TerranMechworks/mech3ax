@@ -1,7 +1,7 @@
 use crate::serde::base64;
 use ::serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ArchiveEntry {
     pub name: String,
     #[serde(with = "base64")]

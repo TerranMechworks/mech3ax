@@ -2,7 +2,7 @@ use crate::commands::buf_writer;
 use crate::ZrdOpts;
 use anyhow::{Context, Result};
 use image::{ColorType, DynamicImage, GenericImageView, ImageFormat};
-use mech3ax_api_types::{Manifest, TextureAlpha};
+use mech3ax_api_types::{TextureAlpha, TextureManifest};
 use mech3ax_image::write_textures;
 use mech3ax_reader::write_reader;
 use serde_json::Value;
@@ -14,7 +14,7 @@ use std::path::Path;
 pub(crate) fn textures(input: String, output: String) -> Result<()> {
     let path = Path::new(&input);
     let buf = std::fs::read(path).context("Failed to read input (manifest)")?;
-    let mut manifest: Manifest =
+    let mut manifest: TextureManifest =
         serde_json::from_slice(&buf).context("Failed to parse input (manifest)")?;
     let parent = path.parent().context("Failed to get input parent path")?;
 

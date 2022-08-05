@@ -3,7 +3,7 @@ mod meshes;
 mod nodes;
 mod textures;
 
-use mech3ax_api_types::{static_assert_size, GameZ, Metadata, ReprSize as _};
+use mech3ax_api_types::{static_assert_size, GameZ, GameZMetadata, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -67,7 +67,7 @@ where
     let nodes = nodes::read_nodes(read, header.node_array_size)?;
     read.assert_end()?;
 
-    let metadata = Metadata {
+    let metadata = GameZMetadata {
         material_array_size,
         meshes_array_size: mesh_array_size,
         node_array_size: header.node_array_size,

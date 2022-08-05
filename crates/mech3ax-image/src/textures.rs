@@ -1,6 +1,6 @@
 use image::{DynamicImage, RgbImage, RgbaImage};
 use mech3ax_api_types::{
-    static_assert_size, Manifest, ReprSize as _, TextureAlpha, TextureInfo, TexturePalette,
+    static_assert_size, ReprSize as _, TextureAlpha, TextureInfo, TextureManifest, TexturePalette,
 };
 use mech3ax_common::assert::{assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
@@ -205,7 +205,7 @@ fn assert_upcast<T>(result: std::result::Result<T, AssertionError>) -> Result<T>
 pub fn read_textures<R, F, E>(
     read: &mut CountingReader<R>,
     mut save_texture: F,
-) -> std::result::Result<Manifest, E>
+) -> std::result::Result<TextureManifest, E>
 where
     R: Read,
     F: FnMut(&str, DynamicImage) -> std::result::Result<(), E>,
@@ -273,7 +273,7 @@ where
         .collect::<std::result::Result<Vec<_>, E>>()?;
 
     read.assert_end()?;
-    Ok(Manifest {
+    Ok(TextureManifest {
         texture_infos,
         global_palettes,
     })
@@ -474,7 +474,7 @@ where
 
 pub fn write_textures<W, F, E>(
     write: &mut W,
-    manifest: &Manifest,
+    manifest: &TextureManifest,
     mut load_texture: F,
 ) -> std::result::Result<(), E>
 where

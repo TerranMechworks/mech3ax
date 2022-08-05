@@ -2,14 +2,14 @@ use crate::serde::base64;
 use ::serde::{Deserialize, Serialize};
 use num_derive::FromPrimitive;
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
 pub enum TextureAlpha {
     None,
     Simple,
     Full,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, FromPrimitive, Copy, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, FromPrimitive)]
 #[repr(u16)]
 pub enum TextureStretch {
     None = 0,
@@ -40,7 +40,7 @@ pub struct TextureInfo {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Manifest {
+pub struct TextureManifest {
     pub texture_infos: Vec<TextureInfo>,
     pub global_palettes: Vec<Vec<u8>>,
 }

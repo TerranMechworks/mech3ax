@@ -1,4 +1,4 @@
-use mech3ax_api_types::{static_assert_size, Frame, Motion};
+use mech3ax_api_types::{static_assert_size, Motion, MotionFrame};
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
@@ -79,14 +79,14 @@ where
             let frames = translations
                 .into_iter()
                 .zip(rotations.into_iter())
-                .map(|(translation, rotation)| Frame {
+                .map(|(translation, rotation)| MotionFrame {
                     translation,
                     rotation,
                 })
                 .collect();
             Ok((part_name, frames))
         })
-        .collect::<Result<Vec<(String, Vec<Frame>)>>>()?;
+        .collect::<Result<Vec<(String, Vec<MotionFrame>)>>>()?;
 
     read.assert_end()?;
 
