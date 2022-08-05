@@ -2,7 +2,7 @@ use crate::buffer::CallbackBuffer;
 use crate::error::err_to_c;
 use crate::filename_to_string;
 use anyhow::{bail, Context, Result};
-use mech3ax_archive::{Entry, Mode, Version};
+use mech3ax_archive::{ArchiveEntry, Mode, Version};
 use serde_json::Value;
 use std::fs::File;
 use std::io::{BufWriter, Cursor};
@@ -37,7 +37,7 @@ pub extern "C" fn write_interp(
     })
 }
 
-fn parse_entries(ptr: *const u8, len: usize) -> Result<Vec<Entry>> {
+fn parse_entries(ptr: *const u8, len: usize) -> Result<Vec<ArchiveEntry>> {
     if ptr.is_null() {
         bail!("entries is null");
     }

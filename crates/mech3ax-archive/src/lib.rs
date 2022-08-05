@@ -37,7 +37,7 @@ struct EntryC {
 static_assert_size!(EntryC, 148);
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Entry {
+pub struct ArchiveEntry {
     pub name: String,
     #[serde(with = "base64")]
     pub garbage: Vec<u8>,
@@ -127,7 +127,7 @@ pub fn read_archive<R, F, E>(
     read: &mut CountingReader<R>,
     mut save_file: F,
     version: Version,
-) -> std::result::Result<Vec<Entry>, E>
+) -> std::result::Result<Vec<ArchiveEntry>, E>
 where
     R: Read + Seek,
     F: FnMut(&str, Vec<u8>, u32) -> std::result::Result<(), E>,
@@ -143,7 +143,7 @@ where
             read.read_exact(&mut buffer)?;
             crc = crc32_update(crc, &buffer);
             save_file(&name, buffer, read.prev)?;
-            Ok(Entry { name, garbage })
+            Ok(ArchiveEntry { name, garbage })
         })
         .collect::<std::result::Result<Vec<_>, E>>()?;
 
@@ -153,7 +153,7 @@ where
     Ok(entries)
 }
 
-fn entry_to_c(entry: &Entry, start: u32, length: u32) -> EntryC {
+fn entry_to_c(entry: &ArchiveEntry, start: u32, length: u32) -> EntryC {
     let mut name = [0; 64];
     str_to_c_padded(&entry.name, &mut name);
     let mut garbage = [0; 76];
@@ -169,7 +169,7 @@ fn entry_to_c(entry: &Entry, start: u32, length: u32) -> EntryC {
 
 pub fn write_archive<W, F, E>(
     write: &mut W,
-    entries: &[Entry],
+    entries: &[ArchiveEntry],
     mut load_file: F,
     version: Version,
 ) -> std::result::Result<(), E>

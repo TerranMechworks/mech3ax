@@ -1,7 +1,7 @@
 use crate::{InterpOpts, ZipOpts};
 use anyhow::{bail, Context, Result};
 use mech3ax_anim::{write_anim, AnimMetadata};
-use mech3ax_archive::{write_archive, Entry, Mode, Version};
+use mech3ax_archive::{write_archive, ArchiveEntry, Mode, Version};
 use mech3ax_gamez::gamez::{write_gamez, GameZ, Material as GameZMat, Mesh, Metadata, Node};
 use mech3ax_gamez::mechlib::{
     write_format, write_materials, write_model, write_version, Material as MechlibMat, Model,
@@ -71,7 +71,7 @@ where
 {
     let input = buf_reader(&input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
-    let entries: Vec<Entry> = zip_json(&mut zip, "manifest.json")?;
+    let entries: Vec<ArchiveEntry> = zip_json(&mut zip, "manifest.json")?;
 
     let mut write = buf_writer(output)?;
     write_archive(
