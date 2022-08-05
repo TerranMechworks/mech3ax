@@ -1,5 +1,4 @@
-mod rfc3339;
-
+use crate::serde::rfc3339;
 use ::serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
@@ -10,6 +9,3 @@ pub struct Script {
     pub last_modified: OffsetDateTime,
     pub lines: Vec<String>,
 }
-
-#[cfg(test)]
-mod tests;

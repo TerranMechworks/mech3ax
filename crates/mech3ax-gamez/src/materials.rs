@@ -1,4 +1,5 @@
 use ::serde::{Deserialize, Serialize};
+use mech3ax_api_types::serde::pointer_zero;
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
@@ -22,10 +23,6 @@ struct MaterialC {
 }
 static_assert_size!(MaterialC, 40);
 pub const MATERIAL_C_SIZE: u32 = MaterialC::SIZE;
-
-fn pointer_zero(pointer: &u32) -> bool {
-    *pointer == 0
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CycleData {
