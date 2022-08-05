@@ -8,9 +8,10 @@ use std::io::{Read, Write};
 
 #[repr(C)]
 struct WindowC {
-    origin_x: u32,          // 000
-    origin_y: u32,          // 004
-    resolution: (u32, u32), // 008
+    origin_x: u32,     // 000
+    origin_y: u32,     // 004
+    resolution_x: u32, // 008
+    resolution_y: u32, // 012
     zero016: [u8; 212],
     buffer_index: i32, // 228
     buffer_ptr: u32,   // 232
@@ -61,7 +62,8 @@ where
     let window: WindowC = read.read_struct()?;
     assert_that!("origin x", window.origin_x == 0, read.prev + 0)?;
     assert_that!("origin y", window.origin_y == 0, read.prev + 4)?;
-    assert_that!("resolution", window.resolution == (320, 200), read.prev + 8)?;
+    assert_that!("resolution x", window.resolution_x == 320, read.prev + 8)?;
+    assert_that!("resolution y", window.resolution_y == 200, read.prev + 12)?;
     assert_all_zero("field 016", read.prev + 16, &window.zero016)?;
     assert_that!("buffer index", window.buffer_index == -1, read.prev + 228)?;
     assert_that!("buffer ptr", window.buffer_ptr == 0, read.prev + 232)?;
@@ -71,7 +73,8 @@ where
 
     Ok(Window {
         name: WINDOW_NAME.to_owned(),
-        resolution: window.resolution,
+        resolution_x: window.resolution_x,
+        resolution_y: window.resolution_y,
         data_ptr,
     })
 }
@@ -103,7 +106,8 @@ where
     write.write_struct(&WindowC {
         origin_x: 0,
         origin_y: 0,
-        resolution: window.resolution,
+        resolution_x: window.resolution_x,
+        resolution_y: window.resolution_y,
         zero016: [0; 212],
         buffer_index: -1,
         buffer_ptr: 0,

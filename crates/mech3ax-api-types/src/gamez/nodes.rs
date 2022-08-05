@@ -70,7 +70,8 @@ pub struct Camera {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Display {
     pub name: String,
-    pub resolution: (u32, u32),
+    pub resolution_x: u32,
+    pub resolution_y: u32,
     pub clear_color: Color,
     pub data_ptr: u32,
 }
@@ -150,7 +151,8 @@ pub struct Object3d<T> {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Window {
     pub name: String,
-    pub resolution: (u32, u32),
+    pub resolution_x: u32,
+    pub resolution_y: u32,
     pub data_ptr: u32,
 }
 

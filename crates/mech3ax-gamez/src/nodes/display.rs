@@ -9,7 +9,8 @@ use std::io::{Read, Write};
 struct DisplayC {
     origin_x: u32,
     origin_y: u32,
-    resolution: (u32, u32),
+    resolution_x: u32,
+    resolution_y: u32,
     clear_color: Color,
 }
 static_assert_size!(DisplayC, 28);
@@ -61,11 +62,8 @@ where
     let display: DisplayC = read.read_struct()?;
     assert_that!("origin x", display.origin_x == 0, read.prev + 0)?;
     assert_that!("origin y", display.origin_y == 0, read.prev + 4)?;
-    assert_that!(
-        "resolution",
-        display.resolution == (640, 400),
-        read.prev + 8
-    )?;
+    assert_that!("resolution x", display.resolution_x == 640, read.prev + 8)?;
+    assert_that!("resolution y", display.resolution_y == 400, read.prev + 12)?;
     assert_that!(
         "clear color",
         display.clear_color == CLEAR_COLOR,
@@ -74,7 +72,8 @@ where
 
     Ok(Display {
         name: DISPLAY_NAME.to_owned(),
-        resolution: display.resolution,
+        resolution_x: display.resolution_x,
+        resolution_y: display.resolution_y,
         clear_color: display.clear_color,
         data_ptr,
     })
@@ -107,7 +106,8 @@ where
     write.write_struct(&DisplayC {
         origin_x: 0,
         origin_y: 0,
-        resolution: display.resolution,
+        resolution_x: display.resolution_x,
+        resolution_y: display.resolution_y,
         clear_color: display.clear_color,
     })?;
     Ok(())
