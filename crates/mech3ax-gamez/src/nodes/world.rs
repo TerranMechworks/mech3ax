@@ -228,11 +228,11 @@ fn assert_world(world: &WorldC, offset: u32) -> Result<(Area, Range, Range, bool
         world.fog_state == FOG_STATE_LINEAR,
         offset + 16
     )?;
-    assert_that!("fog color", world.fog_color == Vec3::EMPTY, offset + 20)?;
-    assert_that!("fog range", world.fog_range == Vec2::EMPTY, offset + 32)?;
+    assert_that!("fog color", world.fog_color == Vec3::DEFAULT, offset + 20)?;
+    assert_that!("fog range", world.fog_range == Vec2::DEFAULT, offset + 32)?;
     assert_that!(
         "fog altitude",
-        world.fog_altitude == Vec2::EMPTY,
+        world.fog_altitude == Vec2::DEFAULT,
         offset + 40
     )?;
     assert_that!("fog density", world.fog_density == 0.0, offset + 48)?;
@@ -523,9 +523,9 @@ where
         area_partition_count,
         area_partition_ptr: world.area_partition_ptr,
         fog_state: FOG_STATE_LINEAR,
-        fog_color: Vec3::EMPTY,
-        fog_range: Vec2::EMPTY,
-        fog_altitude: Vec2::EMPTY,
+        fog_color: Vec3::DEFAULT,
+        fog_range: Vec2::DEFAULT,
+        fog_altitude: Vec2::DEFAULT,
         fog_density: 0.0,
         area_left,
         area_bottom,

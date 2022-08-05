@@ -91,19 +91,19 @@ fn assert_camera(camera: CameraC, offset: u32) -> Result<(Vec2, Vec2)> {
     assert_that!("flags", camera.flags == 0, offset + 16)?;
     assert_that!(
         "translation",
-        camera.translation == Vec3::EMPTY,
+        camera.translation == Vec3::DEFAULT,
         offset + 20
     )?;
-    assert_that!("rotation", camera.rotation == Vec3::EMPTY, offset + 32)?;
+    assert_that!("rotation", camera.rotation == Vec3::DEFAULT, offset + 32)?;
 
     assert_that!(
         "world translate",
-        camera.world_translate == Vec3::EMPTY,
+        camera.world_translate == Vec3::DEFAULT,
         offset + 44
     )?;
     assert_that!(
         "world rotate",
-        camera.world_rotate == Vec3::EMPTY,
+        camera.world_rotate == Vec3::DEFAULT,
         offset + 56
     )?;
     assert_that!(
@@ -111,16 +111,16 @@ fn assert_camera(camera: CameraC, offset: u32) -> Result<(Vec2, Vec2)> {
         camera.mtw_matrix == Matrix::EMPTY,
         offset + 68
     )?;
-    assert_that!("field 104", camera.unk104 == Vec3::EMPTY, offset + 104)?;
+    assert_that!("field 104", camera.unk104 == Vec3::DEFAULT, offset + 104)?;
     assert_that!(
         "view vector",
-        camera.view_vector == Vec3::EMPTY,
+        camera.view_vector == Vec3::DEFAULT,
         offset + 116
     )?;
     assert_that!("matrix", camera.matrix == Matrix::EMPTY, offset + 128)?;
     assert_that!(
         "alt translate",
-        camera.alt_translate == Vec3::EMPTY,
+        camera.alt_translate == Vec3::DEFAULT,
         offset + 164
     )?;
 
@@ -242,15 +242,15 @@ where
         focus_node_xy: -1,
         focus_node_xz: -1,
         flags: 0,
-        translation: Vec3::EMPTY,
-        rotation: Vec3::EMPTY,
-        world_translate: Vec3::EMPTY,
-        world_rotate: Vec3::EMPTY,
+        translation: Vec3::DEFAULT,
+        rotation: Vec3::DEFAULT,
+        world_translate: Vec3::DEFAULT,
+        world_rotate: Vec3::DEFAULT,
         mtw_matrix: Matrix::EMPTY,
-        unk104: Vec3::EMPTY,
-        view_vector: Vec3::EMPTY,
+        unk104: Vec3::DEFAULT,
+        view_vector: Vec3::DEFAULT,
         matrix: Matrix::EMPTY,
-        alt_translate: Vec3::EMPTY,
+        alt_translate: Vec3::DEFAULT,
         clip: camera.clip,
         zero184: [0; 24],
         lod_multiplier: 1.0,

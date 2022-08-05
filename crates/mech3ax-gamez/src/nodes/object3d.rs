@@ -88,10 +88,10 @@ fn assert_object3d(object3d: Object3dC, offset: u32) -> Result<Option<Transforma
     assert_all_zero("field 096", offset + 96, &object3d.zero096)?;
 
     let transformation = if object3d.flags == 40 {
-        assert_that!("rotation", object3d.rotation == Vec3::EMPTY, offset + 24)?;
+        assert_that!("rotation", object3d.rotation == Vec3::DEFAULT, offset + 24)?;
         assert_that!(
             "translation",
-            object3d.translation == Vec3::EMPTY,
+            object3d.translation == Vec3::DEFAULT,
             offset + 84
         )?;
         assert_that!("matrix", object3d.matrix == Matrix::IDENTITY, offset + 48)?;
@@ -189,7 +189,7 @@ where
                 .unwrap_or_else(|| euler_to_matrix(&tr.rotation));
             (32, tr.rotation, tr.translation, matrix)
         })
-        .unwrap_or((40, Vec3::EMPTY, Vec3::EMPTY, Matrix::IDENTITY));
+        .unwrap_or((40, Vec3::DEFAULT, Vec3::DEFAULT, Matrix::IDENTITY));
 
     let matrix = apply_zero_signs(&matrix, object3d.matrix_signs);
 

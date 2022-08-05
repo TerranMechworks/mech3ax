@@ -118,17 +118,17 @@ impl ScriptObject for ObjectMotionFromTo {
         } else {
             assert_that!(
                 "object motion translate from",
-                motion.translate_from == Vec3::EMPTY,
+                motion.translate_from == Vec3::DEFAULT,
                 read.prev + 20
             )?;
             assert_that!(
                 "object motion translate to",
-                motion.translate_to == Vec3::EMPTY,
+                motion.translate_to == Vec3::DEFAULT,
                 read.prev + 32
             )?;
             assert_that!(
                 "object motion translate delta",
-                motion.translate_delta == Vec3::EMPTY,
+                motion.translate_delta == Vec3::DEFAULT,
                 read.prev + 44
             )?;
             None
@@ -143,17 +143,17 @@ impl ScriptObject for ObjectMotionFromTo {
         } else {
             assert_that!(
                 "object motion rotate from",
-                motion.rotate_from == Vec3::EMPTY,
+                motion.rotate_from == Vec3::DEFAULT,
                 read.prev + 56
             )?;
             assert_that!(
                 "object motion rotate to",
-                motion.rotate_to == Vec3::EMPTY,
+                motion.rotate_to == Vec3::DEFAULT,
                 read.prev + 68
             )?;
             assert_that!(
                 "object motion rotate delta",
-                motion.rotate_delta == Vec3::EMPTY,
+                motion.rotate_delta == Vec3::DEFAULT,
                 read.prev + 80
             )?;
             None
@@ -168,17 +168,17 @@ impl ScriptObject for ObjectMotionFromTo {
         } else {
             assert_that!(
                 "object motion scale from",
-                motion.scale_from == Vec3::EMPTY,
+                motion.scale_from == Vec3::DEFAULT,
                 read.prev + 92
             )?;
             assert_that!(
                 "object motion scale to",
-                motion.scale_to == Vec3::EMPTY,
+                motion.scale_to == Vec3::DEFAULT,
                 read.prev + 104
             )?;
             assert_that!(
                 "object motion scale delta",
-                motion.scale_delta == Vec3::EMPTY,
+                motion.scale_delta == Vec3::DEFAULT,
                 read.prev + 116
             )?;
             None
@@ -227,19 +227,19 @@ impl ScriptObject for ObjectMotionFromTo {
             if let Some(translate) = &self.translate {
                 (translate.from, translate.to, translate.delta)
             } else {
-                (Vec3::EMPTY, Vec3::EMPTY, Vec3::EMPTY)
+                (Vec3::DEFAULT, Vec3::DEFAULT, Vec3::DEFAULT)
             };
 
         let (rotate_from, rotate_to, rotate_delta) = if let Some(rotate) = &self.rotate {
             (rotate.from, rotate.to, rotate.delta)
         } else {
-            (Vec3::EMPTY, Vec3::EMPTY, Vec3::EMPTY)
+            (Vec3::DEFAULT, Vec3::DEFAULT, Vec3::DEFAULT)
         };
 
         let (scale_from, scale_to, scale_delta) = if let Some(scale) = &self.scale {
             (scale.from, scale.to, scale.delta)
         } else {
-            (Vec3::EMPTY, Vec3::EMPTY, Vec3::EMPTY)
+            (Vec3::DEFAULT, Vec3::DEFAULT, Vec3::DEFAULT)
         };
 
         write.write_struct(&ObjectMotionFromToC {

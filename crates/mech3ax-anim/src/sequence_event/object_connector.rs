@@ -159,7 +159,7 @@ impl ScriptObject for ObjectConnector {
         } else {
             assert_that!(
                 "object connector from pos",
-                object_connector.from_pos == Vec3::EMPTY,
+                object_connector.from_pos == Vec3::DEFAULT,
                 read.prev + 12
             )?;
             None
@@ -175,7 +175,7 @@ impl ScriptObject for ObjectConnector {
         } else {
             assert_that!(
                 "object connector to pos",
-                object_connector.to_pos == Vec3::EMPTY,
+                object_connector.to_pos == Vec3::DEFAULT,
                 read.prev + 24
             )?;
             None
@@ -299,8 +299,8 @@ impl ScriptObject for ObjectConnector {
             from_index,
             to_index,
             pad10: 0,
-            from_pos: self.from_pos.unwrap_or(Vec3::EMPTY),
-            to_pos: self.to_pos.unwrap_or(Vec3::EMPTY),
+            from_pos: self.from_pos.unwrap_or(Vec3::DEFAULT),
+            to_pos: self.to_pos.unwrap_or(Vec3::DEFAULT),
             zero36: 0.0,
             zero40: 0.0,
             zero44: 0.0,

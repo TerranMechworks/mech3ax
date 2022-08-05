@@ -66,7 +66,11 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
 }
 
 fn assert_light(light: &LightC, offset: u32) -> Result<()> {
-    assert_that!("translation", light.translation == Vec3::EMPTY, offset + 12)?;
+    assert_that!(
+        "translation",
+        light.translation == Vec3::DEFAULT,
+        offset + 12
+    )?;
     assert_all_zero("field 024", offset + 24, &light.zero024)?;
 
     assert_that!("field 136", light.one136 == 1.0, offset + 136)?;
@@ -158,7 +162,7 @@ where
 {
     write.write_struct(&LightC {
         direction: light.direction,
-        translation: Vec3::EMPTY,
+        translation: Vec3::DEFAULT,
         zero024: [0; 112],
         one136: 1.0,
         zero140: 0.0,

@@ -168,7 +168,7 @@ impl ScriptObject for LightState {
         )?;
         assert_that!(
             "light state rotation",
-            light_state.rotation == Vec3::EMPTY,
+            light_state.rotation == Vec3::DEFAULT,
             read.prev + 80
         )?;
 
@@ -190,7 +190,7 @@ impl ScriptObject for LightState {
             )?;
             assert_that!(
                 "light state translation",
-                light_state.translation == Vec3::EMPTY,
+                light_state.translation == Vec3::DEFAULT,
                 read.prev + 68
             )?;
             None
@@ -209,7 +209,7 @@ impl ScriptObject for LightState {
         } else {
             assert_that!(
                 "light state range",
-                light_state.range == Vec2::EMPTY,
+                light_state.range == Vec2::DEFAULT,
                 read.prev + 92
             )?;
             None
@@ -221,7 +221,7 @@ impl ScriptObject for LightState {
         } else {
             assert_that!(
                 "light state color",
-                light_state.color == Vec3::EMPTY,
+                light_state.color == Vec3::DEFAULT,
                 read.prev + 10
             )?;
             None
@@ -306,7 +306,7 @@ impl ScriptObject for LightState {
             };
             (node_index, at_node.translation)
         } else {
-            (0, Vec3::EMPTY)
+            (0, Vec3::DEFAULT)
         };
 
         write.write_struct(&LightStateC {
@@ -321,9 +321,9 @@ impl ScriptObject for LightState {
             static_: bool_c!(self.static_.unwrap_or(false)),
             node_index,
             translation,
-            rotation: Vec3::EMPTY,
-            range: self.range.unwrap_or(Vec2::EMPTY),
-            color: self.color.unwrap_or(Vec3::EMPTY),
+            rotation: Vec3::DEFAULT,
+            range: self.range.unwrap_or(Vec2::DEFAULT),
+            color: self.color.unwrap_or(Vec3::DEFAULT),
             ambient: self.ambient.unwrap_or(0.0),
             diffuse: self.diffuse.unwrap_or(0.0),
         })?;

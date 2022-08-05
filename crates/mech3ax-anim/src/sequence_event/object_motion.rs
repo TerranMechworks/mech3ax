@@ -272,29 +272,29 @@ impl ScriptObject for ObjectMotion {
         } else {
             assert_that!(
                 "object motion trans delta",
-                object_motion.trans_delta == Vec3::EMPTY,
+                object_motion.trans_delta == Vec3::DEFAULT,
                 read.prev + 52
             )?;
             assert_that!(
                 "object motion trans initial",
-                object_motion.trans_initial == Vec3::EMPTY,
+                object_motion.trans_initial == Vec3::DEFAULT,
                 read.prev + 64
             )?;
             assert_that!(
                 "object motion field 100",
-                object_motion.unk100 == Vec3::EMPTY,
+                object_motion.unk100 == Vec3::DEFAULT,
                 read.prev + 100
             )?;
             None
         };
         assert_that!(
             "object motion trans delta copy",
-            object_motion.trans_delta_copy == Vec3::EMPTY,
+            object_motion.trans_delta_copy == Vec3::DEFAULT,
             read.prev + 76
         )?;
         assert_that!(
             "object motion trans initial copy",
-            object_motion.trans_initial_copy == Vec3::EMPTY,
+            object_motion.trans_initial_copy == Vec3::DEFAULT,
             read.prev + 88
         )?;
 
@@ -341,19 +341,19 @@ impl ScriptObject for ObjectMotion {
         } else {
             assert_that!(
                 "object motion xyz rot",
-                object_motion.xyz_rotation == Vec3::EMPTY,
+                object_motion.xyz_rotation == Vec3::DEFAULT,
                 read.prev + 124
             )?;
             assert_that!(
                 "object motion field 136",
-                object_motion.unk136 == Vec3::EMPTY,
+                object_motion.unk136 == Vec3::DEFAULT,
                 read.prev + 136
             )?;
             None
         };
         assert_that!(
             "object motion xyz rot copy",
-            object_motion.xyz_rotation_copy == Vec3::EMPTY,
+            object_motion.xyz_rotation_copy == Vec3::DEFAULT,
             read.prev + 148
         )?;
 
@@ -362,19 +362,19 @@ impl ScriptObject for ObjectMotion {
         } else {
             assert_that!(
                 "object motion scale",
-                object_motion.scale == Vec3::EMPTY,
+                object_motion.scale == Vec3::DEFAULT,
                 read.prev + 160
             )?;
             assert_that!(
                 "object motion field 172",
-                object_motion.unk172 == Vec3::EMPTY,
+                object_motion.unk172 == Vec3::DEFAULT,
                 read.prev + 172
             )?;
             None
         };
         assert_that!(
             "object motion scale copy",
-            object_motion.scale_copy == Vec3::EMPTY,
+            object_motion.scale_copy == Vec3::DEFAULT,
             read.prev + 182
         )?;
 
@@ -550,19 +550,19 @@ impl ScriptObject for ObjectMotion {
         if self.translation_range_min.is_some() {
             flags |= ObjectMotionFlags::TRANSLATION_MIN;
         }
-        let translation_range_min = self.translation_range_min.unwrap_or(Vec4::EMPTY);
+        let translation_range_min = self.translation_range_min.unwrap_or(Vec4::DEFAULT);
 
         if self.translation_range_max.is_some() {
             flags |= ObjectMotionFlags::TRANSLATION_MAX;
         }
-        let translation_range_max = self.translation_range_max.unwrap_or(Vec4::EMPTY);
+        let translation_range_max = self.translation_range_max.unwrap_or(Vec4::DEFAULT);
 
         let (trans_delta, trans_initial, unk100) =
             if let Some((trans_delta, trans_initial, unk100)) = &self.translation {
                 flags |= ObjectMotionFlags::TRANSLATION;
                 (*trans_delta, *trans_initial, *unk100)
             } else {
-                (Vec3::EMPTY, Vec3::EMPTY, Vec3::EMPTY)
+                (Vec3::DEFAULT, Vec3::DEFAULT, Vec3::DEFAULT)
             };
 
         let (forward_rotation_1, forward_rotation_2) = match &self.forward_rotation {
@@ -581,14 +581,14 @@ impl ScriptObject for ObjectMotion {
             flags |= ObjectMotionFlags::XYZ_ROTATION;
             (*xyz_rotation, *unk136)
         } else {
-            (Vec3::EMPTY, Vec3::EMPTY)
+            (Vec3::DEFAULT, Vec3::DEFAULT)
         };
 
         let (scale, unk172) = if let Some((scale, unk176)) = &self.scale {
             flags |= ObjectMotionFlags::SCALE;
             (*scale, *unk176)
         } else {
-            (Vec3::EMPTY, Vec3::EMPTY)
+            (Vec3::DEFAULT, Vec3::DEFAULT)
         };
 
         let mut bounce_seq0_name = [0; 32];
@@ -638,18 +638,18 @@ impl ScriptObject for ObjectMotion {
             trans_range_max_4: translation_range_max.3,
             trans_delta,
             trans_initial,
-            trans_delta_copy: Vec3::EMPTY,
-            trans_initial_copy: Vec3::EMPTY,
+            trans_delta_copy: Vec3::DEFAULT,
+            trans_initial_copy: Vec3::DEFAULT,
             unk100,
             forward_rotation_1,
             forward_rotation_2,
             zero120: 0.0,
             xyz_rotation,
             unk136,
-            xyz_rotation_copy: Vec3::EMPTY,
+            xyz_rotation_copy: Vec3::DEFAULT,
             scale,
             unk172,
-            scale_copy: Vec3::EMPTY,
+            scale_copy: Vec3::DEFAULT,
             bounce_seq0_name,
             bounce_seq0_sentinel: -1,
             bounce_snd0_index,

@@ -80,7 +80,7 @@ impl ScriptObject for CallObjectConnector {
 
         assert_that!(
             "call object connector from pos",
-            call_obj_connector.from_pos == Vec3::EMPTY,
+            call_obj_connector.from_pos == Vec3::DEFAULT,
             read.prev + 44
         )?;
 
@@ -103,7 +103,7 @@ impl ScriptObject for CallObjectConnector {
             save_index: -1,
             from_index,
             to_index: 0,
-            from_pos: Vec3::EMPTY,
+            from_pos: Vec3::DEFAULT,
             to_pos: self.to_pos,
         })?;
         Ok(())

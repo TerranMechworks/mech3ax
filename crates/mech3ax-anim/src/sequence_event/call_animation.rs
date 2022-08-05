@@ -99,7 +99,7 @@ impl ScriptObject for CallAnimation {
         } else {
             assert_that!(
                 "call animation translation",
-                call_animation.translation == Vec3::EMPTY,
+                call_animation.translation == Vec3::DEFAULT,
                 read.prev + 44
             )?;
             None
@@ -110,7 +110,7 @@ impl ScriptObject for CallAnimation {
         } else {
             assert_that!(
                 "call animation rotation",
-                call_animation.rotation == Vec3::EMPTY,
+                call_animation.rotation == Vec3::DEFAULT,
                 read.prev + 56
             )?;
             None
@@ -195,10 +195,10 @@ impl ScriptObject for CallAnimation {
             flags |= CallAnimationFlags::WAIT_FOR;
         }
         let (operand_index, node_index, translation, rotation) = match &self.parameters {
-            Parameters::None => (0, 0, Vec3::EMPTY, Vec3::EMPTY),
+            Parameters::None => (0, 0, Vec3::DEFAULT, Vec3::DEFAULT),
             Parameters::TargetNode(operand_node) => {
                 let operand_index = anim_def.node_to_index(operand_node)? as u16;
-                (operand_index, 0, Vec3::EMPTY, Vec3::EMPTY)
+                (operand_index, 0, Vec3::DEFAULT, Vec3::DEFAULT)
             }
             Parameters::WithNode(node, translation) => {
                 flags |= CallAnimationFlags::WITH_NODE;
@@ -207,9 +207,9 @@ impl ScriptObject for CallAnimation {
                     flags |= CallAnimationFlags::TRANSLATION;
                     *translation
                 } else {
-                    Vec3::EMPTY
+                    Vec3::DEFAULT
                 };
-                (0, node_index, translation, Vec3::EMPTY)
+                (0, node_index, translation, Vec3::DEFAULT)
             }
             Parameters::AtNode(node, translation, rotation) => {
                 flags |= CallAnimationFlags::AT_NODE;
@@ -222,13 +222,13 @@ impl ScriptObject for CallAnimation {
                     flags |= CallAnimationFlags::TRANSLATION;
                     *translation
                 } else {
-                    Vec3::EMPTY
+                    Vec3::DEFAULT
                 };
                 let rotation = if let Some(rotation) = rotation {
                     flags |= CallAnimationFlags::ROTATION;
                     *rotation
                 } else {
-                    Vec3::EMPTY
+                    Vec3::DEFAULT
                 };
                 (0, node_index, translation, rotation)
             }

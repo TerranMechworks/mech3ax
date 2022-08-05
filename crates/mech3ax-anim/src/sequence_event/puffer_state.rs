@@ -200,7 +200,7 @@ impl ScriptObject for PufferState {
         } else {
             assert_that!(
                 "puffer state translation",
-                puffer_state.translation == Vec3::EMPTY,
+                puffer_state.translation == Vec3::DEFAULT,
                 read.prev + 48
             )?;
             None
@@ -211,7 +211,7 @@ impl ScriptObject for PufferState {
         } else {
             assert_that!(
                 "puffer state local velocity",
-                puffer_state.local_velocity == Vec3::EMPTY,
+                puffer_state.local_velocity == Vec3::DEFAULT,
                 read.prev + 60
             )?;
             None
@@ -222,7 +222,7 @@ impl ScriptObject for PufferState {
         } else {
             assert_that!(
                 "puffer state world velocity",
-                puffer_state.world_velocity == Vec3::EMPTY,
+                puffer_state.world_velocity == Vec3::DEFAULT,
                 read.prev + 72
             )?;
             None
@@ -233,7 +233,7 @@ impl ScriptObject for PufferState {
         } else {
             assert_that!(
                 "puffer state min rnd velocity",
-                puffer_state.min_random_velocity == Vec3::EMPTY,
+                puffer_state.min_random_velocity == Vec3::DEFAULT,
                 read.prev + 84
             )?;
             None
@@ -244,7 +244,7 @@ impl ScriptObject for PufferState {
         } else {
             assert_that!(
                 "puffer state max rnd velocity",
-                puffer_state.max_random_velocity == Vec3::EMPTY,
+                puffer_state.max_random_velocity == Vec3::DEFAULT,
                 read.prev + 96
             )?;
             None
@@ -255,7 +255,7 @@ impl ScriptObject for PufferState {
         } else {
             assert_that!(
                 "puffer state world accel",
-                puffer_state.world_acceleration == Vec3::EMPTY,
+                puffer_state.world_acceleration == Vec3::DEFAULT,
                 read.prev + 108
             )?;
             None
@@ -306,7 +306,7 @@ impl ScriptObject for PufferState {
         } else {
             assert_that!(
                 "puffer state size range",
-                puffer_state.size_range == Vec2::EMPTY,
+                puffer_state.size_range == Vec2::DEFAULT,
                 read.prev + 128
             )?;
             None
@@ -330,7 +330,7 @@ impl ScriptObject for PufferState {
         } else {
             assert_that!(
                 "puffer state lifetime range",
-                puffer_state.lifetime_range == Vec2::EMPTY,
+                puffer_state.lifetime_range == Vec2::DEFAULT,
                 read.prev + 136
             )?;
             None
@@ -353,7 +353,7 @@ impl ScriptObject for PufferState {
         } else {
             assert_that!(
                 "puffer state start age range",
-                puffer_state.start_age_range == Vec2::EMPTY,
+                puffer_state.start_age_range == Vec2::DEFAULT,
                 read.prev + 144
             )?;
             None
@@ -377,7 +377,7 @@ impl ScriptObject for PufferState {
 
         assert_that!(
             "puffer state field 156",
-            puffer_state.zero156 == Vec2::EMPTY,
+            puffer_state.zero156 == Vec2::DEFAULT,
             read.prev + 156
         )?;
 
@@ -398,7 +398,7 @@ impl ScriptObject for PufferState {
         } else {
             assert_that!(
                 "puffer state fade range",
-                puffer_state.fade_range == Vec2::EMPTY,
+                puffer_state.fade_range == Vec2::DEFAULT,
                 read.prev + 164
             )?;
             None
@@ -666,7 +666,7 @@ impl ScriptObject for PufferState {
             let node_index = anim_def.node_to_index(&at_node.node)? as u32;
             (node_index, at_node.translation)
         } else {
-            (0, Vec3::EMPTY)
+            (0, Vec3::DEFAULT)
         };
         if self.local_velocity.is_some() {
             flags |= PufferStateFlags::LOCAL_VELOCITY;
@@ -752,19 +752,19 @@ impl ScriptObject for PufferState {
             active_state: self.active_state.unwrap_or(-1),
             node_index,
             translation,
-            local_velocity: self.local_velocity.unwrap_or(Vec3::EMPTY),
-            world_velocity: self.world_velocity.unwrap_or(Vec3::EMPTY),
-            min_random_velocity: self.min_random_velocity.unwrap_or(Vec3::EMPTY),
-            max_random_velocity: self.max_random_velocity.unwrap_or(Vec3::EMPTY),
-            world_acceleration: self.world_acceleration.unwrap_or(Vec3::EMPTY),
+            local_velocity: self.local_velocity.unwrap_or(Vec3::DEFAULT),
+            world_velocity: self.world_velocity.unwrap_or(Vec3::DEFAULT),
+            min_random_velocity: self.min_random_velocity.unwrap_or(Vec3::DEFAULT),
+            max_random_velocity: self.max_random_velocity.unwrap_or(Vec3::DEFAULT),
+            world_acceleration: self.world_acceleration.unwrap_or(Vec3::DEFAULT),
             interval_type,
             interval_value: self.interval.interval_value,
-            size_range: self.size_range.unwrap_or(Vec2::EMPTY),
-            lifetime_range: self.lifetime_range.unwrap_or(Vec2::EMPTY),
-            start_age_range: self.start_age_range.unwrap_or(Vec2::EMPTY),
+            size_range: self.size_range.unwrap_or(Vec2::DEFAULT),
+            lifetime_range: self.lifetime_range.unwrap_or(Vec2::DEFAULT),
+            start_age_range: self.start_age_range.unwrap_or(Vec2::DEFAULT),
             deviation_distance: self.deviation_distance.unwrap_or(0.0),
-            zero156: Vec2::EMPTY,
-            fade_range: self.fade_range.unwrap_or(Vec2::EMPTY),
+            zero156: Vec2::DEFAULT,
+            fade_range: self.fade_range.unwrap_or(Vec2::DEFAULT),
             friction: self.friction.unwrap_or(0.0),
             zero176: 0,
             zero180: 0,

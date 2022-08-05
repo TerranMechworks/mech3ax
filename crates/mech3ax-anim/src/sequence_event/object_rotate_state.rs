@@ -70,7 +70,7 @@ impl ScriptObject for ObjectRotateState {
         } else {
             assert_that!(
                 "object rotate state rot",
-                object_rotate_state.rotate == Vec3::EMPTY,
+                object_rotate_state.rotate == Vec3::DEFAULT,
                 read.prev + 4
             )?;
             assert_that!(
@@ -98,8 +98,8 @@ impl ScriptObject for ObjectRotateState {
                 );
                 (0, rotate, 0)
             }
-            RotateState::AtNodeXYZ => (2, Vec3::EMPTY, INPUT_NODE_INDEX),
-            RotateState::AtNodeMatrix => (4, Vec3::EMPTY, INPUT_NODE_INDEX),
+            RotateState::AtNodeXYZ => (2, Vec3::DEFAULT, INPUT_NODE_INDEX),
+            RotateState::AtNodeMatrix => (4, Vec3::DEFAULT, INPUT_NODE_INDEX),
         };
 
         write.write_struct(&ObjectRotateStateC {

@@ -51,7 +51,7 @@ impl ScriptObject for SoundNode {
             )?;
             assert_that!(
                 "sound node translation",
-                sound_node.translation == Vec3::EMPTY,
+                sound_node.translation == Vec3::DEFAULT,
                 read.prev + 48
             )?;
             None
@@ -78,7 +78,7 @@ impl ScriptObject for SoundNode {
             let node_index = anim_def.node_to_index(&at_node.node)? as u32;
             (2, node_index, at_node.translation)
         } else {
-            (0, 0, Vec3::EMPTY)
+            (0, 0, Vec3::DEFAULT)
         };
         write.write_struct(&SoundNodeC {
             name,
