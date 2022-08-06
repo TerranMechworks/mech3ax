@@ -1,6 +1,6 @@
 use crate::materials::{read_material, write_material, RawMaterial};
 use crate::mesh::{read_mesh_data, read_mesh_info, write_mesh_data, write_mesh_info};
-use crate::nodes::{read_node_mechlib, write_object_3d_data, write_object_3d_info};
+use crate::nodes::{read_node_mechlib, write_object_3d_data, write_object_3d_info, Wrapper};
 use mech3ax_api_types::{Material, Mesh, Model, Node, ResolvedNode, TexturedMaterial};
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
@@ -95,20 +95,23 @@ where
 
 fn read_node_and_mesh<R>(
     read: &mut CountingReader<R>,
-    index: &mut i32,
     meshes: &mut Vec<Mesh>,
     mesh_ptrs: &mut Vec<i32>,
 ) -> Result<ResolvedNode>
 where
     R: Read,
 {
-    let wrapped = read_node_mechlib(read)?;
-    let mut object3d = wrapped.wrapped;
+    let Wrapper {
+        wrapped: mut object3d,
+        has_parent,
+        children_count,
+    } = read_node_mechlib(read)?;
+
     if object3d.mesh_index != 0 {
+        let ptr_index: i32 = mesh_ptrs.len().try_into().unwrap();
         // preserve the pointer, store the new index
         mesh_ptrs.push(object3d.mesh_index);
-        object3d.mesh_index = *index;
-        *index += 1;
+        object3d.mesh_index = ptr_index;
 
         let wrapped_mesh = read_mesh_info(read)?;
         let mesh = read_mesh_data(read, wrapped_mesh)?;
@@ -119,10 +122,10 @@ where
 
     // we have to apply this, so data is written out correctly again, even if
     // the mechlib data doesn't read/write parents
-    object3d.parent = if wrapped.has_parent { Some(0) } else { None };
+    object3d.parent = if has_parent { Some(0) } else { None };
 
-    object3d.children = (0..wrapped.children_count)
-        .map(|_| read_node_and_mesh(read, index, meshes, mesh_ptrs))
+    object3d.children = (0..children_count)
+        .map(|_| read_node_and_mesh(read, meshes, mesh_ptrs))
         .collect::<Result<Vec<_>>>()?;
 
     Ok(ResolvedNode(Node::Object3d(object3d)))
@@ -132,10 +135,9 @@ pub fn read_model<R>(read: &mut CountingReader<R>) -> Result<Model>
 where
     R: Read,
 {
-    let mut index = 0i32;
     let mut meshes = Vec::new();
     let mut mesh_ptrs = Vec::new();
-    let root = read_node_and_mesh(read, &mut index, &mut meshes, &mut mesh_ptrs)?;
+    let root = read_node_and_mesh(read, &mut meshes, &mut mesh_ptrs)?;
     read.assert_end()?;
     Ok(Model {
         root,
@@ -161,11 +163,10 @@ where
     }?;
 
     // preserve mesh_index
-    let mesh_index = object3d.mesh_index;
     // if the mesh_index isn't -1, then we need to restore the correct pointer
     // before the node is written out
-    let restore_index = if mesh_index > -1 {
-        let index = mesh_index as usize;
+    let restore_index = if object3d.mesh_index > -1 {
+        let index = object3d.mesh_index as usize;
         object3d.mesh_index = mesh_ptrs[index];
         Some(index)
     } else {

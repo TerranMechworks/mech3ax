@@ -19,4 +19,4 @@ pub use node::{
     write_object_3d_info, NODE_C_SIZE,
 };
 pub use types::NodeVariant;
-pub use wrappers::WrappedNode;
+pub use wrappers::{WrappedNode, Wrapper};
