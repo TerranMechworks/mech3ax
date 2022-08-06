@@ -14,8 +14,9 @@ mod world;
 mod wrappers;
 
 pub use node::{
-    read_node_data, read_node_info_gamez, read_node_info_mechlib, read_node_info_zero, size_node,
-    write_node_data, write_node_info, write_node_info_zero, NODE_C_SIZE,
+    read_node_data, read_node_info_gamez, read_node_info_zero, read_node_mechlib, size_node,
+    write_node_data, write_node_info, write_node_info_zero, write_object_3d_data,
+    write_object_3d_info, NODE_C_SIZE,
 };
 pub use types::NodeVariant;
 pub use wrappers::WrappedNode;

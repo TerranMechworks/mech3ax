@@ -1,8 +1,6 @@
 use crate::materials::{read_material, write_material, RawMaterial};
 use crate::mesh::{read_mesh_data, read_mesh_info, write_mesh_data, write_mesh_info};
-use crate::nodes::{
-    read_node_data, read_node_info_mechlib, write_node_data, write_node_info, WrappedNode,
-};
+use crate::nodes::{read_node_mechlib, write_object_3d_data, write_object_3d_info};
 use mech3ax_api_types::{Material, Mesh, Model, Node, ResolvedNode, TexturedMaterial};
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
@@ -104,35 +102,30 @@ fn read_node_and_mesh<R>(
 where
     R: Read,
 {
-    let variant = read_node_info_mechlib(read)?;
-    match read_node_data(read, variant)? {
-        WrappedNode::Object3d(wrapped) => {
-            let mut object3d = wrapped.wrapped;
-            if object3d.mesh_index != 0 {
-                // preserve the pointer, store the new index
-                mesh_ptrs.push(object3d.mesh_index);
-                object3d.mesh_index = *index;
-                *index += 1;
+    let wrapped = read_node_mechlib(read)?;
+    let mut object3d = wrapped.wrapped;
+    if object3d.mesh_index != 0 {
+        // preserve the pointer, store the new index
+        mesh_ptrs.push(object3d.mesh_index);
+        object3d.mesh_index = *index;
+        *index += 1;
 
-                let wrapped_mesh = read_mesh_info(read)?;
-                let mesh = read_mesh_data(read, wrapped_mesh)?;
-                meshes.push(mesh);
-            } else {
-                object3d.mesh_index = -1;
-            }
-
-            // we have to apply this, so data is written out correctly again, even if
-            // the mechlib data doesn't read/write parents
-            object3d.parent = if wrapped.has_parent { Some(0) } else { None };
-
-            object3d.children = (0..wrapped.children_count)
-                .map(|_| read_node_and_mesh(read, index, meshes, mesh_ptrs))
-                .collect::<Result<Vec<_>>>()?;
-
-            Ok(ResolvedNode(Node::Object3d(object3d)))
-        }
-        _ => Err(AssertionError("Expected only Object3d nodes in mechlib".to_owned()).into()),
+        let wrapped_mesh = read_mesh_info(read)?;
+        let mesh = read_mesh_data(read, wrapped_mesh)?;
+        meshes.push(mesh);
+    } else {
+        object3d.mesh_index = -1;
     }
+
+    // we have to apply this, so data is written out correctly again, even if
+    // the mechlib data doesn't read/write parents
+    object3d.parent = if wrapped.has_parent { Some(0) } else { None };
+
+    object3d.children = (0..wrapped.children_count)
+        .map(|_| read_node_and_mesh(read, index, meshes, mesh_ptrs))
+        .collect::<Result<Vec<_>>>()?;
+
+    Ok(ResolvedNode(Node::Object3d(object3d)))
 }
 
 pub fn read_model<R>(read: &mut CountingReader<R>) -> Result<Model>
@@ -160,43 +153,38 @@ fn write_node_and_mesh<W>(
 where
     W: Write,
 {
-    let mesh_index = match &mut node.0 {
-        Node::Object3d(object3d) => {
-            // preserve mesh_index
-            let mesh_index = object3d.mesh_index;
-            // if the mesh_index isn't -1, then we need to restore the correct pointer
-            // before the node is written out
-            object3d.mesh_index = if mesh_index > -1 {
-                mesh_ptrs[mesh_index as usize]
-            } else {
-                0
-            };
-            mesh_index
-        }
+    let object3d = match &mut node.0 {
+        Node::Object3d(object3d) => Result::Ok(object3d),
         _ => {
             return Err(AssertionError("Expected only Object3d nodes in mechlib".to_owned()).into())
         }
+    }?;
+
+    let mesh_index = {
+        // preserve mesh_index
+        let mesh_index = object3d.mesh_index;
+        // if the mesh_index isn't -1, then we need to restore the correct pointer
+        // before the node is written out
+        object3d.mesh_index = if mesh_index > -1 {
+            mesh_ptrs[mesh_index as usize]
+        } else {
+            0
+        };
+        mesh_index
     };
 
-    write_node_info(write, &node.0)?;
-    write_node_data(write, &node.0)?;
+    write_object_3d_info(write, &object3d)?;
+    write_object_3d_data(write, &object3d)?;
 
-    match &mut node.0 {
-        Node::Object3d(object3d) => {
-            // if mesh_index isn't -1, then we need to write out the mesh, too
-            if mesh_index > -1 {
-                let mesh = &meshes[mesh_index as usize];
-                write_mesh_info(write, mesh)?;
-                write_mesh_data(write, mesh)?;
-            }
+    // if mesh_index isn't -1, then we need to write out the mesh, too
+    if mesh_index > -1 {
+        let mesh = &meshes[mesh_index as usize];
+        write_mesh_info(write, mesh)?;
+        write_mesh_data(write, mesh)?;
+    }
 
-            for child in object3d.children.iter_mut() {
-                write_node_and_mesh(write, child, meshes, mesh_ptrs)?;
-            }
-        }
-        _ => {
-            return Err(AssertionError("Expected only Object3d nodes in mechlib".to_owned()).into())
-        }
+    for child in object3d.children.iter_mut() {
+        write_node_and_mesh(write, child, meshes, mesh_ptrs)?;
     }
     Ok(())
 }

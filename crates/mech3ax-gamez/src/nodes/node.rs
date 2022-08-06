@@ -8,8 +8,11 @@ use super::object3d;
 use super::types::{NodeType, NodeVariant, NodeVariants};
 use super::window;
 use super::world;
-use super::wrappers::WrappedNode;
-use mech3ax_api_types::{static_assert_size, AreaPartition, BoundingBox, Node, ReprSize as _};
+use super::wrappers::{WrappedNode, Wrapper};
+use mech3ax_api_types::ResolvedNode;
+use mech3ax_api_types::{
+    static_assert_size, AreaPartition, BoundingBox, Node, Object3d, ReprSize as _,
+};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
@@ -140,21 +143,19 @@ fn assert_node(node: NodeC, offset: u32) -> Result<(NodeType, NodeVariants)> {
     Ok((node_type, variants))
 }
 
-pub fn read_node_info_mechlib<R>(read: &mut CountingReader<R>) -> Result<NodeVariant>
+pub fn read_node_mechlib<R>(read: &mut CountingReader<R>) -> Result<Wrapper<Object3d<ResolvedNode>>>
 where
     R: Read,
 {
     let node: NodeC = read.read_struct()?;
     let (node_type, node) = assert_node(node, read.prev)?;
-    match node_type {
-        NodeType::Camera => camera::assert_variants(node, read.prev),
-        NodeType::Display => display::assert_variants(node, read.prev),
-        NodeType::Empty => empty::assert_variants(node, read.prev),
-        NodeType::Light => light::assert_variants(node, read.prev),
-        NodeType::LoD => lod::assert_variants(node, read.prev),
+    let variant = match node_type {
         NodeType::Object3d => object3d::assert_variants(node, read.prev, true),
-        NodeType::Window => window::assert_variants(node, read.prev),
-        NodeType::World => world::assert_variants(node, read.prev),
+        _ => Err(AssertionError("Expected only Object3d nodes in mechlib".to_owned()).into()),
+    }?;
+    match read_node_data(read, variant)? {
+        WrappedNode::Object3d(wrapped) => Ok(wrapped),
+        _ => Err(AssertionError("Expected only Object3d nodes in mechlib".to_owned()).into()),
     }
 }
 
@@ -285,6 +286,15 @@ where
     }
 }
 
+// exposed for mechlib
+pub fn write_object_3d_info<W>(write: &mut W, object3d: &Object3d<ResolvedNode>) -> Result<()>
+where
+    W: Write,
+{
+    let variant = object3d::make_variants(object3d);
+    write_variant(write, NodeType::Object3d, variant)
+}
+
 pub fn write_node_data<W, T>(write: &mut W, node: &Node<T>) -> Result<()>
 where
     W: Write,
@@ -299,6 +309,14 @@ where
         Node::Window(window) => window::write(write, window),
         Node::World(world) => world::write(write, world),
     }
+}
+
+// exposed for mechlib
+pub fn write_object_3d_data<W>(write: &mut W, object3d: &Object3d<ResolvedNode>) -> Result<()>
+where
+    W: Write,
+{
+    object3d::write(write, object3d)
 }
 
 pub fn size_node<T>(node: &Node<T>) -> u32 {
