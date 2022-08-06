@@ -160,25 +160,25 @@ where
         }
     }?;
 
-    let mesh_index = {
-        // preserve mesh_index
-        let mesh_index = object3d.mesh_index;
-        // if the mesh_index isn't -1, then we need to restore the correct pointer
-        // before the node is written out
-        object3d.mesh_index = if mesh_index > -1 {
-            mesh_ptrs[mesh_index as usize]
-        } else {
-            0
-        };
-        mesh_index
+    // preserve mesh_index
+    let mesh_index = object3d.mesh_index;
+    // if the mesh_index isn't -1, then we need to restore the correct pointer
+    // before the node is written out
+    let restore_index = if mesh_index > -1 {
+        let index = mesh_index as usize;
+        object3d.mesh_index = mesh_ptrs[index];
+        Some(index)
+    } else {
+        object3d.mesh_index = 0;
+        None
     };
 
     write_object_3d_info(write, &object3d)?;
     write_object_3d_data(write, &object3d)?;
 
     // if mesh_index isn't -1, then we need to write out the mesh, too
-    if mesh_index > -1 {
-        let mesh = &meshes[mesh_index as usize];
+    if let Some(index) = restore_index {
+        let mesh = &meshes[index];
         write_mesh_info(write, mesh)?;
         write_mesh_data(write, mesh)?;
     }
