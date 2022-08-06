@@ -2,7 +2,7 @@ use crate::panic;
 use anyhow::Result;
 use image::ImageOutputFormat;
 use mech3ax_anim::read_anim;
-use mech3ax_api_types::{IndexedNode, Material, Mesh};
+use mech3ax_api_types::{Material, Mesh, Node};
 use mech3ax_archive::{read_archive, Version};
 use mech3ax_common::CountingReader;
 use mech3ax_gamez::gamez::read_gamez;
@@ -235,7 +235,7 @@ struct GameZWithoutMetadata {
     textures: Vec<String>,
     materials: Vec<Material>,
     meshes: Vec<Mesh>,
-    nodes: Vec<IndexedNode>,
+    nodes: Vec<Node>,
 }
 
 // filename is borrowed, return value is borrowed

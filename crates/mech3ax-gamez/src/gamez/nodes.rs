@@ -2,13 +2,13 @@ use crate::nodes::{
     read_node_data, read_node_info_gamez, read_node_info_zero, size_node, write_node_data,
     write_node_info, write_node_info_zero, NodeVariant, WrappedNode, NODE_C_SIZE,
 };
-use mech3ax_api_types::{IndexedNode, Node};
+use mech3ax_api_types::Node;
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Error, Result};
 use std::io::{Read, Write};
 
-pub fn read_nodes<R>(read: &mut CountingReader<R>, array_size: u32) -> Result<Vec<IndexedNode>>
+pub fn read_nodes<R>(read: &mut CountingReader<R>, array_size: u32) -> Result<Vec<Node>>
 where
     R: Read,
 {
@@ -154,7 +154,7 @@ where
     Ok(nodes)
 }
 
-fn assert_area_partitions(nodes: &[Node<u32>], offset: u32) -> Result<()> {
+fn assert_area_partitions(nodes: &[Node], offset: u32) -> Result<()> {
     let (x_count, y_count) =
         if let Node::World(world) = nodes.first().expect("Expected to have read some nodes") {
             (
@@ -182,12 +182,7 @@ fn assert_area_partitions(nodes: &[Node<u32>], offset: u32) -> Result<()> {
     Ok(())
 }
 
-pub fn write_nodes<W>(
-    write: &mut W,
-    nodes: &[Node<u32>],
-    array_size: u32,
-    offset: u32,
-) -> Result<()>
+pub fn write_nodes<W>(write: &mut W, nodes: &[Node], array_size: u32, offset: u32) -> Result<()>
 where
     W: Write,
 {

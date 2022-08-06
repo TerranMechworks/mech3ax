@@ -1,8 +1,7 @@
 use crate::materials::{read_material, write_material, RawMaterial};
 use crate::mesh::{read_mesh_data, read_mesh_info, write_mesh_data, write_mesh_info};
 use crate::nodes::{read_node_mechlib, write_object_3d_data, write_object_3d_info, Wrapper};
-use mech3ax_api_types::{Material, Mesh, Model, Node, ResolvedNode, TexturedMaterial};
-use mech3ax_common::assert::AssertionError;
+use mech3ax_api_types::{Material, Mesh, Model, Object3d, TexturedMaterial};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -95,9 +94,10 @@ where
 
 fn read_node_and_mesh<R>(
     read: &mut CountingReader<R>,
+    nodes: &mut Vec<Object3d>,
     meshes: &mut Vec<Mesh>,
     mesh_ptrs: &mut Vec<i32>,
-) -> Result<ResolvedNode>
+) -> Result<u32>
 where
     R: Read,
 {
@@ -124,23 +124,30 @@ where
     // the mechlib data doesn't read/write parents
     object3d.parent = if has_parent { Some(0) } else { None };
 
-    object3d.children = (0..children_count)
-        .map(|_| read_node_and_mesh(read, meshes, mesh_ptrs))
+    let current_index = nodes.len();
+    nodes.push(object3d);
+
+    let child_indices = (0..children_count)
+        .map(|_| read_node_and_mesh(read, nodes, meshes, mesh_ptrs))
         .collect::<Result<Vec<_>>>()?;
 
-    Ok(ResolvedNode(Node::Object3d(object3d)))
+    let object3d = &mut nodes[current_index];
+    object3d.children = child_indices;
+
+    Ok(current_index.try_into().unwrap())
 }
 
 pub fn read_model<R>(read: &mut CountingReader<R>) -> Result<Model>
 where
     R: Read,
 {
+    let mut nodes = Vec::new();
     let mut meshes = Vec::new();
     let mut mesh_ptrs = Vec::new();
-    let root = read_node_and_mesh(read, &mut meshes, &mut mesh_ptrs)?;
+    let _root_index = read_node_and_mesh(read, &mut nodes, &mut meshes, &mut mesh_ptrs)?;
     read.assert_end()?;
     Ok(Model {
-        root,
+        nodes,
         meshes,
         mesh_ptrs,
     })
@@ -148,19 +155,15 @@ where
 
 fn write_node_and_mesh<W>(
     write: &mut W,
-    node: &mut ResolvedNode,
+    node_index: u32,
+    nodes: &mut [Object3d],
     meshes: &[Mesh],
     mesh_ptrs: &[i32],
 ) -> Result<()>
 where
     W: Write,
 {
-    let object3d = match &mut node.0 {
-        Node::Object3d(object3d) => Result::Ok(object3d),
-        _ => {
-            return Err(AssertionError("Expected only Object3d nodes in mechlib".to_owned()).into())
-        }
-    }?;
+    let object3d = &mut nodes[node_index as usize];
 
     // preserve mesh_index
     // if the mesh_index isn't -1, then we need to restore the correct pointer
@@ -184,8 +187,9 @@ where
         write_mesh_data(write, mesh)?;
     }
 
-    for child in object3d.children.iter_mut() {
-        write_node_and_mesh(write, child, meshes, mesh_ptrs)?;
+    let child_indices = object3d.children.clone();
+    for child_index in child_indices.into_iter() {
+        write_node_and_mesh(write, child_index, nodes, meshes, mesh_ptrs)?;
     }
     Ok(())
 }
@@ -194,5 +198,5 @@ pub fn write_model<W>(write: &mut W, model: &mut Model) -> Result<()>
 where
     W: Write,
 {
-    write_node_and_mesh(write, &mut model.root, &model.meshes, &model.mesh_ptrs)
+    write_node_and_mesh(write, 0, &mut model.nodes, &model.meshes, &model.mesh_ptrs)
 }

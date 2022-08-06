@@ -126,7 +126,7 @@ fn assert_object3d(object3d: Object3dC, offset: u32) -> Result<Option<Transforma
     Ok(transformation)
 }
 
-pub fn read<R, T>(read: &mut CountingReader<R>, node: NodeVariants) -> Result<Wrapper<Object3d<T>>>
+pub fn read<R>(read: &mut CountingReader<R>, node: NodeVariants) -> Result<Wrapper<Object3d>>
 where
     R: Read,
 {
@@ -159,7 +159,7 @@ where
     })
 }
 
-pub fn make_variants<T>(object3d: &Object3d<T>) -> NodeVariants {
+pub fn make_variants(object3d: &Object3d) -> NodeVariants {
     let flags = NodeBitFlags::from(&object3d.flags);
     NodeVariants {
         name: object3d.name.clone(),
@@ -180,7 +180,7 @@ pub fn make_variants<T>(object3d: &Object3d<T>) -> NodeVariants {
     }
 }
 
-pub fn write<W, T>(write: &mut W, object3d: &Object3d<T>) -> Result<()>
+pub fn write<W>(write: &mut W, object3d: &Object3d) -> Result<()>
 where
     W: Write,
 {
@@ -215,7 +215,7 @@ where
     Ok(())
 }
 
-pub fn size<T>(object3d: &Object3d<T>) -> u32 {
+pub fn size(object3d: &Object3d) -> u32 {
     let parent_size = if object3d.parent.is_some() { 4 } else { 0 };
     Object3dC::SIZE + parent_size + 4 * object3d.children.len() as u32
 }

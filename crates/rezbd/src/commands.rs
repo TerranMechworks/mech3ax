@@ -3,7 +3,7 @@ use anyhow::{bail, Context, Result};
 use mech3ax_anim::{write_anim, AnimMetadata};
 use mech3ax_api_types::saves::AnimActivation;
 use mech3ax_api_types::{
-    ArchiveEntry, GameZ, GameZMetadata, IndexedNode, Material, Mesh, Model, Motion, Script,
+    ArchiveEntry, GameZ, GameZMetadata, Material, Mesh, Model, Motion, Node, Script,
     TextureManifest,
 };
 use mech3ax_archive::{write_archive, Mode, Version};
@@ -216,7 +216,7 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
         let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
         let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
         let meshes: Vec<Mesh> = zip_json(&mut zip, "meshes.json")?;
-        let nodes: Vec<IndexedNode> = zip_json(&mut zip, "nodes.json")?;
+        let nodes: Vec<Node> = zip_json(&mut zip, "nodes.json")?;
         GameZ {
             metadata,
             textures,

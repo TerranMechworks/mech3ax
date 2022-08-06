@@ -10,8 +10,6 @@ pub use nodes::*;
 
 use ::serde::{Deserialize, Serialize};
 
-pub type IndexedNode = Node<u32>;
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GameZMetadata {
     pub material_array_size: i16,
@@ -26,5 +24,5 @@ pub struct GameZ {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
     pub meshes: Vec<Mesh>,
-    pub nodes: Vec<IndexedNode>,
+    pub nodes: Vec<Node>,
 }

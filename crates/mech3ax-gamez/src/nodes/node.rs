@@ -9,7 +9,6 @@ use super::types::{NodeType, NodeVariant, NodeVariants};
 use super::window;
 use super::world;
 use super::wrappers::{WrappedNode, Wrapper};
-use mech3ax_api_types::ResolvedNode;
 use mech3ax_api_types::{
     static_assert_size, AreaPartition, BoundingBox, Node, Object3d, ReprSize as _,
 };
@@ -143,7 +142,7 @@ fn assert_node(node: NodeC, offset: u32) -> Result<(NodeType, NodeVariants)> {
     Ok((node_type, variants))
 }
 
-pub fn read_node_mechlib<R>(read: &mut CountingReader<R>) -> Result<Wrapper<Object3d<ResolvedNode>>>
+pub fn read_node_mechlib<R>(read: &mut CountingReader<R>) -> Result<Wrapper<Object3d>>
 where
     R: Read,
 {
@@ -183,10 +182,7 @@ where
     }
 }
 
-pub fn read_node_data<R, T>(
-    read: &mut CountingReader<R>,
-    variant: NodeVariant,
-) -> Result<WrappedNode<T>>
+pub fn read_node_data<R>(read: &mut CountingReader<R>, variant: NodeVariant) -> Result<WrappedNode>
 where
     R: Read,
 {
@@ -246,7 +242,7 @@ where
     Ok(())
 }
 
-pub fn write_node_info<W, T>(write: &mut W, node: &Node<T>) -> Result<()>
+pub fn write_node_info<W>(write: &mut W, node: &Node) -> Result<()>
 where
     W: Write,
 {
@@ -287,7 +283,7 @@ where
 }
 
 // exposed for mechlib
-pub fn write_object_3d_info<W>(write: &mut W, object3d: &Object3d<ResolvedNode>) -> Result<()>
+pub fn write_object_3d_info<W>(write: &mut W, object3d: &Object3d) -> Result<()>
 where
     W: Write,
 {
@@ -295,7 +291,7 @@ where
     write_variant(write, NodeType::Object3d, variant)
 }
 
-pub fn write_node_data<W, T>(write: &mut W, node: &Node<T>) -> Result<()>
+pub fn write_node_data<W>(write: &mut W, node: &Node) -> Result<()>
 where
     W: Write,
 {
@@ -312,14 +308,14 @@ where
 }
 
 // exposed for mechlib
-pub fn write_object_3d_data<W>(write: &mut W, object3d: &Object3d<ResolvedNode>) -> Result<()>
+pub fn write_object_3d_data<W>(write: &mut W, object3d: &Object3d) -> Result<()>
 where
     W: Write,
 {
     object3d::write(write, object3d)
 }
 
-pub fn size_node<T>(node: &Node<T>) -> u32 {
+pub fn size_node(node: &Node) -> u32 {
     match node {
         Node::Camera(_) => camera::size(),
         Node::Empty(_) => empty::size(),
