@@ -1,8 +1,9 @@
 use crate::static_assert_size;
 use crate::types::{Color, Vec3};
 use ::serde::{Deserialize, Serialize};
+use mech3ax_metadata_proc_macro::{RefStruct, ValStruct};
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy, ValStruct)]
 #[repr(C)]
 pub struct UvCoord {
     pub u: f32,
@@ -10,7 +11,7 @@ pub struct UvCoord {
 }
 static_assert_size!(UvCoord, 8);
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Polygon {
     pub vertex_indices: Vec<u32>,
     pub vertex_colors: Vec<Color>,
@@ -28,7 +29,7 @@ pub struct Polygon {
     pub unk_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct MeshLight {
     pub unk00: u32,
     pub unk04: u32,
@@ -51,7 +52,7 @@ pub struct MeshLight {
     pub unk72: f32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Mesh {
     pub vertices: Vec<Vec3>,
     pub normals: Vec<Vec3>,

@@ -3,7 +3,7 @@ mod meshes;
 mod nodes;
 mod textures;
 
-use mech3ax_api_types::{static_assert_size, GameZ, GameZMetadata, ReprSize as _};
+use mech3ax_api_types::{static_assert_size, GameZData, GameZMetadata, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -30,7 +30,7 @@ const VERSION_MW: u32 = 27;
 #[allow(dead_code)]
 const VERSION_PM: u32 = 41;
 
-pub fn read_gamez<R>(read: &mut CountingReader<R>) -> Result<GameZ>
+pub fn read_gamez<R>(read: &mut CountingReader<R>) -> Result<GameZData>
 where
     R: Read,
 {
@@ -73,7 +73,7 @@ where
         node_array_size: header.node_array_size,
         node_data_count: header.node_count,
     };
-    Ok(GameZ {
+    Ok(GameZData {
         metadata,
         textures,
         materials,
@@ -82,7 +82,7 @@ where
     })
 }
 
-pub fn write_gamez<W>(write: &mut W, gamez: &GameZ) -> Result<()>
+pub fn write_gamez<W>(write: &mut W, gamez: &GameZData) -> Result<()>
 where
     W: Write,
 {

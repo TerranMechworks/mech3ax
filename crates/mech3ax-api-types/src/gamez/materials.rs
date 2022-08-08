@@ -1,8 +1,9 @@
 use crate::serde::pointer_zero;
 use crate::types::Color;
 use ::serde::{Deserialize, Serialize};
+use mech3ax_metadata_proc_macro::{RefStruct, Union};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct CycleData {
     pub textures: Vec<String>,
     pub unk00: bool,
@@ -12,7 +13,7 @@ pub struct CycleData {
     pub data_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct TexturedMaterial {
     pub texture: String,
     // the GameZ data doesn't use the pointer (it stores the texture name index)
@@ -25,14 +26,14 @@ pub struct TexturedMaterial {
     pub flag: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct ColoredMaterial {
     pub color: Color,
     pub unk00: u8,
     pub unk32: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Union)]
 pub enum Material {
     Textured(TexturedMaterial),
     Colored(ColoredMaterial),

@@ -1,0 +1,20 @@
+[package]
+name = "mech3ax-metadata-proc-macro"
+version = "0.0.0"
+authors = ["Toby Fleming <tobywf@users.noreply.github.com>"]
+edition = "2021"
+publish = false
+
+autoexamples = false
+autobenches = false
+
+[lib]
+proc-macro = true
+doctest = false
+
+[dependencies]
+syn = { version = "1.0", features = ["full", "extra-traits"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+
+mech3ax-metadata-types = { path = "../mech3ax-metadata-types" }

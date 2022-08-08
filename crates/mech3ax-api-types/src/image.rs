@@ -1,15 +1,16 @@
 use crate::serde::base64;
 use ::serde::{Deserialize, Serialize};
+use mech3ax_metadata_proc_macro::{Enum, RefStruct, Union};
 use num_derive::FromPrimitive;
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Enum)]
 pub enum TextureAlpha {
     None,
     Simple,
     Full,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, FromPrimitive)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, FromPrimitive, Enum)]
 #[repr(u16)]
 pub enum TextureStretch {
     None = 0,
@@ -18,19 +19,19 @@ pub enum TextureStretch {
     Both = 3,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct PaletteData {
     #[serde(with = "base64")]
     pub data: Vec<u8>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct GlobalPalette {
     pub index: i32,
     pub count: u16,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Union)]
 #[repr(u16)]
 pub enum TexturePalette {
     None,
@@ -38,7 +39,7 @@ pub enum TexturePalette {
     Global(GlobalPalette),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct TextureInfo {
     pub name: String,
     pub alpha: TextureAlpha,
@@ -51,7 +52,7 @@ pub struct TextureInfo {
     pub palette: TexturePalette,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct TextureManifest {
     pub texture_infos: Vec<TextureInfo>,
     pub global_palettes: Vec<PaletteData>,

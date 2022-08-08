@@ -2,7 +2,7 @@ use crate::buffer::CallbackBuffer;
 use crate::error::err_to_c;
 use crate::filename_to_string;
 use anyhow::{bail, Context, Result};
-use mech3ax_api_types::{ArchiveEntry, GameZ, Material, Model, Motion, Script, TextureManifest};
+use mech3ax_api_types::{ArchiveEntry, GameZData, Material, Model, Motion, Script, TextureManifest};
 use mech3ax_archive::{Mode, Version};
 use serde_json::Value;
 use std::fs::File;
@@ -258,7 +258,7 @@ pub extern "C" fn write_gamez(
             bail!("data is null");
         }
         let buf = unsafe { std::slice::from_raw_parts(data, len) };
-        let gamez: GameZ = serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
+        let gamez: GameZData = serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
         let mut write = buf_writer(filename)?;
         mech3ax_gamez::gamez::write_gamez(&mut write, &gamez).context("Failed to write GameZ data")
     })

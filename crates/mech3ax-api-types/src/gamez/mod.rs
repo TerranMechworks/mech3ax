@@ -9,8 +9,9 @@ pub use mesh::*;
 pub use nodes::*;
 
 use ::serde::{Deserialize, Serialize};
+use mech3ax_metadata_proc_macro::RefStruct;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct GameZMetadata {
     pub material_array_size: i16,
     pub meshes_array_size: i32,
@@ -18,8 +19,8 @@ pub struct GameZMetadata {
     pub node_data_count: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GameZ {
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
+pub struct GameZData {
     pub metadata: GameZMetadata,
     pub textures: Vec<String>,
     pub materials: Vec<Material>,

@@ -2,8 +2,9 @@ use crate::serde::bool_false;
 use crate::static_assert_size;
 use crate::types::{Color, Matrix, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
+use mech3ax_metadata_proc_macro::{RefStruct, Union, ValStruct};
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, ValStruct)]
 #[repr(C)]
 pub struct AreaPartition {
     pub x: i32,
@@ -16,7 +17,7 @@ impl AreaPartition {
     pub const ZERO: Self = Self { x: 0, y: 0 };
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, ValStruct)]
 pub struct Area {
     pub left: i32,
     pub top: i32,
@@ -24,7 +25,7 @@ pub struct Area {
     pub bottom: i32,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, RefStruct)]
 #[repr(C)]
 pub struct BoundingBox {
     pub a: Vec3,
@@ -38,7 +39,25 @@ impl BoundingBox {
     };
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
+pub struct Transformation {
+    pub rotation: Vec3,
+    pub translation: Vec3,
+    pub matrix: Option<Matrix>,
+}
+
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
+pub struct Partition {
+    pub x: i32,
+    pub y: i32,
+    pub z_min: f32,
+    pub z_max: f32,
+    pub z_mid: f32,
+    pub nodes: Vec<u32>,
+    pub ptr: u32,
+}
+
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct NodeFlags {
     #[serde(skip_serializing_if = "bool_false", default)]
     pub altitude_surface: bool,
@@ -66,7 +85,7 @@ pub struct NodeFlags {
     pub unk28: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Camera {
     pub name: String,
     pub clip: Range,
@@ -74,7 +93,7 @@ pub struct Camera {
     pub data_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Display {
     pub name: String,
     pub resolution_x: u32,
@@ -83,7 +102,7 @@ pub struct Display {
     pub data_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Empty {
     pub name: String,
     pub flags: NodeFlags,
@@ -95,7 +114,7 @@ pub struct Empty {
     pub parent: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Light {
     pub name: String,
     pub direction: Vec3,
@@ -107,7 +126,7 @@ pub struct Light {
     pub data_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Lod {
     pub name: String,
 
@@ -127,14 +146,7 @@ pub struct Lod {
     pub unk116: BoundingBox,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Transformation {
-    pub rotation: Vec3,
-    pub translation: Vec3,
-    pub matrix: Option<Matrix>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Object3d {
     pub name: String,
     pub transformation: Option<Transformation>,
@@ -155,7 +167,7 @@ pub struct Object3d {
     pub unk164: BoundingBox,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Window {
     pub name: String,
     pub resolution_x: u32,
@@ -163,18 +175,7 @@ pub struct Window {
     pub data_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Partition {
-    pub x: i32,
-    pub y: i32,
-    pub z_min: f32,
-    pub z_max: f32,
-    pub z_mid: f32,
-    pub nodes: Vec<u32>,
-    pub ptr: u32,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct World {
     pub name: String,
     pub area: Area,
@@ -193,7 +194,7 @@ pub struct World {
     pub children_array_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Union)]
 pub enum Node {
     Camera(Camera),
     Display(Display),

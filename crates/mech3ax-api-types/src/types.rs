@@ -1,7 +1,8 @@
 use crate::static_assert_size;
 use ::serde::{Deserialize, Serialize};
+use mech3ax_metadata_proc_macro::ValStruct;
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy, ValStruct)]
 #[repr(C)]
 pub struct Range {
     pub min: f32,
@@ -13,7 +14,7 @@ impl Range {
     pub const DEFAULT: Self = Self { min: 0.0, max: 0.0 };
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy, ValStruct)]
 #[repr(C)]
 pub struct Vec3 {
     pub x: f32,
@@ -30,7 +31,7 @@ impl Vec3 {
     };
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy, ValStruct)]
 #[repr(C)]
 pub struct Color {
     pub r: f32,
@@ -57,7 +58,7 @@ impl Color {
     };
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy, ValStruct)]
 #[repr(C)]
 pub struct Quaternion {
     pub x: f32,
@@ -76,7 +77,7 @@ impl Quaternion {
     };
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, ValStruct)]
 #[repr(C)]
 pub struct Matrix {
     pub a: f32,
