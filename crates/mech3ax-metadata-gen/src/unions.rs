@@ -32,17 +32,26 @@ impl Union {
         }
     }
 
-    pub fn render(&self, tera: &tera::Tera) -> tera::Result<String> {
+    pub fn render_impl(&self, tera: &tera::Tera) -> tera::Result<String> {
         let mut context = tera::Context::new();
         context.insert("union", self);
-        tera.render("union.cs", &context)
+        tera.render("union_impl.cs", &context)
+    }
+
+    pub fn render_conv(&self, tera: &tera::Tera) -> tera::Result<String> {
+        let mut context = tera::Context::new();
+        context.insert("union", self);
+        tera.render("union_conv.cs", &context)
     }
 }
 
-macro_rules! union_macro {
-    () => (
-r###"
-{% macro make_union(union) %}
+pub const UNION_IMPL: &'static str = r###"using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Mech3DotNet.Json.Converters;
+
+namespace Mech3DotNet.Json
+{
     public enum {{ union.choice }}
     {
 {%- for variant in union.variants %}
@@ -72,10 +81,19 @@ r###"
         public T As<T>() where T : class { return (T)value; }
         public object GetValue() { return value; }
     }
+}
+"###;
 
+pub const UNION_CONV: &'static str = r###"using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Mech3DotNet.Json;
+
+namespace Mech3DotNet.Json.Converters
+{
     public class {{ union.name }}Converter : UnionConverter<{{ union.name }}>
     {
-        public override {{ union.name }} ReadUnitVariant(JsonReader reader, string? name, JsonSerializer serializer)
+        public override {{ union.name }} ReadUnitVariant(string? name)
         {
             switch (name)
             {
@@ -88,40 +106,61 @@ r###"
 {%- endif %}{% endfor %}
 {%- for variant in union.variants %}{%- if variant.1 %}
                 case "{{ variant.0 }}":
-                    throw new JsonException("Invalid unit variant '{{ variant.0 }}' for '{{ union.name }}'");
+                    {
+                        System.Diagnostics.Debug.WriteLine("Invalid unit variant '{{ variant.0 }}' for '{{ union.name }}'");
+                        throw new JsonException();
+                    }
 {%- endif %}{% endfor %}
                 case null:
-                    throw new JsonException("Variant for '{{ union.name }}' cannot be null");
+                    {
+                        System.Diagnostics.Debug.WriteLine("Variant cannot be null for '{{ union.name }}'");
+                        throw new JsonException();
+                    }
                 default:
-                    throw new JsonException($"Invalid variant '{name}' for '{{ union.name }}'");
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Invalid variant '{name}' for '{{ union.name }}'");
+                        throw new JsonException();
+                    }
             }
         }
 
-        public override {{ union.name }} ReadStructVariant(JsonReader reader, string? name, JsonSerializer serializer)
+        public override {{ union.name }} ReadStructVariant(ref Utf8JsonReader reader, string? name, JsonSerializerOptions options)
         {
             switch (name)
             {
 {%- for variant in union.variants %}{%- if variant.1 %}
                 case "{{ variant.0 }}":
                     {
-                        var inner = serializer.Deserialize<{{ variant.1 }}>(reader);
+                        var inner = JsonSerializer.Deserialize<{{ variant.1 }}>(ref reader, options);
                         if (inner is null)
-                            throw new JsonException("Data of variant '{{ variant.0 }}' for '{{ union.name }}' cannot be null");
+                        {
+                            System.Diagnostics.Debug.WriteLine("Value of '{{ variant.0 }}' was null for '{{ union.name }}'");
+                            throw new JsonException();
+                        }
                         return new {{ union.name }}(inner);
                     }
 {%- endif %}{% endfor %}
 {%- for variant in union.variants %}{%- if not variant.1 %}
                 case "{{ variant.0 }}":
-                    throw new JsonException("Invalid struct variant '{{ variant.0 }}' for '{{ union.name }}'");
+                    {
+                        System.Diagnostics.Debug.WriteLine("Invalid struct variant '{{ variant.0 }}' for '{{ union.name }}'");
+                        throw new JsonException();
+                    }
 {%- endif %}{% endfor %}
                 case null:
-                    throw new JsonException("Variant for '{{ union.name }}' cannot be null");
+                    {
+                        System.Diagnostics.Debug.WriteLine("Variant cannot be null for '{{ union.name }}'");
+                        throw new JsonException();
+                    }
                 default:
-                    throw new JsonException($"Invalid variant '{name}' for '{{ union.name }}'");
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Invalid variant '{name}' for '{{ union.name }}'");
+                        throw new JsonException();
+                    }
             }
         }
 
-        public override void WriteJson(JsonWriter writer, {{ union.name }} value, JsonSerializer serializer)
+        public override void Write(Utf8JsonWriter writer, {{ union.name }} value, JsonSerializerOptions options)
         {
             switch (value.Variant)
             {
@@ -132,13 +171,13 @@ r###"
                         var inner = value.As<{{ variant.1 }}>();
                         writer.WriteStartObject();
                         writer.WritePropertyName("{{ variant.0 }}");
-                        serializer.Serialize(writer, inner);
+                        JsonSerializer.Serialize(writer, inner, options);
                         writer.WriteEndObject();
                         break;
                     }
 {%- else %}
                     {
-                        writer.WriteValue("{{ variant.0 }}");
+                        writer.WriteStringValue("{{ variant.0 }}");
                         break;
                     }
 {%- endif %}
@@ -148,9 +187,5 @@ r###"
             }
         }
     }
-{% endmacro make_union %}
-"###
-    )
 }
-
-pub(crate) use union_macro;
+"###;

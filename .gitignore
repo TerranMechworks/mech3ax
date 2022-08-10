@@ -9,6 +9,8 @@ __pycache__/
 /.mypy_cache
 README.html
 TODO.txt
-/test
+/output
+/pm
 /scratch
+/test
 cargo-timing*.html

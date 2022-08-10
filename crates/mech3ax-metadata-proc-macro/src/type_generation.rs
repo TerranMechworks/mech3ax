@@ -1,5 +1,5 @@
-use mech3ax_metadata_types::{ComplexTypeOwned, SimpleType, TypeInfoOwned};
-use syn::{parse_quote, ExprCall, ExprPath, ExprStruct};
+use mech3ax_metadata_types::{ComplexTypeOwned, DefaultHandling, SimpleType, TypeInfoOwned};
+use syn::{parse_quote, ExprCall, ExprPath, ExprStruct, Path};
 
 fn generate_simple_type(ty: SimpleType) -> ExprPath {
     match ty {
@@ -46,9 +46,27 @@ fn generate_complex_type(ty: ComplexTypeOwned) -> ExprCall {
     }
 }
 
+fn geneate_default_handling(default: DefaultHandling) -> Path {
+    match default {
+        DefaultHandling::Normal => parse_quote! {
+            ::mech3ax_metadata_types::DefaultHandling::Normal
+        },
+        DefaultHandling::OptionIsNone => parse_quote! {
+            ::mech3ax_metadata_types::DefaultHandling::OptionIsNone
+        },
+        DefaultHandling::BoolFalse => parse_quote! {
+            ::mech3ax_metadata_types::DefaultHandling::BoolFalse
+        },
+        DefaultHandling::PointerZero => parse_quote! {
+            ::mech3ax_metadata_types::DefaultHandling::PointerZero
+        },
+    }
+}
+
 fn generate_type_info(field: TypeInfoOwned) -> ExprStruct {
-    let TypeInfoOwned { name, ty } = field;
+    let TypeInfoOwned { name, ty, default } = field;
     let ty = generate_complex_type(ty);
+    let default = geneate_default_handling(default);
     // let default: syn::Expr = match default {
     //     None => parse_quote! { None },
     //     Some(d) => parse_quote! { Some(#d) },
@@ -57,6 +75,7 @@ fn generate_type_info(field: TypeInfoOwned) -> ExprStruct {
         ::mech3ax_metadata_types::TypeInfo {
             name: #name,
             ty: #ty,
+            default: #default,
         }
     }
 }

@@ -1,4 +1,5 @@
 use crate::enums::Enum;
+use crate::options::Options;
 use crate::structs::Struct;
 use crate::unions::Union;
 use std::collections::HashMap;
@@ -8,6 +9,7 @@ pub struct TypeResolver {
     enums: HashMap<String, Enum>,
     structs: HashMap<String, Struct>,
     unions: HashMap<String, Union>,
+    factory_converters: Vec<(String, usize)>,
 }
 
 impl TypeResolver {
@@ -16,7 +18,12 @@ impl TypeResolver {
             enums: HashMap::new(),
             structs: HashMap::new(),
             unions: HashMap::new(),
+            factory_converters: Vec::new(),
         }
+    }
+
+    pub fn push_factory_converter(&mut self, converter: String, count: usize) {
+        self.factory_converters.push((converter, count));
     }
 
     pub fn push_enum<E>(&mut self)
@@ -55,11 +62,14 @@ impl TypeResolver {
         self.unions.get(name)
     }
 
-    pub fn into_values(self) -> (Vec<Enum>, Vec<Struct>, Vec<Union>) {
+    pub fn into_values(self) -> (Vec<Enum>, Vec<Struct>, Vec<Union>, Options) {
+        let mut factory_converters = self.factory_converters;
+        factory_converters.sort();
         (
             self.enums.into_values().collect(),
             self.structs.into_values().collect(),
             self.unions.into_values().collect(),
+            Options::new(factory_converters),
         )
     }
 }

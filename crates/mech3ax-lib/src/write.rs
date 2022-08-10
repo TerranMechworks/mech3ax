@@ -2,7 +2,9 @@ use crate::buffer::CallbackBuffer;
 use crate::error::err_to_c;
 use crate::filename_to_string;
 use anyhow::{bail, Context, Result};
-use mech3ax_api_types::{ArchiveEntry, GameZData, Material, Model, Motion, Script, TextureManifest};
+use mech3ax_api_types::{
+    ArchiveEntry, GameZData, Material, Model, Motion, Script, TextureManifest,
+};
 use mech3ax_archive::{Mode, Version};
 use serde_json::Value;
 use std::fs::File;

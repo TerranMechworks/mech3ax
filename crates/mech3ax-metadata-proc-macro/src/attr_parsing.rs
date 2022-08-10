@@ -1,73 +1,94 @@
+use mech3ax_metadata_types::DefaultHandling;
 use syn::{AttrStyle, Attribute, Error, Lit, Meta, NestedMeta, Result};
 
-pub fn find_attr<'a, 'b>(attrs: &'a [Attribute], ident: &'b str) -> Option<&'a Attribute> {
+fn find_attr<'a, 'b>(attrs: &'a [Attribute], ident: &'b str) -> Option<&'a Attribute> {
     attrs
         .iter()
         .find(|attr| attr.style == AttrStyle::Outer && attr.path.is_ident(ident))
 }
 
-#[derive(Debug)]
-pub struct ObjectJsonAttr {
-    pub tuple: Option<String>,
-    pub default: Option<String>,
-    pub omit_if_default: bool,
+fn parse_serde_skip_serializing_if(lit: Lit) -> Result<DefaultHandling> {
+    match lit {
+        Lit::Str(lit_str) => {
+            let value = lit_str.value();
+            match value.as_str() {
+                "Option::is_none" => Ok(DefaultHandling::OptionIsNone),
+                "bool_false" => Ok(DefaultHandling::BoolFalse),
+                "pointer_zero" => Ok(DefaultHandling::PointerZero),
+                _ => Err(Error::new_spanned(
+                    lit_str,
+                    format!("Unknown skip `{}`", value),
+                )),
+            }
+        }
+        other => Err(Error::new_spanned(other, "Expected string literal")),
+    }
 }
 
-impl ObjectJsonAttr {
-    pub fn parse_from_attrs(attrs: &[Attribute]) -> Result<Self> {
-        let attr = match find_attr(attrs, "json") {
-            Some(attr) => attr,
-            None => {
-                return Ok(Self {
-                    tuple: None,
-                    default: None,
-                    omit_if_default: false,
-                })
-            }
-        };
+pub fn parse_serde_attr(attrs: &[Attribute]) -> Result<DefaultHandling> {
+    let attr = match find_attr(attrs, "serde") {
+        Some(attr) => attr,
+        None => return Ok(DefaultHandling::Normal),
+    };
 
-        let mut this = Self {
-            tuple: None,
-            default: None,
-            omit_if_default: false,
-        };
-
-        match attr.parse_meta()? {
-            Meta::List(meta) => {
-                for nested in meta.nested.into_iter() {
-                    match nested {
-                        // Parse `#[json(omit_if_default)]`
-                        NestedMeta::Meta(Meta::Path(p)) if p.is_ident("omit_if_default") => {
-                            this.omit_if_default = true;
-                        }
-                        // Parse `#[json(tuple = "foo")]`
-                        NestedMeta::Meta(Meta::NameValue(m)) if m.path.is_ident("tuple") => match m
-                            .lit
-                        {
-                            Lit::Str(lit) => this.tuple = Some(lit.value()),
-                            other => {
-                                return Err(Error::new_spanned(other, "Expected string literal"))
-                            }
-                        },
-                        // Parse `#[json(default = "foo")]`
-                        NestedMeta::Meta(Meta::NameValue(m)) if m.path.is_ident("default") => {
-                            match m.lit {
-                                Lit::Str(lit) => this.default = Some(lit.value()),
-                                other => {
-                                    return Err(Error::new_spanned(
-                                        other,
-                                        "Expected string literal",
-                                    ))
-                                }
-                            }
-                        }
-                        other => return Err(Error::new_spanned(other, "Unknown JSON attribute")),
+    match attr.parse_meta()? {
+        Meta::List(meta) => {
+            for nested in meta.nested.into_iter() {
+                match nested {
+                    // Parse `#[serde(skip_serializing_if = "foo")]`
+                    NestedMeta::Meta(Meta::NameValue(m))
+                        if m.path.is_ident("skip_serializing_if") =>
+                    {
+                        return parse_serde_skip_serializing_if(m.lit);
                     }
+                    _ => {}
                 }
             }
-            other => return Err(Error::new_spanned(other, "Expected #[json(...)]")),
         }
+        other => return Err(Error::new_spanned(other, "Expected #[json(...)]")),
+    }
 
-        Ok(this)
+    Ok(DefaultHandling::Normal)
+}
+
+fn parse_generic_param(nested: NestedMeta) -> Result<(String, String)> {
+    match nested {
+        // Parse `#[generic(foo = "foo"...)]`
+        NestedMeta::Meta(Meta::NameValue(nv)) => {
+            let ident = nv
+                .path
+                .get_ident()
+                .ok_or_else(|| Error::new_spanned(&nv, "Expected #[generic(foo = \"foo\"...)]"))?;
+            let name = ident.to_string();
+            let value = match nv.lit {
+                Lit::Str(litstr) => Ok(litstr.value()),
+                other => Err(Error::new_spanned(
+                    other,
+                    "Expected #[generic(foo = \"foo\"...)]",
+                )),
+            }?;
+            Ok((name, value))
+        }
+        other => Err(Error::new_spanned(
+            other,
+            "Expected #[generic(foo = \"foo\"...)]",
+        )),
+    }
+}
+
+pub fn parse_generic_attr(attrs: &[Attribute]) -> Result<Option<Vec<(String, String)>>> {
+    let attr = match find_attr(attrs, "generic") {
+        Some(attr) => attr,
+        None => return Ok(None),
+    };
+
+    match attr.parse_meta()? {
+        Meta::List(meta) => meta
+            .nested
+            .into_iter()
+            .map(parse_generic_param)
+            .collect::<Result<_>>()
+            .map(Some),
+        other => Err(Error::new_spanned(other, "Expected #[generic(...)]")),
     }
 }

@@ -53,15 +53,25 @@ pub enum ComplexType<'a> {
 }
 
 #[derive(Debug)]
+pub enum DefaultHandling {
+    Normal,
+    OptionIsNone,
+    BoolFalse,
+    PointerZero,
+}
+
+#[derive(Debug)]
 pub struct TypeInfoOwned {
     pub name: String,
     pub ty: ComplexTypeOwned,
+    pub default: DefaultHandling,
 }
 
 #[derive(Debug)]
 pub struct TypeInfo<'a> {
     pub name: &'a str,
     pub ty: ComplexType<'a>,
+    pub default: DefaultHandling,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -78,6 +88,7 @@ pub trait Enum {
 pub trait Struct {
     const NAME: &'static str;
     const SEMANTIC: TypeSemantic;
+    const GENERICS: Option<&'static [(&'static str, &'static str)]>;
     const FIELDS: &'static [TypeInfo<'static>];
 }
 

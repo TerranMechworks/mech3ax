@@ -3,6 +3,7 @@ use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::RefStruct;
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[generic(Vec3 = "TVec3", Quaternion = "TQuaternion")]
 pub struct MotionFrame {
     pub translation: Vec3,
     pub rotation: Quaternion,

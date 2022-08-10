@@ -17,17 +17,26 @@ impl Enum {
         }
     }
 
-    pub fn render(&self, tera: &tera::Tera) -> tera::Result<String> {
+    pub fn render_impl(&self, tera: &tera::Tera) -> tera::Result<String> {
         let mut context = tera::Context::new();
         context.insert("enum", self);
-        tera.render("enum.cs", &context)
+        tera.render("enum_impl.cs", &context)
+    }
+
+    pub fn render_conv(&self, tera: &tera::Tera) -> tera::Result<String> {
+        let mut context = tera::Context::new();
+        context.insert("enum", self);
+        tera.render("enum_conv.cs", &context)
     }
 }
 
-macro_rules! enum_macro {
-    () => (
-r###"
-{% macro make_enum(enum) %}
+pub const ENUM_IMPL: &'static str = r###"using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Mech3DotNet.Json.Converters;
+
+namespace Mech3DotNet.Json
+{
     [JsonConverter(typeof({{ enum.name }}Converter))]
     public enum {{ enum.name }}
     {
@@ -35,27 +44,34 @@ r###"
         {{ variant }},
 {%- endfor %}
     }
+}
+"###;
 
-    internal class {{ enum.name }}Converter : EnumConverter<{{ enum.name }}>
+pub const ENUM_CONV: &'static str = r###"using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Mech3DotNet.Json;
+
+namespace Mech3DotNet.Json.Converters
+{
+    public class {{ enum.name }}Converter : EnumConverter<{{ enum.name }}>
     {
-        public override {{ enum.name }} ReadVariant(string? name) => name switch {
+        public override {{ enum.name }} ReadVariant(string? name) => name switch
+        {
 {%- for variant in enum.variants %}
             "{{ variant }}" => {{ enum.name }}.{{ variant }},
 {%- endfor %}
-            null => throw new JsonSerializationException($"Variant cannot be null for '{{ enum.name }}'"),
-            _ => throw new JsonSerializationException($"Invalid variant '{name}' for '{{ enum.name }}'"),
+            null => DebugAndThrow("Variant cannot be null for '{{ enum.name }}'"),
+            _ => DebugAndThrow($"Invalid variant '{name}' for '{{ enum.name }}'"),
         };
 
-        public override string WriteVariant({{ enum.name }} value) => value switch {
+        public override string WriteVariant({{ enum.name }} value) => value switch
+        {
 {%- for variant in enum.variants %}
             {{ enum.name }}.{{ variant }} => "{{ variant }}",
 {%- endfor %}
             _ => throw new ArgumentOutOfRangeException("{{ enum.name }}"),
         };
     }
-{% endmacro make_enum %}
-"###
-    )
 }
-
-pub(crate) use enum_macro;
+"###;

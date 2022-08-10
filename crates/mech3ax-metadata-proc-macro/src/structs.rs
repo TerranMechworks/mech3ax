@@ -1,3 +1,4 @@
+use crate::attr_parsing::parse_generic_attr;
 use crate::type_generation::generate_type_infos;
 use crate::type_parsing::parse_type_info;
 use mech3ax_metadata_types::{TypeInfoOwned, TypeSemantic};
@@ -22,7 +23,12 @@ struct StructInfo {
     pub ident: Ident,
     pub name: String,
     pub semantic: TypeSemantic,
+    pub generics: Option<Vec<(String, String)>>,
     pub fields: Vec<TypeInfoOwned>,
+}
+
+fn parse_struct_generics(attrs: &[Attribute]) -> Result<Option<Vec<(String, String)>>> {
+    parse_generic_attr(attrs)
 }
 
 fn parse_struct_fields(fields: FieldsNamed) -> Result<Vec<TypeInfoOwned>> {
@@ -51,16 +57,18 @@ fn parse_struct_fields(fields: FieldsNamed) -> Result<Vec<TypeInfoOwned>> {
 fn parse_struct_named(
     ident: Ident,
     fields: FieldsNamed,
-    _attrs: &[Attribute],
+    attrs: &[Attribute],
     semantic: TypeSemantic,
 ) -> Result<StructInfo> {
     let name = ident.to_string();
+    let generics = parse_struct_generics(attrs)?;
     let fields = parse_struct_fields(fields)?;
 
     Ok(StructInfo {
         ident,
         name,
         semantic,
+        generics,
         fields,
     })
 }
@@ -104,6 +112,23 @@ fn generate_struct_semantic(semantic: TypeSemantic) -> ImplItemConst {
     }
 }
 
+fn generate_struct_generics(generics: Option<Vec<(String, String)>>) -> ImplItemConst {
+    let res = match generics {
+        None => parse_quote! {
+            const GENERICS: Option<&'static [(&'static str, &'static str)]> = None;
+        },
+        Some(generics) => {
+            let (name, value): (Vec<_>, Vec<_>) = generics.into_iter().unzip();
+            parse_quote! {
+                const GENERICS: Option<&'static [(&'static str, &'static str)]> = Some(&[
+                    #( (#name, #value), )*
+                ]);
+            }
+        }
+    };
+    res
+}
+
 fn generate_struct_fields(fields: Vec<TypeInfoOwned>) -> ImplItemConst {
     let fields = generate_type_infos(fields);
     parse_quote! {
@@ -118,17 +143,20 @@ fn generate_struct(info: StructInfo, struct_generics: Generics) -> ItemImpl {
         ident,
         name,
         semantic,
+        generics,
         fields,
     } = info;
 
     let name = generate_struct_name(name);
     let semantic = generate_struct_semantic(semantic);
+    let generics = generate_struct_generics(generics);
     let fields = generate_struct_fields(fields);
 
     parse_quote! {
         impl #struct_generics ::mech3ax_metadata_types::Struct for #ident #struct_generics {
             #name
             #semantic
+            #generics
             #fields
         }
     }

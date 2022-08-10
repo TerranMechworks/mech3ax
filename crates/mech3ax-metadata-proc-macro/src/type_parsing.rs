@@ -1,8 +1,8 @@
-use crate::attr_parsing::ObjectJsonAttr;
+use crate::attr_parsing::parse_serde_attr;
 use mech3ax_metadata_types::{ComplexTypeOwned, SimpleType, TypeInfoOwned};
 use syn::{
     AngleBracketedGenericArguments, Attribute, Error, GenericArgument, Ident, Path, PathArguments,
-    PathSegment, Result, Type, TypePath, TypeTuple,
+    PathSegment, Result, Type, TypePath,
 };
 
 fn parse_simple_type(ident: &Ident) -> ComplexTypeOwned {
@@ -25,9 +25,9 @@ fn parse_simple_type(ident: &Ident) -> ComplexTypeOwned {
     }
 }
 
-fn unwrap_generic_arg(json: &ObjectJsonAttr, arg: &GenericArgument) -> Result<ComplexTypeOwned> {
+fn unwrap_generic_arg(arg: &GenericArgument) -> Result<ComplexTypeOwned> {
     match arg {
-        GenericArgument::Type(ty) => parse_complex_type(json, ty),
+        GenericArgument::Type(ty) => parse_complex_type(ty),
         GenericArgument::Binding(binding) => Err(Error::new_spanned(
             arg,
             format!("Can't derive metadata for binding `{:?}`", binding),
@@ -60,7 +60,7 @@ fn parse_vec_type_inner(ty: ComplexTypeOwned) -> ComplexTypeOwned {
     }
 }
 
-fn parse_path_type(json: &ObjectJsonAttr, path: &TypePath) -> Result<ComplexTypeOwned> {
+fn parse_path_type(path: &TypePath) -> Result<ComplexTypeOwned> {
     let TypePath { qself: _, path } = path;
     let Path {
         leading_colon: _,
@@ -88,14 +88,14 @@ fn parse_path_type(json: &ObjectJsonAttr, path: &TypePath) -> Result<ComplexType
             let name = ident.to_string();
             match name.as_str() {
                 "Vec" => match args.iter().collect::<Vec<&GenericArgument>>()[..] {
-                    [arg] => unwrap_generic_arg(json, arg).map(parse_vec_type_inner),
+                    [arg] => unwrap_generic_arg(arg).map(parse_vec_type_inner),
                     _ => Err(Error::new_spanned(
                         segment,
                         format!("Expected single generic argument, but got `{:?}`", args),
                     )),
                 },
                 "Option" => match args.iter().collect::<Vec<&GenericArgument>>()[..] {
-                    [arg] => unwrap_generic_arg(json, arg).map(parse_option_type_inner),
+                    [arg] => unwrap_generic_arg(arg).map(parse_option_type_inner),
                     _ => Err(Error::new_spanned(
                         segment,
                         format!("Expected single generic argument, but got `{:?}`", args),
@@ -120,17 +120,9 @@ fn parse_path_type(json: &ObjectJsonAttr, path: &TypePath) -> Result<ComplexType
     }
 }
 
-fn parse_tuple_type(json: &ObjectJsonAttr, tuple: &TypeTuple) -> Result<ComplexTypeOwned> {
-    let name = json.tuple.clone().ok_or_else(|| {
-        Error::new_spanned(tuple, "Can't derive metadata for tuple, missing annotation")
-    })?;
-    Ok(ComplexTypeOwned::Struct(name))
-}
-
-fn parse_complex_type(json: &ObjectJsonAttr, ty: &Type) -> Result<ComplexTypeOwned> {
+fn parse_complex_type(ty: &Type) -> Result<ComplexTypeOwned> {
     match ty {
-        Type::Path(path) => parse_path_type(json, path),
-        Type::Tuple(tuple) => parse_tuple_type(json, tuple),
+        Type::Path(path) => parse_path_type(path),
         _ => Err(Error::new_spanned(
             ty,
             format!("Can't derive metadata for type `{:?}`", ty),
@@ -139,10 +131,12 @@ fn parse_complex_type(json: &ObjectJsonAttr, ty: &Type) -> Result<ComplexTypeOwn
 }
 
 pub fn parse_type_info(ident: Ident, attrs: &[Attribute], ty: &Type) -> Result<TypeInfoOwned> {
-    let json = ObjectJsonAttr::parse_from_attrs(attrs)?;
-    let ty = parse_complex_type(&json, ty)?;
+    // let json = ObjectJsonAttr::parse_from_attrs(attrs)?;
+    let default = parse_serde_attr(attrs)?;
+    let ty = parse_complex_type(ty)?;
     Ok(TypeInfoOwned {
         name: ident.to_string(),
         ty,
+        default,
     })
 }
