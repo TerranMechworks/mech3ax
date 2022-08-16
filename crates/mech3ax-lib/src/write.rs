@@ -85,7 +85,7 @@ fn write_archive(
     })
 }
 
-fn write_sounds_transform(_name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
+fn write_passthrough_transform(_name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
     Ok(data)
 }
 
@@ -104,7 +104,7 @@ pub extern "C" fn write_sounds(
         entries_ptr,
         entries_len,
         callback,
-        write_sounds_transform,
+        write_passthrough_transform,
     )
 }
 
@@ -134,6 +134,25 @@ pub extern "C" fn write_reader(
         entries_len,
         callback,
         write_reader_transform,
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn write_reader_raw(
+    filename: *const c_char,
+    is_pm: i32,
+    entries_ptr: *const u8,
+    entries_len: usize,
+    callback: NameBufferCb,
+) -> i32 {
+    write_archive(
+        Mode::Reader,
+        filename,
+        is_pm,
+        entries_ptr,
+        entries_len,
+        callback,
+        write_passthrough_transform,
     )
 }
 

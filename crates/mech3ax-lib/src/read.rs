@@ -83,7 +83,7 @@ fn read_archive(
     })
 }
 
-fn read_sound_transform(_name: &str, data: Vec<u8>, _offset: u32) -> Result<Vec<u8>> {
+fn read_passthrough_transform(_name: &str, data: Vec<u8>, _offset: u32) -> Result<Vec<u8>> {
     Ok(data)
 }
 
@@ -94,7 +94,7 @@ pub extern "C" fn read_sounds(filename: *const c_char, is_pm: i32, callback: Nam
         filename,
         is_pm,
         callback,
-        read_sound_transform,
+        read_passthrough_transform,
     )
 }
 
@@ -116,6 +116,22 @@ pub extern "C" fn read_reader(filename: *const c_char, is_pm: i32, callback: Nam
         is_pm,
         callback,
         read_reader_transform,
+    )
+}
+
+// filename returned by data callback will be .zrd!
+#[no_mangle]
+pub extern "C" fn read_reader_raw(
+    filename: *const c_char,
+    is_pm: i32,
+    callback: NameDataCb,
+) -> i32 {
+    read_archive(
+        Mode::Reader,
+        filename,
+        is_pm,
+        callback,
+        read_passthrough_transform,
     )
 }
 
