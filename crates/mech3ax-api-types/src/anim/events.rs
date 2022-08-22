@@ -598,7 +598,7 @@ pub struct Sound {
     pub at_node: AtNode,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Union)]
 pub enum EventData {
     Sound(Sound),
     SoundNode(SoundNode),
@@ -649,7 +649,7 @@ pub struct EventStart {
     pub time: f32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Event {
     pub data: EventData,
     pub start: Option<EventStart>,

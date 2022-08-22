@@ -108,7 +108,7 @@ pub enum ActivationPrereq {
     Object(PrereqObject),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct SeqDef {
     pub name: String,
     pub activation: SeqActivation,
@@ -116,7 +116,7 @@ pub struct SeqDef {
     pub pointer: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct AnimDef {
     pub name: String,
     pub anim_name: NamePad,
