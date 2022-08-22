@@ -1,47 +1,65 @@
 use crate::serde::{base64, bool_false};
 use crate::types::{Color, Quaternion, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
+use mech3ax_metadata_proc_macro::{Enum, RefStruct, Union, ValStruct};
 use num_derive::FromPrimitive;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct AtNode {
     pub node: String,
     pub translation: Vec3,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct StopAnimation {
     pub name: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct ResetAnimation {
     pub name: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct InvalidateAnimation {
     pub name: String,
 }
 
-// TODO: Rename, retype
-#[derive(Debug, Serialize, Deserialize)]
-pub enum Parameters {
-    AtNode(String, Option<Vec3>, Option<Vec3>),
-    WithNode(String, Option<Vec3>),
-    TargetNode(String),
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
+pub struct CallAnimationAtNode {
+    pub node: String,
+    pub translation: Option<Vec3>,
+    pub rotation: Option<Vec3>,
+}
+
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
+pub struct CallAnimationWithNode {
+    pub node: String,
+    pub translation: Option<Vec3>,
+}
+
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
+pub struct CallAnimationTargetNode {
+    pub operand_node: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Union)]
+pub enum CallAnimationParameters {
+    AtNode(CallAnimationAtNode),
+    WithNode(CallAnimationWithNode),
+    TargetNode(CallAnimationTargetNode),
     None,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct CallAnimation {
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub wait_for_completion: Option<u16>,
-    pub parameters: Parameters,
+    pub parameters: CallAnimationParameters,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct CallObjectConnector {
     pub node: String,
     pub from_node: String,
@@ -49,12 +67,13 @@ pub struct CallObjectConnector {
     pub to_pos: Vec3,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Loop {
     pub start: i32,
     pub loop_count: i32,
 }
 
+// TODO
 #[derive(Debug, Serialize, Deserialize)]
 pub enum If {
     RandomWeight(f32),
@@ -79,18 +98,18 @@ pub struct Else;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EndIf;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Callback {
     pub value: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct DetonateWeapon {
     pub name: String,
     pub at_node: AtNode,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ValStruct)]
 pub struct Rgba {
     pub r: f32,
     pub g: f32,
@@ -98,7 +117,7 @@ pub struct Rgba {
     pub a: f32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct FrameBufferEffectColor {
     pub from: Rgba,
     pub to: Rgba,
@@ -108,7 +127,7 @@ pub struct FrameBufferEffectColor {
     pub fudge_alpha: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Enum)]
 #[repr(u32)]
 pub enum FogType {
     Off = 0,
@@ -116,7 +135,7 @@ pub enum FogType {
     Exponential = 2,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct FogState {
     pub name: String,
     pub fog_type: FogType,
@@ -125,7 +144,7 @@ pub struct FogState {
     pub range: Range,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct LightAnimation {
     pub name: String,
     pub range: Range,
@@ -133,7 +152,7 @@ pub struct LightAnimation {
     pub runtime: f32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct LightState {
     pub name: String,
     pub active_state: bool,
@@ -157,20 +176,20 @@ pub struct LightState {
     pub diffuse: Option<f32>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct ObjectActiveState {
     pub node: String,
     pub state: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct ObjectAddChild {
     // in the reader zbd, both values are fused into a list (PARENT_CHILD)
     pub parent: String,
     pub child: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct ObjectConnector {
     pub node: String,
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -185,27 +204,27 @@ pub struct ObjectConnector {
     pub max_length: Option<f32>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct ObjectCycleTexture {
     pub node: String,
     pub reset: u16,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct FloatFromTo {
     pub from: f32,
     pub to: f32,
     pub delta: f32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Vec3FromTo {
     pub from: Vec3,
     pub to: Vec3,
     pub delta: Vec3,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct ObjectMotionFromTo {
     pub node: String,
     pub run_time: f32,
@@ -219,28 +238,28 @@ pub struct ObjectMotionFromTo {
     pub scale: Option<Vec3FromTo>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct TranslateData {
     pub value: Vec3,
     #[serde(with = "base64")]
     pub unk: Vec<u8>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct RotateData {
     pub value: Quaternion,
     #[serde(with = "base64")]
     pub unk: Vec<u8>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct ScaleData {
     pub value: Vec3,
     #[serde(with = "base64")]
     pub unk: Vec<u8>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct ObjectMotionSiFrame {
     pub start_time: f32,
     pub end_time: f32,
@@ -252,32 +271,43 @@ pub struct ObjectMotionSiFrame {
     pub scale: Option<ScaleData>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct ObjectMotionSiScript {
     pub node: String,
     pub frames: Vec<ObjectMotionSiFrame>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Enum)]
 pub enum GravityMode {
     Local,
     Complex,
     NoAltitude,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ValStruct)]
 pub struct Gravity {
     pub mode: GravityMode,
     pub value: f32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub enum ForwardRotation {
-    Time(f32, f32),
-    Distance(f32),
+#[derive(Debug, Serialize, Deserialize, ValStruct)]
+pub struct ForwardRotationTime {
+    pub v1: f32,
+    pub v2: f32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ValStruct)]
+pub struct ForwardRotationDistance {
+    pub v1: f32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Union)]
+pub enum ForwardRotation {
+    Time(ForwardRotationTime),
+    Distance(ForwardRotationDistance),
+}
+
+#[derive(Debug, Serialize, Deserialize, ValStruct)]
 pub struct BounceSound {
     pub name: String,
     pub volume: f32,
@@ -320,7 +350,7 @@ pub struct ObjectOpacityFromTo {
     pub fudge: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct ObjectOpacityState {
     pub node: String,
     pub is_set: bool,
@@ -328,26 +358,26 @@ pub struct ObjectOpacityState {
     pub opacity: f32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Union)]
 pub enum RotateState {
     Absolute(Vec3),
     AtNodeXYZ,
     AtNodeMatrix,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct ObjectRotateState {
     pub node: String,
     pub rotate: RotateState,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct ObjectScaleState {
     pub node: String,
     pub scale: Vec3,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct ObjectTranslateState {
     pub node: String,
     pub translate: Vec3,
@@ -355,14 +385,14 @@ pub struct ObjectTranslateState {
     pub at_node: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Enum)]
 pub enum IntervalType {
     Unset,
     Time,
     Distance,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Interval {
     pub interval_type: IntervalType,
     pub interval_value: f32,
@@ -416,17 +446,17 @@ pub struct PufferState {
     pub growth_factor: Option<f32>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct CallSequence {
     pub name: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct StopSequence {
     pub name: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct SoundNode {
     pub name: String,
     pub active_state: bool,
@@ -434,7 +464,7 @@ pub struct SoundNode {
     pub at_node: Option<AtNode>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Sound {
     pub name: String,
     pub at_node: AtNode,
@@ -477,7 +507,7 @@ pub enum EventData {
     PufferState(PufferState),
 }
 
-#[derive(Debug, Serialize, Deserialize, FromPrimitive, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, FromPrimitive, Clone, Copy, PartialEq, Enum)]
 #[repr(u8)]
 pub enum StartOffset {
     Animation = 1,

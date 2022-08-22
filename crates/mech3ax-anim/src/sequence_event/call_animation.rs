@@ -2,7 +2,8 @@ use super::types::INPUT_NODE;
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
 use mech3ax_api_types::{
-    static_assert_size, AnimDef, CallAnimation, Parameters, ReprSize as _, Vec3,
+    static_assert_size, AnimDef, CallAnimation, CallAnimationAtNode, CallAnimationParameters,
+    CallAnimationTargetNode, CallAnimationWithNode, ReprSize as _, Vec3,
 };
 use mech3ax_common::assert::{assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
@@ -119,7 +120,11 @@ impl ScriptObject for CallAnimation {
             } else {
                 anim_def.node_from_index(call_animation.node_index as usize, read.prev + 40)?
             };
-            Parameters::AtNode(node, translation, rotation)
+            CallAnimationParameters::AtNode(CallAnimationAtNode {
+                node,
+                translation,
+                rotation,
+            })
         } else if with_node {
             let has_rotation = rotation.is_some();
             assert_that!(
@@ -136,7 +141,7 @@ impl ScriptObject for CallAnimation {
             // WITH_NODE doesn't seem to use INPUT_NODE
             let node =
                 anim_def.node_from_index(call_animation.node_index as usize, read.prev + 40)?;
-            Parameters::WithNode(node, translation)
+            CallAnimationParameters::WithNode(CallAnimationWithNode { node, translation })
         } else {
             let has_translation = translation.is_some();
             let has_rotation = rotation.is_some();
@@ -157,11 +162,11 @@ impl ScriptObject for CallAnimation {
             )?;
             // OPERAND_NODE may be used but doesn't need to be
             if call_animation.operand_index == 0 {
-                Parameters::None
+                CallAnimationParameters::None
             } else {
                 let operand_node = anim_def
                     .node_from_index(call_animation.operand_index as usize, read.prev + 32)?;
-                Parameters::TargetNode(operand_node)
+                CallAnimationParameters::TargetNode(CallAnimationTargetNode { operand_node })
             }
         };
 
@@ -180,12 +185,12 @@ impl ScriptObject for CallAnimation {
             flags |= CallAnimationFlags::WAIT_FOR;
         }
         let (operand_index, node_index, translation, rotation) = match &self.parameters {
-            Parameters::None => (0, 0, Vec3::DEFAULT, Vec3::DEFAULT),
-            Parameters::TargetNode(operand_node) => {
+            CallAnimationParameters::None => (0, 0, Vec3::DEFAULT, Vec3::DEFAULT),
+            CallAnimationParameters::TargetNode(CallAnimationTargetNode { operand_node }) => {
                 let operand_index = anim_def.node_to_index(operand_node)? as u16;
                 (operand_index, 0, Vec3::DEFAULT, Vec3::DEFAULT)
             }
-            Parameters::WithNode(node, translation) => {
+            CallAnimationParameters::WithNode(CallAnimationWithNode { node, translation }) => {
                 flags |= CallAnimationFlags::WITH_NODE;
                 let node_index = anim_def.node_to_index(node)? as u32;
                 let translation = if let Some(translation) = translation {
@@ -196,7 +201,11 @@ impl ScriptObject for CallAnimation {
                 };
                 (0, node_index, translation, Vec3::DEFAULT)
             }
-            Parameters::AtNode(node, translation, rotation) => {
+            CallAnimationParameters::AtNode(CallAnimationAtNode {
+                node,
+                translation,
+                rotation,
+            }) => {
                 flags |= CallAnimationFlags::AT_NODE;
                 let node_index = if node == INPUT_NODE {
                     INPUT_NODE_INDEX

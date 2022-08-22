@@ -3,11 +3,12 @@ mod events;
 use crate::serde::base64;
 use crate::Range;
 use ::serde::{Deserialize, Serialize};
+use mech3ax_metadata_proc_macro::{Enum, RefStruct, Union, ValStruct};
 use num_derive::FromPrimitive;
 
 pub use events::*;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct AnimName {
     pub name: String,
     #[serde(with = "base64")]
@@ -15,7 +16,7 @@ pub struct AnimName {
     pub unknown: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct AnimPtr {
     pub file_name: String,
 
@@ -34,7 +35,7 @@ pub struct AnimPtr {
     pub seq_defs_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct AnimMetadata {
     pub base_ptr: u32,
     pub world_ptr: u32,
@@ -42,7 +43,7 @@ pub struct AnimMetadata {
     pub anim_ptrs: Vec<AnimPtr>,
 }
 
-#[derive(Debug, Serialize, Deserialize, FromPrimitive, PartialEq, Copy, Clone)]
+#[derive(Debug, Serialize, Deserialize, FromPrimitive, PartialEq, Clone, Copy, Enum)]
 #[repr(u32)]
 pub enum AnimActivation {
     WeaponHit = 0,
@@ -52,41 +53,41 @@ pub enum AnimActivation {
     OnStartup = 4,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Union)]
 pub enum Execution {
     ByRange(Range),
     ByZone,
     None,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ValStruct)]
 pub struct NamePad {
     pub name: String,
     #[serde(with = "base64")]
     pub pad: Vec<u8>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ValStruct)]
 pub struct NamePtr {
     pub name: String,
     pub pointer: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ValStruct)]
 pub struct NamePtrFlags {
     pub name: String,
     pub pointer: u32,
     pub flags: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, FromPrimitive, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, FromPrimitive, PartialEq, Enum)]
 #[repr(u32)]
 pub enum SeqActivation {
     Initial = 0,
     OnCall = 3,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ValStruct)]
 pub struct PrereqObject {
     pub name: String,
     pub required: bool,
@@ -94,7 +95,7 @@ pub struct PrereqObject {
     pub pointer: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Union)]
 pub enum ActivationPrereq {
     Animation(String),
     Parent(PrereqObject),

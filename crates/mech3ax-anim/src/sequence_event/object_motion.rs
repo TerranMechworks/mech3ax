@@ -1,8 +1,8 @@
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
 use mech3ax_api_types::{
-    static_assert_size, AnimDef, BounceSound, ForwardRotation, Gravity, GravityMode, ObjectMotion,
-    Quaternion, ReprSize as _, Vec3,
+    static_assert_size, AnimDef, BounceSound, ForwardRotation, ForwardRotationDistance,
+    ForwardRotationTime, Gravity, GravityMode, ObjectMotion, Quaternion, ReprSize as _, Vec3,
 };
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
@@ -257,17 +257,19 @@ impl ScriptObject for ObjectMotion {
                 forward_rotation_dist == false,
                 read.prev + 0
             )?;
-            Some(ForwardRotation::Time(
-                object_motion.forward_rotation_1,
-                object_motion.forward_rotation_2,
-            ))
+            Some(ForwardRotation::Time(ForwardRotationTime {
+                v1: object_motion.forward_rotation_1,
+                v2: object_motion.forward_rotation_2,
+            }))
         } else if forward_rotation_dist {
             assert_that!(
                 "object motion fwd rot 2",
                 object_motion.forward_rotation_2 == 0.0,
                 read.prev + 116
             )?;
-            Some(ForwardRotation::Distance(object_motion.forward_rotation_1))
+            Some(ForwardRotation::Distance(ForwardRotationDistance {
+                v1: object_motion.forward_rotation_1,
+            }))
         } else {
             assert_that!(
                 "object motion fwd rot 1",
@@ -517,11 +519,16 @@ impl ScriptObject for ObjectMotion {
             };
 
         let (forward_rotation_1, forward_rotation_2) = match &self.forward_rotation {
-            Some(ForwardRotation::Time(forward_rotation_1, forward_rotation_2)) => {
+            Some(ForwardRotation::Time(ForwardRotationTime {
+                v1: forward_rotation_1,
+                v2: forward_rotation_2,
+            })) => {
                 flags |= ObjectMotionFlags::FORWARD_ROTATION_TIME;
                 (*forward_rotation_1, *forward_rotation_2)
             }
-            Some(ForwardRotation::Distance(forward_rotation_1)) => {
+            Some(ForwardRotation::Distance(ForwardRotationDistance {
+                v1: forward_rotation_1,
+            })) => {
                 flags |= ObjectMotionFlags::FORWARD_ROTATION_DISTANCE;
                 (*forward_rotation_1, 0.0)
             }
