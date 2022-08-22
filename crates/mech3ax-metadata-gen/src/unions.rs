@@ -1,11 +1,12 @@
 use crate::resolver::TypeResolver;
+use mech3ax_metadata_types::TypeSemantic;
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Union {
     pub name: &'static str,
     pub choice: String,
-    pub variants: &'static [(&'static str, Option<&'static str>)],
+    pub variants: Vec<(&'static str, Option<&'static str>, bool)>,
 }
 
 impl Union {
@@ -15,15 +16,22 @@ impl Union {
     {
         let name = S::NAME;
         let choice = format!("{}Variant", name);
-        let variants = S::VARIANTS;
-
-        for (_variant_name, struct_name) in variants {
-            if let Some(name) = struct_name {
-                if resolver.lookup_struct(name).is_none() {
-                    eprintln!("WARNING: structure {} not found", name);
+        let variants = S::VARIANTS
+            .into_iter()
+            .map(|(variant_name, struct_name)| {
+                let mut varant_null_check = true;
+                if let Some(name) = struct_name {
+                    match resolver.lookup_struct(name) {
+                        None => eprintln!("WARNING: structure {} not found", name),
+                        Some(s) => match s.semantic {
+                            TypeSemantic::Ref => varant_null_check = true,
+                            TypeSemantic::Val => varant_null_check = false,
+                        },
+                    }
                 }
-            }
-        }
+                (*variant_name, struct_name.clone(), varant_null_check)
+            })
+            .collect();
 
         Self {
             name,
@@ -132,11 +140,13 @@ namespace Mech3DotNet.Json.Converters
                 case "{{ variant.0 }}":
                     {
                         var inner = JsonSerializer.Deserialize<{{ variant.1 }}>(ref reader, options);
+{%- if variant.2 %}
                         if (inner is null)
                         {
                             System.Diagnostics.Debug.WriteLine("Value of '{{ variant.0 }}' was null for '{{ union.name }}'");
                             throw new JsonException();
                         }
+{%- endif %}
                         return new {{ union.name }}(inner);
                     }
 {%- endif %}{% endfor %}
