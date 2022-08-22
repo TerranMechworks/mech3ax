@@ -80,6 +80,7 @@ fn main() {
     resolver.push_enum::<api::SeqActivation>();
     resolver.push_struct::<api::PrereqAnimation>();
     resolver.push_struct::<api::PrereqObject>();
+    resolver.push_struct::<api::PrereqParent>();
     resolver.push_union::<api::ActivationPrereq>();
     // anim events
     resolver.push_struct::<api::AtNode>();

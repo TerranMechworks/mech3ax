@@ -1,4 +1,6 @@
-use mech3ax_api_types::{static_assert_size, ActivationPrereq, PrereqAnimation, PrereqObject};
+use mech3ax_api_types::{
+    static_assert_size, ActivationPrereq, PrereqAnimation, PrereqObject, PrereqParent,
+};
 use mech3ax_common::assert::{assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
@@ -67,7 +69,7 @@ fn read_activ_prereq_parent<R: Read>(
         prereq.pointer != 0,
         read.prev + 36
     )?;
-    Ok(ActivationPrereq::Parent(PrereqObject {
+    Ok(ActivationPrereq::Parent(PrereqParent {
         name,
         required,
         active: false,
@@ -160,6 +162,23 @@ fn write_activ_prereq_object<W: Write>(
     Ok(())
 }
 
+fn write_activ_prereq_parent<W: Write>(
+    write: &mut W,
+    parent: &PrereqParent,
+    prereq_type: ActivPrereqType,
+) -> Result<()> {
+    let mut name = [0; 32];
+    str_to_c_padded(&parent.name, &mut name);
+    write.write_u32(bool_c!(!parent.required))?;
+    write.write_u32(prereq_type as u32)?;
+    write.write_struct(&ActivPrereqObjC {
+        active: bool_c!(parent.active),
+        name,
+        pointer: parent.pointer,
+    })?;
+    Ok(())
+}
+
 pub fn write_activ_prereqs<W: Write>(
     write: &mut W,
     activ_prereqs: &[ActivationPrereq],
@@ -172,8 +191,8 @@ pub fn write_activ_prereqs<W: Write>(
             ActivationPrereq::Object(object) => {
                 write_activ_prereq_object(write, object, ActivPrereqType::Object)?
             }
-            ActivationPrereq::Parent(object) => {
-                write_activ_prereq_object(write, object, ActivPrereqType::Parent)?
+            ActivationPrereq::Parent(parent) => {
+                write_activ_prereq_parent(write, parent, ActivPrereqType::Parent)?
             }
         }
     }

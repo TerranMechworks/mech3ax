@@ -88,6 +88,11 @@ pub enum SeqActivation {
 }
 
 #[derive(Debug, Serialize, Deserialize, ValStruct)]
+pub struct PrereqAnimation {
+    pub name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, ValStruct)]
 pub struct PrereqObject {
     pub name: String,
     pub required: bool,
@@ -96,15 +101,17 @@ pub struct PrereqObject {
 }
 
 #[derive(Debug, Serialize, Deserialize, ValStruct)]
-pub struct PrereqAnimation {
+pub struct PrereqParent {
     pub name: String,
+    pub required: bool,
+    pub active: bool,
+    pub pointer: u32,
 }
 
-// TODO: this will be broken in C#?
 #[derive(Debug, Serialize, Deserialize, Union)]
 pub enum ActivationPrereq {
     Animation(PrereqAnimation),
-    Parent(PrereqObject),
+    Parent(PrereqParent),
     Object(PrereqObject),
 }
 
