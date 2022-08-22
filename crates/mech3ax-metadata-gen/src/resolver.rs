@@ -2,19 +2,21 @@ use crate::enums::Enum;
 use crate::options::Options;
 use crate::structs::Struct;
 use crate::unions::Union;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug)]
 pub struct TypeResolver {
-    enums: HashMap<String, Enum>,
-    structs: HashMap<String, Struct>,
-    unions: HashMap<String, Union>,
+    names: HashSet<&'static str>,
+    enums: HashMap<&'static str, Enum>,
+    structs: HashMap<&'static str, Struct>,
+    unions: HashMap<&'static str, Union>,
     factory_converters: Vec<(String, usize)>,
 }
 
 impl TypeResolver {
     pub fn new() -> Self {
         Self {
+            names: HashSet::new(),
             enums: HashMap::new(),
             structs: HashMap::new(),
             unions: HashMap::new(),
@@ -31,7 +33,10 @@ impl TypeResolver {
         E: mech3ax_metadata_types::Enum,
     {
         let c = Enum::new::<E>();
-        self.enums.insert(c.name.to_string(), c);
+        if !self.names.insert(c.name) {
+            panic!("Duplicate type name `{}`", c.name);
+        }
+        self.enums.insert(c.name, c);
     }
 
     pub fn push_struct<S>(&mut self)
@@ -39,26 +44,32 @@ impl TypeResolver {
         S: mech3ax_metadata_types::Struct,
     {
         let s = Struct::new::<S>(self);
-        self.structs.insert(s.name.to_string(), s);
+        if !self.names.insert(s.name) {
+            panic!("Duplicate type name `{}`", s.name);
+        }
+        self.structs.insert(s.name, s);
     }
 
-    pub fn push_union<S>(&mut self)
+    pub fn push_union<U>(&mut self)
     where
-        S: mech3ax_metadata_types::Union,
+        U: mech3ax_metadata_types::Union,
     {
-        let s = Union::new::<S>(self);
-        self.unions.insert(s.name.to_string(), s);
+        let u = Union::new::<U>(self);
+        if !self.names.insert(u.name) {
+            panic!("Duplicate type name `{}`", u.name);
+        }
+        self.unions.insert(u.name, u);
     }
 
-    pub fn lookup_enum<'a, 'b>(&'a self, name: &'b str) -> Option<&Enum> {
+    pub fn lookup_enum<'a, 'b>(&'a self, name: &'b str) -> Option<&'a Enum> {
         self.enums.get(name)
     }
 
-    pub fn lookup_struct<'a, 'b>(&'a self, name: &'b str) -> Option<&Struct> {
+    pub fn lookup_struct<'a, 'b>(&'a self, name: &'b str) -> Option<&'a Struct> {
         self.structs.get(name)
     }
 
-    pub fn lookup_union<'a, 'b>(&'a self, name: &'b str) -> Option<&Union> {
+    pub fn lookup_union<'a, 'b>(&'a self, name: &'b str) -> Option<&'a Union> {
         self.unions.get(name)
     }
 
