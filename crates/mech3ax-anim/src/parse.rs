@@ -1,9 +1,7 @@
 use super::anim_def::{read_anim_def, read_anim_def_zero, write_anim_def, write_anim_def_zero};
-use super::types::{AnimDef, AnimPtr};
-use ::serde::{Deserialize, Serialize};
+use super::types::AnimDef;
 use log::trace;
-use mech3ax_api_types::serde::base64;
-use mech3ax_api_types::static_assert_size;
+use mech3ax_api_types::{static_assert_size, AnimMetadata, AnimName, AnimPtr};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_partition, str_to_c_partition};
@@ -29,14 +27,6 @@ struct AnimNameC {
 }
 static_assert_size!(AnimNameC, 84);
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AnimName {
-    pub name: String,
-    #[serde(with = "base64")]
-    pub pad: Vec<u8>,
-    pub unknown: u32,
-}
-
 #[repr(C)]
 struct AnimInfoC {
     zero00: u32,
@@ -59,14 +49,6 @@ struct AnimInfoC {
     zero64: u32,
 }
 static_assert_size!(AnimInfoC, 68);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AnimMetadata {
-    pub base_ptr: u32,
-    pub world_ptr: u32,
-    pub anim_names: Vec<AnimName>,
-    pub anim_ptrs: Vec<AnimPtr>,
-}
 
 fn read_anim_header<R: Read>(read: &mut CountingReader<R>) -> Result<Vec<AnimName>> {
     trace!("Reading anim header at {}", read.offset);

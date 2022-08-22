@@ -3,7 +3,7 @@ use super::support::*;
 use super::types::*;
 use crate::sequence_event::{read_events, size_events, write_events, EventData};
 use log::trace;
-use mech3ax_api_types::{static_assert_size, Range, ReprSize as _};
+use mech3ax_api_types::{static_assert_size, AnimPtr, Range, ReprSize as _};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{

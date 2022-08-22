@@ -7,5 +7,5 @@ mod sequence_event;
 mod support;
 mod types;
 
-pub use parse::{read_anim, write_anim, AnimMetadata};
+pub use parse::{read_anim, write_anim};
 pub use types::AnimDef;
