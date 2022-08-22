@@ -1,4 +1,4 @@
-use crate::AnimDef;
+use mech3ax_api_types::AnimDef;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::Result;
 use std::io::{Read, Write};
@@ -33,7 +33,8 @@ mod sound_node;
 mod types;
 mod utils;
 
-pub use parse::{read_events, size_events, write_events, Event, EventData, StartOffset};
+use object_motion_si_script::object_motion_si_script_size;
+pub use parse::{read_events, size_events, write_events};
 
 pub trait ScriptObject: Sized {
     const INDEX: u8;

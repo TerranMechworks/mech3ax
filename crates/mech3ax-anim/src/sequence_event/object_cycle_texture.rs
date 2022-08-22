@@ -1,9 +1,8 @@
 use super::ScriptObject;
-use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use crate::types::AnimDefLookup as _;
+use mech3ax_api_types::{static_assert_size, AnimDef, ObjectCycleTexture, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
-use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -14,12 +13,6 @@ struct ObjectCycleTextureC {
     reset: u16,
 }
 static_assert_size!(ObjectCycleTextureC, 8);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ObjectCycleTexture {
-    pub node: String,
-    pub reset: u16,
-}
 
 impl ScriptObject for ObjectCycleTexture {
     const INDEX: u8 = 17;

@@ -1,31 +1,9 @@
 use super::delta::{dec_f32, delta};
 use super::ScriptObject;
-use crate::AnimDef;
-use ::serde::{Deserialize, Serialize};
-use mech3ax_api_types::serde::bool_false;
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{static_assert_size, AnimDef, FrameBufferEffectColor, ReprSize as _, Rgba};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy)]
-#[repr(C)]
-pub struct Rgba {
-    pub r: f32,
-    pub g: f32,
-    pub b: f32,
-    pub a: f32,
-}
-static_assert_size!(Rgba, 16);
-
-impl Rgba {
-    pub const DEFAULT: Self = Self {
-        r: 0.0,
-        g: 0.0,
-        b: 0.0,
-        a: 0.0,
-    };
-}
 
 #[repr(C)]
 struct FbFxColorFromToC {
@@ -44,16 +22,6 @@ struct FbFxColorFromToC {
     runtime: f32,
 }
 static_assert_size!(FbFxColorFromToC, 52);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct FrameBufferEffectColor {
-    pub from: Rgba,
-    pub to: Rgba,
-    pub runtime: f32,
-    // this value can be safely ignored, but is required for binary accuracy
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub fudge_alpha: bool,
-}
 
 impl ScriptObject for FrameBufferEffectColor {
     const INDEX: u8 = 36;

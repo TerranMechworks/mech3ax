@@ -1,11 +1,10 @@
 use super::ScriptObject;
-use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _};
+use crate::types::AnimDefLookup as _;
+use mech3ax_api_types::{static_assert_size, AnimDef, Color, LightAnimation, Range, ReprSize as _};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
-use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -27,14 +26,6 @@ struct LightAnimationC {
     runtime: f32,
 }
 static_assert_size!(LightAnimationC, 100);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct LightAnimation {
-    pub name: String,
-    pub range: Range,
-    pub color: Color,
-    pub runtime: f32,
-}
 
 impl ScriptObject for LightAnimation {
     const INDEX: u8 = 5;

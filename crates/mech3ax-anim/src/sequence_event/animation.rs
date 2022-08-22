@@ -1,11 +1,11 @@
 use super::ScriptObject;
-use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{
+    static_assert_size, AnimDef, InvalidateAnimation, ReprSize as _, ResetAnimation, StopAnimation,
+};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
-use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -34,11 +34,6 @@ fn write_animation<W: Write>(write: &mut W, name: &str) -> Result<()> {
     Ok(())
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct StopAnimation {
-    pub name: String,
-}
-
 impl ScriptObject for StopAnimation {
     const INDEX: u8 = 25;
     const SIZE: u32 = AnimationC::SIZE;
@@ -54,11 +49,6 @@ impl ScriptObject for StopAnimation {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ResetAnimation {
-    pub name: String,
-}
-
 impl ScriptObject for ResetAnimation {
     const INDEX: u8 = 26;
     const SIZE: u32 = AnimationC::SIZE;
@@ -72,11 +62,6 @@ impl ScriptObject for ResetAnimation {
     fn write<W: Write>(&self, write: &mut W, _anim_def: &AnimDef) -> Result<()> {
         write_animation(write, &self.name)
     }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct InvalidateAnimation {
-    pub name: String,
 }
 
 impl ScriptObject for InvalidateAnimation {

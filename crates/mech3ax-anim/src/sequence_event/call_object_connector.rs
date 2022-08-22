@@ -1,12 +1,11 @@
 use super::types::INPUT_NODE;
 use super::ScriptObject;
-use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
+use crate::types::AnimDefLookup as _;
+use mech3ax_api_types::{static_assert_size, AnimDef, CallObjectConnector, ReprSize as _, Vec3};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
-use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 // this flag isn't the same as OBJECT_CONNECTOR, and unfortunately,
@@ -27,14 +26,6 @@ struct CallObjectConnectorC {
     to_pos: Vec3,
 }
 static_assert_size!(CallObjectConnectorC, 68);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CallObjectConnector {
-    pub node: String,
-    pub from_node: String,
-    pub to_node: String,
-    pub to_pos: Vec3,
-}
 
 impl ScriptObject for CallObjectConnector {
     const INDEX: u8 = 19;

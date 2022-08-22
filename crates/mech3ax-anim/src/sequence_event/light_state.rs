@@ -1,14 +1,15 @@
-use super::types::{AtNode, INPUT_NODE};
+use super::types::INPUT_NODE;
 use super::utils::assert_color;
 use super::ScriptObject;
-use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _, Vec3};
+use crate::types::AnimDefLookup as _;
+use mech3ax_api_types::{
+    static_assert_size, AnimDef, AtNode, Color, LightState, Range, ReprSize as _, Vec3,
+};
 use mech3ax_common::assert::{assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::light::LightFlags;
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, bool_c, Result};
-use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 const INPUT_NODE_INDEX: u32 = -200i32 as u32;
@@ -33,30 +34,6 @@ struct LightStateC {
     diffuse: f32,      // 116
 }
 static_assert_size!(LightStateC, 120);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct LightState {
-    pub name: String,
-    pub active_state: bool,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub directional: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub saturated: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub subdivide: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub static_: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub at_node: Option<AtNode>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub range: Option<Range>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub color: Option<Color>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub ambient: Option<f32>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub diffuse: Option<f32>,
-}
 
 impl ScriptObject for LightState {
     const INDEX: u8 = 4;

@@ -1,12 +1,10 @@
-use super::types::AtNode;
 use super::ScriptObject;
-use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
+use crate::types::AnimDefLookup as _;
+use mech3ax_api_types::{static_assert_size, AnimDef, AtNode, ReprSize as _, SoundNode, Vec3};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
-use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -19,14 +17,6 @@ struct SoundNodeC {
     translation: Vec3,        // 48
 }
 static_assert_size!(SoundNodeC, 60);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SoundNode {
-    pub name: String,
-    pub active_state: bool,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub at_node: Option<AtNode>,
-}
 
 impl ScriptObject for SoundNode {
     const INDEX: u8 = 2;

@@ -1,11 +1,10 @@
 use super::types::INPUT_NODE;
 use super::ScriptObject;
-use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
+use crate::types::AnimDefLookup as _;
+use mech3ax_api_types::{static_assert_size, AnimDef, ObjectConnector, ReprSize as _, Vec3};
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
-use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -42,21 +41,6 @@ bitflags::bitflags! {
         const TO_INPUT_POS = 1 << 9;
         const MAX_LENGTH = 1 << 15;
     }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ObjectConnector {
-    pub node: String,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub from_node: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub to_node: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub from_pos: Option<Vec3>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub to_pos: Option<Vec3>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub max_length: Option<f32>,
 }
 
 impl ScriptObject for ObjectConnector {

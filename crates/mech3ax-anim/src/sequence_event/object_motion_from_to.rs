@@ -1,10 +1,11 @@
 use super::ScriptObject;
-use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
+use crate::types::AnimDefLookup as _;
+use mech3ax_api_types::{
+    static_assert_size, AnimDef, FloatFromTo, ObjectMotionFromTo, ReprSize as _, Vec3, Vec3FromTo,
+};
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
-use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 bitflags::bitflags! {
@@ -35,34 +36,6 @@ struct ObjectMotionFromToC {
     run_time: f32,         // 128
 }
 static_assert_size!(ObjectMotionFromToC, 132);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct FloatFromTo {
-    pub from: f32,
-    pub to: f32,
-    pub delta: f32,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Vec3FromTo {
-    pub from: Vec3,
-    pub to: Vec3,
-    pub delta: Vec3,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ObjectMotionFromTo {
-    pub node: String,
-    pub run_time: f32,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub morph: Option<FloatFromTo>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub translate: Option<Vec3FromTo>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub rotate: Option<Vec3FromTo>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub scale: Option<Vec3FromTo>,
-}
 
 impl ScriptObject for ObjectMotionFromTo {
     const INDEX: u8 = 11;

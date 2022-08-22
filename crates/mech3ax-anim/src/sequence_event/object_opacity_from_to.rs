@@ -1,9 +1,7 @@
 use super::delta::{dec_f32, delta};
 use super::ScriptObject;
-use crate::AnimDef;
-use ::serde::{Deserialize, Serialize};
-use mech3ax_api_types::serde::bool_false;
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use crate::types::AnimDefLookup as _;
+use mech3ax_api_types::{static_assert_size, AnimDef, ObjectOpacityFromTo, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -19,17 +17,6 @@ struct ObjectOpacityFromToC {
     runtime: f32,
 }
 static_assert_size!(ObjectOpacityFromToC, 24);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ObjectOpacityFromTo {
-    pub node: String,
-    pub opacity_from: (f32, i16),
-    pub opacity_to: (f32, i16),
-    pub runtime: f32,
-    // this value can be safely ignored, but is required for binary accuracy
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub fudge: bool,
-}
 
 impl ScriptObject for ObjectOpacityFromTo {
     const INDEX: u8 = 14;

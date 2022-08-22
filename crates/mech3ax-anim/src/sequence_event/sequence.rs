@@ -1,11 +1,9 @@
 use super::ScriptObject;
-use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{static_assert_size, AnimDef, CallSequence, ReprSize as _, StopSequence};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
-use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -34,11 +32,6 @@ fn write_sequence<W: Write>(write: &mut W, name: &str) -> Result<()> {
     Ok(())
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CallSequence {
-    pub name: String,
-}
-
 impl ScriptObject for CallSequence {
     const INDEX: u8 = 22;
     const SIZE: u32 = SequenceC::SIZE;
@@ -52,11 +45,6 @@ impl ScriptObject for CallSequence {
     fn write<W: Write>(&self, write: &mut W, _anim_def: &AnimDef) -> Result<()> {
         write_sequence(write, &self.name)
     }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct StopSequence {
-    pub name: String,
 }
 
 impl ScriptObject for StopSequence {

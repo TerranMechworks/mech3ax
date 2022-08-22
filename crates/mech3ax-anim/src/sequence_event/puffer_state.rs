@@ -1,12 +1,13 @@
-use super::types::AtNode;
 use super::ScriptObject;
-use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, Range, ReprSize as _, Vec3};
+use crate::types::AnimDefLookup as _;
+use mech3ax_api_types::{
+    static_assert_size, AnimDef, AtNode, Interval, IntervalType, PufferState, Range, ReprSize as _,
+    Vec3,
+};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
-use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -76,67 +77,6 @@ bitflags::bitflags! {
         const FRICTION = 1 << 17;
         // there are more possible values (that are never set in the file)
     }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum IntervalType {
-    Unset,
-    Time,
-    Distance,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Interval {
-    pub interval_type: IntervalType,
-    pub interval_value: f32,
-    pub flag: bool,
-}
-
-pub type PufferStateTextures = (
-    Option<String>,
-    Option<String>,
-    Option<String>,
-    Option<String>,
-    Option<String>,
-    Option<String>,
-);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct PufferState {
-    pub name: String,
-    pub state: bool,
-    pub translate: bool,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub active_state: Option<i32>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub at_node: Option<AtNode>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub local_velocity: Option<Vec3>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub world_velocity: Option<Vec3>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub min_random_velocity: Option<Vec3>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub max_random_velocity: Option<Vec3>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub world_acceleration: Option<Vec3>,
-    pub interval: Interval,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub size_range: Option<Range>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub lifetime_range: Option<Range>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub start_age_range: Option<Range>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub deviation_distance: Option<f32>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub fade_range: Option<Range>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub friction: Option<f32>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub textures: Option<PufferStateTextures>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub growth_factor: Option<f32>,
 }
 
 impl ScriptObject for PufferState {

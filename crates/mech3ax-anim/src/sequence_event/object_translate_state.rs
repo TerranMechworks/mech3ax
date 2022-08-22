@@ -1,10 +1,9 @@
 use super::types::INPUT_NODE;
 use super::ScriptObject;
-use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
+use crate::types::AnimDefLookup as _;
+use mech3ax_api_types::{static_assert_size, AnimDef, ObjectTranslateState, ReprSize as _, Vec3};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
-use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 const INPUT_NODE_INDEX: u16 = -200i16 as u16;
@@ -17,14 +16,6 @@ struct ObjectTranslateStateC {
     at_node_index: u16, // 18
 }
 static_assert_size!(ObjectTranslateStateC, 20);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ObjectTranslateState {
-    pub node: String,
-    pub translate: Vec3,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub at_node: Option<String>,
-}
 
 impl ScriptObject for ObjectTranslateState {
     const INDEX: u8 = 7;

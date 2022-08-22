@@ -1,9 +1,10 @@
 use super::ScriptObject;
-use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
+use crate::types::AnimDefLookup as _;
+use mech3ax_api_types::{
+    static_assert_size, AnimDef, ObjectRotateState, ReprSize as _, RotateState, Vec3,
+};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
-use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 const PI: f32 = std::f32::consts::PI;
@@ -17,19 +18,6 @@ struct ObjectRotateStateC {
     at_node_index: u16, // 18
 }
 static_assert_size!(ObjectRotateStateC, 20);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum RotateState {
-    Absolute(Vec3),
-    AtNodeXYZ,
-    AtNodeMatrix,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ObjectRotateState {
-    pub node: String,
-    pub rotate: RotateState,
-}
 
 impl ScriptObject for ObjectRotateState {
     const INDEX: u8 = 9;

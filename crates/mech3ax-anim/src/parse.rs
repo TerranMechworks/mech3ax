@@ -1,7 +1,6 @@
 use super::anim_def::{read_anim_def, read_anim_def_zero, write_anim_def, write_anim_def_zero};
-use super::types::AnimDef;
 use log::trace;
-use mech3ax_api_types::{static_assert_size, AnimMetadata, AnimName, AnimPtr};
+use mech3ax_api_types::{static_assert_size, AnimDef, AnimMetadata, AnimName, AnimPtr};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_partition, str_to_c_partition};

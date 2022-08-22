@@ -1,9 +1,8 @@
 use super::ScriptObject;
-use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use crate::types::AnimDefLookup as _;
+use mech3ax_api_types::{static_assert_size, AnimDef, ObjectAddChild, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
-use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -12,13 +11,6 @@ struct ObjectAddChildC {
     child_index: u16,
 }
 static_assert_size!(ObjectAddChildC, 4);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ObjectAddChild {
-    // in the reader zbd, both values are fused into a list (PARENT_CHILD)
-    pub parent: String,
-    pub child: String,
-}
 
 impl ScriptObject for ObjectAddChild {
     const INDEX: u8 = 15;

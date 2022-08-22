@@ -1,5 +1,4 @@
-use super::types::*;
-use mech3ax_api_types::static_assert_size;
+use mech3ax_api_types::{static_assert_size, ActivationPrereq, PrereqObject};
 use mech3ax_common::assert::{assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};

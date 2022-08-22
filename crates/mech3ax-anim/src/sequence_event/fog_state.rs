@@ -1,11 +1,11 @@
 use super::utils::assert_color;
 use super::ScriptObject;
-use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _};
+use mech3ax_api_types::{
+    static_assert_size, AnimDef, Color, FogState, FogType, Range, ReprSize as _,
+};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::str_to_c_padded;
 use mech3ax_common::{assert_that, Result};
-use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 const DEFAULT_FOG_NAME: &str = "default_fog_name";
@@ -33,23 +33,6 @@ struct FogStateC {
     range: Range,    // 60
 }
 static_assert_size!(FogStateC, 68);
-
-#[derive(Debug, Serialize, Deserialize)]
-#[repr(u32)]
-pub enum FogType {
-    Off = 0,
-    Linear = 1,
-    Exponential = 2,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct FogState {
-    pub name: String,
-    pub fog_type: FogType,
-    pub color: Color,
-    pub altitude: Range,
-    pub range: Range,
-}
 
 impl ScriptObject for FogState {
     const INDEX: u8 = 28;

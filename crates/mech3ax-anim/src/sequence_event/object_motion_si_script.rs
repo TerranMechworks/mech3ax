@@ -1,8 +1,9 @@
 use super::ScriptObject;
-use crate::AnimDef;
-use ::serde::{Deserialize, Serialize};
-use mech3ax_api_types::serde::base64;
-use mech3ax_api_types::{static_assert_size, Quaternion, ReprSize as _, Vec3};
+use crate::types::AnimDefLookup as _;
+use mech3ax_api_types::{
+    static_assert_size, AnimDef, ObjectMotionSiFrame, ObjectMotionSiScript, Quaternion,
+    ReprSize as _, RotateData, ScaleData, TranslateData, Vec3,
+};
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::bytes_to_c;
@@ -35,26 +36,12 @@ struct TranslateDataC {
 }
 static_assert_size!(TranslateDataC, 76);
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct TranslateData {
-    pub value: Vec3,
-    #[serde(with = "base64")]
-    pub unk: Vec<u8>,
-}
-
 #[repr(C)]
 struct RotateDataC {
     value: Quaternion,
     unk: [u8; 60],
 }
 static_assert_size!(RotateDataC, 76);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RotateData {
-    pub value: Quaternion,
-    #[serde(with = "base64")]
-    pub unk: Vec<u8>,
-}
 
 #[repr(C)]
 struct ScaleDataC {
@@ -63,37 +50,12 @@ struct ScaleDataC {
 }
 static_assert_size!(ScaleDataC, 76);
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ScaleData {
-    pub value: Vec3,
-    #[serde(with = "base64")]
-    pub unk: Vec<u8>,
-}
-
 bitflags::bitflags! {
     pub struct FrameFlags: u32 {
         const TRANSLATE = 1 << 0;
         const ROTATE = 1 << 1;
         const SCALE = 1 << 2;
     }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ObjectMotionSiFrame {
-    pub start_time: f32,
-    pub end_time: f32,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub translation: Option<TranslateData>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub rotation: Option<RotateData>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub scale: Option<ScaleData>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ObjectMotionSiScript {
-    pub node: String,
-    pub frames: Vec<ObjectMotionSiFrame>,
 }
 
 fn read_frame<R: Read>(read: &mut CountingReader<R>) -> Result<ObjectMotionSiFrame> {
@@ -262,20 +224,18 @@ impl ScriptObject for ObjectMotionSiScript {
     }
 }
 
-impl ObjectMotionSiScript {
-    pub fn size(&self) -> u32 {
-        let mut size = ScriptHeaderC::SIZE + self.frames.len() as u32 * FrameC::SIZE;
-        for frame in &self.frames {
-            if frame.translation.is_some() {
-                size += TranslateDataC::SIZE;
-            }
-            if frame.rotation.is_some() {
-                size += RotateDataC::SIZE;
-            }
-            if frame.scale.is_some() {
-                size += ScaleDataC::SIZE;
-            }
+pub fn object_motion_si_script_size(script: &ObjectMotionSiScript) -> u32 {
+    let mut size = ScriptHeaderC::SIZE + script.frames.len() as u32 * FrameC::SIZE;
+    for frame in &script.frames {
+        if frame.translation.is_some() {
+            size += TranslateDataC::SIZE;
         }
-        size
+        if frame.rotation.is_some() {
+            size += RotateDataC::SIZE;
+        }
+        if frame.scale.is_some() {
+            size += ScaleDataC::SIZE;
+        }
     }
+    size
 }

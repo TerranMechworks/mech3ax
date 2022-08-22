@@ -1,12 +1,12 @@
 use super::ScriptObject;
-use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{
+    static_assert_size, AnimDef, Callback, Else, ElseIf, EndIf, If, Loop, ReprSize as _,
+};
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, bool_c, Result};
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
-use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -15,12 +15,6 @@ struct LoopC {
     loop_count: i32,
 }
 static_assert_size!(LoopC, 8);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Loop {
-    pub start: i32,
-    pub loop_count: i32,
-}
 
 impl ScriptObject for Loop {
     const INDEX: u8 = 30;
@@ -62,15 +56,6 @@ enum Condition {
     AnimationLod = 4,
     HwRender = 32,
     PlayerFirstPerson = 64,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum If {
-    RandomWeight(f32),
-    PlayerRange(f32),
-    AnimationLod(u32),
-    HwRender(bool),
-    PlayerFirstPerson(bool),
 }
 
 impl ScriptObject for If {
@@ -127,15 +112,6 @@ impl ScriptObject for If {
         })?;
         Ok(())
     }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum ElseIf {
-    RandomWeight(f32),
-    PlayerRange(f32),
-    AnimationLod(u32),
-    HwRender(bool),
-    PlayerFirstPerson(bool),
 }
 
 impl ScriptObject for ElseIf {
@@ -198,9 +174,6 @@ impl ScriptObject for ElseIf {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Else {}
-
 impl ScriptObject for Else {
     const INDEX: u8 = 32;
     const SIZE: u32 = 0;
@@ -215,9 +188,6 @@ impl ScriptObject for Else {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct EndIf {}
-
 impl ScriptObject for EndIf {
     const INDEX: u8 = 34;
     const SIZE: u32 = 0;
@@ -230,11 +200,6 @@ impl ScriptObject for EndIf {
     fn write<W: Write>(&self, _write: &mut W, _anim_def: &AnimDef) -> Result<()> {
         Ok(())
     }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Callback {
-    pub value: u32,
 }
 
 impl ScriptObject for Callback {

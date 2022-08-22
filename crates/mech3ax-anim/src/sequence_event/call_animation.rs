@@ -1,12 +1,13 @@
 use super::types::INPUT_NODE;
 use super::ScriptObject;
-use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
+use crate::types::AnimDefLookup as _;
+use mech3ax_api_types::{
+    static_assert_size, AnimDef, CallAnimation, Parameters, ReprSize as _, Vec3,
+};
 use mech3ax_common::assert::{assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
-use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 const INPUT_NODE_INDEX: u32 = 65336;
@@ -38,22 +39,6 @@ bitflags::bitflags! {
         // WAIT_FOR_COMPLETION is set
         const WAIT_FOR = 1 << 4;
     }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum Parameters {
-    AtNode(String, Option<Vec3>, Option<Vec3>),
-    WithNode(String, Option<Vec3>),
-    TargetNode(String),
-    None,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CallAnimation {
-    pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub wait_for_completion: Option<u16>,
-    pub parameters: Parameters,
 }
 
 impl ScriptObject for CallAnimation {

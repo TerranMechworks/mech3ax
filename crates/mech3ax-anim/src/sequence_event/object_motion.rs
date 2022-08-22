@@ -1,11 +1,13 @@
 use super::ScriptObject;
-use crate::AnimDef;
-use mech3ax_api_types::{static_assert_size, Quaternion, ReprSize as _, Vec3};
+use crate::types::AnimDefLookup as _;
+use mech3ax_api_types::{
+    static_assert_size, AnimDef, BounceSound, ForwardRotation, Gravity, GravityMode, ObjectMotion,
+    Quaternion, ReprSize as _, Vec3,
+};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
-use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -81,57 +83,6 @@ bitflags::bitflags! {
         const GRAVITY_COMPLEX = 1 << 13; // 8192
         const GRAVITY_NO_ALTITUDE = 1 << 14; // 16384
     }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum GravityMode {
-    Local,
-    Complex,
-    NoAltitude,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Gravity {
-    pub mode: GravityMode,
-    pub value: f32,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum ForwardRotation {
-    Time(f32, f32),
-    Distance(f32),
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct BounceSound {
-    pub name: String,
-    pub volume: f32,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ObjectMotion {
-    pub node: String,
-    pub impact_force: bool,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub gravity: Option<Gravity>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub translation_range_min: Option<Quaternion>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub translation_range_max: Option<Quaternion>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub translation: Option<(Vec3, Vec3, Vec3)>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub forward_rotation: Option<ForwardRotation>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub xyz_rotation: Option<(Vec3, Vec3)>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub scale: Option<(Vec3, Vec3)>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub bounce_sequence: Option<(Option<String>, Option<String>, Option<String>)>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub bounce_sound: Option<BounceSound>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub runtime: Option<f32>,
 }
 
 impl ScriptObject for ObjectMotion {
