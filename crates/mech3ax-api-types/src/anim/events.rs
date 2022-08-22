@@ -643,8 +643,14 @@ pub enum StartOffset {
     Event = 3,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, ValStruct)]
+pub struct EventStart {
+    pub offset: StartOffset,
+    pub time: f32,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Event {
     pub data: EventData,
-    pub start: Option<(StartOffset, f32)>,
+    pub start: Option<EventStart>,
 }

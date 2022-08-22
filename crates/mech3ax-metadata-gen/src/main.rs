@@ -148,8 +148,9 @@ fn main() {
     resolver.push_struct::<api::StopSequence>();
     resolver.push_struct::<api::SoundNode>();
     resolver.push_struct::<api::Sound>();
-    // resolver.push_struct::<api::EventData>();
+    // resolver.push_union::<api::EventData>();
     resolver.push_enum::<api::StartOffset>();
+    resolver.push_struct::<api::EventStart>();
     // resolver.push_struct::<api::Event>();
     // anim mod
     // resolver.push_struct::<api::SeqDef>();

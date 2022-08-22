@@ -2,12 +2,12 @@ use super::*;
 use log::trace;
 use mech3ax_api_types::{
     static_assert_size, AnimDef, CallAnimation, CallObjectConnector, CallSequence, Callback,
-    DetonateWeapon, Else, ElseIf, EndIf, Event, EventData, FogState, FrameBufferEffectColor, If,
-    InvalidateAnimation, LightAnimation, LightState, Loop, ObjectActiveState, ObjectAddChild,
-    ObjectConnector, ObjectCycleTexture, ObjectMotion, ObjectMotionFromTo, ObjectMotionSiScript,
-    ObjectOpacityFromTo, ObjectOpacityState, ObjectRotateState, ObjectScaleState,
-    ObjectTranslateState, PufferState, ReprSize as _, ResetAnimation, Sound, SoundNode,
-    StartOffset, StopAnimation, StopSequence,
+    DetonateWeapon, Else, ElseIf, EndIf, Event, EventData, EventStart, FogState,
+    FrameBufferEffectColor, If, InvalidateAnimation, LightAnimation, LightState, Loop,
+    ObjectActiveState, ObjectAddChild, ObjectConnector, ObjectCycleTexture, ObjectMotion,
+    ObjectMotionFromTo, ObjectMotionSiScript, ObjectOpacityFromTo, ObjectOpacityState,
+    ObjectRotateState, ObjectScaleState, ObjectTranslateState, PufferState, ReprSize as _,
+    ResetAnimation, Sound, SoundNode, StartOffset, StopAnimation, StopSequence,
 };
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
@@ -52,7 +52,10 @@ pub fn read_events<R: Read>(
         let start = if start_offset == StartOffset::Animation && header.start_time == 0.0 {
             None
         } else {
-            Some((start_offset, header.start_time))
+            Some(EventStart {
+                offset: start_offset,
+                time: header.start_time,
+            })
         };
 
         let actual_size = header.size - EventHeaderC::SIZE;
@@ -166,13 +169,9 @@ pub fn read_events<R: Read>(
 pub fn write_events<W: Write>(write: &mut W, anim_def: &AnimDef, events: &[Event]) -> Result<()> {
     for event in events {
         let event_type = event_type(event);
-        let (start_offset, start_time) = match &event.start {
+        let (start_offset, start_time) = match event.start.as_ref() {
             None => (StartOffset::Animation as u8, 0.0),
-            Some((StartOffset::Animation, start_time)) => {
-                (StartOffset::Animation as u8, *start_time)
-            }
-            Some((StartOffset::Event, start_time)) => (StartOffset::Event as u8, *start_time),
-            Some((StartOffset::Sequence, start_time)) => (StartOffset::Sequence as u8, *start_time),
+            Some(event_start) => (event_start.offset as u8, event_start.time),
         };
         let size = size_event(event);
         write.write_struct(&EventHeaderC {
