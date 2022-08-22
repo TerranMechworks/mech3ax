@@ -95,9 +95,14 @@ pub struct PrereqObject {
     pub pointer: u32,
 }
 
+#[derive(Debug, Serialize, Deserialize, ValStruct)]
+pub struct PrereqAnimation {
+    pub name: String,
+}
+
 #[derive(Debug, Serialize, Deserialize, Union)]
 pub enum ActivationPrereq {
-    Animation(String),
+    Animation(PrereqAnimation),
     Parent(PrereqObject),
     Object(PrereqObject),
 }

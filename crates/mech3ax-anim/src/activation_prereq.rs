@@ -1,4 +1,4 @@
-use mech3ax_api_types::{static_assert_size, ActivationPrereq, PrereqObject};
+use mech3ax_api_types::{static_assert_size, ActivationPrereq, PrereqAnimation, PrereqObject};
 use mech3ax_common::assert::{assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
@@ -46,7 +46,7 @@ fn read_activ_prereq_anim<R: Read>(read: &mut CountingReader<R>) -> Result<Activ
         prereq.zero36 == 0,
         read.prev + 36
     )?;
-    Ok(ActivationPrereq::Animation(name))
+    Ok(ActivationPrereq::Animation(PrereqAnimation { name }))
 }
 
 fn read_activ_prereq_parent<R: Read>(
@@ -166,7 +166,9 @@ pub fn write_activ_prereqs<W: Write>(
 ) -> Result<()> {
     for activ_prereq in activ_prereqs {
         match activ_prereq {
-            ActivationPrereq::Animation(name) => write_activ_prereq_anim(write, name)?,
+            ActivationPrereq::Animation(PrereqAnimation { name }) => {
+                write_activ_prereq_anim(write, name)?
+            }
             ActivationPrereq::Object(object) => {
                 write_activ_prereq_object(write, object, ActivPrereqType::Object)?
             }

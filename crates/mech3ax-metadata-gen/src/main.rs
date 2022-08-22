@@ -78,6 +78,7 @@ fn main() {
     resolver.push_struct::<api::NamePtr>();
     resolver.push_struct::<api::NamePtrFlags>();
     resolver.push_enum::<api::SeqActivation>();
+    resolver.push_struct::<api::PrereqAnimation>();
     resolver.push_struct::<api::PrereqObject>();
     resolver.push_union::<api::ActivationPrereq>();
     // anim events
