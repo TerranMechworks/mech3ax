@@ -308,6 +308,13 @@ pub enum ForwardRotation {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, RefStruct)]
+pub struct BounceSequence {
+    pub seq_name0: Option<String>,
+    pub seq_name1: Option<String>,
+    pub seq_name2: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, RefStruct)]
 pub struct BounceSound {
     pub name: String,
     pub volume: f32,
@@ -332,7 +339,7 @@ pub struct ObjectMotion {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub scale: Option<(Vec3, Vec3)>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub bounce_sequence: Option<(Option<String>, Option<String>, Option<String>)>,
+    pub bounce_sequence: Option<BounceSequence>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub bounce_sound: Option<BounceSound>,
     #[serde(skip_serializing_if = "Option::is_none", default)]

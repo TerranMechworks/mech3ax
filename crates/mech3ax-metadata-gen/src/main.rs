@@ -122,6 +122,7 @@ fn main() {
     resolver.push_struct::<api::ForwardRotationTime>();
     resolver.push_struct::<api::ForwardRotationDistance>();
     resolver.push_union::<api::ForwardRotation>();
+    resolver.push_struct::<api::BounceSequence>();
     resolver.push_struct::<api::BounceSound>();
     // resolver.push_struct::<api::ObjectMotion>();
     // resolver.push_struct::<api::ObjectOpacityFromTo>();

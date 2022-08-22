@@ -1,8 +1,9 @@
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
 use mech3ax_api_types::{
-    static_assert_size, AnimDef, BounceSound, ForwardRotation, ForwardRotationDistance,
-    ForwardRotationTime, Gravity, GravityMode, ObjectMotion, Quaternion, ReprSize as _, Vec3,
+    static_assert_size, AnimDef, BounceSequence, BounceSound, ForwardRotation,
+    ForwardRotationDistance, ForwardRotationTime, Gravity, GravityMode, ObjectMotion, Quaternion,
+    ReprSize as _, Vec3,
 };
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
@@ -348,7 +349,7 @@ impl ScriptObject for ObjectMotion {
         )?;
 
         let bounce_sequence = if flags.contains(ObjectMotionFlags::BOUNCE_SEQ) {
-            let bounce_seq0 = if object_motion.bounce_seq0_name[0] != 0 {
+            let seq_name0 = if object_motion.bounce_seq0_name[0] != 0 {
                 let bounce_seq0 =
                     assert_utf8("object motion bounce seq 0 name", read.prev + 196, || {
                         str_from_c_padded(&object_motion.bounce_seq0_name)
@@ -362,7 +363,7 @@ impl ScriptObject for ObjectMotion {
                 return Err(AssertionError(msg).into());
             };
 
-            let bounce_seq1 = if object_motion.bounce_seq1_name[0] != 0 {
+            let seq_name1 = if object_motion.bounce_seq1_name[0] != 0 {
                 let bounce_seq1 =
                     assert_utf8("object motion bounce seq 1 name", read.prev + 236, || {
                         str_from_c_padded(&object_motion.bounce_seq1_name)
@@ -372,7 +373,7 @@ impl ScriptObject for ObjectMotion {
                 None
             };
 
-            let bounce_seq2 = if object_motion.bounce_seq2_name[0] != 0 {
+            let seq_name2 = if object_motion.bounce_seq2_name[0] != 0 {
                 let bounce_seq2 =
                     assert_utf8("object motion bounce seq 2 name", read.prev + 276, || {
                         str_from_c_padded(&object_motion.bounce_seq2_name)
@@ -382,7 +383,11 @@ impl ScriptObject for ObjectMotion {
                 None
             };
 
-            Some((bounce_seq0, bounce_seq1, bounce_seq2))
+            Some(BounceSequence {
+                seq_name0,
+                seq_name1,
+                seq_name2,
+            })
         } else {
             assert_all_zero(
                 "object motion bounce seq 0",
@@ -553,16 +558,16 @@ impl ScriptObject for ObjectMotion {
         let mut bounce_seq1_name = [0; 32];
         let mut bounce_seq2_name = [0; 32];
 
-        if let Some((bounce_seq0, bounce_seq1, bounce_seq2)) = &self.bounce_sequence {
+        if let Some(bounce_seq) = &self.bounce_sequence {
             flags |= ObjectMotionFlags::BOUNCE_SEQ;
 
-            if let Some(name) = bounce_seq0.as_ref() {
+            if let Some(name) = bounce_seq.seq_name0.as_ref() {
                 str_to_c_padded(name, &mut bounce_seq0_name);
             }
-            if let Some(name) = bounce_seq1.as_ref() {
+            if let Some(name) = bounce_seq.seq_name1.as_ref() {
                 str_to_c_padded(name, &mut bounce_seq1_name);
             }
-            if let Some(name) = bounce_seq2.as_ref() {
+            if let Some(name) = bounce_seq.seq_name2.as_ref() {
                 str_to_c_padded(name, &mut bounce_seq2_name);
             }
         }
