@@ -154,7 +154,11 @@ impl Field {
     ) -> Self {
         let TypeInfo { name, ty, default } = ti;
         let json_name = name.to_string();
-        let name = name.to_lower_camel_case();
+        let name = match *name {
+            // TODO: add more reserved keywords
+            "static_" => "static_".to_string(), // this breaks heck
+            other => other.to_lower_camel_case(),
+        };
 
         let (ty, generics, data_type) = complex_type(ty, parent_generics, resolver);
         let null_check = match data_type {
