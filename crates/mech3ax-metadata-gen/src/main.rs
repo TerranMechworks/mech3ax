@@ -93,8 +93,13 @@ fn main() {
     resolver.push_struct::<api::CallAnimation>();
     resolver.push_struct::<api::CallObjectConnector>();
     resolver.push_struct::<api::Loop>();
-    // resolver.push_struct::<api::If>();
-    // resolver.push_struct::<api::ElseIf>();
+    resolver.push_struct::<api::RandomWeightCond>();
+    resolver.push_struct::<api::PlayerRangeCond>();
+    resolver.push_struct::<api::AnimationLodCond>();
+    resolver.push_struct::<api::HwRenderCond>();
+    resolver.push_struct::<api::PlayerFirstPersonCond>();
+    resolver.push_union::<api::If>();
+    resolver.push_union::<api::ElseIf>();
     // resolver.push_struct::<api::Else>();
     // resolver.push_struct::<api::EndIf>();
     resolver.push_struct::<api::Callback>();

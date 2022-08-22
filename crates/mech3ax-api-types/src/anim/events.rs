@@ -3,6 +3,7 @@ use crate::types::{Color, Quaternion, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{Enum, RefStruct, Union, ValStruct};
 use num_derive::FromPrimitive;
+use std::ops::Deref;
 
 #[derive(Debug, Serialize, Deserialize, Clone, RefStruct)]
 pub struct AtNode {
@@ -73,23 +74,117 @@ pub struct Loop {
     pub loop_count: i32,
 }
 
-// TODO
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum If {
-    RandomWeight(f32),
-    PlayerRange(f32),
-    AnimationLod(u32),
-    HwRender(bool),
-    PlayerFirstPerson(bool),
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, ValStruct)]
+pub struct RandomWeightCond {
+    pub value: f32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+impl From<f32> for RandomWeightCond {
+    fn from(value: f32) -> Self {
+        Self { value }
+    }
+}
+
+impl Deref for RandomWeightCond {
+    type Target = f32;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, ValStruct)]
+pub struct PlayerRangeCond {
+    pub value: f32,
+}
+
+impl From<f32> for PlayerRangeCond {
+    fn from(value: f32) -> Self {
+        Self { value }
+    }
+}
+
+impl Deref for PlayerRangeCond {
+    type Target = f32;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, ValStruct)]
+pub struct AnimationLodCond {
+    pub value: u32,
+}
+
+impl From<u32> for AnimationLodCond {
+    fn from(value: u32) -> Self {
+        Self { value }
+    }
+}
+
+impl Deref for AnimationLodCond {
+    type Target = u32;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, ValStruct)]
+pub struct HwRenderCond {
+    pub value: bool,
+}
+
+impl From<bool> for HwRenderCond {
+    fn from(value: bool) -> Self {
+        Self { value }
+    }
+}
+
+impl Deref for HwRenderCond {
+    type Target = bool;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, ValStruct)]
+pub struct PlayerFirstPersonCond {
+    pub value: bool,
+}
+
+impl From<bool> for PlayerFirstPersonCond {
+    fn from(value: bool) -> Self {
+        Self { value }
+    }
+}
+
+impl Deref for PlayerFirstPersonCond {
+    type Target = bool;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Union)]
+pub enum If {
+    RandomWeight(RandomWeightCond),
+    PlayerRange(PlayerRangeCond),
+    AnimationLod(AnimationLodCond),
+    HwRender(HwRenderCond),
+    PlayerFirstPerson(PlayerFirstPersonCond),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Union)]
 pub enum ElseIf {
-    RandomWeight(f32),
-    PlayerRange(f32),
-    AnimationLod(u32),
-    HwRender(bool),
-    PlayerFirstPerson(bool),
+    RandomWeight(RandomWeightCond),
+    PlayerRange(PlayerRangeCond),
+    AnimationLod(AnimationLodCond),
+    HwRender(HwRenderCond),
+    PlayerFirstPerson(PlayerFirstPersonCond),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

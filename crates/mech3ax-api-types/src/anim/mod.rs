@@ -100,6 +100,7 @@ pub struct PrereqAnimation {
     pub name: String,
 }
 
+// TODO: this will be broken in C#?
 #[derive(Debug, Serialize, Deserialize, Union)]
 pub enum ActivationPrereq {
     Animation(PrereqAnimation),

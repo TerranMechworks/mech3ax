@@ -67,18 +67,24 @@ impl ScriptObject for If {
         let if_: IfC = read.read_struct()?;
         assert_that!("if field 4", if_.zero4 == 0, read.prev + 4)?;
         match FromPrimitive::from_u32(if_.condition) {
-            Some(Condition::RandomWeight) => Ok(If::RandomWeight(f32::from_le_bytes(if_.value))),
-            Some(Condition::PlayerRange) => Ok(If::PlayerRange(f32::from_le_bytes(if_.value))),
-            Some(Condition::AnimationLod) => Ok(If::AnimationLod(u32::from_le_bytes(if_.value))),
+            Some(Condition::RandomWeight) => {
+                Ok(If::RandomWeight(f32::from_le_bytes(if_.value).into()))
+            }
+            Some(Condition::PlayerRange) => {
+                Ok(If::PlayerRange(f32::from_le_bytes(if_.value).into()))
+            }
+            Some(Condition::AnimationLod) => {
+                Ok(If::AnimationLod(u32::from_le_bytes(if_.value).into()))
+            }
             Some(Condition::HwRender) => {
                 let value = u32::from_le_bytes(if_.value);
                 let value = assert_that!("if value", bool value, read.prev + 8)?;
-                Ok(If::HwRender(value))
+                Ok(If::HwRender(value.into()))
             }
             Some(Condition::PlayerFirstPerson) => {
                 let value = u32::from_le_bytes(if_.value);
                 let value = assert_that!("if value", bool value, read.prev + 8)?;
-                Ok(If::PlayerFirstPerson(value))
+                Ok(If::PlayerFirstPerson(value.into()))
             }
             None => {
                 let msg = format!(
@@ -97,11 +103,11 @@ impl ScriptObject for If {
             If::PlayerRange(value) => (Condition::PlayerRange as u32, value.to_le_bytes()),
             If::AnimationLod(value) => (Condition::AnimationLod as u32, value.to_le_bytes()),
             If::HwRender(value) => {
-                let value: u32 = bool_c!(*value);
+                let value: u32 = bool_c!(**value);
                 (Condition::HwRender as u32, value.to_le_bytes())
             }
             If::PlayerFirstPerson(value) => {
-                let value: u32 = bool_c!(*value);
+                let value: u32 = bool_c!(**value);
                 (Condition::PlayerFirstPerson as u32, value.to_le_bytes())
             }
         };
@@ -124,21 +130,23 @@ impl ScriptObject for ElseIf {
         assert_that!("else if field 4", if_.zero4 == 0, read.prev + 4)?;
         match FromPrimitive::from_u32(if_.condition) {
             Some(Condition::RandomWeight) => {
-                Ok(ElseIf::RandomWeight(f32::from_le_bytes(if_.value)))
+                Ok(ElseIf::RandomWeight(f32::from_le_bytes(if_.value).into()))
             }
-            Some(Condition::PlayerRange) => Ok(ElseIf::PlayerRange(f32::from_le_bytes(if_.value))),
+            Some(Condition::PlayerRange) => {
+                Ok(ElseIf::PlayerRange(f32::from_le_bytes(if_.value).into()))
+            }
             Some(Condition::AnimationLod) => {
-                Ok(ElseIf::AnimationLod(u32::from_le_bytes(if_.value)))
+                Ok(ElseIf::AnimationLod(u32::from_le_bytes(if_.value).into()))
             }
             Some(Condition::HwRender) => {
                 let value = u32::from_le_bytes(if_.value);
                 let value = assert_that!("else if value", bool value, read.prev + 8)?;
-                Ok(ElseIf::HwRender(value))
+                Ok(ElseIf::HwRender(value.into()))
             }
             Some(Condition::PlayerFirstPerson) => {
                 let value = u32::from_le_bytes(if_.value);
                 let value = assert_that!("else if value", bool value, read.prev + 8)?;
-                Ok(ElseIf::PlayerFirstPerson(value))
+                Ok(ElseIf::PlayerFirstPerson(value.into()))
             }
             None => {
                 let msg = format!(
@@ -157,11 +165,11 @@ impl ScriptObject for ElseIf {
             ElseIf::PlayerRange(value) => (Condition::PlayerRange as u32, value.to_le_bytes()),
             ElseIf::AnimationLod(value) => (Condition::AnimationLod as u32, value.to_le_bytes()),
             ElseIf::HwRender(value) => {
-                let value: u32 = bool_c!(*value);
+                let value: u32 = bool_c!(**value);
                 (Condition::HwRender as u32, value.to_le_bytes())
             }
             ElseIf::PlayerFirstPerson(value) => {
-                let value: u32 = bool_c!(*value);
+                let value: u32 = bool_c!(**value);
                 (Condition::PlayerFirstPerson as u32, value.to_le_bytes())
             }
         };
