@@ -315,6 +315,13 @@ pub struct BounceSequence {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, RefStruct)]
+pub struct ObjectMotionTranslation {
+    pub delta: Vec3,
+    pub initial: Vec3,
+    pub unk: Vec3,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, RefStruct)]
 pub struct BounceSound {
     pub name: String,
     pub volume: f32,
@@ -331,7 +338,7 @@ pub struct ObjectMotion {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub translation_range_max: Option<Quaternion>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub translation: Option<(Vec3, Vec3, Vec3)>,
+    pub translation: Option<ObjectMotionTranslation>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub forward_rotation: Option<ForwardRotation>,
     #[serde(skip_serializing_if = "Option::is_none", default)]

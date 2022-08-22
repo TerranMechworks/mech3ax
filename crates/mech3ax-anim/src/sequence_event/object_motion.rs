@@ -2,8 +2,8 @@ use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
 use mech3ax_api_types::{
     static_assert_size, AnimDef, BounceSequence, BounceSound, ForwardRotation,
-    ForwardRotationDistance, ForwardRotationTime, Gravity, GravityMode, ObjectMotion, Quaternion,
-    ReprSize as _, Vec3,
+    ForwardRotationDistance, ForwardRotationTime, Gravity, GravityMode, ObjectMotion,
+    ObjectMotionTranslation, Quaternion, ReprSize as _, Vec3,
 };
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
@@ -216,11 +216,11 @@ impl ScriptObject for ObjectMotion {
         };
 
         let translation = if flags.contains(ObjectMotionFlags::TRANSLATION) {
-            Some((
-                object_motion.trans_delta,
-                object_motion.trans_initial,
-                object_motion.unk100,
-            ))
+            Some(ObjectMotionTranslation {
+                delta: object_motion.trans_delta,
+                initial: object_motion.trans_initial,
+                unk: object_motion.unk100,
+            })
         } else {
             assert_that!(
                 "object motion trans delta",
@@ -515,13 +515,17 @@ impl ScriptObject for ObjectMotion {
         }
         let translation_range_max = self.translation_range_max.unwrap_or(Quaternion::DEFAULT);
 
-        let (trans_delta, trans_initial, unk100) =
-            if let Some((trans_delta, trans_initial, unk100)) = &self.translation {
-                flags |= ObjectMotionFlags::TRANSLATION;
-                (*trans_delta, *trans_initial, *unk100)
-            } else {
-                (Vec3::DEFAULT, Vec3::DEFAULT, Vec3::DEFAULT)
-            };
+        let (trans_delta, trans_initial, unk100) = if let Some(ObjectMotionTranslation {
+            delta,
+            initial,
+            unk,
+        }) = &self.translation
+        {
+            flags |= ObjectMotionFlags::TRANSLATION;
+            (*delta, *initial, *unk)
+        } else {
+            (Vec3::DEFAULT, Vec3::DEFAULT, Vec3::DEFAULT)
+        };
 
         let (forward_rotation_1, forward_rotation_2) = match &self.forward_rotation {
             Some(ForwardRotation::Time(ForwardRotationTime {
