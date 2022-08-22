@@ -3,7 +3,7 @@ use crate::types::AnimDefLookup as _;
 use mech3ax_api_types::{
     static_assert_size, AnimDef, BounceSequence, BounceSound, ForwardRotation,
     ForwardRotationDistance, ForwardRotationTime, Gravity, GravityMode, ObjectMotion,
-    ObjectMotionTranslation, Quaternion, ReprSize as _, Vec3, XyzRotation,
+    ObjectMotionScale, ObjectMotionTranslation, Quaternion, ReprSize as _, Vec3, XyzRotation,
 };
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
@@ -315,7 +315,10 @@ impl ScriptObject for ObjectMotion {
         )?;
 
         let scale = if flags.contains(ObjectMotionFlags::SCALE) {
-            Some((object_motion.scale, object_motion.unk172))
+            Some(ObjectMotionScale {
+                value: object_motion.scale,
+                unk: object_motion.unk172,
+            })
         } else {
             assert_that!(
                 "object motion scale",
@@ -554,9 +557,9 @@ impl ScriptObject for ObjectMotion {
             (Vec3::DEFAULT, Vec3::DEFAULT)
         };
 
-        let (scale, unk172) = if let Some((scale, unk176)) = &self.scale {
+        let (scale, unk172) = if let Some(ObjectMotionScale { value, unk }) = &self.scale {
             flags |= ObjectMotionFlags::SCALE;
-            (*scale, *unk176)
+            (*value, *unk)
         } else {
             (Vec3::DEFAULT, Vec3::DEFAULT)
         };
