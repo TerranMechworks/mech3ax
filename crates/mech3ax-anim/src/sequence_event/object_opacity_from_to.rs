@@ -1,7 +1,9 @@
 use super::delta::{dec_f32, delta};
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
-use mech3ax_api_types::{static_assert_size, AnimDef, ObjectOpacityFromTo, ReprSize as _};
+use mech3ax_api_types::{
+    static_assert_size, AnimDef, ObjectOpacity, ObjectOpacityFromTo, ReprSize as _,
+};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -67,8 +69,14 @@ impl ScriptObject for ObjectOpacityFromTo {
 
         Ok(Self {
             node,
-            opacity_from: (object_opacity.from_value, object_opacity.from_state),
-            opacity_to: (object_opacity.to_value, object_opacity.to_state),
+            opacity_from: ObjectOpacity {
+                value: object_opacity.from_value,
+                state: object_opacity.from_state,
+            },
+            opacity_to: ObjectOpacity {
+                value: object_opacity.to_value,
+                state: object_opacity.to_state,
+            },
             runtime: object_opacity.runtime,
             fudge,
         })
@@ -81,13 +89,13 @@ impl ScriptObject for ObjectOpacityFromTo {
         } else {
             self.runtime
         };
-        let delta_value = delta(self.opacity_to.0, self.opacity_from.0, runtime);
+        let delta_value = delta(self.opacity_to.value, self.opacity_from.value, runtime);
         write.write_struct(&ObjectOpacityFromToC {
             node_index,
-            from_state: self.opacity_from.1,
-            to_state: self.opacity_to.1,
-            from_value: self.opacity_from.0,
-            to_value: self.opacity_to.0,
+            from_state: self.opacity_from.state,
+            to_state: self.opacity_to.state,
+            from_value: self.opacity_from.value,
+            to_value: self.opacity_to.value,
             delta_value,
             runtime: self.runtime,
         })?;

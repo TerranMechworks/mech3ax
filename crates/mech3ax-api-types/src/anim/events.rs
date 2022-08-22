@@ -346,11 +346,17 @@ pub struct ObjectMotion {
     pub runtime: Option<f32>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ValStruct)]
+pub struct ObjectOpacity {
+    pub value: f32,
+    pub state: i16,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, RefStruct)]
 pub struct ObjectOpacityFromTo {
     pub node: String,
-    pub opacity_from: (f32, i16),
-    pub opacity_to: (f32, i16),
+    pub opacity_from: ObjectOpacity,
+    pub opacity_to: ObjectOpacity,
     pub runtime: f32,
     // this value can be safely ignored, but is required for binary accuracy
     #[serde(skip_serializing_if = "bool_false", default)]

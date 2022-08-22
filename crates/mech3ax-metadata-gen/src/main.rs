@@ -125,7 +125,8 @@ fn main() {
     resolver.push_struct::<api::BounceSequence>();
     resolver.push_struct::<api::BounceSound>();
     // resolver.push_struct::<api::ObjectMotion>();
-    // resolver.push_struct::<api::ObjectOpacityFromTo>();
+    resolver.push_struct::<api::ObjectOpacity>();
+    resolver.push_struct::<api::ObjectOpacityFromTo>();
     resolver.push_struct::<api::ObjectOpacityState>();
     resolver.push_union::<api::RotateState>();
     resolver.push_struct::<api::ObjectRotateState>();
