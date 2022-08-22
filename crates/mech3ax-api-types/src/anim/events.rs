@@ -399,16 +399,17 @@ pub struct Interval {
     pub flag: bool,
 }
 
-pub type PufferStateTextures = (
-    Option<String>,
-    Option<String>,
-    Option<String>,
-    Option<String>,
-    Option<String>,
-    Option<String>,
-);
+#[derive(Debug, Serialize, Deserialize, Clone, RefStruct)]
+pub struct PufferStateCycleTextures {
+    pub texture1: Option<String>,
+    pub texture2: Option<String>,
+    pub texture3: Option<String>,
+    pub texture4: Option<String>,
+    pub texture5: Option<String>,
+    pub texture6: Option<String>,
+}
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, RefStruct)]
 pub struct PufferState {
     pub name: String,
     pub state: bool,
@@ -441,7 +442,7 @@ pub struct PufferState {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub friction: Option<f32>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub textures: Option<PufferStateTextures>,
+    pub textures: Option<PufferStateCycleTextures>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub growth_factor: Option<f32>,
 }

@@ -1,8 +1,8 @@
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
 use mech3ax_api_types::{
-    static_assert_size, AnimDef, AtNode, Interval, IntervalType, PufferState, Range, ReprSize as _,
-    Vec3,
+    static_assert_size, AnimDef, AtNode, Interval, IntervalType, PufferState,
+    PufferStateCycleTextures, Range, ReprSize as _, Vec3,
 };
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
@@ -374,7 +374,7 @@ impl ScriptObject for PufferState {
         )?;
 
         let textures = if flags.contains(PufferStateFlags::CYCLE_TEXTURE) {
-            let tex1 = if puffer_state.tex192[0] != 0 {
+            let texture1 = if puffer_state.tex192[0] != 0 {
                 Some(assert_utf8(
                     "puffer state texture 192",
                     read.prev + 192,
@@ -388,7 +388,7 @@ impl ScriptObject for PufferState {
                 )?;
                 None
             };
-            let tex2 = if puffer_state.tex228[0] != 0 {
+            let texture2 = if puffer_state.tex228[0] != 0 {
                 Some(assert_utf8(
                     "puffer state texture 228",
                     read.prev + 228,
@@ -402,7 +402,7 @@ impl ScriptObject for PufferState {
                 )?;
                 None
             };
-            let tex3 = if puffer_state.tex264[0] != 0 {
+            let texture3 = if puffer_state.tex264[0] != 0 {
                 Some(assert_utf8(
                     "puffer state texture 264",
                     read.prev + 264,
@@ -416,7 +416,7 @@ impl ScriptObject for PufferState {
                 )?;
                 None
             };
-            let tex4 = if puffer_state.tex300[0] != 0 {
+            let texture4 = if puffer_state.tex300[0] != 0 {
                 Some(assert_utf8(
                     "puffer state texture 300",
                     read.prev + 300,
@@ -430,7 +430,7 @@ impl ScriptObject for PufferState {
                 )?;
                 None
             };
-            let tex5 = if puffer_state.tex336[0] != 0 {
+            let texture5 = if puffer_state.tex336[0] != 0 {
                 Some(assert_utf8(
                     "puffer state texture 336",
                     read.prev + 336,
@@ -444,7 +444,7 @@ impl ScriptObject for PufferState {
                 )?;
                 None
             };
-            let tex6 = if puffer_state.tex372[0] != 0 {
+            let texture6 = if puffer_state.tex372[0] != 0 {
                 Some(assert_utf8(
                     "puffer state texture 372",
                     read.prev + 372,
@@ -458,7 +458,14 @@ impl ScriptObject for PufferState {
                 )?;
                 None
             };
-            Some((tex1, tex2, tex3, tex4, tex5, tex6))
+            Some(PufferStateCycleTextures {
+                texture1,
+                texture2,
+                texture3,
+                texture4,
+                texture5,
+                texture6,
+            })
         } else {
             assert_all_zero(
                 "puffer state texture 192",
@@ -658,22 +665,22 @@ impl ScriptObject for PufferState {
         let mut tex372 = [0; 36];
         if let Some(textures) = &self.textures {
             flags |= PufferStateFlags::CYCLE_TEXTURE;
-            if let Some(tex) = &textures.0 {
+            if let Some(tex) = &textures.texture1 {
                 str_to_c_padded(tex, &mut tex192);
             }
-            if let Some(tex) = &textures.1 {
+            if let Some(tex) = &textures.texture2 {
                 str_to_c_padded(tex, &mut tex228);
             }
-            if let Some(tex) = &textures.2 {
+            if let Some(tex) = &textures.texture3 {
                 str_to_c_padded(tex, &mut tex264);
             }
-            if let Some(tex) = &textures.3 {
+            if let Some(tex) = &textures.texture4 {
                 str_to_c_padded(tex, &mut tex300);
             }
-            if let Some(tex) = &textures.4 {
+            if let Some(tex) = &textures.texture5 {
                 str_to_c_padded(tex, &mut tex336);
             }
-            if let Some(tex) = &textures.5 {
+            if let Some(tex) = &textures.texture6 {
                 str_to_c_padded(tex, &mut tex372);
             }
         }

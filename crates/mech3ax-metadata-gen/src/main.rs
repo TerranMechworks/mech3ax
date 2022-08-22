@@ -131,8 +131,8 @@ fn main() {
     resolver.push_struct::<api::ObjectTranslateState>();
     resolver.push_enum::<api::IntervalType>();
     resolver.push_struct::<api::Interval>();
-    // resolver.push_struct::<api::PufferStateTextures>();
-    // resolver.push_struct::<api::PufferState>();
+    resolver.push_struct::<api::PufferStateCycleTextures>();
+    resolver.push_struct::<api::PufferState>();
     resolver.push_struct::<api::CallSequence>();
     resolver.push_struct::<api::StopSequence>();
     resolver.push_struct::<api::SoundNode>();
