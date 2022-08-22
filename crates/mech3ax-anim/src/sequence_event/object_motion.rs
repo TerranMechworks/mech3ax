@@ -3,7 +3,7 @@ use crate::types::AnimDefLookup as _;
 use mech3ax_api_types::{
     static_assert_size, AnimDef, BounceSequence, BounceSound, ForwardRotation,
     ForwardRotationDistance, ForwardRotationTime, Gravity, GravityMode, ObjectMotion,
-    ObjectMotionTranslation, Quaternion, ReprSize as _, Vec3,
+    ObjectMotionTranslation, Quaternion, ReprSize as _, Vec3, XyzRotation,
 };
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
@@ -291,7 +291,10 @@ impl ScriptObject for ObjectMotion {
         )?;
 
         let xyz_rotation = if flags.contains(ObjectMotionFlags::XYZ_ROTATION) {
-            Some((object_motion.xyz_rotation, object_motion.unk136))
+            Some(XyzRotation {
+                value: object_motion.xyz_rotation,
+                unk: object_motion.unk136,
+            })
         } else {
             assert_that!(
                 "object motion xyz rot",
@@ -544,9 +547,9 @@ impl ScriptObject for ObjectMotion {
             None => (0.0, 0.0),
         };
 
-        let (xyz_rotation, unk136) = if let Some((xyz_rotation, unk136)) = &self.xyz_rotation {
+        let (xyz_rotation, unk136) = if let Some(XyzRotation { value, unk }) = &self.xyz_rotation {
             flags |= ObjectMotionFlags::XYZ_ROTATION;
-            (*xyz_rotation, *unk136)
+            (*value, *unk)
         } else {
             (Vec3::DEFAULT, Vec3::DEFAULT)
         };

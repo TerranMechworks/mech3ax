@@ -322,6 +322,12 @@ pub struct ObjectMotionTranslation {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, RefStruct)]
+pub struct XyzRotation {
+    pub value: Vec3,
+    pub unk: Vec3,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, RefStruct)]
 pub struct BounceSound {
     pub name: String,
     pub volume: f32,
@@ -342,7 +348,7 @@ pub struct ObjectMotion {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub forward_rotation: Option<ForwardRotation>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub xyz_rotation: Option<(Vec3, Vec3)>,
+    pub xyz_rotation: Option<XyzRotation>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub scale: Option<(Vec3, Vec3)>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
