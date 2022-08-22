@@ -187,11 +187,11 @@ pub enum ElseIf {
     PlayerFirstPerson(PlayerFirstPersonCond),
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Else;
+#[derive(Debug, Serialize, Deserialize, Clone, RefStruct)]
+pub struct Else {}
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct EndIf;
+#[derive(Debug, Serialize, Deserialize, Clone, RefStruct)]
+pub struct EndIf {}
 
 #[derive(Debug, Serialize, Deserialize, Clone, RefStruct)]
 pub struct Callback {

@@ -100,8 +100,8 @@ fn main() {
     resolver.push_struct::<api::PlayerFirstPersonCond>();
     resolver.push_union::<api::If>();
     resolver.push_union::<api::ElseIf>();
-    // resolver.push_struct::<api::Else>();
-    // resolver.push_struct::<api::EndIf>();
+    resolver.push_struct::<api::Else>();
+    resolver.push_struct::<api::EndIf>();
     resolver.push_struct::<api::Callback>();
     resolver.push_struct::<api::DetonateWeapon>();
     resolver.push_struct::<api::Rgba>();
