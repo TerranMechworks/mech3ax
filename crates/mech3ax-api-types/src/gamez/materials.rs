@@ -29,8 +29,8 @@ pub struct TexturedMaterial {
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct ColoredMaterial {
     pub color: Color,
-    pub unk00: u8,
-    pub unk32: u32,
+    pub unk00: u8,  // alpha?
+    pub unk32: u32, // f32, specular?
 }
 
 #[derive(Debug, Serialize, Deserialize, Union)]

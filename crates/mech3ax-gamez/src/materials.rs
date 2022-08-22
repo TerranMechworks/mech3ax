@@ -6,7 +6,7 @@ use std::io::{Read, Write};
 
 #[repr(C)]
 struct MaterialC {
-    unk00: u8,
+    unk00: u8, // alpha?
     flags: u8,
     rgb: u16,
     color: Color,
@@ -14,7 +14,7 @@ struct MaterialC {
     unk20: f32,
     unk24: f32,
     unk28: f32,
-    unk32: u32,
+    unk32: u32, // f32, specular?
     cycle_ptr: u32,
 }
 static_assert_size!(MaterialC, 40);
