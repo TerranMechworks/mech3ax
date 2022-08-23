@@ -11,8 +11,17 @@ use std::os::raw::c_char;
 
 fn buf_reader(ptr: *const c_char) -> Result<BufReader<File>> {
     let path = filename_to_string(ptr)?;
-    let file = File::open(&path).with_context(|| format!("Failed to open \"{}\"", &path))?;
+    let file = File::open(&path).with_context(|| format!("Failed to open `{}`", &path))?;
     Ok(BufReader::new(file))
+}
+
+#[inline(always)]
+fn buffer_callback(callback: NameDataCb, name: &str, data: &[u8]) -> Result<()> {
+    let ret = callback(name.as_ptr(), name.len(), data.as_ptr(), data.len());
+    if ret != 0 {
+        bail!("callback returned {} on `{}`", ret, name);
+    }
+    Ok(())
 }
 
 type DataCb = extern "C" fn(*const u8, usize);
@@ -64,22 +73,14 @@ fn read_archive(
             &mut read,
             |name, data, offset| {
                 let data = transform(name, data, offset)?;
-                let ret = callback(name.as_ptr(), name.len(), data.as_ptr(), data.len());
-                if ret != 0 {
-                    bail!("callback returned {} on \"{}\"", ret, name);
-                }
-                Ok(())
+                buffer_callback(callback, name, &data)
             },
             version,
         )?;
 
         let name = "manifest.json";
         let data = serde_json::to_vec(&entries)?;
-        let ret = callback(name.as_ptr(), name.len(), data.as_ptr(), data.len());
-        if ret != 0 {
-            bail!("callback returned {} on \"{}\"", ret, name);
-        }
-        Ok(())
+        buffer_callback(callback, name, &data)
     })
 }
 
@@ -103,7 +104,7 @@ fn read_reader_transform(name: &str, data: Vec<u8>, offset: u32) -> Result<Vec<u
     // translate to absolute offset
     read.offset = offset;
     let root = mech3ax_reader::read_reader(&mut read)
-        .with_context(|| format!("Failed to read reader data for \"{}\"", name))?;
+        .with_context(|| format!("Failed to read reader data for `{}`", name))?;
     Ok(serde_json::to_vec(&root)?)
 }
 
@@ -140,7 +141,7 @@ fn read_motion_transform(name: &str, data: Vec<u8>, offset: u32) -> Result<Vec<u
     // translate to absolute offset
     read.offset = offset;
     let root = mech3ax_motion::read_motion(&mut read)
-        .with_context(|| format!("Failed to read motion data for \"{}\"", name))?;
+        .with_context(|| format!("Failed to read motion data for `{}`", name))?;
     Ok(serde_json::to_vec(&root)?)
 }
 
@@ -179,7 +180,7 @@ fn read_mechlib_transform(name: &str, data: Vec<u8>, offset: u32) -> Result<Vec<
         }
         _ => {
             let root = mech3ax_gamez::mechlib::read_model(&mut read)
-                .with_context(|| format!("Failed to read model data for \"{}\"", name))?;
+                .with_context(|| format!("Failed to read model data for `{}`", name))?;
             Ok(serde_json::to_vec(&root)?)
         }
     }
@@ -207,22 +208,14 @@ pub extern "C" fn read_textures(filename: *const c_char, callback: NameDataCb) -
             let mut data = Vec::new();
             image
                 .write_to(&mut data, ImageOutputFormat::Png)
-                .with_context(|| format!("Failed to write image \"{}\"", name))?;
+                .with_context(|| format!("Failed to write image `{}`", name))?;
 
-            let ret = callback(name.as_ptr(), name.len(), data.as_ptr(), data.len());
-            if ret != 0 {
-                bail!("callback returned {} on \"{}\"", ret, name);
-            }
-            Ok(())
+            buffer_callback(callback, name, &data)
         })?;
 
         let data = serde_json::to_vec(&manifest)?;
         let name = "manifest.json";
-        let ret = callback(name.as_ptr(), name.len(), data.as_ptr(), data.len());
-        if ret != 0 {
-            bail!("callback returned {} on \"{}\"", ret, name);
-        }
-        Ok(())
+        buffer_callback(callback, name, &data)
     })
 }
 
@@ -255,21 +248,13 @@ pub extern "C" fn read_anim(filename: *const c_char, is_pm: i32, callback: NameD
         let metadata = mech3ax_anim::read_anim(&mut read, |name, anim_def| {
             let data = serde_json::to_vec(&anim_def)?;
 
-            let ret = callback(name.as_ptr(), name.len(), data.as_ptr(), data.len());
-            if ret != 0 {
-                bail!("callback returned {} on \"{}\"", ret, name);
-            }
-            Ok(())
+            buffer_callback(callback, name, &data)
         })
         .context("Failed to read anim data")?;
 
         let data = serde_json::to_vec(&metadata)?;
         let name = "metadata.json";
-        let ret = callback(name.as_ptr(), name.len(), data.as_ptr(), data.len());
-        if ret != 0 {
-            bail!("callback returned {} on \"{}\"", ret, name);
-        }
-        Ok(())
+        buffer_callback(callback, name, &data)
     })
 }
 
@@ -302,7 +287,7 @@ pub extern "C" fn read_sounds_as_wav(
                     wave.samples.len(),
                 );
                 if ret != 0 {
-                    bail!("callback returned {} on \"{}\"", ret, name);
+                    bail!("callback returned {} on `{}`", ret, name);
                 }
                 Ok(())
             },

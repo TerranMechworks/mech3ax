@@ -1,7 +1,7 @@
 use crate::buffer::CallbackBuffer;
 use crate::error::err_to_c;
 use crate::filename_to_string;
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use mech3ax_api_types::{
     ArchiveEntry, GameZData, Material, Model, Motion, Script, TextureManifest,
 };
@@ -13,8 +13,20 @@ use std::os::raw::c_char;
 
 fn buf_writer(ptr: *const c_char) -> Result<BufWriter<File>> {
     let path = filename_to_string(ptr)?;
-    let file = File::create(&path).with_context(|| format!("Failed to create \"{}\"", &path))?;
+    let file = File::create(&path).with_context(|| format!("Failed to create `{}`", path))?;
     Ok(BufWriter::new(file))
+}
+
+#[inline(always)]
+fn buffer_callback(callback: NameBufferCb, name: &str) -> Result<Vec<u8>> {
+    let mut buffer = CallbackBuffer::new();
+    let ret = callback(name.as_ptr(), name.len(), &mut buffer);
+    if ret != 0 {
+        bail!("callback returned {} on `{}`", ret, name);
+    }
+    buffer
+        .inner()
+        .ok_or_else(|| anyhow!("callback didn't set any data on `{}`", name))
 }
 
 type NameBufferCb = extern "C" fn(*const u8, usize, *mut CallbackBuffer) -> i32;
@@ -68,16 +80,8 @@ fn write_archive(
         mech3ax_archive::write_archive(
             &mut write,
             &entries,
-            |name| {
-                let mut buffer = CallbackBuffer::new();
-                let ret = callback(name.as_ptr(), name.len(), &mut buffer);
-                if ret != 0 {
-                    bail!("callback returned {} on \"{}\"", ret, name);
-                }
-                let data = match buffer.inner() {
-                    Some(data) => data,
-                    None => bail!("callback didn't set any data on \"{}\"", name),
-                };
+            |name| -> Result<Vec<u8>> {
+                let data = buffer_callback(callback, name)?;
                 transform(name, data)
             },
             version,
@@ -110,11 +114,11 @@ pub extern "C" fn write_sounds(
 
 fn write_reader_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
     let value: Value = serde_json::from_slice(&data)
-        .with_context(|| format!("Reader data for \"{}\" is invalid", name))?;
+        .with_context(|| format!("Reader data for `{}` is invalid", name))?;
 
     let mut buf = Vec::new();
     mech3ax_reader::write_reader(&mut buf, &value)
-        .with_context(|| format!("Failed to write reader data for \"{}\"", name))?;
+        .with_context(|| format!("Failed to write reader data for `{}`", name))?;
     Ok(buf)
 }
 
@@ -158,11 +162,11 @@ pub extern "C" fn write_reader_raw(
 
 fn write_motion_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
     let motion: Motion = serde_json::from_slice(&data)
-        .with_context(|| format!("Motion data for \"{}\" is invalid", name))?;
+        .with_context(|| format!("Motion data for `{}` is invalid", name))?;
 
     let mut buf = Vec::new();
     mech3ax_motion::write_motion(&mut buf, &motion)
-        .with_context(|| format!("Failed to write motion data for \"{}\"", name))?;
+        .with_context(|| format!("Failed to write motion data for `{}`", name))?;
     Ok(buf)
 }
 
@@ -199,11 +203,11 @@ fn write_mechlib_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
         }
         original => {
             let mut model: Model = serde_json::from_slice(&data)
-                .with_context(|| format!("Model data for \"{}\" is invalid", original))?;
+                .with_context(|| format!("Model data for `{}` is invalid", original))?;
 
             let mut buf = Vec::new();
             mech3ax_gamez::mechlib::write_model(&mut buf, &mut model)
-                .with_context(|| format!("Failed to write model data for \"{}\"", original))?;
+                .with_context(|| format!("Failed to write model data for `{}`", original))?;
             Ok(buf)
         }
     }
@@ -230,7 +234,7 @@ pub extern "C" fn write_mechlib(
 
 fn parse_manifest(ptr: *const u8, len: usize) -> Result<TextureManifest> {
     if ptr.is_null() {
-        bail!("manifest is null");
+        bail!("texture manifest is null");
     }
     let buf = unsafe { std::slice::from_raw_parts(ptr, len as usize) };
     serde_json::from_slice(buf).context("texture manifest is invalid")
@@ -246,24 +250,21 @@ pub extern "C" fn write_textures(
     err_to_c(|| {
         let manifest = parse_manifest(manifest_ptr, manifest_len)?;
         let mut write = buf_writer(filename)?;
-        mech3ax_image::write_textures(&mut write, &manifest, |name| {
-            let mut buffer = CallbackBuffer::new();
-            let ret = callback(name.as_ptr(), name.len(), &mut buffer);
-            if ret != 0 {
-                bail!("callback returned {} on \"{}\"", ret, name);
-            }
-            let data = match buffer.inner() {
-                Some(data) => data,
-                None => bail!("callback didn't set any data on \"{}\"", name),
-            };
+        mech3ax_image::write_textures(
+            &mut write,
+            &manifest,
+            |name| -> Result<image::DynamicImage> {
+                let data = buffer_callback(callback, name)?;
 
-            let mut reader = image::io::Reader::new(Cursor::new(data));
-            reader.set_format(image::ImageFormat::Png);
-            let image = reader
-                .decode()
-                .with_context(|| format!("Failed to load image data for \"{}\"", name))?;
-            Ok(image)
-        })
+                let mut reader = image::io::Reader::new(Cursor::new(data));
+                reader.set_format(image::ImageFormat::Png);
+                let image = reader
+                    .decode()
+                    .with_context(|| format!("Failed to load image data for `{}`", name))?;
+                Ok(image)
+            },
+        )
+        .context("Failed to write texture package")
     })
 }
 
@@ -276,7 +277,7 @@ pub extern "C" fn write_gamez(
 ) -> i32 {
     err_to_c(move || {
         if data.is_null() {
-            bail!("data is null");
+            bail!("gamez data is null");
         }
         let buf = unsafe { std::slice::from_raw_parts(data, len) };
         let gamez: GameZData = serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
