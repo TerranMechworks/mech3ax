@@ -38,7 +38,7 @@ pub extern "C" fn write_interp(
     data: *const u8,
     len: usize,
 ) -> i32 {
-    err_to_c(move || {
+    err_to_c(|| {
         if data.is_null() {
             bail!("data is null");
         }
@@ -243,6 +243,7 @@ fn parse_manifest(ptr: *const u8, len: usize) -> Result<TextureManifest> {
 #[no_mangle]
 pub extern "C" fn write_textures(
     filename: *const c_char,
+    _is_pm: i32,
     manifest_ptr: *const u8,
     manifest_len: usize,
     callback: NameBufferCb,
@@ -271,11 +272,14 @@ pub extern "C" fn write_textures(
 #[no_mangle]
 pub extern "C" fn write_gamez(
     filename: *const c_char,
-    _is_pm: i32,
+    is_pm: i32,
     data: *const u8,
     len: usize,
 ) -> i32 {
-    err_to_c(move || {
+    err_to_c(|| {
+        if is_pm != 0 {
+            bail!("Pirate's Moon support for Anim isn't implemented yet");
+        }
         if data.is_null() {
             bail!("gamez data is null");
         }

@@ -31,7 +31,7 @@ type WaveFileCb = extern "C" fn(i32, i32, *const f32, usize) -> i32;
 
 #[no_mangle]
 pub extern "C" fn read_interp(filename: *const c_char, _is_pm: i32, callback: DataCb) -> i32 {
-    err_to_c(move || {
+    err_to_c(|| {
         let input = buf_reader(filename)?;
         let mut read = CountingReader::new(input);
         let scripts =
@@ -200,7 +200,7 @@ pub extern "C" fn read_mechlib(filename: *const c_char, is_pm: i32, callback: Na
 
 // callback filename will not end in .png! last call will be the manifest
 #[no_mangle]
-pub extern "C" fn read_textures(filename: *const c_char, callback: NameDataCb) -> i32 {
+pub extern "C" fn read_textures(filename: *const c_char, _is_pm: i32, callback: NameDataCb) -> i32 {
     err_to_c(|| {
         let input = buf_reader(filename)?;
         let mut read = CountingReader::new(input);
