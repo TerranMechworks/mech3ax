@@ -3,7 +3,8 @@ use crate::error::err_to_c;
 use crate::filename_to_string;
 use anyhow::{anyhow, bail, Context, Result};
 use mech3ax_api_types::{
-    ArchiveEntry, GameZData, Material, Model, Motion, Script, TextureManifest,
+    AnimDef, AnimMetadata, ArchiveEntry, GameZData, Material, Model, Motion, Script,
+    TextureManifest,
 };
 use mech3ax_archive::{Mode, Version};
 use serde_json::Value;
@@ -287,5 +288,38 @@ pub extern "C" fn write_gamez(
         let gamez: GameZData = serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
         let mut write = buf_writer(filename)?;
         mech3ax_gamez::gamez::write_gamez(&mut write, &gamez).context("Failed to write GameZ data")
+    })
+}
+
+fn parse_metadata(ptr: *const u8, len: usize) -> Result<AnimMetadata> {
+    if ptr.is_null() {
+        bail!("anim metadata is null");
+    }
+    let buf = unsafe { std::slice::from_raw_parts(ptr, len as usize) };
+    serde_json::from_slice(buf).context("anim metadata is invalid")
+}
+
+#[no_mangle]
+pub extern "C" fn write_anim(
+    filename: *const c_char,
+    is_pm: i32,
+    metadata_ptr: *const u8,
+    metadata_len: usize,
+    callback: NameBufferCb,
+) -> i32 {
+    err_to_c(|| {
+        if is_pm != 0 {
+            bail!("Pirate's Moon support for Anim isn't implemented yet");
+        }
+        let metadata = parse_metadata(metadata_ptr, metadata_len)?;
+        let mut write = buf_writer(filename)?;
+        mech3ax_anim::write_anim(&mut write, &metadata, |name| -> Result<AnimDef> {
+            let data = buffer_callback(callback, name)?;
+
+            let anim_def: AnimDef = serde_json::from_slice(&data)
+                .with_context(|| format!("Anim data for `{}` is invalid", name))?;
+            Ok(anim_def)
+        })
+        .context("Failed to write Anim data")
     })
 }
