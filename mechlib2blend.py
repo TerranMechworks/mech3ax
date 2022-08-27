@@ -53,7 +53,9 @@ class MaterialFactory:
     @classmethod
     @contextmanager
     def with_tempdir(
-        cls, textures: Optional[Path], materials: Sequence[Mapping[str, Any]],
+        cls,
+        textures: Optional[Path],
+        materials: Sequence[Mapping[str, Any]],
     ) -> Iterator["MaterialFactory"]:
         with TemporaryDirectory() as tempdir:
             yield cls(textures, materials, Path(tempdir))
@@ -109,8 +111,13 @@ class MaterialFactory:
             mat, bsdf = self._create_material(f"material_{texture_index}")
             color_info = material_info["Colored"]
 
-            red, green, blue = color_info["color"]
-            bsdf.inputs[0].default_value = (red / 255.0, green / 255.0, blue / 255.0, 1)
+            color = color_info["color"]
+            bsdf.inputs[0].default_value = (
+                color["r"] / 255.0,
+                color["g"] / 255.0,
+                color["b"] / 255.0,
+                1,
+            )
         else:
             # textured material
             texture_name = texture_info["texture"]
@@ -175,7 +182,7 @@ def _process_mesh(
 
     bm = bmesh.new(use_operators=True)
     for vert in vertices:
-        bm.verts.new(vert)
+        bm.verts.new((vert["x"], vert["y"], vert["z"]))
 
     bm.verts.ensure_lookup_table()
     bm.verts.index_update()
@@ -207,9 +214,9 @@ def _process_mesh(
             for index_in_mesh, loop, color in zip(vertex_indices, face.loops, colors):
                 assert loop.vert.index == index_in_mesh
                 loop[color_layer] = (
-                    color[0] / 255.0,
-                    color[1] / 255.0,
-                    color[2] / 255.0,
+                    color["r"] / 255.0,
+                    color["g"] / 255.0,
+                    color["b"] / 255.0,
                     1.0,
                 )
 
@@ -217,7 +224,7 @@ def _process_mesh(
             # because all our faces are created as loops, this should work
             for index_in_mesh, loop, uv in zip(vertex_indices, face.loops, uvs):
                 assert loop.vert.index == index_in_mesh
-                loop[uv_layer].uv = uv
+                loop[uv_layer].uv = (uv["u"], uv["v"])
 
     # since normals can't be loaded, and we've set smooth shading, calculate them
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
@@ -232,12 +239,13 @@ def _process_mesh(
 
 
 def _process_node(
-    node: Mapping[str, Any],
+    nodes: Sequence[Any],
+    node_index: int,
     parent: Optional[bpy.types.EditBone],
     obj: bpy.types.Object,
     positions: Dict[str, Node],
 ) -> None:
-    object3d = node["Object3d"]
+    object3d = nodes[node_index]
     part_name = object3d["name"]
     mesh_index = object3d["mesh_index"]
 
@@ -256,8 +264,10 @@ def _process_node(
 
     transformation = object3d["transformation"]
     if transformation:
-        location = transformation["translation"]
-        rotation = Euler(transformation["rotation"]).to_quaternion()
+        trans = transformation["translation"]
+        location = (trans["x"], trans["y"], trans["z"])
+        rot = transformation["rotation"]
+        rotation = Euler((rot["x"], rot["y"], rot["z"])).to_quaternion()
     else:
         location = (0.0, 0.0, 0.0)
         rotation = Quaternion()
@@ -274,7 +284,7 @@ def _process_node(
 
     children = object3d["children"]
     for child in children:
-        _process_node(child, bone, obj, positions)
+        _process_node(nodes, child, bone, obj, positions)
 
 
 def _add_camera() -> None:
@@ -381,16 +391,20 @@ def _create_motion(
         bone.rotation_quaternion = node.rotation
 
     def _insert_frame(frame_index: int) -> None:
-        for part_name, data in motion_data["parts"]:
+        for part in motion_data["parts"]:
+            part_name = part["name"]
             # since the bones "belong" to the pose, they have to be fetched for every frame
             bone = armature.pose.bones.get(part_name)
             if not bone:
                 continue
 
-            frame_data = data[frame_index]
+            frames = part["frames"]
+            frame_data = frames[frame_index]
             if part_name not in DISCARD_LOC:
-                bone.location = frame_data["translation"]
-            bone.rotation_quaternion = frame_data["rotation"]
+                trans = frame_data["translation"]
+                bone.location = (trans["x"], trans["y"], trans["z"])
+            rot = frame_data["rotation"]
+            bone.rotation_quaternion = (rot["x"], rot["y"], rot["z"], rot["w"])
 
         bpy.ops.poselib.pose_add(frame=frame_index + 1, name=f"{frame_index:02d}")
 
@@ -407,8 +421,11 @@ def model_to_blend(
     # empty scene, this prints some errors
     bpy.ops.wm.read_factory_settings(use_empty=True)
 
+    nodes = model["nodes"]
+    meshes = model["meshes"]
+
     # unpack the root object, which is always uninteresting (mech_foo.flt)
-    root = model["root"]["Object3d"]
+    root = nodes[0]
     children = root["children"]
     assert len(children) == 1, len(children)
 
@@ -422,11 +439,10 @@ def model_to_blend(
     bpy.ops.object.mode_set(mode="EDIT", toggle=False)
     # the positions can only be applied in pose mode, so save them
     positions: Dict[str, Node] = {}
-    _process_node(children[0], None, armature, positions)
+    _process_node(nodes, children[0], None, armature, positions)
 
     # creating the meshes is easiest in object mode
     bpy.ops.object.mode_set(mode="OBJECT", toggle=False)
-    meshes = model["meshes"]
     for bone in armature.data.bones:
         node = positions[bone.name]
         if node.mesh_index < 0:
@@ -494,7 +510,8 @@ def model_to_blend(
     _setup_compositing(use_alpha=not motions)
 
     # we're done!
-    bpy.ops.wm.save_mainfile(filepath=f"{name}.blend")
+    path = Path.cwd() / f"{name}.blend"
+    bpy.ops.wm.save_mainfile(filepath=str(path))
     return armature
 
 
@@ -595,7 +612,9 @@ def main() -> None:
         ),
     )
     parser.add_argument(
-        "--render", action="store_true", help="If specified, motions are rendered.",
+        "--render",
+        action="store_true",
+        help="If specified, motions are rendered.",
     )
 
     # split our arguments from Blender arguments
