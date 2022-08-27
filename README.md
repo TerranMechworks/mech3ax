@@ -86,7 +86,7 @@ Provided subcommands:
 
 ## Blender scripts
 
-Blender 2.90 or higher is recommended. Blender's APIs do change, so you may need to use a version closely matching that one. It will definitely *not* work with versions below 2.80, but if you have success running it with newer versions, let me know so I can update this README.
+Blender 3.2.2 or higher is recommended. Blender's APIs do change, so you may need to use a version closely matching that one. It will definitely *not* work with versions below 2.80, but if you have success running it with newer versions, let me know so I can update this README.
 
 This is a bit tricky to get running, because of the dependencies. Your install location may vary. Naturally, you can specify the absolute path. It's easier if the Blender executable can be found. For macOS and Linux, this can be achieved by an alias in your shell's profile, e.g. `.bashrc`:
 
