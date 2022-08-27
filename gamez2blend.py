@@ -95,8 +95,13 @@ class MaterialFactory:
             mat, bsdf = self._create_material(f"material_{texture_index}")
             color_info = material_info["Colored"]
 
-            red, green, blue = color_info["color"]
-            bsdf.inputs[0].default_value = (red / 255.0, green / 255.0, blue / 255.0, 1)
+            color = color_info["color"]
+            bsdf.inputs[0].default_value = (
+                color["r"] / 255.0,
+                color["g"] / 255.0,
+                color["b"] / 255.0,
+                1,
+            )
         else:
             # textured material
             texture_name, _, _extension = texture_info["texture"].partition(".")
@@ -156,7 +161,7 @@ def _process_mesh(
 
     bm = bmesh.new(use_operators=True)
     for vert in vertices:
-        bm.verts.new(vert)
+        bm.verts.new((vert["x"], vert["y"], vert["z"]))
 
     bm.verts.ensure_lookup_table()
     bm.verts.index_update()
@@ -188,9 +193,9 @@ def _process_mesh(
             for index_in_mesh, loop, color in zip(vertex_indices, face.loops, colors):
                 assert loop.vert.index == index_in_mesh
                 loop[color_layer] = (
-                    color[0] / 255.0,
-                    color[1] / 255.0,
-                    color[2] / 255.0,
+                    color["r"] / 255.0,
+                    color["g"] / 255.0,
+                    color["b"] / 255.0,
                     1.0,
                 )
 
@@ -198,7 +203,7 @@ def _process_mesh(
             # because all our faces are created as loops, this should work
             for index_in_mesh, loop, uv in zip(vertex_indices, face.loops, uvs):
                 assert loop.vert.index == index_in_mesh
-                loop[uv_layer].uv = uv
+                loop[uv_layer].uv = (uv["u"], uv["v"])
 
     # since normals can't be loaded, and we've set smooth shading, calculate them
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
@@ -233,8 +238,10 @@ def _process_node(
 
     transformation = node.data.get("transformation")
     if transformation:
-        obj.location = Vector(transformation["translation"])
-        obj.rotation_euler = Euler(transformation["rotation"])
+        trans = transformation["translation"]
+        obj.location = (trans["x"], trans["y"], trans["z"])
+        rot = transformation["rotation"]
+        obj.rotation_euler = Euler((rot["x"], rot["y"], rot["z"]))
     else:
         obj.location = Vector((0.0, 0.0, 0.0))
         obj.rotation_euler = Euler((0.0, 0.0, 0.0))
@@ -307,7 +314,8 @@ def world_to_blend(
     _set_relationship_lines()
 
     # we're done!
-    bpy.ops.wm.save_mainfile(filepath=f"{name}.blend")
+    path = Path.cwd() / f"{name}.blend"
+    bpy.ops.wm.save_mainfile(filepath=str(path))
 
 
 def _node_array_to_tree(nodes: Sequence[Any]) -> Sequence[Node]:
