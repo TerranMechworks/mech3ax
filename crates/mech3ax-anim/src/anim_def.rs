@@ -4,7 +4,7 @@ use crate::sequence_event::{read_events, size_events, write_events};
 use log::trace;
 use mech3ax_api_types::{
     static_assert_size, AnimActivation, AnimDef, AnimPtr, EventData, Execution, NamePad, Range,
-    ReprSize as _, SeqActivation, SeqDef,
+    ReprSize as _, ResetState, SeqActivation, SeqDef,
 };
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, WriteHelper};
@@ -54,13 +54,7 @@ struct AnimDefC {
     zero188: u32,                    // 188
     zero192: u32,                    // 192
     seq_defs_ptr: u32,               // 196
-    reset_state_ptr: u32,            // 200
-    int204: u32,                     // 204
-    int208: u32,                     // 208
-    int212: u32,                     // 212
-    zero216: [u8; 40],               // 216
-    reset_state_events_ptr: u32,     // 256
-    reset_state_events_size: u32,    // 260
+    reset_state: SeqDefInfoC,        // 200
     seq_def_count: u8,               // 264
     object_count: u8,                // 265
     node_count: u8,                  // 266
@@ -95,7 +89,7 @@ struct SeqDefInfoC {
     size: u32,        // 60
 }
 static_assert_size!(SeqDefInfoC, 64);
-const RESET_SEQUENCE: &str = "RESET_SEQUENCE";
+const RESET_SEQUENCE: &[u8; 32] = b"RESET_SEQUENCE\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 
 pub fn read_anim_def_zero<R: Read>(read: &mut CountingReader<R>) -> Result<()> {
     // the first entry is always zero
@@ -117,59 +111,51 @@ pub fn read_anim_def_zero<R: Read>(read: &mut CountingReader<R>) -> Result<()> {
     Ok(())
 }
 
-fn read_reset_sequence<R: Read>(
+fn read_reset_state<R: Read>(
     read: &mut CountingReader<R>,
     anim_def: &AnimDef,
     size: u32,
     pointer: u32,
-) -> Result<Option<SeqDef>> {
-    trace!("Reading anim def reset seq at {}", read.offset);
+) -> Result<Option<ResetState>> {
+    trace!("Reading anim def reset state at {}", read.offset);
     let reset_state: SeqDefInfoC = read.read_struct()?;
-    let name = assert_utf8("anim def reset seq name", read.prev + 0, || {
-        str_from_c_padded(&reset_state.name)
-    })?;
     assert_that!(
-        "anim def reset seq name",
-        &name == RESET_SEQUENCE,
+        "anim def reset state name",
+        &reset_state.name == RESET_SEQUENCE,
         read.prev + 0
     )?;
     assert_that!(
-        "anim def reset seq flags",
+        "anim def reset state flags",
         reset_state.flags == 0,
         read.prev + 32
     )?;
     assert_all_zero(
-        "anim def reset seq field 36",
+        "anim def reset state field 36",
         read.prev + 36,
         &reset_state.zero36,
     )?;
     assert_that!(
-        "anim def reset seq pointer",
+        "anim def reset state pointer",
         reset_state.pointer == pointer,
         read.prev + 56
     )?;
     assert_that!(
-        "anim def reset seq size",
+        "anim def reset state size",
         reset_state.size == size,
         read.prev + 60
     )?;
 
     if size > 0 {
         assert_that!(
-            "anim def reset seq pointer",
+            "anim def reset state pointer",
             reset_state.pointer != 0,
             read.prev + 56
         )?;
         let events = read_events(read, size, anim_def)?;
-        Ok(Some(SeqDef {
-            name: RESET_SEQUENCE.to_owned(),
-            activation: SeqActivation::Initial,
-            events,
-            pointer,
-        }))
+        Ok(Some(ResetState { events, pointer }))
     } else {
         assert_that!(
-            "anim def reset seq pointer",
+            "anim def reset state pointer",
             reset_state.pointer == 0,
             read.prev + 56
         )?;
@@ -374,29 +360,23 @@ pub fn read_anim_def<R: Read>(read: &mut CountingReader<R>) -> Result<(AnimDef, 
     assert_that!("anim def field 188", anim_def.zero188 == 0, prev + 188)?;
     assert_that!("anim def field 192", anim_def.zero192 == 0, prev + 192)?;
 
-    // TODO: WTF??? are these always the same? and why? same release? are more pointers constant?
+    // reset state
     assert_that!(
-        "anim def field 200",
-        anim_def.reset_state_ptr == 0x45534552,
+        "anim def reset state name",
+        &anim_def.reset_state.name == RESET_SEQUENCE,
         prev + 200
     )?;
     assert_that!(
-        "anim def field 204",
-        anim_def.int204 == 0x45535F54,
-        prev + 204
+        "anim def reset state flags",
+        anim_def.reset_state.flags == 0,
+        prev + 232
     )?;
-    assert_that!(
-        "anim def field 208",
-        anim_def.int208 == 0x4E455551,
-        prev + 208
+    assert_all_zero(
+        "anim def reset state field 36",
+        prev + 236,
+        &anim_def.reset_state.zero36,
     )?;
-    assert_that!(
-        "anim def field 212",
-        anim_def.int212 == 0x00004543,
-        prev + 212
-    )?;
-
-    assert_all_zero("anim def field 216", prev + 216, &anim_def.zero216)?;
+    // the reset state pointer and size are used later in `read_reset_state`
 
     // padding?
     assert_that!("anim def field 275", anim_def.zero275 == 0, prev + 275)?;
@@ -557,16 +537,16 @@ pub fn read_anim_def<R: Read>(read: &mut CountingReader<R>) -> Result<(AnimDef, 
         activ_prereqs,
         anim_refs,
         // these need the anim def to do lookups
-        reset_sequence: None,
+        reset_state: None,
         sequences: Vec::new(),
     };
 
     // unconditional read
-    result.reset_sequence = read_reset_sequence(
+    result.reset_state = read_reset_state(
         read,
         &result,
-        anim_def.reset_state_events_size,
-        anim_def.reset_state_events_ptr,
+        anim_def.reset_state.size,
+        anim_def.reset_state.pointer,
     )?;
 
     // this could be zero, in which case the pointer would also be NULL? (but never is)
@@ -613,8 +593,7 @@ pub fn read_anim_def<R: Read>(read: &mut CountingReader<R>) -> Result<(AnimDef, 
         static_sounds_ptr: anim_def.static_sounds_ptr,
         activ_prereqs_ptr: anim_def.activ_prereqs_ptr,
         anim_refs_ptr: anim_def.anim_refs_ptr,
-        reset_state_ptr: anim_def.reset_state_ptr,
-        reset_state_events_ptr: anim_def.reset_state_events_ptr,
+        reset_state_ptr: anim_def.reset_state.pointer,
         seq_defs_ptr: anim_def.seq_defs_ptr,
     };
     Ok((result, anim_ptr))
@@ -631,23 +610,21 @@ pub fn write_anim_def_zero<W: Write>(write: &mut W) -> Result<()> {
     Ok(())
 }
 
-fn write_reset_sequence<W: Write>(write: &mut W, anim_def: &AnimDef, size: u32) -> Result<()> {
-    let mut name = [0; 32];
-    str_to_c_padded(RESET_SEQUENCE, &mut name);
+fn write_reset_state<W: Write>(write: &mut W, anim_def: &AnimDef, size: u32) -> Result<()> {
     write.write_struct(&SeqDefInfoC {
-        name,
+        name: RESET_SEQUENCE.clone(),
         flags: 0,
         zero36: [0; 20],
         pointer: anim_def
-            .reset_sequence
+            .reset_state
             .as_ref()
-            .map(|seq_def| seq_def.pointer)
+            .map(|state| state.pointer)
             .unwrap_or(0),
         size,
     })?;
 
-    if let Some(seq_def) = &anim_def.reset_sequence {
-        write_events(write, anim_def, &seq_def.events)?;
+    if let Some(state) = &anim_def.reset_state {
+        write_events(write, anim_def, &state.events)?;
     }
     Ok(())
 }
@@ -755,10 +732,18 @@ pub fn write_anim_def<W: Write>(
     let anim_ref_count = anim_def.anim_refs.as_ref().map(|v| v.len()).unwrap_or(0) as u8;
 
     let reset_state_events_size = anim_def
-        .reset_sequence
+        .reset_state
         .as_ref()
-        .map(|seq_def| size_events(&seq_def.events))
+        .map(|state| size_events(&state.events))
         .unwrap_or(0);
+
+    let reset_state = SeqDefInfoC {
+        name: RESET_SEQUENCE.clone(),
+        flags: 0,
+        zero36: [0; 20],
+        pointer: anim_ptr.reset_state_ptr,
+        size: reset_state_events_size,
+    };
 
     write.write_struct(&AnimDefC {
         anim_name,
@@ -783,13 +768,7 @@ pub fn write_anim_def<W: Write>(
         zero188: 0,
         zero192: 0,
         seq_defs_ptr: anim_ptr.seq_defs_ptr,
-        reset_state_ptr: anim_ptr.reset_state_ptr,
-        int204: 0x45535F54,
-        int208: 0x4E455551,
-        int212: 0x00004543,
-        zero216: [0; 40],
-        reset_state_events_ptr: anim_ptr.reset_state_events_ptr,
-        reset_state_events_size,
+        reset_state,
         seq_def_count: anim_def.sequences.len() as u8,
         object_count,
         node_count,
@@ -838,7 +817,7 @@ pub fn write_anim_def<W: Write>(
     if let Some(anim_refs) = &anim_def.anim_refs {
         write_anim_refs(write, anim_refs)?;
     }
-    write_reset_sequence(write, anim_def, reset_state_events_size)?;
+    write_reset_state(write, anim_def, reset_state_events_size)?;
     write_sequence_defs(write, anim_def)?;
 
     Ok(())

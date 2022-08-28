@@ -31,7 +31,6 @@ pub struct AnimPtr {
     pub activ_prereqs_ptr: u32,
     pub anim_refs_ptr: u32,
     pub reset_state_ptr: u32,
-    pub reset_state_events_ptr: u32,
     pub seq_defs_ptr: u32,
 }
 
@@ -116,6 +115,12 @@ pub enum ActivationPrereq {
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
+pub struct ResetState {
+    pub events: Vec<Event>,
+    pub pointer: u32,
+}
+
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct SeqDef {
     pub name: String,
     pub activation: SeqActivation,
@@ -161,6 +166,6 @@ pub struct AnimDef {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub anim_refs: Option<Vec<NamePad>>,
 
-    pub reset_sequence: Option<SeqDef>,
+    pub reset_state: Option<ResetState>,
     pub sequences: Vec<SeqDef>,
 }
