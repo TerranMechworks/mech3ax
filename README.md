@@ -133,8 +133,48 @@ where `--rtexture` and `--rmechtex` are optional.
 
 ## Changelog
 
-### [0.5.1] - unreleased
+### [0.6.0] - unreleased
 
+Big features:
+* Introduce API types crates, to clarify external structures
+* Implement Rust structures to C# structures code generation
+
+* `AnimDef` contains reset state seq def - thanks Skyfaller (`anim`, breaking change)
+* Update Blender scripts to match breaking API changes
+* Support writing anim.zbd (`lib`)
+* Split `PrereqObject` into that and `PrereqParent` (`anim`, breaking change)
+* Add event start struct for `Event` (`anim`, breaking change)
+* Add condition structures for `If`/`ElseIf` (`anim`, breaking change)
+* Add scale struct for `ObjectMotion` (`anim`, breaking change)
+* Add xyz rotation struct for `ObjectMotion` (`anim`, breaking change)
+* Add translation struct for `ObjectMotion` (`anim`, breaking change)
+* Add opacity value/state struct for `ObjectOpacityFromTo` (`anim`, breaking change)
+* Add bounce sequence struct for `ObjectMotion` (`anim`, breaking change)
+* Add struct for `ActivationPrereq::Animation` variant (`anim`, breaking change)
+* Convert `PufferState` cycle textures from tuple to struct (`anim`, breaking change)
+* Convert `CallAnimationParameters` and `ForwardRotation` enum fields to external structs (`anim`, breaking change)
+* Many changes to public anim structures (`anim`, breaking change)
+* Add reader raw/passthrough functions to mech3ax-lib (`lib`)
+* Remove old mech3ax-lib v1 API except anim (`lib`, breaking change)
+* Flatten nodes when reading Mechlib (`mechlib`, breaking change). This means mechlib data can now be read similarly to gamez; as a list of nodes
+* Convert `Vec3` tuple to structure (breaking change)
+* Convert `Matrix` tuple to structure (breaking change)
+* Convert `Block` tuple to `BoundingBox` structure (`mechlib`/`gamez`, breaking change)
+* Add `MessageEntry` structure instead of tuple (`messages`, breaking change)
+* Serialize global palette data as base64 (`image`, breaking change)
+* Add variant structures for `TexturePalette` (`image`, breaking change)
+* Add `MotionPart` structure between `Motion` and `MotionFrame` (`motion`, breaking change)
+* Convert remaining `Vec4` uses to `Quaternion` (breaking change)
+* Destructure resolution tuple (`gamez`, breaking change)
+* Convert one `Vec4` use to `Rgba` (`anim`, breaking change)
+* Convert some `Vec3` uses to `Color` (breaking change)
+* Convert remaining `Vec2` uses to `UvCoord` (`mechlib`/`gamez`, breaking change)
+* Convert most `Vec2` uses to `Range` (breaking change)
+* Convert `Area` into a named structure (`gamez`, breaking change)
+* Convert `AreaPartition` into a named structure (`gamez`, breaking change)
+* Introduce API types crates, to clarify external structures
+* Fix possible undefined behaviour (UB) in `read_struct`
+* Implement JSON to ZRD conversion (`rezbd`)
 * AnimDef field 152 is likely the status (`anim`, breaking change)
 * ReaderLookup field 40 is likely the "in use" or "loaded into world" flag (`anim`, breaking change)
 * AnimRef field 68 is likely a pointer (`anim`, breaking change)
