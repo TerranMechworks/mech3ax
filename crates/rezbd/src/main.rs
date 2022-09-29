@@ -2,39 +2,62 @@ mod commands;
 mod modding;
 
 use anyhow::Result;
-use clap::Parser;
+use clap::Parser as _;
 use env_logger::Env;
 use mech3ax_archive::{Mode, Version};
 use mech3ax_version::VERSION;
 
-#[derive(Parser)]
+#[derive(clap::Parser)]
 #[clap(version = VERSION)]
-struct Opts {
+struct Cli {
+    #[arg(value_enum)]
+    game: Game,
     #[clap(subcommand)]
     subcmd: SubCommand,
 }
 
-#[derive(Parser)]
-struct ZipOpts {
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+enum Game {
+    MW3,
+    PM,
+    Recoil,
+}
+
+#[derive(clap::Args)]
+struct ZipArgs {
     #[clap(help = "The source ZIP path")]
     input: String,
     #[clap(help = "The destination ZBD path (will be overwritten)")]
     output: String,
-    #[clap(long = "pm", help = "Pirate's Moon")]
-    is_pm: bool,
+}
+
+impl ZipArgs {
+    fn opts(self, game: Game) -> Result<ZipOpts> {
+        let Self { input, output } = self;
+        Ok(ZipOpts {
+            game,
+            input,
+            output,
+        })
+    }
+}
+
+struct ZipOpts {
+    game: Game,
+    input: String,
+    output: String,
 }
 
 impl ZipOpts {
     fn version(&self, mode: Mode) -> Version {
-        if self.is_pm {
-            Version::Two(mode)
-        } else {
-            Version::One
+        match self.game {
+            Game::MW3 | Game::Recoil => Version::One,
+            Game::PM => Version::Two(mode),
         }
     }
 }
 
-#[derive(Parser)]
+#[derive(clap::Args)]
 struct InterpOpts {
     #[clap(help = "The source JSON path")]
     input: String,
@@ -42,7 +65,7 @@ struct InterpOpts {
     output: String,
 }
 
-#[derive(Parser)]
+#[derive(clap::Args)]
 struct TextureOpts {
     #[clap(help = "The source ZIP path")]
     input: String,
@@ -55,7 +78,7 @@ struct TextureOpts {
     modding: bool,
 }
 
-#[derive(Parser)]
+#[derive(clap::Args)]
 struct ZrdOpts {
     #[clap(help = "The source JSON path")]
     input: String,
@@ -63,30 +86,30 @@ struct ZrdOpts {
     output: String,
 }
 
-#[derive(Parser)]
+#[derive(clap::Subcommand)]
 enum SubCommand {
     #[clap(about = "Prints license information")]
     License,
     #[clap(about = "Reconstruct 'sounds*.zbd' archives from ZIP")]
-    Sounds(ZipOpts),
+    Sounds(ZipArgs),
     #[clap(about = "Reconstruct 'interp.zbd' files from JSON")]
     Interp(InterpOpts),
     #[clap(about = "Reconstruct 'reader*.zbd' archives from ZIP")]
-    Reader(ZipOpts),
+    Reader(ZipArgs),
     #[clap(
         about = "Reconstruct 'rimage.zbd', 'rmechtex*.zbd', 'rtexture*.zbd', 'texture*.zbd' archives from ZIP"
     )]
     Textures(TextureOpts),
     #[clap(about = "Reconstruct 'motion.zbd' archives from ZIP")]
-    Motion(ZipOpts),
+    Motion(ZipArgs),
     #[clap(about = "Reconstruct 'mechlib.zbd' archives from ZIP")]
-    Mechlib(ZipOpts),
+    Mechlib(ZipArgs),
     #[clap(about = "Reconstruct 'gamez.zbd' archives from ZIP")]
-    Gamez(ZipOpts),
+    Gamez(ZipArgs),
     #[clap(about = "Reconstruct 'anim.zbd' archives from ZIP")]
-    Anim(ZipOpts),
+    Anim(ZipArgs),
     #[clap(about = "Reconstruct savegames '*.mw3' archives from ZIP")]
-    Savegame(ZipOpts),
+    Savegame(ZipArgs),
     #[clap(about = "Reconstruct reader '*.zrd' files from JSON")]
     Zrd(ZrdOpts),
 }
@@ -94,11 +117,12 @@ enum SubCommand {
 fn main() -> Result<()> {
     let env = Env::default().default_filter_or("warn");
     env_logger::Builder::from_env(env).init();
-    let opts: Opts = Opts::parse();
-    match opts.subcmd {
-        SubCommand::Sounds(opts) => commands::sounds(opts),
+    let cli: Cli = Cli::parse();
+    let game = cli.game;
+    match cli.subcmd {
+        SubCommand::Sounds(args) => commands::sounds(args.opts(game)?),
         SubCommand::Interp(opts) => commands::interp(opts),
-        SubCommand::Reader(opts) => commands::reader(opts),
+        SubCommand::Reader(args) => commands::reader(args.opts(game)?),
         SubCommand::Textures(TextureOpts {
             input,
             output,
@@ -109,11 +133,11 @@ fn main() -> Result<()> {
             output,
             modding: true,
         }) => modding::textures(input, output),
-        SubCommand::Motion(opts) => commands::motion(opts),
-        SubCommand::Mechlib(opts) => commands::mechlib(opts),
-        SubCommand::Gamez(opts) => commands::gamez(opts),
-        SubCommand::Anim(opts) => commands::anim(opts),
-        SubCommand::Savegame(opts) => commands::savegame(opts),
+        SubCommand::Motion(args) => commands::motion(args.opts(game)?),
+        SubCommand::Mechlib(args) => commands::mechlib(args.opts(game)?),
+        SubCommand::Gamez(args) => commands::gamez(args.opts(game)?),
+        SubCommand::Anim(args) => commands::anim(args.opts(game)?),
+        SubCommand::Savegame(args) => commands::savegame(args.opts(game)?),
         SubCommand::Zrd(opts) => modding::zrd(opts),
         SubCommand::License => commands::license(),
     }

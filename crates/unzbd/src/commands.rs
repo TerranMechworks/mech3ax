@@ -1,4 +1,4 @@
-use crate::{InterpOpts, MsgOpts, ReaderOpts, ZipOpts};
+use crate::{Game, InterpOpts, MsgOpts, ReaderOpts, ZipOpts};
 use anyhow::{bail, Context, Result};
 use image::ImageOutputFormat;
 use mech3ax_anim::read_anim;
@@ -64,9 +64,6 @@ pub(crate) fn interp(opts: InterpOpts) -> Result<()> {
 }
 
 pub(crate) fn messages(opts: MsgOpts) -> Result<()> {
-    if opts.dump_ids {
-        println!("The --dump-ids flag is deprecated and will be removed in the next version");
-    }
     let mut input = buf_reader(opts.input)?;
     let messages =
         read_messages(&mut input, opts.skip_data).context("Failed to read message data")?;
@@ -117,13 +114,7 @@ pub(crate) fn sounds(opts: ZipOpts) -> Result<()> {
 }
 
 pub(crate) fn reader(opts: ReaderOpts) -> Result<()> {
-    let version = match opts.is_pm {
-        false => Version::One,
-        true => match opts.skip_crc {
-            false => Version::Two(Mode::Reader),
-            true => Version::Two(Mode::ReaderBypass),
-        },
-    };
+    let version = opts.version();
     let options = deflate_opts();
 
     _zarchive(
@@ -145,6 +136,10 @@ pub(crate) fn reader(opts: ReaderOpts) -> Result<()> {
 }
 
 pub(crate) fn motion(opts: ZipOpts) -> Result<()> {
+    match opts.game {
+        Game::MW3 | Game::PM => {}
+        Game::Recoil => bail!("Recoil does not have motion"),
+    }
     let version = opts.version(Mode::Motion);
     let options = deflate_opts();
 
@@ -167,12 +162,13 @@ pub(crate) fn motion(opts: ZipOpts) -> Result<()> {
 }
 
 pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
-    if opts.is_pm {
-        bail!("Pirate's Moon support for Mechlib isn't implemented yet");
-    }
+    let is_pm = match opts.game {
+        Game::MW3 => false,
+        Game::PM => bail!("Pirate's Moon support for Mechlib isn't implemented yet"),
+        Game::Recoil => bail!("Recoil does not have mechlib"),
+    };
     let version = opts.version(Mode::Sounds);
     let options = deflate_opts();
-    let is_pm = opts.is_pm;
 
     _zarchive(
         opts.input,
@@ -229,8 +225,10 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
 }
 
 pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
-    if opts.is_pm {
-        bail!("Pirate's Moon support for Gamez isn't implemented yet");
+    match opts.game {
+        Game::MW3 => {}
+        Game::PM => bail!("Pirate's Moon support for Gamez isn't implemented yet"),
+        Game::Recoil => bail!("Recoil support for Gamez isn't implemented yet"),
     }
     let options = deflate_opts();
 
@@ -253,8 +251,10 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
 }
 
 pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
-    if opts.is_pm {
-        bail!("Pirate's Moon support for Anim isn't implemented yet");
+    match opts.game {
+        Game::MW3 => {}
+        Game::PM => bail!("Pirate's Moon support for Anim isn't implemented yet"),
+        Game::Recoil => bail!("Recoil support for Anim isn't implemented yet"),
     }
     let options = deflate_opts();
 
@@ -274,10 +274,11 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
 }
 
 pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
-    if opts.is_pm {
-        bail!("Pirate's Moon support for savegames isn't implemented yet");
-    }
-    let version = Version::One;
+    let version = match opts.game {
+        Game::MW3 => Version::One,
+        Game::PM => bail!("Pirate's Moon support for Savegames isn't implemented yet"),
+        Game::Recoil => bail!("Recoil support for Savegames isn't implemented yet"),
+    };
     let options = deflate_opts();
 
     _zarchive(

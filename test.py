@@ -6,6 +6,14 @@ from pathlib import Path
 from typing import List, Literal, Tuple
 
 Build = Literal["debug", "release"]
+Game = Literal["mw3", "pm", "recoil"]
+
+
+def name_to_game(name: str) -> Game:
+    is_pm = name.endswith("-pm")
+    if is_pm:
+        return "pm"
+    return "mw3"
 
 
 class Tester:
@@ -29,16 +37,12 @@ class Tester:
         for _, _, output_dir in self.versions:
             output_dir.mkdir(exist_ok=True)
 
-    def unzbd(self, command: str, one: Path, two: Path, is_pm: bool = False) -> None:
-        cmd = [str(self.unzbd_exe), command, str(one), str(two)]
-        if is_pm:
-            cmd.append("--pm")
+    def unzbd(self, command: str, game: Game, one: Path, two: Path) -> None:
+        cmd = [str(self.unzbd_exe), game, command, str(one), str(two)]
         subprocess.run(cmd, check=True)
 
-    def rezbd(self, command: str, one: Path, two: Path, is_pm: bool = False) -> None:
-        cmd = [str(self.rezbd_exe), command, str(one), str(two)]
-        if is_pm:
-            cmd.append("--pm")
+    def rezbd(self, command: str, game: Game, one: Path, two: Path) -> None:
+        cmd = [str(self.rezbd_exe), game, command, str(one), str(two)]
         subprocess.run(cmd, check=True)
 
     def compare(self, one: Path, two: Path) -> None:
@@ -57,45 +61,42 @@ class Tester:
     def test_sounds(self) -> None:
         print("--- SOUNDS ---")
         for name, zbd_dir, output_base in self.versions:
-            is_pm = name.endswith("-pm")
+            game = name_to_game(name)
 
-            print(name, "soundsL.zbd", is_pm)
-            input_zbd = zbd_dir / "soundsL.zbd"
-            zip_path = output_base / "soundsL.zip"
-            output_zbd = output_base / "soundsL.zbd"
+            for sounds in ["soundsL", "soundsH"]:
+                print(name, f"{sounds}.zbd", game)
+                input_zbd = zbd_dir / f"{sounds}.zbd"
+                zip_path = output_base / f"{sounds}.zip"
+                output_zbd = output_base / f"{sounds}.zbd"
 
-            self.unzbd("sounds", input_zbd, zip_path, is_pm)
-            self.rezbd("sounds", zip_path, output_zbd, is_pm)
-            self.compare(input_zbd, output_zbd)
-
-            print(name, "soundsH.zbd", is_pm)
-            input_zbd = zbd_dir / "soundsH.zbd"
-            zip_path = output_base / "soundsH.zip"
-            output_zbd = output_base / "soundsH.zbd"
-
-            self.unzbd("sounds", input_zbd, zip_path, is_pm)
-            self.rezbd("sounds", zip_path, output_zbd, is_pm)
-            self.compare(input_zbd, output_zbd)
+                self.unzbd("sounds", game, input_zbd, zip_path)
+                self.rezbd("sounds", game, zip_path, output_zbd)
+                self.compare(input_zbd, output_zbd)
 
     def test_interp(self) -> None:
         print("--- INTERP ---")
         for name, zbd_dir, output_base in self.versions:
-            print(name, "interp.zbd")
+            game = name_to_game(name)
+
+            print(name, "interp.zbd", game)
             input_zbd = zbd_dir / "interp.zbd"
             zip_path = output_base / "interp.json"
             output_zbd = output_base / "interp.zbd"
-            self.unzbd("interp", input_zbd, zip_path)
-            self.rezbd("interp", zip_path, output_zbd)
+            self.unzbd("interp", game, input_zbd, zip_path)
+            self.rezbd("interp", game, zip_path, output_zbd)
             self.compare(input_zbd, output_zbd)
 
     def test_messages(self) -> None:
         print("--- MESSAGES ---")
         for name, zbd_dir, output_base in self.versions:
-            print(name, "Mech3Msg.dll")
+            game = name_to_game(name)
+
+            print(name, "Mech3Msg.dll", game)
             input_dll = zbd_dir.parent / "Mech3Msg.dll"
             output_json = output_base / "Mech3Msg.json"
             cmd = [
                 str(self.unzbd_exe),
+                game,
                 "messages",
                 str(input_dll),
                 str(output_json),
@@ -138,6 +139,8 @@ class Tester:
     def test_textures(self) -> None:
         print("--- TEXTURES ---")
         for name, zbd_dir, output_base in self.versions:
+            game = name_to_game(name)
+
             output_dir = output_base / "textures"
             output_dir.mkdir(exist_ok=True)
 
@@ -154,18 +157,18 @@ class Tester:
 
                 zip_path = output_dir / zip_name
                 output_zbd = output_dir / zbd_name
-                print(name, mission, input_zbd.name)
-                self.unzbd("textures", input_zbd, zip_path)
-                self.rezbd("textures", zip_path, output_zbd)
+                print(name, mission, input_zbd.name, game)
+                self.unzbd("textures", game, input_zbd, zip_path)
+                self.rezbd("textures", game, zip_path, output_zbd)
                 self.compare(input_zbd, output_zbd)
 
     def test_reader(self) -> None:
         print("--- READER ---")
         for name, zbd_dir, output_base in self.versions:
+            game = name_to_game(name)
+
             output_dir = output_base / "reader"
             output_dir.mkdir(exist_ok=True)
-
-            is_pm = name.endswith("-pm")
 
             for input_zbd in sorted(zbd_dir.rglob("reader*.zbd")):
                 rel_path = input_zbd.relative_to(zbd_dir)
@@ -179,44 +182,47 @@ class Tester:
 
                 zip_path = output_dir / zip_name
                 output_zbd = output_dir / zbd_name
-                print(name, mission, input_zbd.name, is_pm)
-                self.unzbd("reader", input_zbd, zip_path, is_pm)
-                self.rezbd("reader", zip_path, output_zbd, is_pm)
+                print(name, mission, input_zbd.name, game)
+                self.unzbd("reader", game, input_zbd, zip_path)
+                self.rezbd("reader", game, zip_path, output_zbd)
                 self.compare(input_zbd, output_zbd)
 
     def test_motion(self) -> None:
         print("--- MOTION ---")
         for name, zbd_dir, output_base in self.versions:
-            is_pm = name.endswith("-pm")
-            print(name, "motion.zbd", is_pm)
+            game = name_to_game(name)
+
+            print(name, "motion.zbd", game)
 
             input_zbd = zbd_dir / "motion.zbd"
             zip_path = output_base / "motion.zip"
             output_zbd = output_base / "motion.zbd"
-            self.unzbd("motion", input_zbd, zip_path, is_pm)
-            self.rezbd("motion", zip_path, output_zbd, is_pm)
+            self.unzbd("motion", game, input_zbd, zip_path)
+            self.rezbd("motion", game, zip_path, output_zbd)
             self.compare(input_zbd, output_zbd)
 
     def test_mechlib(self) -> None:
         print("--- MECHLIB ---")
         for name, zbd_dir, output_base in self.versions:
-            print(name, "mechlib.zbd")
-
-            if name.endswith("-pm"):
+            game = name_to_game(name)
+            if game != "mw3":
                 print("SKIPPING")
                 continue
+
+            print(name, "mechlib.zbd", game)
 
             input_zbd = zbd_dir / "mechlib.zbd"
             zip_path = output_base / "mechlib.zip"
             output_zbd = output_base / "mechlib.zbd"
-            self.unzbd("mechlib", input_zbd, zip_path)
-            self.rezbd("mechlib", zip_path, output_zbd)
+            self.unzbd("mechlib", game, input_zbd, zip_path)
+            self.rezbd("mechlib", game, zip_path, output_zbd)
             self.compare(input_zbd, output_zbd)
 
     def test_gamez(self) -> None:
         print("--- GAMEZ ---")
         for name, zbd_dir, output_base in self.versions:
-            if name.endswith("-pm"):
+            game = name_to_game(name)
+            if game != "mw3":
                 print("SKIPPING")
                 continue
 
@@ -231,15 +237,16 @@ class Tester:
 
                 zip_path = output_dir / zip_name
                 output_zbd = output_dir / zbd_name
-                print(name, mission, input_zbd.name)
-                self.unzbd("gamez", input_zbd, zip_path)
-                self.rezbd("gamez", zip_path, output_zbd)
+                print(name, mission, input_zbd.name, game)
+                self.unzbd("gamez", game, input_zbd, zip_path)
+                self.rezbd("gamez", game, zip_path, output_zbd)
                 self.compare(input_zbd, output_zbd)
 
     def test_anim(self) -> None:
         print("--- ANIM ---")
         for name, zbd_dir, output_base in self.versions:
-            if name.endswith("-pm"):
+            game = name_to_game(name)
+            if game != "mw3":
                 print("SKIPPING")
                 continue
 
@@ -254,9 +261,9 @@ class Tester:
 
                 zip_path = output_dir / zip_name
                 output_zbd = output_dir / zbd_name
-                print(name, mission, input_zbd.name)
-                self.unzbd("anim", input_zbd, zip_path)
-                self.rezbd("anim", zip_path, output_zbd)
+                print(name, mission, input_zbd.name, game)
+                self.unzbd("anim", game, input_zbd, zip_path)
+                self.rezbd("anim", game, zip_path, output_zbd)
                 self.compare(input_zbd, output_zbd)
 
 

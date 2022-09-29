@@ -10,7 +10,7 @@ autobenches = false
 
 [dependencies]
 anyhow = "1.0"
-clap = { version = "3.0.0", default-features = false, features = ["std", "derive", "color"] }
+clap = { version = "4.0", default-features = false, features = ["std", "derive", "color", "help", "usage", "error-context"] }
 env_logger = { version = "0.9", default-features = false, features = ["atty", "humantime"] }
 image = { version = "0.23", default-features = false, features = ["png"] }
 serde = "1.0"

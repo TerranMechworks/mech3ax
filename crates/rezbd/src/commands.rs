@@ -1,4 +1,4 @@
-use crate::{InterpOpts, ZipOpts};
+use crate::{Game, InterpOpts, ZipOpts};
 use anyhow::{bail, Context, Result};
 use mech3ax_anim::write_anim;
 use mech3ax_api_types::saves::AnimActivation;
@@ -139,12 +139,12 @@ pub(crate) fn motion(opts: ZipOpts) -> Result<()> {
 }
 
 pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
-    if opts.is_pm {
-        bail!("Pirate's Moon support for Mechlib isn't implemented yet");
-    }
-
+    let is_pm = match opts.game {
+        Game::MW3 => false,
+        Game::PM => bail!("Pirate's Moon support for Mechlib isn't implemented yet"),
+        Game::Recoil => bail!("Recoil does not have mechlib"),
+    };
     let version = opts.version(Mode::Sounds);
-    let is_pm = opts.is_pm;
 
     _zarchive(
         opts.input,
@@ -205,8 +205,10 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
 }
 
 pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
-    if opts.is_pm {
-        bail!("Pirate's Moon support for Gamez isn't implemented yet");
+    match opts.game {
+        Game::MW3 => {}
+        Game::PM => bail!("Pirate's Moon support for Gamez isn't implemented yet"),
+        Game::Recoil => bail!("Recoil support for Gamez isn't implemented yet"),
     }
 
     let gamez = {
@@ -231,8 +233,10 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
 }
 
 pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
-    if opts.is_pm {
-        bail!("Pirate's Moon support for Anim isn't implemented yet");
+    match opts.game {
+        Game::MW3 => {}
+        Game::PM => bail!("Pirate's Moon support for Anim isn't implemented yet"),
+        Game::Recoil => bail!("Recoil support for Anim isn't implemented yet"),
     }
 
     let input = buf_reader(&opts.input)?;
@@ -245,10 +249,11 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
 }
 
 pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
-    if opts.is_pm {
-        bail!("Pirate's Moon support for savegames isn't implemented yet");
-    }
-    let version = Version::One;
+    let version = match opts.game {
+        Game::MW3 => Version::One,
+        Game::PM => bail!("Pirate's Moon support for Savegames isn't implemented yet"),
+        Game::Recoil => bail!("Recoil support for Savegames isn't implemented yet"),
+    };
 
     _zarchive(
         opts.input,

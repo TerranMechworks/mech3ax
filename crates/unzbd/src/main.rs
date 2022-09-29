@@ -1,46 +1,67 @@
 mod commands;
 
 use anyhow::Result;
-use clap::Parser;
+use clap::Parser as _;
 use env_logger::Env;
 use mech3ax_archive::{Mode, Version};
 use mech3ax_version::VERSION;
 
-#[derive(Parser)]
+#[derive(clap::Parser)]
 #[clap(version = VERSION)]
-struct Opts {
+struct Cli {
+    #[arg(value_enum)]
+    game: Game,
     #[clap(subcommand)]
     subcmd: SubCommand,
 }
 
-#[derive(Parser)]
-struct ZipOpts {
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+enum Game {
+    MW3,
+    PM,
+    Recoil,
+}
+
+#[derive(clap::Args)]
+struct ZipArgs {
     #[clap(help = "The source ZBD path")]
     input: String,
     #[clap(help = "The destination ZIP path (will be overwritten)")]
     output: String,
-    #[clap(long = "pm", help = "Pirate's Moon")]
-    is_pm: bool,
+}
+
+impl ZipArgs {
+    fn opts(self, game: Game) -> Result<ZipOpts> {
+        let Self { input, output } = self;
+        Ok(ZipOpts {
+            game,
+            input,
+            output,
+        })
+    }
+}
+
+struct ZipOpts {
+    game: Game,
+    input: String,
+    output: String,
 }
 
 impl ZipOpts {
     fn version(&self, mode: Mode) -> Version {
-        if self.is_pm {
-            Version::Two(mode)
-        } else {
-            Version::One
+        match self.game {
+            Game::MW3 | Game::Recoil => Version::One,
+            Game::PM => Version::Two(mode),
         }
     }
 }
 
-#[derive(Parser)]
-struct ReaderOpts {
+#[derive(clap::Args)]
+struct ReaderArgs {
     #[clap(help = "The source ZBD path")]
     input: String,
     #[clap(help = "The destination ZIP path (will be overwritten)")]
     output: String,
-    #[clap(long = "pm", help = "Pirate's Moon")]
-    is_pm: bool,
     #[clap(
         long = "skip-crc",
         help = "Skip the CRC check (only for PM)",
@@ -49,7 +70,40 @@ struct ReaderOpts {
     skip_crc: bool,
 }
 
-#[derive(Parser)]
+impl ReaderArgs {
+    fn opts(self, game: Game) -> Result<ReaderOpts> {
+        let Self {
+            input,
+            output,
+            skip_crc,
+        } = self;
+        Ok(ReaderOpts {
+            game,
+            input,
+            output,
+            skip_crc,
+        })
+    }
+}
+
+struct ReaderOpts {
+    game: Game,
+    input: String,
+    output: String,
+    skip_crc: bool,
+}
+
+impl ReaderOpts {
+    fn version(&self) -> Version {
+        match self.game {
+            Game::MW3 | Game::Recoil => Version::One,
+            Game::PM if self.skip_crc => Version::Two(Mode::ReaderBypass),
+            Game::PM => Version::Two(Mode::Reader),
+        }
+    }
+}
+
+#[derive(clap::Args)]
 struct InterpOpts {
     #[clap(help = "The source ZBD path")]
     input: String,
@@ -57,7 +111,7 @@ struct InterpOpts {
     output: String,
 }
 
-#[derive(Parser)]
+#[derive(clap::Args)]
 struct TextureOpts {
     #[clap(help = "The source ZBD path")]
     input: String,
@@ -65,14 +119,12 @@ struct TextureOpts {
     output: String,
 }
 
-#[derive(Parser)]
+#[derive(clap::Args)]
 struct MsgOpts {
     #[clap(help = "The source Mech3Msg.dll path")]
     input: String,
     #[clap(help = "The destination JSON path (will be overwritten)")]
     output: String,
-    #[clap(long = "dump-ids", help = "Dump message IDs")]
-    dump_ids: bool,
     #[clap(
         long = "skip-data",
         help = "Number of bytes to skip for CRT initialisation",
@@ -81,49 +133,48 @@ struct MsgOpts {
     skip_data: Option<usize>,
 }
 
-#[derive(Parser)]
+#[derive(clap::Subcommand)]
 enum SubCommand {
     #[clap(about = "Prints license information")]
     License,
     #[clap(about = "Extract 'sounds*.zbd' archives to ZIP")]
-    Sounds(ZipOpts),
+    Sounds(ZipArgs),
     #[clap(about = "Extract 'interp.zbd' files to JSON")]
     Interp(InterpOpts),
-    #[clap(about = "Extract 'reader*.zbd' archives to ZIP")]
-    Reader(ReaderOpts),
-    #[clap(about = "Extract 'Mech3Msg.dll' files to JSON")]
+    #[clap(about = "Extract 'reader*.zbd'/'zrdr.zbd' archives to ZIP")]
+    Reader(ReaderArgs),
+    #[clap(about = "Extract 'Mech3Msg.dll'/'messages.dll' files to JSON")]
     Messages(MsgOpts),
-    #[clap(
-        about = "Extract 'rimage.zbd', 'rmechtex*.zbd', 'rtexture*.zbd', 'texture*.zbd' archives to ZIP"
-    )]
+    #[clap(about = "Extract texture packages to ZIP")]
     Textures(TextureOpts),
-    #[clap(about = "Extract 'motion.zbd' archives to ZIP")]
-    Motion(ZipOpts),
-    #[clap(about = "Extract 'mechlib.zbd' archives to ZIP")]
-    Mechlib(ZipOpts),
-    #[clap(about = "Extract 'gamez.zbd' archives to ZIP")]
-    Gamez(ZipOpts),
-    #[clap(about = "Extract 'anim.zbd' archives to ZIP")]
-    Anim(ZipOpts),
-    #[clap(about = "Extract savegames '*.mw3' archives to ZIP")]
-    Savegame(ZipOpts),
+    #[clap(about = "Extract 'motion.zbd' archives to ZIP (MW3, PM)")]
+    Motion(ZipArgs),
+    #[clap(about = "Extract 'mechlib.zbd' archives to ZIP (MW3)")]
+    Mechlib(ZipArgs),
+    #[clap(about = "Extract 'gamez.zbd' archives to ZIP (MW3, PM)")]
+    Gamez(ZipArgs),
+    #[clap(about = "Extract 'anim.zbd' archives to ZIP (MW3, PM)")]
+    Anim(ZipArgs),
+    #[clap(about = "Extract savegames '*.mw3' archives to ZIP (MW3)")]
+    Savegame(ZipArgs),
 }
 
 fn main() -> Result<()> {
     let env = Env::default().default_filter_or("warn");
     env_logger::Builder::from_env(env).init();
-    let opts: Opts = Opts::parse();
-    match opts.subcmd {
-        SubCommand::Sounds(opts) => commands::sounds(opts),
+    let cli: Cli = Cli::parse();
+    let game = cli.game;
+    match cli.subcmd {
+        SubCommand::Sounds(args) => commands::sounds(args.opts(game)?),
         SubCommand::Interp(opts) => commands::interp(opts),
-        SubCommand::Reader(opts) => commands::reader(opts),
+        SubCommand::Reader(args) => commands::reader(args.opts(game)?),
         SubCommand::Messages(opts) => commands::messages(opts),
         SubCommand::Textures(TextureOpts { input, output }) => commands::textures(input, output),
-        SubCommand::Motion(opts) => commands::motion(opts),
-        SubCommand::Mechlib(opts) => commands::mechlib(opts),
-        SubCommand::Gamez(opts) => commands::gamez(opts),
-        SubCommand::Anim(opts) => commands::anim(opts),
-        SubCommand::Savegame(opts) => commands::savegame(opts),
+        SubCommand::Motion(args) => commands::motion(args.opts(game)?),
+        SubCommand::Mechlib(args) => commands::mechlib(args.opts(game)?),
+        SubCommand::Gamez(args) => commands::gamez(args.opts(game)?),
+        SubCommand::Anim(args) => commands::anim(args.opts(game)?),
+        SubCommand::Savegame(args) => commands::savegame(args.opts(game)?),
         SubCommand::License => commands::license(),
     }
 }

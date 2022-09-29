@@ -56,8 +56,8 @@ It's easiest to [grab the pre-build binaries from releases](https://github.com/T
 On macOS or Linux, you can run them like this:
 
 ```bash
-unzbd interp "original/zbd/interp.zbd" "interp.json"
-rezbd interp "interp.json" "interp.zbd"
+unzbd mw3 interp "original/zbd/interp.zbd" "interp.json"
+rezbd mw3 interp "interp.json" "interp.zbd"
 # the files should be the same
 cmp "original/zbd/interp.zbd" "interp.zbd"
 ```
@@ -65,12 +65,18 @@ cmp "original/zbd/interp.zbd" "interp.zbd"
 On Windows, you can use either the command line (`cmd.exe`) or Powershell (which I'd recommend):
 
 ```powershell
-PS> unzbd.exe interp "C:\Program Files (x86)\MechWarrior 3\zbd\interp.zbd" ".\interp.json"
-PS> rezbd.exe interp ".\interp.json" ".\interp.zbd"
+PS> unzbd.exe mw3 interp "C:\Program Files (x86)\MechWarrior 3\zbd\interp.zbd" ".\interp.json"
+PS> rezbd.exe mw3 interp ".\interp.json" ".\interp.zbd"
 PS> comp /M "C:\Program Files (x86)\MechWarrior 3\zbd\interp.zbd" ".\interp.zbd"
 Comparing C:\Program Files (x86)\MechWarrior 3\zbd\interp.zbd and .\interp.zbd...
 Files compare OK
 ```
+
+Supported games (support may be partial):
+
+* `mw3`
+* `pm`
+* `recoil`
 
 Provided subcommands:
 
@@ -79,10 +85,10 @@ Provided subcommands:
 * `reader` (produces a `*.zip` file)
 * `messages` (produces a `*.json` file, `unzbd` only)
 * `textures` (produces a `*.zip` file)
-* `motion` (produces a `*.zip` file)
-* `mechlib` (produces a `*.zip` file)
-* `anim` (produces a `*.zip` file)
-* `gamez` (produces a `*.zip` file)
+* `motion` (produces a `*.zip` file, `mw3` and `pm` only)
+* `mechlib` (produces a `*.zip` file, `mw3` only)
+* `anim` (produces a `*.zip` file, `mw3` only)
+* `gamez` (produces a `*.zip` file, `mw3` only)
 
 ## Blender scripts
 
@@ -139,10 +145,12 @@ Big features:
 
 * Introduce API types crates, to clarify external structures
 * Implement Rust structures to C# structures code generation
+* Updated CLI to support multiple games
 
 
 Detailed changes:
 
+* Removed `--dump-ids` flag (`unzbd`, breaking change)
 * `AnimDef` contains reset state seq def - thanks Skyfaller (`anim`, breaking change)
 * Update Blender scripts to match breaking API changes
 * Support writing anim.zbd (`lib`)
