@@ -136,8 +136,12 @@ where `--rtexture` and `--rmechtex` are optional.
 ### [0.6.0] - unreleased
 
 Big features:
+
 * Introduce API types crates, to clarify external structures
 * Implement Rust structures to C# structures code generation
+
+
+Detailed changes:
 
 * `AnimDef` contains reset state seq def - thanks Skyfaller (`anim`, breaking change)
 * Update Blender scripts to match breaking API changes
