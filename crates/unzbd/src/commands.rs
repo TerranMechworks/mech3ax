@@ -64,9 +64,9 @@ pub(crate) fn interp(opts: InterpOpts) -> Result<()> {
 }
 
 pub(crate) fn messages(opts: MsgOpts) -> Result<()> {
+    let skip_data = opts.skip_data();
     let mut input = buf_reader(opts.input)?;
-    let messages =
-        read_messages(&mut input, opts.skip_data).context("Failed to read message data")?;
+    let messages = read_messages(&mut input, skip_data).context("Failed to read message data")?;
     let contents = serde_json::to_vec_pretty(&messages)?;
     std::fs::write(opts.output, contents).context("Failed to write output")
 }

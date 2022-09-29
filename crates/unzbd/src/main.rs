@@ -120,17 +120,37 @@ struct TextureOpts {
 }
 
 #[derive(clap::Args)]
-struct MsgOpts {
+struct MsgArgs {
     #[clap(help = "The source Mech3Msg.dll path")]
     input: String,
     #[clap(help = "The destination JSON path (will be overwritten)")]
     output: String,
-    #[clap(
-        long = "skip-data",
-        help = "Number of bytes to skip for CRT initialisation",
-        hide = true
-    )]
-    skip_data: Option<usize>,
+}
+
+impl MsgArgs {
+    fn opts(self, game: Game) -> Result<MsgOpts> {
+        let Self { input, output } = self;
+        Ok(MsgOpts {
+            game,
+            input,
+            output,
+        })
+    }
+}
+
+struct MsgOpts {
+    game: Game,
+    input: String,
+    output: String,
+}
+
+impl MsgOpts {
+    fn skip_data(&self) -> Option<usize> {
+        match self.game {
+            Game::MW3 | Game::PM => None,
+            Game::Recoil => Some(48),
+        }
+    }
 }
 
 #[derive(clap::Subcommand)]
@@ -144,7 +164,7 @@ enum SubCommand {
     #[clap(about = "Extract 'reader*.zbd'/'zrdr.zbd' archives to ZIP")]
     Reader(ReaderArgs),
     #[clap(about = "Extract 'Mech3Msg.dll'/'messages.dll' files to JSON")]
-    Messages(MsgOpts),
+    Messages(MsgArgs),
     #[clap(about = "Extract texture packages to ZIP")]
     Textures(TextureOpts),
     #[clap(about = "Extract 'motion.zbd' archives to ZIP (MW3, PM)")]
@@ -168,7 +188,7 @@ fn main() -> Result<()> {
         SubCommand::Sounds(args) => commands::sounds(args.opts(game)?),
         SubCommand::Interp(opts) => commands::interp(opts),
         SubCommand::Reader(args) => commands::reader(args.opts(game)?),
-        SubCommand::Messages(opts) => commands::messages(opts),
+        SubCommand::Messages(args) => commands::messages(args.opts(game)?),
         SubCommand::Textures(TextureOpts { input, output }) => commands::textures(input, output),
         SubCommand::Motion(args) => commands::motion(args.opts(game)?),
         SubCommand::Mechlib(args) => commands::mechlib(args.opts(game)?),

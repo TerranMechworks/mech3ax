@@ -10,9 +10,10 @@ Game = Literal["mw3", "pm", "recoil"]
 
 
 def name_to_game(name: str) -> Game:
-    is_pm = name.endswith("-pm")
-    if is_pm:
+    if name.endswith("-pm"):
         return "pm"
+    if name.endswith("-recoil"):
+        return "recoil"
     return "mw3"
 
 
@@ -63,7 +64,12 @@ class Tester:
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
 
-            for sounds in ["soundsL", "soundsH"]:
+            if game == "recoil":
+                sounds_names = ["soundsl", "soundsm", "soundsh"]
+            else:
+                sounds_names = ["soundsL", "soundsH"]
+
+            for sounds in sounds_names:
                 print(name, f"{sounds}.zbd", game)
                 input_zbd = zbd_dir / f"{sounds}.zbd"
                 zip_path = output_base / f"{sounds}.zip"
@@ -91,9 +97,14 @@ class Tester:
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
 
-            print(name, "Mech3Msg.dll", game)
-            input_dll = zbd_dir.parent / "Mech3Msg.dll"
-            output_json = output_base / "Mech3Msg.json"
+            if game == "recoil":
+                msg_name = "messages"
+            else:
+                msg_name = "Mech3Msg"
+
+            print(name, f"{msg_name}.dll", game)
+            input_dll = zbd_dir.parent / f"{msg_name}.dll"
+            output_json = output_base / f"{msg_name}.json"
             cmd = [
                 str(self.unzbd_exe),
                 game,
@@ -144,7 +155,12 @@ class Tester:
             output_dir = output_base / "textures"
             output_dir.mkdir(exist_ok=True)
 
-            texture_zbds = list(zbd_dir.rglob("*tex*.zbd")) + [zbd_dir / "rimage.zbd"]
+            texture_zbds = list(zbd_dir.rglob("*tex*.zbd"))
+            if game == "recoil":
+                texture_zbds += [zbd_dir / "image.zbd"]
+            else:
+                texture_zbds += [zbd_dir / "rimage.zbd"]
+
             for input_zbd in sorted(texture_zbds):
                 rel_path = input_zbd.relative_to(zbd_dir)
                 mission = rel_path.parent.name
@@ -167,10 +183,15 @@ class Tester:
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
 
+            if game == "recoil":
+                rdr_glob = "zrdr.zbd"
+            else:
+                rdr_glob = "reader*.zbd"
+
             output_dir = output_base / "reader"
             output_dir.mkdir(exist_ok=True)
 
-            for input_zbd in sorted(zbd_dir.rglob("reader*.zbd")):
+            for input_zbd in sorted(zbd_dir.rglob(rdr_glob)):
                 rel_path = input_zbd.relative_to(zbd_dir)
                 mission = rel_path.parent.name
                 if not mission:
@@ -191,6 +212,9 @@ class Tester:
         print("--- MOTION ---")
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
+            if game == "recoil":
+                print("SKIPPING", name)
+                continue
 
             print(name, "motion.zbd", game)
 
@@ -206,7 +230,7 @@ class Tester:
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
             if game != "mw3":
-                print("SKIPPING")
+                print("SKIPPING", name)
                 continue
 
             print(name, "mechlib.zbd", game)
@@ -223,7 +247,7 @@ class Tester:
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
             if game != "mw3":
-                print("SKIPPING")
+                print("SKIPPING", name)
                 continue
 
             output_dir = output_base / "gamez"
@@ -247,7 +271,7 @@ class Tester:
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
             if game != "mw3":
-                print("SKIPPING")
+                print("SKIPPING", name)
                 continue
 
             output_dir = output_base / "anim"
