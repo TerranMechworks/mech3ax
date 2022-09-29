@@ -16,6 +16,7 @@ test = false
 bitflags = "1.0"
 image = { version = "0.23", default-features = false }
 num-traits = "0.2"
+log = "0.4"
 
 mech3ax-api-types = { path = "../mech3ax-api-types" }
 mech3ax-common = { path = "../mech3ax-common" }
