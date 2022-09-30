@@ -13,6 +13,7 @@ use mech3ax_pixel_ops::{
     rgb888topal8, simple_alpha,
 };
 use num_traits::FromPrimitive;
+use std::collections::HashSet;
 use std::io::{Read, Seek, Write};
 
 #[repr(C)]
@@ -59,6 +60,16 @@ bitflags::bitflags! {
         const ALPHA_LOADED = 1 << 6;
         const PALETTE_LOADED = 1 << 7;
     }
+}
+
+fn rename(seen: &HashSet<String>, original: &str) -> String {
+    for index in 1usize.. {
+        let name = format!("{}-{}", original, index);
+        if !seen.contains(&name) {
+            return name;
+        }
+    }
+    panic!("ran out of renames");
 }
 
 fn convert_info_from_c(
@@ -108,6 +119,7 @@ fn convert_info_from_c(
 
     Ok(TextureInfo {
         name,
+        rename: None,
         alpha,
         width: tex_info.width,
         height: tex_info.height,
@@ -280,6 +292,7 @@ where
         })
         .collect::<std::result::Result<Vec<_>, E>>()?;
 
+    let mut seen: HashSet<String> = HashSet::new();
     let texture_infos = tex_table
         .into_iter()
         .map(|(name, start_offset, palette_index)| {
@@ -294,8 +307,15 @@ where
             } else {
                 None
             };
-            let (info, image) = read_texture(read, name, global_palette)?;
-            save_texture(&info.name, image)?;
+            let (mut info, image) = read_texture(read, name.clone(), global_palette)?;
+            if seen.insert(name) {
+                save_texture(&info.name, image)?;
+            } else {
+                let renamed = rename(&seen, &info.name);
+                trace!("Renaming texture from `{}` to `{}`", info.name, renamed);
+                save_texture(&renamed, image)?;
+                info.rename = Some(renamed);
+            }
             Ok(info)
         })
         .collect::<std::result::Result<Vec<_>, E>>()?;
@@ -616,7 +636,13 @@ where
     }
 
     for info in &manifest.texture_infos {
-        let image = load_texture(&info.name)?;
+        let image = match &info.rename {
+            Some(renamed) => {
+                trace!("Renaming texture from `{}` to `{}`", info.name, renamed);
+                load_texture(renamed)?
+            }
+            None => load_texture(&info.name)?,
+        };
         if log_enabled!(Level::Trace) {
             let offset = write.stream_position().unwrap_or_default();
             trace!("Writing texture `{}` at {}", info.name, offset);

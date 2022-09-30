@@ -42,6 +42,8 @@ pub enum TexturePalette {
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct TextureInfo {
     pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub rename: Option<String>,
     pub alpha: TextureAlpha,
     pub width: u16,
     pub height: u16,
