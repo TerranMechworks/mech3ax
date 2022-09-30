@@ -208,7 +208,7 @@ fn write_mechlib_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
                 .with_context(|| format!("Model data for `{}` is invalid", original))?;
 
             let mut buf = CountingWriter::new(Vec::new());
-            mech3ax_gamez::mechlib::write_model(&mut buf, &mut model)
+            mech3ax_gamez::mechlib::write_model_mw(&mut buf, &mut model)
                 .with_context(|| format!("Failed to write model data for `{}`", original))?;
             Ok(buf.into_inner())
         }

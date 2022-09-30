@@ -9,7 +9,7 @@ use mech3ax_api_types::{
 use mech3ax_archive::{write_archive, Mode, Version};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_gamez::gamez::write_gamez;
-use mech3ax_gamez::mechlib::{write_format, write_materials, write_model, write_version};
+use mech3ax_gamez::mechlib::{write_format, write_materials, write_model_mw, write_version};
 use mech3ax_image::write_textures;
 use mech3ax_interp::write_interp;
 use mech3ax_motion::write_motion;
@@ -173,7 +173,7 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                 let mut model: Model = zip_json(zip, &name)?;
 
                 let mut buf = CountingWriter::new(Vec::new());
-                write_model(&mut buf, &mut model).with_context(|| {
+                write_model_mw(&mut buf, &mut model).with_context(|| {
                     format!("Failed to write mechlib model for \"{}\"", original)
                 })?;
                 Ok(buf.into_inner())

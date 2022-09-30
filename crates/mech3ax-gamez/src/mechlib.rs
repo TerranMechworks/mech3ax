@@ -1,5 +1,5 @@
 use crate::materials::{read_material, write_material, RawMaterial};
-use crate::mesh::{read_mesh_data, read_mesh_info, write_mesh_data, write_mesh_info};
+use crate::mesh::{read_mesh_data_mw, read_mesh_info_mw, write_mesh_data_mw, write_mesh_info_mw};
 use crate::nodes::{read_node_mechlib, write_object_3d_data, write_object_3d_info, Wrapper};
 use mech3ax_api_types::{Material, Mesh, Model, Object3d, TexturedMaterial};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -77,7 +77,7 @@ pub fn write_materials(
     Ok(())
 }
 
-fn read_node_and_mesh(
+fn read_node_and_mesh_mw(
     read: &mut CountingReader<impl Read>,
     nodes: &mut Vec<Object3d>,
     meshes: &mut Vec<Mesh>,
@@ -95,8 +95,8 @@ fn read_node_and_mesh(
         mesh_ptrs.push(object3d.mesh_index);
         object3d.mesh_index = ptr_index;
 
-        let wrapped_mesh = read_mesh_info(read)?;
-        let mesh = read_mesh_data(read, wrapped_mesh)?;
+        let wrapped_mesh = read_mesh_info_mw(read)?;
+        let mesh = read_mesh_data_mw(read, wrapped_mesh)?;
         meshes.push(mesh);
     } else {
         object3d.mesh_index = -1;
@@ -110,7 +110,7 @@ fn read_node_and_mesh(
     nodes.push(object3d);
 
     let child_indices = (0..children_count)
-        .map(|_| read_node_and_mesh(read, nodes, meshes, mesh_ptrs))
+        .map(|_| read_node_and_mesh_mw(read, nodes, meshes, mesh_ptrs))
         .collect::<Result<Vec<_>>>()?;
 
     let object3d = &mut nodes[current_index];
@@ -119,11 +119,11 @@ fn read_node_and_mesh(
     Ok(current_index.try_into().unwrap())
 }
 
-pub fn read_model(read: &mut CountingReader<impl Read>) -> Result<Model> {
+pub fn read_model_mw(read: &mut CountingReader<impl Read>) -> Result<Model> {
     let mut nodes = Vec::new();
     let mut meshes = Vec::new();
     let mut mesh_ptrs = Vec::new();
-    let _root_index = read_node_and_mesh(read, &mut nodes, &mut meshes, &mut mesh_ptrs)?;
+    let _root_index = read_node_and_mesh_mw(read, &mut nodes, &mut meshes, &mut mesh_ptrs)?;
     read.assert_end()?;
     Ok(Model {
         nodes,
@@ -159,8 +159,8 @@ fn write_node_and_mesh(
     // if mesh_index isn't -1, then we need to write out the mesh, too
     if let Some(index) = restore_index {
         let mesh = &meshes[index];
-        write_mesh_info(write, mesh)?;
-        write_mesh_data(write, mesh)?;
+        write_mesh_info_mw(write, mesh)?;
+        write_mesh_data_mw(write, mesh)?;
     }
 
     let child_indices = object3d.children.clone();
@@ -170,6 +170,6 @@ fn write_node_and_mesh(
     Ok(())
 }
 
-pub fn write_model(write: &mut CountingWriter<impl Write>, model: &mut Model) -> Result<()> {
+pub fn write_model_mw(write: &mut CountingWriter<impl Write>, model: &mut Model) -> Result<()> {
     write_node_and_mesh(write, 0, &mut model.nodes, &model.meshes, &model.mesh_ptrs)
 }

@@ -5,7 +5,7 @@ use mech3ax_anim::read_anim;
 use mech3ax_archive::{read_archive, Mode, Version};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_gamez::gamez::read_gamez;
-use mech3ax_gamez::mechlib::{read_format, read_materials, read_model, read_version};
+use mech3ax_gamez::mechlib::{read_format, read_materials, read_model_mw, read_version};
 use mech3ax_image::read_textures;
 use mech3ax_interp::read_interp;
 use mech3ax_messages::read_messages;
@@ -193,7 +193,7 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                 }
                 original => {
                     let name = original.replace(".flt", ".json");
-                    let root = read_model(&mut read).with_context(|| {
+                    let root = read_model_mw(&mut read).with_context(|| {
                         format!("Failed to read mechlib model for \"{}\"", original)
                     })?;
                     zip_json(zip, options, &name, &root)

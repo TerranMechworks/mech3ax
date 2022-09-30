@@ -157,7 +157,7 @@ pub extern "C" fn read_motion(filename: *const c_char, is_pm: i32, callback: Nam
     )
 }
 
-fn read_mechlib_transform(name: &str, data: Vec<u8>, offset: u32) -> Result<Vec<u8>> {
+fn read_mechlib_transform_mw(name: &str, data: Vec<u8>, offset: u32) -> Result<Vec<u8>> {
     let mut read = CountingReader::new(Cursor::new(data));
     // translate to absolute offset
     read.offset = offset;
@@ -179,7 +179,7 @@ fn read_mechlib_transform(name: &str, data: Vec<u8>, offset: u32) -> Result<Vec<
             Ok(serde_json::to_vec(&materials)?)
         }
         _ => {
-            let root = mech3ax_gamez::mechlib::read_model(&mut read)
+            let root = mech3ax_gamez::mechlib::read_model_mw(&mut read)
                 .with_context(|| format!("Failed to read model data for `{}`", name))?;
             Ok(serde_json::to_vec(&root)?)
         }
@@ -194,7 +194,7 @@ pub extern "C" fn read_mechlib(filename: *const c_char, is_pm: i32, callback: Na
         filename,
         is_pm,
         callback,
-        read_mechlib_transform,
+        read_mechlib_transform_mw,
     )
 }
 

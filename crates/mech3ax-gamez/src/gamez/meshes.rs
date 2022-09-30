@@ -1,6 +1,6 @@
 use crate::mesh::{
-    read_mesh_data, read_mesh_info, read_mesh_infos_zero, size_mesh, write_mesh_data,
-    write_mesh_info, write_mesh_infos_zero, MESH_C_SIZE,
+    read_mesh_data_mw, read_mesh_info_mw, read_mesh_infos_zero_mw, size_mesh_mw,
+    write_mesh_data_mw, write_mesh_info_mw, write_mesh_infos_zero_mw, MESH_MW_C_SIZE,
 };
 use mech3ax_api_types::{static_assert_size, Mesh, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -30,7 +30,7 @@ pub fn read_meshes(
     let mut prev_offset = read.offset;
     let meshes = (0..info.count)
         .map(|_| {
-            let wrapped_mesh = read_mesh_info(read)?;
+            let wrapped_mesh = read_mesh_info_mw(read)?;
             let mesh_offset = read.read_u32()?;
             assert_that!("mesh offset", prev_offset <= mesh_offset <= end_offset, read.prev)?;
             prev_offset = mesh_offset;
@@ -38,13 +38,13 @@ pub fn read_meshes(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    read_mesh_infos_zero(read, info.count, info.array_size)?;
+    read_mesh_infos_zero_mw(read, info.count, info.array_size)?;
 
     let meshes = meshes
         .into_iter()
         .map(|(wrapped_mesh, mesh_offset)| {
             assert_that!("mesh offset", mesh_offset == read.offset, read.offset)?;
-            let mesh = read_mesh_data(read, wrapped_mesh)?;
+            let mesh = read_mesh_data_mw(read, wrapped_mesh)?;
             Ok(mesh)
         })
         .collect::<Result<Vec<_>>>()?;
@@ -66,26 +66,26 @@ pub fn write_meshes(
     })?;
 
     for (mesh, offset) in meshes.iter().zip(offsets.iter()) {
-        write_mesh_info(write, mesh)?;
+        write_mesh_info_mw(write, mesh)?;
         write.write_u32(*offset)?;
     }
 
-    write_mesh_infos_zero(write, count, array_size)?;
+    write_mesh_infos_zero_mw(write, count, array_size)?;
 
     for mesh in meshes {
-        write_mesh_data(write, mesh)?;
+        write_mesh_data_mw(write, mesh)?;
     }
 
     Ok(())
 }
 
 pub fn size_meshes(offset: u32, array_size: i32, meshes: &[Mesh]) -> (u32, Vec<u32>) {
-    let mut offset = offset + MeshesInfoC::SIZE + (MESH_C_SIZE + 4) * array_size as u32;
+    let mut offset = offset + MeshesInfoC::SIZE + (MESH_MW_C_SIZE + 4) * array_size as u32;
     let mesh_offsets = meshes
         .iter()
         .map(|mesh| {
             let current = offset;
-            offset += size_mesh(mesh);
+            offset += size_mesh_mw(mesh);
             current
         })
         .collect();
