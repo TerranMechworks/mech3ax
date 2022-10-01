@@ -11,7 +11,8 @@ pub struct CountingReader<R: Read> {
 }
 
 impl<R: Read> CountingReader<R> {
-    pub fn new(read: R) -> Self {
+    #[inline]
+    pub const fn new(read: R) -> Self {
         Self {
             inner: read,
             offset: 0,
@@ -19,18 +20,7 @@ impl<R: Read> CountingReader<R> {
         }
     }
 
-    pub fn into_inner(self) -> R {
-        self.inner
-    }
-
-    pub fn get_ref(&self) -> &R {
-        &self.inner
-    }
-
-    pub fn get_mut(&mut self) -> &mut R {
-        &mut self.inner
-    }
-
+    #[inline]
     pub fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> {
         if let Err(err) = self.inner.read_exact(buf) {
             return Err(err);
@@ -40,36 +30,42 @@ impl<R: Read> CountingReader<R> {
         Ok(())
     }
 
+    #[inline]
     pub fn read_u32(&mut self) -> Result<u32> {
         let mut buf = [0; 4];
         self.read_exact(&mut buf)?;
         Ok(u32::from_le_bytes(buf))
     }
 
+    #[inline]
     pub fn read_i32(&mut self) -> Result<i32> {
         let mut buf = [0; 4];
         self.read_exact(&mut buf)?;
         Ok(i32::from_le_bytes(buf))
     }
 
+    #[inline]
     pub fn read_f32(&mut self) -> Result<f32> {
         let mut buf = [0; 4];
         self.read_exact(&mut buf)?;
         Ok(f32::from_le_bytes(buf))
     }
 
+    #[inline]
     pub fn read_u16(&mut self) -> Result<u16> {
         let mut buf = [0; 2];
         self.read_exact(&mut buf)?;
         Ok(u16::from_le_bytes(buf))
     }
 
+    #[inline]
     pub fn read_i16(&mut self) -> Result<i16> {
         let mut buf = [0; 2];
         self.read_exact(&mut buf)?;
         Ok(i16::from_le_bytes(buf))
     }
 
+    #[inline]
     pub fn read_u8(&mut self) -> Result<u8> {
         let mut buf = [0; 1];
         self.read_exact(&mut buf)?;
@@ -112,6 +108,7 @@ impl<R: Read> CountingReader<R> {
 }
 
 impl<R: Read + Seek> Seek for CountingReader<R> {
+    #[inline]
     fn seek(&mut self, pos: SeekFrom) -> Result<u64> {
         let offset = self.inner.seek(pos)?;
         self.offset = offset as u32;
