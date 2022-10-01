@@ -20,6 +20,10 @@ impl<R: Read> CountingReader<R> {
         }
     }
 
+    pub fn get_mut(&mut self) -> &mut R {
+        &mut self.inner
+    }
+
     #[inline]
     pub fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> {
         if let Err(err) = self.inner.read_exact(buf) {
@@ -113,32 +117,6 @@ impl<R: Read + Seek> Seek for CountingReader<R> {
         let offset = self.inner.seek(pos)?;
         self.offset = offset as u32;
         Ok(offset)
-    }
-}
-
-pub trait ReadHelper {
-    fn read_u32(&mut self) -> Result<u32>;
-    fn read_u16(&mut self) -> Result<u16>;
-    fn read_f32(&mut self) -> Result<f32>;
-}
-
-impl<R: Read> ReadHelper for R {
-    fn read_u32(&mut self) -> Result<u32> {
-        let mut buf = [0; 4];
-        self.read_exact(&mut buf)?;
-        Ok(u32::from_le_bytes(buf))
-    }
-
-    fn read_u16(&mut self) -> Result<u16> {
-        let mut buf = [0; 2];
-        self.read_exact(&mut buf)?;
-        Ok(u16::from_le_bytes(buf))
-    }
-
-    fn read_f32(&mut self) -> Result<f32> {
-        let mut buf = [0; 4];
-        self.read_exact(&mut buf)?;
-        Ok(f32::from_le_bytes(buf))
     }
 }
 

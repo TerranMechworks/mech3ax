@@ -1,9 +1,9 @@
 use mech3ax_common::assert::AssertionError;
-use mech3ax_common::io_ext::ReadHelper;
+use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Result};
 use mech3ax_encoding::windows1252_decode;
 use std::collections::HashMap;
-use std::io::{Cursor, Read};
+use std::io::Cursor;
 
 fn remove_trailing(buf: &mut Vec<u8>) -> std::result::Result<(), AssertionError> {
     // remove from back: \0 (0, multiple), \n (10, single), and \r (13, single)
@@ -50,7 +50,7 @@ fn remove_trailing(buf: &mut Vec<u8>) -> std::result::Result<(), AssertionError>
 }
 
 pub fn read_message_table(data: &[u8]) -> Result<HashMap<u32, String>> {
-    let mut read = Cursor::new(data);
+    let mut read = CountingReader::new(Cursor::new(data));
     let count = read.read_u32()?;
 
     let table = (0..count)
@@ -64,7 +64,7 @@ pub fn read_message_table(data: &[u8]) -> Result<HashMap<u32, String>> {
 
     let mut entries = HashMap::new();
     for (low_id, high_id, offset_to_entries) in table {
-        read.set_position(offset_to_entries as u64);
+        read.get_mut().set_position(offset_to_entries as u64);
         for entry_id in low_id..=high_id {
             let length = read.read_u16()? - 4;
             let flags = read.read_u16()?;
