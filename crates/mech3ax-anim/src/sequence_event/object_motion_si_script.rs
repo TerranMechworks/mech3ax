@@ -5,7 +5,7 @@ use mech3ax_api_types::{
     ReprSize as _, RotateData, ScaleData, TranslateData, Vec3,
 };
 use mech3ax_common::assert::AssertionError;
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::bytes_to_c;
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -164,7 +164,7 @@ impl ScriptObject for ObjectMotionSiScript {
         Ok(ObjectMotionSiScript { node, frames })
     }
 
-    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
         let node_index = anim_def.node_to_index(&self.node)? as u32;
         let count = self.frames.len() as u32;
         write.write_struct(&ScriptHeaderC {

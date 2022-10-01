@@ -1,7 +1,7 @@
 use super::ScriptObject;
 use mech3ax_api_types::{static_assert_size, AnimDef, CallSequence, ReprSize as _, StopSequence};
 use mech3ax_common::assert::assert_utf8;
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -22,7 +22,7 @@ fn read_sequence(read: &mut CountingReader<impl Read>) -> Result<String> {
     Ok(name)
 }
 
-fn write_sequence(write: &mut impl Write, name: &str) -> Result<()> {
+fn write_sequence(write: &mut CountingWriter<impl Write>, name: &str) -> Result<()> {
     let mut fill = [0; 32];
     str_to_c_padded(name, &mut fill);
     write.write_struct(&SequenceC {
@@ -42,7 +42,7 @@ impl ScriptObject for CallSequence {
         Ok(Self { name })
     }
 
-    fn write(&self, write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, _anim_def: &AnimDef) -> Result<()> {
         write_sequence(write, &self.name)
     }
 }
@@ -57,7 +57,7 @@ impl ScriptObject for StopSequence {
         Ok(Self { name })
     }
 
-    fn write(&self, write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, _anim_def: &AnimDef) -> Result<()> {
         write_sequence(write, &self.name)
     }
 }

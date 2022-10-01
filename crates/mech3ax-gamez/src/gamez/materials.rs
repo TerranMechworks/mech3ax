@@ -3,7 +3,7 @@ use crate::materials::{
     MATERIAL_C_SIZE,
 };
 use mech3ax_api_types::{static_assert_size, CycleData, Material, ReprSize as _, TexturedMaterial};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, bool_c, Result};
 use std::io::{Read, Write};
 
@@ -134,7 +134,11 @@ pub fn read_materials(
     Ok((materials, array_size))
 }
 
-fn write_cycle(write: &mut impl Write, textures: &[String], material: &Material) -> Result<()> {
+fn write_cycle(
+    write: &mut CountingWriter<impl Write>,
+    textures: &[String],
+    material: &Material,
+) -> Result<()> {
     if let Material::Textured(mat) = material {
         if let Some(cycle) = &mat.cycle {
             let unk00 = bool_c!(cycle.unk00);
@@ -162,7 +166,7 @@ fn write_cycle(write: &mut impl Write, textures: &[String], material: &Material)
 }
 
 pub fn write_materials(
-    write: &mut impl Write,
+    write: &mut CountingWriter<impl Write>,
     textures: &[String],
     materials: &[Material],
     array_size: i16,

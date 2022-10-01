@@ -1,6 +1,6 @@
 use mech3ax_api_types::{static_assert_size, Color, ColoredMaterial, Material, ReprSize as _};
 use mech3ax_common::assert::AssertionError;
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
@@ -101,7 +101,7 @@ pub fn read_material(read: &mut CountingReader<impl Read>) -> Result<RawMaterial
 }
 
 pub fn write_material(
-    write: &mut impl Write,
+    write: &mut CountingWriter<impl Write>,
     material: &Material,
     pointer: Option<u32>,
 ) -> Result<()> {
@@ -191,7 +191,11 @@ pub fn read_materials_zero(
     Ok(())
 }
 
-pub fn write_materials_zero(write: &mut impl Write, start: i16, end: i16) -> Result<()> {
+pub fn write_materials_zero(
+    write: &mut CountingWriter<impl Write>,
+    start: i16,
+    end: i16,
+) -> Result<()> {
     let material = MaterialC {
         unk00: 0,
         flags: MaterialFlags::FREE.bits(),

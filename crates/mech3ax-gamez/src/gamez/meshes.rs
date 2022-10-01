@@ -3,7 +3,7 @@ use crate::mesh::{
     write_mesh_info, write_mesh_infos_zero, MESH_C_SIZE,
 };
 use mech3ax_api_types::{static_assert_size, Mesh, ReprSize as _};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
@@ -53,7 +53,7 @@ pub fn read_meshes(
 }
 
 pub fn write_meshes(
-    write: &mut impl Write,
+    write: &mut CountingWriter<impl Write>,
     meshes: &[Mesh],
     offsets: &[u32],
     array_size: i32,

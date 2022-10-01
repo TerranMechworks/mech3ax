@@ -6,7 +6,7 @@ use mech3ax_api_types::{
     ObjectMotionScale, ObjectMotionTranslation, Quaternion, ReprSize as _, Vec3, XyzRotation,
 };
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -493,7 +493,7 @@ impl ScriptObject for ObjectMotion {
         })
     }
 
-    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
         let node_index = anim_def.node_to_index(&self.node)? as u32;
         let mut flags = ObjectMotionFlags::empty();
         let gravity = if let Some(gravity_info) = &self.gravity {

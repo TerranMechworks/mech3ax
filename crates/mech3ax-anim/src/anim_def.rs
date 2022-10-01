@@ -7,7 +7,7 @@ use mech3ax_api_types::{
     ReprSize as _, ResetState, SeqActivation, SeqDef,
 };
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{
     str_from_c_padded, str_from_c_partition, str_to_c_padded, str_to_c_partition,
 };
@@ -599,7 +599,7 @@ pub fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<(AnimDef, A
     Ok((result, anim_ptr))
 }
 
-pub fn write_anim_def_zero(write: &mut impl Write) -> Result<()> {
+pub fn write_anim_def_zero(write: &mut CountingWriter<impl Write>) -> Result<()> {
     // the first entry is always zero
     let mut anim_def = [0; AnimDefC::SIZE as usize];
     // ...except for this one byte?
@@ -610,7 +610,11 @@ pub fn write_anim_def_zero(write: &mut impl Write) -> Result<()> {
     Ok(())
 }
 
-fn write_reset_state(write: &mut impl Write, anim_def: &AnimDef, size: u32) -> Result<()> {
+fn write_reset_state(
+    write: &mut CountingWriter<impl Write>,
+    anim_def: &AnimDef,
+    size: u32,
+) -> Result<()> {
     write.write_struct(&SeqDefInfoC {
         name: RESET_SEQUENCE.clone(),
         flags: 0,
@@ -629,7 +633,7 @@ fn write_reset_state(write: &mut impl Write, anim_def: &AnimDef, size: u32) -> R
     Ok(())
 }
 
-fn write_sequence_defs(write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
+fn write_sequence_defs(write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
     for seq_def in &anim_def.sequences {
         let mut name = [0; 32];
         str_to_c_padded(&seq_def.name, &mut name);
@@ -652,7 +656,7 @@ fn write_sequence_defs(write: &mut impl Write, anim_def: &AnimDef) -> Result<()>
 }
 
 pub fn write_anim_def(
-    write: &mut impl Write,
+    write: &mut CountingWriter<impl Write>,
     anim_def: &AnimDef,
     anim_ptr: &AnimPtr,
 ) -> Result<()> {

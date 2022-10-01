@@ -1,7 +1,7 @@
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
 use mech3ax_api_types::{static_assert_size, AnimDef, ObjectOpacityState, ReprSize as _};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, bool_c, Result};
 use std::io::{Read, Write};
 
@@ -34,7 +34,7 @@ impl ScriptObject for ObjectOpacityState {
         })
     }
 
-    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
         write.write_struct(&ObjectOpacityStateC {
             is_set: bool_c!(self.is_set),
             state: bool_c!(self.state),

@@ -1,5 +1,5 @@
 use mech3ax_common::assert::AssertionError;
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{Error, Result};
 use std::convert::TryInto;
 use std::io::{Read, Write};
@@ -52,7 +52,7 @@ fn invalid_number(num: &Number) -> AssertionError {
     AssertionError(format!("Expected valid number, but was {}", num))
 }
 
-fn write_value(write: &mut impl Write, value: &Value) -> Result<()> {
+fn write_value(write: &mut CountingWriter<impl Write>, value: &Value) -> Result<()> {
     match value {
         Value::Number(num) => {
             if let Some(int) = num.as_i64() {
@@ -98,6 +98,6 @@ fn write_value(write: &mut impl Write, value: &Value) -> Result<()> {
     Ok(())
 }
 
-pub fn write_reader(write: &mut impl Write, value: &Value) -> Result<()> {
+pub fn write_reader(write: &mut CountingWriter<impl Write>, value: &Value) -> Result<()> {
     write_value(write, value)
 }

@@ -1,7 +1,7 @@
 use super::flags::NodeBitFlags;
 use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
 use mech3ax_api_types::{static_assert_size, BoundingBox, Color, Display, ReprSize as _};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
@@ -108,7 +108,7 @@ pub fn make_variants(display: &Display) -> NodeVariants {
     }
 }
 
-pub fn write(write: &mut impl Write, display: &Display) -> Result<()> {
+pub fn write(write: &mut CountingWriter<impl Write>, display: &Display) -> Result<()> {
     write.write_struct(&DisplayC {
         origin_x: 0,
         origin_y: 0,

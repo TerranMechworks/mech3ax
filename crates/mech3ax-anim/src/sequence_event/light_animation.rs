@@ -2,7 +2,7 @@ use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
 use mech3ax_api_types::{static_assert_size, AnimDef, Color, LightAnimation, Range, ReprSize as _};
 use mech3ax_common::assert::assert_utf8;
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -131,7 +131,7 @@ impl ScriptObject for LightAnimation {
         })
     }
 
-    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
         let mut name = [0; 32];
         str_to_c_padded(&self.name, &mut name);
         let light_index = anim_def.light_to_index(&self.name)? as u32;

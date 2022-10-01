@@ -1,7 +1,7 @@
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
 use mech3ax_api_types::{static_assert_size, AnimDef, AtNode, ReprSize as _, Sound, Vec3};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
@@ -31,7 +31,7 @@ impl ScriptObject for Sound {
         })
     }
 
-    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
         write.write_struct(&SoundC {
             sound_index: anim_def.sound_to_index(&self.name)? as u16,
             node_index: anim_def.node_to_index(&self.at_node.node)? as u16,

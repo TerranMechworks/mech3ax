@@ -4,7 +4,7 @@ use crate::nodes::{
 };
 use mech3ax_api_types::Node;
 use mech3ax_common::assert::AssertionError;
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Error, Result};
 use std::io::{Read, Write};
 
@@ -180,7 +180,7 @@ fn assert_area_partitions(nodes: &[Node], offset: u32) -> Result<()> {
 }
 
 pub fn write_nodes(
-    write: &mut impl Write,
+    write: &mut CountingWriter<impl Write>,
     nodes: &[Node],
     array_size: u32,
     offset: u32,

@@ -4,7 +4,7 @@ use mech3ax_api_types::{
     static_assert_size, BoundingBox, Color, Light, Range, ReprSize as _, Vec3,
 };
 use mech3ax_common::assert::{assert_all_zero, AssertionError};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlags;
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -172,7 +172,7 @@ pub fn make_variants(light: &Light) -> NodeVariants {
     }
 }
 
-pub fn write(write: &mut impl Write, light: &Light) -> Result<()> {
+pub fn write(write: &mut CountingWriter<impl Write>, light: &Light) -> Result<()> {
     write.write_struct(&LightC {
         direction: light.direction,
         translation: Vec3::DEFAULT,

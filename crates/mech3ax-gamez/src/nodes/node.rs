@@ -13,7 +13,7 @@ use mech3ax_api_types::{
     static_assert_size, AreaPartition, BoundingBox, Node, Object3d, ReprSize as _,
 };
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
 use mech3ax_common::{assert_that, bool_c, Result};
 use num_traits::FromPrimitive;
@@ -194,7 +194,11 @@ pub fn read_node_data(
     }
 }
 
-fn write_variant(write: &mut impl Write, node_type: NodeType, variant: NodeVariants) -> Result<()> {
+fn write_variant(
+    write: &mut CountingWriter<impl Write>,
+    node_type: NodeType,
+    variant: NodeVariants,
+) -> Result<()> {
     let mut name = [0; 36];
     str_to_c_node_name(variant.name, &mut name);
 
@@ -233,7 +237,7 @@ fn write_variant(write: &mut impl Write, node_type: NodeType, variant: NodeVaria
     Ok(())
 }
 
-pub fn write_node_info(write: &mut impl Write, node: &Node) -> Result<()> {
+pub fn write_node_info(write: &mut CountingWriter<impl Write>, node: &Node) -> Result<()> {
     match node {
         Node::Camera(camera) => {
             let variant = camera::make_variants(camera);
@@ -271,12 +275,15 @@ pub fn write_node_info(write: &mut impl Write, node: &Node) -> Result<()> {
 }
 
 // exposed for mechlib
-pub fn write_object_3d_info(write: &mut impl Write, object3d: &Object3d) -> Result<()> {
+pub fn write_object_3d_info(
+    write: &mut CountingWriter<impl Write>,
+    object3d: &Object3d,
+) -> Result<()> {
     let variant = object3d::make_variants(object3d);
     write_variant(write, NodeType::Object3d, variant)
 }
 
-pub fn write_node_data(write: &mut impl Write, node: &Node) -> Result<()> {
+pub fn write_node_data(write: &mut CountingWriter<impl Write>, node: &Node) -> Result<()> {
     match node {
         Node::Camera(camera) => camera::write(write, camera),
         Node::Display(display) => display::write(write, display),
@@ -290,7 +297,10 @@ pub fn write_node_data(write: &mut impl Write, node: &Node) -> Result<()> {
 }
 
 // exposed for mechlib
-pub fn write_object_3d_data(write: &mut impl Write, object3d: &Object3d) -> Result<()> {
+pub fn write_object_3d_data(
+    write: &mut CountingWriter<impl Write>,
+    object3d: &Object3d,
+) -> Result<()> {
     object3d::write(write, object3d)
 }
 
@@ -352,7 +362,7 @@ pub fn read_node_info_zero(read: &mut CountingReader<impl Read>) -> Result<()> {
     assert_node_info_zero(node, read.prev)
 }
 
-pub fn write_node_info_zero(write: &mut impl Write) -> Result<()> {
+pub fn write_node_info_zero(write: &mut CountingWriter<impl Write>) -> Result<()> {
     write.write_struct(&NodeC {
         name: [0; 36],
         flags: 0,

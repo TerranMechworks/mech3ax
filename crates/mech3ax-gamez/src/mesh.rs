@@ -1,7 +1,7 @@
 use mech3ax_api_types::{
     static_assert_size, Color, Mesh, MeshLight, Polygon, ReprSize as _, UvCoord, Vec3,
 };
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, bool_c, Result};
 use std::io::{Read, Write};
 
@@ -291,7 +291,7 @@ pub fn read_mesh_data(read: &mut CountingReader<impl Read>, wrapped: WrappedMesh
     Ok(mesh)
 }
 
-pub fn write_mesh_info(write: &mut impl Write, mesh: &Mesh) -> Result<()> {
+pub fn write_mesh_info(write: &mut CountingWriter<impl Write>, mesh: &Mesh) -> Result<()> {
     write.write_struct(&MeshC {
         file_ptr: bool_c!(mesh.file_ptr),
         unk04: bool_c!(mesh.unk04),
@@ -320,21 +320,21 @@ pub fn write_mesh_info(write: &mut impl Write, mesh: &Mesh) -> Result<()> {
     Ok(())
 }
 
-fn write_vec3s(write: &mut impl Write, vecs: &[Vec3]) -> Result<()> {
+fn write_vec3s(write: &mut CountingWriter<impl Write>, vecs: &[Vec3]) -> Result<()> {
     for vec in vecs {
         write.write_struct(vec)?;
     }
     Ok(())
 }
 
-fn write_colors(write: &mut impl Write, colors: &[Color]) -> Result<()> {
+fn write_colors(write: &mut CountingWriter<impl Write>, colors: &[Color]) -> Result<()> {
     for color in colors {
         write.write_struct(color)?;
     }
     Ok(())
 }
 
-fn write_lights(write: &mut impl Write, lights: &[MeshLight]) -> Result<()> {
+fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[MeshLight]) -> Result<()> {
     for light in lights {
         write.write_struct(&LightC {
             unk00: light.unk00,
@@ -364,14 +364,14 @@ fn write_lights(write: &mut impl Write, lights: &[MeshLight]) -> Result<()> {
     Ok(())
 }
 
-fn write_u32s(write: &mut impl Write, values: &[u32]) -> Result<()> {
+fn write_u32s(write: &mut CountingWriter<impl Write>, values: &[u32]) -> Result<()> {
     for value in values {
         write.write_u32(*value)?;
     }
     Ok(())
 }
 
-fn write_uvs(write: &mut impl Write, uv_coords: &[UvCoord]) -> Result<()> {
+fn write_uvs(write: &mut CountingWriter<impl Write>, uv_coords: &[UvCoord]) -> Result<()> {
     for uv in uv_coords {
         write.write_f32(uv.u)?;
         write.write_f32(1.0 - uv.v)?;
@@ -379,7 +379,7 @@ fn write_uvs(write: &mut impl Write, uv_coords: &[UvCoord]) -> Result<()> {
     Ok(())
 }
 
-fn write_polygons(write: &mut impl Write, polygons: &[Polygon]) -> Result<()> {
+fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) -> Result<()> {
     for polygon in polygons {
         let mut vertex_info = polygon.vertex_indices.len() as u32;
         if polygon.unk_bit {
@@ -413,7 +413,7 @@ fn write_polygons(write: &mut impl Write, polygons: &[Polygon]) -> Result<()> {
     Ok(())
 }
 
-pub fn write_mesh_data(write: &mut impl Write, mesh: &Mesh) -> Result<()> {
+pub fn write_mesh_data(write: &mut CountingWriter<impl Write>, mesh: &Mesh) -> Result<()> {
     write_vec3s(write, &mesh.vertices)?;
     write_vec3s(write, &mesh.normals)?;
     write_vec3s(write, &mesh.morphs)?;
@@ -463,7 +463,11 @@ pub fn read_mesh_infos_zero(
     Ok(())
 }
 
-pub fn write_mesh_infos_zero(write: &mut impl Write, start: i32, end: i32) -> Result<()> {
+pub fn write_mesh_infos_zero(
+    write: &mut CountingWriter<impl Write>,
+    start: i32,
+    end: i32,
+) -> Result<()> {
     let mesh = MeshC {
         file_ptr: 0,
         unk04: 0,

@@ -4,7 +4,7 @@ mod nodes;
 mod textures;
 
 use mech3ax_api_types::{static_assert_size, GameZData, GameZMetadata, ReprSize as _};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
@@ -79,7 +79,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZData> {
     })
 }
 
-pub fn write_gamez(write: &mut impl Write, gamez: &GameZData) -> Result<()> {
+pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZData) -> Result<()> {
     let texture_count = gamez.textures.len() as u32;
     let material_array_size = gamez.metadata.material_array_size;
     let meshes_array_size = gamez.metadata.meshes_array_size;

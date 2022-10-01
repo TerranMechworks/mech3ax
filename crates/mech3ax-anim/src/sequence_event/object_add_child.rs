@@ -1,7 +1,7 @@
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
 use mech3ax_api_types::{static_assert_size, AnimDef, ObjectAddChild, ReprSize as _};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
@@ -24,7 +24,7 @@ impl ScriptObject for ObjectAddChild {
         Ok(Self { parent, child })
     }
 
-    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
         let parent_index = anim_def.node_to_index(&self.parent)? as u16;
         let child_index = anim_def.node_to_index(&self.child)? as u16;
         write.write_struct(&ObjectAddChildC {

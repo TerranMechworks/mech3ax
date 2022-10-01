@@ -2,7 +2,7 @@ use log::trace;
 use mech3ax_api_types::saves::{ActivationStatus, ActivationType, AnimActivation};
 use mech3ax_api_types::static_assert_size;
 use mech3ax_common::assert::{assert_utf8, AssertionError};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
 use num_traits::FromPrimitive;
@@ -171,7 +171,10 @@ pub fn read_activation(read: &mut CountingReader<impl Read>) -> Result<AnimActiv
     })
 }
 
-pub fn write_activation(write: &mut impl Write, activation: &AnimActivation) -> Result<()> {
+pub fn write_activation(
+    write: &mut CountingWriter<impl Write>,
+    activation: &AnimActivation,
+) -> Result<()> {
     let type_ = match activation.type_ {
         ActivationType::One => 1,
         ActivationType::Two(_) => 2,

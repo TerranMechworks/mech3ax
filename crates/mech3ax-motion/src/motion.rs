@@ -1,6 +1,6 @@
 use mech3ax_api_types::{static_assert_size, Motion, MotionFrame, MotionPart};
 use mech3ax_common::assert::AssertionError;
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
@@ -97,7 +97,7 @@ pub fn read_motion(read: &mut CountingReader<impl Read>) -> Result<Motion> {
     })
 }
 
-pub fn write_motion(write: &mut impl Write, motion: &Motion) -> Result<()> {
+pub fn write_motion(write: &mut CountingWriter<impl Write>, motion: &Motion) -> Result<()> {
     let header = Header {
         version: VERSION,
         loop_time: motion.loop_time,

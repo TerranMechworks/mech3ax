@@ -6,7 +6,7 @@ use mech3ax_api_types::{
     static_assert_size, AnimDef, AtNode, Color, LightState, Range, ReprSize as _, Vec3,
 };
 use mech3ax_common::assert::{assert_utf8, AssertionError};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlags;
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, bool_c, Result};
@@ -245,7 +245,7 @@ impl ScriptObject for LightState {
         })
     }
 
-    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
         let mut name = [0; 32];
         str_to_c_padded(&self.name, &mut name);
         let light_index = anim_def.light_to_index(&self.name)? as u32;

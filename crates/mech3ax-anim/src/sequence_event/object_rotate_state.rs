@@ -3,7 +3,7 @@ use crate::types::AnimDefLookup as _;
 use mech3ax_api_types::{
     static_assert_size, AnimDef, ObjectRotateState, ReprSize as _, RotateState, Vec3,
 };
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
@@ -76,7 +76,7 @@ impl ScriptObject for ObjectRotateState {
         Ok(Self { node, rotate })
     }
 
-    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
         let (flags, rotate, at_node_index) = match &self.rotate {
             RotateState::Absolute(rotate) => {
                 let rotate = Vec3 {

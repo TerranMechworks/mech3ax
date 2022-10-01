@@ -6,7 +6,7 @@ use mech3ax_api_types::{
     CallAnimationTargetNode, CallAnimationWithNode, ReprSize as _, Vec3,
 };
 use mech3ax_common::assert::{assert_utf8, AssertionError};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -177,7 +177,7 @@ impl ScriptObject for CallAnimation {
         })
     }
 
-    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
         let mut name = [0; 32];
         str_to_c_padded(&self.name, &mut name);
         let mut flags = CallAnimationFlags::empty();

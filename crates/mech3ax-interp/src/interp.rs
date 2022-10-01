@@ -1,6 +1,6 @@
 use mech3ax_api_types::{static_assert_size, ReprSize as _, Script};
 use mech3ax_common::assert::assert_utf8;
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_from_c_sized, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -109,7 +109,7 @@ fn write_script(lines: &[String]) -> (u32, Vec<(u32, Vec<u8>)>) {
     (size, transformed)
 }
 
-pub fn write_interp(write: &mut impl Write, scripts: &[Script]) -> Result<()> {
+pub fn write_interp(write: &mut CountingWriter<impl Write>, scripts: &[Script]) -> Result<()> {
     let count = scripts.len() as u32;
     write.write_u32(SIGNATURE)?;
     write.write_u32(VERSION)?;

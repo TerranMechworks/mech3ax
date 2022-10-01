@@ -3,6 +3,7 @@ use crate::ZrdOpts;
 use anyhow::{Context, Result};
 use image::{ColorType, DynamicImage, GenericImageView, ImageFormat};
 use mech3ax_api_types::{TextureAlpha, TextureManifest};
+use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_image::write_textures;
 use mech3ax_reader::write_reader;
 use serde_json::Value;
@@ -45,7 +46,9 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
         .collect::<Result<_>>()?;
 
     let result = {
-        let mut output = BufWriter::new(File::create(&output).context("Failed to create output")?);
+        let mut output = CountingWriter::new(BufWriter::new(
+            File::create(&output).context("Failed to create output")?,
+        ));
 
         write_textures::<_, _, anyhow::Error>(&mut output, &manifest, |name| {
             images

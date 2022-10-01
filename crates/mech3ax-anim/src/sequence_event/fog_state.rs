@@ -3,7 +3,7 @@ use super::ScriptObject;
 use mech3ax_api_types::{
     static_assert_size, AnimDef, Color, FogState, FogType, Range, ReprSize as _,
 };
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::str_to_c_padded;
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -68,7 +68,7 @@ impl ScriptObject for FogState {
         })
     }
 
-    fn write(&self, write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, _anim_def: &AnimDef) -> Result<()> {
         let mut name = [0; 32];
         str_to_c_padded(DEFAULT_FOG_NAME, &mut name);
         let fog_type = match &self.fog_type {

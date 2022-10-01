@@ -5,7 +5,7 @@ use mech3ax_api_types::{
     static_assert_size, BoundingBox, Camera, Matrix, Range, ReprSize as _, Vec3,
 };
 use mech3ax_common::assert::assert_all_zero;
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
@@ -242,7 +242,7 @@ pub fn make_variants(camera: &Camera) -> NodeVariants {
     }
 }
 
-pub fn write(write: &mut impl Write, camera: &Camera) -> Result<()> {
+pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera) -> Result<()> {
     let fov_h_half = camera.fov.min / 2.0;
     let fov_v_half = camera.fov.max / 2.0;
 

@@ -6,7 +6,7 @@ use mech3ax_api_types::{
     static_assert_size, Matrix, Object3d, ReprSize as _, Transformation, Vec3,
 };
 use mech3ax_common::assert::assert_all_zero;
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
@@ -177,7 +177,7 @@ pub fn make_variants(object3d: &Object3d) -> NodeVariants {
     }
 }
 
-pub fn write(write: &mut impl Write, object3d: &Object3d) -> Result<()> {
+pub fn write(write: &mut CountingWriter<impl Write>, object3d: &Object3d) -> Result<()> {
     let (flags, rotation, translation, matrix) = object3d
         .transformation
         .as_ref()

@@ -1,4 +1,4 @@
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
@@ -13,7 +13,7 @@ pub fn read_save_header(read: &mut CountingReader<impl Read>) -> Result<()> {
     Ok(())
 }
 
-pub fn write_save_header(write: &mut impl Write) -> Result<()> {
+pub fn write_save_header(write: &mut CountingWriter<impl Write>) -> Result<()> {
     write.write_u32(VERSION_MW)?;
     write.write_u32(FORMAT)?;
     Ok(())

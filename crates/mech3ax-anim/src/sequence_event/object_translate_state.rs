@@ -2,7 +2,7 @@ use super::types::INPUT_NODE;
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
 use mech3ax_api_types::{static_assert_size, AnimDef, ObjectTranslateState, ReprSize as _, Vec3};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
@@ -54,7 +54,7 @@ impl ScriptObject for ObjectTranslateState {
         })
     }
 
-    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
         let node_index = anim_def.node_to_index(&self.node)? as u16;
         let at_node_index = if let Some(at_node) = &self.at_node {
             assert_that!("object translate state at node", at_node == INPUT_NODE, 0)?;

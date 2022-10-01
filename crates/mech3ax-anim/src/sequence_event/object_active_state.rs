@@ -1,7 +1,7 @@
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
 use mech3ax_api_types::{static_assert_size, AnimDef, ObjectActiveState, ReprSize as _};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, bool_c, Result};
 use std::io::{Read, Write};
 
@@ -27,7 +27,7 @@ impl ScriptObject for ObjectActiveState {
         Ok(Self { node, state })
     }
 
-    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
         write.write_struct(&ObjectActiveStateC {
             state: bool_c!(self.state),
             node_index: anim_def.node_to_index(&self.node)? as u32,

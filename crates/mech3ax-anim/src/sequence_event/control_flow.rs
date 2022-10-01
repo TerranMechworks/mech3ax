@@ -3,7 +3,7 @@ use mech3ax_api_types::{
     static_assert_size, AnimDef, Callback, Else, ElseIf, EndIf, If, Loop, ReprSize as _,
 };
 use mech3ax_common::assert::AssertionError;
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, bool_c, Result};
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
@@ -30,7 +30,7 @@ impl ScriptObject for Loop {
         })
     }
 
-    fn write(&self, write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, _anim_def: &AnimDef) -> Result<()> {
         write.write_struct(&LoopC {
             start: self.start,
             loop_count: self.loop_count,
@@ -97,7 +97,7 @@ impl ScriptObject for If {
         }
     }
 
-    fn write(&self, write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, _anim_def: &AnimDef) -> Result<()> {
         let (condition, value) = match self {
             If::RandomWeight(value) => (Condition::RandomWeight as u32, value.to_le_bytes()),
             If::PlayerRange(value) => (Condition::PlayerRange as u32, value.to_le_bytes()),
@@ -159,7 +159,7 @@ impl ScriptObject for ElseIf {
         }
     }
 
-    fn write(&self, write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, _anim_def: &AnimDef) -> Result<()> {
         let (condition, value) = match self {
             ElseIf::RandomWeight(value) => (Condition::RandomWeight as u32, value.to_le_bytes()),
             ElseIf::PlayerRange(value) => (Condition::PlayerRange as u32, value.to_le_bytes()),
@@ -191,7 +191,7 @@ impl ScriptObject for Else {
         Ok(Self {})
     }
 
-    fn write(&self, _write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, _write: &mut CountingWriter<impl Write>, _anim_def: &AnimDef) -> Result<()> {
         Ok(())
     }
 }
@@ -205,7 +205,7 @@ impl ScriptObject for EndIf {
         Ok(Self {})
     }
 
-    fn write(&self, _write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, _write: &mut CountingWriter<impl Write>, _anim_def: &AnimDef) -> Result<()> {
         Ok(())
     }
 }
@@ -225,7 +225,7 @@ impl ScriptObject for Callback {
         Ok(Self { value })
     }
 
-    fn write(&self, write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, _anim_def: &AnimDef) -> Result<()> {
         write.write_u32(self.value)?;
         Ok(())
     }

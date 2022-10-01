@@ -25,6 +25,11 @@ impl<R: Read> CountingReader<R> {
     }
 
     #[inline]
+    pub fn into_inner(self) -> R {
+        self.inner
+    }
+
+    #[inline]
     pub fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> {
         self.inner.read_exact(buf)?;
         self.prev = self.offset;
@@ -116,68 +121,6 @@ impl<R: Read + Seek> Seek for CountingReader<R> {
     }
 }
 
-pub trait WriteHelper {
-    fn write_u32(&mut self, value: u32) -> Result<()>;
-    fn write_i32(&mut self, value: i32) -> Result<()>;
-    fn write_f32(&mut self, value: f32) -> Result<()>;
-    fn write_u16(&mut self, value: u16) -> Result<()>;
-    fn write_i16(&mut self, value: i16) -> Result<()>;
-    fn write_struct<S: ReprSize>(&mut self, value: &S) -> Result<()>;
-    fn write_string(&mut self, value: &str) -> crate::Result<()>;
-    fn write_zeros(&mut self, count: u32) -> Result<()>;
-}
-
-impl<W: Write> WriteHelper for W {
-    fn write_u32(&mut self, value: u32) -> Result<()> {
-        let buf = value.to_le_bytes();
-        self.write_all(&buf)
-    }
-
-    fn write_i32(&mut self, value: i32) -> Result<()> {
-        let buf = value.to_le_bytes();
-        self.write_all(&buf)
-    }
-
-    fn write_f32(&mut self, value: f32) -> Result<()> {
-        let buf = value.to_le_bytes();
-        self.write_all(&buf)
-    }
-
-    fn write_u16(&mut self, value: u16) -> Result<()> {
-        let buf = value.to_le_bytes();
-        self.write_all(&buf)
-    }
-
-    fn write_i16(&mut self, value: i16) -> Result<()> {
-        let buf = value.to_le_bytes();
-        self.write_all(&buf)
-    }
-
-    fn write_struct<S: ReprSize>(&mut self, value: &S) -> Result<()> {
-        let size = std::mem::size_of::<S>();
-        let buf = unsafe { std::slice::from_raw_parts(value as *const S as *const u8, size) };
-        self.write_all(buf)
-    }
-
-    fn write_string(&mut self, value: &str) -> crate::Result<()> {
-        if !value.is_ascii() {
-            return Err(crate::Error::Assert(AssertionError(
-                "Expected ASCII string".to_owned(),
-            )));
-        }
-        let buf = value.as_bytes();
-        let count = buf.len() as u32;
-        self.write_u32(count)?;
-        self.write_all(buf)?;
-        Ok(())
-    }
-
-    fn write_zeros(&mut self, count: u32) -> Result<()> {
-        let buf = vec![0; count as usize];
-        self.write_all(&buf)
-    }
-}
-
 pub struct CountingWriter<W: Write> {
     inner: W,
     pub offset: usize,
@@ -190,6 +133,16 @@ impl<W: Write> CountingWriter<W> {
             inner: write,
             offset: 0,
         }
+    }
+
+    #[inline]
+    pub fn get_mut(&mut self) -> &mut W {
+        &mut self.inner
+    }
+
+    #[inline]
+    pub fn into_inner(self) -> W {
+        self.inner
     }
 
     #[inline(always)]
@@ -257,6 +210,15 @@ impl<W: Write> CountingWriter<W> {
     pub fn write_zeros(&mut self, count: u32) -> Result<()> {
         let buf = vec![0; count as usize];
         self.write_all(&buf)
+    }
+}
+
+impl<W: Write + Seek> Seek for CountingWriter<W> {
+    #[inline]
+    fn seek(&mut self, pos: SeekFrom) -> Result<u64> {
+        let offset = self.inner.seek(pos)?;
+        self.offset = offset as usize;
+        Ok(offset)
     }
 }
 

@@ -2,7 +2,7 @@ use mech3ax_api_types::{
     static_assert_size, ActivationPrereq, PrereqAnimation, PrereqObject, PrereqParent,
 };
 use mech3ax_common::assert::{assert_utf8, AssertionError};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, bool_c, Result};
 use num_derive::FromPrimitive;
@@ -131,7 +131,7 @@ pub fn read_activ_prereqs(
     (0..count).map(|_| read_activ_prereq(read)).collect()
 }
 
-fn write_activ_prereq_anim(write: &mut impl Write, name: &str) -> Result<()> {
+fn write_activ_prereq_anim(write: &mut CountingWriter<impl Write>, name: &str) -> Result<()> {
     let mut fill = [0; 32];
     str_to_c_padded(name, &mut fill);
     // always required (not optional)
@@ -146,7 +146,7 @@ fn write_activ_prereq_anim(write: &mut impl Write, name: &str) -> Result<()> {
 }
 
 fn write_activ_prereq_object(
-    write: &mut impl Write,
+    write: &mut CountingWriter<impl Write>,
     object: &PrereqObject,
     prereq_type: ActivPrereqType,
 ) -> Result<()> {
@@ -163,7 +163,7 @@ fn write_activ_prereq_object(
 }
 
 fn write_activ_prereq_parent(
-    write: &mut impl Write,
+    write: &mut CountingWriter<impl Write>,
     parent: &PrereqParent,
     prereq_type: ActivPrereqType,
 ) -> Result<()> {
@@ -180,7 +180,7 @@ fn write_activ_prereq_parent(
 }
 
 pub fn write_activ_prereqs(
-    write: &mut impl Write,
+    write: &mut CountingWriter<impl Write>,
     activ_prereqs: &[ActivationPrereq],
 ) -> Result<()> {
     for activ_prereq in activ_prereqs {

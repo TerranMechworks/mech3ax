@@ -1,7 +1,7 @@
 use log::trace;
 use mech3ax_api_types::{static_assert_size, NamePad, NamePtr, NamePtrFlags, ReprSize as _};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{
     bytes_to_c, str_from_c_node_name, str_from_c_padded, str_from_c_partition, str_to_c_node_name,
     str_to_c_padded, str_to_c_partition,
@@ -49,7 +49,7 @@ pub fn read_objects(read: &mut CountingReader<impl Read>, count: u8) -> Result<V
         .collect()
 }
 
-pub fn write_objects(write: &mut impl Write, objects: &[NamePad]) -> Result<()> {
+pub fn write_objects(write: &mut CountingWriter<impl Write>, objects: &[NamePad]) -> Result<()> {
     // the first entry is always zero
     write.write_zeros(ObjectC::SIZE)?;
     for object in objects {
@@ -115,7 +115,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, count: u8) -> Result<Vec
         .collect()
 }
 
-pub fn write_nodes(write: &mut impl Write, nodes: &[NamePtr]) -> Result<()> {
+pub fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NamePtr]) -> Result<()> {
     // the first entry is always zero
     write.write_zeros(NodeInfoC::SIZE)?;
     for node_info in nodes {
@@ -183,7 +183,7 @@ pub fn read_lights(read: &mut CountingReader<impl Read>, count: u8) -> Result<Ve
         .collect()
 }
 
-pub fn write_lights(write: &mut impl Write, lights: &[NamePtr]) -> Result<()> {
+pub fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[NamePtr]) -> Result<()> {
     // the first entry is always zero
     write.write_zeros(ReaderLookupC::SIZE)?;
     for light in lights {
@@ -249,7 +249,10 @@ pub fn read_puffers(read: &mut CountingReader<impl Read>, count: u8) -> Result<V
         .collect()
 }
 
-pub fn write_puffers(write: &mut impl Write, puffers: &[NamePtrFlags]) -> Result<()> {
+pub fn write_puffers(
+    write: &mut CountingWriter<impl Write>,
+    puffers: &[NamePtrFlags],
+) -> Result<()> {
     // the first entry is always zero
     write.write_zeros(ReaderLookupC::SIZE)?;
     for puffer in puffers {
@@ -324,7 +327,10 @@ pub fn read_dynamic_sounds(
         .collect()
 }
 
-pub fn write_dynamic_sounds(write: &mut impl Write, dynamic_sounds: &[NamePtr]) -> Result<()> {
+pub fn write_dynamic_sounds(
+    write: &mut CountingWriter<impl Write>,
+    dynamic_sounds: &[NamePtr],
+) -> Result<()> {
     // the first entry is always zero
     write.write_zeros(ReaderLookupC::SIZE)?;
     for dynamic_sound in dynamic_sounds {
@@ -378,7 +384,10 @@ pub fn read_static_sounds(read: &mut CountingReader<impl Read>, count: u8) -> Re
         .collect()
 }
 
-pub fn write_static_sounds(write: &mut impl Write, static_sounds: &[NamePad]) -> Result<()> {
+pub fn write_static_sounds(
+    write: &mut CountingWriter<impl Write>,
+    static_sounds: &[NamePad],
+) -> Result<()> {
     // the first entry is always zero
     write.write_zeros(StaticSoundC::SIZE)?;
     for static_sound in static_sounds {
@@ -425,7 +434,10 @@ pub fn read_anim_refs(read: &mut CountingReader<impl Read>, count: u8) -> Result
         .collect()
 }
 
-pub fn write_anim_refs(write: &mut impl Write, anim_refs: &[NamePad]) -> Result<()> {
+pub fn write_anim_refs(
+    write: &mut CountingWriter<impl Write>,
+    anim_refs: &[NamePad],
+) -> Result<()> {
     // the first entry... is not zero! as this is not a node list
     for anim_ref in anim_refs {
         let mut name = [0; 64];

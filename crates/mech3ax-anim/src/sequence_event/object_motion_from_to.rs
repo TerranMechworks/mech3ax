@@ -4,7 +4,7 @@ use mech3ax_api_types::{
     static_assert_size, AnimDef, FloatFromTo, ObjectMotionFromTo, ReprSize as _, Vec3, Vec3FromTo,
 };
 use mech3ax_common::assert::AssertionError;
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
@@ -173,7 +173,7 @@ impl ScriptObject for ObjectMotionFromTo {
         })
     }
 
-    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
         let mut flags = ObjectMotionFromToFlags::empty();
         if self.translate.is_some() {
             flags |= ObjectMotionFromToFlags::TRANSLATE;

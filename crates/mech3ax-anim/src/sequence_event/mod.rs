@@ -1,5 +1,5 @@
 use mech3ax_api_types::AnimDef;
-use mech3ax_common::io_ext::CountingReader;
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::Result;
 use std::io::{Read, Write};
 
@@ -40,5 +40,5 @@ pub trait ScriptObject: Sized {
     const INDEX: u8;
     const SIZE: u32;
     fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self>;
-    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()>;
+    fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()>;
 }

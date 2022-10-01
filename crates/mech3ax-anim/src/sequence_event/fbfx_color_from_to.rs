@@ -1,7 +1,7 @@
 use super::delta::{dec_f32, delta};
 use super::ScriptObject;
 use mech3ax_api_types::{static_assert_size, AnimDef, FrameBufferEffectColor, ReprSize as _, Rgba};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
@@ -110,7 +110,7 @@ impl ScriptObject for FrameBufferEffectColor {
         })
     }
 
-    fn write(&self, write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, _anim_def: &AnimDef) -> Result<()> {
         let delta_red = delta(self.to.r, self.from.r, self.runtime);
         let delta_green = delta(self.to.g, self.from.g, self.runtime);
         let delta_blue = delta(self.to.b, self.from.b, self.runtime);

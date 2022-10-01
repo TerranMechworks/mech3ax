@@ -5,7 +5,7 @@ use super::wrappers::Wrapper;
 use mech3ax_api_types::{
     static_assert_size, Area, BoundingBox, Color, Partition, Range, ReprSize as _, World,
 };
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
@@ -458,7 +458,7 @@ pub fn make_variants(world: &World) -> NodeVariants {
     }
 }
 
-fn write_partition(write: &mut impl Write, partition: &Partition) -> Result<()> {
+fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition) -> Result<()> {
     let x = partition.x as f32;
     let y = partition.y as f32;
     let diagonal = partition_diag(partition.z_min, partition.z_max);
@@ -492,7 +492,10 @@ fn write_partition(write: &mut impl Write, partition: &Partition) -> Result<()> 
     Ok(())
 }
 
-fn write_partitions(write: &mut impl Write, partitions: &[Vec<Partition>]) -> Result<()> {
+fn write_partitions(
+    write: &mut CountingWriter<impl Write>,
+    partitions: &[Vec<Partition>],
+) -> Result<()> {
     for sub_partitions in partitions {
         for partition in sub_partitions {
             write_partition(write, partition)?;
@@ -501,7 +504,7 @@ fn write_partitions(write: &mut impl Write, partitions: &[Vec<Partition>]) -> Re
     Ok(())
 }
 
-pub fn write(write: &mut impl Write, world: &World) -> Result<()> {
+pub fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Result<()> {
     let mut area_partition_count = world.area_partition_x_count * world.area_partition_y_count;
     if world.fudge_count {
         area_partition_count -= 1;

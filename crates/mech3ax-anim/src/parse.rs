@@ -2,7 +2,7 @@ use super::anim_def::{read_anim_def, read_anim_def_zero, write_anim_def, write_a
 use log::trace;
 use mech3ax_api_types::{static_assert_size, AnimDef, AnimMetadata, AnimName, AnimPtr};
 use mech3ax_common::assert::assert_utf8;
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_partition, str_to_c_partition};
 use mech3ax_common::{assert_that, Error, Result};
 use std::convert::From;
@@ -155,7 +155,10 @@ where
     })
 }
 
-fn write_anim_header(write: &mut impl Write, anim_names: &[AnimName]) -> Result<()> {
+fn write_anim_header(
+    write: &mut CountingWriter<impl Write>,
+    anim_names: &[AnimName],
+) -> Result<()> {
     write.write_u32(SIGNATURE)?;
     write.write_u32(VERSION_MW)?;
     write.write_u32(anim_names.len() as u32)?;
@@ -171,7 +174,7 @@ fn write_anim_header(write: &mut impl Write, anim_names: &[AnimName]) -> Result<
     Ok(())
 }
 
-fn write_anim_info(write: &mut impl Write, metadata: &AnimMetadata) -> Result<()> {
+fn write_anim_info(write: &mut CountingWriter<impl Write>, metadata: &AnimMetadata) -> Result<()> {
     write.write_struct(&AnimInfoC {
         zero00: 0,
         ptr04: 0,
@@ -196,7 +199,7 @@ fn write_anim_info(write: &mut impl Write, metadata: &AnimMetadata) -> Result<()
 }
 
 fn write_anim_defs<W, F, E>(
-    write: &mut W,
+    write: &mut CountingWriter<W>,
     anim_ptrs: &[AnimPtr],
     mut load_anim_def: F,
 ) -> std::result::Result<(), E>
@@ -214,7 +217,7 @@ where
 }
 
 pub fn write_anim<W, F, E>(
-    write: &mut W,
+    write: &mut CountingWriter<W>,
     metadata: &AnimMetadata,
     load_anim_def: F,
 ) -> std::result::Result<(), E>

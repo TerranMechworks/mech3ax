@@ -7,6 +7,7 @@ use mech3ax_api_types::{
     Script, TextureManifest,
 };
 use mech3ax_archive::{write_archive, Mode, Version};
+use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_gamez::gamez::write_gamez;
 use mech3ax_gamez::mechlib::{write_format, write_materials, write_model, write_version};
 use mech3ax_image::write_textures;
@@ -26,20 +27,20 @@ pub fn buf_reader<P: AsRef<Path>>(path: P) -> Result<BufReader<File>> {
     ))
 }
 
-pub fn buf_writer<P: AsRef<Path>>(path: P) -> Result<BufWriter<File>> {
-    Ok(BufWriter::new(
+pub fn buf_writer<P: AsRef<Path>>(path: P) -> Result<CountingWriter<BufWriter<File>>> {
+    Ok(CountingWriter::new(BufWriter::new(
         File::create(path).context("Failed to create output")?,
-    ))
+    )))
 }
 
 fn zip_read(zip: &mut ZipArchive<impl Read + Seek>, name: &str) -> Result<Vec<u8>> {
     let mut file = zip
         .by_name(name)
         .with_context(|| format!("Failed to find \"{}\" in Zip", name))?;
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf)
+    let mut buf = CountingWriter::new(Vec::new());
+    file.read_to_end(buf.get_mut())
         .with_context(|| format!("Failed to read \"{}\" from Zip", name))?;
-    Ok(buf)
+    Ok(buf.into_inner())
 }
 
 fn zip_json<R, T>(zip: &mut ZipArchive<R>, name: &str) -> Result<T>
@@ -107,10 +108,10 @@ pub(crate) fn reader(opts: ZipOpts) -> Result<()> {
             let name = original.replace(".zrd", ".json");
             let value: Value = zip_json(zip, &name)?;
 
-            let mut buf = Vec::new();
+            let mut buf = CountingWriter::new(Vec::new());
             write_reader(&mut buf, &value)
                 .with_context(|| format!("Failed to write reader data for \"{}\"", original))?;
-            Ok(buf)
+            Ok(buf.into_inner())
         },
     )
 }
@@ -127,10 +128,10 @@ pub(crate) fn motion(opts: ZipOpts) -> Result<()> {
             let name = format!("{}.json", original);
             let motion: Motion = zip_json(zip, &name)?;
 
-            let mut buf = Vec::new();
+            let mut buf = CountingWriter::new(Vec::new());
             write_motion(&mut buf, &motion)
                 .with_context(|| format!("Failed to write motion data for \"{}\"", original))?;
-            Ok(buf)
+            Ok(buf.into_inner())
         },
     )
 }
@@ -150,32 +151,32 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
         "Failed to write mechlib data",
         |zip, name| match name {
             "format" => {
-                let mut buf = Vec::new();
+                let mut buf = CountingWriter::new(Vec::new());
                 write_format(&mut buf).context("Failed to write mechlib format")?;
-                Ok(buf)
+                Ok(buf.into_inner())
             }
             "version" => {
-                let mut buf = Vec::new();
+                let mut buf = CountingWriter::new(Vec::new());
                 write_version(&mut buf, is_pm).context("Failed to write mechlib version")?;
-                Ok(buf)
+                Ok(buf.into_inner())
             }
             "materials" => {
                 let materials: Vec<Material> = zip_json(zip, "materials.json")?;
 
-                let mut buf = Vec::new();
+                let mut buf = CountingWriter::new(Vec::new());
                 write_materials(&mut buf, &materials)
                     .context("Failed to write mechlib materials")?;
-                Ok(buf)
+                Ok(buf.into_inner())
             }
             original => {
                 let name = original.replace(".flt", ".json");
                 let mut model: Model = zip_json(zip, &name)?;
 
-                let mut buf = Vec::new();
+                let mut buf = CountingWriter::new(Vec::new());
                 write_model(&mut buf, &mut model).with_context(|| {
                     format!("Failed to write mechlib model for \"{}\"", original)
                 })?;
-                Ok(buf)
+                Ok(buf.into_inner())
             }
         },
     )
@@ -259,18 +260,18 @@ pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
         "Failed to write savegame data",
         |zip, name| match name {
             "zSaveHeader" => {
-                let mut buf = Vec::with_capacity(8);
+                let mut buf = CountingWriter::new(Vec::with_capacity(8));
                 write_save_header(&mut buf).context("Failed to write savegame header")?;
-                Ok(buf)
+                Ok(buf.into_inner())
             }
             original => {
                 let name = format!("{}.json", original);
                 let activation: AnimActivation = zip_json(zip, &name)?;
 
-                let mut buf = Vec::new();
+                let mut buf = CountingWriter::new(Vec::new());
                 write_activation(&mut buf, &activation)
                     .with_context(|| format!("Failed to write anim activation \"{}\"", original))?;
-                Ok(buf)
+                Ok(buf.into_inner())
             }
         },
     )

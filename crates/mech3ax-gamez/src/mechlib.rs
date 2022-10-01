@@ -2,7 +2,7 @@ use crate::materials::{read_material, write_material, RawMaterial};
 use crate::mesh::{read_mesh_data, read_mesh_info, write_mesh_data, write_mesh_info};
 use crate::nodes::{read_node_mechlib, write_object_3d_data, write_object_3d_info, Wrapper};
 use mech3ax_api_types::{Material, Mesh, Model, Object3d, TexturedMaterial};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
@@ -23,12 +23,12 @@ pub fn read_format(read: &mut CountingReader<impl Read>) -> Result<()> {
     read.assert_end()
 }
 
-pub fn write_version(write: &mut impl Write, is_pm: bool) -> Result<()> {
+pub fn write_version(write: &mut CountingWriter<impl Write>, is_pm: bool) -> Result<()> {
     write.write_u32(if is_pm { VERSION_PM } else { VERSION_MW })?;
     Ok(())
 }
 
-pub fn write_format(write: &mut impl Write) -> Result<()> {
+pub fn write_format(write: &mut CountingWriter<impl Write>) -> Result<()> {
     write.write_u32(FORMAT)?;
     Ok(())
 }
@@ -60,7 +60,10 @@ pub fn read_materials(read: &mut CountingReader<impl Read>) -> Result<Vec<Materi
     Ok(materials)
 }
 
-pub fn write_materials(write: &mut impl Write, materials: &[Material]) -> Result<()> {
+pub fn write_materials(
+    write: &mut CountingWriter<impl Write>,
+    materials: &[Material],
+) -> Result<()> {
     write.write_u32(materials.len() as u32)?;
     for material in materials {
         write_material(write, material, None)?;
@@ -130,7 +133,7 @@ pub fn read_model(read: &mut CountingReader<impl Read>) -> Result<Model> {
 }
 
 fn write_node_and_mesh(
-    write: &mut impl Write,
+    write: &mut CountingWriter<impl Write>,
     node_index: u32,
     nodes: &mut [Object3d],
     meshes: &[Mesh],
@@ -167,6 +170,6 @@ fn write_node_and_mesh(
     Ok(())
 }
 
-pub fn write_model(write: &mut impl Write, model: &mut Model) -> Result<()> {
+pub fn write_model(write: &mut CountingWriter<impl Write>, model: &mut Model) -> Result<()> {
     write_node_and_mesh(write, 0, &mut model.nodes, &model.meshes, &model.mesh_ptrs)
 }

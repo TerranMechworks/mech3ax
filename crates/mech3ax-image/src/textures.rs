@@ -5,7 +5,7 @@ use mech3ax_api_types::{
     TextureManifest, TexturePalette,
 };
 use mech3ax_common::assert::{assert_utf8, AssertionError};
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Error, Result};
 use mech3ax_pixel_ops::{
@@ -411,15 +411,12 @@ fn invalid_alpha(name: &str, expected: &str, actual: &TextureAlpha) -> Error {
     }
 }
 
-fn write_texture<W>(
-    write: &mut W,
+fn write_texture(
+    write: &mut CountingWriter<impl Write + Seek>,
     info: &TextureInfo,
     image: DynamicImage,
     global_palettes: &[PaletteData],
-) -> Result<()>
-where
-    W: Write + Seek,
-{
+) -> Result<()> {
     let tex_info = convert_info_to_c(info);
     if log_enabled!(Level::Trace) {
         let offset = write.stream_position().unwrap_or_default();
@@ -568,7 +565,7 @@ where
 }
 
 pub fn write_textures<W, F, E>(
-    write: &mut W,
+    write: &mut CountingWriter<W>,
     manifest: &TextureManifest,
     mut load_texture: F,
 ) -> std::result::Result<(), E>

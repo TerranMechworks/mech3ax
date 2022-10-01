@@ -10,7 +10,7 @@ use mech3ax_api_types::{
     ResetAnimation, Sound, SoundNode, StartOffset, StopAnimation, StopSequence,
 };
 use mech3ax_common::assert::AssertionError;
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
@@ -166,7 +166,11 @@ pub fn read_events(
     Ok(events)
 }
 
-pub fn write_events(write: &mut impl Write, anim_def: &AnimDef, events: &[Event]) -> Result<()> {
+pub fn write_events(
+    write: &mut CountingWriter<impl Write>,
+    anim_def: &AnimDef,
+    events: &[Event],
+) -> Result<()> {
     for event in events {
         let event_type = event_type(event);
         let (start_offset, start_time) = match event.start.as_ref() {
@@ -263,7 +267,11 @@ fn size_event(event: &Event) -> u32 {
     size + EventHeaderC::SIZE
 }
 
-fn write_event(write: &mut impl Write, anim_def: &AnimDef, event: &Event) -> Result<()> {
+fn write_event(
+    write: &mut CountingWriter<impl Write>,
+    anim_def: &AnimDef,
+    event: &Event,
+) -> Result<()> {
     match &event.data {
         EventData::Sound(data) => data.write(write, anim_def),
         EventData::SoundNode(data) => data.write(write, anim_def),

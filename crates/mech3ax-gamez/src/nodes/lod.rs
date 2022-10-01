@@ -3,7 +3,7 @@ use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
 use super::wrappers::Wrapper;
 use mech3ax_api_types::{static_assert_size, BoundingBox, Lod, Range, ReprSize as _};
 use mech3ax_common::assert::assert_all_zero;
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, bool_c, Result};
 use std::io::{Read, Write};
 
@@ -154,7 +154,7 @@ pub fn make_variants(lod: &Lod) -> NodeVariants {
     }
 }
 
-pub fn write(write: &mut impl Write, lod: &Lod) -> Result<()> {
+pub fn write(write: &mut CountingWriter<impl Write>, lod: &Lod) -> Result<()> {
     write.write_struct(&LodC {
         level: bool_c!(lod.level),
         range_near_sq: lod.range.min * lod.range.min,

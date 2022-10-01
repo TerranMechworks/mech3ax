@@ -3,7 +3,7 @@ use mech3ax_api_types::{
     static_assert_size, AnimDef, InvalidateAnimation, ReprSize as _, ResetAnimation, StopAnimation,
 };
 use mech3ax_common::assert::assert_utf8;
-use mech3ax_common::io_ext::{CountingReader, WriteHelper};
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -24,7 +24,7 @@ fn read_animation(read: &mut CountingReader<impl Read>) -> Result<String> {
     Ok(name)
 }
 
-fn write_animation(write: &mut impl Write, name: &str) -> Result<()> {
+fn write_animation(write: &mut CountingWriter<impl Write>, name: &str) -> Result<()> {
     let mut fill = [0; 32];
     str_to_c_padded(name, &mut fill);
     write.write_struct(&AnimationC {
@@ -44,7 +44,7 @@ impl ScriptObject for StopAnimation {
         Ok(Self { name })
     }
 
-    fn write(&self, write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, _anim_def: &AnimDef) -> Result<()> {
         write_animation(write, &self.name)
     }
 }
@@ -59,7 +59,7 @@ impl ScriptObject for ResetAnimation {
         Ok(Self { name })
     }
 
-    fn write(&self, write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, _anim_def: &AnimDef) -> Result<()> {
         write_animation(write, &self.name)
     }
 }
@@ -74,7 +74,7 @@ impl ScriptObject for InvalidateAnimation {
         Ok(Self { name })
     }
 
-    fn write(&self, write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut CountingWriter<impl Write>, _anim_def: &AnimDef) -> Result<()> {
         write_animation(write, &self.name)
     }
 }
