@@ -58,7 +58,7 @@ bitflags::bitflags! {
     }
 }
 
-fn read_frame<R: Read>(read: &mut CountingReader<R>) -> Result<ObjectMotionSiFrame> {
+fn read_frame(read: &mut CountingReader<impl Read>) -> Result<ObjectMotionSiFrame> {
     let frame: FrameC = read.read_struct()?;
     let flags = FrameFlags::from_bits(frame.flags).ok_or_else(|| {
         AssertionError(format!(
@@ -125,7 +125,7 @@ impl ScriptObject for ObjectMotionSiScript {
     const INDEX: u8 = 12;
     const SIZE: u32 = u32::MAX;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         let end_offset = read.offset + size;
         let header: ScriptHeaderC = read.read_struct()?;
 
@@ -164,7 +164,7 @@ impl ScriptObject for ObjectMotionSiScript {
         Ok(ObjectMotionSiScript { node, frames })
     }
 
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
         let node_index = anim_def.node_to_index(&self.node)? as u32;
         let count = self.frames.len() as u32;
         write.write_struct(&ScriptHeaderC {

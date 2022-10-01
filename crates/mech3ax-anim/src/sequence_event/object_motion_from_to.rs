@@ -41,7 +41,7 @@ impl ScriptObject for ObjectMotionFromTo {
     const INDEX: u8 = 11;
     const SIZE: u32 = ObjectMotionFromToC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!(
             "object motion from to size",
             size == Self::SIZE,
@@ -173,7 +173,7 @@ impl ScriptObject for ObjectMotionFromTo {
         })
     }
 
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
         let mut flags = ObjectMotionFromToFlags::empty();
         if self.translate.is_some() {
             flags |= ObjectMotionFromToFlags::TRANSLATE;

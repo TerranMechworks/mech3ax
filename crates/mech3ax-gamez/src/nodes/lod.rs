@@ -107,10 +107,7 @@ fn assert_lod(lod: LodC, offset: u32) -> Result<(bool, Range, f32, Option<u32>)>
     ))
 }
 
-pub fn read<R>(read: &mut CountingReader<R>, node: NodeVariants) -> Result<Wrapper<Lod>>
-where
-    R: Read,
-{
+pub fn read(read: &mut CountingReader<impl Read>, node: NodeVariants) -> Result<Wrapper<Lod>> {
     let lod: LodC = read.read_struct()?;
     let (level, range, unk60, unk76) = assert_lod(lod, read.prev)?;
 
@@ -157,10 +154,7 @@ pub fn make_variants(lod: &Lod) -> NodeVariants {
     }
 }
 
-pub fn write<W>(write: &mut W, lod: &Lod) -> Result<()>
-where
-    W: Write,
-{
+pub fn write(write: &mut impl Write, lod: &Lod) -> Result<()> {
     write.write_struct(&LodC {
         level: bool_c!(lod.level),
         range_near_sq: lod.range.min * lod.range.min,

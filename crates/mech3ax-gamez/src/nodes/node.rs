@@ -142,10 +142,7 @@ fn assert_node(node: NodeC, offset: u32) -> Result<(NodeType, NodeVariants)> {
     Ok((node_type, variants))
 }
 
-pub fn read_node_mechlib<R>(read: &mut CountingReader<R>) -> Result<Wrapper<Object3d>>
-where
-    R: Read,
-{
+pub fn read_node_mechlib(read: &mut CountingReader<impl Read>) -> Result<Wrapper<Object3d>> {
     let node: NodeC = read.read_struct()?;
     let (node_type, node) = assert_node(node, read.prev)?;
     let variant = match node_type {
@@ -158,10 +155,7 @@ where
     }
 }
 
-pub fn read_node_info_gamez<R>(read: &mut CountingReader<R>) -> Result<Option<NodeVariant>>
-where
-    R: Read,
-{
+pub fn read_node_info_gamez(read: &mut CountingReader<impl Read>) -> Result<Option<NodeVariant>> {
     let node: NodeC = read.read_struct()?;
     if node.name[0] == 0 {
         assert_node_info_zero(node, read.prev)?;
@@ -182,10 +176,10 @@ where
     }
 }
 
-pub fn read_node_data<R>(read: &mut CountingReader<R>, variant: NodeVariant) -> Result<WrappedNode>
-where
-    R: Read,
-{
+pub fn read_node_data(
+    read: &mut CountingReader<impl Read>,
+    variant: NodeVariant,
+) -> Result<WrappedNode> {
     match variant {
         NodeVariant::Camera(data_ptr) => Ok(WrappedNode::Camera(camera::read(read, data_ptr)?)),
         NodeVariant::Display(data_ptr) => Ok(WrappedNode::Display(display::read(read, data_ptr)?)),
@@ -200,10 +194,7 @@ where
     }
 }
 
-fn write_variant<W>(write: &mut W, node_type: NodeType, variant: NodeVariants) -> Result<()>
-where
-    W: Write,
-{
+fn write_variant(write: &mut impl Write, node_type: NodeType, variant: NodeVariants) -> Result<()> {
     let mut name = [0; 36];
     str_to_c_node_name(variant.name, &mut name);
 
@@ -242,10 +233,7 @@ where
     Ok(())
 }
 
-pub fn write_node_info<W>(write: &mut W, node: &Node) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_node_info(write: &mut impl Write, node: &Node) -> Result<()> {
     match node {
         Node::Camera(camera) => {
             let variant = camera::make_variants(camera);
@@ -283,18 +271,12 @@ where
 }
 
 // exposed for mechlib
-pub fn write_object_3d_info<W>(write: &mut W, object3d: &Object3d) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_object_3d_info(write: &mut impl Write, object3d: &Object3d) -> Result<()> {
     let variant = object3d::make_variants(object3d);
     write_variant(write, NodeType::Object3d, variant)
 }
 
-pub fn write_node_data<W>(write: &mut W, node: &Node) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_node_data(write: &mut impl Write, node: &Node) -> Result<()> {
     match node {
         Node::Camera(camera) => camera::write(write, camera),
         Node::Display(display) => display::write(write, display),
@@ -308,10 +290,7 @@ where
 }
 
 // exposed for mechlib
-pub fn write_object_3d_data<W>(write: &mut W, object3d: &Object3d) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_object_3d_data(write: &mut impl Write, object3d: &Object3d) -> Result<()> {
     object3d::write(write, object3d)
 }
 
@@ -368,18 +347,12 @@ fn assert_node_info_zero(node: NodeC, offset: u32) -> Result<()> {
     Ok(())
 }
 
-pub fn read_node_info_zero<R>(read: &mut CountingReader<R>) -> Result<()>
-where
-    R: Read,
-{
+pub fn read_node_info_zero(read: &mut CountingReader<impl Read>) -> Result<()> {
     let node: NodeC = read.read_struct()?;
     assert_node_info_zero(node, read.prev)
 }
 
-pub fn write_node_info_zero<W>(write: &mut W) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_node_info_zero(write: &mut impl Write) -> Result<()> {
     write.write_struct(&NodeC {
         name: [0; 36],
         flags: 0,

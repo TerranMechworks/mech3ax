@@ -25,8 +25,8 @@ struct EventHeaderC {
 }
 static_assert_size!(EventHeaderC, 12);
 
-pub fn read_events<R: Read>(
-    read: &mut CountingReader<R>,
+pub fn read_events(
+    read: &mut CountingReader<impl Read>,
     length: u32,
     anim_def: &AnimDef,
 ) -> Result<Vec<Event>> {
@@ -166,7 +166,7 @@ pub fn read_events<R: Read>(
     Ok(events)
 }
 
-pub fn write_events<W: Write>(write: &mut W, anim_def: &AnimDef, events: &[Event]) -> Result<()> {
+pub fn write_events(write: &mut impl Write, anim_def: &AnimDef, events: &[Event]) -> Result<()> {
     for event in events {
         let event_type = event_type(event);
         let (start_offset, start_time) = match event.start.as_ref() {
@@ -263,7 +263,7 @@ fn size_event(event: &Event) -> u32 {
     size + EventHeaderC::SIZE
 }
 
-fn write_event<W: Write>(write: &mut W, anim_def: &AnimDef, event: &Event) -> Result<()> {
+fn write_event(write: &mut impl Write, anim_def: &AnimDef, event: &Event) -> Result<()> {
     match &event.data {
         EventData::Sound(data) => data.write(write, anim_def),
         EventData::SoundNode(data) => data.write(write, anim_def),

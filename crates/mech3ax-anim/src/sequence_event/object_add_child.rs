@@ -16,7 +16,7 @@ impl ScriptObject for ObjectAddChild {
     const INDEX: u8 = 15;
     const SIZE: u32 = ObjectAddChildC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("object add child size", size == Self::SIZE, read.offset)?;
         let add_child: ObjectAddChildC = read.read_struct()?;
         let parent = anim_def.node_from_index(add_child.parent_index as usize, read.prev + 0)?;
@@ -24,7 +24,7 @@ impl ScriptObject for ObjectAddChild {
         Ok(Self { parent, child })
     }
 
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
         let parent_index = anim_def.node_to_index(&self.parent)? as u16;
         let child_index = anim_def.node_to_index(&self.child)? as u16;
         write.write_struct(&ObjectAddChildC {

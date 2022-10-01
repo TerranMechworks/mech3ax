@@ -21,7 +21,7 @@ impl ScriptObject for ObjectTranslateState {
     const INDEX: u8 = 7;
     const SIZE: u32 = ObjectTranslateStateC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!(
             "object translate state size",
             size == Self::SIZE,
@@ -54,7 +54,7 @@ impl ScriptObject for ObjectTranslateState {
         })
     }
 
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
         let node_index = anim_def.node_to_index(&self.node)? as u16;
         let at_node_index = if let Some(at_node) = &self.at_node {
             assert_that!("object translate state at node", at_node == INPUT_NODE, 0)?;

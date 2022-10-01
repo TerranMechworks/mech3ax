@@ -38,7 +38,7 @@ impl ScriptObject for FogState {
     const INDEX: u8 = 28;
     const SIZE: u32 = FogStateC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("fog state size", size == Self::SIZE, read.offset)?;
         let fog_state: FogStateC = read.read_struct()?;
 
@@ -68,7 +68,7 @@ impl ScriptObject for FogState {
         })
     }
 
-    fn write<W: Write>(&self, write: &mut W, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
         let mut name = [0; 32];
         str_to_c_padded(DEFAULT_FOG_NAME, &mut name);
         let fog_type = match &self.fog_type {

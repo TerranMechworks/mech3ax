@@ -24,7 +24,7 @@ impl ScriptObject for ObjectOpacityFromTo {
     const INDEX: u8 = 14;
     const SIZE: u32 = ObjectOpacityFromToC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!(
             "object opacity from to size",
             size == Self::SIZE,
@@ -82,7 +82,7 @@ impl ScriptObject for ObjectOpacityFromTo {
         })
     }
 
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
         let node_index = anim_def.node_to_index(&self.node)? as u32;
         let runtime = if self.fudge {
             dec_f32(self.runtime)

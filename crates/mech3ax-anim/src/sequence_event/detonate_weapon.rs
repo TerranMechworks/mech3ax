@@ -19,7 +19,7 @@ impl ScriptObject for DetonateWeapon {
     const INDEX: u8 = 41;
     const SIZE: u32 = DetonateWeaponC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("detonate weapon size", size == Self::SIZE, read.offset)?;
         let detonate_weapon: DetonateWeaponC = read.read_struct()?;
         let name = assert_utf8("detonate weapon name", read.prev + 0, || {
@@ -35,7 +35,7 @@ impl ScriptObject for DetonateWeapon {
         })
     }
 
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
         let mut name = [0; 10];
         str_to_c_padded(&self.name, &mut name);
         write.write_struct(&DetonateWeaponC {

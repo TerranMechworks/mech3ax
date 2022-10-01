@@ -13,7 +13,7 @@ struct SequenceC {
 }
 static_assert_size!(SequenceC, 36);
 
-fn read_sequence<R: Read>(read: &mut CountingReader<R>) -> Result<String> {
+fn read_sequence(read: &mut CountingReader<impl Read>) -> Result<String> {
     let sequence: SequenceC = read.read_struct()?;
     let name = assert_utf8("sequence name", read.prev + 0, || {
         str_from_c_padded(&sequence.name)
@@ -22,7 +22,7 @@ fn read_sequence<R: Read>(read: &mut CountingReader<R>) -> Result<String> {
     Ok(name)
 }
 
-fn write_sequence<W: Write>(write: &mut W, name: &str) -> Result<()> {
+fn write_sequence(write: &mut impl Write, name: &str) -> Result<()> {
     let mut fill = [0; 32];
     str_to_c_padded(name, &mut fill);
     write.write_struct(&SequenceC {
@@ -36,13 +36,13 @@ impl ScriptObject for CallSequence {
     const INDEX: u8 = 22;
     const SIZE: u32 = SequenceC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("call sequence size", size == Self::SIZE, read.offset)?;
         let name = read_sequence(read)?;
         Ok(Self { name })
     }
 
-    fn write<W: Write>(&self, write: &mut W, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
         write_sequence(write, &self.name)
     }
 }
@@ -51,13 +51,13 @@ impl ScriptObject for StopSequence {
     const INDEX: u8 = 23;
     const SIZE: u32 = SequenceC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("stop sequence size", size == Self::SIZE, read.offset)?;
         let name = read_sequence(read)?;
         Ok(Self { name })
     }
 
-    fn write<W: Write>(&self, write: &mut W, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
         write_sequence(write, &self.name)
     }
 }

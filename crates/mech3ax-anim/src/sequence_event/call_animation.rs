@@ -46,7 +46,7 @@ impl ScriptObject for CallAnimation {
     const INDEX: u8 = 24;
     const SIZE: u32 = CallAnimationC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("call animation size", size == Self::SIZE, read.offset)?;
         let call_animation: CallAnimationC = read.read_struct()?;
 
@@ -177,7 +177,7 @@ impl ScriptObject for CallAnimation {
         })
     }
 
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
         let mut name = [0; 32];
         str_to_c_padded(&self.name, &mut name);
         let mut flags = CallAnimationFlags::empty();

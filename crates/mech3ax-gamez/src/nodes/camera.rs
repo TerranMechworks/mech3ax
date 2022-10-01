@@ -210,10 +210,7 @@ fn assert_camera(camera: CameraC, offset: u32) -> Result<(Range, Range)> {
     Ok((camera.clip, camera.fov))
 }
 
-pub fn read<R>(read: &mut CountingReader<R>, data_ptr: u32) -> Result<Camera>
-where
-    R: Read,
-{
+pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32) -> Result<Camera> {
     let camera: CameraC = read.read_struct()?;
     let (clip, fov) = assert_camera(camera, read.prev)?;
 
@@ -245,10 +242,7 @@ pub fn make_variants(camera: &Camera) -> NodeVariants {
     }
 }
 
-pub fn write<W>(write: &mut W, camera: &Camera) -> Result<()>
-where
-    W: Write,
-{
+pub fn write(write: &mut impl Write, camera: &Camera) -> Result<()> {
     let fov_h_half = camera.fov.min / 2.0;
     let fov_v_half = camera.fov.max / 2.0;
 

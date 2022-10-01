@@ -10,45 +10,30 @@ pub const VERSION_MW: u32 = 27;
 pub const VERSION_PM: u32 = 41;
 pub const FORMAT: u32 = 1;
 
-pub fn read_version<R>(read: &mut CountingReader<R>, is_pm: bool) -> Result<()>
-where
-    R: Read,
-{
+pub fn read_version(read: &mut CountingReader<impl Read>, is_pm: bool) -> Result<()> {
     let actual = read.read_u32()?;
     let expected = if is_pm { VERSION_PM } else { VERSION_MW };
     assert_that!("version", actual == expected, read.prev)?;
     read.assert_end()
 }
 
-pub fn read_format<R>(read: &mut CountingReader<R>) -> Result<()>
-where
-    R: Read,
-{
+pub fn read_format(read: &mut CountingReader<impl Read>) -> Result<()> {
     let format = read.read_u32()?;
     assert_that!("format", format == FORMAT, read.prev)?;
     read.assert_end()
 }
 
-pub fn write_version<W>(write: &mut W, is_pm: bool) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_version(write: &mut impl Write, is_pm: bool) -> Result<()> {
     write.write_u32(if is_pm { VERSION_PM } else { VERSION_MW })?;
     Ok(())
 }
 
-pub fn write_format<W>(write: &mut W) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_format(write: &mut impl Write) -> Result<()> {
     write.write_u32(FORMAT)?;
     Ok(())
 }
 
-pub fn read_materials<R>(read: &mut CountingReader<R>) -> Result<Vec<Material>>
-where
-    R: Read,
-{
+pub fn read_materials(read: &mut CountingReader<impl Read>) -> Result<Vec<Material>> {
     let count = read.read_u32()?;
     let materials = (0..count)
         .map(|_| {
@@ -75,10 +60,7 @@ where
     Ok(materials)
 }
 
-pub fn write_materials<W>(write: &mut W, materials: &[Material]) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_materials(write: &mut impl Write, materials: &[Material]) -> Result<()> {
     write.write_u32(materials.len() as u32)?;
     for material in materials {
         write_material(write, material, None)?;
@@ -92,15 +74,12 @@ where
     Ok(())
 }
 
-fn read_node_and_mesh<R>(
-    read: &mut CountingReader<R>,
+fn read_node_and_mesh(
+    read: &mut CountingReader<impl Read>,
     nodes: &mut Vec<Object3d>,
     meshes: &mut Vec<Mesh>,
     mesh_ptrs: &mut Vec<i32>,
-) -> Result<u32>
-where
-    R: Read,
-{
+) -> Result<u32> {
     let Wrapper {
         wrapped: mut object3d,
         has_parent,
@@ -137,10 +116,7 @@ where
     Ok(current_index.try_into().unwrap())
 }
 
-pub fn read_model<R>(read: &mut CountingReader<R>) -> Result<Model>
-where
-    R: Read,
-{
+pub fn read_model(read: &mut CountingReader<impl Read>) -> Result<Model> {
     let mut nodes = Vec::new();
     let mut meshes = Vec::new();
     let mut mesh_ptrs = Vec::new();
@@ -153,16 +129,13 @@ where
     })
 }
 
-fn write_node_and_mesh<W>(
-    write: &mut W,
+fn write_node_and_mesh(
+    write: &mut impl Write,
     node_index: u32,
     nodes: &mut [Object3d],
     meshes: &[Mesh],
     mesh_ptrs: &[i32],
-) -> Result<()>
-where
-    W: Write,
-{
+) -> Result<()> {
     let object3d = &mut nodes[node_index as usize];
 
     // preserve mesh_index
@@ -194,9 +167,6 @@ where
     Ok(())
 }
 
-pub fn write_model<W>(write: &mut W, model: &mut Model) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_model(write: &mut impl Write, model: &mut Model) -> Result<()> {
     write_node_and_mesh(write, 0, &mut model.nodes, &model.meshes, &model.mesh_ptrs)
 }

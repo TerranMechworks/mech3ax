@@ -15,10 +15,10 @@ struct MeshesInfoC {
 }
 static_assert_size!(MeshesInfoC, 12);
 
-pub fn read_meshes<R>(read: &mut CountingReader<R>, end_offset: u32) -> Result<(Vec<Mesh>, i32)>
-where
-    R: Read,
-{
+pub fn read_meshes(
+    read: &mut CountingReader<impl Read>,
+    end_offset: u32,
+) -> Result<(Vec<Mesh>, i32)> {
     let info: MeshesInfoC = read.read_struct()?;
     assert_that!("mat count", info.count < info.array_size, read.prev + 0)?;
     assert_that!(
@@ -52,15 +52,12 @@ where
     Ok((meshes, info.array_size))
 }
 
-pub fn write_meshes<W>(
-    write: &mut W,
+pub fn write_meshes(
+    write: &mut impl Write,
     meshes: &[Mesh],
     offsets: &[u32],
     array_size: i32,
-) -> Result<()>
-where
-    W: Write,
-{
+) -> Result<()> {
     let count = meshes.len() as i32;
     write.write_struct(&MeshesInfoC {
         array_size,

@@ -83,7 +83,7 @@ impl ScriptObject for PufferState {
     const INDEX: u8 = 42;
     const SIZE: u32 = PufferStateC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("puffer state size", size == Self::SIZE, read.offset)?;
         let puffer_state: PufferStateC = read.read_struct()?;
         let name = assert_utf8("puffer state name", read.prev + 0, || {
@@ -587,7 +587,7 @@ impl ScriptObject for PufferState {
         })
     }
 
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
         let mut name = [0; 32];
         str_to_c_padded(&self.name, &mut name);
         let puffer_index = anim_def.puffer_to_index(&self.name)? as u32;

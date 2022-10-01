@@ -23,7 +23,7 @@ impl ScriptObject for ObjectRotateState {
     const INDEX: u8 = 9;
     const SIZE: u32 = ObjectRotateStateC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("object rotate state size", size == Self::SIZE, read.offset)?;
         let object_rotate_state: ObjectRotateStateC = read.read_struct()?;
         // FLAGS (mutually exclusive)
@@ -76,7 +76,7 @@ impl ScriptObject for ObjectRotateState {
         Ok(Self { node, rotate })
     }
 
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
         let (flags, rotate, at_node_index) = match &self.rotate {
             RotateState::Absolute(rotate) => {
                 let rotate = Vec3 {

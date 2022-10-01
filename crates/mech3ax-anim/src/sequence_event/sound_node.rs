@@ -22,7 +22,7 @@ impl ScriptObject for SoundNode {
     const INDEX: u8 = 2;
     const SIZE: u32 = SoundNodeC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("sound node size", size == Self::SIZE, read.offset)?;
         let sound_node: SoundNodeC = read.read_struct()?;
         let name = assert_utf8("sound node name", read.prev + 0, || {
@@ -59,7 +59,7 @@ impl ScriptObject for SoundNode {
         })
     }
 
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
         let mut name = [0; 32];
         str_to_c_padded(&self.name, &mut name);
         let active_state = if self.active_state { 1 } else { 0 };

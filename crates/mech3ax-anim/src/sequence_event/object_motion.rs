@@ -90,7 +90,7 @@ impl ScriptObject for ObjectMotion {
     const INDEX: u8 = 10;
     const SIZE: u32 = ObjectMotionC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("object motion size", size == Self::SIZE, read.offset)?;
         let object_motion: ObjectMotionC = read.read_struct()?;
 
@@ -493,7 +493,7 @@ impl ScriptObject for ObjectMotion {
         })
     }
 
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
         let node_index = anim_def.node_to_index(&self.node)? as u32;
         let mut flags = ObjectMotionFlags::empty();
         let gravity = if let Some(gravity_info) = &self.gravity {

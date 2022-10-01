@@ -131,14 +131,11 @@ fn convert_info_from_c(
     })
 }
 
-fn read_texture<R>(
-    read: &mut CountingReader<R>,
+fn read_texture(
+    read: &mut CountingReader<impl Read>,
     name: String,
     global_palette: Option<(i32, &PaletteData)>,
-) -> Result<(TextureInfo, DynamicImage)>
-where
-    R: Read,
-{
+) -> Result<(TextureInfo, DynamicImage)> {
     trace!("Reading texture info `{}` at {}", name, read.offset);
     let tex_info: Info = read.read_struct()?;
     assert_that!("field 08", tex_info.zero08 == 0, read.prev + 8)?;

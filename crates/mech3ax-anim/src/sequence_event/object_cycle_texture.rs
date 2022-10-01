@@ -18,7 +18,7 @@ impl ScriptObject for ObjectCycleTexture {
     const INDEX: u8 = 17;
     const SIZE: u32 = ObjectCycleTextureC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("object cycle texture size", size == Self::SIZE, read.offset)?;
         let object_cycle_texture: ObjectCycleTextureC = read.read_struct()?;
         assert_that!(
@@ -40,7 +40,7 @@ impl ScriptObject for ObjectCycleTexture {
         })
     }
 
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
         let node_index = anim_def.node_to_index(&self.node)? as u16;
         write.write_struct(&ObjectCycleTextureC {
             increment: 1,

@@ -28,14 +28,11 @@ struct CycleInfoC {
 }
 static_assert_size!(CycleInfoC, 28);
 
-fn read_cycle<R>(
-    read: &mut CountingReader<R>,
+fn read_cycle(
+    read: &mut CountingReader<impl Read>,
     material: RawMaterial,
     textures: &[String],
-) -> Result<Material>
-where
-    R: Read,
-{
+) -> Result<Material> {
     Ok(match material {
         RawMaterial::Textured(mat) => {
             let texture_index = mat.pointer as usize;
@@ -86,13 +83,10 @@ where
     })
 }
 
-pub fn read_materials<R>(
-    read: &mut CountingReader<R>,
+pub fn read_materials(
+    read: &mut CountingReader<impl Read>,
     textures: &[String],
-) -> Result<(Vec<Material>, i16)>
-where
-    R: Read,
-{
+) -> Result<(Vec<Material>, i16)> {
     let info: MaterialInfoC = read.read_struct()?;
     assert_that!("mat array size", 0 <= info.array_size <= i16::MAX as i32, read.prev + 0)?;
     assert_that!("mat count", 0 <= info.count <= info.array_size, read.prev + 0)?;
@@ -140,10 +134,7 @@ where
     Ok((materials, array_size))
 }
 
-fn write_cycle<W>(write: &mut W, textures: &[String], material: &Material) -> Result<()>
-where
-    W: Write,
-{
+fn write_cycle(write: &mut impl Write, textures: &[String], material: &Material) -> Result<()> {
     if let Material::Textured(mat) = material {
         if let Some(cycle) = &mat.cycle {
             let unk00 = bool_c!(cycle.unk00);
@@ -170,15 +161,12 @@ where
     Ok(())
 }
 
-pub fn write_materials<W>(
-    write: &mut W,
+pub fn write_materials(
+    write: &mut impl Write,
     textures: &[String],
     materials: &[Material],
     array_size: i16,
-) -> Result<()>
-where
-    W: Write,
-{
+) -> Result<()> {
     let count = materials.len() as i32;
     write.write_struct(&MaterialInfoC {
         array_size: array_size as i32,

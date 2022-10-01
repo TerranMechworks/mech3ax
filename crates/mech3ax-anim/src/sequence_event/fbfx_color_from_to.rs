@@ -27,7 +27,7 @@ impl ScriptObject for FrameBufferEffectColor {
     const INDEX: u8 = 36;
     const SIZE: u32 = FbFxColorFromToC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("fbfx color from to size", size == Self::SIZE, read.offset)?;
         let fbfx: FbFxColorFromToC = read.read_struct()?;
 
@@ -110,7 +110,7 @@ impl ScriptObject for FrameBufferEffectColor {
         })
     }
 
-    fn write<W: Write>(&self, write: &mut W, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
         let delta_red = delta(self.to.r, self.from.r, self.runtime);
         let delta_green = delta(self.to.g, self.from.g, self.runtime);
         let delta_blue = delta(self.to.b, self.from.b, self.runtime);

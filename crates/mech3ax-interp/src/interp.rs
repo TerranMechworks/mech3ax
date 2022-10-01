@@ -17,10 +17,7 @@ struct EntryC {
 }
 static_assert_size!(EntryC, 128);
 
-fn read_script<R>(read: &mut CountingReader<R>, offset: &mut u64) -> Result<Vec<String>>
-where
-    R: Read,
-{
+fn read_script(read: &mut CountingReader<impl Read>, offset: &mut u64) -> Result<Vec<String>> {
     let mut lines = Vec::new();
     loop {
         let size = read.read_u32()?;
@@ -53,10 +50,7 @@ where
     Ok(lines)
 }
 
-pub fn read_interp<R>(read: &mut CountingReader<R>) -> Result<Vec<Script>>
-where
-    R: Read,
-{
+pub fn read_interp(read: &mut CountingReader<impl Read>) -> Result<Vec<Script>> {
     let signature = read.read_u32()?;
     assert_that!("signature", signature == SIGNATURE, 0)?;
     let version = read.read_u32()?;
@@ -115,10 +109,7 @@ fn write_script(lines: &[String]) -> (u32, Vec<(u32, Vec<u8>)>) {
     (size, transformed)
 }
 
-pub fn write_interp<W>(write: &mut W, scripts: &[Script]) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_interp(write: &mut impl Write, scripts: &[Script]) -> Result<()> {
     let count = scripts.len() as u32;
     write.write_u32(SIGNATURE)?;
     write.write_u32(VERSION)?;

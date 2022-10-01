@@ -39,6 +39,6 @@ pub use parse::{read_events, size_events, write_events};
 pub trait ScriptObject: Sized {
     const INDEX: u8;
     const SIZE: u32;
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self>;
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()>;
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self>;
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()>;
 }

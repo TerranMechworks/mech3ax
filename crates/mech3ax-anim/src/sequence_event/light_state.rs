@@ -39,7 +39,7 @@ impl ScriptObject for LightState {
     const INDEX: u8 = 4;
     const SIZE: u32 = LightStateC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("light state size", size == Self::SIZE, read.offset)?;
         let light_state: LightStateC = read.read_struct()?;
 
@@ -245,7 +245,7 @@ impl ScriptObject for LightState {
         })
     }
 
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
         let mut name = [0; 32];
         str_to_c_padded(&self.name, &mut name);
         let light_index = anim_def.light_to_index(&self.name)? as u32;

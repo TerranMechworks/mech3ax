@@ -17,7 +17,7 @@ impl ScriptObject for Sound {
     const INDEX: u8 = 1;
     const SIZE: u32 = SoundC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("sound size", size == Self::SIZE, read.offset)?;
         let sound: SoundC = read.read_struct()?;
         let name = anim_def.sound_from_index(sound.sound_index as usize, read.prev + 0)?;
@@ -31,7 +31,7 @@ impl ScriptObject for Sound {
         })
     }
 
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
         write.write_struct(&SoundC {
             sound_index: anim_def.sound_to_index(&self.name)? as u16,
             node_index: anim_def.node_to_index(&self.at_node.node)? as u16,

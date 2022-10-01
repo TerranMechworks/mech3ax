@@ -25,10 +25,7 @@ pub fn bytes_to_c(bytes: &[u8], fill: &mut [u8]) {
 
 const DEFAULT_NODE_NAME: &str = "Default_node_name";
 
-pub fn str_to_c_padded<S>(str: S, fill: &mut [u8])
-where
-    S: Into<String>,
-{
+pub fn str_to_c_padded(str: impl Into<String>, fill: &mut [u8]) {
     let mut buf = str.into().into_bytes();
     if !buf.is_ascii() {
         panic!("Non-ASCII string");
@@ -38,10 +35,7 @@ where
     fill.copy_from_slice(&buf);
 }
 
-pub fn str_to_c_node_name<S>(str: S, fill: &mut [u8])
-where
-    S: Into<String>,
-{
+pub fn str_to_c_node_name(str: impl Into<String>, fill: &mut [u8]) {
     let mut buf = Vec::from(DEFAULT_NODE_NAME.as_bytes());
     buf.resize(fill.len(), 0);
     {
@@ -59,10 +53,7 @@ where
     fill.copy_from_slice(&buf);
 }
 
-pub fn str_to_c_suffix<S>(str: S, fill: &mut [u8])
-where
-    S: Into<String>,
-{
+pub fn str_to_c_suffix(str: impl Into<String>, fill: &mut [u8]) {
     let mut buf = str.into().into_bytes();
     if !buf.is_ascii() {
         panic!("Non-ASCII string");
@@ -76,10 +67,7 @@ where
     fill.copy_from_slice(&buf);
 }
 
-pub fn str_to_c_partition<S>(str: S, pad: &[u8], fill: &mut [u8])
-where
-    S: Into<String>,
-{
+pub fn str_to_c_partition(str: impl Into<String>, pad: &[u8], fill: &mut [u8]) {
     assert!(pad.len() < fill.len(), "padding overflows buffer");
     let mut buf = vec![0; fill.len()];
     // fill buf with the padding first

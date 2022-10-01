@@ -47,7 +47,7 @@ impl ScriptObject for ObjectConnector {
     const INDEX: u8 = 18;
     const SIZE: u32 = ObjectConnectorC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("object connector size", size == Self::SIZE, read.offset)?;
         let object_connector: ObjectConnectorC = read.read_struct()?;
         let flags = ObjectConnectorFlags::from_bits(object_connector.flags).ok_or_else(|| {
@@ -237,7 +237,7 @@ impl ScriptObject for ObjectConnector {
         })
     }
 
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
         let node_index = anim_def.node_to_index(&self.node)? as u16;
         let mut flags = ObjectConnectorFlags::empty();
 

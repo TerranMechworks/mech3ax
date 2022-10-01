@@ -18,7 +18,7 @@ impl ScriptObject for ObjectOpacityState {
     const INDEX: u8 = 13;
     const SIZE: u32 = ObjectOpacityStateC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("object opacity state size", size == Self::SIZE, read.offset)?;
         let object_opacity_state: ObjectOpacityStateC = read.read_struct()?;
         let is_set = assert_that!("object opacity state is set", bool object_opacity_state.is_set as u32, read.prev + 0)?;
@@ -34,7 +34,7 @@ impl ScriptObject for ObjectOpacityState {
         })
     }
 
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
         write.write_struct(&ObjectOpacityStateC {
             is_set: bool_c!(self.is_set),
             state: bool_c!(self.state),

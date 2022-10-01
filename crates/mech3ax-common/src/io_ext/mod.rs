@@ -122,10 +122,7 @@ pub trait ReadHelper {
     fn read_f32(&mut self) -> Result<f32>;
 }
 
-impl<R> ReadHelper for R
-where
-    R: Read,
-{
+impl<R: Read> ReadHelper for R {
     fn read_u32(&mut self) -> Result<u32> {
         let mut buf = [0; 4];
         self.read_exact(&mut buf)?;
@@ -156,10 +153,7 @@ pub trait WriteHelper {
     fn write_zeros(&mut self, count: u32) -> Result<()>;
 }
 
-impl<W> WriteHelper for W
-where
-    W: Write,
-{
+impl<W: Write> WriteHelper for W {
     fn write_u32(&mut self, value: u32) -> Result<()> {
         let buf = value.to_le_bytes();
         self.write_all(&buf)

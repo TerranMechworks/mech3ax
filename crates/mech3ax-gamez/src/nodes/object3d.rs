@@ -126,10 +126,7 @@ fn assert_object3d(object3d: Object3dC, offset: u32) -> Result<Option<Transforma
     Ok(transformation)
 }
 
-pub fn read<R>(read: &mut CountingReader<R>, node: NodeVariants) -> Result<Wrapper<Object3d>>
-where
-    R: Read,
-{
+pub fn read(read: &mut CountingReader<impl Read>, node: NodeVariants) -> Result<Wrapper<Object3d>> {
     let object3dc: Object3dC = read.read_struct()?;
     let matrix_signs = extract_zero_signs(&object3dc.matrix);
     let transformation = assert_object3d(object3dc, read.prev)?;
@@ -180,10 +177,7 @@ pub fn make_variants(object3d: &Object3d) -> NodeVariants {
     }
 }
 
-pub fn write<W>(write: &mut W, object3d: &Object3d) -> Result<()>
-where
-    W: Write,
-{
+pub fn write(write: &mut impl Write, object3d: &Object3d) -> Result<()> {
     let (flags, rotation, translation, matrix) = object3d
         .transformation
         .as_ref()

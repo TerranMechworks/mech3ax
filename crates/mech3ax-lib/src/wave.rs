@@ -14,14 +14,14 @@ pub struct WaveFile {
     pub samples: Vec<f32>,
 }
 
-fn read_chunk_header<R: Read>(read: &mut CountingReader<R>) -> Result<([u8; 4], u32)> {
+fn read_chunk_header(read: &mut CountingReader<impl Read>) -> Result<([u8; 4], u32)> {
     let mut chunk_id = [0u8; 4];
     read.read_exact(&mut chunk_id)?;
     let chunk_size = read.read_u32()?;
     Ok((chunk_id, chunk_size))
 }
 
-fn read_riff_chunk<R: Read>(read: &mut CountingReader<R>) -> Result<()> {
+fn read_riff_chunk(read: &mut CountingReader<impl Read>) -> Result<()> {
     let (chunk_id, _chunk_size) = read_chunk_header(read)?;
     assert_that!("RIFF chunk ID", &chunk_id == RIFF_CHUNK_ID, read.offset - 8)?;
     // TODO: validate chunk_size against the length of data - 8?
@@ -38,7 +38,7 @@ struct Format {
     frequency: i32,
 }
 
-fn read_fmt_chunk<R: Read>(read: &mut CountingReader<R>, chunk_size: u32) -> Result<Format> {
+fn read_fmt_chunk(read: &mut CountingReader<impl Read>, chunk_size: u32) -> Result<Format> {
     let format_tag = read.read_u16()?;
     assert_that!("format tag", format_tag == WAVE_FORMAT_PCM, read.prev)?;
     // this is only valid for PCM files
@@ -63,8 +63,8 @@ fn read_fmt_chunk<R: Read>(read: &mut CountingReader<R>, chunk_size: u32) -> Res
     })
 }
 
-fn read_samples_8bit<R: Read>(
-    read: &mut CountingReader<R>,
+fn read_samples_8bit(
+    read: &mut CountingReader<impl Read>,
     sample_count: usize,
     format: Format,
 ) -> Result<WaveFile> {
@@ -85,8 +85,8 @@ fn read_samples_8bit<R: Read>(
     })
 }
 
-fn read_samples_16bit<R: Read>(
-    read: &mut CountingReader<R>,
+fn read_samples_16bit(
+    read: &mut CountingReader<impl Read>,
     sample_count: usize,
     format: Format,
 ) -> Result<WaveFile> {
@@ -111,8 +111,8 @@ fn read_samples_16bit<R: Read>(
     })
 }
 
-fn read_data_chunk<R: Read>(
-    read: &mut CountingReader<R>,
+fn read_data_chunk(
+    read: &mut CountingReader<impl Read>,
     chunk_size: u32,
     format: Format,
 ) -> Result<WaveFile> {
@@ -130,7 +130,7 @@ fn read_data_chunk<R: Read>(
     }
 }
 
-fn read_wav_file<R: Read + Seek>(read: &mut CountingReader<R>) -> Result<WaveFile> {
+fn read_wav_file(read: &mut CountingReader<impl Read + Seek>) -> Result<WaveFile> {
     // the RIFF chunk must be first
     read_riff_chunk(read)?;
 
@@ -160,7 +160,7 @@ fn read_wav_file<R: Read + Seek>(read: &mut CountingReader<R>) -> Result<WaveFil
 }
 
 impl WaveFile {
-    pub fn new<R: Read + Seek>(read: &mut CountingReader<R>) -> Result<WaveFile> {
+    pub fn new(read: &mut CountingReader<impl Read + Seek>) -> Result<WaveFile> {
         read_wav_file(read)
     }
 }

@@ -33,7 +33,7 @@ struct ActivPrereqObjC {
 }
 static_assert_size!(ActivPrereqObjC, 40);
 
-fn read_activ_prereq_anim<R: Read>(read: &mut CountingReader<R>) -> Result<ActivationPrereq> {
+fn read_activ_prereq_anim(read: &mut CountingReader<impl Read>) -> Result<ActivationPrereq> {
     let prereq: ActivPrereqAnimC = read.read_struct()?;
     let name = assert_utf8("anim def activ prereq a name", read.prev + 0, || {
         str_from_c_padded(&prereq.name)
@@ -51,8 +51,8 @@ fn read_activ_prereq_anim<R: Read>(read: &mut CountingReader<R>) -> Result<Activ
     Ok(ActivationPrereq::Animation(PrereqAnimation { name }))
 }
 
-fn read_activ_prereq_parent<R: Read>(
-    read: &mut CountingReader<R>,
+fn read_activ_prereq_parent(
+    read: &mut CountingReader<impl Read>,
     required: bool,
 ) -> Result<ActivationPrereq> {
     let prereq: ActivPrereqObjC = read.read_struct()?;
@@ -77,8 +77,8 @@ fn read_activ_prereq_parent<R: Read>(
     }))
 }
 
-fn read_activ_prereq_object<R: Read>(
-    read: &mut CountingReader<R>,
+fn read_activ_prereq_object(
+    read: &mut CountingReader<impl Read>,
     required: bool,
 ) -> Result<ActivationPrereq> {
     let prereq: ActivPrereqObjC = read.read_struct()?;
@@ -99,7 +99,7 @@ fn read_activ_prereq_object<R: Read>(
     }))
 }
 
-fn read_activ_prereq<R: Read>(read: &mut CountingReader<R>) -> Result<ActivationPrereq> {
+fn read_activ_prereq(read: &mut CountingReader<impl Read>) -> Result<ActivationPrereq> {
     let optional = read.read_u32()?;
     let required = !assert_that!("anim def activ prereq optional", bool optional, read.prev)?;
     let prereq_type_raw = read.read_u32()?;
@@ -124,14 +124,14 @@ fn read_activ_prereq<R: Read>(read: &mut CountingReader<R>) -> Result<Activation
     }
 }
 
-pub fn read_activ_prereqs<R: Read>(
-    read: &mut CountingReader<R>,
+pub fn read_activ_prereqs(
+    read: &mut CountingReader<impl Read>,
     count: u8,
 ) -> Result<Vec<ActivationPrereq>> {
     (0..count).map(|_| read_activ_prereq(read)).collect()
 }
 
-fn write_activ_prereq_anim<W: Write>(write: &mut W, name: &str) -> Result<()> {
+fn write_activ_prereq_anim(write: &mut impl Write, name: &str) -> Result<()> {
     let mut fill = [0; 32];
     str_to_c_padded(name, &mut fill);
     // always required (not optional)
@@ -145,8 +145,8 @@ fn write_activ_prereq_anim<W: Write>(write: &mut W, name: &str) -> Result<()> {
     Ok(())
 }
 
-fn write_activ_prereq_object<W: Write>(
-    write: &mut W,
+fn write_activ_prereq_object(
+    write: &mut impl Write,
     object: &PrereqObject,
     prereq_type: ActivPrereqType,
 ) -> Result<()> {
@@ -162,8 +162,8 @@ fn write_activ_prereq_object<W: Write>(
     Ok(())
 }
 
-fn write_activ_prereq_parent<W: Write>(
-    write: &mut W,
+fn write_activ_prereq_parent(
+    write: &mut impl Write,
     parent: &PrereqParent,
     prereq_type: ActivPrereqType,
 ) -> Result<()> {
@@ -179,8 +179,8 @@ fn write_activ_prereq_parent<W: Write>(
     Ok(())
 }
 
-pub fn write_activ_prereqs<W: Write>(
-    write: &mut W,
+pub fn write_activ_prereqs(
+    write: &mut impl Write,
     activ_prereqs: &[ActivationPrereq],
 ) -> Result<()> {
     for activ_prereq in activ_prereqs {

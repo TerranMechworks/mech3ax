@@ -8,10 +8,7 @@ use mech3ax_common::io_ext::{CountingReader, WriteHelper};
 use mech3ax_common::{assert_that, Error, Result};
 use std::io::{Read, Write};
 
-pub fn read_nodes<R>(read: &mut CountingReader<R>, array_size: u32) -> Result<Vec<Node>>
-where
-    R: Read,
-{
+pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Result<Vec<Node>> {
     let end_offset = read.offset + NODE_C_SIZE * array_size + 4 * array_size;
 
     let mut variants = Vec::new();
@@ -182,10 +179,12 @@ fn assert_area_partitions(nodes: &[Node], offset: u32) -> Result<()> {
     Ok(())
 }
 
-pub fn write_nodes<W>(write: &mut W, nodes: &[Node], array_size: u32, offset: u32) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_nodes(
+    write: &mut impl Write,
+    nodes: &[Node],
+    array_size: u32,
+    offset: u32,
+) -> Result<()> {
     let mut offset = offset + NODE_C_SIZE * array_size + 4 * array_size;
 
     for node in nodes {

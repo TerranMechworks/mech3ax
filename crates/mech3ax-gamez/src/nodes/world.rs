@@ -128,10 +128,7 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     ))
 }
 
-fn read_partition<R>(read: &mut CountingReader<R>, x: i32, y: i32) -> Result<Partition>
-where
-    R: Read,
-{
+fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Result<Partition> {
     let partition: PartitionC = read.read_struct()?;
     let xf = x as f32;
     let yf = y as f32;
@@ -212,14 +209,11 @@ where
     })
 }
 
-fn read_partitions<R>(
-    read: &mut CountingReader<R>,
+fn read_partitions(
+    read: &mut CountingReader<impl Read>,
     area_x: super::range::Range,
     area_y: super::range::Range,
-) -> Result<Vec<Vec<Partition>>>
-where
-    R: Read,
-{
+) -> Result<Vec<Vec<Partition>>> {
     area_y
         .map(|y| {
             area_x
@@ -406,15 +400,12 @@ fn assert_world(
     Ok((area, area_x, area_y, fudge_count))
 }
 
-pub fn read<R>(
-    read: &mut CountingReader<R>,
+pub fn read(
+    read: &mut CountingReader<impl Read>,
     data_ptr: u32,
     children_count: u32,
     children_array_ptr: u32,
-) -> Result<Wrapper<World>>
-where
-    R: Read,
-{
+) -> Result<Wrapper<World>> {
     let world: WorldC = read.read_struct()?;
     let (area, area_x, area_y, fudge_count) = assert_world(&world, read.prev)?;
 
@@ -467,10 +458,7 @@ pub fn make_variants(world: &World) -> NodeVariants {
     }
 }
 
-fn write_partition<W>(write: &mut W, partition: &Partition) -> Result<()>
-where
-    W: Write,
-{
+fn write_partition(write: &mut impl Write, partition: &Partition) -> Result<()> {
     let x = partition.x as f32;
     let y = partition.y as f32;
     let diagonal = partition_diag(partition.z_min, partition.z_max);
@@ -504,10 +492,7 @@ where
     Ok(())
 }
 
-fn write_partitions<W>(write: &mut W, partitions: &[Vec<Partition>]) -> Result<()>
-where
-    W: Write,
-{
+fn write_partitions(write: &mut impl Write, partitions: &[Vec<Partition>]) -> Result<()> {
     for sub_partitions in partitions {
         for partition in sub_partitions {
             write_partition(write, partition)?;
@@ -516,10 +501,7 @@ where
     Ok(())
 }
 
-pub fn write<W>(write: &mut W, world: &World) -> Result<()>
-where
-    W: Write,
-{
+pub fn write(write: &mut impl Write, world: &World) -> Result<()> {
     let mut area_partition_count = world.area_partition_x_count * world.area_partition_y_count;
     if world.fudge_count {
         area_partition_count -= 1;

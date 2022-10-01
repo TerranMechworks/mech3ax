@@ -30,10 +30,7 @@ const VERSION_MW: u32 = 27;
 #[allow(dead_code)]
 const VERSION_PM: u32 = 41;
 
-pub fn read_gamez<R>(read: &mut CountingReader<R>) -> Result<GameZData>
-where
-    R: Read,
-{
+pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZData> {
     let header: HeaderC = read.read_struct()?;
 
     assert_that!("signature", header.signature == SIGNATURE, 0)?;
@@ -82,10 +79,7 @@ where
     })
 }
 
-pub fn write_gamez<W>(write: &mut W, gamez: &GameZData) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_gamez(write: &mut impl Write, gamez: &GameZData) -> Result<()> {
     let texture_count = gamez.textures.len() as u32;
     let material_array_size = gamez.metadata.material_array_size;
     let meshes_array_size = gamez.metadata.meshes_array_size;

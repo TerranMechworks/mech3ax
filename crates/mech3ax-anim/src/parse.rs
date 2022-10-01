@@ -49,7 +49,7 @@ struct AnimInfoC {
 }
 static_assert_size!(AnimInfoC, 68);
 
-fn read_anim_header<R: Read>(read: &mut CountingReader<R>) -> Result<Vec<AnimName>> {
+fn read_anim_header(read: &mut CountingReader<impl Read>) -> Result<Vec<AnimName>> {
     trace!("Reading anim header at {}", read.offset);
     let signature = read.read_u32()?;
     assert_that!("signature", signature == SIGNATURE, read.prev)?;
@@ -73,7 +73,7 @@ fn read_anim_header<R: Read>(read: &mut CountingReader<R>) -> Result<Vec<AnimNam
         .collect::<Result<Vec<_>>>()
 }
 
-fn read_anim_info<R: Read>(read: &mut CountingReader<R>) -> Result<(u16, u32, u32)> {
+fn read_anim_info(read: &mut CountingReader<impl Read>) -> Result<(u16, u32, u32)> {
     trace!("Reading anim info at {}", read.offset);
     let anim_info: AnimInfoC = read.read_struct()?;
     assert_that!("anim field 00", anim_info.zero00 == 0, read.prev + 0)?;
@@ -155,7 +155,7 @@ where
     })
 }
 
-fn write_anim_header<W: Write>(write: &mut W, anim_names: &[AnimName]) -> Result<()> {
+fn write_anim_header(write: &mut impl Write, anim_names: &[AnimName]) -> Result<()> {
     write.write_u32(SIGNATURE)?;
     write.write_u32(VERSION_MW)?;
     write.write_u32(anim_names.len() as u32)?;
@@ -171,7 +171,7 @@ fn write_anim_header<W: Write>(write: &mut W, anim_names: &[AnimName]) -> Result
     Ok(())
 }
 
-fn write_anim_info<W: Write>(write: &mut W, metadata: &AnimMetadata) -> Result<()> {
+fn write_anim_info(write: &mut impl Write, metadata: &AnimMetadata) -> Result<()> {
     write.write_struct(&AnimInfoC {
         zero00: 0,
         ptr04: 0,

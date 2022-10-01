@@ -44,10 +44,7 @@ bitflags::bitflags! {
     }
 }
 
-pub fn read_material<R>(read: &mut CountingReader<R>) -> Result<RawMaterial>
-where
-    R: Read,
-{
+pub fn read_material(read: &mut CountingReader<impl Read>) -> Result<RawMaterial> {
     let material: MaterialC = read.read_struct()?;
     let bitflags = MaterialFlags::from_bits(material.flags).ok_or_else(|| {
         AssertionError(format!(
@@ -103,10 +100,11 @@ where
     Ok(material)
 }
 
-pub fn write_material<W>(write: &mut W, material: &Material, pointer: Option<u32>) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_material(
+    write: &mut impl Write,
+    material: &Material,
+    pointer: Option<u32>,
+) -> Result<()> {
     let mat_c = match material {
         Material::Textured(material) => {
             let mut bitflags = MaterialFlags::ALWAYS | MaterialFlags::TEXTURED;
@@ -154,10 +152,11 @@ where
     Ok(())
 }
 
-pub fn read_materials_zero<R>(read: &mut CountingReader<R>, start: i16, end: i16) -> Result<()>
-where
-    R: Read,
-{
+pub fn read_materials_zero(
+    read: &mut CountingReader<impl Read>,
+    start: i16,
+    end: i16,
+) -> Result<()> {
     for index in start..end {
         let material: MaterialC = read.read_struct()?;
         assert_that!("field 00", material.unk00 == 0, read.prev + 0)?;
@@ -192,10 +191,7 @@ where
     Ok(())
 }
 
-pub fn write_materials_zero<W>(write: &mut W, start: i16, end: i16) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_materials_zero(write: &mut impl Write, start: i16, end: i16) -> Result<()> {
     let material = MaterialC {
         unk00: 0,
         flags: MaterialFlags::FREE.bits(),

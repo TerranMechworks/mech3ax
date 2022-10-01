@@ -16,7 +16,7 @@ impl ScriptObject for ObjectActiveState {
     const INDEX: u8 = 6;
     const SIZE: u32 = ObjectActiveStateC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("object active state size", size == Self::SIZE, read.offset)?;
         let object_active_state: ObjectActiveStateC = read.read_struct()?;
         let state =
@@ -27,7 +27,7 @@ impl ScriptObject for ObjectActiveState {
         Ok(Self { node, state })
     }
 
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
         write.write_struct(&ObjectActiveStateC {
             state: bool_c!(self.state),
             node_index: anim_def.node_to_index(&self.node)? as u32,

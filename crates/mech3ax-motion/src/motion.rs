@@ -18,10 +18,7 @@ struct Header {
 }
 static_assert_size!(Header, 24);
 
-pub fn read_motion<R>(read: &mut CountingReader<R>) -> Result<Motion>
-where
-    R: Read,
-{
+pub fn read_motion(read: &mut CountingReader<impl Read>) -> Result<Motion> {
     let header: Header = read.read_struct()?;
     assert_that!("version", header.version == VERSION, read.prev)?;
     assert_that!("loop time", header.loop_time > 0.0, read.prev + 4)?;
@@ -100,10 +97,7 @@ where
     })
 }
 
-pub fn write_motion<W>(write: &mut W, motion: &Motion) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_motion(write: &mut impl Write, motion: &Motion) -> Result<()> {
     let header = Header {
         version: VERSION,
         loop_time: motion.loop_time,

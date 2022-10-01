@@ -16,10 +16,7 @@ struct TextureInfoC {
 }
 static_assert_size!(TextureInfoC, 40);
 
-pub fn read_texture_infos<R>(read: &mut CountingReader<R>, count: u32) -> Result<Vec<String>>
-where
-    R: Read,
-{
+pub fn read_texture_infos(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<String>> {
     (0..count)
         .map(|_| {
             let info: TextureInfoC = read.read_struct()?;
@@ -42,10 +39,7 @@ where
         .collect::<Result<Vec<_>>>()
 }
 
-pub fn write_texture_infos<W>(write: &mut W, textures: &[String]) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_texture_infos(write: &mut impl Write, textures: &[String]) -> Result<()> {
     for name in textures {
         let mut texture = [0; 20];
         str_to_c_suffix(name, &mut texture);

@@ -67,10 +67,7 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     Ok(NodeVariant::Window(node.data_ptr))
 }
 
-pub fn read<R>(read: &mut CountingReader<R>, data_ptr: u32) -> Result<Window>
-where
-    R: Read,
-{
+pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32) -> Result<Window> {
     let window: WindowC = read.read_struct()?;
     assert_that!("origin x", window.origin_x == 0, read.prev + 0)?;
     assert_that!("origin y", window.origin_y == 0, read.prev + 4)?;
@@ -111,10 +108,7 @@ pub fn make_variants(window: &Window) -> NodeVariants {
     }
 }
 
-pub fn write<W>(write: &mut W, window: &Window) -> Result<()>
-where
-    W: Write,
-{
+pub fn write(write: &mut impl Write, window: &Window) -> Result<()> {
     write.write_struct(&WindowC {
         origin_x: 0,
         origin_y: 0,

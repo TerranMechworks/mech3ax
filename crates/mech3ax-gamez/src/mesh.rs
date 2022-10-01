@@ -158,33 +158,21 @@ fn assert_mesh_info(mesh: MeshC, offset: u32) -> Result<WrappedMesh> {
     })
 }
 
-pub fn read_mesh_info<R>(read: &mut CountingReader<R>) -> Result<WrappedMesh>
-where
-    R: Read,
-{
+pub fn read_mesh_info(read: &mut CountingReader<impl Read>) -> Result<WrappedMesh> {
     let mesh: MeshC = read.read_struct()?;
     let wrapped = assert_mesh_info(mesh, read.prev)?;
     Ok(wrapped)
 }
 
-fn read_vec3s<R>(read: &mut CountingReader<R>, count: u32) -> std::io::Result<Vec<Vec3>>
-where
-    R: Read,
-{
+fn read_vec3s(read: &mut CountingReader<impl Read>, count: u32) -> std::io::Result<Vec<Vec3>> {
     (0..count).map(|_| read.read_struct()).collect()
 }
 
-fn read_colors<R>(read: &mut CountingReader<R>, count: u32) -> std::io::Result<Vec<Color>>
-where
-    R: Read,
-{
+fn read_colors(read: &mut CountingReader<impl Read>, count: u32) -> std::io::Result<Vec<Color>> {
     (0..count).map(|_| read.read_struct()).collect()
 }
 
-fn read_lights<R>(read: &mut CountingReader<R>, count: u32) -> Result<Vec<MeshLight>>
-where
-    R: Read,
-{
+fn read_lights(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<MeshLight>> {
     let lights = (0..count)
         .map(|_| read.read_struct())
         .collect::<std::io::Result<Vec<LightC>>>()?;
@@ -256,17 +244,11 @@ fn assert_polygon(poly: PolygonC, offset: u32) -> Result<(u32, bool, bool, Polyg
     Ok((verts_in_poly, has_normals, has_uvs, polygon))
 }
 
-fn read_u32s<R>(read: &mut CountingReader<R>, count: u32) -> std::io::Result<Vec<u32>>
-where
-    R: Read,
-{
+fn read_u32s(read: &mut CountingReader<impl Read>, count: u32) -> std::io::Result<Vec<u32>> {
     (0..count).map(|_| read.read_u32()).collect()
 }
 
-fn read_uvs<R>(read: &mut CountingReader<R>, count: u32) -> std::io::Result<Vec<UvCoord>>
-where
-    R: Read,
-{
+fn read_uvs(read: &mut CountingReader<impl Read>, count: u32) -> std::io::Result<Vec<UvCoord>> {
     (0..count)
         .map(|_| {
             let u = read.read_f32()?;
@@ -276,10 +258,7 @@ where
         .collect()
 }
 
-fn read_polygons<R>(read: &mut CountingReader<R>, count: u32) -> Result<Vec<Polygon>>
-where
-    R: Read,
-{
+fn read_polygons(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<Polygon>> {
     (0..count)
         .map(|_| {
             let poly: PolygonC = read.read_struct()?;
@@ -302,10 +281,7 @@ where
         .collect()
 }
 
-pub fn read_mesh_data<R>(read: &mut CountingReader<R>, wrapped: WrappedMesh) -> Result<Mesh>
-where
-    R: Read,
-{
+pub fn read_mesh_data(read: &mut CountingReader<impl Read>, wrapped: WrappedMesh) -> Result<Mesh> {
     let mut mesh = wrapped.mesh;
     mesh.vertices = read_vec3s(read, wrapped.vertex_count)?;
     mesh.normals = read_vec3s(read, wrapped.normal_count)?;
@@ -315,10 +291,7 @@ where
     Ok(mesh)
 }
 
-pub fn write_mesh_info<W>(write: &mut W, mesh: &Mesh) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_mesh_info(write: &mut impl Write, mesh: &Mesh) -> Result<()> {
     write.write_struct(&MeshC {
         file_ptr: bool_c!(mesh.file_ptr),
         unk04: bool_c!(mesh.unk04),
@@ -347,30 +320,21 @@ where
     Ok(())
 }
 
-fn write_vec3s<W>(write: &mut W, vecs: &[Vec3]) -> Result<()>
-where
-    W: Write,
-{
+fn write_vec3s(write: &mut impl Write, vecs: &[Vec3]) -> Result<()> {
     for vec in vecs {
         write.write_struct(vec)?;
     }
     Ok(())
 }
 
-fn write_colors<W>(write: &mut W, colors: &[Color]) -> Result<()>
-where
-    W: Write,
-{
+fn write_colors(write: &mut impl Write, colors: &[Color]) -> Result<()> {
     for color in colors {
         write.write_struct(color)?;
     }
     Ok(())
 }
 
-fn write_lights<W>(write: &mut W, lights: &[MeshLight]) -> Result<()>
-where
-    W: Write,
-{
+fn write_lights(write: &mut impl Write, lights: &[MeshLight]) -> Result<()> {
     for light in lights {
         write.write_struct(&LightC {
             unk00: light.unk00,
@@ -400,20 +364,14 @@ where
     Ok(())
 }
 
-fn write_u32s<W>(write: &mut W, values: &[u32]) -> Result<()>
-where
-    W: Write,
-{
+fn write_u32s(write: &mut impl Write, values: &[u32]) -> Result<()> {
     for value in values {
         write.write_u32(*value)?;
     }
     Ok(())
 }
 
-fn write_uvs<W>(write: &mut W, uv_coords: &[UvCoord]) -> Result<()>
-where
-    W: Write,
-{
+fn write_uvs(write: &mut impl Write, uv_coords: &[UvCoord]) -> Result<()> {
     for uv in uv_coords {
         write.write_f32(uv.u)?;
         write.write_f32(1.0 - uv.v)?;
@@ -421,10 +379,7 @@ where
     Ok(())
 }
 
-fn write_polygons<W>(write: &mut W, polygons: &[Polygon]) -> Result<()>
-where
-    W: Write,
-{
+fn write_polygons(write: &mut impl Write, polygons: &[Polygon]) -> Result<()> {
     for polygon in polygons {
         let mut vertex_info = polygon.vertex_indices.len() as u32;
         if polygon.unk_bit {
@@ -458,10 +413,7 @@ where
     Ok(())
 }
 
-pub fn write_mesh_data<W>(write: &mut W, mesh: &Mesh) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_mesh_data(write: &mut impl Write, mesh: &Mesh) -> Result<()> {
     write_vec3s(write, &mesh.vertices)?;
     write_vec3s(write, &mesh.normals)?;
     write_vec3s(write, &mesh.morphs)?;
@@ -470,10 +422,11 @@ where
     Ok(())
 }
 
-pub fn read_mesh_infos_zero<R>(read: &mut CountingReader<R>, start: i32, end: i32) -> Result<()>
-where
-    R: Read,
-{
+pub fn read_mesh_infos_zero(
+    read: &mut CountingReader<impl Read>,
+    start: i32,
+    end: i32,
+) -> Result<()> {
     for index in start..end {
         let mesh: MeshC = read.read_struct()?;
         assert_that!("file_ptr", mesh.file_ptr == 0, read.prev + 0)?;
@@ -510,10 +463,7 @@ where
     Ok(())
 }
 
-pub fn write_mesh_infos_zero<W>(write: &mut W, start: i32, end: i32) -> Result<()>
-where
-    W: Write,
-{
+pub fn write_mesh_infos_zero(write: &mut impl Write, start: i32, end: i32) -> Result<()> {
     let mesh = MeshC {
         file_ptr: 0,
         unk04: 0,

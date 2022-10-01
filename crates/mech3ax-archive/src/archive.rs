@@ -20,13 +20,10 @@ struct EntryC {
 static_assert_size!(EntryC, 148);
 
 #[allow(clippy::type_complexity)]
-fn read_table<R>(
-    read: &mut CountingReader<R>,
+fn read_table(
+    read: &mut CountingReader<impl Read + Seek>,
     version: Version,
-) -> Result<(Vec<(String, u32, u32, Vec<u8>)>, u32)>
-where
-    R: Read + Seek,
-{
+) -> Result<(Vec<(String, u32, u32, Vec<u8>)>, u32)> {
     let (count, start, checksum) = match version {
         Version::One => {
             let pos = read.seek(SeekFrom::End(-8))?;

@@ -31,7 +31,7 @@ impl ScriptObject for CallObjectConnector {
     const INDEX: u8 = 19;
     const SIZE: u32 = CallObjectConnectorC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!(
             "call object connector size",
             size == Self::SIZE,
@@ -83,7 +83,7 @@ impl ScriptObject for CallObjectConnector {
         })
     }
 
-    fn write<W: Write>(&self, write: &mut W, anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
         let mut node = [0; 32];
         str_to_c_padded(&self.node, &mut node);
         let from_index = anim_def.node_to_index(&self.from_node)? as u16;

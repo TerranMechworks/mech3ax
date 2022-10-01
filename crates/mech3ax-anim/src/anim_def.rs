@@ -91,7 +91,7 @@ struct SeqDefInfoC {
 static_assert_size!(SeqDefInfoC, 64);
 const RESET_SEQUENCE: &[u8; 32] = b"RESET_SEQUENCE\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 
-pub fn read_anim_def_zero<R: Read>(read: &mut CountingReader<R>) -> Result<()> {
+pub fn read_anim_def_zero(read: &mut CountingReader<impl Read>) -> Result<()> {
     // the first entry is always zero
     let mut anim_def = [0; AnimDefC::SIZE as usize];
     read.read_exact(&mut anim_def)?;
@@ -111,8 +111,8 @@ pub fn read_anim_def_zero<R: Read>(read: &mut CountingReader<R>) -> Result<()> {
     Ok(())
 }
 
-fn read_reset_state<R: Read>(
-    read: &mut CountingReader<R>,
+fn read_reset_state(
+    read: &mut CountingReader<impl Read>,
     anim_def: &AnimDef,
     size: u32,
     pointer: u32,
@@ -163,7 +163,7 @@ fn read_reset_state<R: Read>(
     }
 }
 
-fn read_sequence_def<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef) -> Result<SeqDef> {
+fn read_sequence_def(read: &mut CountingReader<impl Read>, anim_def: &AnimDef) -> Result<SeqDef> {
     let seq_def: SeqDefInfoC = read.read_struct()?;
     let name = assert_utf8("anim def seq def name", read.prev + 0, || {
         str_from_c_padded(&seq_def.name)
@@ -199,8 +199,8 @@ fn read_sequence_def<R: Read>(read: &mut CountingReader<R>, anim_def: &AnimDef) 
     })
 }
 
-fn read_sequence_defs<R: Read>(
-    read: &mut CountingReader<R>,
+fn read_sequence_defs(
+    read: &mut CountingReader<impl Read>,
     anim_def: &AnimDef,
     count: u8,
 ) -> Result<Vec<SeqDef>> {
@@ -212,7 +212,7 @@ fn read_sequence_defs<R: Read>(
         .collect()
 }
 
-pub fn read_anim_def<R: Read>(read: &mut CountingReader<R>) -> Result<(AnimDef, AnimPtr)> {
+pub fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<(AnimDef, AnimPtr)> {
     let anim_def: AnimDefC = read.read_struct()?;
 
     // save this so we can output accurate offsets after doing further reads
@@ -599,7 +599,7 @@ pub fn read_anim_def<R: Read>(read: &mut CountingReader<R>) -> Result<(AnimDef, 
     Ok((result, anim_ptr))
 }
 
-pub fn write_anim_def_zero<W: Write>(write: &mut W) -> Result<()> {
+pub fn write_anim_def_zero(write: &mut impl Write) -> Result<()> {
     // the first entry is always zero
     let mut anim_def = [0; AnimDefC::SIZE as usize];
     // ...except for this one byte?
@@ -610,7 +610,7 @@ pub fn write_anim_def_zero<W: Write>(write: &mut W) -> Result<()> {
     Ok(())
 }
 
-fn write_reset_state<W: Write>(write: &mut W, anim_def: &AnimDef, size: u32) -> Result<()> {
+fn write_reset_state(write: &mut impl Write, anim_def: &AnimDef, size: u32) -> Result<()> {
     write.write_struct(&SeqDefInfoC {
         name: RESET_SEQUENCE.clone(),
         flags: 0,
@@ -629,7 +629,7 @@ fn write_reset_state<W: Write>(write: &mut W, anim_def: &AnimDef, size: u32) -> 
     Ok(())
 }
 
-fn write_sequence_defs<W: Write>(write: &mut W, anim_def: &AnimDef) -> Result<()> {
+fn write_sequence_defs(write: &mut impl Write, anim_def: &AnimDef) -> Result<()> {
     for seq_def in &anim_def.sequences {
         let mut name = [0; 32];
         str_to_c_padded(&seq_def.name, &mut name);
@@ -651,8 +651,8 @@ fn write_sequence_defs<W: Write>(write: &mut W, anim_def: &AnimDef) -> Result<()
     Ok(())
 }
 
-pub fn write_anim_def<W: Write>(
-    write: &mut W,
+pub fn write_anim_def(
+    write: &mut impl Write,
     anim_def: &AnimDef,
     anim_ptr: &AnimPtr,
 ) -> Result<()> {

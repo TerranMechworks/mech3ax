@@ -32,10 +32,7 @@ pub fn buf_writer<P: AsRef<Path>>(path: P) -> Result<BufWriter<File>> {
     ))
 }
 
-fn zip_read<R>(zip: &mut ZipArchive<R>, name: &str) -> Result<Vec<u8>>
-where
-    R: Read + Seek,
-{
+fn zip_read(zip: &mut ZipArchive<impl Read + Seek>, name: &str) -> Result<Vec<u8>> {
     let mut file = zip
         .by_name(name)
         .with_context(|| format!("Failed to find \"{}\" in Zip", name))?;

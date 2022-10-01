@@ -15,7 +15,7 @@ struct AnimationC {
 }
 static_assert_size!(AnimationC, 36);
 
-fn read_animation<R: Read>(read: &mut CountingReader<R>) -> Result<String> {
+fn read_animation(read: &mut CountingReader<impl Read>) -> Result<String> {
     let animation: AnimationC = read.read_struct()?;
     let name = assert_utf8("animation name", read.prev + 0, || {
         str_from_c_padded(&animation.name)
@@ -24,7 +24,7 @@ fn read_animation<R: Read>(read: &mut CountingReader<R>) -> Result<String> {
     Ok(name)
 }
 
-fn write_animation<W: Write>(write: &mut W, name: &str) -> Result<()> {
+fn write_animation(write: &mut impl Write, name: &str) -> Result<()> {
     let mut fill = [0; 32];
     str_to_c_padded(name, &mut fill);
     write.write_struct(&AnimationC {
@@ -38,13 +38,13 @@ impl ScriptObject for StopAnimation {
     const INDEX: u8 = 25;
     const SIZE: u32 = AnimationC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("stop animation size", size == Self::SIZE, read.offset)?;
         let name = read_animation(read)?;
         Ok(Self { name })
     }
 
-    fn write<W: Write>(&self, write: &mut W, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
         write_animation(write, &self.name)
     }
 }
@@ -53,13 +53,13 @@ impl ScriptObject for ResetAnimation {
     const INDEX: u8 = 26;
     const SIZE: u32 = AnimationC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("reset animation size", size == Self::SIZE, read.offset)?;
         let name = read_animation(read)?;
         Ok(Self { name })
     }
 
-    fn write<W: Write>(&self, write: &mut W, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
         write_animation(write, &self.name)
     }
 }
@@ -68,13 +68,13 @@ impl ScriptObject for InvalidateAnimation {
     const INDEX: u8 = 27;
     const SIZE: u32 = AnimationC::SIZE;
 
-    fn read<R: Read>(read: &mut CountingReader<R>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
+    fn read(read: &mut CountingReader<impl Read>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("invalidate animation size", size == Self::SIZE, read.offset)?;
         let name = read_animation(read)?;
         Ok(Self { name })
     }
 
-    fn write<W: Write>(&self, write: &mut W, _anim_def: &AnimDef) -> Result<()> {
+    fn write(&self, write: &mut impl Write, _anim_def: &AnimDef) -> Result<()> {
         write_animation(write, &self.name)
     }
 }

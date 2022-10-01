@@ -37,10 +37,12 @@ fn store_opts() -> FileOptions {
     FileOptions::default().compression_method(zip::CompressionMethod::Stored)
 }
 
-fn zip_write<W>(zip: &mut ZipWriter<W>, options: FileOptions, name: &str, data: &[u8]) -> Result<()>
-where
-    W: Write + Seek,
-{
+fn zip_write(
+    zip: &mut ZipWriter<impl Write + Seek>,
+    options: FileOptions,
+    name: &str,
+    data: &[u8],
+) -> Result<()> {
     zip.start_file(name, options)
         .with_context(|| format!("Failed to write \"{}\" to Zip", name))?;
     zip.write_all(data)

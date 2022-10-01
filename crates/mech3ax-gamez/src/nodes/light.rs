@@ -132,10 +132,7 @@ fn assert_light(light: &LightC, offset: u32) -> Result<()> {
     Ok(())
 }
 
-pub fn read<R>(read: &mut CountingReader<R>, data_ptr: u32) -> Result<Light>
-where
-    R: Read,
-{
+pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32) -> Result<Light> {
     let light: LightC = read.read_struct()?;
     assert_light(&light, read.prev)?;
 
@@ -175,10 +172,7 @@ pub fn make_variants(light: &Light) -> NodeVariants {
     }
 }
 
-pub fn write<W>(write: &mut W, light: &Light) -> Result<()>
-where
-    W: Write,
-{
+pub fn write(write: &mut impl Write, light: &Light) -> Result<()> {
     write.write_struct(&LightC {
         direction: light.direction,
         translation: Vec3::DEFAULT,
