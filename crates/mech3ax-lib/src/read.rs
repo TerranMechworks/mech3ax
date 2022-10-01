@@ -4,7 +4,7 @@ use crate::wave::WaveFile;
 use anyhow::{bail, Context, Result};
 use image::ImageOutputFormat;
 use mech3ax_archive::{Mode, Version};
-use mech3ax_common::CountingReader;
+use mech3ax_common::io_ext::CountingReader;
 use std::fs::File;
 use std::io::{BufReader, Cursor};
 use std::os::raw::c_char;

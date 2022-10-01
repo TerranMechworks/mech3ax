@@ -45,4 +45,3 @@ pub enum Error {
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
-pub type CountingReader<R> = io_ext::CountingReader<R>;

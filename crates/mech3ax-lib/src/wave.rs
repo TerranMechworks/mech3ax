@@ -1,5 +1,6 @@
 use anyhow::{bail, Result};
-use mech3ax_common::{assert_that, CountingReader};
+use mech3ax_common::assert_that;
+use mech3ax_common::io_ext::CountingReader;
 use std::io::{Read, Seek, SeekFrom};
 
 const RIFF_CHUNK_ID: &[u8; 4] = b"RIFF";

@@ -3,7 +3,7 @@ use anyhow::{bail, Context, Result};
 use image::ImageOutputFormat;
 use mech3ax_anim::read_anim;
 use mech3ax_archive::{read_archive, Mode, Version};
-use mech3ax_common::CountingReader;
+use mech3ax_common::io_ext::CountingReader;
 use mech3ax_gamez::gamez::read_gamez;
 use mech3ax_gamez::mechlib::{read_format, read_materials, read_model, read_version};
 use mech3ax_image::read_textures;

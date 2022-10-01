@@ -1,7 +1,7 @@
 use crate::panic;
 use anyhow::Result;
 use mech3ax_anim::read_anim;
-use mech3ax_common::CountingReader;
+use mech3ax_common::io_ext::CountingReader;
 use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::io::BufReader;
