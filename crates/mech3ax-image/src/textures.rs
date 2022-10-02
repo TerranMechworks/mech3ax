@@ -1,5 +1,5 @@
 use image::{DynamicImage, RgbImage, RgbaImage};
-use log::{log_enabled, trace, Level};
+use log::trace;
 use mech3ax_api_types::{
     static_assert_size, GlobalPalette, PaletteData, ReprSize as _, TextureAlpha, TextureInfo,
     TextureManifest, TexturePalette,
@@ -14,7 +14,7 @@ use mech3ax_pixel_ops::{
 };
 use num_traits::FromPrimitive;
 use std::collections::HashSet;
-use std::io::{Read, Seek, Write};
+use std::io::{Read, Write};
 
 #[repr(C)]
 struct Header {
@@ -412,16 +412,13 @@ fn invalid_alpha(name: &str, expected: &str, actual: &TextureAlpha) -> Error {
 }
 
 fn write_texture(
-    write: &mut CountingWriter<impl Write + Seek>,
+    write: &mut CountingWriter<impl Write>,
     info: &TextureInfo,
     image: DynamicImage,
     global_palettes: &[PaletteData],
 ) -> Result<()> {
     let tex_info = convert_info_to_c(info);
-    if log_enabled!(Level::Trace) {
-        let offset = write.stream_position().unwrap_or_default();
-        trace!("Writing texture info `{}` at {}", info.name, offset);
-    }
+    trace!("Writing texture info `{}` at {}", info.name, write.offset);
     write.write_struct(&tex_info)?;
 
     match &info.palette {
@@ -433,16 +430,10 @@ fn write_texture(
                         return Err(invalid_alpha(&info.name, "no or simple", &info.alpha));
                     }
                     let image_data = rgb888topal8(&img.into_raw(), &local.data);
-                    if log_enabled!(Level::Trace) {
-                        let offset = write.stream_position().unwrap_or_default();
-                        trace!("Writing palette indices at {}", offset);
-                    }
+                    trace!("Writing palette indices at {}", write.offset);
                     write.write_all(&image_data)?;
                     let palette_data = rgb888to565(&local.data);
-                    if log_enabled!(Level::Trace) {
-                        let offset = write.stream_position().unwrap_or_default();
-                        trace!("Writing palette data at {}", offset);
-                    }
+                    trace!("Writing palette data at {}", write.offset);
                     write.write_all(&palette_data)?;
                 }
                 DynamicImage::ImageRgba8(img) => {
@@ -450,24 +441,15 @@ fn write_texture(
                         return Err(invalid_alpha(&info.name, "full", &info.alpha));
                     }
                     let (image_data, alpha_data) = rgb888atopal8(&img.into_raw(), &local.data);
-                    if log_enabled!(Level::Trace) {
-                        let offset = write.stream_position().unwrap_or_default();
-                        trace!("Writing palette indices at {}", offset);
-                    }
+                    trace!("Writing palette indices at {}", write.offset);
                     write.write_all(&image_data)?;
                     // throw away the simple alpha
                     if info.alpha == TextureAlpha::Full {
-                        if log_enabled!(Level::Trace) {
-                            let offset = write.stream_position().unwrap_or_default();
-                            trace!("Writing alpha data at {}", offset);
-                        }
+                        trace!("Writing alpha data at {}", write.offset);
                         write.write_all(&alpha_data)?;
                     }
                     let palette_data = rgb888to565(&local.data);
-                    if log_enabled!(Level::Trace) {
-                        let offset = write.stream_position().unwrap_or_default();
-                        trace!("Writing palette data at {}", offset);
-                    }
+                    trace!("Writing palette data at {}", write.offset);
                     write.write_all(&palette_data)?;
                 }
                 _ => {
@@ -489,10 +471,7 @@ fn write_texture(
                         return Err(invalid_alpha(&info.name, "no or simple", &info.alpha));
                     }
                     let image_data = rgb888topal8(&img.into_raw(), palette);
-                    if log_enabled!(Level::Trace) {
-                        let offset = write.stream_position().unwrap_or_default();
-                        trace!("Writing palette indices at {}", offset);
-                    }
+                    trace!("Writing palette indices at {}", write.offset);
                     write.write_all(&image_data)?;
                 }
                 DynamicImage::ImageRgba8(img) => {
@@ -500,15 +479,9 @@ fn write_texture(
                         return Err(invalid_alpha(&info.name, "full", &info.alpha));
                     }
                     let (image_data, alpha_data) = rgb888atopal8(&img.into_raw(), palette);
-                    if log_enabled!(Level::Trace) {
-                        let offset = write.stream_position().unwrap_or_default();
-                        trace!("Writing palette indices at {}", offset);
-                    }
+                    trace!("Writing palette indices at {}", write.offset);
                     write.write_all(&image_data)?;
-                    if log_enabled!(Level::Trace) {
-                        let offset = write.stream_position().unwrap_or_default();
-                        trace!("Writing alpha data at {}", offset);
-                    }
+                    trace!("Writing alpha data at {}", write.offset);
                     write.write_all(&alpha_data)?;
                 }
                 _ => {
@@ -526,10 +499,7 @@ fn write_texture(
                         return Err(invalid_alpha(&info.name, "no", &info.alpha));
                     }
                     let image_data = rgb888to565(&img.into_raw());
-                    if log_enabled!(Level::Trace) {
-                        let offset = write.stream_position().unwrap_or_default();
-                        trace!("Writing full color data at {}", offset);
-                    }
+                    trace!("Writing full color data at {}", write.offset);
                     write.write_all(&image_data)?;
                 }
                 DynamicImage::ImageRgba8(img) => {
@@ -537,17 +507,11 @@ fn write_texture(
                         return Err(invalid_alpha(&info.name, "simple or full", &info.alpha));
                     }
                     let (image_data, alpha_data) = rgb888ato565(&img.into_raw());
-                    if log_enabled!(Level::Trace) {
-                        let offset = write.stream_position().unwrap_or_default();
-                        trace!("Writing full color data at {}", offset);
-                    }
+                    trace!("Writing full color data at {}", write.offset);
                     write.write_all(&image_data)?;
                     // throw away the simple alpha
                     if info.alpha == TextureAlpha::Full {
-                        if log_enabled!(Level::Trace) {
-                            let offset = write.stream_position().unwrap_or_default();
-                            trace!("Writing alpha data at {}", offset);
-                        }
+                        trace!("Writing alpha data at {}", write.offset);
                         write.write_all(&alpha_data)?;
                     }
                 }
@@ -570,7 +534,7 @@ pub fn write_textures<W, F, E>(
     mut load_texture: F,
 ) -> std::result::Result<(), E>
 where
-    W: Write + Seek,
+    W: Write,
     F: FnMut(&str) -> std::result::Result<DynamicImage, E>,
     E: From<std::io::Error> + From<Error>,
 {
@@ -584,12 +548,9 @@ where
         zero16: 0,
         zero20: 0,
     };
-    if log_enabled!(Level::Trace) {
-        trace!("Global palette count: {}", global_palette_count);
-        trace!("Texture count: {}", texture_count);
-        let offset = write.stream_position().unwrap_or_default();
-        trace!("Writing header at {}", offset);
-    }
+    trace!("Global palette count: {}", global_palette_count);
+    trace!("Texture count: {}", texture_count);
+    trace!("Writing header at {}", write.offset);
     write.write_struct(&header)?;
 
     let mut offset = Header::SIZE + texture_count * Entry::SIZE + global_palette_count as u32 * 512;
@@ -606,26 +567,20 @@ where
             start_offset: offset,
             palette_index,
         };
-        if log_enabled!(Level::Trace) {
-            trace!(
-                "Texture `{}` data at {}, global palette index {}",
-                info.name,
-                offset,
-                palette_index
-            );
-            let offset = write.stream_position().unwrap_or_default();
-            trace!("Writing texture entry {} at {}", index, offset);
-        }
+        trace!(
+            "Texture `{}` data at {}, global palette index {}",
+            info.name,
+            offset,
+            palette_index
+        );
+        trace!("Writing texture entry {} at {}", index, write.offset);
         write.write_struct(&entry)?;
         offset += calc_length(info);
     }
 
     for (index, palette) in manifest.global_palettes.iter().enumerate() {
         let palette_data = rgb888to565(&palette.data);
-        if log_enabled!(Level::Trace) {
-            let offset = write.stream_position().unwrap_or_default();
-            trace!("Writing global palette {} at {}", index, offset);
-        }
+        trace!("Writing global palette {} at {}", index, write.offset);
         write.write_all(&palette_data)?;
     }
 
@@ -637,10 +592,7 @@ where
             }
             None => load_texture(&info.name)?,
         };
-        if log_enabled!(Level::Trace) {
-            let offset = write.stream_position().unwrap_or_default();
-            trace!("Writing texture `{}` at {}", info.name, offset);
-        }
+        trace!("Writing texture `{}` at {}", info.name, write.offset);
         write_texture(write, info, image, &manifest.global_palettes)?;
     }
 
