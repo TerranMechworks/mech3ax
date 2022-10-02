@@ -1,5 +1,5 @@
 use image::{DynamicImage, RgbImage, RgbaImage};
-use log::trace;
+use log::{debug, trace};
 use mech3ax_api_types::{
     static_assert_size, GlobalPalette, PaletteData, ReprSize as _, TextureAlpha, TextureInfo,
     TextureManifest, TexturePalette,
@@ -35,6 +35,7 @@ struct Entry {
 }
 static_assert_size!(Entry, 40);
 
+#[derive(Debug)]
 #[repr(C)]
 struct Info {
     flags: u32,         // 00
@@ -136,8 +137,14 @@ fn read_texture(
     name: String,
     global_palette: Option<(i32, &PaletteData)>,
 ) -> Result<(TextureInfo, DynamicImage)> {
-    trace!("Reading texture info `{}` at {}", name, read.offset);
+    debug!(
+        "Reading texture info `{}` ({}) at {}",
+        name,
+        Info::SIZE,
+        read.offset
+    );
     let tex_info: Info = read.read_struct()?;
+    trace!("Texture info: {:#?}", tex_info);
     assert_that!("field 08", tex_info.zero08 == 0, read.prev + 8)?;
     let palette_count = tex_info.palette_count;
     let mut info = convert_info_from_c(name, tex_info, global_palette, read.prev + 0)?;
@@ -148,14 +155,14 @@ fn read_texture(
     let size = size32 as usize;
 
     let image = if palette_count == 0 {
-        trace!("Reading full color data at {}", read.offset);
+        debug!("Reading full color data ({}) at {}", size * 2, read.offset);
         let mut image_data = vec![0u8; size * 2];
         read.read_exact(&mut image_data)?;
 
         let alpha_data = match info.alpha {
             TextureAlpha::Simple => Some(simple_alpha(&image_data)),
             TextureAlpha::Full => {
-                trace!("Reading alpha data at {}", read.offset);
+                debug!("Reading alpha data ({}) at {}", size, read.offset);
                 let mut buf = vec![0; size];
                 read.read_exact(&mut buf)?;
                 Some(buf)
@@ -171,13 +178,13 @@ fn read_texture(
             DynamicImage::ImageRgb8(RgbImage::from_raw(width, height, image_data).unwrap())
         }
     } else {
-        trace!("Reading palette indices at {}", read.offset);
+        debug!("Reading palette indices ({}) at {}", size, read.offset);
         let mut index_data = vec![0u8; size];
         read.read_exact(&mut index_data)?;
 
         let alpha_data = match &info.alpha {
             TextureAlpha::Full => {
-                trace!("Reading alpha data at {}", read.offset);
+                debug!("Reading alpha data ({}) at {}", size, read.offset);
                 let mut buf = vec![0; size];
                 read.read_exact(&mut buf)?;
                 Some(buf)
@@ -206,8 +213,9 @@ fn read_texture(
             info.palette = TexturePalette::Global(global);
             convert_image(&palette.data[0..(palette_count as usize) * 3])
         } else {
-            trace!("Reading palette data at {}", read.offset);
-            let mut palette_data = vec![0u8; palette_count as usize * 2];
+            let palette_len = palette_count as usize * 2;
+            debug!("Reading palette data ({}) at {}", palette_len, read.offset);
+            let mut palette_data = vec![0u8; palette_len];
             read.read_exact(&mut palette_data)?;
             let palette_data = rgb565to888(&palette_data);
             let image = convert_image(&palette_data);
@@ -233,7 +241,7 @@ where
     F: FnMut(&str, DynamicImage) -> std::result::Result<(), E>,
     E: From<Error>,
 {
-    trace!("Reading header at {}", read.offset);
+    debug!("Reading header ({}) at {}", Header::SIZE, read.offset);
     let header: Header = read.read_struct().map_err(Error::IO)?;
     assert_upcast(assert_that!("field 00", header.zero00 == 0, read.prev + 0))?;
     assert_upcast(assert_that!(
@@ -254,13 +262,18 @@ where
     assert_upcast(assert_that!("field 16", header.zero16 == 0, read.prev + 16))?;
     assert_upcast(assert_that!("field 20", header.zero20 == 0, read.prev + 20))?;
 
-    trace!("Global palette count: {}", header.global_palette_count);
-    trace!("Texture count: {}", header.texture_count);
+    debug!("Global palette count: {}", header.global_palette_count);
+    debug!("Texture count: {}", header.texture_count);
 
     let palette_index_max = header.global_palette_count - 1;
     let tex_table = (0..header.texture_count)
         .map(|index| {
-            trace!("Reading texture entry {} at {}", index, read.offset);
+            debug!(
+                "Reading texture entry {} ({}) at {}",
+                index,
+                Entry::SIZE,
+                read.offset
+            );
             let entry: Entry = read.read_struct()?;
             assert_that!(
                 "global palette index",
@@ -268,11 +281,9 @@ where
                 read.prev + 36
             )?;
             let name = assert_utf8("name", read.prev + 0, || str_from_c_padded(&entry.name))?;
-            trace!(
+            debug!(
                 "Texture `{}` data at {}, global palette index {}",
-                name,
-                entry.start_offset,
-                entry.palette_index
+                name, entry.start_offset, entry.palette_index
             );
             Ok((name, entry.start_offset, entry.palette_index))
         })
@@ -280,7 +291,7 @@ where
 
     let global_palettes = (0..header.global_palette_count)
         .map(|index| {
-            trace!("Reading global palette {} at {}", index, read.offset);
+            debug!("Reading global palette {} (512) at {}", index, read.offset);
             let mut palette_data = vec![0u8; 512];
             read.read_exact(&mut palette_data).map_err(Error::IO)?;
             Ok(PaletteData {
@@ -298,7 +309,7 @@ where
                 read.offset == start_offset,
                 read.offset
             ))?;
-            trace!("Reading texture `{}` at {}", name, read.offset);
+            debug!("Reading texture `{}` at {}", name, read.offset);
             let global_palette = if palette_index > -1 {
                 Some((palette_index, &global_palettes[palette_index as usize]))
             } else {
@@ -309,7 +320,7 @@ where
                 save_texture(&info.name, image)?;
             } else {
                 let renamed = rename(&seen, &info.name);
-                trace!("Renaming texture from `{}` to `{}`", info.name, renamed);
+                debug!("Renaming texture from `{}` to `{}`", info.name, renamed);
                 save_texture(&renamed, image)?;
                 info.rename = Some(renamed);
             }
@@ -318,7 +329,7 @@ where
         .collect::<std::result::Result<Vec<_>, E>>()?;
 
     read.assert_end()?;
-    trace!("Textures read");
+    debug!("Textures read");
     Ok(TextureManifest {
         texture_infos,
         global_palettes,
@@ -418,7 +429,13 @@ fn write_texture(
     global_palettes: &[PaletteData],
 ) -> Result<()> {
     let tex_info = convert_info_to_c(info);
-    trace!("Writing texture info `{}` at {}", info.name, write.offset);
+    debug!(
+        "Writing texture info `{}` ({}) at {}",
+        info.name,
+        Info::SIZE,
+        write.offset
+    );
+    trace!("Texture info: {:#?}", tex_info);
     write.write_struct(&tex_info)?;
 
     match &info.palette {
@@ -430,10 +447,18 @@ fn write_texture(
                         return Err(invalid_alpha(&info.name, "no or simple", &info.alpha));
                     }
                     let image_data = rgb888topal8(&img.into_raw(), &local.data);
-                    trace!("Writing palette indices at {}", write.offset);
+                    debug!(
+                        "Writing palette indices ({}) at {}",
+                        image_data.len(),
+                        write.offset
+                    );
                     write.write_all(&image_data)?;
                     let palette_data = rgb888to565(&local.data);
-                    trace!("Writing palette data at {}", write.offset);
+                    debug!(
+                        "Writing palette data ({}) at {}",
+                        palette_data.len(),
+                        write.offset
+                    );
                     write.write_all(&palette_data)?;
                 }
                 DynamicImage::ImageRgba8(img) => {
@@ -441,15 +466,27 @@ fn write_texture(
                         return Err(invalid_alpha(&info.name, "full", &info.alpha));
                     }
                     let (image_data, alpha_data) = rgb888atopal8(&img.into_raw(), &local.data);
-                    trace!("Writing palette indices at {}", write.offset);
+                    debug!(
+                        "Writing palette indices ({}) at {}",
+                        image_data.len(),
+                        write.offset
+                    );
                     write.write_all(&image_data)?;
                     // throw away the simple alpha
                     if info.alpha == TextureAlpha::Full {
-                        trace!("Writing alpha data at {}", write.offset);
+                        debug!(
+                            "Writing alpha data ({}) at {}",
+                            alpha_data.len(),
+                            write.offset
+                        );
                         write.write_all(&alpha_data)?;
                     }
                     let palette_data = rgb888to565(&local.data);
-                    trace!("Writing palette data at {}", write.offset);
+                    debug!(
+                        "Writing palette data ({}) at {}",
+                        palette_data.len(),
+                        write.offset
+                    );
                     write.write_all(&palette_data)?;
                 }
                 _ => {
@@ -471,7 +508,11 @@ fn write_texture(
                         return Err(invalid_alpha(&info.name, "no or simple", &info.alpha));
                     }
                     let image_data = rgb888topal8(&img.into_raw(), palette);
-                    trace!("Writing palette indices at {}", write.offset);
+                    debug!(
+                        "Writing palette indices ({}) at {}",
+                        image_data.len(),
+                        write.offset
+                    );
                     write.write_all(&image_data)?;
                 }
                 DynamicImage::ImageRgba8(img) => {
@@ -479,9 +520,17 @@ fn write_texture(
                         return Err(invalid_alpha(&info.name, "full", &info.alpha));
                     }
                     let (image_data, alpha_data) = rgb888atopal8(&img.into_raw(), palette);
-                    trace!("Writing palette indices at {}", write.offset);
+                    debug!(
+                        "Writing palette indices ({}) at {}",
+                        image_data.len(),
+                        write.offset
+                    );
                     write.write_all(&image_data)?;
-                    trace!("Writing alpha data at {}", write.offset);
+                    debug!(
+                        "Writing alpha data ({}) at {}",
+                        alpha_data.len(),
+                        write.offset
+                    );
                     write.write_all(&alpha_data)?;
                 }
                 _ => {
@@ -499,7 +548,11 @@ fn write_texture(
                         return Err(invalid_alpha(&info.name, "no", &info.alpha));
                     }
                     let image_data = rgb888to565(&img.into_raw());
-                    trace!("Writing full color data at {}", write.offset);
+                    debug!(
+                        "Writing full color data ({}) at {}",
+                        image_data.len(),
+                        write.offset
+                    );
                     write.write_all(&image_data)?;
                 }
                 DynamicImage::ImageRgba8(img) => {
@@ -507,11 +560,19 @@ fn write_texture(
                         return Err(invalid_alpha(&info.name, "simple or full", &info.alpha));
                     }
                     let (image_data, alpha_data) = rgb888ato565(&img.into_raw());
-                    trace!("Writing full color data at {}", write.offset);
+                    debug!(
+                        "Writing full color data ({}) at {}",
+                        image_data.len(),
+                        write.offset
+                    );
                     write.write_all(&image_data)?;
                     // throw away the simple alpha
                     if info.alpha == TextureAlpha::Full {
-                        trace!("Writing alpha data at {}", write.offset);
+                        debug!(
+                            "Writing alpha data ({}) at {}",
+                            alpha_data.len(),
+                            write.offset
+                        );
                         write.write_all(&alpha_data)?;
                     }
                 }
@@ -548,9 +609,9 @@ where
         zero16: 0,
         zero20: 0,
     };
-    trace!("Global palette count: {}", global_palette_count);
-    trace!("Texture count: {}", texture_count);
-    trace!("Writing header at {}", write.offset);
+    debug!("Global palette count: {}", global_palette_count);
+    debug!("Texture count: {}", texture_count);
+    debug!("Writing header ({}) at {}", Header::SIZE, write.offset);
     write.write_struct(&header)?;
 
     let mut offset = Header::SIZE + texture_count * Entry::SIZE + global_palette_count as u32 * 512;
@@ -567,35 +628,43 @@ where
             start_offset: offset,
             palette_index,
         };
-        trace!(
+        debug!(
             "Texture `{}` data at {}, global palette index {}",
-            info.name,
-            offset,
-            palette_index
+            info.name, offset, palette_index
         );
-        trace!("Writing texture entry {} at {}", index, write.offset);
+        debug!(
+            "Writing texture entry {} ({}) at {}",
+            index,
+            Entry::SIZE,
+            write.offset
+        );
         write.write_struct(&entry)?;
         offset += calc_length(info);
     }
 
     for (index, palette) in manifest.global_palettes.iter().enumerate() {
         let palette_data = rgb888to565(&palette.data);
-        trace!("Writing global palette {} at {}", index, write.offset);
+        debug!(
+            "Writing global palette {} ({}) at {}",
+            index,
+            palette_data.len(),
+            write.offset
+        );
         write.write_all(&palette_data)?;
     }
 
     for info in &manifest.texture_infos {
         let image = match &info.rename {
             Some(renamed) => {
-                trace!("Renaming texture from `{}` to `{}`", info.name, renamed);
+                debug!("Renaming texture from `{}` to `{}`", info.name, renamed);
                 load_texture(renamed)?
             }
             None => load_texture(&info.name)?,
         };
-        trace!("Writing texture `{}` at {}", info.name, write.offset);
+        debug!("Writing texture `{}` at {}", info.name, write.offset);
         write_texture(write, info, image, &manifest.global_palettes)?;
     }
 
-    trace!("Textures written");
+    debug!("Textures written");
     Ok(())
 }
