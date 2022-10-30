@@ -36,10 +36,10 @@ pub fn buf_writer<P: AsRef<Path>>(path: P) -> Result<CountingWriter<BufWriter<Fi
 fn zip_read(zip: &mut ZipArchive<impl Read + Seek>, name: &str) -> Result<Vec<u8>> {
     let mut file = zip
         .by_name(name)
-        .with_context(|| format!("Failed to find \"{}\" in Zip", name))?;
+        .with_context(|| format!("Failed to find `{}` in Zip", name))?;
     let mut buf = CountingWriter::new(Vec::new());
     file.read_to_end(buf.get_mut())
-        .with_context(|| format!("Failed to read \"{}\" from Zip", name))?;
+        .with_context(|| format!("Failed to read `{}` from Zip", name))?;
     Ok(buf.into_inner())
 }
 
@@ -49,7 +49,7 @@ where
     T: serde::de::DeserializeOwned,
 {
     let buf = zip_read(zip, name)?;
-    serde_json::from_slice(&buf).with_context(|| format!("Failed to parse \"{}\" from Zip", name))
+    serde_json::from_slice(&buf).with_context(|| format!("Failed to parse `{}` from Zip", name))
 }
 
 pub(crate) fn interp(opts: InterpOpts) -> Result<()> {
@@ -110,7 +110,7 @@ pub(crate) fn reader(opts: ZipOpts) -> Result<()> {
 
             let mut buf = CountingWriter::new(Vec::new());
             write_reader(&mut buf, &value)
-                .with_context(|| format!("Failed to write reader data for \"{}\"", original))?;
+                .with_context(|| format!("Failed to write reader data for `{}`", original))?;
             Ok(buf.into_inner())
         },
     )
@@ -196,7 +196,7 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
         reader.set_format(image::ImageFormat::Png);
         let image = reader
             .decode()
-            .with_context(|| format!("Failed to load image data for \"{}\"", original))?;
+            .with_context(|| format!("Failed to load image data for `{}`", original))?;
         Ok(image)
     })
     .context("Failed to write texture data")
@@ -270,7 +270,7 @@ pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
 
                 let mut buf = CountingWriter::new(Vec::new());
                 write_activation(&mut buf, &activation)
-                    .with_context(|| format!("Failed to write anim activation \"{}\"", original))?;
+                    .with_context(|| format!("Failed to write anim activation `{}`", original))?;
                 Ok(buf.into_inner())
             }
         },

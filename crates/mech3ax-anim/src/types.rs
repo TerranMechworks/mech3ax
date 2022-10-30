@@ -34,11 +34,11 @@ impl AnimDefLookup for AnimDef {
                 .position(|node| node.name == name)
                 .map(|pos| pos + 1)
                 .ok_or_else(|| {
-                    AssertionError(format!("Expected to find node '{}', but didn't", name)).into()
+                    AssertionError(format!("Expected to find node `{}`, but didn't", name)).into()
                 })
         } else {
             let msg = format!(
-                "Expected to find node '{}', but anim def has no nodes",
+                "Expected to find node `{}`, but anim def has no nodes",
                 name
             );
             Err(AssertionError(msg).into())
@@ -65,11 +65,11 @@ impl AnimDefLookup for AnimDef {
                 .position(|sound| sound.name == name)
                 .map(|pos| pos + 1)
                 .ok_or_else(|| {
-                    AssertionError(format!("Expected to find sound '{}', but didn't", name)).into()
+                    AssertionError(format!("Expected to find sound `{}`, but didn't", name)).into()
                 })
         } else {
             let msg = format!(
-                "Expected to find sound '{}', but anim def has no sounds",
+                "Expected to find sound `{}`, but anim def has no sounds",
                 name
             );
             Err(AssertionError(msg).into())
@@ -96,11 +96,11 @@ impl AnimDefLookup for AnimDef {
                 .position(|light| light.name == name)
                 .map(|pos| pos + 1)
                 .ok_or_else(|| {
-                    AssertionError(format!("Expected to find light '{}', but didn't", name)).into()
+                    AssertionError(format!("Expected to find light `{}`, but didn't", name)).into()
                 })
         } else {
             let msg = format!(
-                "Expected to find light '{}', but anim def has no lights",
+                "Expected to find light `{}`, but anim def has no lights",
                 name
             );
             Err(AssertionError(msg).into())
@@ -127,11 +127,11 @@ impl AnimDefLookup for AnimDef {
                 .position(|puffer| puffer.name == name)
                 .map(|pos| pos + 1)
                 .ok_or_else(|| {
-                    AssertionError(format!("Expected to find puffer '{}', but didn't", name)).into()
+                    AssertionError(format!("Expected to find puffer `{}`, but didn't", name)).into()
                 })
         } else {
             let msg = format!(
-                "Expected to find puffer '{}', but anim def has no puffers",
+                "Expected to find puffer `{}`, but anim def has no puffers",
                 name
             );
             Err(AssertionError(msg).into())

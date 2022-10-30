@@ -44,9 +44,9 @@ fn zip_write(
     data: &[u8],
 ) -> Result<()> {
     zip.start_file(name, options)
-        .with_context(|| format!("Failed to write \"{}\" to Zip", name))?;
+        .with_context(|| format!("Failed to write `{}` to Zip", name))?;
     zip.write_all(data)
-        .with_context(|| format!("Failed to write \"{}\" to Zip", name))
+        .with_context(|| format!("Failed to write `{}` to Zip", name))
 }
 
 fn zip_json<W, T>(zip: &mut ZipWriter<W>, options: FileOptions, name: &str, value: &T) -> Result<()>
@@ -92,7 +92,10 @@ where
 
     let manifest = read_archive(
         &mut input,
-        |name, data, offset| save_file(&mut zip, name, data, offset),
+        |name, data, offset| {
+            debug!("Reading `{}` at {}", name, offset);
+            save_file(&mut zip, name, data, offset)
+        },
         version,
     )
     .context(context)?;
@@ -130,7 +133,7 @@ pub(crate) fn reader(opts: ReaderOpts) -> Result<()> {
             // translate to absolute offset
             read.offset = offset;
             let root = read_reader(&mut read)
-                .with_context(|| format!("Failed to read reader data for \"{}\"", name))?;
+                .with_context(|| format!("Failed to read reader data for `{}`", name))?;
 
             zip_json(zip, options, &name, &root)
         },
@@ -156,7 +159,7 @@ pub(crate) fn motion(opts: ZipOpts) -> Result<()> {
             // translate to absolute offset
             read.offset = offset;
             let root = read_motion(&mut read)
-                .with_context(|| format!("Failed to read motion data for \"{}\"", original))?;
+                .with_context(|| format!("Failed to read motion data for `{}`", original))?;
 
             zip_json(zip, options, &name, &root)
         },
@@ -215,7 +218,7 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
         let mut data = Vec::new();
         image
             .write_to(&mut data, ImageOutputFormat::Png)
-            .with_context(|| format!("Failed to write image data for \"{}\"", original))?;
+            .with_context(|| format!("Failed to write image data for `{}`", original))?;
 
         zip_write(&mut zip, options, &name, &data)
     })
@@ -299,7 +302,7 @@ pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
                 original => {
                     let name = format!("{}.json", original);
                     let value = read_activation(&mut read).with_context(|| {
-                        format!("Failed to read anim activation \"{}\"", original)
+                        format!("Failed to read anim activation `{}`", original)
                     })?;
                     zip_json(zip, options, &name, &value)
                 }

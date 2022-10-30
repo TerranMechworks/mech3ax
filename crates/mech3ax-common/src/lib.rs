@@ -34,13 +34,13 @@ pub enum Error {
     Assert(#[from] assert::AssertionError),
     #[error(transparent)]
     PeError(#[from] PeError),
-    #[error("Unexpected alpha channel for \"{name}\" (expected {expected} alpha, found {actual})")]
+    #[error("Unexpected alpha channel for `{name}` (expected {expected} alpha, found {actual})")]
     InvalidAlphaChannel {
         name: String,
         expected: String,
         actual: String,
     },
-    #[error("Unexpected image format for \"{name}\" ({color} is not supported)")]
+    #[error("Unexpected image format for `{name}` ({color} is not supported)")]
     InvalidImageFormat { name: String, color: String },
 }
 

@@ -40,13 +40,13 @@ pub fn read_motion(read: &mut CountingReader<impl Read>) -> Result<Motion> {
             // the first and last frames always match
             let first = translations.first().ok_or_else(|| {
                 AssertionError(format!(
-                    "part '{}' didn't contain a single frame",
+                    "part `{}` didn't contain a single frame",
                     part_name
                 ))
             })?;
             let last = translations.last().ok_or_else(|| {
                 AssertionError(format!(
-                    "part '{}' didn't contain a single frame",
+                    "part `{}` didn't contain a single frame",
                     part_name
                 ))
             })?;
@@ -60,13 +60,13 @@ pub fn read_motion(read: &mut CountingReader<impl Read>) -> Result<Motion> {
             // the first and last frames always match
             let first = rotations.first().ok_or_else(|| {
                 AssertionError(format!(
-                    "part '{}' didn't contain a single frame",
+                    "part `{}` didn't contain a single frame",
                     part_name
                 ))
             })?;
             let last = rotations.last().ok_or_else(|| {
                 AssertionError(format!(
-                    "part '{}' didn't contain a single frame",
+                    "part `{}` didn't contain a single frame",
                     part_name
                 ))
             })?;

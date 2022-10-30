@@ -116,7 +116,7 @@ fn combine(
         .into_iter()
         .map(|(entry_id, key)| {
             let value = messages.remove(&entry_id).ok_or_else(|| {
-                AssertionError(format!("Message \"{}\" ({}) not found", &key, entry_id))
+                AssertionError(format!("Message `{}` ({}) not found", &key, entry_id))
             })?;
             Ok(MessageEntry {
                 key,

@@ -38,7 +38,7 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
             info.width = width as u16;
             info.height = height as u16;
             if info.alpha == TextureAlpha::None && image.color() == ColorType::Rgba8 {
-                println!("WARNING: removing alpha from '{}'", info.name);
+                println!("WARNING: removing alpha from `{}`", info.name);
                 image = DynamicImage::ImageRgb8(image.to_rgb8());
             }
             Ok((info.name.clone(), image))

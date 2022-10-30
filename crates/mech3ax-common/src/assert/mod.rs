@@ -32,7 +32,7 @@ where
         Ok(())
     } else {
         let msg = format!(
-            "Expected '{}' == {:#?}, but was {:#?} (at {})",
+            "Expected `{}` == {:#?}, but was {:#?} (at {})",
             name, expected, actual, pos
         );
         Err(AssertionError(msg))
@@ -49,7 +49,7 @@ where
     if actual != expected {
         Ok(())
     } else {
-        let msg = format!("Expected '{}' != {:#?}, but was (at {})", name, actual, pos);
+        let msg = format!("Expected `{}` != {:#?}, but was (at {})", name, actual, pos);
         Err(AssertionError(msg))
     }
 }
@@ -65,7 +65,7 @@ where
         Ok(())
     } else {
         let msg = format!(
-            "Expected '{}' < {:#?}, but was {:#?} (at {})",
+            "Expected `{}` < {:#?}, but was {:#?} (at {})",
             name, expected, actual, pos
         );
         Err(AssertionError(msg))
@@ -83,7 +83,7 @@ where
         Ok(())
     } else {
         let msg = format!(
-            "Expected '{}' <= {:#?}, but was {:#?} (at {})",
+            "Expected `{}` <= {:#?}, but was {:#?} (at {})",
             name, expected, actual, pos
         );
         Err(AssertionError(msg))
@@ -101,7 +101,7 @@ where
         Ok(())
     } else {
         let msg = format!(
-            "Expected '{}' > {:#?}, but was {:#?} (at {})",
+            "Expected `{}` > {:#?}, but was {:#?} (at {})",
             name, expected, actual, pos
         );
         Err(AssertionError(msg))
@@ -120,7 +120,7 @@ where
         Ok(())
     } else {
         let msg = format!(
-            "Expected '{}' >= {:#?}, but was {:#?} (at {})",
+            "Expected `{}` >= {:#?}, but was {:#?} (at {})",
             name, expected, actual, pos
         );
         Err(AssertionError(msg))
@@ -144,7 +144,7 @@ where
         Ok(())
     } else {
         let msg = format!(
-            "Expected {:#?} <= '{}' <= {:#?}, but was {:#?} (at {})",
+            "Expected {:#?} <= `{}` <= {:#?}, but was {:#?} (at {})",
             expected_min, name, expected_max, actual, pos
         );
         Err(AssertionError(msg))
@@ -162,7 +162,7 @@ where
         Ok(())
     } else {
         let msg = format!(
-            "Expected '{}' to be in {:#?}, but was {:#?} (at {})",
+            "Expected `{}` to be in {:#?}, but was {:#?} (at {})",
             name, haystack, needle, pos
         );
         Err(AssertionError(msg))
@@ -177,7 +177,7 @@ where
 {
     if actual > 1 {
         let msg = format!(
-            "Expected '{}' to be 0 or 1, but was {} (at {})",
+            "Expected `{}` to be 0 or 1, but was {} (at {})",
             name, actual, pos
         );
         Err(AssertionError(msg))
@@ -197,18 +197,18 @@ where
         let pos = pos.as_();
         let msg = match err {
             ConversionError::PaddingError(padding) => format!(
-                "Expected '{}' to padded with {} (at {})",
+                "Expected `{}` to padded with {} (at {})",
                 name, padding, pos
             ),
             ConversionError::NonAscii(index) => {
                 format!(
-                    "Expected '{}' to be a valid string (at {})",
+                    "Expected `{}` to be a valid string (at {})",
                     name,
                     pos + index
                 )
             }
             ConversionError::Unterminated => {
-                format!("Expected '{}' to be zero-terminated (at {})", name, pos)
+                format!("Expected `{}` to be zero-terminated (at {})", name, pos)
             }
         };
         AssertionError(msg)
@@ -226,7 +226,7 @@ where
     if let Some((index, _)) = iter.find(|(_, &v)| v != 0) {
         let value = buf[index];
         let msg = format!(
-            "Expected '{}' to be zero, but byte {} was {:02X} (at {})",
+            "Expected `{}` to be zero, but byte {} was {:02X} (at {})",
             name, index, value, pos
         );
         Err(AssertionError(msg))
