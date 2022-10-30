@@ -13,6 +13,7 @@ doctest = false
 
 [dependencies]
 bitflags = "1.0"
+log = "0.4"
 num-derive = "0.3"
 num-traits = "0.2"
 

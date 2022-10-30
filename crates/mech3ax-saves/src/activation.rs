@@ -1,4 +1,4 @@
-use log::trace;
+use log::debug;
 use mech3ax_api_types::saves::{ActivationStatus, ActivationType, AnimActivation};
 use mech3ax_api_types::static_assert_size;
 use mech3ax_common::assert::{assert_utf8, AssertionError};
@@ -154,7 +154,7 @@ pub fn read_activation(read: &mut CountingReader<impl Read>) -> Result<AnimActiv
 
     let node_states = (0..activation.count)
         .map(|i| {
-            trace!("Reading node state {} (at {})", i, read.offset);
+            debug!("Reading node state {} ({}) at {}", i, 68, read.offset);
             let mut buf = vec![0u8; 68];
             read.read_exact(&mut buf)?;
             Ok(buf)

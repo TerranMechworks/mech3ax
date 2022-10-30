@@ -29,12 +29,12 @@ pub fn read_meshes(
 
     let mut prev_offset = read.offset;
     let meshes = (0..info.count)
-        .map(|_| {
-            let wrapped_mesh = read_mesh_info_mw(read)?;
+        .map(|mesh_index| {
+            let wrapped_mesh = read_mesh_info_mw(read, mesh_index)?;
             let mesh_offset = read.read_u32()?;
             assert_that!("mesh offset", prev_offset <= mesh_offset <= end_offset, read.prev)?;
             prev_offset = mesh_offset;
-            Ok((wrapped_mesh, mesh_offset))
+            Ok((wrapped_mesh, mesh_offset, mesh_index))
         })
         .collect::<Result<Vec<_>>>()?;
 
@@ -42,9 +42,9 @@ pub fn read_meshes(
 
     let meshes = meshes
         .into_iter()
-        .map(|(wrapped_mesh, mesh_offset)| {
+        .map(|(wrapped_mesh, mesh_offset, mesh_index)| {
             assert_that!("mesh offset", mesh_offset == read.offset, read.offset)?;
-            let mesh = read_mesh_data_mw(read, wrapped_mesh)?;
+            let mesh = read_mesh_data_mw(read, wrapped_mesh, mesh_index)?;
             Ok(mesh)
         })
         .collect::<Result<Vec<_>>>()?;
@@ -65,15 +65,15 @@ pub fn write_meshes(
         index_max: count,
     })?;
 
-    for (mesh, offset) in meshes.iter().zip(offsets.iter()) {
-        write_mesh_info_mw(write, mesh)?;
+    for (mesh_index, (mesh, offset)) in meshes.iter().zip(offsets.iter()).enumerate() {
+        write_mesh_info_mw(write, mesh, mesh_index)?;
         write.write_u32(*offset)?;
     }
 
     write_mesh_infos_zero_mw(write, count, array_size)?;
 
-    for mesh in meshes {
-        write_mesh_data_mw(write, mesh)?;
+    for (mesh_index, mesh) in meshes.iter().enumerate() {
+        write_mesh_data_mw(write, mesh, mesh_index)?;
     }
 
     Ok(())

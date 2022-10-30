@@ -1,3 +1,4 @@
+use log::debug;
 use mech3ax_api_types::{static_assert_size, Color, ColoredMaterial, Material, ReprSize as _};
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -44,8 +45,15 @@ bitflags::bitflags! {
     }
 }
 
-pub fn read_material(read: &mut CountingReader<impl Read>) -> Result<RawMaterial> {
+pub fn read_material(read: &mut CountingReader<impl Read>, index: u32) -> Result<RawMaterial> {
+    debug!(
+        "Reading material {} ({}) at {}",
+        index,
+        MaterialC::SIZE,
+        read.offset
+    );
     let material: MaterialC = read.read_struct()?;
+
     let bitflags = MaterialFlags::from_bits(material.flags).ok_or_else(|| {
         AssertionError(format!(
             "Expected valid material flags, but was 0x{:02X} (at {})",
@@ -104,6 +112,7 @@ pub fn write_material(
     write: &mut CountingWriter<impl Write>,
     material: &Material,
     pointer: Option<u32>,
+    index: usize,
 ) -> Result<()> {
     let mat_c = match material {
         Material::Textured(material) => {
@@ -148,6 +157,12 @@ pub fn write_material(
             }
         }
     };
+    debug!(
+        "Writing material {} ({}) at {}",
+        index,
+        MaterialC::SIZE,
+        write.offset
+    );
     write.write_struct(&mat_c)?;
     Ok(())
 }
@@ -158,6 +173,12 @@ pub fn read_materials_zero(
     end: i16,
 ) -> Result<()> {
     for index in start..end {
+        debug!(
+            "Reading zero material {} ({}) at {}",
+            index,
+            MaterialC::SIZE,
+            read.offset
+        );
         let material: MaterialC = read.read_struct()?;
         assert_that!("field 00", material.unk00 == 0, read.prev + 0)?;
         assert_that!(

@@ -103,7 +103,8 @@ pub fn read_materials(
     // read materials without cycle data
     let materials = (0..count)
         .map(|index| {
-            let material = read_material(read)?;
+            // Cast safety: index is >= 0, and count is i32
+            let material = read_material(read, index as _)?;
 
             let mut expected_index1 = index + 1;
             if expected_index1 >= count {
@@ -180,7 +181,7 @@ pub fn write_materials(
     })?;
 
     let count = materials.len() as i16;
-    for (i, material) in materials.iter().enumerate() {
+    for (index, material) in materials.iter().enumerate() {
         let pointer = if let Material::Textured(textured) = material {
             // reconstruct the texture index
             let texture_index = textures
@@ -191,9 +192,9 @@ pub fn write_materials(
         } else {
             None
         };
-        write_material(write, material, pointer)?;
+        write_material(write, material, pointer, index)?;
 
-        let index = i as i16;
+        let index = index as i16;
         let mut index1 = index + 1;
         if index1 >= count {
             index1 = -1;
