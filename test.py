@@ -6,15 +6,18 @@ from pathlib import Path
 from typing import List, Literal, Tuple
 
 Build = Literal["debug", "release"]
-Game = Literal["mw3", "pm", "recoil"]
+Game = Literal["mw", "pm", "rc"]
+GAME_MW: Game = "mw"
+GAME_PM: Game = "pm"
+GAME_RC: Game = "rc"
 
 
 def name_to_game(name: str) -> Game:
     if name.endswith("-pm"):
-        return "pm"
+        return GAME_PM
     if name.endswith("-recoil"):
-        return "recoil"
-    return "mw3"
+        return GAME_RC
+    return GAME_MW
 
 
 class Tester:
@@ -64,7 +67,7 @@ class Tester:
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
 
-            if game == "recoil":
+            if game == GAME_RC:
                 sounds_names = ["soundsl", "soundsm", "soundsh"]
             else:
                 sounds_names = ["soundsL", "soundsH"]
@@ -97,7 +100,7 @@ class Tester:
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
 
-            if game == "recoil":
+            if game == GAME_RC:
                 msg_name = "messages"
             else:
                 msg_name = "Mech3Msg"
@@ -156,7 +159,7 @@ class Tester:
             output_dir.mkdir(exist_ok=True)
 
             texture_zbds = list(zbd_dir.rglob("*tex*.zbd"))
-            if game == "recoil":
+            if game == GAME_RC:
                 texture_zbds += [zbd_dir / "image.zbd"]
             else:
                 texture_zbds += [zbd_dir / "rimage.zbd"]
@@ -183,7 +186,7 @@ class Tester:
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
 
-            if game == "recoil":
+            if game == GAME_RC:
                 rdr_glob = "zrdr.zbd"
             else:
                 rdr_glob = "reader*.zbd"
@@ -212,7 +215,7 @@ class Tester:
         print("--- MOTION ---")
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
-            if game == "recoil":
+            if game == GAME_RC:
                 print("SKIPPING", name)
                 continue
 
@@ -229,7 +232,7 @@ class Tester:
         print("--- MECHLIB ---")
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
-            if game != "mw3":
+            if game == GAME_RC:
                 print("SKIPPING", name)
                 continue
 
@@ -246,7 +249,7 @@ class Tester:
         print("--- GAMEZ ---")
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
-            if game != "mw3":
+            if game != GAME_MW:
                 print("SKIPPING", name)
                 continue
 
@@ -270,7 +273,7 @@ class Tester:
         print("--- ANIM ---")
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
-            if game != "mw3":
+            if game != GAME_MW:
                 print("SKIPPING", name)
                 continue
 

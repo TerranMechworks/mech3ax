@@ -4,6 +4,7 @@ use anyhow::Result;
 use clap::Parser as _;
 use env_logger::Env;
 use mech3ax_archive::{Mode, Version};
+use mech3ax_common::GameType;
 use mech3ax_version::VERSION;
 
 #[derive(clap::Parser)]
@@ -15,11 +16,35 @@ struct Cli {
     subcmd: SubCommand,
 }
 
-#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+#[derive(Debug, Clone, Copy)]
 enum Game {
-    MW3,
+    MW,
     PM,
-    Recoil,
+    RC,
+}
+
+impl clap::ValueEnum for Game {
+    fn value_variants<'a>() -> &'a [Self] {
+        &[Self::MW, Self::PM, Self::RC]
+    }
+
+    fn to_possible_value<'a>(&self) -> Option<clap::builder::PossibleValue> {
+        match self {
+            Self::MW => Some(clap::builder::PossibleValue::new("mw")),
+            Self::PM => Some(clap::builder::PossibleValue::new("pm")),
+            Self::RC => Some(clap::builder::PossibleValue::new("rc")),
+        }
+    }
+}
+
+impl Into<GameType> for Game {
+    fn into(self) -> GameType {
+        match self {
+            Self::MW => GameType::MW,
+            Self::PM => GameType::PM,
+            Self::RC => GameType::RC,
+        }
+    }
 }
 
 #[derive(clap::Args)]
@@ -31,7 +56,7 @@ struct ZipArgs {
 }
 
 impl ZipArgs {
-    fn opts(self, game: Game) -> Result<ZipOpts> {
+    fn opts(self, game: GameType) -> Result<ZipOpts> {
         let Self { input, output } = self;
         Ok(ZipOpts {
             game,
@@ -42,7 +67,7 @@ impl ZipArgs {
 }
 
 struct ZipOpts {
-    game: Game,
+    game: GameType,
     input: String,
     output: String,
 }
@@ -50,8 +75,8 @@ struct ZipOpts {
 impl ZipOpts {
     fn version(&self, mode: Mode) -> Version {
         match self.game {
-            Game::MW3 | Game::Recoil => Version::One,
-            Game::PM => Version::Two(mode),
+            GameType::MW | GameType::RC => Version::One,
+            GameType::PM => Version::Two(mode),
         }
     }
 }
@@ -71,7 +96,7 @@ struct ReaderArgs {
 }
 
 impl ReaderArgs {
-    fn opts(self, game: Game) -> Result<ReaderOpts> {
+    fn opts(self, game: GameType) -> Result<ReaderOpts> {
         let Self {
             input,
             output,
@@ -87,7 +112,7 @@ impl ReaderArgs {
 }
 
 struct ReaderOpts {
-    game: Game,
+    game: GameType,
     input: String,
     output: String,
     skip_crc: bool,
@@ -96,9 +121,9 @@ struct ReaderOpts {
 impl ReaderOpts {
     fn version(&self) -> Version {
         match self.game {
-            Game::MW3 | Game::Recoil => Version::One,
-            Game::PM if self.skip_crc => Version::Two(Mode::ReaderBypass),
-            Game::PM => Version::Two(Mode::Reader),
+            GameType::MW | GameType::RC => Version::One,
+            GameType::PM if self.skip_crc => Version::Two(Mode::ReaderBypass),
+            GameType::PM => Version::Two(Mode::Reader),
         }
     }
 }
@@ -128,7 +153,7 @@ struct MsgArgs {
 }
 
 impl MsgArgs {
-    fn opts(self, game: Game) -> Result<MsgOpts> {
+    fn opts(self, game: GameType) -> Result<MsgOpts> {
         let Self { input, output } = self;
         Ok(MsgOpts {
             game,
@@ -139,7 +164,7 @@ impl MsgArgs {
 }
 
 struct MsgOpts {
-    game: Game,
+    game: GameType,
     input: String,
     output: String,
 }
@@ -147,8 +172,8 @@ struct MsgOpts {
 impl MsgOpts {
     fn skip_data(&self) -> Option<usize> {
         match self.game {
-            Game::MW3 | Game::PM => None,
-            Game::Recoil => Some(48),
+            GameType::MW | GameType::PM => None,
+            GameType::RC => Some(48),
         }
     }
 }
@@ -183,7 +208,7 @@ fn main() -> Result<()> {
     let env = Env::default().default_filter_or("warn");
     env_logger::Builder::from_env(env).init();
     let cli: Cli = Cli::parse();
-    let game = cli.game;
+    let game: GameType = cli.game.into();
     match cli.subcmd {
         SubCommand::Sounds(args) => commands::sounds(args.opts(game)?),
         SubCommand::Interp(opts) => commands::interp(opts),

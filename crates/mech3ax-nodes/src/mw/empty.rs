@@ -1,5 +1,5 @@
-use super::flags::NodeBitFlags;
-use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
+use crate::flags::NodeBitFlags;
+use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
 use mech3ax_api_types::Empty;
 use mech3ax_common::{assert_that, Result};
 
@@ -12,7 +12,7 @@ const NEVER_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
         | NodeBitFlags::CLIP_TO.bits(),
 );
 
-pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
+pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantMw> {
     // cannot assert name
     let const_flags = node.flags & (ALWAYS_PRESENT | NEVER_PRESENT);
     assert_that!("empty flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
@@ -46,7 +46,7 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     // children array ptr is already asserted
     assert_that!("empty field 196", node.unk196 == 160, offset + 196)?;
 
-    Ok(NodeVariant::Empty(Empty {
+    Ok(NodeVariantMw::Empty(Empty {
         name: node.name,
         flags: node.flags.into(),
         unk044: node.unk044,
@@ -58,8 +58,8 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     }))
 }
 
-pub fn make_variants(empty: &Empty) -> NodeVariants {
-    NodeVariants {
+pub fn make_variants(empty: &Empty) -> NodeVariantsMw {
+    NodeVariantsMw {
         name: empty.name.clone(),
         flags: NodeBitFlags::from(&empty.flags),
         unk044: empty.unk044,

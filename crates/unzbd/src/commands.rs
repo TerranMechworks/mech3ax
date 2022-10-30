@@ -1,11 +1,15 @@
-use crate::{Game, InterpOpts, MsgOpts, ReaderOpts, ZipOpts};
+use crate::{InterpOpts, MsgOpts, ReaderOpts, ZipOpts};
 use anyhow::{bail, Context, Result};
 use image::ImageOutputFormat;
+use log::debug;
 use mech3ax_anim::read_anim;
 use mech3ax_archive::{read_archive, Mode, Version};
 use mech3ax_common::io_ext::CountingReader;
+use mech3ax_common::GameType;
 use mech3ax_gamez::gamez::read_gamez;
-use mech3ax_gamez::mechlib::{read_format, read_materials, read_model_mw, read_version};
+use mech3ax_gamez::mechlib::{
+    read_format, read_materials, read_model_mw, read_model_pm, read_version,
+};
 use mech3ax_image::read_textures;
 use mech3ax_interp::read_interp;
 use mech3ax_messages::read_messages;
@@ -142,8 +146,8 @@ pub(crate) fn reader(opts: ReaderOpts) -> Result<()> {
 
 pub(crate) fn motion(opts: ZipOpts) -> Result<()> {
     match opts.game {
-        Game::MW3 | Game::PM => {}
-        Game::Recoil => bail!("Recoil does not have motion"),
+        GameType::MW | GameType::PM => {}
+        GameType::RC => bail!("Recoil does not have motion"),
     }
     let version = opts.version(Mode::Motion);
     let options = deflate_opts();
@@ -167,10 +171,10 @@ pub(crate) fn motion(opts: ZipOpts) -> Result<()> {
 }
 
 pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
-    let is_pm = match opts.game {
-        Game::MW3 => false,
-        Game::PM => bail!("Pirate's Moon support for Mechlib isn't implemented yet"),
-        Game::Recoil => bail!("Recoil does not have mechlib"),
+    let game = match opts.game {
+        GameType::MW => GameType::MW,
+        GameType::PM => GameType::PM,
+        GameType::RC => bail!("Recoil does not have mechlib"),
     };
     let version = opts.version(Mode::Sounds);
     let options = deflate_opts();
@@ -187,7 +191,7 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
             match name {
                 "format" => read_format(&mut read).context("Failed to read mechlib format"),
                 "version" => {
-                    read_version(&mut read, is_pm).context("Failed to read mechlib version")
+                    read_version(&mut read, game).context("Failed to read mechlib version")
                 }
                 "materials" => {
                     let materials =
@@ -196,10 +200,21 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                 }
                 original => {
                     let name = original.replace(".flt", ".json");
-                    let root = read_model_mw(&mut read).with_context(|| {
-                        format!("Failed to read mechlib model for \"{}\"", original)
-                    })?;
-                    zip_json(zip, options, &name, &root)
+                    match game {
+                        GameType::MW => {
+                            let root = read_model_mw(&mut read).with_context(|| {
+                                format!("Failed to read mechlib model for `{}`", original)
+                            })?;
+                            zip_json(zip, options, &name, &root)
+                        }
+                        GameType::PM => {
+                            let root = read_model_pm(&mut read).with_context(|| {
+                                format!("Failed to read mechlib model for `{}`", original)
+                            })?;
+                            zip_json(zip, options, &name, &root)
+                        }
+                        GameType::RC => unreachable!("Recoil does not have mechlib"),
+                    }
                 }
             }
         },
@@ -231,9 +246,9 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
 
 pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
     match opts.game {
-        Game::MW3 => {}
-        Game::PM => bail!("Pirate's Moon support for Gamez isn't implemented yet"),
-        Game::Recoil => bail!("Recoil support for Gamez isn't implemented yet"),
+        GameType::MW => {}
+        GameType::PM => bail!("Pirate's Moon support for Gamez isn't implemented yet"),
+        GameType::RC => bail!("Recoil support for Gamez isn't implemented yet"),
     }
     let options = deflate_opts();
 
@@ -257,9 +272,9 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
 
 pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
     match opts.game {
-        Game::MW3 => {}
-        Game::PM => bail!("Pirate's Moon support for Anim isn't implemented yet"),
-        Game::Recoil => bail!("Recoil support for Anim isn't implemented yet"),
+        GameType::MW => {}
+        GameType::PM => bail!("Pirate's Moon support for Anim isn't implemented yet"),
+        GameType::RC => bail!("Recoil support for Anim isn't implemented yet"),
     }
     let options = deflate_opts();
 
@@ -280,9 +295,9 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
 
 pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
     let version = match opts.game {
-        Game::MW3 => Version::One,
-        Game::PM => bail!("Pirate's Moon support for Savegames isn't implemented yet"),
-        Game::Recoil => bail!("Recoil support for Savegames isn't implemented yet"),
+        GameType::MW => Version::One,
+        GameType::PM => bail!("Pirate's Moon support for Savegames isn't implemented yet"),
+        GameType::RC => bail!("Recoil support for Savegames isn't implemented yet"),
     };
     let options = deflate_opts();
 

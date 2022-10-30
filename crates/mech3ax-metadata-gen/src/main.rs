@@ -44,9 +44,9 @@ fn main() {
     resolver.push_union::<api::Material>();
     // gamez mesh
     resolver.push_struct::<api::UvCoord>();
-    resolver.push_struct::<api::Polygon>();
-    resolver.push_struct::<api::MeshLight>();
-    resolver.push_struct::<api::Mesh>();
+    resolver.push_struct::<api::PolygonMw>();
+    resolver.push_struct::<api::MeshLightMw>();
+    resolver.push_struct::<api::MeshMw>();
     // gamez nodes
     resolver.push_struct::<api::AreaPartition>();
     resolver.push_struct::<api::Area>();
@@ -64,7 +64,7 @@ fn main() {
     resolver.push_struct::<api::World>();
     resolver.push_union::<api::Node>();
     // gamez mechlib
-    resolver.push_struct::<api::Model>();
+    resolver.push_struct::<api::ModelMw>();
     // gamez mod
     resolver.push_struct::<api::GameZMetadata>();
     resolver.push_struct::<api::GameZData>();

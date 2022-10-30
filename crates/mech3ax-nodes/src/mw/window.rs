@@ -1,5 +1,5 @@
-use super::flags::NodeBitFlags;
-use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
+use crate::flags::NodeBitFlags;
+use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
 use mech3ax_api_types::{static_assert_size, BoundingBox, ReprSize as _, Window};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -7,7 +7,7 @@ use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]
-struct WindowC {
+struct WindowMwC {
     origin_x: u32,     // 000
     origin_y: u32,     // 004
     resolution_x: u32, // 008
@@ -19,11 +19,11 @@ struct WindowC {
     zero240: u32,
     zero244: u32,
 }
-static_assert_size!(WindowC, 248);
+static_assert_size!(WindowMwC, 248);
 
 const WINDOW_NAME: &str = "window1";
 
-pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
+pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantMw> {
     let name = &node.name;
     assert_that!("window name", name == WINDOW_NAME, offset + 0)?;
     assert_that!(
@@ -64,11 +64,11 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
         offset + 164
     )?;
     assert_that!("window field 196", node.unk196 == 0, offset + 196)?;
-    Ok(NodeVariant::Window(node.data_ptr))
+    Ok(NodeVariantMw::Window(node.data_ptr))
 }
 
 pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32) -> Result<Window> {
-    let window: WindowC = read.read_struct()?;
+    let window: WindowMwC = read.read_struct()?;
     assert_that!("origin x", window.origin_x == 0, read.prev + 0)?;
     assert_that!("origin y", window.origin_y == 0, read.prev + 4)?;
     assert_that!("resolution x", window.resolution_x == 320, read.prev + 8)?;
@@ -88,8 +88,8 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32) -> Result<Windo
     })
 }
 
-pub fn make_variants(window: &Window) -> NodeVariants {
-    NodeVariants {
+pub fn make_variants(window: &Window) -> NodeVariantsMw {
+    NodeVariantsMw {
         name: WINDOW_NAME.to_owned(),
         flags: NodeBitFlags::DEFAULT,
         unk044: 0,
@@ -109,7 +109,7 @@ pub fn make_variants(window: &Window) -> NodeVariants {
 }
 
 pub fn write(write: &mut CountingWriter<impl Write>, window: &Window) -> Result<()> {
-    write.write_struct(&WindowC {
+    write.write_struct(&WindowMwC {
         origin_x: 0,
         origin_y: 0,
         resolution_x: window.resolution_x,
@@ -125,5 +125,5 @@ pub fn write(write: &mut CountingWriter<impl Write>, window: &Window) -> Result<
 }
 
 pub fn size() -> u32 {
-    WindowC::SIZE
+    WindowMwC::SIZE
 }

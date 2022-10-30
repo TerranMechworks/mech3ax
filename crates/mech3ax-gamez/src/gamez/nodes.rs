@@ -1,15 +1,16 @@
-use crate::nodes::{
-    read_node_data, read_node_info_gamez, read_node_info_zero, size_node, write_node_data,
-    write_node_info, write_node_info_zero, NodeVariant, WrappedNode, NODE_C_SIZE,
-};
 use mech3ax_api_types::Node;
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Error, Result};
+use mech3ax_nodes::{
+    read_node_data_mw, read_node_info_gamez_mw, read_node_info_zero_mw, size_node_mw,
+    write_node_data_mw, write_node_info_mw, write_node_info_zero_mw, NodeVariantMw, WrappedNodeMw,
+    NODE_MW_C_SIZE,
+};
 use std::io::{Read, Write};
 
 pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Result<Vec<Node>> {
-    let end_offset = read.offset + NODE_C_SIZE * array_size + 4 * array_size;
+    let end_offset = read.offset + NODE_MW_C_SIZE * array_size + 4 * array_size;
 
     let mut variants = Vec::new();
     // the node_count is wildly inaccurate for some files, and there are more nodes to
@@ -19,7 +20,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
     let mut light_node = false;
     for i in 0..array_size {
         let node_info_pos = read.offset;
-        let variant = read_node_info_gamez(read)?;
+        let variant = read_node_info_gamez_mw(read)?;
         // this is an index for empty/zero nodes, and the offset for others
         let actual_index = read.read_u32()?;
         match variant {
@@ -36,16 +37,16 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
             }
             Some(mut variant) => {
                 match &mut variant {
-                    NodeVariant::World(_, _, _) => {
+                    NodeVariantMw::World(_, _, _) => {
                         assert_that!("node data position", i == 0, node_info_pos)?;
                     }
-                    NodeVariant::Window(_) => {
+                    NodeVariantMw::Window(_) => {
                         assert_that!("node data position", i == 1, node_info_pos)?;
                     }
-                    NodeVariant::Camera(_) => {
+                    NodeVariantMw::Camera(_) => {
                         assert_that!("node data position", i == 2, node_info_pos)?;
                     }
-                    NodeVariant::Display(_) => {
+                    NodeVariantMw::Display(_) => {
                         match display_node {
                             0 => assert_that!("node data position", i == 3, node_info_pos)?,
                             1 => assert_that!("node data position", i == 4, node_info_pos)?,
@@ -58,12 +59,12 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
                         }
                         display_node += 1;
                     }
-                    NodeVariant::Empty(empty) => {
+                    NodeVariantMw::Empty(empty) => {
                         assert_that!("node data position", i > 3, node_info_pos)?;
                         assert_that!("empty ref index", 4 <= actual_index <= array_size, read.prev)?;
                         empty.parent = actual_index;
                     }
-                    NodeVariant::Light(_) => {
+                    NodeVariantMw::Light(_) => {
                         assert_that!("node data position", i > 3, node_info_pos)?;
                         if light_node {
                             return Err(Error::Assert(AssertionError(format!(
@@ -83,7 +84,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
     }
 
     for i in actual_count..array_size {
-        read_node_info_zero(read)?;
+        read_node_info_zero_mw(read)?;
         let actual_index = read.read_u32()?;
 
         let mut expected_index = i + 1;
@@ -100,7 +101,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
         .into_iter()
         .map(|(variant, offset)| {
             match &variant {
-                NodeVariant::Empty(_) => {
+                NodeVariantMw::Empty(_) => {
                     // in the case of an empty node, the offset is used as the parent
                     // index, and not the offset (there is no node data)
                 }
@@ -108,13 +109,13 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
                     assert_that!("node data offset", offset == read.offset, read.offset)?;
                 }
             }
-            match read_node_data(read, variant)? {
-                WrappedNode::Camera(camera) => Ok(Node::Camera(camera)),
-                WrappedNode::Display(display) => Ok(Node::Display(display)),
-                WrappedNode::Empty(empty) => Ok(Node::Empty(empty)),
-                WrappedNode::Light(light) => Ok(Node::Light(light)),
-                WrappedNode::Window(window) => Ok(Node::Window(window)),
-                WrappedNode::Lod(wrapped_lod) => {
+            match read_node_data_mw(read, variant)? {
+                WrappedNodeMw::Camera(camera) => Ok(Node::Camera(camera)),
+                WrappedNodeMw::Display(display) => Ok(Node::Display(display)),
+                WrappedNodeMw::Empty(empty) => Ok(Node::Empty(empty)),
+                WrappedNodeMw::Light(light) => Ok(Node::Light(light)),
+                WrappedNodeMw::Window(window) => Ok(Node::Window(window)),
+                WrappedNodeMw::Lod(wrapped_lod) => {
                     let mut lod = wrapped_lod.wrapped;
                     lod.parent = read.read_u32()?;
                     lod.children = (0..wrapped_lod.children_count)
@@ -122,7 +123,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
                         .collect::<std::io::Result<Vec<_>>>()?;
                     Ok(Node::Lod(lod))
                 }
-                WrappedNode::Object3d(wrapped_obj) => {
+                WrappedNodeMw::Object3d(wrapped_obj) => {
                     let mut object3d = wrapped_obj.wrapped;
 
                     object3d.parent = if wrapped_obj.has_parent {
@@ -135,7 +136,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
                         .collect::<std::io::Result<Vec<_>>>()?;
                     Ok(Node::Object3d(object3d))
                 }
-                WrappedNode::World(wrapped_world) => {
+                WrappedNodeMw::World(wrapped_world) => {
                     let mut world = wrapped_world.wrapped;
                     world.children = (0..wrapped_world.children_count)
                         .map(|_| read.read_u32())
@@ -185,22 +186,22 @@ pub fn write_nodes(
     array_size: u32,
     offset: u32,
 ) -> Result<()> {
-    let mut offset = offset + NODE_C_SIZE * array_size + 4 * array_size;
+    let mut offset = offset + NODE_MW_C_SIZE * array_size + 4 * array_size;
 
     for node in nodes {
-        write_node_info(write, node)?;
+        write_node_info_mw(write, node)?;
         let index = match node {
             Node::Empty(empty) => empty.parent,
             _ => offset,
         };
         write.write_u32(index)?;
-        offset += size_node(node);
+        offset += size_node_mw(node);
     }
 
     let node_count = nodes.len() as u32;
 
     for i in node_count..array_size {
-        write_node_info_zero(write)?;
+        write_node_info_zero_mw(write)?;
         let mut index = i + 1;
         if index == array_size {
             index = 0xFFFFFF;
@@ -209,7 +210,7 @@ pub fn write_nodes(
     }
 
     for node in nodes {
-        write_node_data(write, node)?;
+        write_node_data_mw(write, node)?;
         match node {
             Node::Lod(lod) => {
                 write.write_u32(lod.parent)?;

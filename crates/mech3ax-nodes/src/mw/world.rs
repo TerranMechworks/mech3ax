@@ -1,7 +1,8 @@
-use super::flags::NodeBitFlags;
-use super::math::partition_diag;
-use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
-use super::wrappers::Wrapper;
+use super::wrappers::WrapperMw;
+use crate::flags::NodeBitFlags;
+use crate::math::partition_diag;
+use crate::range::RangeI32;
+use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
 use mech3ax_api_types::{
     static_assert_size, Area, BoundingBox, Color, Partition, Range, ReprSize as _, World,
 };
@@ -10,7 +11,7 @@ use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]
-struct WorldC {
+struct WorldMwC {
     flags: u32,                           // 000
     area_partition_used: u32,             // 004
     area_partition_count: u32,            // 008
@@ -55,10 +56,10 @@ struct WorldC {
     zero180: u32,                         // 180
     zero184: u32,                         // 184
 }
-static_assert_size!(WorldC, 188);
+static_assert_size!(WorldMwC, 188);
 
 #[repr(C)]
-struct PartitionC {
+struct PartitionMwC {
     flags: u32,
     mone04: i32,
     part_x: f32,
@@ -79,12 +80,12 @@ struct PartitionC {
     zero64: u32,
     zero68: u32,
 }
-static_assert_size!(PartitionC, 72);
+static_assert_size!(PartitionMwC, 72);
 
 const FOG_STATE_LINEAR: u32 = 1;
 const WORLD_NAME: &str = "world1";
 
-pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
+pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantMw> {
     let name = &node.name;
     assert_that!("world name", name == WORLD_NAME, offset + 0)?;
     assert_that!(
@@ -121,7 +122,7 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
         offset + 164
     )?;
     assert_that!("world field 196", node.unk196 == 0, offset + 196)?;
-    Ok(NodeVariant::World(
+    Ok(NodeVariantMw::World(
         node.data_ptr,
         node.children_count,
         node.children_array_ptr,
@@ -129,7 +130,7 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
 }
 
 fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Result<Partition> {
-    let partition: PartitionC = read.read_struct()?;
+    let partition: PartitionMwC = read.read_struct()?;
     let xf = x as f32;
     let yf = y as f32;
 
@@ -211,8 +212,8 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
 
 fn read_partitions(
     read: &mut CountingReader<impl Read>,
-    area_x: super::range::Range,
-    area_y: super::range::Range,
+    area_x: RangeI32,
+    area_y: RangeI32,
 ) -> Result<Vec<Vec<Partition>>> {
     area_y
         .map(|y| {
@@ -224,10 +225,7 @@ fn read_partitions(
         .collect::<Result<Vec<_>>>()
 }
 
-fn assert_world(
-    world: &WorldC,
-    offset: u32,
-) -> Result<(Area, super::range::Range, super::range::Range, bool)> {
+fn assert_world(world: &WorldMwC, offset: u32) -> Result<(Area, RangeI32, RangeI32, bool)> {
     assert_that!("flag", world.flags == 0, offset + 0)?;
 
     // LINEAR = 1, EXPONENTIAL = 2 (never set)
@@ -348,9 +346,9 @@ fn assert_world(
     )?;
 
     //let area_x = range(area_left, area_right, 256);
-    let area_x = super::range::Range::new(area_left, area_right, 256);
+    let area_x = RangeI32::new(area_left, area_right, 256);
     // because the virtual partition y size is negative, this is inverted!
-    let area_y = super::range::Range::new(area_bottom, area_top, -256);
+    let area_y = RangeI32::new(area_bottom, area_top, -256);
 
     assert_that!(
         "vp x count",
@@ -405,8 +403,8 @@ pub fn read(
     data_ptr: u32,
     children_count: u32,
     children_array_ptr: u32,
-) -> Result<Wrapper<World>> {
-    let world: WorldC = read.read_struct()?;
+) -> Result<WrapperMw<World>> {
+    let world: WorldMwC = read.read_struct()?;
     let (area, area_x, area_y, fudge_count) = assert_world(&world, read.prev)?;
 
     // read as a result of world.children_count (always 1, not node.children_count!)
@@ -431,15 +429,15 @@ pub fn read(
         data_ptr,
         children_array_ptr,
     };
-    Ok(Wrapper {
+    Ok(WrapperMw {
         wrapped,
         has_parent: false,
         children_count,
     })
 }
 
-pub fn make_variants(world: &World) -> NodeVariants {
-    NodeVariants {
+pub fn make_variants(world: &World) -> NodeVariantsMw {
+    NodeVariantsMw {
         name: WORLD_NAME.to_owned(),
         flags: NodeBitFlags::DEFAULT,
         unk044: 0,
@@ -463,7 +461,7 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
     let y = partition.y as f32;
     let diagonal = partition_diag(partition.z_min, partition.z_max);
 
-    write.write_struct(&PartitionC {
+    write.write_struct(&PartitionMwC {
         flags: 0x100,
         mone04: -1,
         part_x: x,
@@ -516,7 +514,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Result<()
     let area_width = area_right - area_left;
     let area_height = area_top - area_bottom;
 
-    write.write_struct(&WorldC {
+    write.write_struct(&WorldMwC {
         flags: 0,
         area_partition_used: 0,
         area_partition_count,
@@ -575,5 +573,5 @@ pub fn size(world: &World) -> u32 {
         }
     }
     item_count += world.children.len() as u32;
-    WorldC::SIZE + 4 + PartitionC::SIZE * partition_count + 4 * item_count
+    WorldMwC::SIZE + 4 + PartitionMwC::SIZE * partition_count + 4 * item_count
 }

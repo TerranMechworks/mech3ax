@@ -1,5 +1,5 @@
-use super::flags::NodeBitFlags;
-use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
+use crate::flags::NodeBitFlags;
+use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
 use mech3ax_api_types::{
     static_assert_size, BoundingBox, Color, Light, Range, ReprSize as _, Vec3,
 };
@@ -10,7 +10,7 @@ use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]
-struct LightC {
+struct LightMwC {
     direction: Vec3,    // 000
     translation: Vec3,  // 012
     zero024: [u8; 112], // 024
@@ -30,7 +30,7 @@ struct LightC {
     parent_count: u32,  // 200
     parent_ptr: u32,    // 204
 }
-static_assert_size!(LightC, 208);
+static_assert_size!(LightMwC, 208);
 
 const BBOX_LIGHT: BoundingBox = BoundingBox {
     a: Vec3 {
@@ -46,7 +46,7 @@ const BBOX_LIGHT: BoundingBox = BoundingBox {
 };
 const LIGHT_NAME: &str = "sunlight";
 
-pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
+pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantMw> {
     let name = &node.name;
     assert_that!("light name", name == LIGHT_NAME, offset + 0)?;
     assert_that!(
@@ -83,10 +83,10 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
         offset + 164
     )?;
     assert_that!("light field 196", node.unk196 == 0, offset + 196)?;
-    Ok(NodeVariant::Light(node.data_ptr))
+    Ok(NodeVariantMw::Light(node.data_ptr))
 }
 
-fn assert_light(light: &LightC, offset: u32) -> Result<()> {
+fn assert_light(light: &LightMwC, offset: u32) -> Result<()> {
     assert_that!(
         "translation",
         light.translation == Vec3::DEFAULT,
@@ -133,7 +133,7 @@ fn assert_light(light: &LightC, offset: u32) -> Result<()> {
 }
 
 pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32) -> Result<Light> {
-    let light: LightC = read.read_struct()?;
+    let light: LightMwC = read.read_struct()?;
     assert_light(&light, read.prev)?;
 
     // read as a result of parent_count, but is always 0
@@ -152,8 +152,8 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32) -> Result<Light
     })
 }
 
-pub fn make_variants(light: &Light) -> NodeVariants {
-    NodeVariants {
+pub fn make_variants(light: &Light) -> NodeVariantsMw {
+    NodeVariantsMw {
         name: LIGHT_NAME.to_owned(),
         flags: NodeBitFlags::DEFAULT | NodeBitFlags::UNK08,
         unk044: 0,
@@ -173,7 +173,7 @@ pub fn make_variants(light: &Light) -> NodeVariants {
 }
 
 pub fn write(write: &mut CountingWriter<impl Write>, light: &Light) -> Result<()> {
-    write.write_struct(&LightC {
+    write.write_struct(&LightMwC {
         direction: light.direction,
         translation: Vec3::DEFAULT,
         zero024: [0; 112],
@@ -199,5 +199,5 @@ pub fn write(write: &mut CountingWriter<impl Write>, light: &Light) -> Result<()
 }
 
 pub fn size() -> u32 {
-    LightC::SIZE + 4
+    LightMwC::SIZE + 4
 }

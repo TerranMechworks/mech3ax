@@ -1,7 +1,7 @@
-use super::flags::NodeBitFlags;
-use super::math::{apply_zero_signs, euler_to_matrix, extract_zero_signs, PI};
-use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
-use super::wrappers::Wrapper;
+use super::wrappers::WrapperMw;
+use crate::flags::NodeBitFlags;
+use crate::math::{apply_zero_signs, euler_to_matrix, extract_zero_signs, PI};
+use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
 use mech3ax_api_types::{
     static_assert_size, Matrix, Object3d, ReprSize as _, Transformation, Vec3,
 };
@@ -11,7 +11,7 @@ use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]
-struct Object3dC {
+struct Object3dMwC {
     flags: u32,        // 000
     opacity: f32,      // 004
     zero008: f32,      // 008
@@ -24,7 +24,7 @@ struct Object3dC {
     translation: Vec3, // 084
     zero096: [u8; 48], // 096
 }
-static_assert_size!(Object3dC, 144);
+static_assert_size!(Object3dMwC, 144);
 
 const ALWAYS_PRESENT: NodeBitFlags =
     NodeBitFlags::from_bits_truncate(NodeBitFlags::BASE.bits() | NodeBitFlags::UNK25.bits());
@@ -38,10 +38,10 @@ const SCALE_ONE: Vec3 = Vec3 {
 
 #[allow(clippy::collapsible_else_if)]
 pub fn assert_variants(
-    node: NodeVariants,
+    node: NodeVariantsMw,
     offset: u32,
     mesh_index_is_ptr: bool,
-) -> Result<NodeVariant> {
+) -> Result<NodeVariantMw> {
     // cannot assert name
     let const_flags = node.flags & (ALWAYS_PRESENT | NEVER_PRESENT);
     assert_that!("empty flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
@@ -80,10 +80,10 @@ pub fn assert_variants(
     }
     // can have area partition, parent, children
     assert_that!("object3d field 196", node.unk196 == 160, offset + 196)?;
-    Ok(NodeVariant::Object3d(node))
+    Ok(NodeVariantMw::Object3d(node))
 }
 
-fn assert_object3d(object3d: Object3dC, offset: u32) -> Result<Option<Transformation>> {
+fn assert_object3d(object3d: Object3dMwC, offset: u32) -> Result<Option<Transformation>> {
     assert_that!("flags", object3d.flags in [32u32, 40u32], offset + 0)?;
     assert_that!("opacity", object3d.opacity == 0.0, offset + 4)?;
     assert_that!("field 008", object3d.zero008 == 0.0, offset + 8)?;
@@ -110,7 +110,7 @@ fn assert_object3d(object3d: Object3dC, offset: u32) -> Result<Option<Transforma
         let translation = object3d.translation;
 
         let expected_matrix = euler_to_matrix(&rotation);
-        // in most cases, the calculated matrix is correct :/ for 2%, this fails
+        // in most cases, the calculated matrix is correct :/ for 2%, this fails (mw and pm)
         let matrix = if expected_matrix == object3d.matrix {
             None
         } else {
@@ -126,8 +126,11 @@ fn assert_object3d(object3d: Object3dC, offset: u32) -> Result<Option<Transforma
     Ok(transformation)
 }
 
-pub fn read(read: &mut CountingReader<impl Read>, node: NodeVariants) -> Result<Wrapper<Object3d>> {
-    let object3dc: Object3dC = read.read_struct()?;
+pub fn read(
+    read: &mut CountingReader<impl Read>,
+    node: NodeVariantsMw,
+) -> Result<WrapperMw<Object3d>> {
+    let object3dc: Object3dMwC = read.read_struct()?;
     let matrix_signs = extract_zero_signs(&object3dc.matrix);
     let transformation = assert_object3d(object3dc, read.prev)?;
 
@@ -149,16 +152,16 @@ pub fn read(read: &mut CountingReader<impl Read>, node: NodeVariants) -> Result<
         unk164: node.unk164,
     };
 
-    Ok(Wrapper {
+    Ok(WrapperMw {
         wrapped,
         has_parent: node.has_parent,
         children_count: node.children_count,
     })
 }
 
-pub fn make_variants(object3d: &Object3d) -> NodeVariants {
+pub fn make_variants(object3d: &Object3d) -> NodeVariantsMw {
     let flags = NodeBitFlags::from(&object3d.flags);
-    NodeVariants {
+    NodeVariantsMw {
         name: object3d.name.clone(),
         flags,
         unk044: 1,
@@ -168,7 +171,7 @@ pub fn make_variants(object3d: &Object3d) -> NodeVariants {
         area_partition: object3d.area_partition,
         has_parent: object3d.parent.is_some(),
         parent_array_ptr: object3d.parent_array_ptr,
-        children_count: object3d.children.len() as u32,
+        children_count: object3d.children.len() as _,
         children_array_ptr: object3d.children_array_ptr,
         unk116: object3d.unk116,
         unk140: object3d.unk140,
@@ -193,7 +196,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, object3d: &Object3d) -> Res
 
     let matrix = apply_zero_signs(&matrix, object3d.matrix_signs);
 
-    write.write_struct(&Object3dC {
+    write.write_struct(&Object3dMwC {
         flags,
         opacity: 0.0,
         zero008: 0.0,
@@ -211,5 +214,5 @@ pub fn write(write: &mut CountingWriter<impl Write>, object3d: &Object3d) -> Res
 
 pub fn size(object3d: &Object3d) -> u32 {
     let parent_size = if object3d.parent.is_some() { 4 } else { 0 };
-    Object3dC::SIZE + parent_size + 4 * object3d.children.len() as u32
+    Object3dMwC::SIZE + parent_size + 4 * object3d.children.len() as u32
 }

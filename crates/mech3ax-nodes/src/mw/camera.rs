@@ -1,6 +1,6 @@
-use super::flags::NodeBitFlags;
-use super::math::cotangent;
-use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
+use crate::flags::NodeBitFlags;
+use crate::math::cotangent;
+use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
 use mech3ax_api_types::{
     static_assert_size, BoundingBox, Camera, Matrix, Range, ReprSize as _, Vec3,
 };
@@ -10,7 +10,7 @@ use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]
-struct CameraC {
+struct CameraMwC {
     world_index: i32,      // 000
     window_index: i32,     // 004
     focus_node_xy: i32,    // 008
@@ -49,11 +49,11 @@ struct CameraC {
     zone_set: i32,
     unk484: i32,
 }
-static_assert_size!(CameraC, 488);
+static_assert_size!(CameraMwC, 488);
 
 const CAMERA_NAME: &str = "camera1";
 
-pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
+pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantMw> {
     let name = &node.name;
     assert_that!("camera name", name == CAMERA_NAME, offset + 0)?;
     assert_that!(
@@ -94,10 +94,10 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
         offset + 164
     )?;
     assert_that!("camera field 196", node.unk196 == 0, offset + 196)?;
-    Ok(NodeVariant::Camera(node.data_ptr))
+    Ok(NodeVariantMw::Camera(node.data_ptr))
 }
 
-fn assert_camera(camera: CameraC, offset: u32) -> Result<(Range, Range)> {
+fn assert_camera(camera: CameraMwC, offset: u32) -> Result<(Range, Range)> {
     assert_that!("world index", camera.world_index == 0, offset + 0)?;
     assert_that!("window index", camera.window_index == 1, offset + 4)?;
     assert_that!("focus node xy", camera.focus_node_xy == -1, offset + 8)?;
@@ -211,7 +211,7 @@ fn assert_camera(camera: CameraC, offset: u32) -> Result<(Range, Range)> {
 }
 
 pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32) -> Result<Camera> {
-    let camera: CameraC = read.read_struct()?;
+    let camera: CameraMwC = read.read_struct()?;
     let (clip, fov) = assert_camera(camera, read.prev)?;
 
     Ok(Camera {
@@ -222,8 +222,8 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32) -> Result<Camer
     })
 }
 
-pub fn make_variants(camera: &Camera) -> NodeVariants {
-    NodeVariants {
+pub fn make_variants(camera: &Camera) -> NodeVariantsMw {
+    NodeVariantsMw {
         name: CAMERA_NAME.to_owned(),
         flags: NodeBitFlags::DEFAULT,
         unk044: 0,
@@ -246,7 +246,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera) -> Result<
     let fov_h_half = camera.fov.min / 2.0;
     let fov_v_half = camera.fov.max / 2.0;
 
-    write.write_struct(&CameraC {
+    write.write_struct(&CameraMwC {
         world_index: 0,
         window_index: 1,
         focus_node_xy: -1,
@@ -289,5 +289,5 @@ pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera) -> Result<
 }
 
 pub fn size() -> u32 {
-    CameraC::SIZE
+    CameraMwC::SIZE
 }

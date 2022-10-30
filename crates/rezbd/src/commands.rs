@@ -1,15 +1,19 @@
-use crate::{Game, InterpOpts, ZipOpts};
+use crate::{InterpOpts, ZipOpts};
 use anyhow::{bail, Context, Result};
+use log::debug;
 use mech3ax_anim::write_anim;
 use mech3ax_api_types::saves::AnimActivation;
 use mech3ax_api_types::{
-    AnimMetadata, ArchiveEntry, GameZData, GameZMetadata, Material, Mesh, Model, Motion, Node,
-    Script, TextureManifest,
+    AnimMetadata, ArchiveEntry, GameZData, GameZMetadata, Material, MeshMw, ModelMw, ModelPm,
+    Motion, Node, Script, TextureManifest,
 };
 use mech3ax_archive::{write_archive, Mode, Version};
 use mech3ax_common::io_ext::CountingWriter;
+use mech3ax_common::GameType;
 use mech3ax_gamez::gamez::write_gamez;
-use mech3ax_gamez::mechlib::{write_format, write_materials, write_model_mw, write_version};
+use mech3ax_gamez::mechlib::{
+    write_format, write_materials, write_model_mw, write_model_pm, write_version,
+};
 use mech3ax_image::write_textures;
 use mech3ax_interp::write_interp;
 use mech3ax_motion::write_motion;
@@ -141,10 +145,10 @@ pub(crate) fn motion(opts: ZipOpts) -> Result<()> {
 }
 
 pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
-    let is_pm = match opts.game {
-        Game::MW3 => false,
-        Game::PM => bail!("Pirate's Moon support for Mechlib isn't implemented yet"),
-        Game::Recoil => bail!("Recoil does not have mechlib"),
+    let game = match opts.game {
+        GameType::MW => GameType::MW,
+        GameType::PM => GameType::PM,
+        GameType::RC => bail!("Recoil does not have mechlib"),
     };
     let version = opts.version(Mode::Sounds);
 
@@ -153,34 +157,42 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
         opts.output,
         version,
         "Failed to write mechlib data",
-        |zip, name| match name {
-            "format" => {
-                let mut buf = CountingWriter::new(Vec::new());
-                write_format(&mut buf).context("Failed to write mechlib format")?;
-                Ok(buf.into_inner())
-            }
-            "version" => {
-                let mut buf = CountingWriter::new(Vec::new());
-                write_version(&mut buf, is_pm).context("Failed to write mechlib version")?;
-                Ok(buf.into_inner())
-            }
-            "materials" => {
-                let materials: Vec<Material> = zip_json(zip, "materials.json")?;
-
-                let mut buf = CountingWriter::new(Vec::new());
-                write_materials(&mut buf, &materials)
-                    .context("Failed to write mechlib materials")?;
-                Ok(buf.into_inner())
-            }
-            original => {
-                let name = original.replace(".flt", ".json");
-                let mut model: Model = zip_json(zip, &name)?;
-
-                let mut buf = CountingWriter::new(Vec::new());
-                write_model_mw(&mut buf, &mut model).with_context(|| {
-                    format!("Failed to write mechlib model for \"{}\"", original)
-                })?;
-                Ok(buf.into_inner())
+        |zip, name, offset| {
+            let mut buf = CountingWriter::new(Vec::new(), offset);
+            match name {
+                "format" => {
+                    write_format(&mut buf).context("Failed to write mechlib format")?;
+                    Ok(buf.into_inner())
+                }
+                "version" => {
+                    write_version(&mut buf, game).context("Failed to write mechlib version")?;
+                    Ok(buf.into_inner())
+                }
+                "materials" => {
+                    let materials: Vec<Material> = zip_json(zip, "materials.json")?;
+                    write_materials(&mut buf, &materials)
+                        .context("Failed to write mechlib materials")?;
+                    Ok(buf.into_inner())
+                }
+                original => {
+                    let name = original.replace(".flt", ".json");
+                    match game {
+                        GameType::MW => {
+                            let mut model: ModelMw = zip_json(zip, &name)?;
+                            write_model_mw(&mut buf, &mut model).with_context(|| {
+                                format!("Failed to write mechlib model for `{}`", original)
+                            })?;
+                        }
+                        GameType::PM => {
+                            let mut model: ModelPm = zip_json(zip, &name)?;
+                            write_model_pm(&mut buf, &mut model).with_context(|| {
+                                format!("Failed to write mechlib model for `{}`", original)
+                            })?;
+                        }
+                        GameType::RC => unreachable!("Recoil does not have mechlib"),
+                    }
+                    Ok(buf.into_inner())
+                }
             }
         },
     )
@@ -208,9 +220,9 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
 
 pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
     match opts.game {
-        Game::MW3 => {}
-        Game::PM => bail!("Pirate's Moon support for Gamez isn't implemented yet"),
-        Game::Recoil => bail!("Recoil support for Gamez isn't implemented yet"),
+        GameType::MW => {}
+        GameType::PM => bail!("Pirate's Moon support for Gamez isn't implemented yet"),
+        GameType::RC => bail!("Recoil support for Gamez isn't implemented yet"),
     }
 
     let gamez = {
@@ -219,7 +231,7 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
         let metadata: GameZMetadata = zip_json(&mut zip, "metadata.json")?;
         let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
         let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
-        let meshes: Vec<Mesh> = zip_json(&mut zip, "meshes.json")?;
+        let meshes: Vec<MeshMw> = zip_json(&mut zip, "meshes.json")?;
         let nodes: Vec<Node> = zip_json(&mut zip, "nodes.json")?;
         GameZData {
             metadata,
@@ -236,9 +248,9 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
 
 pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
     match opts.game {
-        Game::MW3 => {}
-        Game::PM => bail!("Pirate's Moon support for Anim isn't implemented yet"),
-        Game::Recoil => bail!("Recoil support for Anim isn't implemented yet"),
+        GameType::MW => {}
+        GameType::PM => bail!("Pirate's Moon support for Anim isn't implemented yet"),
+        GameType::RC => bail!("Recoil support for Anim isn't implemented yet"),
     }
 
     let input = buf_reader(&opts.input)?;
@@ -252,9 +264,9 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
 
 pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
     let version = match opts.game {
-        Game::MW3 => Version::One,
-        Game::PM => bail!("Pirate's Moon support for Savegames isn't implemented yet"),
-        Game::Recoil => bail!("Recoil support for Savegames isn't implemented yet"),
+        GameType::MW => Version::One,
+        GameType::PM => bail!("Pirate's Moon support for Savegames isn't implemented yet"),
+        GameType::RC => bail!("Recoil support for Savegames isn't implemented yet"),
     };
 
     _zarchive(

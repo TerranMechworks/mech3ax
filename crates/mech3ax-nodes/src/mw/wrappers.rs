@@ -1,18 +1,18 @@
 use mech3ax_api_types::{Camera, Display, Empty, Light, Lod, Object3d, Window, World};
 
-pub struct Wrapper<T> {
+pub struct WrapperMw<T> {
     pub wrapped: T,
     pub has_parent: bool,
     pub children_count: u32,
 }
 
-pub enum WrappedNode {
+pub enum WrappedNodeMw {
     Camera(Camera),
     Display(Display),
     Empty(Empty),
     Light(Light),
-    Lod(Wrapper<Lod>),
-    Object3d(Wrapper<Object3d>),
+    Lod(WrapperMw<Lod>),
+    Object3d(WrapperMw<Object3d>),
     Window(Window),
-    World(Wrapper<World>),
+    World(WrapperMw<World>),
 }

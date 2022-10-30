@@ -169,7 +169,7 @@ fn read_mechlib_transform_mw(name: &str, data: Vec<u8>, offset: u32) -> Result<V
             Ok(mech3ax_gamez::mechlib::FORMAT.to_le_bytes().to_vec())
         }
         "version" => {
-            mech3ax_gamez::mechlib::read_version(&mut read, false)
+            mech3ax_gamez::mechlib::read_version(&mut read, mech3ax_common::GameType::MW)
                 .context("Failed to read mechlib format data")?;
             Ok(mech3ax_gamez::mechlib::VERSION_MW.to_le_bytes().to_vec())
         }
@@ -186,16 +186,43 @@ fn read_mechlib_transform_mw(name: &str, data: Vec<u8>, offset: u32) -> Result<V
     }
 }
 
+fn read_mechlib_transform_pm(name: &str, data: Vec<u8>, offset: u32) -> Result<Vec<u8>> {
+    let mut read = CountingReader::new(Cursor::new(data));
+    // translate to absolute offset
+    read.offset = offset;
+
+    match name {
+        "format" => {
+            mech3ax_gamez::mechlib::read_format(&mut read)
+                .context("Failed to read mechlib format data")?;
+            Ok(mech3ax_gamez::mechlib::FORMAT.to_le_bytes().to_vec())
+        }
+        "version" => {
+            mech3ax_gamez::mechlib::read_version(&mut read, mech3ax_common::GameType::PM)
+                .context("Failed to read mechlib format data")?;
+            Ok(mech3ax_gamez::mechlib::VERSION_PM.to_le_bytes().to_vec())
+        }
+        "materials" => {
+            let materials = mech3ax_gamez::mechlib::read_materials(&mut read)
+                .context("Failed to read mechlib format data")?;
+            Ok(serde_json::to_vec(&materials)?)
+        }
+        _ => {
+            let root = mech3ax_gamez::mechlib::read_model_pm(&mut read)
+                .with_context(|| format!("Failed to read model data for `{}`", name))?;
+            Ok(serde_json::to_vec(&root)?)
+        }
+    }
+}
+
 // callback filename will end in .flt (except for format, version, materials)!
 #[no_mangle]
 pub extern "C" fn read_mechlib(filename: *const c_char, is_pm: i32, callback: NameDataCb) -> i32 {
-    read_archive(
-        Mode::Sounds,
-        filename,
-        is_pm,
-        callback,
-        read_mechlib_transform_mw,
-    )
+    let transform = match is_pm {
+        0 => read_mechlib_transform_mw,
+        _ => read_mechlib_transform_pm,
+    };
+    read_archive(Mode::Sounds, filename, is_pm, callback, transform)
 }
 
 // callback filename will not end in .png! last call will be the manifest

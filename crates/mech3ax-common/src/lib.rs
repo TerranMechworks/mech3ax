@@ -6,6 +6,13 @@ pub mod string;
 
 use thiserror::Error;
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum GameType {
+    MW,
+    PM,
+    RC,
+}
+
 #[derive(Debug, Error)]
 pub enum PeError {
     #[error("Address {value} underflows bound {bound} in section {section}")]

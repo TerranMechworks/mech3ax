@@ -1,6 +1,6 @@
-use super::flags::NodeBitFlags;
-use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
-use super::wrappers::Wrapper;
+use super::wrappers::WrapperMw;
+use crate::flags::NodeBitFlags;
+use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
 use mech3ax_api_types::{static_assert_size, BoundingBox, Lod, Range, ReprSize as _};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -8,7 +8,7 @@ use mech3ax_common::{assert_that, bool_c, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]
-struct LodC {
+struct LodMwC {
     level: u32,         // 00
     range_near_sq: f32, // 04
     range_far: f32,     // 08
@@ -20,7 +20,7 @@ struct LodC {
     unk72: u32,         // 72
     unk76: u32,         // 76
 }
-static_assert_size!(LodC, 80);
+static_assert_size!(LodMwC, 80);
 
 const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     NodeBitFlags::BASE.bits() | NodeBitFlags::UNK08.bits() | NodeBitFlags::UNK10.bits(),
@@ -33,10 +33,10 @@ const NEVER_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
         | NodeBitFlags::UNK28.bits(),
 );
 
-pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
+pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantMw> {
     // cannot assert name
     let const_flags = node.flags & (ALWAYS_PRESENT | NEVER_PRESENT);
-    assert_that!("empty flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
+    assert_that!("lod flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
     // variable
     /*
     const ALTITUDE_SURFACE = 1 << 3;
@@ -70,10 +70,10 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
     )?;
     assert_that!("lod bbox 3", node.unk164 == node.unk116, offset + 164)?;
     assert_that!("lod field 196", node.unk196 == 160, offset + 196)?;
-    Ok(NodeVariant::Lod(node))
+    Ok(NodeVariantMw::Lod(node))
 }
 
-fn assert_lod(lod: LodC, offset: u32) -> Result<(bool, Range, f32, Option<u32>)> {
+fn assert_lod(lod: LodMwC, offset: u32) -> Result<(bool, Range, f32, Option<u32>)> {
     let level = assert_that!("level", bool lod.level, offset + 0)?;
     assert_that!("range near sq", 0.0 <= lod.range_near_sq <= 1000.0 * 1000.0, offset + 4)?;
     let range_near = lod.range_near_sq.sqrt();
@@ -107,8 +107,8 @@ fn assert_lod(lod: LodC, offset: u32) -> Result<(bool, Range, f32, Option<u32>)>
     ))
 }
 
-pub fn read(read: &mut CountingReader<impl Read>, node: NodeVariants) -> Result<Wrapper<Lod>> {
-    let lod: LodC = read.read_struct()?;
+pub fn read(read: &mut CountingReader<impl Read>, node: NodeVariantsMw) -> Result<WrapperMw<Lod>> {
+    let lod: LodMwC = read.read_struct()?;
     let (level, range, unk60, unk76) = assert_lod(lod, read.prev)?;
 
     let wrapped = Lod {
@@ -127,15 +127,15 @@ pub fn read(read: &mut CountingReader<impl Read>, node: NodeVariants) -> Result<
         children_array_ptr: node.children_array_ptr,
         unk116: node.unk116,
     };
-    Ok(Wrapper {
+    Ok(WrapperMw {
         wrapped,
         has_parent: false,
         children_count: node.children_count,
     })
 }
 
-pub fn make_variants(lod: &Lod) -> NodeVariants {
-    NodeVariants {
+pub fn make_variants(lod: &Lod) -> NodeVariantsMw {
+    NodeVariantsMw {
         name: lod.name.clone(),
         flags: NodeBitFlags::from(&lod.flags),
         unk044: 1,
@@ -155,7 +155,7 @@ pub fn make_variants(lod: &Lod) -> NodeVariants {
 }
 
 pub fn write(write: &mut CountingWriter<impl Write>, lod: &Lod) -> Result<()> {
-    write.write_struct(&LodC {
+    write.write_struct(&LodMwC {
         level: bool_c!(lod.level),
         range_near_sq: lod.range.min * lod.range.min,
         range_far: lod.range.max,
@@ -171,5 +171,5 @@ pub fn write(write: &mut CountingWriter<impl Write>, lod: &Lod) -> Result<()> {
 }
 
 pub fn size(lod: &Lod) -> u32 {
-    LodC::SIZE + 4 + 4 * lod.children.len() as u32
+    LodMwC::SIZE + 4 + 4 * lod.children.len() as u32
 }

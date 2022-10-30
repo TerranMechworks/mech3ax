@@ -3,7 +3,7 @@ use crate::error::err_to_c;
 use crate::filename_to_string;
 use anyhow::{anyhow, bail, Context, Result};
 use mech3ax_api_types::{
-    AnimDef, AnimMetadata, ArchiveEntry, GameZData, Material, Model, Motion, Script,
+    AnimDef, AnimMetadata, ArchiveEntry, GameZData, Material, ModelMw, Motion, Script,
     TextureManifest,
 };
 use mech3ax_archive::{Mode, Version};
@@ -204,7 +204,7 @@ fn write_mechlib_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
             Ok(buf.into_inner())
         }
         original => {
-            let mut model: Model = serde_json::from_slice(&data)
+            let mut model: ModelMw = serde_json::from_slice(&data)
                 .with_context(|| format!("Model data for `{}` is invalid", original))?;
 
             let mut buf = CountingWriter::new(Vec::new(), 0);

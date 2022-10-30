@@ -1,19 +1,19 @@
-use super::flags::NodeBitFlags;
-use super::types::{NodeVariant, NodeVariants, ZONE_DEFAULT};
+use crate::flags::NodeBitFlags;
+use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
 use mech3ax_api_types::{static_assert_size, BoundingBox, Color, Display, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]
-struct DisplayC {
+struct DisplayMwC {
     origin_x: u32,
     origin_y: u32,
     resolution_x: u32,
     resolution_y: u32,
     clear_color: Color,
 }
-static_assert_size!(DisplayC, 28);
+static_assert_size!(DisplayMwC, 28);
 
 #[allow(clippy::excessive_precision)]
 const CLEAR_COLOR: Color = Color {
@@ -23,7 +23,7 @@ const CLEAR_COLOR: Color = Color {
 };
 const DISPLAY_NAME: &str = "display";
 
-pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
+pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantMw> {
     let name = &node.name;
     assert_that!("display name", name == DISPLAY_NAME, offset + 0)?;
     assert_that!(
@@ -64,11 +64,11 @@ pub fn assert_variants(node: NodeVariants, offset: u32) -> Result<NodeVariant> {
         offset + 164
     )?;
     assert_that!("display field 196", node.unk196 == 0, offset + 196)?;
-    Ok(NodeVariant::Display(node.data_ptr))
+    Ok(NodeVariantMw::Display(node.data_ptr))
 }
 
 pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32) -> Result<Display> {
-    let display: DisplayC = read.read_struct()?;
+    let display: DisplayMwC = read.read_struct()?;
     assert_that!("origin x", display.origin_x == 0, read.prev + 0)?;
     assert_that!("origin y", display.origin_y == 0, read.prev + 4)?;
     assert_that!("resolution x", display.resolution_x == 640, read.prev + 8)?;
@@ -88,8 +88,8 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32) -> Result<Displ
     })
 }
 
-pub fn make_variants(display: &Display) -> NodeVariants {
-    NodeVariants {
+pub fn make_variants(display: &Display) -> NodeVariantsMw {
+    NodeVariantsMw {
         name: DISPLAY_NAME.to_owned(),
         flags: NodeBitFlags::DEFAULT,
         unk044: 0,
@@ -109,7 +109,7 @@ pub fn make_variants(display: &Display) -> NodeVariants {
 }
 
 pub fn write(write: &mut CountingWriter<impl Write>, display: &Display) -> Result<()> {
-    write.write_struct(&DisplayC {
+    write.write_struct(&DisplayMwC {
         origin_x: 0,
         origin_y: 0,
         resolution_x: display.resolution_x,
@@ -120,5 +120,5 @@ pub fn write(write: &mut CountingWriter<impl Write>, display: &Display) -> Resul
 }
 
 pub fn size() -> u32 {
-    DisplayC::SIZE
+    DisplayMwC::SIZE
 }
