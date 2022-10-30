@@ -46,9 +46,10 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
         .collect::<Result<_>>()?;
 
     let result = {
-        let mut output = CountingWriter::new(BufWriter::new(
-            File::create(&output).context("Failed to create output")?,
-        ));
+        let mut output = CountingWriter::new(
+            BufWriter::new(File::create(&output).context("Failed to create output")?),
+            0,
+        );
 
         write_textures::<_, _, anyhow::Error>(&mut output, &manifest, |name| {
             images

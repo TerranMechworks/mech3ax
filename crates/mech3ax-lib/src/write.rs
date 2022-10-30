@@ -16,7 +16,7 @@ use std::os::raw::c_char;
 fn buf_writer(ptr: *const c_char) -> Result<CountingWriter<BufWriter<File>>> {
     let path = filename_to_string(ptr)?;
     let file = File::create(&path).with_context(|| format!("Failed to create `{}`", path))?;
-    Ok(CountingWriter::new(BufWriter::new(file)))
+    Ok(CountingWriter::new(BufWriter::new(file), 0))
 }
 
 #[inline(always)]
@@ -82,7 +82,7 @@ fn write_archive(
         mech3ax_archive::write_archive(
             &mut write,
             &entries,
-            |name| -> Result<Vec<u8>> {
+            |name, _offset| -> Result<Vec<u8>> {
                 let data = buffer_callback(callback, name)?;
                 transform(name, data)
             },
@@ -118,7 +118,7 @@ fn write_reader_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
     let value: Value = serde_json::from_slice(&data)
         .with_context(|| format!("Reader data for `{}` is invalid", name))?;
 
-    let mut buf = CountingWriter::new(Vec::new());
+    let mut buf = CountingWriter::new(Vec::new(), 0);
     mech3ax_reader::write_reader(&mut buf, &value)
         .with_context(|| format!("Failed to write reader data for `{}`", name))?;
     Ok(buf.into_inner())
@@ -166,7 +166,7 @@ fn write_motion_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
     let motion: Motion = serde_json::from_slice(&data)
         .with_context(|| format!("Motion data for `{}` is invalid", name))?;
 
-    let mut buf = CountingWriter::new(Vec::new());
+    let mut buf = CountingWriter::new(Vec::new(), 0);
     mech3ax_motion::write_motion(&mut buf, &motion)
         .with_context(|| format!("Failed to write motion data for `{}`", name))?;
     Ok(buf.into_inner())
@@ -198,7 +198,7 @@ fn write_mechlib_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
             let materials: Vec<Material> =
                 serde_json::from_slice(&data).context("Materials data is invalid")?;
 
-            let mut buf = CountingWriter::new(Vec::new());
+            let mut buf = CountingWriter::new(Vec::new(), 0);
             mech3ax_gamez::mechlib::write_materials(&mut buf, &materials)
                 .context("Failed to write materials data")?;
             Ok(buf.into_inner())
@@ -207,7 +207,7 @@ fn write_mechlib_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
             let mut model: Model = serde_json::from_slice(&data)
                 .with_context(|| format!("Model data for `{}` is invalid", original))?;
 
-            let mut buf = CountingWriter::new(Vec::new());
+            let mut buf = CountingWriter::new(Vec::new(), 0);
             mech3ax_gamez::mechlib::write_model_mw(&mut buf, &mut model)
                 .with_context(|| format!("Failed to write model data for `{}`", original))?;
             Ok(buf.into_inner())

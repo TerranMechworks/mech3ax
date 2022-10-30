@@ -22,7 +22,7 @@ fn u32_roundtrip() {
     let mut reader = CountingReader::new(Cursor::new(expected.clone()));
     assert_eq!(3735928559, reader.read_u32().unwrap());
 
-    let mut writer = CountingWriter::new(Cursor::new(vec![]));
+    let mut writer = CountingWriter::new(Cursor::new(vec![]), 0);
     writer.write_u32(3735928559).unwrap();
 
     let mut cursor = writer.into_inner();
@@ -35,7 +35,7 @@ fn i32_roundtrip() {
     let mut reader = CountingReader::new(Cursor::new(expected.clone()));
     assert_eq!(-559038737, reader.read_i32().unwrap());
 
-    let mut writer = CountingWriter::new(Cursor::new(vec![]));
+    let mut writer = CountingWriter::new(Cursor::new(vec![]), 0);
     writer.write_i32(-559038737).unwrap();
 
     let mut cursor = writer.into_inner();
@@ -45,7 +45,7 @@ fn i32_roundtrip() {
 #[test]
 fn f32_roundtrip() {
     let expected = -1.0f32;
-    let mut writer = CountingWriter::new(Cursor::new(vec![]));
+    let mut writer = CountingWriter::new(Cursor::new(vec![]), 0);
     writer.write_f32(expected).unwrap();
 
     let mut cursor = writer.into_inner();
@@ -61,7 +61,7 @@ fn u16_roundtrip() {
     let mut reader = CountingReader::new(Cursor::new(expected.clone()));
     assert_eq!(48879, reader.read_u16().unwrap());
 
-    let mut writer = CountingWriter::new(Cursor::new(vec![]));
+    let mut writer = CountingWriter::new(Cursor::new(vec![]), 0);
     writer.write_u16(48879).unwrap();
 
     let mut cursor = writer.into_inner();
@@ -74,7 +74,7 @@ fn i16_roundtrip() {
     let mut reader = CountingReader::new(Cursor::new(expected.clone()));
     assert_eq!(-16657, reader.read_i16().unwrap());
 
-    let mut writer = CountingWriter::new(Cursor::new(vec![]));
+    let mut writer = CountingWriter::new(Cursor::new(vec![]), 0);
     writer.write_i16(-16657).unwrap();
 
     let mut cursor = writer.into_inner();
@@ -98,7 +98,7 @@ fn struct_roundtrip() {
         int: 3735928559,
     };
 
-    let mut cursor = CountingWriter::new(Cursor::new(vec![]));
+    let mut cursor = CountingWriter::new(Cursor::new(vec![]), 0);
     cursor.write_struct(&expected).unwrap();
     assert_eq!(
         std::mem::size_of::<TestStruct>() as u64,
@@ -115,7 +115,7 @@ fn struct_roundtrip() {
 #[test]
 fn string_roundtrip() {
     let expected = "Hello World".to_owned();
-    let mut writer = CountingWriter::new(Cursor::new(vec![]));
+    let mut writer = CountingWriter::new(Cursor::new(vec![]), 0);
     writer.write_string(&expected).unwrap();
 
     let mut cursor = writer.into_inner();

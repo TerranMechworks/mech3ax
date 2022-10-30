@@ -128,10 +128,10 @@ pub struct CountingWriter<W: Write> {
 
 impl<W: Write> CountingWriter<W> {
     #[inline]
-    pub const fn new(write: W) -> Self {
+    pub const fn new(write: W, offset: usize) -> Self {
         Self {
             inner: write,
-            offset: 0,
+            offset,
         }
     }
 

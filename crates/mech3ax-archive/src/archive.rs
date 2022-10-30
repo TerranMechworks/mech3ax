@@ -148,7 +148,7 @@ pub fn write_archive<W, F, E>(
 ) -> std::result::Result<(), E>
 where
     W: Write,
-    F: FnMut(&str) -> std::result::Result<Vec<u8>, E>,
+    F: FnMut(&str, usize) -> std::result::Result<Vec<u8>, E>,
     E: From<std::io::Error> + From<Error>,
 {
     let mut offset = 0;
@@ -158,7 +158,7 @@ where
     let transformed = entries
         .iter()
         .map(|entry| {
-            let data = load_file(&entry.name)?;
+            let data = load_file(&entry.name, write.offset)?;
             write.write_all(&data)?;
             crc = crc32_update(crc, &data);
             let len = data.len() as u32;

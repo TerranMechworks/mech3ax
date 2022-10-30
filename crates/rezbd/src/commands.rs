@@ -28,16 +28,17 @@ pub fn buf_reader<P: AsRef<Path>>(path: P) -> Result<BufReader<File>> {
 }
 
 pub fn buf_writer<P: AsRef<Path>>(path: P) -> Result<CountingWriter<BufWriter<File>>> {
-    Ok(CountingWriter::new(BufWriter::new(
-        File::create(path).context("Failed to create output")?,
-    )))
+    Ok(CountingWriter::new(
+        BufWriter::new(File::create(path).context("Failed to create output")?),
+        0,
+    ))
 }
 
 fn zip_read(zip: &mut ZipArchive<impl Read + Seek>, name: &str) -> Result<Vec<u8>> {
     let mut file = zip
         .by_name(name)
         .with_context(|| format!("Failed to find `{}` in Zip", name))?;
-    let mut buf = CountingWriter::new(Vec::new());
+    let mut buf = CountingWriter::new(Vec::new(), 0);
     file.read_to_end(buf.get_mut())
         .with_context(|| format!("Failed to read `{}` from Zip", name))?;
     Ok(buf.into_inner())
@@ -68,7 +69,7 @@ fn _zarchive<F>(
     mut load_file: F,
 ) -> Result<()>
 where
-    F: FnMut(&mut ZipArchive<BufReader<File>>, &str) -> Result<Vec<u8>>,
+    F: FnMut(&mut ZipArchive<BufReader<File>>, &str, usize) -> Result<Vec<u8>>,
 {
     let input = buf_reader(&input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
@@ -78,7 +79,10 @@ where
     write_archive(
         &mut write,
         &entries,
-        |name| load_file(&mut zip, name),
+        |name, offset| {
+            debug!("Writing `{}` at {}", name, offset);
+            load_file(&mut zip, name, offset)
+        },
         version,
     )
     .context(context)
@@ -92,7 +96,7 @@ pub(crate) fn sounds(opts: ZipOpts) -> Result<()> {
         opts.output,
         version,
         "Failed to write sounds data",
-        zip_read,
+        |zip, name, _offset| zip_read(zip, name),
     )
 }
 
@@ -104,11 +108,11 @@ pub(crate) fn reader(opts: ZipOpts) -> Result<()> {
         opts.output,
         version,
         "Failed to write reader data",
-        |zip, original| {
+        |zip, original, offset| {
             let name = original.replace(".zrd", ".json");
             let value: Value = zip_json(zip, &name)?;
 
-            let mut buf = CountingWriter::new(Vec::new());
+            let mut buf = CountingWriter::new(Vec::new(), offset);
             write_reader(&mut buf, &value)
                 .with_context(|| format!("Failed to write reader data for `{}`", original))?;
             Ok(buf.into_inner())
@@ -124,13 +128,13 @@ pub(crate) fn motion(opts: ZipOpts) -> Result<()> {
         opts.output,
         version,
         "Failed to write motion data",
-        |zip, original| {
+        |zip, original, offset| {
             let name = format!("{}.json", original);
             let motion: Motion = zip_json(zip, &name)?;
 
-            let mut buf = CountingWriter::new(Vec::new());
+            let mut buf = CountingWriter::new(Vec::new(), offset);
             write_motion(&mut buf, &motion)
-                .with_context(|| format!("Failed to write motion data for \"{}\"", original))?;
+                .with_context(|| format!("Failed to write motion data for `{}`", original))?;
             Ok(buf.into_inner())
         },
     )
@@ -258,9 +262,9 @@ pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
         opts.output,
         version,
         "Failed to write savegame data",
-        |zip, name| match name {
+        |zip, name, offset| match name {
             "zSaveHeader" => {
-                let mut buf = CountingWriter::new(Vec::with_capacity(8));
+                let mut buf = CountingWriter::new(Vec::with_capacity(8), offset);
                 write_save_header(&mut buf).context("Failed to write savegame header")?;
                 Ok(buf.into_inner())
             }
@@ -268,7 +272,7 @@ pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
                 let name = format!("{}.json", original);
                 let activation: AnimActivation = zip_json(zip, &name)?;
 
-                let mut buf = CountingWriter::new(Vec::new());
+                let mut buf = CountingWriter::new(Vec::new(), offset);
                 write_activation(&mut buf, &activation)
                     .with_context(|| format!("Failed to write anim activation `{}`", original))?;
                 Ok(buf.into_inner())
