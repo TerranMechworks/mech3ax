@@ -5,6 +5,7 @@ Cargo.lock
 *.zip
 *.tar.gz
 *.json
+*.log
 __pycache__/
 /.mypy_cache
 README.html
