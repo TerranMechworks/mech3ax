@@ -1,23 +1,39 @@
 use crate::mesh::{read_mesh_data_mw, read_mesh_info_mw, write_mesh_data_mw, write_mesh_info_mw};
-use mech3ax_api_types::{MeshMw, ModelMw, Object3d};
+use mech3ax_api_types::{MeshMw, ModelMw, NodeMw, Object3d};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::Result;
 use mech3ax_nodes::{
-    read_node_mechlib_mw, write_object_3d_data_mw, write_object_3d_info_mw, WrapperMw,
+    mechlib_only_err_mw, read_node_mechlib_mw, write_node_data_mw, write_node_info_mw,
+    WrappedNodeMw, WrapperMw,
 };
 use std::io::{Read, Write};
 
 fn read_node_and_mesh(
     read: &mut CountingReader<impl Read>,
-    nodes: &mut Vec<Object3d>,
+    nodes: &mut Vec<NodeMw>,
     meshes: &mut Vec<MeshMw>,
     mesh_ptrs: &mut Vec<i32>,
+) -> Result<u32> {
+    match read_node_mechlib_mw(read)? {
+        WrappedNodeMw::Object3d(wrapped) => {
+            read_node_and_mesh_object3d(read, nodes, meshes, mesh_ptrs, wrapped)
+        }
+        _ => Err(mechlib_only_err_mw()),
+    }
+}
+
+fn read_node_and_mesh_object3d(
+    read: &mut CountingReader<impl Read>,
+    nodes: &mut Vec<NodeMw>,
+    meshes: &mut Vec<MeshMw>,
+    mesh_ptrs: &mut Vec<i32>,
+    wrapped: WrapperMw<Object3d>,
 ) -> Result<u32> {
     let WrapperMw {
         wrapped: mut object3d,
         has_parent,
         children_count,
-    } = read_node_mechlib_mw(read)?;
+    } = wrapped;
 
     if object3d.mesh_index != 0 {
         let mesh_index: i32 = mesh_ptrs.len().try_into().unwrap();
@@ -37,13 +53,16 @@ fn read_node_and_mesh(
     object3d.parent = if has_parent { Some(0) } else { None };
 
     let current_index = nodes.len();
-    nodes.push(object3d);
+    nodes.push(NodeMw::Object3d(object3d));
 
     let child_indices = (0..children_count)
         .map(|_| read_node_and_mesh(read, nodes, meshes, mesh_ptrs))
         .collect::<Result<Vec<_>>>()?;
 
-    let object3d = &mut nodes[current_index];
+    let object3d = match &mut nodes[current_index] {
+        NodeMw::Object3d(o) => o,
+        _ => panic!("node should be Object3d"),
+    };
     object3d.children = child_indices;
 
     Ok(current_index.try_into().unwrap())
@@ -65,26 +84,31 @@ pub fn read_model_mw(read: &mut CountingReader<impl Read>) -> Result<ModelMw> {
 fn write_node_and_mesh(
     write: &mut CountingWriter<impl Write>,
     node_index: u32,
-    nodes: &mut [Object3d],
+    nodes: &mut [NodeMw],
     meshes: &[MeshMw],
     mesh_ptrs: &[i32],
 ) -> Result<()> {
-    let object3d = &mut nodes[node_index as usize];
+    let node = &mut nodes[node_index as usize];
 
-    // preserve mesh_index
-    // if the mesh_index isn't -1, then we need to restore the correct pointer
-    // before the node is written out
-    let restore_index = if object3d.mesh_index > -1 {
-        let index = object3d.mesh_index as usize;
-        object3d.mesh_index = mesh_ptrs[index];
-        Some(index)
-    } else {
-        object3d.mesh_index = 0;
-        None
+    let restore_index = match node {
+        NodeMw::Object3d(object3d) => {
+            // preserve mesh_index
+            // if the mesh_index isn't -1, then we need to restore the correct pointer
+            // before the node is written out
+            if object3d.mesh_index > -1 {
+                let index = object3d.mesh_index as usize;
+                object3d.mesh_index = mesh_ptrs[index];
+                Some(index)
+            } else {
+                object3d.mesh_index = 0;
+                None
+            }
+        }
+        _ => return Err(mechlib_only_err_mw()),
     };
 
-    write_object_3d_info_mw(write, &object3d)?;
-    write_object_3d_data_mw(write, &object3d)?;
+    write_node_info_mw(write, &node)?;
+    write_node_data_mw(write, &node)?;
 
     // if mesh_index isn't -1, then we need to write out the mesh, too
     if let Some(mesh_index) = restore_index {
@@ -93,7 +117,11 @@ fn write_node_and_mesh(
         write_mesh_data_mw(write, mesh, mesh_index)?;
     }
 
-    let child_indices = object3d.children.clone();
+    let child_indices = match node {
+        NodeMw::Object3d(object3d) => object3d.children.clone(),
+        _ => unreachable!(),
+    };
+
     for child_index in child_indices.into_iter() {
         write_node_and_mesh(write, child_index, nodes, meshes, mesh_ptrs)?;
     }

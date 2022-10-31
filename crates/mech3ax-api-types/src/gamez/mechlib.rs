@@ -1,19 +1,13 @@
 use crate::gamez::mesh::{MeshMw, MeshPm};
-use crate::gamez::nodes::{LodPm, NodePm, Object3d, Object3dPm};
+use crate::gamez::nodes::{NodeMw, NodePm};
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::{RefStruct, Union};
+use mech3ax_metadata_proc_macro::RefStruct;
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct ModelMw {
-    pub nodes: Vec<Object3d>,
+    pub nodes: Vec<NodeMw>,
     pub meshes: Vec<MeshMw>,
     pub mesh_ptrs: Vec<i32>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Union)]
-pub enum ModelNodePm {
-    Object3d(Object3dPm),
-    Lod(LodPm),
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]

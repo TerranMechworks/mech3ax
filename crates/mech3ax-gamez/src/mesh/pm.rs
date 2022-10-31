@@ -58,6 +58,14 @@ static_assert_size!(PolygonPmC, 40);
 const POLYGON_PM_UNK16: u32 = 1;
 const POLYGON_PM_UNK36: u32 = 0xFFFFFF00;
 
+bitflags::bitflags! {
+    pub struct PolygonFlags: u32 {
+        const UNK2 = 1 << 2;
+        const NORMALS = 1 << 4;
+        const TRI_STRIP = 1 << 5;
+    }
+}
+
 #[repr(C)]
 struct LightPmC {
     unk00: u32,       // 00
@@ -237,14 +245,6 @@ fn read_lights(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<M
         .collect::<Result<Vec<_>>>()
 }
 
-bitflags::bitflags! {
-    pub struct PolygonFlags: u32 {
-        const UNK2 = 1 << 2;
-        const NORMALS = 1 << 4;
-        const TRI_FAN = 1 << 5;
-    }
-}
-
 fn assert_polygon(poly: PolygonPmC, offset: u32) -> Result<(u32, bool, PolygonPm)> {
     trace!("{:#?}", poly);
 
@@ -264,10 +264,10 @@ fn assert_polygon(poly: PolygonPmC, offset: u32) -> Result<(u32, bool, PolygonPm
     })?;
     let has_unk2 = flags.contains(PolygonFlags::UNK2);
     let has_normals = flags.contains(PolygonFlags::NORMALS);
-    let triangle_fan = flags.contains(PolygonFlags::TRI_FAN);
-    if triangle_fan {
-        // in mechlib, triangle fans always have normals
-        assert_that!("has normals when tri fan", has_normals == true, offset + 1)?;
+    let triangle_strip = flags.contains(PolygonFlags::TRI_STRIP);
+    if triangle_strip {
+        // in mechlib, triangle strip always have normals
+        assert_that!("has normals when tri strip", has_normals == true, offset + 1)?;
     }
 
     assert_that!("field 04", 0 <= poly.unk04 <= 20, offset + 4)?;
@@ -295,7 +295,7 @@ fn assert_polygon(poly: PolygonPmC, offset: u32) -> Result<(u32, bool, PolygonPm
         uv_coords: vec![],
         vertex_colors: vec![],
         texture_index: 0,
-        triangle_fan,
+        triangle_strip,
 
         flag_unk2: has_unk2,
         unk04: poly.unk04,
@@ -461,8 +461,8 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[PolygonPm]
         if polygon.normal_indices.is_some() {
             vertex_bits |= PolygonFlags::NORMALS;
         }
-        if polygon.triangle_fan {
-            vertex_bits |= PolygonFlags::TRI_FAN;
+        if polygon.triangle_strip {
+            vertex_bits |= PolygonFlags::TRI_STRIP;
         }
         if polygon.flag_unk2 {
             vertex_bits |= PolygonFlags::UNK2;

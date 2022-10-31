@@ -239,7 +239,7 @@ pub struct World {
 }
 
 #[derive(Debug, Serialize, Deserialize, Union)]
-pub enum Node {
+pub enum NodeMw {
     Camera(Camera),
     Display(Display),
     Empty(Empty),

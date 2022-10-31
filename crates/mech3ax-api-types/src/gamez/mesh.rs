@@ -83,7 +83,7 @@ pub struct PolygonPm {
     pub uv_coords: Vec<UvCoord>,
     pub normal_indices: Option<Vec<u32>>,
     pub texture_index: u32,
-    pub triangle_fan: bool,
+    pub triangle_strip: bool,
 
     pub flag_unk2: bool,
     pub unk04: u32,

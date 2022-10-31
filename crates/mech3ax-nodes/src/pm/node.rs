@@ -152,6 +152,11 @@ fn assert_node(node: NodePmC, offset: u32) -> Result<(NodeType, NodeVariantsPm)>
     Ok((node_type, variants))
 }
 
+#[inline]
+pub fn mechlib_only_err_pm() -> mech3ax_common::Error {
+    AssertionError("Expected only Object3d or Lod nodes in mechlib".to_owned()).into()
+}
+
 pub fn read_node_mechlib_pm(read: &mut CountingReader<impl Read>) -> Result<WrappedNodePm> {
     debug!(
         "Reading mechlib node (pm, {}) at {}",
@@ -165,17 +170,9 @@ pub fn read_node_mechlib_pm(read: &mut CountingReader<impl Read>) -> Result<Wrap
     let variant = match node_type {
         NodeType::Object3d => object3d::assert_variants(node, read.prev, true),
         NodeType::LoD => lod::assert_variants(node, read.prev, true),
-        _ => {
-            Err(AssertionError("Expected only Object3d or LoD nodes in mechlib".to_owned()).into())
-        }
+        _ => Err(mechlib_only_err_pm()),
     }?;
-    match read_node_data_pm(read, variant)? {
-        WrappedNodePm::Object3d(wrapped) => Ok(WrappedNodePm::Object3d(wrapped)),
-        WrappedNodePm::Lod(wrapped) => Ok(WrappedNodePm::Lod(wrapped)),
-        // _ => {
-        //     Err(AssertionError("Expected only Object3d or LoD nodes in mechlib".to_owned()).into())
-        // }
-    }
+    read_node_data_pm(read, variant)
 }
 
 pub fn read_node_data_pm(

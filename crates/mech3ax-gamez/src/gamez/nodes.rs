@@ -1,4 +1,4 @@
-use mech3ax_api_types::Node;
+use mech3ax_api_types::NodeMw;
 use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Error, Result};
@@ -9,7 +9,7 @@ use mech3ax_nodes::{
 };
 use std::io::{Read, Write};
 
-pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Result<Vec<Node>> {
+pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Result<Vec<NodeMw>> {
     let end_offset = read.offset + NODE_MW_C_SIZE * array_size + 4 * array_size;
 
     let mut variants = Vec::new();
@@ -110,18 +110,18 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
                 }
             }
             match read_node_data_mw(read, variant)? {
-                WrappedNodeMw::Camera(camera) => Ok(Node::Camera(camera)),
-                WrappedNodeMw::Display(display) => Ok(Node::Display(display)),
-                WrappedNodeMw::Empty(empty) => Ok(Node::Empty(empty)),
-                WrappedNodeMw::Light(light) => Ok(Node::Light(light)),
-                WrappedNodeMw::Window(window) => Ok(Node::Window(window)),
+                WrappedNodeMw::Camera(camera) => Ok(NodeMw::Camera(camera)),
+                WrappedNodeMw::Display(display) => Ok(NodeMw::Display(display)),
+                WrappedNodeMw::Empty(empty) => Ok(NodeMw::Empty(empty)),
+                WrappedNodeMw::Light(light) => Ok(NodeMw::Light(light)),
+                WrappedNodeMw::Window(window) => Ok(NodeMw::Window(window)),
                 WrappedNodeMw::Lod(wrapped_lod) => {
                     let mut lod = wrapped_lod.wrapped;
                     lod.parent = read.read_u32()?;
                     lod.children = (0..wrapped_lod.children_count)
                         .map(|_| read.read_u32())
                         .collect::<std::io::Result<Vec<_>>>()?;
-                    Ok(Node::Lod(lod))
+                    Ok(NodeMw::Lod(lod))
                 }
                 WrappedNodeMw::Object3d(wrapped_obj) => {
                     let mut object3d = wrapped_obj.wrapped;
@@ -134,14 +134,14 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
                     object3d.children = (0..wrapped_obj.children_count)
                         .map(|_| read.read_u32())
                         .collect::<std::io::Result<Vec<_>>>()?;
-                    Ok(Node::Object3d(object3d))
+                    Ok(NodeMw::Object3d(object3d))
                 }
                 WrappedNodeMw::World(wrapped_world) => {
                     let mut world = wrapped_world.wrapped;
                     world.children = (0..wrapped_world.children_count)
                         .map(|_| read.read_u32())
                         .collect::<std::io::Result<Vec<_>>>()?;
-                    Ok(Node::World(world))
+                    Ok(NodeMw::World(world))
                 }
             }
         })
@@ -152,9 +152,9 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
     Ok(nodes)
 }
 
-fn assert_area_partitions(nodes: &[Node], offset: u32) -> Result<()> {
+fn assert_area_partitions(nodes: &[NodeMw], offset: u32) -> Result<()> {
     let (x_count, y_count) =
-        if let Node::World(world) = nodes.first().expect("Expected to have read some nodes") {
+        if let NodeMw::World(world) = nodes.first().expect("Expected to have read some nodes") {
             (
                 world.area_partition_x_count as i32,
                 world.area_partition_y_count as i32,
@@ -165,8 +165,8 @@ fn assert_area_partitions(nodes: &[Node], offset: u32) -> Result<()> {
 
     for node in nodes {
         let area_partition = match node {
-            Node::Lod(lod) => &lod.area_partition,
-            Node::Object3d(object3d) => &object3d.area_partition,
+            NodeMw::Lod(lod) => &lod.area_partition,
+            NodeMw::Object3d(object3d) => &object3d.area_partition,
             _ => &None,
         };
         if let Some(ap) = area_partition {
@@ -182,7 +182,7 @@ fn assert_area_partitions(nodes: &[Node], offset: u32) -> Result<()> {
 
 pub fn write_nodes(
     write: &mut CountingWriter<impl Write>,
-    nodes: &[Node],
+    nodes: &[NodeMw],
     array_size: u32,
     offset: u32,
 ) -> Result<()> {
@@ -191,7 +191,7 @@ pub fn write_nodes(
     for node in nodes {
         write_node_info_mw(write, node)?;
         let index = match node {
-            Node::Empty(empty) => empty.parent,
+            NodeMw::Empty(empty) => empty.parent,
             _ => offset,
         };
         write.write_u32(index)?;
@@ -212,13 +212,13 @@ pub fn write_nodes(
     for node in nodes {
         write_node_data_mw(write, node)?;
         match node {
-            Node::Lod(lod) => {
+            NodeMw::Lod(lod) => {
                 write.write_u32(lod.parent)?;
                 for child in &lod.children {
                     write.write_u32(*child)?;
                 }
             }
-            Node::Object3d(object3d) => {
+            NodeMw::Object3d(object3d) => {
                 if let Some(parent) = object3d.parent {
                     write.write_u32(parent)?;
                 }
@@ -226,7 +226,7 @@ pub fn write_nodes(
                     write.write_u32(*child)?;
                 }
             }
-            Node::World(world) => {
+            NodeMw::World(world) => {
                 for child in &world.children {
                     write.write_u32(*child)?;
                 }

@@ -5,7 +5,7 @@ use mech3ax_anim::write_anim;
 use mech3ax_api_types::saves::AnimActivation;
 use mech3ax_api_types::{
     AnimMetadata, ArchiveEntry, GameZData, GameZMetadata, Material, MeshMw, ModelMw, ModelPm,
-    Motion, Node, Script, TextureManifest,
+    Motion, NodeMw, Script, TextureManifest,
 };
 use mech3ax_archive::{write_archive, Mode, Version};
 use mech3ax_common::io_ext::CountingWriter;
@@ -232,7 +232,7 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
         let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
         let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
         let meshes: Vec<MeshMw> = zip_json(&mut zip, "meshes.json")?;
-        let nodes: Vec<Node> = zip_json(&mut zip, "nodes.json")?;
+        let nodes: Vec<NodeMw> = zip_json(&mut zip, "nodes.json")?;
         GameZData {
             metadata,
             textures,

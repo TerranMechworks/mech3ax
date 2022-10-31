@@ -25,5 +25,5 @@ pub struct GameZData {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
     pub meshes: Vec<MeshMw>,
-    pub nodes: Vec<Node>,
+    pub nodes: Vec<NodeMw>,
 }

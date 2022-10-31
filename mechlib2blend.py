@@ -1,6 +1,5 @@
 import argparse
 import json
-import os
 import sys
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -13,7 +12,7 @@ from zipfile import ZipFile
 
 import bmesh  # type: ignore
 import bpy  # type: ignore
-from mathutils import Euler, Matrix, Quaternion, Vector  # type: ignore
+from mathutils import Euler, Quaternion, Vector  # type: ignore
 
 
 @dataclass
@@ -126,12 +125,17 @@ class MaterialFactory:
             if self.textures:
                 # load image from archive
                 filename = f"{texture_name}.png"
-                self.textures.extract(filename, path=str(self.tempdir))
-                image = bpy.data.images.load(str(self.tempdir / filename))
-                # we extracted the image to a temp dir, ensure it is packed into the blend file
-                image.pack()
-                # update the filepath to be sensible once the temp dir is deleted
-                image.filepath_raw = f"//{texture_name}.png"
+                try:
+                    self.textures.extract(filename, path=str(self.tempdir))
+                except KeyError:
+                    print("WARNING: did not find", texture_name)
+                    image = self._default_image()
+                else:
+                    image = bpy.data.images.load(str(self.tempdir / filename))
+                    # we extracted the image to a temp dir, ensure it is packed into the blend file
+                    image.pack()
+                    # update the filepath to be sensible once the temp dir is deleted
+                    image.filepath_raw = f"//{texture_name}.png"
             else:
                 # otherwise, use a default image
                 image = self._default_image()
@@ -198,33 +202,80 @@ def _process_mesh(
         uvs = poly["uv_coords"]
         texture_index = poly["texture_index"]
 
-        try:
-            face = bm.faces.new(bm.verts[i] for i in vertex_indices)
-        except ValueError as e:
-            # some models contain duplicate faces. they are identical, so
-            # skipping them seems harmless
-            print("Mesh", mesh_name, "error:", str(e), "ptr:", poly["vertices_ptr"])
-            continue
+        if poly.get("triangle_strip", False):
+            print("Triangle strip")
+            for i in range(len(vertex_indices) - 3 + 1):
+                vertex_window = vertex_indices[i : i + 3]
+                try:
+                    face = bm.faces.new(bm.verts[i] for i in vertex_window)
+                except ValueError as e:
+                    # some models contain duplicate faces. they are identical, so
+                    # skipping them seems harmless
+                    print(
+                        "Mesh",
+                        mesh_name,
+                        "error:",
+                        str(e),
+                        "ptr:",
+                        poly["vertices_ptr"],
+                    )
+                    continue
+                face.smooth = True
+                face.material_index = tex_index_to_mat_index[texture_index]
 
-        face.smooth = True
-        face.material_index = tex_index_to_mat_index[texture_index]
+                if colors:
+                    colors_window = colors[i : i + 3]
+                    # because all our faces are created as loops, this should work
+                    for index_in_mesh, loop, color in zip(
+                        vertex_window, face.loops, colors_window
+                    ):
+                        assert loop.vert.index == index_in_mesh
+                        loop[color_layer] = (
+                            color["r"] / 255.0,
+                            color["g"] / 255.0,
+                            color["b"] / 255.0,
+                            1.0,
+                        )
 
-        if colors:
-            # because all our faces are created as loops, this should work
-            for index_in_mesh, loop, color in zip(vertex_indices, face.loops, colors):
-                assert loop.vert.index == index_in_mesh
-                loop[color_layer] = (
-                    color["r"] / 255.0,
-                    color["g"] / 255.0,
-                    color["b"] / 255.0,
-                    1.0,
-                )
+                if uvs:
+                    uvs_window = uvs[i : i + 3]
+                    # because all our faces are created as loops, this should work
+                    for index_in_mesh, loop, uv in zip(
+                        vertex_window, face.loops, uvs_window
+                    ):
+                        assert loop.vert.index == index_in_mesh
+                        loop[uv_layer].uv = (uv["u"], 1.0 - uv["v"])
 
-        if uvs:
-            # because all our faces are created as loops, this should work
-            for index_in_mesh, loop, uv in zip(vertex_indices, face.loops, uvs):
-                assert loop.vert.index == index_in_mesh
-                loop[uv_layer].uv = (uv["u"], uv["v"])
+        else:
+            try:
+                face = bm.faces.new(bm.verts[i] for i in vertex_indices)
+            except ValueError as e:
+                # some models contain duplicate faces. they are identical, so
+                # skipping them seems harmless
+                print("Mesh", mesh_name, "error:", str(e), "ptr:", poly["vertices_ptr"])
+                continue
+
+            face.smooth = True
+            face.material_index = tex_index_to_mat_index[texture_index]
+
+            if colors:
+                # because all our faces are created as loops, this should work
+                for index_in_mesh, loop, color in zip(
+                    vertex_indices, face.loops, colors
+                ):
+                    assert loop.vert.index == index_in_mesh
+                    loop[color_layer] = (
+                        color["r"] / 255.0,
+                        color["g"] / 255.0,
+                        color["b"] / 255.0,
+                        1.0,
+                    )
+
+            if uvs:
+                # because all our faces are created as loops, this should work
+                for index_in_mesh, loop, uv in zip(vertex_indices, face.loops, uvs):
+                    assert loop.vert.index == index_in_mesh
+                    loop[uv_layer].uv = (uv["u"], uv["v"])
 
     # since normals can't be loaded, and we've set smooth shading, calculate them
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
@@ -246,6 +297,7 @@ def _process_node(
     positions: Dict[str, Node],
 ) -> None:
     object3d = nodes[node_index]
+    object3d = object3d["Object3d"]
     part_name = object3d["name"]
     mesh_index = object3d["mesh_index"]
 
@@ -425,7 +477,7 @@ def model_to_blend(
     meshes = model["meshes"]
 
     # unpack the root object, which is always uninteresting (mech_foo.flt)
-    root = nodes[0]
+    root = nodes[0]["Object3d"]
     children = root["children"]
     assert len(children) == 1, len(children)
 

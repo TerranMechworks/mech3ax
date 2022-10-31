@@ -49,7 +49,7 @@ fn read_node_and_mesh_lod(
 
     let lod = match &mut nodes[current_index] {
         NodePm::Lod(l) => l,
-        NodePm::Object3d(_) => panic!("node should not be LoD"),
+        NodePm::Object3d(_) => panic!("node should be Lod"),
     };
     lod.children = child_indices;
 
@@ -95,7 +95,7 @@ fn read_node_and_mesh_object3d(
 
     let object3d = match &mut nodes[current_index] {
         NodePm::Object3d(o) => o,
-        NodePm::Lod(_) => panic!("node should not be LoD"),
+        NodePm::Lod(_) => panic!("node should be Object3d"),
     };
     object3d.children = child_indices;
 
@@ -139,7 +139,7 @@ fn write_node_and_mesh(
             }
         }
         NodePm::Lod(_) => None,
-        // _ => panic!("mechlib node should be Object3d or Lod"),
+        // _ => return Err(mechlib_only_err_mw()),
     };
 
     write_node_info_pm(write, &node, true)?;
@@ -155,7 +155,7 @@ fn write_node_and_mesh(
     let child_indices = match node {
         NodePm::Object3d(object3d) => object3d.children.clone(),
         NodePm::Lod(lod) => lod.children.clone(),
-        // _ => panic!("mechlib node should be Object3d or Lod"),
+        // _ => unreachable!(),
     };
 
     for child_index in child_indices.into_iter() {

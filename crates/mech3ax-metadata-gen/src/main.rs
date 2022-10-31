@@ -62,7 +62,7 @@ fn main() {
     resolver.push_struct::<api::Object3d>();
     resolver.push_struct::<api::Window>();
     resolver.push_struct::<api::World>();
-    resolver.push_union::<api::Node>();
+    resolver.push_union::<api::NodeMw>();
     // gamez mechlib
     resolver.push_struct::<api::ModelMw>();
     // gamez mod

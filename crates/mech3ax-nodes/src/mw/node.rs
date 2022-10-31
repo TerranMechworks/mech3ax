@@ -6,13 +6,11 @@ use super::lod;
 use super::object3d;
 use super::window;
 use super::world;
-use super::wrappers::{WrappedNodeMw, WrapperMw};
+use super::wrappers::WrappedNodeMw;
 use crate::flags::NodeBitFlags;
 use crate::types::{NodeType, NodeVariantMw, NodeVariantsMw};
 use log::{debug, trace};
-use mech3ax_api_types::{
-    static_assert_size, AreaPartition, BoundingBox, Node, Object3d, ReprSize as _,
-};
+use mech3ax_api_types::{static_assert_size, AreaPartition, BoundingBox, NodeMw, ReprSize as _};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
@@ -145,7 +143,12 @@ fn assert_node(node: NodeMwC, offset: u32) -> Result<(NodeType, NodeVariantsMw)>
     Ok((node_type, variants))
 }
 
-pub fn read_node_mechlib_mw(read: &mut CountingReader<impl Read>) -> Result<WrapperMw<Object3d>> {
+#[inline]
+pub fn mechlib_only_err_mw() -> mech3ax_common::Error {
+    AssertionError("Expected only Object3d nodes in mechlib".to_owned()).into()
+}
+
+pub fn read_node_mechlib_mw(read: &mut CountingReader<impl Read>) -> Result<WrappedNodeMw> {
     debug!(
         "Reading mechlib node (mw, {}) at {}",
         NodeMwC::SIZE,
@@ -157,12 +160,9 @@ pub fn read_node_mechlib_mw(read: &mut CountingReader<impl Read>) -> Result<Wrap
     debug!("Node `{}` read", node.name);
     let variant = match node_type {
         NodeType::Object3d => object3d::assert_variants(node, read.prev, true),
-        _ => Err(AssertionError("Expected only Object3d nodes in mechlib".to_owned()).into()),
+        _ => Err(mechlib_only_err_mw()),
     }?;
-    match read_node_data_mw(read, variant)? {
-        WrappedNodeMw::Object3d(wrapped) => Ok(wrapped),
-        _ => Err(AssertionError("Expected only Object3d nodes in mechlib".to_owned()).into()),
-    }
+    read_node_data_mw(read, variant)
 }
 
 pub fn read_node_info_gamez_mw(
@@ -263,83 +263,66 @@ fn write_variant(
     Ok(())
 }
 
-pub fn write_node_info_mw(write: &mut CountingWriter<impl Write>, node: &Node) -> Result<()> {
+pub fn write_node_info_mw(write: &mut CountingWriter<impl Write>, node: &NodeMw) -> Result<()> {
     match node {
-        Node::Camera(camera) => {
+        NodeMw::Camera(camera) => {
             let variant = camera::make_variants(camera);
             write_variant(write, NodeType::Camera, variant)
         }
-        Node::Display(display) => {
+        NodeMw::Display(display) => {
             let variant = display::make_variants(display);
             write_variant(write, NodeType::Display, variant)
         }
-        Node::Empty(empty) => {
+        NodeMw::Empty(empty) => {
             let variant = empty::make_variants(empty);
             write_variant(write, NodeType::Empty, variant)
         }
-        Node::Light(light) => {
+        NodeMw::Light(light) => {
             let variant = light::make_variants(light);
             write_variant(write, NodeType::Light, variant)
         }
-        Node::Lod(lod) => {
+        NodeMw::Lod(lod) => {
             let variant = lod::make_variants(lod);
             write_variant(write, NodeType::LoD, variant)
         }
-        Node::Object3d(object3d) => {
+        NodeMw::Object3d(object3d) => {
             let variant = object3d::make_variants(object3d);
             write_variant(write, NodeType::Object3d, variant)
         }
-        Node::Window(window) => {
+        NodeMw::Window(window) => {
             let variant = window::make_variants(window);
             write_variant(write, NodeType::Window, variant)
         }
-        Node::World(world) => {
+        NodeMw::World(world) => {
             let variant = world::make_variants(world);
             write_variant(write, NodeType::World, variant)
         }
     }
 }
 
-// exposed for mechlib
-pub fn write_object_3d_info_mw(
-    write: &mut CountingWriter<impl Write>,
-    object3d: &Object3d,
-) -> Result<()> {
-    let variant = object3d::make_variants(object3d);
-    write_variant(write, NodeType::Object3d, variant)
-}
-
-pub fn write_node_data_mw(write: &mut CountingWriter<impl Write>, node: &Node) -> Result<()> {
+pub fn write_node_data_mw(write: &mut CountingWriter<impl Write>, node: &NodeMw) -> Result<()> {
     match node {
-        Node::Camera(camera) => camera::write(write, camera),
-        Node::Display(display) => display::write(write, display),
-        Node::Empty(_) => Ok(()),
-        Node::Light(light) => light::write(write, light),
-        Node::Lod(lod) => lod::write(write, lod),
-        Node::Object3d(object3d) => object3d::write(write, object3d),
-        Node::Window(window) => window::write(write, window),
-        Node::World(world) => world::write(write, world),
+        NodeMw::Camera(camera) => camera::write(write, camera),
+        NodeMw::Display(display) => display::write(write, display),
+        NodeMw::Empty(_) => Ok(()),
+        NodeMw::Light(light) => light::write(write, light),
+        NodeMw::Lod(lod) => lod::write(write, lod),
+        NodeMw::Object3d(object3d) => object3d::write(write, object3d),
+        NodeMw::Window(window) => window::write(write, window),
+        NodeMw::World(world) => world::write(write, world),
     }
 }
 
-// exposed for mechlib
-pub fn write_object_3d_data_mw(
-    write: &mut CountingWriter<impl Write>,
-    object3d: &Object3d,
-) -> Result<()> {
-    object3d::write(write, object3d)
-}
-
-pub fn size_node_mw(node: &Node) -> u32 {
+pub fn size_node_mw(node: &NodeMw) -> u32 {
     match node {
-        Node::Camera(_) => camera::size(),
-        Node::Empty(_) => empty::size(),
-        Node::Display(_) => display::size(),
-        Node::Light(_) => light::size(),
-        Node::Lod(lod) => lod::size(lod),
-        Node::Object3d(object3d) => object3d::size(object3d),
-        Node::Window(_) => window::size(),
-        Node::World(world) => world::size(world),
+        NodeMw::Camera(_) => camera::size(),
+        NodeMw::Empty(_) => empty::size(),
+        NodeMw::Display(_) => display::size(),
+        NodeMw::Light(_) => light::size(),
+        NodeMw::Lod(lod) => lod::size(lod),
+        NodeMw::Object3d(object3d) => object3d::size(object3d),
+        NodeMw::Window(_) => window::size(),
+        NodeMw::World(world) => world::size(world),
     }
 }
 
