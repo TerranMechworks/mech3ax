@@ -1,53 +1,55 @@
 use crate::flags::NodeBitFlags;
 use crate::math::cotangent;
 use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
+use log::{debug, trace};
 use mech3ax_api_types::{
-    static_assert_size, BoundingBox, Camera, Matrix, Range, ReprSize as _, Vec3,
+    static_assert_size, BoundingBox, Camera, Hide, Matrix, Range, ReprSize as _, Vec3,
 };
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
+#[derive(Debug)]
 #[repr(C)]
 struct CameraMwC {
-    world_index: i32,      // 000
-    window_index: i32,     // 004
-    focus_node_xy: i32,    // 008
-    focus_node_xz: i32,    // 012
-    flags: u32,            // 016
-    translation: Vec3,     // 020
-    rotation: Vec3,        // 032
-    world_translate: Vec3, // 044
-    world_rotate: Vec3,    // 056
-    mtw_matrix: Matrix,    // 068
-    unk104: Vec3,
-    view_vector: Vec3,   // 116
-    matrix: Matrix,      // 128
-    alt_translate: Vec3, // 164
-    clip: Range,         // 176
-    zero184: [u8; 24],
-    lod_multiplier: f32,    // 208
-    lod_inv_sq: f32,        // 212
-    fov_h_zoom_factor: f32, // 216
-    fov_v_zoom_factor: f32, // 220
-    fov_h_base: f32,        // 224
-    fov_v_base: f32,        // 228
-    fov: Range,             // 232
-    fov_h_half: f32,        // 240
-    fov_v_half: f32,        // 244
-    one248: u32,
-    zero252: [u8; 60],
-    one312: u32,
-    zero316: [u8; 72],
-    one388: u32,
-    zero392: [u8; 72],
-    zero464: u32,
-    fov_h_cot: f32, // 468
-    fov_v_cot: f32, // 472
-    stride: i32,
-    zone_set: i32,
-    unk484: i32,
+    world_index: i32,        // 000
+    window_index: i32,       // 004
+    focus_node_xy: i32,      // 008
+    focus_node_xz: i32,      // 012
+    flags: u32,              // 016
+    translation: Vec3,       // 020
+    rotation: Vec3,          // 032
+    world_translate: Vec3,   // 044
+    world_rotate: Vec3,      // 056
+    mtw_matrix: Matrix,      // 068
+    unk104: Vec3,            // 104
+    view_vector: Vec3,       // 116
+    matrix: Matrix,          // 128
+    alt_translate: Vec3,     // 164
+    clip: Range,             // 176
+    zero184: Hide<[u8; 24]>, // 184
+    lod_multiplier: f32,     // 208
+    lod_inv_sq: f32,         // 212
+    fov_h_zoom_factor: f32,  // 216
+    fov_v_zoom_factor: f32,  // 220
+    fov_h_base: f32,         // 224
+    fov_v_base: f32,         // 228
+    fov: Range,              // 232
+    fov_h_half: f32,         // 240
+    fov_v_half: f32,         // 244
+    one248: u32,             // 248
+    zero252: Hide<[u8; 60]>, // 252
+    one312: u32,             // 312
+    zero316: Hide<[u8; 72]>, // 316
+    one388: u32,             // 388
+    zero392: Hide<[u8; 72]>, // 392
+    zero464: u32,            // 464
+    fov_h_cot: f32,          // 468
+    fov_v_cot: f32,          // 472
+    stride: i32,             // 476
+    zone_set: i32,           // 480
+    unk484: i32,             // 484
 }
 static_assert_size!(CameraMwC, 488);
 
@@ -145,7 +147,7 @@ fn assert_camera(camera: CameraMwC, offset: u32) -> Result<(Range, Range)> {
         offset + 180
     )?;
 
-    assert_all_zero("field 184", offset + 184, &camera.zero184)?;
+    assert_all_zero("field 184", offset + 184, &camera.zero184.0)?;
 
     assert_that!("LOD mul", camera.lod_multiplier == 1.0, offset + 208)?;
     assert_that!("LOD inv sq", camera.lod_inv_sq == 1.0, offset + 212)?;
@@ -182,13 +184,13 @@ fn assert_camera(camera: CameraMwC, offset: u32) -> Result<(Range, Range)> {
     )?;
 
     assert_that!("field 248", camera.one248 == 1, offset + 248)?;
-    assert_all_zero("field 252", offset + 252, &camera.zero252)?;
+    assert_all_zero("field 252", offset + 252, &camera.zero252.0)?;
 
     assert_that!("field 312", camera.one312 == 1, offset + 312)?;
-    assert_all_zero("field 316", offset + 316, &camera.zero316)?;
+    assert_all_zero("field 316", offset + 316, &camera.zero316.0)?;
 
     assert_that!("field 388", camera.one388 == 1, offset + 388)?;
-    assert_all_zero("field 392", offset + 392, &camera.zero392)?;
+    assert_all_zero("field 392", offset + 392, &camera.zero392.0)?;
 
     assert_that!("field 464", camera.zero464 == 0, offset + 464)?;
 
@@ -210,8 +212,16 @@ fn assert_camera(camera: CameraMwC, offset: u32) -> Result<(Range, Range)> {
     Ok((camera.clip, camera.fov))
 }
 
-pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32) -> Result<Camera> {
+pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -> Result<Camera> {
+    debug!(
+        "Reading camera node data {} (mw, {}) at {}",
+        index,
+        CameraMwC::SIZE,
+        read.offset
+    );
     let camera: CameraMwC = read.read_struct()?;
+    trace!("{:#?}", camera);
+
     let (clip, fov) = assert_camera(camera, read.prev)?;
 
     Ok(Camera {
@@ -242,11 +252,18 @@ pub fn make_variants(camera: &Camera) -> NodeVariantsMw {
     }
 }
 
-pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera) -> Result<()> {
+pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera, index: usize) -> Result<()> {
+    debug!(
+        "Writing camera node data {} (mw, {}) at {}",
+        index,
+        CameraMwC::SIZE,
+        write.offset
+    );
+
     let fov_h_half = camera.fov.min / 2.0;
     let fov_v_half = camera.fov.max / 2.0;
 
-    write.write_struct(&CameraMwC {
+    let camera = CameraMwC {
         world_index: 0,
         window_index: 1,
         focus_node_xy: -1,
@@ -262,7 +279,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera) -> Result<
         matrix: Matrix::EMPTY,
         alt_translate: Vec3::DEFAULT,
         clip: camera.clip,
-        zero184: [0; 24],
+        zero184: Hide([0; 24]),
         lod_multiplier: 1.0,
         lod_inv_sq: 1.0,
         fov_h_zoom_factor: 1.0,
@@ -273,18 +290,20 @@ pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera) -> Result<
         fov_h_half,
         fov_v_half,
         one248: 1,
-        zero252: [0; 60],
+        zero252: Hide([0; 60]),
         one312: 1,
-        zero316: [0; 72],
+        zero316: Hide([0; 72]),
         one388: 1,
-        zero392: [0; 72],
+        zero392: Hide([0; 72]),
         zero464: 0,
         fov_h_cot: cotangent(fov_h_half),
         fov_v_cot: cotangent(fov_v_half),
         stride: 0,
         zone_set: 0,
         unk484: -256,
-    })?;
+    };
+    trace!("{:#?}", camera);
+    write.write_struct(&camera)?;
     Ok(())
 }
 

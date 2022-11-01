@@ -2,27 +2,29 @@ use super::wrappers::WrapperMw;
 use crate::flags::NodeBitFlags;
 use crate::math::{apply_zero_signs, euler_to_matrix, extract_zero_signs, PI};
 use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
+use log::{debug, trace};
 use mech3ax_api_types::{
-    static_assert_size, Matrix, Object3d, ReprSize as _, Transformation, Vec3,
+    static_assert_size, Hide, Matrix, Object3d, ReprSize as _, Transformation, Vec3,
 };
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
+#[derive(Debug)]
 #[repr(C)]
 struct Object3dMwC {
-    flags: u32,        // 000
-    opacity: f32,      // 004
-    zero008: f32,      // 008
-    zero012: f32,      // 012
-    zero016: f32,      // 016
-    zero020: f32,      // 020
-    rotation: Vec3,    // 024
-    scale: Vec3,       // 032
-    matrix: Matrix,    // 048
-    translation: Vec3, // 084
-    zero096: [u8; 48], // 096
+    flags: u32,              // 000
+    opacity: f32,            // 004
+    zero008: f32,            // 008
+    zero012: f32,            // 012
+    zero016: f32,            // 016
+    zero020: f32,            // 020
+    rotation: Vec3,          // 024
+    scale: Vec3,             // 032
+    matrix: Matrix,          // 048
+    translation: Vec3,       // 084
+    zero096: Hide<[u8; 48]>, // 096
 }
 static_assert_size!(Object3dMwC, 144);
 
@@ -91,7 +93,7 @@ fn assert_object3d(object3d: Object3dMwC, offset: u32) -> Result<Option<Transfor
     assert_that!("field 016", object3d.zero016 == 0.0, offset + 16)?;
     assert_that!("field 020", object3d.zero020 == 0.0, offset + 20)?;
     assert_that!("scale", object3d.scale == SCALE_ONE, offset + 36)?;
-    assert_all_zero("field 096", offset + 96, &object3d.zero096)?;
+    assert_all_zero("field 096", offset + 96, &object3d.zero096.0)?;
 
     let transformation = if object3d.flags == 40 {
         assert_that!("rotation", object3d.rotation == Vec3::DEFAULT, offset + 24)?;
@@ -129,10 +131,19 @@ fn assert_object3d(object3d: Object3dMwC, offset: u32) -> Result<Option<Transfor
 pub fn read(
     read: &mut CountingReader<impl Read>,
     node: NodeVariantsMw,
+    index: usize,
 ) -> Result<WrapperMw<Object3d>> {
-    let object3dc: Object3dMwC = read.read_struct()?;
-    let matrix_signs = extract_zero_signs(&object3dc.matrix);
-    let transformation = assert_object3d(object3dc, read.prev)?;
+    debug!(
+        "Reading object3d node data {} (mw, {}) at {}",
+        index,
+        Object3dMwC::SIZE,
+        read.offset
+    );
+    let object3d: Object3dMwC = read.read_struct()?;
+    trace!("{:#?}", object3d);
+
+    let matrix_signs = extract_zero_signs(&object3d.matrix);
+    let transformation = assert_object3d(object3d, read.prev)?;
 
     let wrapped = Object3d {
         name: node.name,
@@ -180,7 +191,18 @@ pub fn make_variants(object3d: &Object3d) -> NodeVariantsMw {
     }
 }
 
-pub fn write(write: &mut CountingWriter<impl Write>, object3d: &Object3d) -> Result<()> {
+pub fn write(
+    write: &mut CountingWriter<impl Write>,
+    object3d: &Object3d,
+    index: usize,
+) -> Result<()> {
+    debug!(
+        "Writing object3d node data {} (mw, {}) at {}",
+        index,
+        Object3dMwC::SIZE,
+        write.offset
+    );
+
     let (flags, rotation, translation, matrix) = object3d
         .transformation
         .as_ref()
@@ -196,7 +218,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, object3d: &Object3d) -> Res
 
     let matrix = apply_zero_signs(&matrix, object3d.matrix_signs);
 
-    write.write_struct(&Object3dMwC {
+    let object3d = Object3dMwC {
         flags,
         opacity: 0.0,
         zero008: 0.0,
@@ -207,8 +229,10 @@ pub fn write(write: &mut CountingWriter<impl Write>, object3d: &Object3d) -> Res
         scale: SCALE_ONE,
         matrix,
         translation,
-        zero096: [0u8; 48],
-    })?;
+        zero096: Hide([0u8; 48]),
+    };
+    trace!("{:#?}", object3d);
+    write.write_struct(&object3d)?;
     Ok(())
 }
 

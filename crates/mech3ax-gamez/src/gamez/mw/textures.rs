@@ -1,4 +1,4 @@
-use log::debug;
+use log::{debug, trace};
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -6,6 +6,7 @@ use mech3ax_common::string::{str_from_c_suffix, str_to_c_suffix};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
+#[derive(Debug)]
 #[repr(C)]
 struct TextureInfoC {
     zero00: u32,
@@ -27,6 +28,8 @@ pub fn read_texture_infos(read: &mut CountingReader<impl Read>, count: u32) -> R
                 read.offset
             );
             let info: TextureInfoC = read.read_struct()?;
+            trace!("{:#?}", info);
+
             // not sure what this is. a pointer to the previous texture in the global
             // array? or a pointer to the texture?
             assert_that!("field 00", info.zero00 == 0, read.prev + 0)?;
@@ -59,14 +62,16 @@ pub fn write_texture_infos(
         );
         let mut texture = [0; 20];
         str_to_c_suffix(name, &mut texture);
-        write.write_struct(&TextureInfoC {
+        let info = TextureInfoC {
             zero00: 0,
             zero04: 0,
             texture,
             used: 2,
             index: 0,
             unk36: -1,
-        })?;
+        };
+        trace!("{:#?}", info);
+        write.write_struct(&info)?;
     }
     Ok(())
 }

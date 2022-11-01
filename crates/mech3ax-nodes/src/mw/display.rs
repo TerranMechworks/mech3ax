@@ -1,10 +1,12 @@
 use crate::flags::NodeBitFlags;
 use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
+use log::{debug, trace};
 use mech3ax_api_types::{static_assert_size, BoundingBox, Color, Display, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
+#[derive(Debug)]
 #[repr(C)]
 struct DisplayMwC {
     origin_x: u32,
@@ -67,8 +69,16 @@ pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantM
     Ok(NodeVariantMw::Display(node.data_ptr))
 }
 
-pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32) -> Result<Display> {
+pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -> Result<Display> {
+    debug!(
+        "Reading display node data {} (mw, {}) at {}",
+        index,
+        DisplayMwC::SIZE,
+        read.offset
+    );
     let display: DisplayMwC = read.read_struct()?;
+    trace!("{:#?}", display);
+
     assert_that!("origin x", display.origin_x == 0, read.prev + 0)?;
     assert_that!("origin y", display.origin_y == 0, read.prev + 4)?;
     assert_that!("resolution x", display.resolution_x == 640, read.prev + 8)?;
@@ -108,14 +118,26 @@ pub fn make_variants(display: &Display) -> NodeVariantsMw {
     }
 }
 
-pub fn write(write: &mut CountingWriter<impl Write>, display: &Display) -> Result<()> {
-    write.write_struct(&DisplayMwC {
+pub fn write(
+    write: &mut CountingWriter<impl Write>,
+    display: &Display,
+    index: usize,
+) -> Result<()> {
+    debug!(
+        "Writing display node data {} (mw, {}) at {}",
+        index,
+        DisplayMwC::SIZE,
+        write.offset
+    );
+    let display = DisplayMwC {
         origin_x: 0,
         origin_y: 0,
         resolution_x: display.resolution_x,
         resolution_y: display.resolution_y,
         clear_color: display.clear_color,
-    })?;
+    };
+    trace!("{:#?}", display);
+    write.write_struct(&display)?;
     Ok(())
 }
 

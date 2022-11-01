@@ -311,15 +311,34 @@ pub fn read_mesh_data_mw(
 ) -> Result<MeshMw> {
     debug!("Reading mesh data {} (mw) at {}", mesh_index, read.offset);
     let mut mesh = wrapped.mesh;
-    trace!("Reading vertices at {}", read.offset);
+    trace!(
+        "Reading {} x vertices at {}",
+        wrapped.vertex_count,
+        read.offset
+    );
     mesh.vertices = read_vec3s(read, wrapped.vertex_count)?;
-    trace!("Reading normals at {}", read.offset);
+    trace!(
+        "Reading {} x normals at {}",
+        wrapped.normal_count,
+        read.offset
+    );
     mesh.normals = read_vec3s(read, wrapped.normal_count)?;
-    trace!("Reading morphs at {}", read.offset);
+    trace!(
+        "Reading {} x morphs at {}",
+        wrapped.morph_count,
+        read.offset
+    );
     mesh.morphs = read_vec3s(read, wrapped.morph_count)?;
-    trace!("Reading lights at {}", read.offset);
+    trace!(
+        "Reading {} x lights at {}",
+        wrapped.light_count,
+        read.offset
+    );
     mesh.lights = read_lights(read, wrapped.light_count)?;
-    debug!("Reading polygons (mw) at {}", read.offset);
+    debug!(
+        "Reading {} x polygons (mw) at {}",
+        wrapped.polygon_count, read.offset
+    );
     mesh.polygons = read_polygons(read, wrapped.polygon_count)?;
     trace!("Read mesh data (mw) at {}", read.offset);
     Ok(mesh)
@@ -336,7 +355,7 @@ pub fn write_mesh_info_mw(
         MeshMwC::SIZE,
         write.offset
     );
-    write.write_struct(&MeshMwC {
+    let mesh = MeshMwC {
         file_ptr: bool_c!(mesh.file_ptr),
         unk04: bool_c!(mesh.unk04),
         unk08: mesh.unk08,
@@ -360,7 +379,9 @@ pub fn write_mesh_info_mw(
         unk80: mesh.unk80,
         unk84: mesh.unk84,
         zero88: 0,
-    })?;
+    };
+    trace!("{:#?}", mesh);
+    write.write_struct(&mesh)?;
     Ok(())
 }
 
@@ -466,15 +487,27 @@ pub fn write_mesh_data_mw(
     mesh_index: usize,
 ) -> Result<()> {
     debug!("Writing mesh data {} (mw) at {}", mesh_index, write.offset);
-    trace!("Writing vertices at {}", write.offset);
+    trace!(
+        "Writing {} x vertices at {}",
+        mesh.vertices.len(),
+        write.offset
+    );
     write_vec3s(write, &mesh.vertices)?;
-    trace!("Writing normals at {}", write.offset);
+    trace!(
+        "Writing {} x normals at {}",
+        mesh.normals.len(),
+        write.offset
+    );
     write_vec3s(write, &mesh.normals)?;
-    trace!("Writing morphs at {}", write.offset);
+    trace!("Writing {} x morphs at {}", mesh.morphs.len(), write.offset);
     write_vec3s(write, &mesh.morphs)?;
-    trace!("Writing lights at {}", write.offset);
+    trace!("Writing {} x lights at {}", mesh.lights.len(), write.offset);
     write_lights(write, &mesh.lights)?;
-    debug!("Writing polygons (mw) at {}", write.offset);
+    debug!(
+        "Writing {} x polygons (mw) at {}",
+        mesh.polygons.len(),
+        write.offset
+    );
     write_polygons(write, &mesh.polygons)?;
     trace!("Wrote mesh data (mw) at {}", write.offset);
     Ok(())
@@ -492,6 +525,7 @@ pub fn read_mesh_infos_zero_mw(
             read.offset
         );
         let mesh: MeshMwC = read.read_struct()?;
+
         assert_that!("file_ptr", mesh.file_ptr == 0, read.prev + 0)?;
         assert_that!("unk04", mesh.unk04 == 0, read.prev + 4)?;
         assert_that!("unk08", mesh.unk08 == 0, read.prev + 8)?;

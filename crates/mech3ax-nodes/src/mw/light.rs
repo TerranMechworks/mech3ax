@@ -1,7 +1,8 @@
 use crate::flags::NodeBitFlags;
 use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
+use log::{debug, trace};
 use mech3ax_api_types::{
-    static_assert_size, BoundingBox, Color, Light, Range, ReprSize as _, Vec3,
+    static_assert_size, BoundingBox, Color, Hide, Light, Range, ReprSize as _, Vec3,
 };
 use mech3ax_common::assert::{assert_all_zero, AssertionError};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -9,26 +10,27 @@ use mech3ax_common::light::LightFlags;
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
+#[derive(Debug)]
 #[repr(C)]
 struct LightMwC {
-    direction: Vec3,    // 000
-    translation: Vec3,  // 012
-    zero024: [u8; 112], // 024
-    one136: f32,        // 136
-    zero140: f32,       // 140
-    zero144: f32,       // 144
-    zero148: f32,       // 148
-    zero152: f32,       // 152
-    diffuse: f32,       // 156
-    ambient: f32,       // 160
-    color: Color,       // 164
-    flags: u32,         // 176
-    range: Range,       // 180
-    range_near_sq: f32, // 188
-    range_far_sq: f32,  // 192
-    range_inv: f32,     // 196
-    parent_count: u32,  // 200
-    parent_ptr: u32,    // 204
+    direction: Vec3,          // 000
+    translation: Vec3,        // 012
+    zero024: Hide<[u8; 112]>, // 024
+    one136: f32,              // 136
+    zero140: f32,             // 140
+    zero144: f32,             // 144
+    zero148: f32,             // 148
+    zero152: f32,             // 152
+    diffuse: f32,             // 156
+    ambient: f32,             // 160
+    color: Color,             // 164
+    flags: u32,               // 176
+    range: Range,             // 180
+    range_near_sq: f32,       // 188
+    range_far_sq: f32,        // 192
+    range_inv: f32,           // 196
+    parent_count: u32,        // 200
+    parent_ptr: u32,          // 204
 }
 static_assert_size!(LightMwC, 208);
 
@@ -92,7 +94,7 @@ fn assert_light(light: &LightMwC, offset: u32) -> Result<()> {
         light.translation == Vec3::DEFAULT,
         offset + 12
     )?;
-    assert_all_zero("field 024", offset + 24, &light.zero024)?;
+    assert_all_zero("field 024", offset + 24, &light.zero024.0)?;
 
     assert_that!("field 136", light.one136 == 1.0, offset + 136)?;
     assert_that!("field 140", light.zero140 == 0.0, offset + 140)?;
@@ -132,8 +134,16 @@ fn assert_light(light: &LightMwC, offset: u32) -> Result<()> {
     Ok(())
 }
 
-pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32) -> Result<Light> {
+pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -> Result<Light> {
+    debug!(
+        "Reading light node data {} (mw, {}) at {}",
+        index,
+        LightMwC::SIZE,
+        read.offset
+    );
     let light: LightMwC = read.read_struct()?;
+    trace!("{:#?}", light);
+
     assert_light(&light, read.prev)?;
 
     // read as a result of parent_count, but is always 0
@@ -172,11 +182,17 @@ pub fn make_variants(light: &Light) -> NodeVariantsMw {
     }
 }
 
-pub fn write(write: &mut CountingWriter<impl Write>, light: &Light) -> Result<()> {
-    write.write_struct(&LightMwC {
+pub fn write(write: &mut CountingWriter<impl Write>, light: &Light, index: usize) -> Result<()> {
+    debug!(
+        "Writing light node data {} (mw, {}) at {}",
+        index,
+        LightMwC::SIZE,
+        write.offset
+    );
+    let light = LightMwC {
         direction: light.direction,
         translation: Vec3::DEFAULT,
-        zero024: [0; 112],
+        zero024: Hide([0; 112]),
         one136: 1.0,
         zero140: 0.0,
         zero144: 0.0,
@@ -192,7 +208,9 @@ pub fn write(write: &mut CountingWriter<impl Write>, light: &Light) -> Result<()
         range_inv: 1.0 / (light.range.max - light.range.min),
         parent_count: 1,
         parent_ptr: light.parent_ptr,
-    })?;
+    };
+    trace!("{:#?}", light);
+    write.write_struct(&light)?;
     // written as a result of parent_count, but is always 0
     write.write_u32(0)?;
     Ok(())

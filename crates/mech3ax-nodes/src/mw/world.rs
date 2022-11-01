@@ -3,6 +3,7 @@ use crate::flags::NodeBitFlags;
 use crate::math::partition_diag;
 use crate::range::RangeI32;
 use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
+use log::{debug, trace};
 use mech3ax_api_types::{
     static_assert_size, Area, BoundingBox, Color, Partition, Range, ReprSize as _, World,
 };
@@ -10,6 +11,7 @@ use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
+#[derive(Debug)]
 #[repr(C)]
 struct WorldMwC {
     flags: u32,                           // 000
@@ -58,6 +60,7 @@ struct WorldMwC {
 }
 static_assert_size!(WorldMwC, 188);
 
+#[derive(Debug)]
 #[repr(C)]
 struct PartitionMwC {
     flags: u32,
@@ -130,7 +133,16 @@ pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantM
 }
 
 fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Result<Partition> {
+    debug!(
+        "Reading world partition data x: {}, y: {} (mw, {}) at {}",
+        x,
+        y,
+        PartitionMwC::SIZE,
+        read.offset
+    );
     let partition: PartitionMwC = read.read_struct()?;
+    trace!("{:#?}", partition);
+
     let xf = x as f32;
     let yf = y as f32;
 
@@ -403,8 +415,17 @@ pub fn read(
     data_ptr: u32,
     children_count: u32,
     children_array_ptr: u32,
+    index: usize,
 ) -> Result<WrapperMw<World>> {
+    debug!(
+        "Reading world node data {} (mw, {}) at {}",
+        index,
+        WorldMwC::SIZE,
+        read.offset
+    );
     let world: WorldMwC = read.read_struct()?;
+    trace!("{:#?}", world);
+
     let (area, area_x, area_y, fudge_count) = assert_world(&world, read.prev)?;
 
     // read as a result of world.children_count (always 1, not node.children_count!)
@@ -457,11 +478,19 @@ pub fn make_variants(world: &World) -> NodeVariantsMw {
 }
 
 fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition) -> Result<()> {
+    debug!(
+        "Writing world partition data x: {}, y: {} (mw, {}) at {}",
+        partition.x,
+        partition.y,
+        PartitionMwC::SIZE,
+        write.offset
+    );
+
     let x = partition.x as f32;
     let y = partition.y as f32;
     let diagonal = partition_diag(partition.z_min, partition.z_max);
 
-    write.write_struct(&PartitionMwC {
+    let partition_c = PartitionMwC {
         flags: 0x100,
         mone04: -1,
         part_x: x,
@@ -481,7 +510,9 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
         ptr: partition.ptr,
         zero64: 0,
         zero68: 0,
-    })?;
+    };
+    trace!("{:#?}", partition_c);
+    write.write_struct(&partition_c)?;
 
     for node in &partition.nodes {
         write.write_u32(*node)?;
@@ -502,7 +533,14 @@ fn write_partitions(
     Ok(())
 }
 
-pub fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Result<()> {
+pub fn write(write: &mut CountingWriter<impl Write>, world: &World, index: usize) -> Result<()> {
+    debug!(
+        "Writing world node data {} (mw, {}) at {}",
+        index,
+        WorldMwC::SIZE,
+        write.offset
+    );
+
     let mut area_partition_count = world.area_partition_x_count * world.area_partition_y_count;
     if world.fudge_count {
         area_partition_count -= 1;
@@ -514,7 +552,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Result<()
     let area_width = area_right - area_left;
     let area_height = area_top - area_bottom;
 
-    write.write_struct(&WorldMwC {
+    let world_c = WorldMwC {
         flags: 0,
         area_partition_used: 0,
         area_partition_count,
@@ -558,7 +596,9 @@ pub fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Result<()
         zero176: 0,
         zero180: 0,
         zero184: 0,
-    })?;
+    };
+    trace!("{:#?}", world_c);
+    write.write_struct(&world_c)?;
     write.write_u32(world.world_child_value)?;
     write_partitions(write, &world.partitions)?;
     Ok(())

@@ -365,17 +365,40 @@ pub fn read_mesh_data_pm(
 ) -> Result<MeshPm> {
     debug!("Reading mesh data {} (pm) at {}", mesh_index, read.offset);
     let mut mesh = wrapped.mesh;
-    trace!("Reading vertices at {}", read.offset);
+    trace!(
+        "Reading {} x vertices at {}",
+        wrapped.vertex_count,
+        read.offset
+    );
     mesh.vertices = read_vec3s(read, wrapped.vertex_count)?;
-    trace!("Reading normals at {}", read.offset);
+    trace!(
+        "Reading {} x normals at {}",
+        wrapped.normal_count,
+        read.offset
+    );
     mesh.normals = read_vec3s(read, wrapped.normal_count)?;
-    trace!("Reading morphs at {}", read.offset);
+    trace!(
+        "Reading {} x morphs at {}",
+        wrapped.morph_count,
+        read.offset
+    );
     mesh.morphs = read_vec3s(read, wrapped.morph_count)?;
-    trace!("Reading lights at {}", read.offset);
+    trace!(
+        "Reading {} x lights at {}",
+        wrapped.light_count,
+        read.offset
+    );
     mesh.lights = read_lights(read, wrapped.light_count)?;
-    debug!("Reading polygons (pm) at {}", read.offset);
+    debug!(
+        "Reading {} x polygons (pm) at {}",
+        wrapped.polygon_count, read.offset
+    );
     mesh.polygons = read_polygons(read, wrapped.polygon_count)?;
-    trace!("Reading unknown (pm) at {}", read.offset);
+    trace!(
+        "Reading {} x unknown (pm) at {}",
+        wrapped.unk_count,
+        read.offset
+    );
     mesh.unk = read_vec3s(read, wrapped.unk_count)?;
     trace!("Read mesh data (pm) at {}", read.offset);
     Ok(mesh)
@@ -529,17 +552,33 @@ pub fn write_mesh_data_pm(
     mesh_index: usize,
 ) -> Result<()> {
     debug!("Writing mesh data {} (pm) at {}", mesh_index, write.offset);
-    trace!("Writing vertices at {}", write.offset);
+    trace!(
+        "Writing {} x vertices at {}",
+        mesh.vertices.len(),
+        write.offset
+    );
     write_vec3s(write, &mesh.vertices)?;
-    trace!("Writing normals at {}", write.offset);
+    trace!(
+        "Writing {} x normals at {}",
+        mesh.normals.len(),
+        write.offset
+    );
     write_vec3s(write, &mesh.normals)?;
-    trace!("Writing morphs at {}", write.offset);
+    trace!("Writing {} x morphs at {}", mesh.morphs.len(), write.offset);
     write_vec3s(write, &mesh.morphs)?;
-    trace!("Writing lights at {}", write.offset);
+    trace!("Writing {} x lights at {}", mesh.lights.len(), write.offset);
     write_lights(write, &mesh.lights)?;
-    debug!("Writing polygons (pm) at {}", write.offset);
+    debug!(
+        "Writing {} x polygons (pm) at {}",
+        mesh.polygons.len(),
+        write.offset
+    );
     write_polygons(write, &mesh.polygons)?;
-    trace!("Writing unknown (pm) at {}", write.offset);
+    trace!(
+        "Writing {} x unknown (pm) at {}",
+        mesh.unk.len(),
+        write.offset
+    );
     write_vec3s(write, &mesh.unk)?;
     trace!("Wrote mesh data (pm) at {}", write.offset);
     Ok(())

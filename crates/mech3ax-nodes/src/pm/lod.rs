@@ -1,22 +1,12 @@
 use super::wrappers::WrapperPm;
 use crate::flags::NodeBitFlags;
 use crate::types::{NodeVariantPm, NodeVariantsPm};
-use log::trace;
-use mech3ax_api_types::{static_assert_size, BoundingBox, LodPm, Range, ReprSize as _};
+use log::{debug, trace};
+use mech3ax_api_types::{static_assert_size, BoundingBox, Hide, LodPm, Range, ReprSize as _};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, bool_c, Result};
 use std::io::{Read, Write};
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-#[repr(transparent)]
-struct Hide<T>(pub T);
-
-impl<T> std::fmt::Debug for Hide<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("...")
-    }
-}
 
 #[derive(Debug)]
 #[repr(C)]
@@ -201,8 +191,17 @@ fn assert_lod(lod: LodPmC, offset: u32) -> Result<(bool, Range, f32, f32)> {
 pub fn read(
     read: &mut CountingReader<impl Read>,
     node: NodeVariantsPm,
+    index: usize,
 ) -> Result<WrapperPm<LodPm>> {
+    debug!(
+        "Reading lod node data {} (pm, {}) at {}",
+        index,
+        LodPmC::SIZE,
+        read.offset
+    );
     let lod: LodPmC = read.read_struct()?;
+    trace!("{:#?}", lod);
+
     let (level, range, unk64, unk72) = assert_lod(lod, read.prev)?;
 
     let wrapped = LodPm {
@@ -251,8 +250,14 @@ pub fn make_variants(lod: &LodPm, mesh_index_is_ptr: bool) -> NodeVariantsPm {
     }
 }
 
-pub fn write(write: &mut CountingWriter<impl Write>, lod: &LodPm) -> Result<()> {
-    write.write_struct(&LodPmC {
+pub fn write(write: &mut CountingWriter<impl Write>, lod: &LodPm, index: usize) -> Result<()> {
+    debug!(
+        "Writing lod node data {} (pm, {}) at {}",
+        index,
+        LodPmC::SIZE,
+        write.offset
+    );
+    let lod = LodPmC {
         level: bool_c!(lod.level),
         range_near_sq: lod.range.min * lod.range.min,
         range_far: lod.range.max,
@@ -266,7 +271,9 @@ pub fn write(write: &mut CountingWriter<impl Write>, lod: &LodPm) -> Result<()> 
         one80: 1,
         unk84: 0,
         unk88: 0,
-    })?;
+    };
+    trace!("{:#?}", lod);
+    write.write_struct(&lod)?;
     Ok(())
 }
 

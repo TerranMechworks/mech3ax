@@ -13,7 +13,7 @@ fn read_node_and_mesh(
     meshes: &mut Vec<MeshPm>,
     mesh_ptrs: &mut Vec<i32>,
 ) -> Result<u32> {
-    match read_node_mechlib_pm(read)? {
+    match read_node_mechlib_pm(read, nodes.len())? {
         WrappedNodePm::Lod(wrapped) => {
             read_node_and_mesh_lod(read, nodes, meshes, mesh_ptrs, wrapped)
         }
@@ -122,7 +122,8 @@ fn write_node_and_mesh(
     meshes: &[MeshPm],
     mesh_ptrs: &[i32],
 ) -> Result<()> {
-    let node = &mut nodes[node_index as usize];
+    let index = node_index as usize;
+    let node = &mut nodes[index];
 
     let restore_index = match node {
         NodePm::Object3d(object3d) => {
@@ -142,8 +143,8 @@ fn write_node_and_mesh(
         // _ => return Err(mechlib_only_err_mw()),
     };
 
-    write_node_info_pm(write, &node, true)?;
-    write_node_data_pm(write, &node)?;
+    write_node_info_pm(write, &node, true, index)?;
+    write_node_data_pm(write, &node, index)?;
 
     // if mesh_index isn't -1, then we need to write out the mesh, too
     if let Some(mesh_index) = restore_index {

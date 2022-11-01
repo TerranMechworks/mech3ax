@@ -157,14 +157,19 @@ pub fn mechlib_only_err_pm() -> mech3ax_common::Error {
     AssertionError("Expected only Object3d or Lod nodes in mechlib".to_owned()).into()
 }
 
-pub fn read_node_mechlib_pm(read: &mut CountingReader<impl Read>) -> Result<WrappedNodePm> {
+pub fn read_node_mechlib_pm(
+    read: &mut CountingReader<impl Read>,
+    index: usize,
+) -> Result<WrappedNodePm> {
     debug!(
-        "Reading mechlib node (pm, {}) at {}",
+        "Reading mechlib node {} (pm, {}) at {}",
+        index,
         NodePmC::SIZE,
         read.offset
     );
     let node: NodePmC = read.read_struct()?;
     trace!("{:#?}", node);
+
     let (node_type, node) = assert_node(node, read.prev)?;
     debug!("Node `{}` read", node.name);
     let variant = match node_type {
@@ -172,16 +177,19 @@ pub fn read_node_mechlib_pm(read: &mut CountingReader<impl Read>) -> Result<Wrap
         NodeType::LoD => lod::assert_variants(node, read.prev, true),
         _ => Err(mechlib_only_err_pm()),
     }?;
-    read_node_data_pm(read, variant)
+    read_node_data_pm(read, variant, index)
 }
 
 pub fn read_node_data_pm(
     read: &mut CountingReader<impl Read>,
     variant: NodeVariantPm,
+    index: usize,
 ) -> Result<WrappedNodePm> {
     match variant {
-        NodeVariantPm::Lod(node) => Ok(WrappedNodePm::Lod(lod::read(read, node)?)),
-        NodeVariantPm::Object3d(node) => Ok(WrappedNodePm::Object3d(object3d::read(read, node)?)),
+        NodeVariantPm::Lod(node) => Ok(WrappedNodePm::Lod(lod::read(read, node, index)?)),
+        NodeVariantPm::Object3d(node) => {
+            Ok(WrappedNodePm::Object3d(object3d::read(read, node, index)?))
+        }
     }
 }
 
@@ -189,10 +197,11 @@ fn write_variant(
     write: &mut CountingWriter<impl Write>,
     node_type: NodeType,
     variant: NodeVariantsPm,
+    index: usize,
 ) -> Result<()> {
     debug!(
-        "Writing node `{}` (pm, {}) at {}",
-        variant.name,
+        "Writing node info {} (pm, {}) at {}",
+        index,
         NodePmC::SIZE,
         write.offset
     );
@@ -200,7 +209,7 @@ fn write_variant(
     let mut name = [0; 36];
     str_to_c_node_name(variant.name, &mut name);
 
-    write.write_struct(&NodePmC {
+    let node = NodePmC {
         name,
         flags: variant.flags.bits(),
         zero040: 0,
@@ -231,7 +240,9 @@ fn write_variant(
         unk196: 0x000000A0,
         zero200: 0,
         zero204: 0,
-    })?;
+    };
+    trace!("{:#?}", node);
+    write.write_struct(&node)?;
     Ok(())
 }
 
@@ -239,23 +250,28 @@ pub fn write_node_info_pm(
     write: &mut CountingWriter<impl Write>,
     node: &NodePm,
     mesh_index_is_ptr: bool,
+    index: usize,
 ) -> Result<()> {
     match node {
         NodePm::Lod(lod) => {
             let variant = lod::make_variants(lod, mesh_index_is_ptr);
-            write_variant(write, NodeType::LoD, variant)
+            write_variant(write, NodeType::LoD, variant, index)
         }
         NodePm::Object3d(object3d) => {
             let variant = object3d::make_variants(object3d);
-            write_variant(write, NodeType::Object3d, variant)
+            write_variant(write, NodeType::Object3d, variant, index)
         }
     }
 }
 
-pub fn write_node_data_pm(write: &mut CountingWriter<impl Write>, node: &NodePm) -> Result<()> {
+pub fn write_node_data_pm(
+    write: &mut CountingWriter<impl Write>,
+    node: &NodePm,
+    index: usize,
+) -> Result<()> {
     match node {
-        NodePm::Lod(lod) => lod::write(write, lod),
-        NodePm::Object3d(object3d) => object3d::write(write, object3d),
+        NodePm::Lod(lod) => lod::write(write, lod, index),
+        NodePm::Object3d(object3d) => object3d::write(write, object3d, index),
     }
 }
 

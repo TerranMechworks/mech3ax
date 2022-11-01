@@ -4,11 +4,13 @@ mod nodes;
 mod textures;
 
 use super::{SIGNATURE, VERSION_MW};
+use log::{debug, trace};
 use mech3ax_api_types::{static_assert_size, GameZData, GameZMetadata, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
+#[derive(Debug)]
 #[repr(C)]
 struct HeaderMwC {
     signature: u32,        // 00
@@ -24,7 +26,13 @@ struct HeaderMwC {
 static_assert_size!(HeaderMwC, 36);
 
 pub fn read_gamez_mw(read: &mut CountingReader<impl Read>) -> Result<GameZData> {
+    debug!(
+        "Reading gamez header (mw, {}) at {}",
+        HeaderMwC::SIZE,
+        read.offset
+    );
     let header: HeaderMwC = read.read_struct()?;
+    trace!("{:#?}", header);
 
     assert_that!("signature", header.signature == SIGNATURE, 0)?;
     assert_that!("version", header.version == VERSION_MW, 4)?;
@@ -99,7 +107,12 @@ pub fn write_gamez_mw(write: &mut CountingWriter<impl Write>, gamez: &GameZData)
     let (nodes_offset, mesh_offsets) =
         meshes::size_meshes(meshes_offset, meshes_array_size, &gamez.meshes);
 
-    write.write_struct(&HeaderMwC {
+    debug!(
+        "Writing gamez header (mw, {}) at {}",
+        HeaderMwC::SIZE,
+        write.offset
+    );
+    let header = HeaderMwC {
         signature: SIGNATURE,
         version: VERSION_MW,
         texture_count,
@@ -109,7 +122,9 @@ pub fn write_gamez_mw(write: &mut CountingWriter<impl Write>, gamez: &GameZData)
         node_array_size: gamez.metadata.node_array_size,
         node_count: gamez.metadata.node_data_count,
         nodes_offset,
-    })?;
+    };
+    trace!("{:#?}", header);
+    write.write_struct(&header)?;
 
     textures::write_texture_infos(write, &gamez.textures)?;
     materials::write_materials(

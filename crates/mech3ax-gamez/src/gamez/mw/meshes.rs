@@ -2,11 +2,13 @@ use crate::mesh::{
     read_mesh_data_mw, read_mesh_info_mw, read_mesh_infos_zero_mw, size_mesh_mw,
     write_mesh_data_mw, write_mesh_info_mw, write_mesh_infos_zero_mw, MESH_MW_C_SIZE,
 };
+use log::{debug, trace};
 use mech3ax_api_types::{static_assert_size, MeshMw, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
+#[derive(Debug)]
 #[repr(C)]
 struct MeshesInfoC {
     array_size: i32,
@@ -19,7 +21,14 @@ pub fn read_meshes(
     read: &mut CountingReader<impl Read>,
     end_offset: u32,
 ) -> Result<(Vec<MeshMw>, i32)> {
+    debug!(
+        "Reading mesh info (mw, {}) at {}",
+        MeshesInfoC::SIZE,
+        read.offset
+    );
     let info: MeshesInfoC = read.read_struct()?;
+    trace!("{:#?}", info);
+
     assert_that!("mat count", info.count < info.array_size, read.prev + 0)?;
     assert_that!(
         "mesh index max",
@@ -58,12 +67,19 @@ pub fn write_meshes(
     offsets: &[u32],
     array_size: i32,
 ) -> Result<()> {
+    debug!(
+        "Writing mesh info (mw, {}) at {}",
+        MeshesInfoC::SIZE,
+        write.offset
+    );
     let count = meshes.len() as i32;
-    write.write_struct(&MeshesInfoC {
+    let info = MeshesInfoC {
         array_size,
         count,
         index_max: count,
-    })?;
+    };
+    trace!("{:#?}", info);
+    write.write_struct(&info)?;
 
     for (mesh_index, (mesh, offset)) in meshes.iter().zip(offsets.iter()).enumerate() {
         write_mesh_info_mw(write, mesh, mesh_index)?;
