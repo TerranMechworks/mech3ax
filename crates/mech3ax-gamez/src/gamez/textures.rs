@@ -1,3 +1,4 @@
+use log::debug;
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -18,7 +19,13 @@ static_assert_size!(TextureInfoC, 40);
 
 pub fn read_texture_infos(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<String>> {
     (0..count)
-        .map(|_| {
+        .map(|index| {
+            debug!(
+                "Reading texture info {} (mw, {}) at {}",
+                index,
+                TextureInfoC::SIZE,
+                read.offset
+            );
             let info: TextureInfoC = read.read_struct()?;
             // not sure what this is. a pointer to the previous texture in the global
             // array? or a pointer to the texture?
@@ -43,7 +50,13 @@ pub fn write_texture_infos(
     write: &mut CountingWriter<impl Write>,
     textures: &[String],
 ) -> Result<()> {
-    for name in textures {
+    for (index, name) in textures.iter().enumerate() {
+        debug!(
+            "Writing texture info {} (mw, {}) at {}",
+            index,
+            TextureInfoC::SIZE,
+            write.offset
+        );
         let mut texture = [0; 20];
         str_to_c_suffix(name, &mut texture);
         write.write_struct(&TextureInfoC {

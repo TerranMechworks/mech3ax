@@ -12,10 +12,10 @@ struct MaterialC {
     rgb: u16,
     color: Color,
     pointer: u32,
-    unk20: f32,
-    unk24: f32,
-    unk28: f32,
-    unk32: u32, // f32, specular?
+    zero20: f32, // always 0.0
+    half24: f32, // always 0.5
+    half28: f32, // always 0.5
+    unk32: u32,  // f32, specular?
     cycle_ptr: u32,
 }
 static_assert_size!(MaterialC, 40);
@@ -70,9 +70,9 @@ pub fn read_material(read: &mut CountingReader<impl Read>, index: u32) -> Result
     assert_that!("flag always", flag_always == true, read.prev + 1)?;
     assert_that!("flag free", flag_free == false, read.prev + 1)?;
 
-    assert_that!("field 20", material.unk20 == 0.0, read.prev + 20)?;
-    assert_that!("field 24", material.unk24 == 0.5, read.prev + 24)?;
-    assert_that!("field 28", material.unk28 == 0.5, read.prev + 28)?;
+    assert_that!("field 20", material.zero20 == 0.0, read.prev + 20)?;
+    assert_that!("field 24", material.half24 == 0.5, read.prev + 24)?;
+    assert_that!("field 28", material.half28 == 0.5, read.prev + 28)?;
 
     let material = if bitflags.contains(MaterialFlags::TEXTURED) {
         assert_that!("field 00", material.unk00 == 0xFF, read.prev + 0)?;
@@ -134,9 +134,9 @@ pub fn write_material(
                 // this allows GameZ to override the pointer with the texture index
                 // (without mutating the material)
                 pointer: pointer.unwrap_or(material.pointer),
-                unk20: 0.0,
-                unk24: 0.5,
-                unk28: 0.5,
+                zero20: 0.0,
+                half24: 0.5,
+                half28: 0.5,
                 unk32: material.unk32,
                 cycle_ptr,
             }
@@ -149,9 +149,9 @@ pub fn write_material(
                 rgb: 0x0000,
                 color: material.color,
                 pointer: 0,
-                unk20: 0.0,
-                unk24: 0.5,
-                unk28: 0.5,
+                zero20: 0.0,
+                half24: 0.5,
+                half28: 0.5,
                 unk32: material.unk32,
                 cycle_ptr: 0,
             }
@@ -189,9 +189,9 @@ pub fn read_materials_zero(
         assert_that!("rgb", material.rgb == 0x0000, read.prev + 2)?;
         assert_that!("color", material.color == Color::BLACK, read.prev + 4)?;
         assert_that!("pointer", material.pointer == 0, read.prev + 16)?;
-        assert_that!("field 20", material.unk20 == 0.0, read.prev + 20)?;
-        assert_that!("field 24", material.unk24 == 0.0, read.prev + 24)?;
-        assert_that!("field 28", material.unk28 == 0.0, read.prev + 28)?;
+        assert_that!("field 20", material.zero20 == 0.0, read.prev + 20)?;
+        assert_that!("field 24", material.half24 == 0.0, read.prev + 24)?;
+        assert_that!("field 28", material.half28 == 0.0, read.prev + 28)?;
         assert_that!("field 32", material.unk32 == 0, read.prev + 32)?;
         assert_that!("cycle ptr", material.cycle_ptr == 0, read.prev + 36)?;
 
@@ -223,9 +223,9 @@ pub fn write_materials_zero(
         rgb: 0x0000,
         color: Color::BLACK,
         pointer: 0,
-        unk20: 0.0,
-        unk24: 0.0,
-        unk28: 0.0,
+        zero20: 0.0,
+        half24: 0.0,
+        half28: 0.0,
         unk32: 0,
         cycle_ptr: 0,
     };

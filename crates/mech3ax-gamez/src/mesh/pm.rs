@@ -267,7 +267,11 @@ fn assert_polygon(poly: PolygonPmC, offset: u32) -> Result<(u32, bool, PolygonPm
     let triangle_strip = flags.contains(PolygonFlags::TRI_STRIP);
     if triangle_strip {
         // in mechlib, triangle strip always have normals
-        assert_that!("has normals when tri strip", has_normals == true, offset + 1)?;
+        assert_that!(
+            "has normals when tri strip",
+            has_normals == true,
+            offset + 1
+        )?;
     }
 
     assert_that!("field 04", 0 <= poly.unk04 <= 20, offset + 4)?;

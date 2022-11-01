@@ -36,6 +36,21 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZData> {
     assert_that!("signature", header.signature == SIGNATURE, 0)?;
     assert_that!("version", header.version == VERSION_MW, 4)?;
     assert_that!("texture count", header.texture_count < 4096, 8)?;
+    assert_that!(
+        "texture offset",
+        header.textures_offset < header.materials_offset,
+        12
+    )?;
+    assert_that!(
+        "materials offset",
+        header.materials_offset < header.meshes_offset,
+        16
+    )?;
+    assert_that!(
+        "meshes offset",
+        header.meshes_offset < header.nodes_offset,
+        20
+    )?;
     assert_that!("node count", header.node_count < header.node_array_size, 28)?;
 
     assert_that!(
