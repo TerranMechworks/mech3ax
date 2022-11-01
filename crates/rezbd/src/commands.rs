@@ -10,7 +10,7 @@ use mech3ax_api_types::{
 use mech3ax_archive::{write_archive, Mode, Version};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::GameType;
-use mech3ax_gamez::gamez::write_gamez;
+use mech3ax_gamez::gamez::write_gamez_mw;
 use mech3ax_gamez::mechlib::{
     write_format, write_materials, write_model_mw, write_model_pm, write_version,
 };
@@ -243,7 +243,7 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
     };
 
     let mut write = buf_writer(opts.output)?;
-    write_gamez(&mut write, &gamez).context("Failed to write gamez data")
+    write_gamez_mw(&mut write, &gamez).context("Failed to write gamez data")
 }
 
 pub(crate) fn anim(opts: ZipOpts) -> Result<()> {

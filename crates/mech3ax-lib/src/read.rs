@@ -255,7 +255,7 @@ pub extern "C" fn read_gamez(filename: *const c_char, is_pm: i32, callback: Data
         let gamez = {
             let input = buf_reader(filename)?;
             let mut read = CountingReader::new(input);
-            mech3ax_gamez::gamez::read_gamez(&mut read).context("Failed to read gamez data")
+            mech3ax_gamez::gamez::read_gamez_mw(&mut read).context("Failed to read gamez data")
         }?;
         let data = serde_json::to_vec(&gamez)?;
         callback(data.as_ptr(), data.len());

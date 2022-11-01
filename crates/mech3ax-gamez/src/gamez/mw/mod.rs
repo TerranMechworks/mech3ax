@@ -3,35 +3,28 @@ mod meshes;
 mod nodes;
 mod textures;
 
+use super::{SIGNATURE, VERSION_MW};
 use mech3ax_api_types::{static_assert_size, GameZData, GameZMetadata, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]
-struct HeaderC {
-    signature: u32,
-    version: u32,
-    texture_count: u32,
-    textures_offset: u32,
-    materials_offset: u32,
-    meshes_offset: u32,
-    node_array_size: u32,
-    node_count: u32,
-    nodes_offset: u32,
+struct HeaderMwC {
+    signature: u32,        // 00
+    version: u32,          // 04
+    texture_count: u32,    // 08
+    textures_offset: u32,  // 12
+    materials_offset: u32, // 16
+    meshes_offset: u32,    // 20
+    node_array_size: u32,  // 24
+    node_count: u32,       // 28
+    nodes_offset: u32,     // 32
 }
-static_assert_size!(HeaderC, 36);
+static_assert_size!(HeaderMwC, 36);
 
-const SIGNATURE: u32 = 0x02971222;
-
-#[allow(dead_code)]
-const VERSION_RECOIL: u32 = 15;
-const VERSION_MW: u32 = 27;
-#[allow(dead_code)]
-const VERSION_PM: u32 = 41;
-
-pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZData> {
-    let header: HeaderC = read.read_struct()?;
+pub fn read_gamez_mw(read: &mut CountingReader<impl Read>) -> Result<GameZData> {
+    let header: HeaderMwC = read.read_struct()?;
 
     assert_that!("signature", header.signature == SIGNATURE, 0)?;
     assert_that!("version", header.version == VERSION_MW, 4)?;
@@ -94,19 +87,19 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZData> {
     })
 }
 
-pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZData) -> Result<()> {
+pub fn write_gamez_mw(write: &mut CountingWriter<impl Write>, gamez: &GameZData) -> Result<()> {
     let texture_count = gamez.textures.len() as u32;
     let material_array_size = gamez.metadata.material_array_size;
     let meshes_array_size = gamez.metadata.meshes_array_size;
 
-    let textures_offset = HeaderC::SIZE;
+    let textures_offset = HeaderMwC::SIZE;
     let materials_offset = textures_offset + textures::size_texture_infos(texture_count);
     let meshes_offset =
         materials_offset + materials::size_materials(material_array_size, &gamez.materials);
     let (nodes_offset, mesh_offsets) =
         meshes::size_meshes(meshes_offset, meshes_array_size, &gamez.meshes);
 
-    write.write_struct(&HeaderC {
+    write.write_struct(&HeaderMwC {
         signature: SIGNATURE,
         version: VERSION_MW,
         texture_count,

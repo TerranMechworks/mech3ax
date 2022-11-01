@@ -288,7 +288,8 @@ pub extern "C" fn write_gamez(
         let buf = unsafe { std::slice::from_raw_parts(data, len) };
         let gamez: GameZData = serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
         let mut write = buf_writer(filename)?;
-        mech3ax_gamez::gamez::write_gamez(&mut write, &gamez).context("Failed to write GameZ data")
+        mech3ax_gamez::gamez::write_gamez_mw(&mut write, &gamez)
+            .context("Failed to write GameZ data")
     })
 }
 

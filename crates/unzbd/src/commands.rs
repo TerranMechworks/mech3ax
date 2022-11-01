@@ -6,7 +6,7 @@ use mech3ax_anim::read_anim;
 use mech3ax_archive::{read_archive, Mode, Version};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::GameType;
-use mech3ax_gamez::gamez::read_gamez;
+use mech3ax_gamez::gamez::read_gamez_mw;
 use mech3ax_gamez::mechlib::{
     read_format, read_materials, read_model_mw, read_model_pm, read_version,
 };
@@ -254,7 +254,7 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
 
     let gamez = {
         let mut input = CountingReader::new(buf_reader(opts.input)?);
-        read_gamez(&mut input).context("Failed to read gamez data")?
+        read_gamez_mw(&mut input).context("Failed to read gamez data")?
     };
 
     let output = buf_writer(opts.output)?;
