@@ -1,10 +1,10 @@
 use log::debug;
 use mech3ax_api_types::saves::{ActivationStatus, ActivationType, AnimActivation};
 use mech3ax_api_types::static_assert_size;
-use mech3ax_common::assert::{assert_utf8, AssertionError};
+use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use num_traits::FromPrimitive;
 use std::convert::TryInto;
 use std::io::{Cursor, Read, Write};
@@ -59,10 +59,11 @@ pub fn read_activation(read: &mut CountingReader<impl Read>) -> Result<AnimActiv
     };
 
     let status: ActivationStatus = FromPrimitive::from_u8(activation.status).ok_or_else(|| {
-        AssertionError(format!(
+        assert_with_msg!(
             "Expected valid anim activation status, but was {} (at {})",
-            activation.status, read.prev,
-        ))
+            activation.status,
+            read.prev,
+        )
     })?;
 
     let ptr = match activation.unk86 {
@@ -83,12 +84,11 @@ pub fn read_activation(read: &mut CountingReader<impl Read>) -> Result<AnimActiv
             NonZeroU32::new(activation.unk80)
         }
         _ => {
-            return Err(AssertionError(format!(
+            return Err(assert_with_msg!(
                 "Expected anim activation unk86 to be either 0 or 25, but was {0} (at {1})",
                 activation.unk86,
                 read.prev + 86
-            ))
-            .into());
+            ));
         }
     };
 
@@ -187,11 +187,11 @@ pub fn write_activation(
         None => (0, 0),
     };
     let count = activation.node_states.len().try_into().map_err(|_| {
-        AssertionError(format!(
+        assert_with_msg!(
             "Expected activation to have {} node states or fewer, but was {}",
             u8::MAX,
             activation.node_states.len()
-        ))
+        )
     })?;
 
     let mut activ = AnimActivationC {
@@ -214,22 +214,22 @@ pub fn write_activation(
         }
         ActivationType::Two(Some(ref values)) => {
             let src: &[u8; 6 * 4] = &values[..].try_into().map_err(|_| {
-                AssertionError(format!(
+                assert_with_msg!(
                     "Expected activation type to have exactly {} bytes, but was {}",
                     6 * 4,
                     values.len()
-                ))
+                )
             })?;
             let (_one, two) = activ.values.split_at_mut(3 * 4);
             two.copy_from_slice(src);
         }
         ActivationType::Five(Some(ref values)) => {
             let src: &[u8; VALUES_SIZE] = &values[..].try_into().map_err(|_| {
-                AssertionError(format!(
+                assert_with_msg!(
                     "Expected activation type to have exactly {} bytes, but was {}",
                     VALUES_SIZE,
                     values.len()
-                ))
+                )
             })?;
             activ.values.copy_from_slice(src);
         }

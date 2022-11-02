@@ -1,8 +1,7 @@
 use crate::materials::{read_material, write_material, RawMaterial};
 use mech3ax_api_types::{Material, TexturedMaterial};
-use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, GameType, Result};
+use mech3ax_common::{assert_that, assert_with_msg, GameType, Result};
 use std::io::{Read, Write};
 
 pub const VERSION_MW: u32 = 27;
@@ -12,10 +11,10 @@ pub const FORMAT: u32 = 1;
 pub fn read_version(read: &mut CountingReader<impl Read>, game: GameType) -> Result<()> {
     let actual = read.read_u32()?;
     let expected = match game {
-        GameType::MW => Ok(VERSION_MW),
-        GameType::PM => Ok(VERSION_PM),
-        GameType::RC => Err(AssertionError("Recoil has no mechlib".into())),
-    }?;
+        GameType::MW => VERSION_MW,
+        GameType::PM => VERSION_PM,
+        GameType::RC => return Err(assert_with_msg!("Recoil has no mechlib")),
+    };
     assert_that!("version", actual == expected, read.prev)?;
     read.assert_end()
 }
@@ -28,10 +27,10 @@ pub fn read_format(read: &mut CountingReader<impl Read>) -> Result<()> {
 
 pub fn write_version(write: &mut CountingWriter<impl Write>, game: GameType) -> Result<()> {
     let version = match game {
-        GameType::MW => Ok(VERSION_MW),
-        GameType::PM => Ok(VERSION_PM),
-        GameType::RC => Err(AssertionError("Recoil has no mechlib".into())),
-    }?;
+        GameType::MW => VERSION_MW,
+        GameType::PM => VERSION_PM,
+        GameType::RC => return Err(assert_with_msg!("Recoil has no mechlib")),
+    };
     write.write_u32(version)?;
     Ok(())
 }

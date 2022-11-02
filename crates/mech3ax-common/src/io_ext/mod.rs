@@ -1,4 +1,5 @@
-use crate::assert::{assert_utf8, AssertionError};
+use crate::assert::assert_utf8;
+use crate::assert_with_msg;
 use crate::string::str_from_c_sized;
 use mech3ax_api_types::ReprSize;
 use std::io::{Read, Result, Seek, SeekFrom, Write};
@@ -105,9 +106,10 @@ impl<R: Read> CountingReader<R> {
         let mut buf = [0; 1];
         match self.inner.read(&mut buf)? {
             0 => Ok(()),
-            _ => Err(
-                AssertionError(format!("Expected all data to be read (at {})", self.offset)).into(),
-            ),
+            _ => Err(assert_with_msg!(
+                "Expected all data to be read (at {})",
+                self.offset
+            )),
         }
     }
 }
@@ -195,9 +197,7 @@ impl<W: Write> CountingWriter<W> {
 
     pub fn write_string(&mut self, value: &str) -> crate::Result<()> {
         if !value.is_ascii() {
-            return Err(crate::Error::Assert(AssertionError(
-                "Expected ASCII string".to_owned(),
-            )));
+            return Err(assert_with_msg!("Expected ASCII string"));
         }
         let buf = value.as_bytes();
         let count = buf.len() as u32;

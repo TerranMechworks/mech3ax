@@ -1,6 +1,5 @@
 use mech3ax_api_types::AnimDef;
-use mech3ax_common::assert::AssertionError;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 
 pub trait AnimDefLookup {
     fn node_from_index(&self, index: usize, offset: u32) -> Result<String>;
@@ -19,11 +18,11 @@ impl AnimDefLookup for AnimDef {
             assert_that!("node index", 1 <= index <= nodes.len(), offset)?;
             Ok(nodes[index - 1].name.clone())
         } else {
-            let msg = format!(
+            Err(assert_with_msg!(
                 "Tried to look up node {}, but anim def has no nodes (at {})",
-                index, offset
-            );
-            Err(AssertionError(msg).into())
+                index,
+                offset
+            ))
         }
     }
 
@@ -33,15 +32,12 @@ impl AnimDefLookup for AnimDef {
                 .iter()
                 .position(|node| node.name == name)
                 .map(|pos| pos + 1)
-                .ok_or_else(|| {
-                    AssertionError(format!("Expected to find node `{}`, but didn't", name)).into()
-                })
+                .ok_or_else(|| assert_with_msg!("Expected to find node `{}`, but didn't", name))
         } else {
-            let msg = format!(
+            Err(assert_with_msg!(
                 "Expected to find node `{}`, but anim def has no nodes",
                 name
-            );
-            Err(AssertionError(msg).into())
+            ))
         }
     }
 
@@ -50,11 +46,11 @@ impl AnimDefLookup for AnimDef {
             assert_that!("sound index", 1 <= index <= sounds.len(), offset)?;
             Ok(sounds[index - 1].name.clone())
         } else {
-            let msg = format!(
+            Err(assert_with_msg!(
                 "Tried to look up sound {}, but anim def has no sounds (at {})",
-                index, offset
-            );
-            Err(AssertionError(msg).into())
+                index,
+                offset
+            ))
         }
     }
 
@@ -64,15 +60,12 @@ impl AnimDefLookup for AnimDef {
                 .iter()
                 .position(|sound| sound.name == name)
                 .map(|pos| pos + 1)
-                .ok_or_else(|| {
-                    AssertionError(format!("Expected to find sound `{}`, but didn't", name)).into()
-                })
+                .ok_or_else(|| assert_with_msg!("Expected to find sound `{}`, but didn't", name))
         } else {
-            let msg = format!(
+            Err(assert_with_msg!(
                 "Expected to find sound `{}`, but anim def has no sounds",
                 name
-            );
-            Err(AssertionError(msg).into())
+            ))
         }
     }
 
@@ -81,11 +74,11 @@ impl AnimDefLookup for AnimDef {
             assert_that!("light index", 1 <= index <= lights.len(), offset)?;
             Ok(lights[index - 1].name.clone())
         } else {
-            let msg = format!(
+            Err(assert_with_msg!(
                 "Tried to look up light {}, but anim def has no lights (at {})",
-                index, offset
-            );
-            Err(AssertionError(msg).into())
+                index,
+                offset
+            ))
         }
     }
 
@@ -95,15 +88,12 @@ impl AnimDefLookup for AnimDef {
                 .iter()
                 .position(|light| light.name == name)
                 .map(|pos| pos + 1)
-                .ok_or_else(|| {
-                    AssertionError(format!("Expected to find light `{}`, but didn't", name)).into()
-                })
+                .ok_or_else(|| assert_with_msg!("Expected to find light `{}`, but didn't", name))
         } else {
-            let msg = format!(
+            Err(assert_with_msg!(
                 "Expected to find light `{}`, but anim def has no lights",
                 name
-            );
-            Err(AssertionError(msg).into())
+            ))
         }
     }
 
@@ -112,11 +102,11 @@ impl AnimDefLookup for AnimDef {
             assert_that!("puffer index", 1 <= index <= puffers.len(), offset)?;
             Ok(puffers[index - 1].name.clone())
         } else {
-            let msg = format!(
+            Err(assert_with_msg!(
                 "Tried to look up puffer {}, but anim def has no puffers (at {})",
-                index, offset
-            );
-            Err(AssertionError(msg).into())
+                index,
+                offset
+            ))
         }
     }
 
@@ -126,15 +116,12 @@ impl AnimDefLookup for AnimDef {
                 .iter()
                 .position(|puffer| puffer.name == name)
                 .map(|pos| pos + 1)
-                .ok_or_else(|| {
-                    AssertionError(format!("Expected to find puffer `{}`, but didn't", name)).into()
-                })
+                .ok_or_else(|| assert_with_msg!("Expected to find puffer `{}`, but didn't", name))
         } else {
-            let msg = format!(
+            Err(assert_with_msg!(
                 "Expected to find puffer `{}`, but anim def has no puffers",
                 name
-            );
-            Err(AssertionError(msg).into())
+            ))
         }
     }
 }

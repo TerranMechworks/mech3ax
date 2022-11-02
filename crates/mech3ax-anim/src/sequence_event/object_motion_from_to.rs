@@ -3,9 +3,8 @@ use crate::types::AnimDefLookup as _;
 use mech3ax_api_types::{
     static_assert_size, AnimDef, FloatFromTo, ObjectMotionFromTo, ReprSize as _, Vec3, Vec3FromTo,
 };
-use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use std::io::{Read, Write};
 
 bitflags::bitflags! {
@@ -49,11 +48,11 @@ impl ScriptObject for ObjectMotionFromTo {
         )?;
         let motion: ObjectMotionFromToC = read.read_struct()?;
         let flags = ObjectMotionFromToFlags::from_bits(motion.flags).ok_or_else(|| {
-            AssertionError(format!(
+            assert_with_msg!(
                 "Expected valid object motion from flags, but was {:08X} (at {})",
                 motion.flags,
                 read.prev + 0
-            ))
+            )
         })?;
         let node = anim_def.node_from_index(motion.node_index as usize, read.prev + 4)?;
 

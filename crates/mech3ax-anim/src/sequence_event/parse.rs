@@ -9,9 +9,8 @@ use mech3ax_api_types::{
     ObjectRotateState, ObjectScaleState, ObjectTranslateState, PufferState, ReprSize as _,
     ResetAnimation, Sound, SoundNode, StartOffset, StopAnimation, StopSequence,
 };
-use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
 
@@ -42,11 +41,11 @@ pub fn read_events(
         assert_that!("event header field 02", header.pad == 0, read.prev + 2)?;
         let start_offset: StartOffset =
             FromPrimitive::from_u8(header.start_offset).ok_or_else(|| {
-                AssertionError(format!(
+                assert_with_msg!(
                     "Expected valid event start offset, but was {} (at {})",
                     header.start_offset,
                     read.prev + 1
-                ))
+                )
             })?;
 
         let start = if start_offset == StartOffset::Animation && header.start_time == 0.0 {
@@ -150,12 +149,11 @@ pub fn read_events(
                 ObjectMotionSiScript::read(read, anim_def, actual_size)?,
             ),
             _ => {
-                let msg = format!(
+                return Err(assert_with_msg!(
                     "Expected valid event type, but was {} (at {})",
                     header.event_type,
                     read.prev + 0
-                );
-                return Err(AssertionError(msg).into());
+                ));
             }
         };
 

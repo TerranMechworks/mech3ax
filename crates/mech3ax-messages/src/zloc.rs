@@ -1,8 +1,8 @@
 use log::trace;
-use mech3ax_common::assert::{assert_utf8, AssertionError};
+use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::string::str_from_c_sized;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use std::io::Cursor;
 
 pub fn read_zlocids(
@@ -39,10 +39,13 @@ pub fn read_zlocids(
         }
 
         let relative_offset = mem_offset.checked_sub(mem_start).ok_or_else(|| {
-            AssertionError(format!(
+            assert_with_msg!(
                 "Entry memory offset {} underflowed (start: {}, end: {}, at: {})",
-                mem_offset, mem_start, mem_end, read.prev
-            ))
+                mem_offset,
+                mem_start,
+                mem_end,
+                read.prev
+            )
         })?;
 
         let entry_id = read.read_u32()?;

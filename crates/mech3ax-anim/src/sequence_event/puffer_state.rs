@@ -4,10 +4,10 @@ use mech3ax_api_types::{
     static_assert_size, AnimDef, AtNode, Interval, IntervalType, PufferState,
     PufferStateCycleTextures, Range, ReprSize as _, Vec3,
 };
-use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
+use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -98,11 +98,11 @@ impl ScriptObject for PufferState {
             read.prev + 0
         )?;
         let flags = PufferStateFlags::from_bits(puffer_state.flags).ok_or_else(|| {
-            AssertionError(format!(
+            assert_with_msg!(
                 "Expected valid puffer state flags, but was 0x{:08X} (at {})",
                 puffer_state.flags,
                 read.prev + 36
-            ))
+            )
         })?;
 
         let state = flags.contains(PufferStateFlags::STATE);

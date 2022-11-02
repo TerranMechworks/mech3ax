@@ -1,50 +1,37 @@
-use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_encoding::windows1252_decode;
 use std::collections::HashMap;
 use std::io::Cursor;
 
-fn remove_trailing(buf: &mut Vec<u8>) -> std::result::Result<(), AssertionError> {
+fn remove_trailing(buf: &mut Vec<u8>) -> Result<()> {
     // remove from back: \0 (0, multiple), \n (10, single), and \r (13, single)
     loop {
         match buf.last() {
             Some(0) => buf.pop(),
             Some(_) => break,
-            None => {
-                return Err(AssertionError(
-                    "Message table: ran out of chars".to_string(),
-                ))
-            }
+            None => return Err(assert_with_msg!("Message table: ran out of chars")),
         };
     }
     match buf.pop() {
         Some(10) => {}
         Some(actual) => {
-            return Err(AssertionError(format!(
+            return Err(assert_with_msg!(
                 "Message table: expected trailing \n, was {}",
                 actual
-            )))
-        }
-        None => {
-            return Err(AssertionError(
-                "Message table: ran out of chars".to_string(),
             ))
         }
+        None => return Err(assert_with_msg!("Message table: ran out of chars")),
     };
     match buf.pop() {
         Some(13) => {}
         Some(actual) => {
-            return Err(AssertionError(format!(
+            return Err(assert_with_msg!(
                 "Message table: expected trailing \r, was {}",
                 actual
-            )))
-        }
-        None => {
-            return Err(AssertionError(
-                "Message table: ran out of chars".to_string(),
             ))
         }
+        None => return Err(assert_with_msg!("Message table: ran out of chars")),
     };
     Ok(())
 }

@@ -5,10 +5,10 @@ use mech3ax_api_types::{
     ForwardRotationDistance, ForwardRotationTime, Gravity, GravityMode, ObjectMotion,
     ObjectMotionScale, ObjectMotionTranslation, Quaternion, ReprSize as _, Vec3, XyzRotation,
 };
-use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
+use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -95,11 +95,11 @@ impl ScriptObject for ObjectMotion {
         let object_motion: ObjectMotionC = read.read_struct()?;
 
         let flags = ObjectMotionFlags::from_bits(object_motion.flags).ok_or_else(|| {
-            AssertionError(format!(
+            assert_with_msg!(
                 "Expected valid object motion flags, but was 0x{:08X} (at {})",
                 object_motion.flags,
                 read.prev + 0
-            ))
+            )
         })?;
         let node = anim_def.node_from_index(object_motion.node_index as usize, read.prev + 4)?;
 
@@ -362,11 +362,10 @@ impl ScriptObject for ObjectMotion {
                     })?;
                 Some(bounce_seq0)
             } else {
-                let msg = format!(
+                return Err(assert_with_msg!(
                     "Expected at least one bounce sequence (at {})",
                     read.prev + 196
-                );
-                return Err(AssertionError(msg).into());
+                ));
             };
 
             let seq_name1 = if object_motion.bounce_seq1_name[0] != 0 {

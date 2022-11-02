@@ -1,7 +1,6 @@
 use mech3ax_api_types::NodeMw;
-use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Error, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_nodes::{
     read_node_data_mw, read_node_info_gamez_mw, read_node_info_zero_mw, size_node_mw,
     write_node_data_mw, write_node_info_mw, write_node_info_zero_mw, NodeVariantMw, WrappedNodeMw,
@@ -51,10 +50,11 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
                             0 => assert_that!("node data position", index == 3, node_info_pos)?,
                             1 => assert_that!("node data position", index == 4, node_info_pos)?,
                             _ => {
-                                return Err(Error::Assert(AssertionError(format!(
+                                return Err(assert_with_msg!(
                                     "Unexpected display node in position {} (at {})",
-                                    index, node_info_pos
-                                ))))
+                                    index,
+                                    node_info_pos
+                                ));
                             }
                         }
                         display_node += 1;
@@ -67,10 +67,11 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
                     NodeVariantMw::Light(_) => {
                         assert_that!("node data position", index > 3, node_info_pos)?;
                         if light_node {
-                            return Err(Error::Assert(AssertionError(format!(
+                            return Err(assert_with_msg!(
                                 "Unexpected light node in position {} (at {})",
-                                index, node_info_pos
-                            ))));
+                                index,
+                                node_info_pos
+                            ));
                         }
                         light_node = true;
                     }
@@ -161,7 +162,7 @@ fn assert_area_partitions(nodes: &[NodeMw], offset: u32) -> Result<()> {
                 world.area_partition_y_count as i32,
             )
         } else {
-            return Err(AssertionError("Expected the world node to be first".to_owned()).into());
+            return Err(assert_with_msg!("Expected the world node to be first"));
         };
 
     for node in nodes {

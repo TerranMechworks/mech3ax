@@ -2,9 +2,8 @@ use super::types::INPUT_NODE;
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
 use mech3ax_api_types::{static_assert_size, AnimDef, ObjectConnector, ReprSize as _, Vec3};
-use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -51,11 +50,11 @@ impl ScriptObject for ObjectConnector {
         assert_that!("object connector size", size == Self::SIZE, read.offset)?;
         let object_connector: ObjectConnectorC = read.read_struct()?;
         let flags = ObjectConnectorFlags::from_bits(object_connector.flags).ok_or_else(|| {
-            AssertionError(format!(
+            assert_with_msg!(
                 "Expected valid object connector flags, but was 0x{:08X} (at {})",
                 object_connector.flags,
                 read.prev + 0
-            ))
+            )
         })?;
 
         assert_that!(

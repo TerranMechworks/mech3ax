@@ -5,11 +5,11 @@ use crate::types::AnimDefLookup as _;
 use mech3ax_api_types::{
     static_assert_size, AnimDef, AtNode, Color, LightState, Range, ReprSize as _, Vec3,
 };
-use mech3ax_common::assert::{assert_utf8, AssertionError};
+use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlags;
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
-use mech3ax_common::{assert_that, bool_c, Result};
+use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
 use std::io::{Read, Write};
 
 const INPUT_NODE_INDEX: u32 = -200i32 as u32;
@@ -57,11 +57,11 @@ impl ScriptObject for LightState {
         )?;
 
         let flags = LightFlags::from_bits(light_state.flags).ok_or_else(|| {
-            AssertionError(format!(
+            assert_with_msg!(
                 "Expected valid light state flags, but was 0x{:08X} (at {})",
                 light_state.flags,
                 read.prev + 36
-            ))
+            )
         })?;
         // this is never set for anim.zbd
         let translation_abs = flags.contains(LightFlags::TRANSLATION_ABS);

@@ -4,10 +4,10 @@ use mech3ax_api_types::{
     static_assert_size, GlobalPalette, PaletteData, ReprSize as _, TextureAlpha, TextureInfo,
     TextureManifest, TexturePalette,
 };
-use mech3ax_common::assert::{assert_utf8, AssertionError};
+use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
-use mech3ax_common::{assert_that, Error, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Error, Result};
 use mech3ax_pixel_ops::{
     pal8to888, pal8to888a, rgb565to888, rgb565to888a, rgb888ato565, rgb888atopal8, rgb888to565,
     rgb888topal8, simple_alpha,
@@ -80,10 +80,11 @@ fn convert_info_from_c(
     offset: u32,
 ) -> Result<TextureInfo> {
     let bitflags = TexFlags::from_bits(tex_info.flags).ok_or_else(|| {
-        AssertionError(format!(
+        assert_with_msg!(
             "Expected valid texture flags, but was 0x{:08X} (at {})",
-            tex_info.flags, offset
-        ))
+            tex_info.flags,
+            offset
+        )
     })?;
     // one byte per pixel support isn't implemented
     let bytes_per_pixel2 = bitflags.contains(TexFlags::BYTES_PER_PIXEL2);
@@ -111,11 +112,11 @@ fn convert_info_from_c(
     };
 
     let stretch = FromPrimitive::from_u16(tex_info.stretch).ok_or_else(|| {
-        AssertionError(format!(
+        assert_with_msg!(
             "Expected valid texture stretch, but was {} (at {})",
             tex_info.stretch,
             offset + 16
-        ))
+        )
     })?;
 
     Ok(TextureInfo {
@@ -228,8 +229,20 @@ fn read_texture(
     Ok((info, image))
 }
 
-fn assert_upcast<T>(result: std::result::Result<T, AssertionError>) -> Result<T> {
-    result.map_err(Error::Assert)
+fn read_textures_header(read: &mut CountingReader<impl Read>) -> Result<Header> {
+    debug!("Reading header ({}) at {}", Header::SIZE, read.offset);
+    let header: Header = read.read_struct().map_err(Error::IO)?;
+    assert_that!("field 00", header.zero00 == 0, read.prev + 0)?;
+    assert_that!("has entries", header.has_entries == 1, read.prev + 4)?;
+    assert_that!(
+        "global palette count",
+        header.global_palette_count >= 0,
+        read.prev + 8
+    )?;
+    assert_that!("texture count", header.texture_count > 0, read.prev + 12)?;
+    assert_that!("field 16", header.zero16 == 0, read.prev + 16)?;
+    assert_that!("field 20", header.zero20 == 0, read.prev + 20)?;
+    Ok(header)
 }
 
 pub fn read_textures<R, F, E>(
@@ -241,27 +254,7 @@ where
     F: FnMut(&str, DynamicImage) -> std::result::Result<(), E>,
     E: From<Error>,
 {
-    debug!("Reading header ({}) at {}", Header::SIZE, read.offset);
-    let header: Header = read.read_struct().map_err(Error::IO)?;
-    assert_upcast(assert_that!("field 00", header.zero00 == 0, read.prev + 0))?;
-    assert_upcast(assert_that!(
-        "has entries",
-        header.has_entries == 1,
-        read.prev + 4
-    ))?;
-    assert_upcast(assert_that!(
-        "global palette count",
-        header.global_palette_count >= 0,
-        read.prev + 8
-    ))?;
-    assert_upcast(assert_that!(
-        "texture count",
-        header.texture_count > 0,
-        read.prev + 12
-    ))?;
-    assert_upcast(assert_that!("field 16", header.zero16 == 0, read.prev + 16))?;
-    assert_upcast(assert_that!("field 20", header.zero20 == 0, read.prev + 20))?;
-
+    let header = read_textures_header(read)?;
     debug!("Global palette count: {}", header.global_palette_count);
     debug!("Texture count: {}", header.texture_count);
 
@@ -304,11 +297,8 @@ where
     let texture_infos = tex_table
         .into_iter()
         .map(|(name, start_offset, palette_index)| {
-            assert_upcast(assert_that!(
-                "texture offset",
-                read.offset == start_offset,
-                read.offset
-            ))?;
+            assert_that!("texture offset", read.offset == start_offset, read.offset)
+                .map_err(|e| Error::Assert(e))?;
             debug!("Reading texture `{}` at {}", name, read.offset);
             let global_palette = if palette_index > -1 {
                 Some((palette_index, &global_palettes[palette_index as usize]))

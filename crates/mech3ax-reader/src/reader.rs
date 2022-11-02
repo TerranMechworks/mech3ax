@@ -1,6 +1,5 @@
-use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{Error, Result};
+use mech3ax_common::{assert_with_msg, Result};
 use std::convert::TryInto;
 use std::io::{Read, Write};
 
@@ -30,13 +29,11 @@ fn read_value(read: &mut CountingReader<impl Read>) -> Result<Value> {
                 Ok(Value::Array(value))
             }
         }
-        value_type => {
-            let msg = format!(
-                "Expected valid value type, but was {} (at {})",
-                value_type, read.prev
-            );
-            Err(Error::Assert(AssertionError(msg)))
-        }
+        value_type => Err(assert_with_msg!(
+            "Expected valid value type, but was {} (at {})",
+            value_type,
+            read.prev
+        )),
     }
 }
 
@@ -48,8 +45,8 @@ pub fn read_reader(read: &mut CountingReader<impl Read>) -> Result<Value> {
     value
 }
 
-fn invalid_number(num: &Number) -> AssertionError {
-    AssertionError(format!("Expected valid number, but was {}", num))
+fn invalid_number(num: &Number) -> mech3ax_common::Error {
+    assert_with_msg!("Expected valid number, but was {}", num)
 }
 
 fn write_value(write: &mut CountingWriter<impl Write>, value: &Value) -> Result<()> {
@@ -63,7 +60,7 @@ fn write_value(write: &mut CountingWriter<impl Write>, value: &Value) -> Result<
                 write.write_u32(FLOAT)?;
                 write.write_f32(float as f32)?;
             } else {
-                return Err(Error::Assert(invalid_number(num)));
+                return Err(invalid_number(num));
             }
         }
         Value::String(string) => {
@@ -77,11 +74,11 @@ fn write_value(write: &mut CountingWriter<impl Write>, value: &Value) -> Result<
         Value::Array(list) => {
             let length = list.len() + 1;
             let count = length.try_into().map_err(|_| {
-                AssertionError(format!(
+                assert_with_msg!(
                     "Expected list to have {} items or fewer, but was {}",
                     u32::MAX,
                     length
-                ))
+                )
             })?;
             write.write_u32(LIST)?;
             write.write_u32(count)?;
@@ -91,8 +88,10 @@ fn write_value(write: &mut CountingWriter<impl Write>, value: &Value) -> Result<
             }
         }
         _ => {
-            let msg = format!("Expected valid value type, but was {}", value);
-            return Err(Error::Assert(AssertionError(msg)));
+            return Err(assert_with_msg!(
+                "Expected valid value type, but was {}",
+                value
+            ))
         }
     };
     Ok(())

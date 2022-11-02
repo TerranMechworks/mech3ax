@@ -1,10 +1,10 @@
 use mech3ax_api_types::{
     static_assert_size, ActivationPrereq, PrereqAnimation, PrereqObject, PrereqParent,
 };
-use mech3ax_common::assert::{assert_utf8, AssertionError};
+use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
-use mech3ax_common::{assert_that, bool_c, Result};
+use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
@@ -114,13 +114,11 @@ fn read_activ_prereq(read: &mut CountingReader<impl Read>) -> Result<ActivationP
         }
         Some(ActivPrereqType::Parent) => read_activ_prereq_parent(read, required),
         Some(ActivPrereqType::Object) => read_activ_prereq_object(read, required),
-        None => {
-            let msg = format!(
-                "Expected valid activ prereq type, but was {} (at {})",
-                prereq_type_raw, read.prev
-            );
-            Err(AssertionError(msg).into())
-        }
+        None => Err(assert_with_msg!(
+            "Expected valid activ prereq type, but was {} (at {})",
+            prereq_type_raw,
+            read.prev
+        )),
     }
 }
 

@@ -4,10 +4,9 @@ use mech3ax_api_types::{
     static_assert_size, AnimDef, ObjectMotionSiFrame, ObjectMotionSiScript, Quaternion,
     ReprSize as _, RotateData, ScaleData, TranslateData, Vec3,
 };
-use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::bytes_to_c;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -61,11 +60,11 @@ bitflags::bitflags! {
 fn read_frame(read: &mut CountingReader<impl Read>) -> Result<ObjectMotionSiFrame> {
     let frame: FrameC = read.read_struct()?;
     let flags = FrameFlags::from_bits(frame.flags).ok_or_else(|| {
-        AssertionError(format!(
+        assert_with_msg!(
             "Expected valid object motion si script flags, but was {:08X} (at {})",
             frame.flags,
             read.prev + 0
-        ))
+        )
     })?;
     assert_that!(
         "object motion si script frame start",

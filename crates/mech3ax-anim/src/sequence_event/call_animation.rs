@@ -5,10 +5,10 @@ use mech3ax_api_types::{
     static_assert_size, AnimDef, CallAnimation, CallAnimationAtNode, CallAnimationParameters,
     CallAnimationTargetNode, CallAnimationWithNode, ReprSize as _, Vec3,
 };
-use mech3ax_common::assert::{assert_utf8, AssertionError};
+use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use std::io::{Read, Write};
 
 const INPUT_NODE_INDEX: u32 = 65336;
@@ -54,11 +54,11 @@ impl ScriptObject for CallAnimation {
             str_from_c_padded(&call_animation.name)
         })?;
         let flags = CallAnimationFlags::from_bits(call_animation.flags).ok_or_else(|| {
-            AssertionError(format!(
+            assert_with_msg!(
                 "Expected valid call animation flags, but was 0x{:04X} (at {})",
                 call_animation.flags,
                 read.prev + 34
-            ))
+            )
         })?;
         // this is used to store the index of the animation to call once loaded
         assert_that!(

@@ -2,9 +2,8 @@ use super::ScriptObject;
 use mech3ax_api_types::{
     static_assert_size, AnimDef, Callback, Else, ElseIf, EndIf, If, Loop, ReprSize as _,
 };
-use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, bool_c, Result};
+use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
@@ -86,14 +85,11 @@ impl ScriptObject for If {
                 let value = assert_that!("if value", bool value, read.prev + 8)?;
                 Ok(If::PlayerFirstPerson(value.into()))
             }
-            None => {
-                let msg = format!(
-                    "Expected valid condition, but was {} (at {})",
-                    if_.condition,
-                    read.prev + 0
-                );
-                Err(AssertionError(msg).into())
-            }
+            None => Err(assert_with_msg!(
+                "Expected valid condition, but was {} (at {})",
+                if_.condition,
+                read.prev + 0
+            )),
         }
     }
 
@@ -148,14 +144,11 @@ impl ScriptObject for ElseIf {
                 let value = assert_that!("else if value", bool value, read.prev + 8)?;
                 Ok(ElseIf::PlayerFirstPerson(value.into()))
             }
-            None => {
-                let msg = format!(
-                    "Expected valid condition, but was {} (at {})",
-                    if_.condition,
-                    read.prev + 0
-                );
-                Err(AssertionError(msg).into())
-            }
+            None => Err(assert_with_msg!(
+                "Expected valid condition, but was {} (at {})",
+                if_.condition,
+                read.prev + 0
+            )),
         }
     }
 

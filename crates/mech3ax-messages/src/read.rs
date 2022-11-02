@@ -4,8 +4,7 @@ use crate::resources::read_resource_directory;
 use crate::zloc::read_zlocids;
 use log::trace;
 use mech3ax_api_types::{MessageEntry, Messages};
-use mech3ax_common::assert::AssertionError;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use std::collections::HashMap;
 use std::io::Read;
 
@@ -16,7 +15,7 @@ fn parse_data_section(
 ) -> Result<Vec<(u32, String)>> {
     let data_section = sections
         .lookup(".data")
-        .ok_or_else(|| AssertionError("Expected DLL to contain a data section".to_owned()))?;
+        .ok_or_else(|| assert_with_msg!("Expected DLL to contain a data section"))?;
 
     trace!(
         "Data section raw: {}, len: {}",
@@ -53,7 +52,7 @@ fn parse_resource_section(
 ) -> Result<(u32, HashMap<u32, String>)> {
     let resource_section = sections
         .lookup(".rsrc")
-        .ok_or_else(|| AssertionError("Expected DLL to contain a resource section".to_owned()))?;
+        .ok_or_else(|| assert_with_msg!("Expected DLL to contain a resource section"))?;
 
     trace!(
         "Resource section raw: {}, len: {}",
@@ -93,12 +92,12 @@ fn parse_resource_section(
     let virt_start = data_offset;
     let virt_end = virt_start + data_size;
 
-    let real_start = resource_section.virt_to_real(virt_start)?.ok_or_else(|| {
-        AssertionError("Expected message table start offset to be mapped".to_owned())
-    })?;
-    let real_end = resource_section.virt_to_real(virt_end)?.ok_or_else(|| {
-        AssertionError("Expected message table end offset to be mapped".to_owned())
-    })?;
+    let real_start = resource_section
+        .virt_to_real(virt_start)?
+        .ok_or_else(|| assert_with_msg!("Expected message table start offset to be mapped"))?;
+    let real_end = resource_section
+        .virt_to_real(virt_end)?
+        .ok_or_else(|| assert_with_msg!("Expected message table end offset to be mapped"))?;
 
     trace!("Message table raw: {}, end: {}", real_start, real_end);
 
@@ -115,9 +114,9 @@ fn combine(
     let entries = message_ids
         .into_iter()
         .map(|(entry_id, key)| {
-            let value = messages.remove(&entry_id).ok_or_else(|| {
-                AssertionError(format!("Message `{}` ({}) not found", &key, entry_id))
-            })?;
+            let value = messages
+                .remove(&entry_id)
+                .ok_or_else(|| assert_with_msg!("Message `{}` ({}) not found", &key, entry_id))?;
             Ok(MessageEntry {
                 key,
                 id: entry_id,

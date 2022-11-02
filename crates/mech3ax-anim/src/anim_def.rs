@@ -6,12 +6,12 @@ use mech3ax_api_types::{
     static_assert_size, AnimActivation, AnimDef, AnimPtr, EventData, Execution, NamePad, Range,
     ReprSize as _, ResetState, SeqActivation, SeqDef,
 };
-use mech3ax_common::assert::{assert_all_zero, assert_utf8, AssertionError};
+use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{
     str_from_c_padded, str_from_c_partition, str_to_c_padded, str_to_c_partition,
 };
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use num_traits::FromPrimitive as _;
 use std::io::{Read, Write};
 
@@ -173,12 +173,11 @@ fn read_sequence_def(read: &mut CountingReader<impl Read>, anim_def: &AnimDef) -
     } else if seq_def.flags == 0x0303 {
         SeqActivation::OnCall
     } else {
-        let msg = format!(
+        return Err(assert_with_msg!(
             "Expected valid seq def flags, but was 0x{:08X} (at {})",
             seq_def.flags,
             read.prev + 32
-        );
-        return Err(AssertionError(msg).into());
+        ));
     };
     assert_all_zero("anim def seq def field 36", read.prev + 36, &seq_def.zero36)?;
     // it doesn't make sense for a sequence to be empty
@@ -255,11 +254,11 @@ pub fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<(AnimDef, A
     assert_all_zero("anim def field 104", prev + 104, &anim_def.zero104)?;
 
     let flags = AnimDefFlags::from_bits(anim_def.flags).ok_or_else(|| {
-        AssertionError(format!(
+        assert_with_msg!(
             "Expected valid anim def flags, but was 0x{:04X} (at {})",
             anim_def.flags,
             read.prev + 148
-        ))
+        )
     })?;
 
     let network_log = if flags.contains(AnimDefFlags::NETWORK_LOG_SET) {
@@ -284,11 +283,11 @@ pub fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<(AnimDef, A
 
     assert_that!("anim def status", anim_def.status == 0, prev + 152)?;
     let activation = AnimActivation::from_u8(anim_def.activation).ok_or_else(|| {
-        AssertionError(format!(
+        assert_with_msg!(
             "Expected valid anim def activation, but was {} (at {})",
             anim_def.activation,
             read.prev + 153
-        ))
+        )
     })?;
     assert_that!(
         "anim def action priority",

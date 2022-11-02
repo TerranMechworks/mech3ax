@@ -3,9 +3,8 @@ use log::{debug, trace};
 use mech3ax_api_types::{
     static_assert_size, MeshLightPm, MeshPm, PolygonPm, ReprSize as _, UvCoord, Vec3,
 };
-use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, bool_c, Result};
+use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
 use std::io::{Read, Write};
 
 #[derive(Debug)]
@@ -256,11 +255,11 @@ fn assert_polygon(poly: PolygonPmC, offset: u32) -> Result<(u32, bool, PolygonPm
     assert_that!("verts in poly", 3 <= verts_in_poly <= 99, offset + 0)?;
 
     let flags = PolygonFlags::from_bits(verts_bits).ok_or_else(|| {
-        AssertionError(format!(
+        assert_with_msg!(
             "Expected valid polygon flags, but was 0x{:02X} (at {})",
             verts_bits,
             offset + 1,
-        ))
+        )
     })?;
     let has_unk2 = flags.contains(PolygonFlags::UNK2);
     let has_normals = flags.contains(PolygonFlags::NORMALS);

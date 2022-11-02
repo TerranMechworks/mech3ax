@@ -1,7 +1,6 @@
 use mech3ax_api_types::{static_assert_size, Motion, MotionFrame, MotionPart};
-use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use std::io::{Read, Write};
 
 const VERSION: u32 = 4;
@@ -39,16 +38,10 @@ pub fn read_motion(read: &mut CountingReader<impl Read>) -> Result<Motion> {
 
             // the first and last frames always match
             let first = translations.first().ok_or_else(|| {
-                AssertionError(format!(
-                    "part `{}` didn't contain a single frame",
-                    part_name
-                ))
+                assert_with_msg!("part `{}` didn't contain a single frame", part_name)
             })?;
             let last = translations.last().ok_or_else(|| {
-                AssertionError(format!(
-                    "part `{}` didn't contain a single frame",
-                    part_name
-                ))
+                assert_with_msg!("part `{}` didn't contain a single frame", part_name)
             })?;
             assert_that!("part translation first/last", first == last, read.offset)?;
             translations.pop();
@@ -59,16 +52,10 @@ pub fn read_motion(read: &mut CountingReader<impl Read>) -> Result<Motion> {
 
             // the first and last frames always match
             let first = rotations.first().ok_or_else(|| {
-                AssertionError(format!(
-                    "part `{}` didn't contain a single frame",
-                    part_name
-                ))
+                assert_with_msg!("part `{}` didn't contain a single frame", part_name)
             })?;
             let last = rotations.last().ok_or_else(|| {
-                AssertionError(format!(
-                    "part `{}` didn't contain a single frame",
-                    part_name
-                ))
+                assert_with_msg!("part `{}` didn't contain a single frame", part_name)
             })?;
             assert_that!("part rotation first/last", first == last, read.offset)?;
             rotations.pop();

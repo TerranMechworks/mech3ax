@@ -3,8 +3,7 @@ mod structures;
 use super::bin::StructAt as _;
 use super::size::ConstSize as _;
 use log::trace;
-use mech3ax_common::assert::AssertionError;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use structures::*;
 
 const RT_MESSAGETABLE: u32 = 11;
@@ -147,9 +146,7 @@ pub fn read_resource_directory(data: &[u8], base_offset: usize) -> Result<(u32, 
             is_dir == false,
             reader.abs_offset()
         )?;
-        name.ok_or_else(|| {
-            AssertionError("Expected language resource entry name to be an ID".to_owned())
-        })?
+        name.ok_or_else(|| assert_with_msg!("Expected language resource entry name to be an ID"))?
     };
     // resource language directory
     let (data_offset, data_size) = reader.read_data("lang")?;

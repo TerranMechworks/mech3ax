@@ -1,8 +1,7 @@
 use log::{debug, trace};
 use mech3ax_api_types::{static_assert_size, Color, ColoredMaterial, Material, ReprSize as _};
-use mech3ax_common::assert::AssertionError;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use std::io::{Read, Write};
 
 #[derive(Debug)]
@@ -57,11 +56,11 @@ pub fn read_material(read: &mut CountingReader<impl Read>, index: u32) -> Result
     trace!("{:#?}", material);
 
     let bitflags = MaterialFlags::from_bits(material.flags).ok_or_else(|| {
-        AssertionError(format!(
+        assert_with_msg!(
             "Expected valid material flags, but was 0x{:02X} (at {})",
             material.flags,
             read.prev + 1
-        ))
+        )
     })?;
 
     let flag_unknown = bitflags.contains(MaterialFlags::UNKNOWN);

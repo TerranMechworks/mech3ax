@@ -279,6 +279,21 @@ macro_rules! assert_that {
 }
 
 #[macro_export]
+macro_rules! assert_with_msg {
+    ($msg:literal) => {
+        $crate::assert_with_msg!($msg.to_string())
+    };
+    ($msg:expr) => {
+        $crate::Error::Assert(
+            $crate::assert::AssertionError($msg)
+        )
+    };
+    ($($arg:tt)*) => {
+        $crate::assert_with_msg!(format!($($arg)*))
+    };
+}
+
+#[macro_export]
 macro_rules! bool_c {
     ($value:expr) => {
         if $value {

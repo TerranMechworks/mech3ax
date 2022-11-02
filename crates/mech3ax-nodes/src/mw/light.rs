@@ -4,10 +4,10 @@ use log::{debug, trace};
 use mech3ax_api_types::{
     static_assert_size, BoundingBox, Color, Hide, Light, Range, ReprSize as _, Vec3,
 };
-use mech3ax_common::assert::{assert_all_zero, AssertionError};
+use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlags;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use std::io::{Read, Write};
 
 #[derive(Debug)]
@@ -108,11 +108,11 @@ fn assert_light(light: &LightMwC, offset: u32) -> Result<()> {
     assert_that!("color", light.color == Color::WHITE_NORM, offset + 164)?;
 
     let flags = LightFlags::from_bits(light.flags).ok_or_else(|| {
-        AssertionError(format!(
+        assert_with_msg!(
             "Expected valid light flags, but was 0x{:08X} (at {})",
             light.flags,
             offset + 176
-        ))
+        )
     })?;
     assert_that!("flag", flags == LightFlags::DEFAULT, offset + 176)?;
 

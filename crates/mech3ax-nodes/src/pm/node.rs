@@ -5,10 +5,10 @@ use crate::flags::NodeBitFlags;
 use crate::types::{NodeType, NodeVariantPm, NodeVariantsPm, ZONE_DEFAULT};
 use log::{debug, trace};
 use mech3ax_api_types::{static_assert_size, AreaPartition, BoundingBox, NodePm, ReprSize as _};
-use mech3ax_common::assert::{assert_utf8, AssertionError};
+use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
-use mech3ax_common::{assert_that, bool_c, Result};
+use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
 
@@ -54,18 +54,18 @@ fn assert_node(node: NodePmC, offset: u32) -> Result<(NodeType, NodeVariantsPm)>
 
     let name = assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name))?;
     let flags = NodeBitFlags::from_bits(node.flags).ok_or_else(|| {
-        AssertionError(format!(
+        assert_with_msg!(
             "Expected valid node flags, but was 0x{:08X} (at {})",
             node.flags,
             offset + 36
-        ))
+        )
     })?;
     let node_type = FromPrimitive::from_u32(node.node_type).ok_or_else(|| {
-        AssertionError(format!(
+        assert_with_msg!(
             "Expected valid node type, but was {} (at {})",
             node.node_type,
             offset + 52
-        ))
+        )
     })?;
 
     assert_that!("field 040", node.zero040 == 0, offset + 40)?;
@@ -154,7 +154,7 @@ fn assert_node(node: NodePmC, offset: u32) -> Result<(NodeType, NodeVariantsPm)>
 
 #[inline]
 pub fn mechlib_only_err_pm() -> mech3ax_common::Error {
-    AssertionError("Expected only Object3d or Lod nodes in mechlib".to_owned()).into()
+    assert_with_msg!("Expected only Object3d or Lod nodes in mechlib")
 }
 
 pub fn read_node_mechlib_pm(
