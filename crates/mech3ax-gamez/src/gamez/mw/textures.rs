@@ -1,5 +1,5 @@
 use log::{debug, trace};
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{static_assert_size, Ascii, ReprSize as _};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_suffix, str_to_c_suffix};
@@ -8,15 +8,15 @@ use std::io::{Read, Write};
 
 #[derive(Debug)]
 #[repr(C)]
-struct TextureInfoC {
-    zero00: u32,
-    zero04: u32,
-    texture: [u8; 20],
-    used: u32,
-    index: u32,
-    unk36: i32,
+struct TextureInfoMwC {
+    zero00: u32,        // 00
+    zero04: u32,        // 04
+    texture: Ascii<20>, // 08
+    used: u32,          // 28
+    index: u32,         // 32
+    unk36: i32,         // 36
 }
-static_assert_size!(TextureInfoC, 40);
+static_assert_size!(TextureInfoMwC, 40);
 
 pub fn read_texture_infos(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<String>> {
     (0..count)
@@ -24,10 +24,10 @@ pub fn read_texture_infos(read: &mut CountingReader<impl Read>, count: u32) -> R
             debug!(
                 "Reading texture info {} (mw, {}) at {}",
                 index,
-                TextureInfoC::SIZE,
+                TextureInfoMwC::SIZE,
                 read.offset
             );
-            let info: TextureInfoC = read.read_struct()?;
+            let info: TextureInfoMwC = read.read_struct()?;
             trace!("{:#?}", info);
 
             // not sure what this is. a pointer to the previous texture in the global
@@ -36,7 +36,7 @@ pub fn read_texture_infos(read: &mut CountingReader<impl Read>, count: u32) -> R
             // a non-zero value here causes additional dynamic code to be called
             assert_that!("field 04", info.zero04 == 0, read.prev + 4)?;
             let texture = assert_utf8("texture", read.prev + 8, || {
-                str_from_c_suffix(&info.texture)
+                str_from_c_suffix(&info.texture.0)
             })?;
             // 2 if the texture is used, 0 if the texture is unused
             // 1 or 3 if the texture is being processed (deallocated?)
@@ -57,12 +57,12 @@ pub fn write_texture_infos(
         debug!(
             "Writing texture info {} (mw, {}) at {}",
             index,
-            TextureInfoC::SIZE,
+            TextureInfoMwC::SIZE,
             write.offset
         );
-        let mut texture = [0; 20];
-        str_to_c_suffix(name, &mut texture);
-        let info = TextureInfoC {
+        let mut texture = Ascii::new();
+        str_to_c_suffix(name, &mut texture.0);
+        let info = TextureInfoMwC {
             zero00: 0,
             zero04: 0,
             texture,
@@ -77,5 +77,5 @@ pub fn write_texture_infos(
 }
 
 pub fn size_texture_infos(count: u32) -> u32 {
-    TextureInfoC::SIZE * count
+    TextureInfoMwC::SIZE * count
 }

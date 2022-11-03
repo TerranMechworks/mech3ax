@@ -3,7 +3,7 @@ use crate::math::cotangent;
 use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
 use log::{debug, trace};
 use mech3ax_api_types::{
-    static_assert_size, BoundingBox, Camera, Hide, Matrix, Range, ReprSize as _, Vec3,
+    static_assert_size, BoundingBox, Camera, Matrix, Range, ReprSize as _, Vec3, Zeros,
 };
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -13,43 +13,43 @@ use std::io::{Read, Write};
 #[derive(Debug)]
 #[repr(C)]
 struct CameraMwC {
-    world_index: i32,        // 000
-    window_index: i32,       // 004
-    focus_node_xy: i32,      // 008
-    focus_node_xz: i32,      // 012
-    flags: u32,              // 016
-    translation: Vec3,       // 020
-    rotation: Vec3,          // 032
-    world_translate: Vec3,   // 044
-    world_rotate: Vec3,      // 056
-    mtw_matrix: Matrix,      // 068
-    unk104: Vec3,            // 104
-    view_vector: Vec3,       // 116
-    matrix: Matrix,          // 128
-    alt_translate: Vec3,     // 164
-    clip: Range,             // 176
-    zero184: Hide<[u8; 24]>, // 184
-    lod_multiplier: f32,     // 208
-    lod_inv_sq: f32,         // 212
-    fov_h_zoom_factor: f32,  // 216
-    fov_v_zoom_factor: f32,  // 220
-    fov_h_base: f32,         // 224
-    fov_v_base: f32,         // 228
-    fov: Range,              // 232
-    fov_h_half: f32,         // 240
-    fov_v_half: f32,         // 244
-    one248: u32,             // 248
-    zero252: Hide<[u8; 60]>, // 252
-    one312: u32,             // 312
-    zero316: Hide<[u8; 72]>, // 316
-    one388: u32,             // 388
-    zero392: Hide<[u8; 72]>, // 392
-    zero464: u32,            // 464
-    fov_h_cot: f32,          // 468
-    fov_v_cot: f32,          // 472
-    stride: i32,             // 476
-    zone_set: i32,           // 480
-    unk484: i32,             // 484
+    world_index: i32,       // 000
+    window_index: i32,      // 004
+    focus_node_xy: i32,     // 008
+    focus_node_xz: i32,     // 012
+    flags: u32,             // 016
+    translation: Vec3,      // 020
+    rotation: Vec3,         // 032
+    world_translate: Vec3,  // 044
+    world_rotate: Vec3,     // 056
+    mtw_matrix: Matrix,     // 068
+    unk104: Vec3,           // 104
+    view_vector: Vec3,      // 116
+    matrix: Matrix,         // 128
+    alt_translate: Vec3,    // 164
+    clip: Range,            // 176
+    zero184: Zeros<24>,     // 184
+    lod_multiplier: f32,    // 208
+    lod_inv_sq: f32,        // 212
+    fov_h_zoom_factor: f32, // 216
+    fov_v_zoom_factor: f32, // 220
+    fov_h_base: f32,        // 224
+    fov_v_base: f32,        // 228
+    fov: Range,             // 232
+    fov_h_half: f32,        // 240
+    fov_v_half: f32,        // 244
+    one248: u32,            // 248
+    zero252: Zeros<60>,     // 252
+    one312: u32,            // 312
+    zero316: Zeros<72>,     // 316
+    one388: u32,            // 388
+    zero392: Zeros<72>,     // 392
+    zero464: u32,           // 464
+    fov_h_cot: f32,         // 468
+    fov_v_cot: f32,         // 472
+    stride: i32,            // 476
+    zone_set: i32,          // 480
+    unk484: i32,            // 484
 }
 static_assert_size!(CameraMwC, 488);
 
@@ -279,7 +279,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera, index: usi
         matrix: Matrix::EMPTY,
         alt_translate: Vec3::DEFAULT,
         clip: camera.clip,
-        zero184: Hide([0; 24]),
+        zero184: Zeros::new(),
         lod_multiplier: 1.0,
         lod_inv_sq: 1.0,
         fov_h_zoom_factor: 1.0,
@@ -290,11 +290,11 @@ pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera, index: usi
         fov_h_half,
         fov_v_half,
         one248: 1,
-        zero252: Hide([0; 60]),
+        zero252: Zeros::new(),
         one312: 1,
-        zero316: Hide([0; 72]),
+        zero316: Zeros::new(),
         one388: 1,
-        zero392: Hide([0; 72]),
+        zero392: Zeros::new(),
         zero464: 0,
         fov_h_cot: cotangent(fov_h_half),
         fov_v_cot: cotangent(fov_v_half),

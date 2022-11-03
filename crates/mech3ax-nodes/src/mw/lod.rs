@@ -2,7 +2,7 @@ use super::wrappers::WrapperMw;
 use crate::flags::NodeBitFlags;
 use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
 use log::{debug, trace};
-use mech3ax_api_types::{static_assert_size, BoundingBox, Hide, Lod, Range, ReprSize as _};
+use mech3ax_api_types::{static_assert_size, BoundingBox, Lod, Range, ReprSize as _, Zeros};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, bool_c, Result};
@@ -11,16 +11,16 @@ use std::io::{Read, Write};
 #[derive(Debug)]
 #[repr(C)]
 struct LodMwC {
-    level: u32,             // 00
-    range_near_sq: f32,     // 04
-    range_far: f32,         // 08
-    range_far_sq: f32,      // 12
-    zero16: Hide<[u8; 44]>, // 16
-    unk60: f32,             // 60
-    unk64: f32,             // 64
-    one68: u32,             // 68
-    unk72: u32,             // 72
-    unk76: u32,             // 76
+    level: u32,         // 00
+    range_near_sq: f32, // 04
+    range_far: f32,     // 08
+    range_far_sq: f32,  // 12
+    zero16: Zeros<44>,  // 16
+    unk60: f32,         // 60
+    unk64: f32,         // 64
+    one68: u32,         // 68
+    unk72: u32,         // 72
+    unk76: u32,         // 76
 }
 static_assert_size!(LodMwC, 80);
 
@@ -180,7 +180,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, lod: &Lod, index: usize) ->
         range_near_sq: lod.range.min * lod.range.min,
         range_far: lod.range.max,
         range_far_sq: lod.range.max * lod.range.max,
-        zero16: Hide([0; 44]),
+        zero16: Zeros::new(),
         unk60: lod.unk60,
         unk64: lod.unk60 * lod.unk60,
         one68: 1,

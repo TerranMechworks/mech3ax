@@ -2,7 +2,7 @@ use crate::flags::NodeBitFlags;
 use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
 use log::{debug, trace};
 use mech3ax_api_types::{
-    static_assert_size, BoundingBox, Color, Hide, Light, Range, ReprSize as _, Vec3,
+    static_assert_size, BoundingBox, Color, Light, Range, ReprSize as _, Vec3, Zeros,
 };
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -13,24 +13,24 @@ use std::io::{Read, Write};
 #[derive(Debug)]
 #[repr(C)]
 struct LightMwC {
-    direction: Vec3,          // 000
-    translation: Vec3,        // 012
-    zero024: Hide<[u8; 112]>, // 024
-    one136: f32,              // 136
-    zero140: f32,             // 140
-    zero144: f32,             // 144
-    zero148: f32,             // 148
-    zero152: f32,             // 152
-    diffuse: f32,             // 156
-    ambient: f32,             // 160
-    color: Color,             // 164
-    flags: u32,               // 176
-    range: Range,             // 180
-    range_near_sq: f32,       // 188
-    range_far_sq: f32,        // 192
-    range_inv: f32,           // 196
-    parent_count: u32,        // 200
-    parent_ptr: u32,          // 204
+    direction: Vec3,     // 000
+    translation: Vec3,   // 012
+    zero024: Zeros<112>, // 024
+    one136: f32,         // 136
+    zero140: f32,        // 140
+    zero144: f32,        // 144
+    zero148: f32,        // 148
+    zero152: f32,        // 152
+    diffuse: f32,        // 156
+    ambient: f32,        // 160
+    color: Color,        // 164
+    flags: u32,          // 176
+    range: Range,        // 180
+    range_near_sq: f32,  // 188
+    range_far_sq: f32,   // 192
+    range_inv: f32,      // 196
+    parent_count: u32,   // 200
+    parent_ptr: u32,     // 204
 }
 static_assert_size!(LightMwC, 208);
 
@@ -192,7 +192,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, light: &Light, index: usize
     let light = LightMwC {
         direction: light.direction,
         translation: Vec3::DEFAULT,
-        zero024: Hide([0; 112]),
+        zero024: Zeros::new(),
         one136: 1.0,
         zero140: 0.0,
         zero144: 0.0,

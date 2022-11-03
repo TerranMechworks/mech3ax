@@ -2,7 +2,7 @@ use super::wrappers::WrapperPm;
 use crate::flags::NodeBitFlags;
 use crate::types::{NodeVariantPm, NodeVariantsPm};
 use log::{debug, trace};
-use mech3ax_api_types::{static_assert_size, BoundingBox, Hide, LodPm, Range, ReprSize as _};
+use mech3ax_api_types::{static_assert_size, BoundingBox, LodPm, Range, ReprSize as _, Zeros};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, bool_c, Result};
@@ -11,19 +11,19 @@ use std::io::{Read, Write};
 #[derive(Debug)]
 #[repr(C)]
 struct LodPmC {
-    level: u32,             // 00
-    range_near_sq: f32,     // 04
-    range_far: f32,         // 08
-    range_far_sq: f32,      // 12
-    zero16: Hide<[u8; 44]>, // 16
-    unk60: f32,             // 60
-    unk64: f32,             // 64
-    unk68: f32,             // 68
-    unk72: f32,             // 72
-    unk76: f32,             // 76
-    one80: u32,             // 80
-    unk84: u32,             // 84
-    unk88: u32,             // 88
+    level: u32,         // 00
+    range_near_sq: f32, // 04
+    range_far: f32,     // 08
+    range_far_sq: f32,  // 12
+    zero16: Zeros<44>,  // 16
+    unk60: f32,         // 60
+    unk64: f32,         // 64
+    unk68: f32,         // 68
+    unk72: f32,         // 72
+    unk76: f32,         // 76
+    one80: u32,         // 80
+    unk84: u32,         // 84
+    unk88: u32,         // 88
 }
 /*
 level: u32,         // 00
@@ -262,7 +262,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, lod: &LodPm, index: usize) 
         range_near_sq: lod.range.min * lod.range.min,
         range_far: lod.range.max,
         range_far_sq: lod.range.max * lod.range.max,
-        zero16: Hide([0; 44]),
+        zero16: Zeros::new(),
         unk60: 0.0,
         unk64: lod.unk64,
         unk68: lod.unk64 * lod.unk64,

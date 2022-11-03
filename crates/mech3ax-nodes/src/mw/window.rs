@@ -1,7 +1,7 @@
 use crate::flags::NodeBitFlags;
 use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
 use log::{debug, trace};
-use mech3ax_api_types::{static_assert_size, BoundingBox, Hide, ReprSize as _, Window};
+use mech3ax_api_types::{static_assert_size, BoundingBox, ReprSize as _, Window, Zeros};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
@@ -10,16 +10,16 @@ use std::io::{Read, Write};
 #[derive(Debug)]
 #[repr(C)]
 struct WindowMwC {
-    origin_x: u32,            // 000
-    origin_y: u32,            // 004
-    resolution_x: u32,        // 008
-    resolution_y: u32,        // 012
-    zero016: Hide<[u8; 212]>, // 016
-    buffer_index: i32,        // 228
-    buffer_ptr: u32,          // 232
-    zero236: u32,             // 236
-    zero240: u32,             // 240
-    zero244: u32,             // 244
+    origin_x: u32,       // 000
+    origin_y: u32,       // 004
+    resolution_x: u32,   // 008
+    resolution_y: u32,   // 012
+    zero016: Zeros<212>, // 016
+    buffer_index: i32,   // 228
+    buffer_ptr: u32,     // 232
+    zero236: u32,        // 236
+    zero240: u32,        // 240
+    zero244: u32,        // 244
 }
 static_assert_size!(WindowMwC, 248);
 
@@ -130,7 +130,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, window: &Window, index: usi
         origin_y: 0,
         resolution_x: window.resolution_x,
         resolution_y: window.resolution_y,
-        zero016: Hide([0; 212]),
+        zero016: Zeros::new(),
         buffer_index: -1,
         buffer_ptr: 0,
         zero236: 0,

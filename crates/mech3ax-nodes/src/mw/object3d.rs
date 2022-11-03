@@ -4,7 +4,7 @@ use crate::math::{apply_zero_signs, euler_to_matrix, extract_zero_signs, PI};
 use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
 use log::{debug, trace};
 use mech3ax_api_types::{
-    static_assert_size, Hide, Matrix, Object3d, ReprSize as _, Transformation, Vec3,
+    static_assert_size, Matrix, Object3d, ReprSize as _, Transformation, Vec3, Zeros,
 };
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -14,17 +14,17 @@ use std::io::{Read, Write};
 #[derive(Debug)]
 #[repr(C)]
 struct Object3dMwC {
-    flags: u32,              // 000
-    opacity: f32,            // 004
-    zero008: f32,            // 008
-    zero012: f32,            // 012
-    zero016: f32,            // 016
-    zero020: f32,            // 020
-    rotation: Vec3,          // 024
-    scale: Vec3,             // 032
-    matrix: Matrix,          // 048
-    translation: Vec3,       // 084
-    zero096: Hide<[u8; 48]>, // 096
+    flags: u32,         // 000
+    opacity: f32,       // 004
+    zero008: f32,       // 008
+    zero012: f32,       // 012
+    zero016: f32,       // 016
+    zero020: f32,       // 020
+    rotation: Vec3,     // 024
+    scale: Vec3,        // 032
+    matrix: Matrix,     // 048
+    translation: Vec3,  // 084
+    zero096: Zeros<48>, // 096
 }
 static_assert_size!(Object3dMwC, 144);
 
@@ -229,7 +229,7 @@ pub fn write(
         scale: SCALE_ONE,
         matrix,
         translation,
-        zero096: Hide([0u8; 48]),
+        zero096: Zeros([0u8; 48]),
     };
     trace!("{:#?}", object3d);
     write.write_struct(&object3d)?;

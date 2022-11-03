@@ -10,7 +10,9 @@ use super::wrappers::WrappedNodeMw;
 use crate::flags::NodeBitFlags;
 use crate::types::{NodeType, NodeVariantMw, NodeVariantsMw};
 use log::{debug, trace};
-use mech3ax_api_types::{static_assert_size, AreaPartition, BoundingBox, NodeMw, ReprSize as _};
+use mech3ax_api_types::{
+    static_assert_size, AreaPartition, Ascii, BoundingBox, NodeMw, ReprSize as _,
+};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
@@ -21,7 +23,7 @@ use std::io::{Read, Write};
 #[derive(Debug)]
 #[repr(C)]
 struct NodeMwC {
-    name: [u8; 36],                // 000
+    name: Ascii<36>,               // 000
     flags: u32,                    // 036
     zero040: u32,                  // 040
     unk044: u32,                   // 044
@@ -57,7 +59,7 @@ pub const NODE_MW_C_SIZE: u32 = NodeMwC::SIZE;
 fn assert_node(node: NodeMwC, offset: u32) -> Result<(NodeType, NodeVariantsMw)> {
     // invariants for every node type
 
-    let name = assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name))?;
+    let name = assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name.0))?;
     let flags = NodeBitFlags::from_bits(node.flags).ok_or_else(|| {
         assert_with_msg!(
             "Expected valid node flags, but was 0x{:08X} (at {})",
@@ -183,7 +185,7 @@ pub fn read_node_info_gamez_mw(
     let node: NodeMwC = read.read_struct()?;
     trace!("{:#?}", node);
 
-    if node.name[0] == 0 {
+    if node.name.0[0] == 0 {
         assert_node_info_zero(node, read.prev)?;
         Ok(None)
     } else {
@@ -250,8 +252,8 @@ fn write_variant(
         write.offset
     );
 
-    let mut name = [0; 36];
-    str_to_c_node_name(variant.name, &mut name);
+    let mut name = Ascii::new();
+    str_to_c_node_name(variant.name, &mut name.0);
 
     let area_partition = variant.area_partition.unwrap_or(AreaPartition::DEFAULT_MW);
 
@@ -362,7 +364,7 @@ pub fn size_node_mw(node: &NodeMw) -> u32 {
 }
 
 fn assert_node_info_zero(node: NodeMwC, offset: u32) -> Result<()> {
-    assert_all_zero("name", offset + 0, &node.name)?;
+    assert_all_zero("name", offset + 0, &node.name.0)?;
     assert_that!("flags", node.flags == 0, offset + 36)?;
     assert_that!("flags", node.node_type == 0, offset + 40)?;
     assert_that!("field 040", node.zero040 == 0, offset + 40)?;
@@ -420,7 +422,7 @@ pub fn write_node_info_zero_mw(write: &mut CountingWriter<impl Write>, index: u3
         write.offset
     );
     let node = NodeMwC {
-        name: [0; 36],
+        name: Ascii::new(),
         flags: 0,
         zero040: 0,
         unk044: 0,

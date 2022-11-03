@@ -4,7 +4,9 @@ use super::wrappers::WrappedNodePm;
 use crate::flags::NodeBitFlags;
 use crate::types::{NodeType, NodeVariantPm, NodeVariantsPm, ZONE_DEFAULT};
 use log::{debug, trace};
-use mech3ax_api_types::{static_assert_size, AreaPartition, BoundingBox, NodePm, ReprSize as _};
+use mech3ax_api_types::{
+    static_assert_size, AreaPartition, Ascii, BoundingBox, NodePm, ReprSize as _,
+};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
@@ -15,7 +17,7 @@ use std::io::{Read, Write};
 #[derive(Debug)]
 #[repr(C)]
 struct NodePmC {
-    name: [u8; 36],                // 000
+    name: Ascii<36>,               // 000
     flags: u32,                    // 036
     zero040: u32,                  // 040
     unk044: u32,                   // 044
@@ -52,7 +54,7 @@ pub const NODE_PM_C_SIZE: u32 = NodePmC::SIZE;
 fn assert_node(node: NodePmC, offset: u32) -> Result<(NodeType, NodeVariantsPm)> {
     // invariants for every node type
 
-    let name = assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name))?;
+    let name = assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name.0))?;
     let flags = NodeBitFlags::from_bits(node.flags).ok_or_else(|| {
         assert_with_msg!(
             "Expected valid node flags, but was 0x{:08X} (at {})",
@@ -206,8 +208,8 @@ fn write_variant(
         write.offset
     );
 
-    let mut name = [0; 36];
-    str_to_c_node_name(variant.name, &mut name);
+    let mut name = Ascii::new();
+    str_to_c_node_name(variant.name, &mut name.0);
 
     let node = NodePmC {
         name,
