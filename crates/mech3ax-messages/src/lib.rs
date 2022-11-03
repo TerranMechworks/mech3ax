@@ -6,6 +6,7 @@ mod message_table;
 mod pe;
 mod read;
 mod resources;
+mod string_table;
 mod zloc;
 
-pub use read::read_messages;
+pub use read::{read_message_table, read_messages};

@@ -149,6 +149,7 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
         GameType::MW => GameType::MW,
         GameType::PM => GameType::PM,
         GameType::RC => bail!("Recoil does not have mechlib"),
+        GameType::CS => bail!("Crimson Skies does not have mechlib"),
     };
     let version = opts.version(Mode::Sounds);
 
@@ -190,6 +191,7 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                             })?;
                         }
                         GameType::RC => unreachable!("Recoil does not have mechlib"),
+                        GameType::CS => unreachable!("Crimson Skies does not have mechlib"),
                     }
                     Ok(buf.into_inner())
                 }
@@ -223,6 +225,7 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
         GameType::MW => {}
         GameType::PM => bail!("Pirate's Moon support for Gamez isn't implemented yet"),
         GameType::RC => bail!("Recoil support for Gamez isn't implemented yet"),
+        GameType::CS => bail!("Crimson Skies support for Gamez isn't implemented yet"),
     }
 
     let gamez = {
@@ -251,6 +254,7 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
         GameType::MW => {}
         GameType::PM => bail!("Pirate's Moon support for Anim isn't implemented yet"),
         GameType::RC => bail!("Recoil support for Anim isn't implemented yet"),
+        GameType::CS => bail!("Crimson Skies support for Anim isn't implemented yet"),
     }
 
     let input = buf_reader(&opts.input)?;
@@ -267,6 +271,7 @@ pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
         GameType::MW => Version::One,
         GameType::PM => bail!("Pirate's Moon support for Savegames isn't implemented yet"),
         GameType::RC => bail!("Recoil support for Savegames isn't implemented yet"),
+        GameType::CS => bail!("Crimson Skies support for Savegames isn't implemented yet"),
     };
 
     _zarchive(

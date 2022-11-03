@@ -21,11 +21,12 @@ enum Game {
     MW,
     PM,
     RC,
+    CS,
 }
 
 impl clap::ValueEnum for Game {
     fn value_variants<'a>() -> &'a [Self] {
-        &[Self::MW, Self::PM, Self::RC]
+        &[Self::MW, Self::PM, Self::RC, Self::CS]
     }
 
     fn to_possible_value<'a>(&self) -> Option<clap::builder::PossibleValue> {
@@ -33,6 +34,7 @@ impl clap::ValueEnum for Game {
             Self::MW => Some(clap::builder::PossibleValue::new("mw")),
             Self::PM => Some(clap::builder::PossibleValue::new("pm")),
             Self::RC => Some(clap::builder::PossibleValue::new("rc")),
+            Self::CS => Some(clap::builder::PossibleValue::new("cs")),
         }
     }
 }
@@ -43,6 +45,7 @@ impl Into<GameType> for Game {
             Self::MW => GameType::MW,
             Self::PM => GameType::PM,
             Self::RC => GameType::RC,
+            Self::CS => GameType::CS,
         }
     }
 }
@@ -75,7 +78,8 @@ struct ZipOpts {
 impl ZipOpts {
     fn version(&self, mode: Mode) -> Version {
         match self.game {
-            GameType::MW | GameType::RC => Version::One,
+            // TODO: CS
+            GameType::MW | GameType::RC | GameType::CS => Version::One,
             GameType::PM => Version::Two(mode),
         }
     }
@@ -121,7 +125,8 @@ struct ReaderOpts {
 impl ReaderOpts {
     fn version(&self) -> Version {
         match self.game {
-            GameType::MW | GameType::RC => Version::One,
+            // TODO: CS
+            GameType::MW | GameType::RC | GameType::CS => Version::One,
             GameType::PM if self.skip_crc => Version::Two(Mode::ReaderBypass),
             GameType::PM => Version::Two(Mode::Reader),
         }
@@ -167,15 +172,6 @@ struct MsgOpts {
     game: GameType,
     input: String,
     output: String,
-}
-
-impl MsgOpts {
-    fn skip_data(&self) -> Option<usize> {
-        match self.game {
-            GameType::MW | GameType::PM => None,
-            GameType::RC => Some(48),
-        }
-    }
 }
 
 #[derive(clap::Subcommand)]

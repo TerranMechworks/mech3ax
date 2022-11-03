@@ -14,6 +14,7 @@ pub fn read_version(read: &mut CountingReader<impl Read>, game: GameType) -> Res
         GameType::MW => VERSION_MW,
         GameType::PM => VERSION_PM,
         GameType::RC => return Err(assert_with_msg!("Recoil has no mechlib")),
+        GameType::CS => return Err(assert_with_msg!("Crimson Skies has no mechlib")),
     };
     assert_that!("version", actual == expected, read.prev)?;
     read.assert_end()
@@ -30,6 +31,7 @@ pub fn write_version(write: &mut CountingWriter<impl Write>, game: GameType) -> 
         GameType::MW => VERSION_MW,
         GameType::PM => VERSION_PM,
         GameType::RC => return Err(assert_with_msg!("Recoil has no mechlib")),
+        GameType::CS => return Err(assert_with_msg!("Crimson Skies has no mechlib")),
     };
     write.write_u32(version)?;
     Ok(())
@@ -76,7 +78,9 @@ pub fn write_materials(
         write_material(write, material, None, index)?;
         if let Material::Textured(textured) = material {
             if textured.cycle.is_some() {
-                panic!("mechlib materials cannot have cycled textures");
+                return Err(assert_with_msg!(
+                    "mechlib materials cannot have cycled textures"
+                ));
             }
             write.write_string(&textured.texture)?;
         }

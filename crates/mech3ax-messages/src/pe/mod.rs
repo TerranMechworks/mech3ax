@@ -9,6 +9,8 @@ use constants::{ImageFileFlags, IMAGE_DIRECTORY_ENTRY_RESOURCE};
 use log::trace;
 use structures::*;
 
+pub type ImageSection = IMAGE_SECTION_HEADER;
+
 pub struct SectionsAndDirectories {
     pub image_base: u32,
     pub file_alignment: u32,
@@ -17,7 +19,7 @@ pub struct SectionsAndDirectories {
 }
 
 impl SectionsAndDirectories {
-    pub fn lookup(&self, name: &str) -> Option<&IMAGE_SECTION_HEADER> {
+    pub fn lookup(&self, name: &str) -> Option<&ImageSection> {
         self.sections.iter().find(|&section| section.name() == name)
     }
 

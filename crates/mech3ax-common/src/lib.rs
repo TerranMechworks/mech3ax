@@ -11,6 +11,7 @@ pub enum GameType {
     MW,
     PM,
     RC,
+    CS,
 }
 
 #[derive(Debug, Error)]

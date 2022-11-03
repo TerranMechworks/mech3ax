@@ -46,7 +46,7 @@ pub extern "C" fn read_interp(filename: *const c_char, _is_pm: i32, callback: Da
 pub extern "C" fn read_messages(filename: *const c_char, callback: DataCb) -> i32 {
     err_to_c(|| {
         let mut read = buf_reader(filename)?;
-        let messages = mech3ax_messages::read_messages(&mut read, None)
+        let messages = mech3ax_messages::read_message_table(&mut read, None)
             .context("Failed to read message data")?;
         let data = serde_json::to_vec(&messages)?;
         callback(data.as_ptr(), data.len());
