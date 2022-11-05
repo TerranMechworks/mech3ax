@@ -8,6 +8,7 @@ use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, assert_with_msg, Error, Result};
+use mech3ax_debug::Ascii;
 use mech3ax_pixel_ops::{
     pal8to888, pal8to888a, rgb565to888, rgb565to888a, rgb888ato565, rgb888atopal8, rgb888to565,
     rgb888topal8, simple_alpha,
@@ -16,28 +17,30 @@ use num_traits::FromPrimitive;
 use std::collections::HashSet;
 use std::io::{Read, Write};
 
+#[derive(Debug)]
 #[repr(C)]
-struct Header {
-    zero00: u32,
-    has_entries: u32,
-    global_palette_count: i32,
-    texture_count: u32,
-    zero16: u32,
-    zero20: u32,
+struct TexturesHeaderC {
+    zero00: u32,               // 00
+    has_entries: u32,          // 04
+    global_palette_count: i32, // 08
+    texture_count: u32,        // 12
+    zero16: u32,               // 16
+    zero20: u32,               // 20
 }
-static_assert_size!(Header, 24);
-
-#[repr(C)]
-struct Entry {
-    name: [u8; 32],
-    start_offset: u32,
-    palette_index: i32,
-}
-static_assert_size!(Entry, 40);
+static_assert_size!(TexturesHeaderC, 24);
 
 #[derive(Debug)]
 #[repr(C)]
-struct Info {
+struct TextureEntryC {
+    name: Ascii<32>,    // 00
+    start_offset: u32,  // 32
+    palette_index: i32, // 36
+}
+static_assert_size!(TextureEntryC, 40);
+
+#[derive(Debug)]
+#[repr(C)]
+struct TextureInfoC {
     flags: u32,         // 00
     width: u16,         // 04
     height: u16,        // 06
@@ -45,7 +48,7 @@ struct Info {
     palette_count: u16, // 12
     stretch: u16,       // 14
 }
-static_assert_size!(Info, 16);
+static_assert_size!(TextureInfoC, 16);
 
 bitflags::bitflags! {
     struct TexFlags: u32 {
@@ -75,7 +78,7 @@ fn rename(seen: &HashSet<String>, original: &str) -> String {
 
 fn convert_info_from_c(
     name: String,
-    tex_info: Info,
+    tex_info: TextureInfoC,
     global_palette: Option<(i32, &PaletteData)>,
     offset: u32,
 ) -> Result<TextureInfo> {
@@ -141,11 +144,11 @@ fn read_texture(
     debug!(
         "Reading texture info `{}` ({}) at {}",
         name,
-        Info::SIZE,
+        TextureInfoC::SIZE,
         read.offset
     );
-    let tex_info: Info = read.read_struct()?;
-    trace!("Texture info: {:#?}", tex_info);
+    let tex_info: TextureInfoC = read.read_struct()?;
+    trace!("{:#?}", tex_info);
     assert_that!("field 08", tex_info.zero08 == 0, read.prev + 8)?;
     let palette_count = tex_info.palette_count;
     let mut info = convert_info_from_c(name, tex_info, global_palette, read.prev + 0)?;
@@ -229,9 +232,15 @@ fn read_texture(
     Ok((info, image))
 }
 
-fn read_textures_header(read: &mut CountingReader<impl Read>) -> Result<Header> {
-    debug!("Reading header ({}) at {}", Header::SIZE, read.offset);
-    let header: Header = read.read_struct().map_err(Error::IO)?;
+fn read_textures_header(read: &mut CountingReader<impl Read>) -> Result<TexturesHeaderC> {
+    debug!(
+        "Reading texture header ({}) at {}",
+        TexturesHeaderC::SIZE,
+        read.offset
+    );
+    let header: TexturesHeaderC = read.read_struct().map_err(Error::IO)?;
+    trace!("{:#?}", header);
+
     assert_that!("field 00", header.zero00 == 0, read.prev + 0)?;
     assert_that!("has entries", header.has_entries == 1, read.prev + 4)?;
     assert_that!(
@@ -255,8 +264,6 @@ where
     E: From<Error>,
 {
     let header = read_textures_header(read)?;
-    debug!("Global palette count: {}", header.global_palette_count);
-    debug!("Texture count: {}", header.texture_count);
 
     let palette_index_max = header.global_palette_count - 1;
     let tex_table = (0..header.texture_count)
@@ -264,20 +271,18 @@ where
             debug!(
                 "Reading texture entry {} ({}) at {}",
                 index,
-                Entry::SIZE,
+                TextureEntryC::SIZE,
                 read.offset
             );
-            let entry: Entry = read.read_struct()?;
+            let entry: TextureEntryC = read.read_struct()?;
+            trace!("{:#?}", entry);
+
             assert_that!(
                 "global palette index",
                 -1 <= entry.palette_index <= palette_index_max,
                 read.prev + 36
             )?;
-            let name = assert_utf8("name", read.prev + 0, || str_from_c_padded(&entry.name))?;
-            debug!(
-                "Texture `{}` data at {}, global palette index {}",
-                name, entry.start_offset, entry.palette_index
-            );
+            let name = assert_utf8("name", read.prev + 0, || str_from_c_padded(&entry.name.0))?;
             Ok((name, entry.start_offset, entry.palette_index))
         })
         .collect::<Result<Vec<_>>>()?;
@@ -327,7 +332,7 @@ where
 }
 
 fn calc_length(info: &TextureInfo) -> u32 {
-    let mut length = Info::SIZE;
+    let mut length = TextureInfoC::SIZE;
     let size = (info.width as u32) * (info.height as u32);
 
     match &info.palette {
@@ -355,7 +360,7 @@ fn calc_length(info: &TextureInfo) -> u32 {
     length
 }
 
-fn convert_info_to_c(info: &TextureInfo) -> Info {
+fn convert_info_to_c(info: &TextureInfo) -> TextureInfoC {
     let mut bitflags = TexFlags::BYTES_PER_PIXEL2;
     if info.image_loaded {
         bitflags |= TexFlags::IMAGE_LOADED;
@@ -389,7 +394,7 @@ fn convert_info_to_c(info: &TextureInfo) -> Info {
         TexturePalette::None => 0,
     };
 
-    Info {
+    TextureInfoC {
         flags: bitflags.bits(),
         width: info.width,
         height: info.height,
@@ -422,10 +427,10 @@ fn write_texture(
     debug!(
         "Writing texture info `{}` ({}) at {}",
         info.name,
-        Info::SIZE,
+        TextureInfoC::SIZE,
         write.offset
     );
-    trace!("Texture info: {:#?}", tex_info);
+    trace!("{:#?}", tex_info);
     write.write_struct(&tex_info)?;
 
     match &info.palette {
@@ -589,9 +594,14 @@ where
     F: FnMut(&str) -> std::result::Result<DynamicImage, E>,
     E: From<std::io::Error> + From<Error>,
 {
+    debug!(
+        "Writing texture header ({}) at {}",
+        TexturesHeaderC::SIZE,
+        write.offset
+    );
     let texture_count = manifest.texture_infos.len() as u32;
     let global_palette_count = manifest.global_palettes.len() as i32;
-    let header = Header {
+    let header = TexturesHeaderC {
         zero00: 0,
         has_entries: 1,
         global_palette_count,
@@ -599,35 +609,32 @@ where
         zero16: 0,
         zero20: 0,
     };
-    debug!("Global palette count: {}", global_palette_count);
-    debug!("Texture count: {}", texture_count);
-    debug!("Writing header ({}) at {}", Header::SIZE, write.offset);
+    trace!("{:#?}", header);
     write.write_struct(&header)?;
 
-    let mut offset = Header::SIZE + texture_count * Entry::SIZE + global_palette_count as u32 * 512;
+    let mut offset = TexturesHeaderC::SIZE
+        + texture_count * TextureEntryC::SIZE
+        + global_palette_count as u32 * 512;
 
     for (index, info) in manifest.texture_infos.iter().enumerate() {
-        let mut name = [0; 32];
-        str_to_c_padded(&info.name, &mut name);
+        debug!(
+            "Writing texture entry {} ({}) at {}",
+            index,
+            TextureEntryC::SIZE,
+            write.offset
+        );
+        let mut name = Ascii::new();
+        str_to_c_padded(&info.name, &mut name.0);
         let palette_index = match &info.palette {
             TexturePalette::Global(global) => global.index,
             _ => -1,
         };
-        let entry = Entry {
+        let entry = TextureEntryC {
             name,
             start_offset: offset,
             palette_index,
         };
-        debug!(
-            "Texture `{}` data at {}, global palette index {}",
-            info.name, offset, palette_index
-        );
-        debug!(
-            "Writing texture entry {} ({}) at {}",
-            index,
-            Entry::SIZE,
-            write.offset
-        );
+        trace!("{:#?}", entry);
         write.write_struct(&entry)?;
         offset += calc_length(info);
     }

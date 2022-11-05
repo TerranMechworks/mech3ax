@@ -17,6 +17,12 @@ pub enum TextureStretch {
     Vertical = 1,
     Horizontal = 2,
     Both = 3,
+    /// Crimson Skies only
+    Unk4 = 4,
+    /// Crimson Skies only
+    Unk7 = 7,
+    /// Crimson Skies only
+    Unk8 = 8,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
