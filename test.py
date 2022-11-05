@@ -6,10 +6,11 @@ from pathlib import Path
 from typing import List, Literal, Tuple
 
 Build = Literal["debug", "release"]
-Game = Literal["mw", "pm", "rc"]
+Game = Literal["mw", "pm", "rc", "cs"]
 GAME_MW: Game = "mw"
 GAME_PM: Game = "pm"
 GAME_RC: Game = "rc"
+GAME_CS: Game = "cs"
 
 
 def name_to_game(name: str) -> Game:
@@ -17,7 +18,23 @@ def name_to_game(name: str) -> Game:
         return GAME_PM
     if name.endswith("-recoil"):
         return GAME_RC
+    if name.endswith("-cs"):
+        return GAME_CS
     return GAME_MW
+
+
+def campaign_mission(input_zbd: Path, zbd_dir: Path) -> Tuple[str, str, List[str]]:
+    zip_name = f"{input_zbd.stem}.zip"
+    zbd_name = f"{input_zbd.stem}.zbd"
+    rel_path = input_zbd.relative_to(zbd_dir)
+    parents = []
+    for parent in rel_path.parents:
+        parent_name = parent.name
+        if parent_name:
+            zip_name = f"{parent_name}-{zip_name}"
+            zbd_name = f"{parent_name}-{zbd_name}"
+            parents.append(parent_name)
+    return (zip_name, zbd_name, parents)
 
 
 class Tester:
@@ -69,6 +86,8 @@ class Tester:
 
             if game == GAME_RC:
                 sounds_names = ["soundsl", "soundsm", "soundsh"]
+            elif game == GAME_CS:
+                sounds_names = ["soundsl", "soundsh"]
             else:
                 sounds_names = ["soundsL", "soundsH"]
 
@@ -102,6 +121,8 @@ class Tester:
 
             if game == GAME_RC:
                 msg_name = "messages"
+            elif game == GAME_CS:
+                msg_name = "strings"
             else:
                 msg_name = "Mech3Msg"
 
@@ -166,17 +187,17 @@ class Tester:
 
             for input_zbd in sorted(texture_zbds):
                 rel_path = input_zbd.relative_to(zbd_dir)
-                mission = rel_path.parent.name
-                if not mission:
+                campaign = rel_path.parent.name
+                if not campaign:
                     zip_name = f"{input_zbd.stem}.zip"
                     zbd_name = f"{input_zbd.stem}.zbd"
                 else:
-                    zip_name = f"{mission}-{input_zbd.stem}.zip"
-                    zbd_name = f"{mission}-{input_zbd.stem}.zbd"
+                    zip_name = f"{campaign}-{input_zbd.stem}.zip"
+                    zbd_name = f"{campaign}-{input_zbd.stem}.zbd"
 
                 zip_path = output_dir / zip_name
                 output_zbd = output_dir / zbd_name
-                print(name, mission, input_zbd.name, game)
+                print(name, campaign, input_zbd.name, game)
                 self.unzbd("textures", game, input_zbd, zip_path)
                 self.rezbd("textures", game, zip_path, output_zbd)
                 self.compare(input_zbd, output_zbd)
@@ -186,7 +207,7 @@ class Tester:
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
 
-            if game == GAME_RC:
+            if game == GAME_RC or game == GAME_CS:
                 rdr_glob = "zrdr.zbd"
             else:
                 rdr_glob = "reader*.zbd"
@@ -195,18 +216,10 @@ class Tester:
             output_dir.mkdir(exist_ok=True)
 
             for input_zbd in sorted(zbd_dir.rglob(rdr_glob)):
-                rel_path = input_zbd.relative_to(zbd_dir)
-                mission = rel_path.parent.name
-                if not mission:
-                    zip_name = f"{input_zbd.stem}.zip"
-                    zbd_name = f"{input_zbd.stem}.zbd"
-                else:
-                    zip_name = f"{mission}-{input_zbd.stem}.zip"
-                    zbd_name = f"{mission}-{input_zbd.stem}.zbd"
-
+                zip_name, zbd_name, parents = campaign_mission(input_zbd, zbd_dir)
                 zip_path = output_dir / zip_name
                 output_zbd = output_dir / zbd_name
-                print(name, mission, input_zbd.name, game)
+                print(name, *parents, input_zbd.name, game)
                 self.unzbd("reader", game, input_zbd, zip_path)
                 self.rezbd("reader", game, zip_path, output_zbd)
                 self.compare(input_zbd, output_zbd)
@@ -215,7 +228,7 @@ class Tester:
         print("--- MOTION ---")
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
-            if game == GAME_RC:
+            if game == GAME_RC or game == GAME_CS:
                 print("SKIPPING", name)
                 continue
 
@@ -232,7 +245,7 @@ class Tester:
         print("--- MECHLIB ---")
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
-            if game == GAME_RC:
+            if game == GAME_RC or game == GAME_CS:
                 print("SKIPPING", name)
                 continue
 
@@ -249,7 +262,7 @@ class Tester:
         print("--- GAMEZ ---")
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
-            if game != GAME_MW:
+            if game == GAME_RC:
                 print("SKIPPING", name)
                 continue
 
@@ -257,14 +270,10 @@ class Tester:
             output_dir.mkdir(exist_ok=True)
 
             for input_zbd in sorted(zbd_dir.rglob("gamez.zbd")):
-                rel_path = input_zbd.relative_to(zbd_dir)
-                mission = rel_path.parent.name
-                zip_name = f"{mission}-{input_zbd.stem}.zip"
-                zbd_name = f"{mission}-{input_zbd.stem}.zbd"
-
+                zip_name, zbd_name, parents = campaign_mission(input_zbd, zbd_dir)
                 zip_path = output_dir / zip_name
                 output_zbd = output_dir / zbd_name
-                print(name, mission, input_zbd.name, game)
+                print(name, *parents, input_zbd.name, game)
                 self.unzbd("gamez", game, input_zbd, zip_path)
                 self.rezbd("gamez", game, zip_path, output_zbd)
                 self.compare(input_zbd, output_zbd)
@@ -281,14 +290,10 @@ class Tester:
             output_dir.mkdir(exist_ok=True)
 
             for input_zbd in sorted(zbd_dir.rglob("anim.zbd")):
-                rel_path = input_zbd.relative_to(zbd_dir)
-                mission = rel_path.parent.name
-                zip_name = f"{mission}-{input_zbd.stem}.zip"
-                zbd_name = f"{mission}-{input_zbd.stem}.zbd"
-
+                zip_name, zbd_name, parents = campaign_mission(input_zbd, zbd_dir)
                 zip_path = output_dir / zip_name
                 output_zbd = output_dir / zbd_name
-                print(name, mission, input_zbd.name, game)
+                print(name, *parents, input_zbd.name, game)
                 self.unzbd("anim", game, input_zbd, zip_path)
                 self.rezbd("anim", game, zip_path, output_zbd)
                 self.compare(input_zbd, output_zbd)

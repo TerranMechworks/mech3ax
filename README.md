@@ -5,14 +5,39 @@ MechWarrior 3 Asset Extractor (`mech3ax`) is a cross-platform, open-source proje
 * the Recoil™ game (1999)
 * the MechWarrior 3™ base game (1999)
 * the MechWarrior 3 Pirate's Moon™ expansion (1999)
+* the Crimson Skies™ game (2000)
 
-Zipper Interactive™ was trademark or registered trademark of Sony Computer Entertainment America LLC.
+Please note that the goal is to extract all assets information comprehensively, and not necessarily make it easy to work with this data. In other words, the tools can be used for modding, but don't make it easy. This is expected and unlikely to change (sorry!).
+
+Zipper Interactive™ was trademark or registered trademark of Sony Computer Entertainment America LLC. Other trademarks belong to the respective rightsholders.
 
 Obviously, this is an unofficial fan effort and not connected to the developers, publishers, or rightsholders. [Join us on MW3 Discord](https://discord.gg/Be53gMy), or the Recoil Discord!
 
 [![The Annihilator 'Mech running](.github/mech_annihilator_run.gif)](https://imgur.com/a/H5pB1Vd)
 
 ## Currently supported
+
+### Support matrix
+
+| Type                                                   | RC | MW | PM | CS |
+| ------------------------------------------------------ | -- | -- | -- | -- |
+| `sounds*.zbd`                                          | ✅ | ✅ | ✅ | ✅ |
+| `interp.zbd`                                           | ✅ | ✅ | ✅ | ✅ |
+| `messages.dll`/`Mech3Msg.dll`/`strings.dll`            | ✅ | ✅ | ✅ | ✅ |
+| `zrdr.zbd`/`reader*.zbd`                               | ✅ | ✅ | ✅ | ✅ |
+| Image/texture ZBDs                                     | ✅ | ✅ | ✅ | ✅ |
+| `mechlib.zbd`                                          | ⬛ | ✅ | ❌ | ⬛ |
+| `motion.zbd`                                           | ⬛ | ✅ | ✅ | ⬛ |
+| `gamez.zbd`                                            | ❌ | ✅ | ❌ | ❌ |
+| `anim.zbd`/`cam_anim.zbd`/`mis_anim.zbd`               | ❌ | ✅ | ❌ | ❌ |
+| `m*.zmap`                                              | ❌ | ⬛ | ⬛ | ⬛ |
+| `planes.zbd`                                           | ⬛ | ⬛ | ⬛ | ❌ |
+
+Legend:
+
+* ✅ works
+* ❌ not implemented
+* ⬛ not applicable
 
 ### MechWarrior 3
 
@@ -43,7 +68,11 @@ Not supported (yet?):
 
 ### Recoil
 
-All maps (`m*.zmap`), `anim.zbd`, and `gamez.zbd` files are not supported yet.
+Maps (`m*.zmap`), `anim.zbd`, and `gamez.zbd` files are not supported yet.
+
+### Crimson Skies
+
+`planes.zbd`, `cam_anim.zbd`/`mis_anim.zbd`, and `gamez.zbd` files are not supported yet.
 
 ## How to use
 
@@ -56,8 +85,8 @@ It's easiest to [grab the pre-build binaries from releases](https://github.com/T
 On macOS or Linux, you can run them like this:
 
 ```bash
-unzbd mw3 interp "original/zbd/interp.zbd" "interp.json"
-rezbd mw3 interp "interp.json" "interp.zbd"
+unzbd mw interp "original/zbd/interp.zbd" "interp.json"
+rezbd mw interp "interp.json" "interp.zbd"
 # the files should be the same
 cmp "original/zbd/interp.zbd" "interp.zbd"
 ```
@@ -65,8 +94,8 @@ cmp "original/zbd/interp.zbd" "interp.zbd"
 On Windows, you can use either the command line (`cmd.exe`) or Powershell (which I'd recommend):
 
 ```powershell
-PS> unzbd.exe mw3 interp "C:\Program Files (x86)\MechWarrior 3\zbd\interp.zbd" ".\interp.json"
-PS> rezbd.exe mw3 interp ".\interp.json" ".\interp.zbd"
+PS> unzbd.exe mw interp "C:\Program Files (x86)\MechWarrior 3\zbd\interp.zbd" ".\interp.json"
+PS> rezbd.exe mw interp ".\interp.json" ".\interp.zbd"
 PS> comp /M "C:\Program Files (x86)\MechWarrior 3\zbd\interp.zbd" ".\interp.zbd"
 Comparing C:\Program Files (x86)\MechWarrior 3\zbd\interp.zbd and .\interp.zbd...
 Files compare OK
@@ -74,9 +103,10 @@ Files compare OK
 
 Supported games (support may be partial):
 
-* `mw3`
-* `pm`
-* `recoil`
+* `mw` (MechWarrior 3)
+* `pm` (Pirate's Moon)
+* `rc` (Recoil)
+* `cs` (Crimson Skies)
 
 Provided subcommands:
 
@@ -85,10 +115,10 @@ Provided subcommands:
 * `reader` (produces a `*.zip` file)
 * `messages` (produces a `*.json` file, `unzbd` only)
 * `textures` (produces a `*.zip` file)
-* `motion` (produces a `*.zip` file, `mw3` and `pm` only)
-* `mechlib` (produces a `*.zip` file, `mw3` only)
-* `anim` (produces a `*.zip` file, `mw3` only)
-* `gamez` (produces a `*.zip` file, `mw3` only)
+* `motion` (produces a `*.zip` file, `mw` and `pm` only)
+* `mechlib` (produces a `*.zip` file, `mw` only)
+* `anim` (produces a `*.zip` file, `mw` only)
+* `gamez` (produces a `*.zip` file, `mw` only)
 
 ## Blender scripts
 
@@ -150,6 +180,8 @@ Big features:
 
 Detailed changes:
 
+* Support Crimson Skies' textures (`unzbd`)
+* Support Crimson Skies' `strings.dll` (`unzbd`)
 * Removed `--dump-ids` flag (`unzbd`, breaking change)
 * `AnimDef` contains reset state seq def - thanks Skyfaller (`anim`, breaking change)
 * Update Blender scripts to match breaking API changes
