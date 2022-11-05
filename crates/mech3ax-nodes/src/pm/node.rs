@@ -4,13 +4,12 @@ use super::wrappers::WrappedNodePm;
 use crate::flags::NodeBitFlags;
 use crate::types::{NodeType, NodeVariantPm, NodeVariantsPm, ZONE_DEFAULT};
 use log::{debug, trace};
-use mech3ax_api_types::{
-    static_assert_size, AreaPartition, Ascii, BoundingBox, NodePm, ReprSize as _,
-};
+use mech3ax_api_types::{static_assert_size, AreaPartition, BoundingBox, NodePm, ReprSize as _};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
 use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
+use mech3ax_debug::Ascii;
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
 

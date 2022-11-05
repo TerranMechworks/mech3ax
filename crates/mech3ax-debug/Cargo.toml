@@ -1,0 +1,12 @@
+[package]
+name = "mech3ax-debug"
+version = "0.0.0"
+authors = ["Toby Fleming <tobywf@users.noreply.github.com>"]
+edition = "2021"
+publish = false
+
+autoexamples = false
+autobenches = false
+
+[lib]
+doctest = false

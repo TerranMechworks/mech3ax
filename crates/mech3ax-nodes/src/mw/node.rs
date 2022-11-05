@@ -10,13 +10,12 @@ use super::wrappers::WrappedNodeMw;
 use crate::flags::NodeBitFlags;
 use crate::types::{NodeType, NodeVariantMw, NodeVariantsMw};
 use log::{debug, trace};
-use mech3ax_api_types::{
-    static_assert_size, AreaPartition, Ascii, BoundingBox, NodeMw, ReprSize as _,
-};
+use mech3ax_api_types::{static_assert_size, AreaPartition, BoundingBox, NodeMw, ReprSize as _};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
 use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
+use mech3ax_debug::Ascii;
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
 

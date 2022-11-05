@@ -2,12 +2,13 @@ use crate::flags::NodeBitFlags;
 use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
 use log::{debug, trace};
 use mech3ax_api_types::{
-    static_assert_size, BoundingBox, Color, Light, Range, ReprSize as _, Vec3, Zeros,
+    static_assert_size, BoundingBox, Color, Light, Range, ReprSize as _, Vec3,
 };
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlags;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_debug::Zeros;
 use std::io::{Read, Write};
 
 #[derive(Debug)]

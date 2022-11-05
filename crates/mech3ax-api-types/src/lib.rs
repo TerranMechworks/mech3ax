@@ -2,7 +2,6 @@
 mod anim;
 mod archive;
 mod gamez;
-mod helpers;
 mod image;
 mod interp;
 mod messages;
@@ -11,8 +10,6 @@ pub mod saves;
 mod serde;
 mod size;
 mod types;
-
-pub use helpers::{Ascii, Zeros};
 
 pub use anim::*;
 pub use archive::*;
