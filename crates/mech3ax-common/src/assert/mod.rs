@@ -237,40 +237,37 @@ where
 
 #[macro_export]
 macro_rules! assert_that {
-    ($name:expr, $expected_min:tt <= $($actual:ident).+ <= $expected_max:expr, $pos:expr) => {
+    ($name:expr, $expected_min:tt <= $($actual:tt).+ <= $expected_max:expr, $pos:expr) => {
         $crate::assert::is_between($name, $expected_min, $expected_max, $($actual).+, $pos)
     };
-    ($name:expr, $expected_min:tt <= $($actual:ident).+.$tail:tt <= $expected_max:expr, $pos:expr) => {
-        $crate::assert::is_between($name, $expected_min, $expected_max, $($actual).+.$tail, $pos)
-    };
-    ($name:expr, -$expected_min:tt <= $($actual:ident).+ <= $expected_max:expr, $pos:expr) => {
+    ($name:expr, -$expected_min:tt <= $($actual:tt).+ <= $expected_max:expr, $pos:expr) => {
         $crate::assert::is_between($name, -$expected_min, $expected_max, $($actual).+, $pos)
     };
-    ($name:expr, -$expected_min:tt <= $($actual:ident).+.$tail:tt <= $expected_max:expr, $pos:expr) => {
-        $crate::assert::is_between($name, -$expected_min, $expected_max, $($actual).+.$tail, $pos)
-    };
-    ($name:expr, $($actual:ident).+ == $expected:expr, $pos:expr) => {
+    ($name:expr, $($actual:tt).+ == $expected:expr, $pos:expr) => {
         $crate::assert::is_equal_to($name, $expected, $($actual).+, $pos)
     };
-    ($name:expr, &$($actual:ident).+ == $expected:expr, $pos:expr) => {
+    ($name:expr, &$($actual:tt).+ == $expected:expr, $pos:expr) => {
         $crate::assert::is_equal_to($name, $expected, &$($actual).+, $pos)
     };
-    ($name:expr, $($actual:ident).+ != $expected:expr, $pos:expr) => {
+    ($name:expr, $($actual:tt).+ != $expected:expr, $pos:expr) => {
         $crate::assert::is_not_equal_to($name, $expected, $($actual).+, $pos)
     };
-    ($name:expr, $($actual:ident).+ < $expected:expr, $pos:expr) => {
+    ($name:expr, &$($actual:tt).+ != $expected:expr, $pos:expr) => {
+        $crate::assert::is_not_equal_to($name, $expected, &$($actual).+, $pos)
+    };
+    ($name:expr, $($actual:tt).+ < $expected:expr, $pos:expr) => {
         $crate::assert::is_less_than($name, $expected, $($actual).+, $pos)
     };
-    ($name:expr, $($actual:ident).+ <= $expected:expr, $pos:expr) => {
+    ($name:expr, $($actual:tt).+ <= $expected:expr, $pos:expr) => {
         $crate::assert::is_less_than_or_equal_to($name, $expected, $($actual).+, $pos)
     };
-    ($name:expr, $($actual:ident).+ > $expected:expr, $pos:expr) => {
+    ($name:expr, $($actual:tt).+ > $expected:expr, $pos:expr) => {
         $crate::assert::is_greater_than($name, $expected, $($actual).+, $pos)
     };
-    ($name:expr, $($actual:ident).+ >= $expected:expr, $pos:expr) => {
+    ($name:expr, $($actual:tt).+ >= $expected:expr, $pos:expr) => {
         $crate::assert::is_greater_than_or_equal_to( $name, $expected, $($actual).+, $pos)
     };
-    ($name:expr, $($actual:ident).+ in $haystack:expr, $pos:expr) => {
+    ($name:expr, $($actual:tt).+ in $haystack:expr, $pos:expr) => {
         $crate::assert::is_in($name, &$haystack, &$($actual).+, $pos)
     };
     ($name:expr, bool $actual:expr, $pos:expr) => {
