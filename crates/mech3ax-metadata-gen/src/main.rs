@@ -66,8 +66,8 @@ fn main() {
     // gamez mechlib
     resolver.push_struct::<api::ModelMw>();
     // gamez mod
-    resolver.push_struct::<api::GameZMetadata>();
-    resolver.push_struct::<api::GameZData>();
+    resolver.push_struct::<api::GameZMwMetadata>();
+    resolver.push_struct::<api::GameZMwData>();
     // anim mod
     resolver.push_struct::<api::AnimName>();
     resolver.push_struct::<api::AnimPtr>();

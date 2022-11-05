@@ -1,4 +1,4 @@
-use crate::materials::{read_material, write_material, RawMaterial};
+use crate::materials::ng::{read_material, write_material, RawMaterial};
 use mech3ax_api_types::{Material, TexturedMaterial};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, GameType, Result};
@@ -57,7 +57,7 @@ pub fn read_materials(read: &mut CountingReader<impl Read>) -> Result<Vec<Materi
                         texture,
                         pointer: mat.pointer,
                         cycle: None,
-                        unk32: mat.unk32,
+                        specular: mat.specular,
                         flag: mat.flag,
                     })
                 }

@@ -149,7 +149,7 @@ pub fn mechlib_only_err_mw() -> mech3ax_common::Error {
     assert_with_msg!("Expected only Object3d nodes in mechlib")
 }
 
-pub fn read_node_mechlib_mw(
+pub fn read_node_mechlib(
     read: &mut CountingReader<impl Read>,
     index: usize,
 ) -> Result<WrappedNodeMw> {
@@ -168,10 +168,10 @@ pub fn read_node_mechlib_mw(
         NodeType::Object3d => object3d::assert_variants(node, read.prev, true),
         _ => Err(mechlib_only_err_mw()),
     }?;
-    read_node_data_mw(read, variant, index)
+    read_node_data(read, variant, index)
 }
 
-pub fn read_node_info_gamez_mw(
+pub fn read_node_info_gamez(
     read: &mut CountingReader<impl Read>,
     index: u32,
 ) -> Result<Option<NodeVariantMw>> {
@@ -203,7 +203,7 @@ pub fn read_node_info_gamez_mw(
     }
 }
 
-pub fn read_node_data_mw(
+pub fn read_node_data(
     read: &mut CountingReader<impl Read>,
     variant: NodeVariantMw,
     index: usize,
@@ -291,7 +291,7 @@ fn write_variant(
     Ok(())
 }
 
-pub fn write_node_info_mw(
+pub fn write_node_info(
     write: &mut CountingWriter<impl Write>,
     node: &NodeMw,
     index: usize,
@@ -332,7 +332,7 @@ pub fn write_node_info_mw(
     }
 }
 
-pub fn write_node_data_mw(
+pub fn write_node_data(
     write: &mut CountingWriter<impl Write>,
     node: &NodeMw,
     index: usize,
@@ -349,7 +349,7 @@ pub fn write_node_data_mw(
     }
 }
 
-pub fn size_node_mw(node: &NodeMw) -> u32 {
+pub fn size_node(node: &NodeMw) -> u32 {
     match node {
         NodeMw::Camera(_) => camera::size(),
         NodeMw::Empty(_) => empty::size(),
@@ -402,7 +402,7 @@ fn assert_node_info_zero(node: NodeMwC, offset: u32) -> Result<()> {
     Ok(())
 }
 
-pub fn read_node_info_zero_mw(read: &mut CountingReader<impl Read>, index: u32) -> Result<()> {
+pub fn read_node_info_zero(read: &mut CountingReader<impl Read>, index: u32) -> Result<()> {
     debug!(
         "Reading zero node info {} (mw, {}) at {}",
         index,
@@ -413,7 +413,7 @@ pub fn read_node_info_zero_mw(read: &mut CountingReader<impl Read>, index: u32) 
     assert_node_info_zero(node, read.prev)
 }
 
-pub fn write_node_info_zero_mw(write: &mut CountingWriter<impl Write>, index: u32) -> Result<()> {
+pub fn write_node_info_zero(write: &mut CountingWriter<impl Write>, index: u32) -> Result<()> {
     debug!(
         "Writing zero node info {} (mw, {}) at {}",
         index,

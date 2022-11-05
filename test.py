@@ -262,9 +262,6 @@ class Tester:
         print("--- GAMEZ ---")
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
-            if game == GAME_RC:
-                print("SKIPPING", name)
-                continue
 
             output_dir = output_base / "gamez"
             output_dir.mkdir(exist_ok=True)

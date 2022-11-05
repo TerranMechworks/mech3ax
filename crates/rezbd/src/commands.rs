@@ -4,16 +4,15 @@ use log::debug;
 use mech3ax_anim::write_anim;
 use mech3ax_api_types::saves::AnimActivation;
 use mech3ax_api_types::{
-    AnimMetadata, ArchiveEntry, GameZData, GameZMetadata, Material, MeshMw, ModelMw, ModelPm,
-    Motion, NodeMw, Script, TextureManifest,
+    AnimMetadata, ArchiveEntry, GameZCsData, GameZCsMetadata, GameZMwData, GameZMwMetadata,
+    GameZPmData, GameZPmMetadata, GameZRcData, GameZRcMetadata, Material, MeshMw, ModelMw, Motion,
+    NodeMw, Script, TextureManifest,
 };
 use mech3ax_archive::{write_archive, Mode, Version};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::GameType;
-use mech3ax_gamez::gamez::write_gamez_mw;
-use mech3ax_gamez::mechlib::{
-    write_format, write_materials, write_model_mw, write_model_pm, write_version,
-};
+use mech3ax_gamez::gamez;
+use mech3ax_gamez::mechlib::{self, write_format, write_materials, write_version};
 use mech3ax_image::write_textures;
 use mech3ax_interp::write_interp;
 use mech3ax_motion::write_motion;
@@ -180,15 +179,12 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                     match game {
                         GameType::MW => {
                             let mut model: ModelMw = zip_json(zip, &name)?;
-                            write_model_mw(&mut buf, &mut model).with_context(|| {
+                            mechlib::mw::write_model(&mut buf, &mut model).with_context(|| {
                                 format!("Failed to write mechlib model for `{}`", original)
                             })?;
                         }
                         GameType::PM => {
-                            let mut model: ModelPm = zip_json(zip, &name)?;
-                            write_model_pm(&mut buf, &mut model).with_context(|| {
-                                format!("Failed to write mechlib model for `{}`", original)
-                            })?;
+                            return Err(mech3ax_common::assert_with_msg!("TODO").into());
                         }
                         GameType::RC => unreachable!("Recoil does not have mechlib"),
                         GameType::CS => unreachable!("Crimson Skies does not have mechlib"),
@@ -222,31 +218,113 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
 
 pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
     match opts.game {
-        GameType::MW => {}
-        GameType::PM => bail!("Pirate's Moon support for Gamez isn't implemented yet"),
-        GameType::RC => bail!("Recoil support for Gamez isn't implemented yet"),
-        GameType::CS => bail!("Crimson Skies support for Gamez isn't implemented yet"),
+        GameType::RC => gamez_rc(opts),
+        GameType::MW => gamez_mw(opts),
+        GameType::PM => gamez_pm(opts),
+        GameType::CS => gamez_cs(opts),
     }
+}
 
-    let gamez = {
-        let input = buf_reader(&opts.input)?;
-        let mut zip = ZipArchive::new(input).context("Failed to open input")?;
-        let metadata: GameZMetadata = zip_json(&mut zip, "metadata.json")?;
-        let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
-        let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
-        let meshes: Vec<MeshMw> = zip_json(&mut zip, "meshes.json")?;
-        let nodes: Vec<NodeMw> = zip_json(&mut zip, "nodes.json")?;
-        GameZData {
-            metadata,
-            textures,
-            materials,
-            meshes,
-            nodes,
-        }
+fn gamez_mw(opts: ZipOpts) -> Result<()> {
+    let input = buf_reader(&opts.input)?;
+    let mut zip = ZipArchive::new(input).context("Failed to open input")?;
+
+    let metadata: GameZMwMetadata = zip_json(&mut zip, "metadata.json")?;
+    let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
+    let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
+    let meshes: Vec<MeshMw> = zip_json(&mut zip, "meshes.json")?;
+    let nodes: Vec<NodeMw> = zip_json(&mut zip, "nodes.json")?;
+
+    drop(zip);
+
+    let gamez = GameZMwData {
+        metadata,
+        textures,
+        materials,
+        meshes,
+        nodes,
     };
 
     let mut write = buf_writer(opts.output)?;
-    write_gamez_mw(&mut write, &gamez).context("Failed to write gamez data")
+    gamez::mw::write_gamez(&mut write, &gamez).context("Failed to write gamez data")
+}
+
+fn gamez_pm(opts: ZipOpts) -> Result<()> {
+    let input = buf_reader(&opts.input)?;
+    let mut zip = ZipArchive::new(input).context("Failed to open input")?;
+
+    let metadata: GameZPmMetadata = zip_json(&mut zip, "metadata.json")?;
+    let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
+    let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
+    // let meshes: Vec<MeshPm> = zip_json(&mut zip, "meshes.json")?;
+    // let nodes: Vec<NodePm> = zip_json(&mut zip, "nodes.json")?;
+    let meshes: Vec<u8> = zip_read(&mut zip, "meshes.bin")?;
+    let nodes: Vec<u8> = zip_read(&mut zip, "nodes.bin")?;
+
+    drop(zip);
+
+    let gamez = GameZPmData {
+        metadata,
+        textures,
+        materials,
+        meshes,
+        nodes,
+    };
+
+    let mut write = buf_writer(opts.output)?;
+    gamez::pm::write_gamez(&mut write, &gamez).context("Failed to write gamez data")
+}
+
+fn gamez_cs(opts: ZipOpts) -> Result<()> {
+    let input = buf_reader(&opts.input)?;
+    let mut zip = ZipArchive::new(input).context("Failed to open input")?;
+
+    let metadata: GameZCsMetadata = zip_json(&mut zip, "metadata.json")?;
+    let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
+    let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
+    // let meshes: Vec<MeshCs> = zip_json(&mut zip, "meshes.json")?;
+    // let nodes: Vec<NodeCs> = zip_json(&mut zip, "nodes.json")?;
+    let meshes: Vec<u8> = zip_read(&mut zip, "meshes.bin")?;
+    let nodes: Vec<u8> = zip_read(&mut zip, "nodes.bin")?;
+
+    drop(zip);
+
+    let gamez = GameZCsData {
+        metadata,
+        textures,
+        materials,
+        meshes,
+        nodes,
+    };
+
+    let mut write = buf_writer(opts.output)?;
+    gamez::cs::write_gamez(&mut write, &gamez).context("Failed to write gamez data")
+}
+
+fn gamez_rc(opts: ZipOpts) -> Result<()> {
+    let input = buf_reader(&opts.input)?;
+    let mut zip = ZipArchive::new(input).context("Failed to open input")?;
+
+    let metadata: GameZRcMetadata = zip_json(&mut zip, "metadata.json")?;
+    let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
+    let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
+    // let meshes: Vec<MeshRc> = zip_json(&mut zip, "meshes.json")?;
+    // let nodes: Vec<NodeRc> = zip_json(&mut zip, "nodes.json")?;
+    let meshes: Vec<u8> = zip_read(&mut zip, "meshes.bin")?;
+    let nodes: Vec<u8> = zip_read(&mut zip, "nodes.bin")?;
+
+    drop(zip);
+
+    let gamez = GameZRcData {
+        metadata,
+        textures,
+        materials,
+        meshes,
+        nodes,
+    };
+
+    let mut write = buf_writer(opts.output)?;
+    gamez::rc::write_gamez(&mut write, &gamez).context("Failed to write gamez data")
 }
 
 pub(crate) fn anim(opts: ZipOpts) -> Result<()> {

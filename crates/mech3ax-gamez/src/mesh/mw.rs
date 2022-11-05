@@ -52,6 +52,7 @@ struct PolygonMwC {
 }
 static_assert_size!(PolygonMwC, 36);
 
+#[derive(Debug)]
 #[repr(C)]
 struct LightMwC {
     unk00: u32,       // 00
@@ -85,7 +86,7 @@ pub struct WrappedMeshMw {
     pub light_count: u32,
 }
 
-pub fn read_mesh_info_mw(
+pub fn read_mesh_info(
     read: &mut CountingReader<impl Read>,
     mesh_index: i32,
 ) -> Result<WrappedMeshMw> {
@@ -112,10 +113,10 @@ fn assert_mesh_info(mesh: MeshMwC, offset: u32) -> Result<WrappedMeshMw> {
 
     if mesh.polygon_count == 0 {
         assert_that!("polygons ptr", mesh.polygons_ptr == 0, offset + 52)?;
-        // this is a really weird case where the model only has light info
         assert_that!("vertex count", mesh.vertex_count == 0, offset + 20)?;
         assert_that!("normal count", mesh.normal_count == 0, offset + 24)?;
         assert_that!("morph count", mesh.morph_count == 0, offset + 28)?;
+        // this is a really weird case where the model only has light info
         assert_that!("light count", mesh.light_count > 0, offset + 32)?;
     } else {
         assert_that!("polygons ptr", mesh.polygons_ptr != 0, offset + 52)?;
@@ -221,7 +222,6 @@ fn read_lights(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<M
 }
 
 fn assert_polygon(poly: PolygonMwC, offset: u32) -> Result<(u32, bool, bool, PolygonMw)> {
-    trace!("{:#?}", poly);
     assert_that!("vertex info", poly.vertex_info < 0x3FF, offset + 0)?;
     assert_that!("field 04", 0 <= poly.unk04 <= 20, offset + 4)?;
 
@@ -259,16 +259,23 @@ fn assert_polygon(poly: PolygonMwC, offset: u32) -> Result<(u32, bool, bool, Pol
     Ok((verts_in_poly, has_normals, has_uvs, polygon))
 }
 
-fn read_polygons(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<PolygonMw>> {
+fn read_polygons(
+    read: &mut CountingReader<impl Read>,
+    count: u32,
+    mesh_index: i32,
+) -> Result<Vec<PolygonMw>> {
     (0..count)
         .map(|index| {
             debug!(
-                "Reading polygon info {} (mw, {}) at {}",
+                "Reading polygon info {}:{} (mw, {}) at {}",
+                mesh_index,
                 index,
                 PolygonMwC::SIZE,
                 read.offset
             );
             let poly: PolygonMwC = read.read_struct()?;
+            trace!("{:#?}", poly);
+
             let result = assert_polygon(poly, read.prev)?;
             Ok(result)
         })
@@ -304,7 +311,7 @@ fn read_polygons(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec
         .collect()
 }
 
-pub fn read_mesh_data_mw(
+pub fn read_mesh_data(
     read: &mut CountingReader<impl Read>,
     wrapped: WrappedMeshMw,
     mesh_index: i32,
@@ -339,12 +346,12 @@ pub fn read_mesh_data_mw(
         "Reading {} x polygons (mw) at {}",
         wrapped.polygon_count, read.offset
     );
-    mesh.polygons = read_polygons(read, wrapped.polygon_count)?;
-    trace!("Read mesh data (mw) at {}", read.offset);
+    mesh.polygons = read_polygons(read, wrapped.polygon_count, mesh_index)?;
+    trace!("Finished mesh data {} (mw) at {}", mesh_index, read.offset);
     Ok(mesh)
 }
 
-pub fn write_mesh_info_mw(
+pub fn write_mesh_info(
     write: &mut CountingWriter<impl Write>,
     mesh: &MeshMw,
     mesh_index: usize,
@@ -421,7 +428,11 @@ fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[MeshLightMw]) 
     Ok(())
 }
 
-fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[PolygonMw]) -> Result<()> {
+fn write_polygons(
+    write: &mut CountingWriter<impl Write>,
+    polygons: &[PolygonMw],
+    mesh_index: usize,
+) -> Result<()> {
     for (index, polygon) in polygons.iter().enumerate() {
         let mut vertex_info = polygon.vertex_indices.len() as u32;
         if polygon.unk_bit {
@@ -431,7 +442,8 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[PolygonMw]
             vertex_info |= 0x200;
         }
         debug!(
-            "Writing polygon info {} (mw, {}) at {}",
+            "Writing polygon info {}:{} (mw, {}) at {}",
+            mesh_index,
             index,
             PolygonMwC::SIZE,
             write.offset
@@ -481,7 +493,7 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[PolygonMw]
     Ok(())
 }
 
-pub fn write_mesh_data_mw(
+pub fn write_mesh_data(
     write: &mut CountingWriter<impl Write>,
     mesh: &MeshMw,
     mesh_index: usize,
@@ -508,19 +520,20 @@ pub fn write_mesh_data_mw(
         mesh.polygons.len(),
         write.offset
     );
-    write_polygons(write, &mesh.polygons)?;
+    write_polygons(write, &mesh.polygons, mesh_index)?;
     trace!("Wrote mesh data (mw) at {}", write.offset);
     Ok(())
 }
 
-pub fn read_mesh_infos_zero_mw(
+pub fn read_mesh_infos_zero(
     read: &mut CountingReader<impl Read>,
     start: i32,
     end: i32,
 ) -> Result<()> {
     for index in start..end {
         debug!(
-            "Reading mesh info zero (mw, {}) at {}",
+            "Reading mesh info zero {} (mw, {}) at {}",
+            index,
             MeshMwC::SIZE,
             read.offset
         );
@@ -560,7 +573,7 @@ pub fn read_mesh_infos_zero_mw(
     Ok(())
 }
 
-pub fn write_mesh_infos_zero_mw(
+pub fn write_mesh_infos_zero(
     write: &mut CountingWriter<impl Write>,
     start: i32,
     end: i32,
@@ -593,7 +606,8 @@ pub fn write_mesh_infos_zero_mw(
 
     for index in start..end {
         debug!(
-            "Writing mesh info zero (mw, {}) at {}",
+            "Writing mesh info zero {} (mw, {}) at {}",
+            index,
             MeshMwC::SIZE,
             write.offset
         );
@@ -608,7 +622,7 @@ pub fn write_mesh_infos_zero_mw(
     Ok(())
 }
 
-pub fn size_mesh_mw(mesh: &MeshMw) -> u32 {
+pub fn size_mesh(mesh: &MeshMw) -> u32 {
     let mut size =
         Vec3::SIZE * (mesh.vertices.len() + mesh.normals.len() + mesh.morphs.len()) as u32;
     for light in &mesh.lights {

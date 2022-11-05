@@ -22,15 +22,15 @@ pub struct TexturedMaterial {
     // the Mechlib data doesn't have cycled textures
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub cycle: Option<CycleData>,
-    pub unk32: u32,
+    pub specular: f32,
     pub flag: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct ColoredMaterial {
     pub color: Color,
-    pub unk00: u8,  // alpha?
-    pub unk32: u32, // f32, specular?
+    pub alpha: u8,
+    pub specular: f32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Union)]

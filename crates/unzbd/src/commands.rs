@@ -6,10 +6,8 @@ use mech3ax_anim::read_anim;
 use mech3ax_archive::{read_archive, Mode, Version};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::GameType;
-use mech3ax_gamez::gamez::read_gamez_mw;
-use mech3ax_gamez::mechlib::{
-    read_format, read_materials, read_model_mw, read_model_pm, read_version,
-};
+use mech3ax_gamez::gamez;
+use mech3ax_gamez::mechlib::{self, read_format, read_materials, read_version};
 use mech3ax_image::read_textures;
 use mech3ax_interp::read_interp;
 use mech3ax_messages::read_messages;
@@ -203,17 +201,12 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                     let name = original.replace(".flt", ".json");
                     match game {
                         GameType::MW => {
-                            let root = read_model_mw(&mut read).with_context(|| {
+                            let root = mechlib::mw::read_model(&mut read).with_context(|| {
                                 format!("Failed to read mechlib model for `{}`", original)
                             })?;
                             zip_json(zip, options, &name, &root)
                         }
-                        GameType::PM => {
-                            let root = read_model_pm(&mut read).with_context(|| {
-                                format!("Failed to read mechlib model for `{}`", original)
-                            })?;
-                            zip_json(zip, options, &name, &root)
-                        }
+                        GameType::PM => Err(mech3ax_common::assert_with_msg!("TODO").into()),
                         GameType::RC => unreachable!("Recoil does not have mechlib"),
                         GameType::CS => unreachable!("Crimson Skies does not have mechlib"),
                     }
@@ -248,26 +241,90 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
 
 pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
     match opts.game {
-        GameType::MW => {}
-        GameType::PM => bail!("Pirate's Moon support for Gamez isn't implemented yet"),
-        GameType::RC => bail!("Recoil support for Gamez isn't implemented yet"),
-        GameType::CS => bail!("Crimson Skies support for Gamez isn't implemented yet"),
+        GameType::RC => gamez_rc(opts),
+        GameType::MW => gamez_mw(opts),
+        GameType::PM => gamez_pm(opts),
+        GameType::CS => gamez_cs(opts),
     }
-    let options = deflate_opts();
+}
 
-    let gamez = {
-        let mut input = CountingReader::new(buf_reader(opts.input)?);
-        read_gamez_mw(&mut input).context("Failed to read gamez data")?
-    };
+fn gamez_mw(opts: ZipOpts) -> Result<()> {
+    let mut input = CountingReader::new(buf_reader(opts.input)?);
+    let gamez = gamez::mw::read_gamez(&mut input).context("Failed to read gamez data")?;
+    drop(input);
 
     let output = buf_writer(opts.output)?;
     let mut zip = ZipWriter::new(output);
+    let options = deflate_opts();
 
     zip_json(&mut zip, options, "metadata.json", &gamez.metadata)?;
     zip_json(&mut zip, options, "textures.json", &gamez.textures)?;
     zip_json(&mut zip, options, "materials.json", &gamez.materials)?;
     zip_json(&mut zip, options, "meshes.json", &gamez.meshes)?;
     zip_json(&mut zip, options, "nodes.json", &gamez.nodes)?;
+
+    zip.finish()?;
+    Ok(())
+}
+
+fn gamez_pm(opts: ZipOpts) -> Result<()> {
+    let mut input = CountingReader::new(buf_reader(opts.input)?);
+    let gamez = gamez::pm::read_gamez(&mut input).context("Failed to read gamez data")?;
+    drop(input);
+
+    let output = buf_writer(opts.output)?;
+    let mut zip = ZipWriter::new(output);
+    let options = deflate_opts();
+
+    zip_json(&mut zip, options, "metadata.json", &gamez.metadata)?;
+    zip_json(&mut zip, options, "textures.json", &gamez.textures)?;
+    zip_json(&mut zip, options, "materials.json", &gamez.materials)?;
+    // zip_json(&mut zip, options, "meshes.json", &gamez.meshes)?;
+    // zip_json(&mut zip, options, "nodes.json", &gamez.nodes)?;
+    zip_write(&mut zip, options, "meshes.bin", &gamez.meshes)?;
+    zip_write(&mut zip, options, "nodes.bin", &gamez.nodes)?;
+
+    zip.finish()?;
+    Ok(())
+}
+
+fn gamez_cs(opts: ZipOpts) -> Result<()> {
+    let mut input = CountingReader::new(buf_reader(opts.input)?);
+    let gamez = gamez::cs::read_gamez(&mut input).context("Failed to read gamez data")?;
+    drop(input);
+
+    let output = buf_writer(opts.output)?;
+    let mut zip = ZipWriter::new(output);
+    let options = deflate_opts();
+
+    zip_json(&mut zip, options, "metadata.json", &gamez.metadata)?;
+    zip_json(&mut zip, options, "textures.json", &gamez.textures)?;
+    zip_json(&mut zip, options, "materials.json", &gamez.materials)?;
+    // zip_json(&mut zip, options, "meshes.json", &gamez.meshes)?;
+    // zip_json(&mut zip, options, "nodes.json", &gamez.nodes)?;
+    zip_write(&mut zip, options, "meshes.bin", &gamez.meshes)?;
+    zip_write(&mut zip, options, "nodes.bin", &gamez.nodes)?;
+
+    zip.finish()?;
+    Ok(())
+}
+
+fn gamez_rc(opts: ZipOpts) -> Result<()> {
+    let mut input = CountingReader::new(buf_reader(opts.input)?);
+    let gamez = gamez::rc::read_gamez(&mut input).context("Failed to read gamez data")?;
+    drop(input);
+
+    let output = buf_writer(opts.output)?;
+    let mut zip = ZipWriter::new(output);
+    let options = deflate_opts();
+
+    zip_json(&mut zip, options, "metadata.json", &gamez.metadata)?;
+    zip_json(&mut zip, options, "textures.json", &gamez.textures)?;
+    zip_json(&mut zip, options, "materials.json", &gamez.materials)?;
+    // zip_json(&mut zip, options, "meshes.json", &gamez.meshes)?;
+    // zip_json(&mut zip, options, "nodes.json", &gamez.nodes)?;
+    zip_write(&mut zip, options, "meshes.bin", &gamez.meshes)?;
+    zip_write(&mut zip, options, "nodes.bin", &gamez.nodes)?;
 
     zip.finish()?;
     Ok(())

@@ -123,6 +123,15 @@ impl<R: Read> CountingReader<R> {
             )),
         }
     }
+
+    #[inline]
+    pub fn read_to_end(&mut self) -> Result<Vec<u8>> {
+        let mut buf = Vec::new();
+        self.inner.read_to_end(&mut buf)?;
+        self.prev = self.offset;
+        self.offset += buf.len() as u32;
+        Ok(buf)
+    }
 }
 
 impl<R: Read + Seek> Seek for CountingReader<R> {

@@ -158,7 +158,7 @@ pub fn mechlib_only_err_pm() -> mech3ax_common::Error {
     assert_with_msg!("Expected only Object3d or Lod nodes in mechlib")
 }
 
-pub fn read_node_mechlib_pm(
+pub fn read_node_mechlib(
     read: &mut CountingReader<impl Read>,
     index: usize,
 ) -> Result<WrappedNodePm> {
@@ -178,10 +178,10 @@ pub fn read_node_mechlib_pm(
         NodeType::LoD => lod::assert_variants(node, read.prev, true),
         _ => Err(mechlib_only_err_pm()),
     }?;
-    read_node_data_pm(read, variant, index)
+    read_node_data(read, variant, index)
 }
 
-pub fn read_node_data_pm(
+pub fn read_node_data(
     read: &mut CountingReader<impl Read>,
     variant: NodeVariantPm,
     index: usize,
@@ -247,7 +247,7 @@ fn write_variant(
     Ok(())
 }
 
-pub fn write_node_info_pm(
+pub fn write_node_info(
     write: &mut CountingWriter<impl Write>,
     node: &NodePm,
     mesh_index_is_ptr: bool,
@@ -265,7 +265,7 @@ pub fn write_node_info_pm(
     }
 }
 
-pub fn write_node_data_pm(
+pub fn write_node_data(
     write: &mut CountingWriter<impl Write>,
     node: &NodePm,
     index: usize,
@@ -276,7 +276,7 @@ pub fn write_node_data_pm(
     }
 }
 
-pub fn size_node_pm(node: &NodePm) -> u32 {
+pub fn size_node(node: &NodePm) -> u32 {
     match node {
         NodePm::Lod(lod) => lod::size(lod),
         NodePm::Object3d(object3d) => object3d::size(object3d),

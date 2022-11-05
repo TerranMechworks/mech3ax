@@ -1,11 +1,11 @@
 use mech3ax_api_types::NodeMw;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_nodes::{
-    read_node_data_mw, read_node_info_gamez_mw, read_node_info_zero_mw, size_node_mw,
-    write_node_data_mw, write_node_info_mw, write_node_info_zero_mw, NodeVariantMw, WrappedNodeMw,
-    NODE_MW_C_SIZE,
+use mech3ax_nodes::mw::{
+    read_node_data, read_node_info_gamez, read_node_info_zero, size_node, write_node_data,
+    write_node_info, write_node_info_zero, WrappedNodeMw, NODE_MW_C_SIZE,
 };
+use mech3ax_nodes::NodeVariantMw;
 use std::io::{Read, Write};
 
 pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Result<Vec<NodeMw>> {
@@ -19,7 +19,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
     let mut light_node = false;
     for index in 0..array_size {
         let node_info_pos = read.offset;
-        let variant = read_node_info_gamez_mw(read, index)?;
+        let variant = read_node_info_gamez(read, index)?;
         // this is an index for empty/zero nodes, and the offset for others
         let actual_index = read.read_u32()?;
         match variant {
@@ -85,7 +85,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
     }
 
     for index in actual_count..array_size {
-        read_node_info_zero_mw(read, index)?;
+        read_node_info_zero(read, index)?;
         let actual_index = read.read_u32()?;
 
         let mut expected_index = index + 1;
@@ -111,7 +111,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
                     assert_that!("node data offset", offset == read.offset, read.offset)?;
                 }
             }
-            match read_node_data_mw(read, variant, index)? {
+            match read_node_data(read, variant, index)? {
                 WrappedNodeMw::Camera(camera) => Ok(NodeMw::Camera(camera)),
                 WrappedNodeMw::Display(display) => Ok(NodeMw::Display(display)),
                 WrappedNodeMw::Empty(empty) => Ok(NodeMw::Empty(empty)),
@@ -155,15 +155,14 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
 }
 
 fn assert_area_partitions(nodes: &[NodeMw], offset: u32) -> Result<()> {
-    let (x_count, y_count) =
-        if let NodeMw::World(world) = nodes.first().expect("Expected to have read some nodes") {
-            (
-                world.area_partition_x_count as i32,
-                world.area_partition_y_count as i32,
-            )
-        } else {
-            return Err(assert_with_msg!("Expected the world node to be first"));
-        };
+    let (x_count, y_count) = match nodes.first() {
+        Some(NodeMw::World(world)) => Ok((
+            world.area_partition_x_count as i32,
+            world.area_partition_y_count as i32,
+        )),
+        Some(_) => Err(assert_with_msg!("Expected the world node to be first")),
+        None => Err(assert_with_msg!("Expected to have read some nodes")),
+    }?;
 
     for node in nodes {
         let area_partition = match node {
@@ -191,19 +190,19 @@ pub fn write_nodes(
     let mut offset = offset + NODE_MW_C_SIZE * array_size + 4 * array_size;
 
     for (index, node) in nodes.iter().enumerate() {
-        write_node_info_mw(write, node, index)?;
+        write_node_info(write, node, index)?;
         let index = match node {
             NodeMw::Empty(empty) => empty.parent,
             _ => offset,
         };
         write.write_u32(index)?;
-        offset += size_node_mw(node);
+        offset += size_node(node);
     }
 
     let node_count = nodes.len() as u32;
 
     for index in node_count..array_size {
-        write_node_info_zero_mw(write, index)?;
+        write_node_info_zero(write, index)?;
         let mut index = index + 1;
         if index == array_size {
             index = 0xFFFFFF;
@@ -212,7 +211,7 @@ pub fn write_nodes(
     }
 
     for (index, node) in nodes.iter().enumerate() {
-        write_node_data_mw(write, node, index)?;
+        write_node_data(write, node, index)?;
         match node {
             NodeMw::Lod(lod) => {
                 write.write_u32(lod.parent)?;

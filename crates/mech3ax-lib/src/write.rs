@@ -3,7 +3,7 @@ use crate::error::err_to_c;
 use crate::filename_to_string;
 use anyhow::{anyhow, bail, Context, Result};
 use mech3ax_api_types::{
-    AnimDef, AnimMetadata, ArchiveEntry, GameZData, Material, ModelMw, Motion, Script,
+    AnimDef, AnimMetadata, ArchiveEntry, GameZMwData, Material, ModelMw, Motion, Script,
     TextureManifest,
 };
 use mech3ax_archive::{Mode, Version};
@@ -208,7 +208,7 @@ fn write_mechlib_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
                 .with_context(|| format!("Model data for `{}` is invalid", original))?;
 
             let mut buf = CountingWriter::new(Vec::new(), 0);
-            mech3ax_gamez::mechlib::write_model_mw(&mut buf, &mut model)
+            mech3ax_gamez::mechlib::mw::write_model(&mut buf, &mut model)
                 .with_context(|| format!("Failed to write model data for `{}`", original))?;
             Ok(buf.into_inner())
         }
@@ -286,9 +286,10 @@ pub extern "C" fn write_gamez(
             bail!("gamez data is null");
         }
         let buf = unsafe { std::slice::from_raw_parts(data, len) };
-        let gamez: GameZData = serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
+        let gamez: GameZMwData =
+            serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
         let mut write = buf_writer(filename)?;
-        mech3ax_gamez::gamez::write_gamez_mw(&mut write, &gamez)
+        mech3ax_gamez::gamez::mw::write_gamez(&mut write, &gamez)
             .context("Failed to write GameZ data")
     })
 }

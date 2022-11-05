@@ -34,7 +34,6 @@ pub fn read_texture_infos(read: &mut CountingReader<impl Read>, count: u32) -> R
             // not sure what this is. a pointer to the previous texture in the global
             // array? or a pointer to the texture?
             assert_that!("field 00", info.zero00 == 0, read.prev + 0)?;
-            // a non-zero value here causes additional dynamic code to be called
             assert_that!("field 04", info.zero04 == 0, read.prev + 4)?;
             let texture = assert_utf8("texture", read.prev + 8, || {
                 str_from_c_suffix(&info.texture.0)
