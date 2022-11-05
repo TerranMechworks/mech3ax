@@ -1,10 +1,12 @@
 use super::{Mode, Version};
+use log::{debug, trace};
 use mech3ax_api_types::{static_assert_size, ArchiveEntry, ReprSize as _};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{bytes_to_c, str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Error, Result};
 use mech3ax_crc32::{crc32_update, CRC32_INIT};
+use std::collections::HashSet;
 use std::io::{Read, Seek, SeekFrom, Write};
 
 const VERSION_MW: u32 = 1;
@@ -96,6 +98,16 @@ fn read_table(
     Ok((entries, checksum))
 }
 
+fn rename(seen: &HashSet<String>, original: &str) -> String {
+    for index in 1usize.. {
+        let name = format!("{}-{}", original, index);
+        if !seen.contains(&name) {
+            return name;
+        }
+    }
+    panic!("ran out of renames");
+}
+
 pub fn read_archive<R, F, E>(
     read: &mut CountingReader<R>,
     mut save_file: F,
@@ -108,15 +120,34 @@ where
 {
     let (entries, checksum) = read_table(read, version)?;
     let mut crc = CRC32_INIT;
+    let mut seen: HashSet<String> = HashSet::new();
     let entries = entries
         .into_iter()
         .map(|(name, start, length, garbage)| {
+            trace!(
+                "Reading entry `{}` with length {} at {}",
+                name,
+                length,
+                start
+            );
             read.seek(SeekFrom::Start(start as u64))?;
             let mut buffer = vec![0; length as usize];
             read.read_exact(&mut buffer)?;
             crc = crc32_update(crc, &buffer);
-            save_file(&name, buffer, read.prev)?;
-            Ok(ArchiveEntry { name, garbage })
+            let rename = if seen.insert(name.clone()) {
+                save_file(&name, buffer, read.prev)?;
+                None
+            } else {
+                let renamed = rename(&seen, &name);
+                debug!("Renaming entry from `{}` to `{}`", name, renamed);
+                save_file(&renamed, buffer, read.prev)?;
+                Some(renamed)
+            };
+            Ok(ArchiveEntry {
+                name,
+                rename,
+                garbage,
+            })
         })
         .collect::<std::result::Result<Vec<_>, E>>()?;
 
@@ -158,7 +189,16 @@ where
     let transformed = entries
         .iter()
         .map(|entry| {
-            let data = load_file(&entry.name, write.offset)?;
+            let data = match &entry.rename {
+                Some(rename) => load_file(rename, write.offset),
+                None => load_file(&entry.name, write.offset),
+            }?;
+            trace!(
+                "Writing entry `{}` with length {} at {}",
+                entry.name,
+                data.len(),
+                write.offset
+            );
             write.write_all(&data)?;
             crc = crc32_update(crc, &data);
             let len = data.len() as u32;
