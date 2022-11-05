@@ -5,7 +5,7 @@ use crate::mesh::mw::{
 use log::{debug, trace};
 use mech3ax_api_types::{static_assert_size, MeshMw, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};
 
 #[derive(Debug)]
@@ -72,7 +72,7 @@ pub fn write_meshes(
         MeshesInfoC::SIZE,
         write.offset
     );
-    let count = meshes.len() as i32;
+    let count = assert_len!(i32, meshes.len(), "GameZ meshes")?;
     let info = MeshesInfoC {
         array_size,
         count,
@@ -96,7 +96,12 @@ pub fn write_meshes(
 }
 
 pub fn size_meshes(offset: u32, array_size: i32, meshes: &[MeshMw]) -> (u32, Vec<u32>) {
-    let mut offset = offset + MeshesInfoC::SIZE + (MESH_MW_C_SIZE + 4) * array_size as u32;
+    if array_size < 0 {
+        panic!("negative array size");
+    }
+    // Cast safety: array_size >= 0 and i32::MAX < u32::MAX
+    let array_size = array_size as u32;
+    let mut offset = offset + MeshesInfoC::SIZE + (MESH_MW_C_SIZE + 4) * array_size;
     let mesh_offsets = meshes
         .iter()
         .map(|mesh| {

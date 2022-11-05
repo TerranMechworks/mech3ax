@@ -5,7 +5,7 @@ use log::{debug, trace};
 use mech3ax_api_types::{static_assert_size, BoundingBox, LodPm, Range, ReprSize as _};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, bool_c, Result};
+use mech3ax_common::{assert_len, assert_that, bool_c, Result};
 use mech3ax_debug::Zeros;
 use std::io::{Read, Write};
 
@@ -228,8 +228,9 @@ pub fn read(
     })
 }
 
-pub fn make_variants(lod: &LodPm, mesh_index_is_ptr: bool) -> NodeVariantsPm {
-    NodeVariantsPm {
+pub fn make_variants(lod: &LodPm, mesh_index_is_ptr: bool) -> Result<NodeVariantsPm> {
+    let children_count = assert_len!(u16, lod.children.len(), "lod children")?;
+    Ok(NodeVariantsPm {
         name: lod.name.clone(),
         // flags: NodeBitFlags::from(&lod.flags),
         flags: ALWAYS_PRESENT,
@@ -242,13 +243,13 @@ pub fn make_variants(lod: &LodPm, mesh_index_is_ptr: bool) -> NodeVariantsPm {
         // area_partition: None,
         has_parent: true,
         parent_array_ptr: lod.parent_array_ptr,
-        children_count: lod.children.len() as u16,
+        children_count,
         children_array_ptr: lod.children_array_ptr,
         unk112: 2,
         unk116: BoundingBox::EMPTY,
         unk140: BoundingBox::EMPTY,
         unk164: lod.unk164,
-    }
+    })
 }
 
 pub fn write(write: &mut CountingWriter<impl Write>, lod: &LodPm, index: usize) -> Result<()> {
@@ -279,5 +280,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, lod: &LodPm, index: usize) 
 }
 
 pub fn size(lod: &LodPm) -> u32 {
-    LodPmC::SIZE + 4 + 4 * lod.children.len() as u32
+    // Cast safety: truncation simply leads to incorrect size (TODO?)
+    let children_length = lod.children.len() as u32;
+    LodPmC::SIZE + 4 + 4 * children_length
 }

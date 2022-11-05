@@ -12,21 +12,21 @@ fn lerp() {
     let path = Path::new(&env::var("OUT_DIR").unwrap()).join("lerp.rs");
     let mut file = BufWriter::new(File::create(&path).unwrap());
 
-    writeln!(&mut file, "static LERP5: [u8; 256] = [").unwrap();
+    writeln!(&mut file, "const LERP5: [u8; 256] = [").unwrap();
     for i in 0..256 {
         let lerp5 = ((i as f64) * 31.0 / 255.0 + 0.5) as u8;
         writeln!(&mut file, "    {},", lerp5).unwrap();
     }
     writeln!(&mut file, "];").unwrap();
 
-    writeln!(&mut file, "static LERP6: [u8; 256] = [").unwrap();
+    writeln!(&mut file, "const LERP6: [u8; 256] = [").unwrap();
     for i in 0..256 {
         let lerp6 = ((i as f64) * 63.0 / 255.0 + 0.5) as u8;
         writeln!(&mut file, "    {},", lerp6).unwrap();
     }
     writeln!(&mut file, "];").unwrap();
 
-    writeln!(&mut file, "static LERP888: [u32; 65536] = [").unwrap();
+    writeln!(&mut file, "const LERP888: [u32; 65536] = [").unwrap();
     for i in 0u16..=65535 {
         let red_bits = ((i >> 11) & 0b11111) as u8;
         let red_lerp = ((red_bits as f64) * 255.0 / 31.0 + 0.5) as u8 as u32;

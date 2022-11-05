@@ -255,11 +255,11 @@ pub fn write_node_info(
 ) -> Result<()> {
     match node {
         NodePm::Lod(lod) => {
-            let variant = lod::make_variants(lod, mesh_index_is_ptr);
+            let variant = lod::make_variants(lod, mesh_index_is_ptr)?;
             write_variant(write, NodeType::LoD, variant, index)
         }
         NodePm::Object3d(object3d) => {
-            let variant = object3d::make_variants(object3d);
+            let variant = object3d::make_variants(object3d)?;
             write_variant(write, NodeType::Object3d, variant, index)
         }
     }

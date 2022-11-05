@@ -1,5 +1,5 @@
 use crate::bin::FromU8;
-use crate::size::static_assert_size;
+use crate::size::{static_assert_size, u32_to_usize};
 
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
@@ -39,7 +39,7 @@ impl IMAGE_RESOURCE_DIRECTORY_ENTRY {
         let is_dir =
             (self.offset & IMAGE_RESOURCE_DATA_IS_DIRECTORY) == IMAGE_RESOURCE_DATA_IS_DIRECTORY;
         let offset = self.offset & !IMAGE_RESOURCE_DATA_IS_DIRECTORY;
-        (is_dir, offset as usize)
+        (is_dir, u32_to_usize(offset))
     }
 }
 

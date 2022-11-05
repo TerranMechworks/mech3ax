@@ -1,3 +1,4 @@
+use crate::size::u32_to_usize;
 use log::trace;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
@@ -59,7 +60,7 @@ pub fn read_zlocids(
         .rev()
         .map(|(entry_id, start)| {
             let pos = base_offset + start;
-            let relative_start = start as usize;
+            let relative_start = u32_to_usize(start);
             let mut relative_end = relative_start;
 
             while data[relative_end] != 0 {

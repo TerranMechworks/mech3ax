@@ -8,7 +8,7 @@ use mech3ax_api_types::{
     static_assert_size, Area, BoundingBox, Color, Partition, Range, ReprSize as _, World,
 };
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};
 
 #[derive(Debug)]
@@ -457,8 +457,9 @@ pub fn read(
     })
 }
 
-pub fn make_variants(world: &World) -> NodeVariantsMw {
-    NodeVariantsMw {
+pub fn make_variants(world: &World) -> Result<NodeVariantsMw> {
+    let children_count = assert_len!(u32, world.children.len(), "world children")?;
+    Ok(NodeVariantsMw {
         name: WORLD_NAME.to_owned(),
         flags: NodeBitFlags::DEFAULT,
         unk044: 0,
@@ -468,13 +469,13 @@ pub fn make_variants(world: &World) -> NodeVariantsMw {
         area_partition: None,
         has_parent: false,
         parent_array_ptr: 0,
-        children_count: world.children.len() as u32,
+        children_count,
         children_array_ptr: world.children_array_ptr,
         unk116: BoundingBox::EMPTY,
         unk140: BoundingBox::EMPTY,
         unk164: BoundingBox::EMPTY,
         unk196: 0,
-    }
+    })
 }
 
 fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition) -> Result<()> {
@@ -489,6 +490,7 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
     let x = partition.x as f32;
     let y = partition.y as f32;
     let diagonal = partition_diag(partition.z_min, partition.z_max);
+    let count = assert_len!(u16, partition.nodes.len(), "partition nodes")?;
 
     let partition_c = PartitionMwC {
         flags: 0x100,
@@ -506,7 +508,7 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
         y_mid: y - 128.0,
         diagonal,
         zero56: 0,
-        count: partition.nodes.len() as u16,
+        count,
         ptr: partition.ptr,
         zero64: 0,
         zero68: 0,
@@ -609,9 +611,11 @@ pub fn size(world: &World) -> u32 {
     let mut item_count = 0;
     for subpartition in &world.partitions {
         for partition in subpartition {
+            // Cast safety: truncation simply leads to incorrect size (TODO?)
             item_count += partition.nodes.len() as u32
         }
     }
+    // Cast safety: truncation simply leads to incorrect size (TODO?)
     item_count += world.children.len() as u32;
     WorldMwC::SIZE + 4 + PartitionMwC::SIZE * partition_count + 4 * item_count
 }

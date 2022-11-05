@@ -44,7 +44,8 @@ fn read_fmt_chunk(read: &mut CountingReader<impl Read>, chunk_size: u32) -> Resu
     assert_that!("format tag", format_tag == WAVE_FORMAT_PCM, read.prev)?;
     // this is only valid for PCM files
     assert_that!("format chunk size", chunk_size in [16, 18], read.prev - 4)?;
-    let channels = read.read_u16()? as _;
+    // Cast safety: i32 > u16
+    let channels = read.read_u16()? as i32;
     // aka. SamplesPerSec, sample rate, sampling rate. Unity calls this frequency
     // this should be an unsigned, but Unity doesn't support that
     let frequency = read.read_i32()?;
@@ -53,7 +54,8 @@ fn read_fmt_chunk(read: &mut CountingReader<impl Read>, chunk_size: u32) -> Resu
     // PCM: Channels * (bitsPerSample / 8)
     let _block_align = read.read_u16()?;
     // aka. sample size
-    let bits_per_sample = read.read_u16()? as _;
+    // Cast safety: u32 > u16
+    let bits_per_sample = read.read_u16()? as u32;
     if chunk_size != 16 {
         let _extra_param_size = read.read_u16()?;
     }
@@ -97,6 +99,7 @@ fn read_samples_16bit(
     let max_value = (i16::MAX as f32) + 1.0;
     let mut data = vec![0i16; sample_count];
     {
+        // TODO: likely unsafe/UB
         let len = data.len() * std::mem::size_of::<i16>();
         let buf = unsafe { std::slice::from_raw_parts_mut(data.as_mut_ptr() as _, len) };
         read.read_exact(buf)?;
@@ -154,6 +157,7 @@ fn read_wav_file(read: &mut CountingReader<impl Read + Seek>) -> Result<WaveFile
                 } else {
                     chunk_size
                 };
+                // Cast safety: i64 > u32
                 read.seek(SeekFrom::Current(skip as i64))?;
             }
         }

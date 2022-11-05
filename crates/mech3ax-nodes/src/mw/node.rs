@@ -314,11 +314,11 @@ pub fn write_node_info(
             write_variant(write, NodeType::Light, variant, index)
         }
         NodeMw::Lod(lod) => {
-            let variant = lod::make_variants(lod);
+            let variant = lod::make_variants(lod)?;
             write_variant(write, NodeType::LoD, variant, index)
         }
         NodeMw::Object3d(object3d) => {
-            let variant = object3d::make_variants(object3d);
+            let variant = object3d::make_variants(object3d)?;
             write_variant(write, NodeType::Object3d, variant, index)
         }
         NodeMw::Window(window) => {
@@ -326,7 +326,7 @@ pub fn write_node_info(
             write_variant(write, NodeType::Window, variant, index)
         }
         NodeMw::World(world) => {
-            let variant = world::make_variants(world);
+            let variant = world::make_variants(world)?;
             write_variant(write, NodeType::World, variant, index)
         }
     }

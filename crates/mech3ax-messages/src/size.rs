@@ -18,3 +18,5 @@ macro_rules! static_assert_size {
 }
 
 pub(crate) use static_assert_size;
+
+pub use mech3ax_api_types::{u16_to_usize, u32_to_usize};

@@ -2,6 +2,19 @@ use std::collections::HashMap;
 
 include!(concat!(env!("OUT_DIR"), "/lerp.rs"));
 
+// ideally, we want to check (0..LERP5.len()) == (u8::MIN..=u8::MAX), but that
+// is not a const
+const _: () = assert!((LERP5.len() - 1) == (u8::MAX as usize));
+const _: () = assert!((LERP6.len() - 1) == (u8::MAX as usize));
+const _: () = assert!((LERP888.len() - 1) == (u16::MAX as usize));
+
+macro_rules! u8_mask {
+    ($value:expr) => {
+        // Cast safety: masked to u8::MAX
+        (($value) & 0xFF) as u8
+    };
+}
+
 pub fn rgb565to888(src: &[u8]) -> Vec<u8> {
     let src_len = src.len();
     let dst_len = src_len * 3 / 2;
@@ -11,12 +24,13 @@ pub fn rgb565to888(src: &[u8]) -> Vec<u8> {
     let mut j = 0;
     loop {
         // little-endian GGGBBBBB RRRRRGGG
+        // Cast safety: LERP888.len() == (u16::MIN..=u16::MAX)
         let color565 = ((src[i + 1] as usize) << 8) | (src[i + 0] as usize);
         let color888 = LERP888[color565];
 
-        dst[j + 0] = ((color888 >> 16) & 0xFF) as u8;
-        dst[j + 1] = ((color888 >> 8) & 0xFF) as u8;
-        dst[j + 2] = ((color888 >> 0) & 0xFF) as u8;
+        dst[j + 0] = u8_mask!(color888 >> 16);
+        dst[j + 1] = u8_mask!(color888 >> 8);
+        dst[j + 2] = u8_mask!(color888 >> 0);
 
         i += 2;
         j += 3;
@@ -40,12 +54,13 @@ pub fn rgb565to888a(src: &[u8], alpha: &[u8]) -> Vec<u8> {
     let mut k = 0;
     loop {
         // little-endian GGGBBBBB RRRRRGGG
+        // Cast safety: LERP888.len() == (u16::MIN..=u16::MAX)
         let color565 = ((src[i + 1] as usize) << 8) | (src[i + 0] as usize);
         let color888 = LERP888[color565];
 
-        dst[j + 0] = ((color888 >> 16) & 0xFF) as u8;
-        dst[j + 1] = ((color888 >> 8) & 0xFF) as u8;
-        dst[j + 2] = ((color888 >> 0) & 0xFF) as u8;
+        dst[j + 0] = u8_mask!(color888 >> 16);
+        dst[j + 1] = u8_mask!(color888 >> 8);
+        dst[j + 2] = u8_mask!(color888 >> 0);
         dst[j + 3] = alpha[k];
 
         i += 2;
@@ -95,6 +110,7 @@ pub fn pal8to888(indices: &[u8], palette: &[u8]) -> Vec<u8> {
     let mut i = 0;
     let mut j = 0;
     loop {
+        // TODO: cast may be unsafe/panic
         let index = indices[i] as usize * 3;
 
         dst[j + 0] = palette[index + 0];
@@ -121,6 +137,7 @@ pub fn pal8to888a(indices: &[u8], palette: &[u8], alpha: &[u8]) -> Vec<u8> {
     let mut i = 0;
     let mut j = 0;
     loop {
+        // TODO: cast may be unsafe/panic
         let index = indices[i] as usize * 3;
 
         dst[j + 0] = palette[index + 0];
@@ -147,8 +164,11 @@ pub fn rgb888to565(src: &[u8]) -> Vec<u8> {
     let mut i = 0;
     let mut j = 0;
     loop {
+        // Cast safety: LERP5.len() == (u8::MIN..=u8::MAX)
         let red = LERP5[src[i + 0] as usize];
+        // Cast safety: LERP6.len() == (u8::MIN..=u8::MAX)
         let green = LERP6[src[i + 1] as usize];
+        // Cast safety: LERP5.len() == (u8::MIN..=u8::MAX)
         let blue = LERP5[src[i + 2] as usize];
 
         // little-endian GGGBBBBB RRRRRGGG
@@ -177,8 +197,11 @@ pub fn rgb888ato565(src: &[u8]) -> (Vec<u8>, Vec<u8>) {
     let mut j = 0;
     let mut k = 0;
     loop {
+        // Cast safety: LERP5.len() == (u8::MIN..=u8::MAX)
         let red = LERP5[src[i + 0] as usize];
+        // Cast safety: LERP6.len() == (u8::MIN..=u8::MAX)
         let green = LERP6[src[i + 1] as usize];
+        // Cast safety: LERP5.len() == (u8::MIN..=u8::MAX)
         let blue = LERP5[src[i + 2] as usize];
 
         // little-endian GGGBBBBB RRRRRGGG

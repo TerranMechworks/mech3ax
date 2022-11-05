@@ -7,7 +7,7 @@ use crate::textures::ng as textures;
 use log::{debug, trace};
 use mech3ax_api_types::{static_assert_size, GameZCsData, GameZCsMetadata, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};
 
 #[derive(Debug)]
@@ -126,10 +126,10 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
 }
 
 pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) -> Result<()> {
-    let texture_count = gamez.textures.len() as u32;
+    let texture_count = assert_len!(u32, gamez.textures.len(), "GameZ textures")?;
     let material_array_size = gamez.metadata.material_array_size;
     // let meshes_array_size = gamez.metadata.meshes_array_size;
-    // let node_count = gamez.nodes.len() as u32;
+    // let node_count = assert_len_u32(gamez.nodes.len(), "GameZ nodes")?;
 
     let textures_offset = HeaderCsC::SIZE;
     let materials_offset = textures_offset + textures::size_texture_infos(texture_count);

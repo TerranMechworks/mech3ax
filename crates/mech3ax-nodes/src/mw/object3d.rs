@@ -8,7 +8,7 @@ use mech3ax_api_types::{
 };
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_len, assert_that, Result};
 use mech3ax_debug::Zeros;
 use std::io::{Read, Write};
 
@@ -171,9 +171,10 @@ pub fn read(
     })
 }
 
-pub fn make_variants(object3d: &Object3d) -> NodeVariantsMw {
+pub fn make_variants(object3d: &Object3d) -> Result<NodeVariantsMw> {
     let flags = NodeBitFlags::from(&object3d.flags);
-    NodeVariantsMw {
+    let children_count = assert_len!(u32, object3d.children.len(), "object 3d children")?;
+    Ok(NodeVariantsMw {
         name: object3d.name.clone(),
         flags,
         unk044: 1,
@@ -183,13 +184,13 @@ pub fn make_variants(object3d: &Object3d) -> NodeVariantsMw {
         area_partition: object3d.area_partition,
         has_parent: object3d.parent.is_some(),
         parent_array_ptr: object3d.parent_array_ptr,
-        children_count: object3d.children.len() as _,
+        children_count,
         children_array_ptr: object3d.children_array_ptr,
         unk116: object3d.unk116,
         unk140: object3d.unk140,
         unk164: object3d.unk164,
         unk196: 160,
-    }
+    })
 }
 
 pub fn write(
@@ -239,5 +240,7 @@ pub fn write(
 
 pub fn size(object3d: &Object3d) -> u32 {
     let parent_size = if object3d.parent.is_some() { 4 } else { 0 };
-    Object3dMwC::SIZE + parent_size + 4 * object3d.children.len() as u32
+    // Cast safety: truncation simply leads to incorrect size (TODO?)
+    let children_length = object3d.children.len() as u32;
+    Object3dMwC::SIZE + parent_size + 4 * children_length
 }

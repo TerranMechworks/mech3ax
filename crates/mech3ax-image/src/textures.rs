@@ -7,7 +7,7 @@ use mech3ax_api_types::{
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
-use mech3ax_common::{assert_that, assert_with_msg, Error, Result};
+use mech3ax_common::{assert_len, assert_that, assert_with_msg, Error, Result};
 use mech3ax_debug::Ascii;
 use mech3ax_pixel_ops::{
     pal8to888, pal8to888a, rgb565to888, rgb565to888a, rgb888ato565, rgb888atopal8, rgb888to565,
@@ -599,8 +599,8 @@ where
         TexturesHeaderC::SIZE,
         write.offset
     );
-    let texture_count = manifest.texture_infos.len() as u32;
-    let global_palette_count = manifest.global_palettes.len() as i32;
+    let texture_count = assert_len!(u32, manifest.texture_infos.len(), "texture infos")?;
+    let global_palette_count = assert_len!(i32, manifest.global_palettes.len(), "global palettes")?;
     let header = TexturesHeaderC {
         zero00: 0,
         has_entries: 1,
@@ -612,9 +612,10 @@ where
     trace!("{:#?}", header);
     write.write_struct(&header)?;
 
-    let mut offset = TexturesHeaderC::SIZE
-        + texture_count * TextureEntryC::SIZE
-        + global_palette_count as u32 * 512;
+    // Cast safety: global_palette_count >= 0 and u32 > i32
+    let global_palette_count = global_palette_count as u32;
+    let mut offset =
+        TexturesHeaderC::SIZE + texture_count * TextureEntryC::SIZE + global_palette_count * 512;
 
     for (index, info) in manifest.texture_infos.iter().enumerate() {
         debug!(

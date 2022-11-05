@@ -1,6 +1,7 @@
 use crate::message_table;
 use crate::pe;
 use crate::resources::{read_resource_directory_mt, read_resource_directory_st};
+use crate::size::u32_to_usize;
 use crate::string_table;
 use crate::zloc::read_zlocids;
 use log::trace;
@@ -86,7 +87,7 @@ fn parse_resource_section_mt(
     buf: &[u8],
     resource_section: &pe::ImageSection,
 ) -> Result<(u32, HashMap<u32, String>)> {
-    let resource_section_offset = resource_section.pointer_to_raw_data as _;
+    let resource_section_offset = u32_to_usize(resource_section.pointer_to_raw_data);
     let resource_section_bytes = resource_section.get_section_bytes(buf);
 
     let (language_id, data_offset, data_size) =
@@ -116,7 +117,7 @@ fn parse_resource_section_st(
     buf: &[u8],
     resource_section: &pe::ImageSection,
 ) -> Result<(u32, HashMap<u32, String>)> {
-    let resource_section_offset = resource_section.pointer_to_raw_data as _;
+    let resource_section_offset = u32_to_usize(resource_section.pointer_to_raw_data);
     let resource_section_bytes = resource_section.get_section_bytes(buf);
 
     let (language_id, blocks) =
@@ -144,6 +145,7 @@ fn parse_resource_section_st(
 
         let string_block_bytes = &buf[real_start..real_end];
         let mut data = CountingReader::new(string_block_bytes);
+        // Cast safety: potentially unsafe, but should be ok for 32 bit PE files
         data.offset = real_start as _;
         string_table::read_string_block(block.block_id, data, &mut messages)?;
     }

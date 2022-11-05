@@ -4,7 +4,7 @@ mod structures;
 use mech3ax_common::{assert_that, Error, PeError, Result};
 
 use super::bin::StructAt as _;
-use super::size::ConstSize as _;
+use super::size::{u16_to_usize, ConstSize as _};
 use constants::{ImageFileFlags, IMAGE_DIRECTORY_ENTRY_RESOURCE};
 use log::trace;
 use structures::*;
@@ -111,9 +111,11 @@ pub fn read_pe_headers(buf: &[u8]) -> Result<SectionsAndDirectories> {
     )?;
     // this check is pretty important. otherwise, the data directory will be
     // too big, and the section offset will be wrong.
+    // Cast safety: u32 > u16
+    let image_numberof_directory_entries: u32 = IMAGE_NUMBEROF_DIRECTORY_ENTRIES as _;
     assert_that!(
         "Optional header RVAs",
-        optional_header.number_of_rva_and_sizes == IMAGE_NUMBEROF_DIRECTORY_ENTRIES as _,
+        optional_header.number_of_rva_and_sizes == image_numberof_directory_entries,
         optional_header_offset
     )?;
 
@@ -125,7 +127,7 @@ pub fn read_pe_headers(buf: &[u8]) -> Result<SectionsAndDirectories> {
     let section_base_offset = optional_header_offset + IMAGE_OPTIONAL_HEADER32::SIZE;
     trace!("PE section base offset: {}", section_base_offset);
 
-    let sections = (0..file_header.number_of_sections as usize)
+    let sections = (0..u16_to_usize(file_header.number_of_sections))
         .map(|section_index| {
             let section_offset = section_base_offset + IMAGE_SECTION_HEADER::SIZE * section_index;
             let section: IMAGE_SECTION_HEADER = buf.struct_at(section_offset)?;

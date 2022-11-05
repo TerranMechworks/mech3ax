@@ -1,6 +1,6 @@
 use mech3ax_api_types::{static_assert_size, Motion, MotionFrame, MotionPart};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
 use std::io::{Read, Write};
 
 const VERSION: u32 = 4;
@@ -85,11 +85,12 @@ pub fn read_motion(read: &mut CountingReader<impl Read>) -> Result<Motion> {
 }
 
 pub fn write_motion(write: &mut CountingWriter<impl Write>, motion: &Motion) -> Result<()> {
+    let part_count = assert_len!(u32, motion.parts.len(), "motion parts")?;
     let header = Header {
         version: VERSION,
         loop_time: motion.loop_time,
         frame_count: motion.frame_count,
-        part_count: motion.parts.len() as u32,
+        part_count,
         minus_one: -1.0,
         plus_one: 1.0,
     };

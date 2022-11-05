@@ -18,5 +18,5 @@ pub use image::*;
 pub use interp::*;
 pub use messages::*;
 pub use motion::*;
-pub use size::ReprSize;
+pub use size::{u16_to_usize, u32_to_usize, ReprSize};
 pub use types::*;

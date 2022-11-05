@@ -4,7 +4,7 @@ use mech3ax_api_types::{
     static_assert_size, MeshLightMw, MeshMw, PolygonMw, ReprSize as _, UvCoord, Vec3,
 };
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, bool_c, Result};
+use mech3ax_common::{assert_len, assert_that, bool_c, Result};
 use std::io::{Read, Write};
 
 #[derive(Debug)]
@@ -362,16 +362,21 @@ pub fn write_mesh_info(
         MeshMwC::SIZE,
         write.offset
     );
+    let polygon_count = assert_len!(u32, mesh.polygons.len(), "mesh polygons")?;
+    let vertex_count = assert_len!(u32, mesh.vertices.len(), "mesh vertices")?;
+    let normal_count = assert_len!(u32, mesh.normals.len(), "mesh normals")?;
+    let morph_count = assert_len!(u32, mesh.morphs.len(), "mesh morphs")?;
+    let light_count = assert_len!(u32, mesh.lights.len(), "mesh lights")?;
     let mesh = MeshMwC {
         file_ptr: bool_c!(mesh.file_ptr),
         unk04: bool_c!(mesh.unk04),
         unk08: mesh.unk08,
         parent_count: mesh.parent_count,
-        polygon_count: mesh.polygons.len() as u32,
-        vertex_count: mesh.vertices.len() as u32,
-        normal_count: mesh.normals.len() as u32,
-        morph_count: mesh.morphs.len() as u32,
-        light_count: mesh.lights.len() as u32,
+        polygon_count,
+        vertex_count,
+        normal_count,
+        morph_count,
+        light_count,
         zero36: 0,
         unk40: mesh.unk40,
         unk44: mesh.unk44,
@@ -623,6 +628,7 @@ pub fn write_mesh_infos_zero(
 }
 
 pub fn size_mesh(mesh: &MeshMw) -> u32 {
+    // Cast safety: truncation simply leads to incorrect size (TODO?)
     let mut size =
         Vec3::SIZE * (mesh.vertices.len() + mesh.normals.len() + mesh.morphs.len()) as u32;
     for light in &mesh.lights {

@@ -2,7 +2,7 @@ use mech3ax_api_types::{static_assert_size, ReprSize as _, Script};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_from_c_sized, str_to_c_padded};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};
 use time::OffsetDateTime;
 
@@ -62,10 +62,14 @@ pub fn read_interp(read: &mut CountingReader<impl Read>) -> Result<Vec<Script>> 
         .map(|_| {
             let entry: EntryC = read.read_struct()?;
             let name = assert_utf8("name", offset, || str_from_c_padded(&entry.name))?;
+            // Cast safety: i64 > u32
             let last_modified =
                 OffsetDateTime::from_unix_timestamp(entry.last_modified as i64).unwrap();
+            // Cast safety: u64 > u32
             offset += EntryC::SIZE as u64;
-            Ok((name, last_modified, entry.start as u64))
+            // Cast safety: u64 > u32
+            let start = entry.start as u64;
+            Ok((name, last_modified, start))
         })
         .collect::<Result<Vec<_>>>()?;
 
@@ -86,13 +90,14 @@ pub fn read_interp(read: &mut CountingReader<impl Read>) -> Result<Vec<Script>> 
     scripts
 }
 
-fn write_script(lines: &[String]) -> (u32, Vec<(u32, Vec<u8>)>) {
+fn write_script(lines: &[String]) -> Result<(u32, Vec<(u32, u32, Vec<u8>)>)> {
     let mut size = 0;
     let transformed = lines
         .iter()
         .map(|line| {
             let mut buf = Vec::from(line.as_bytes());
             buf.push(32); // add "zero" terminator
+            let line_size = assert_len!(u32, buf.len(), "line length in bytes")?;
             let mut zero_count = 0;
             for v in &mut buf {
                 if *v == 32 {
@@ -100,17 +105,17 @@ fn write_script(lines: &[String]) -> (u32, Vec<(u32, Vec<u8>)>) {
                     *v = 0;
                 }
             }
-            size += 8 + buf.len() as u32;
-            (zero_count, buf)
+            size += 8 + line_size;
+            Ok((zero_count, line_size, buf))
         })
-        .collect();
+        .collect::<Result<Vec<_>>>()?;
     // zero "size" u32 written to signify end of script
     size += 4;
-    (size, transformed)
+    Ok((size, transformed))
 }
 
 pub fn write_interp(write: &mut CountingWriter<impl Write>, scripts: &[Script]) -> Result<()> {
-    let count = scripts.len() as u32;
+    let count = assert_len!(u32, scripts.len(), "scripts")?;
     write.write_u32(SIGNATURE)?;
     write.write_u32(VERSION)?;
     write.write_u32(count)?;
@@ -121,6 +126,7 @@ pub fn write_interp(write: &mut CountingWriter<impl Write>, scripts: &[Script]) 
         .map(|script| {
             let mut name = [0; 120];
             str_to_c_padded(&script.name, &mut name);
+            // Cast safety: truncation simply leads to incorrect timestamp
             let last_modified = script.last_modified.unix_timestamp() as u32;
             let entry = EntryC {
                 name,
@@ -129,15 +135,15 @@ pub fn write_interp(write: &mut CountingWriter<impl Write>, scripts: &[Script]) 
             };
             write.write_struct(&entry)?;
 
-            let (size, lines) = write_script(&script.lines);
+            let (size, lines) = write_script(&script.lines)?;
             offset += size;
             Ok(lines)
         })
         .collect::<Result<Vec<_>>>()?;
 
     for lines in transformed.into_iter() {
-        for (arg_count, command) in lines.into_iter() {
-            write.write_u32(command.len() as u32)?;
+        for (arg_count, line_size, command) in lines.into_iter() {
+            write.write_u32(line_size)?;
             write.write_u32(arg_count)?;
             write.write_all(&command)?;
         }

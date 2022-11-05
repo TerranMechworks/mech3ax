@@ -1,3 +1,4 @@
+use crate::size::u16_to_usize;
 use log::trace;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_with_msg, Result};
@@ -26,7 +27,7 @@ pub fn read_string_block(
     let block_max = block_id * 16;
     trace!("String block {}: {}..{}", block_id, block_min, block_max);
     for string_id in block_min..block_max {
-        let len = data.read_u16()? as usize;
+        let len = u16_to_usize(data.read_u16()?);
         // blocks always have 16 strings; so missing strings are "empty"
         if len == 0 {
             continue;

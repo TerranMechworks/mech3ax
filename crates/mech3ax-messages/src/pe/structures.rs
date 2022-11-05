@@ -1,5 +1,5 @@
 use crate::bin::FromU8;
-use crate::size::static_assert_size;
+use crate::size::{static_assert_size, u32_to_usize};
 use mech3ax_common::PeError as Error;
 
 type Result<T> = ::std::result::Result<T, Error>;
@@ -206,6 +206,8 @@ impl IMAGE_SECTION_HEADER {
     }
 
     pub fn get_section_bytes<'a, 'b>(&'a self, buf: &'b [u8]) -> &'b [u8] {
-        &buf[self.pointer_to_raw_data as _..][..self.size_of_raw_data as _]
+        let start = u32_to_usize(self.pointer_to_raw_data);
+        let len = u32_to_usize(self.size_of_raw_data);
+        &buf[start..][..len]
     }
 }

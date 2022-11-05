@@ -238,7 +238,7 @@ fn parse_manifest(ptr: *const u8, len: usize) -> Result<TextureManifest> {
     if ptr.is_null() {
         bail!("texture manifest is null");
     }
-    let buf = unsafe { std::slice::from_raw_parts(ptr, len as usize) };
+    let buf = unsafe { std::slice::from_raw_parts(ptr, len) };
     serde_json::from_slice(buf).context("texture manifest is invalid")
 }
 
@@ -298,7 +298,7 @@ fn parse_metadata(ptr: *const u8, len: usize) -> Result<AnimMetadata> {
     if ptr.is_null() {
         bail!("anim metadata is null");
     }
-    let buf = unsafe { std::slice::from_raw_parts(ptr, len as usize) };
+    let buf = unsafe { std::slice::from_raw_parts(ptr, len) };
     serde_json::from_slice(buf).context("anim metadata is invalid")
 }
 
