@@ -1,22 +1,36 @@
 use super::{MapHeaderC, MAP_VERSION};
-use mech3ax_api_types::{MapChunk, MapRc};
+use log::{debug, trace};
+use mech3ax_api_types::{MapFeature, MapRc, ReprSize as _};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, Result};
 use std::io::Write;
 
-fn write_map_chunk(write: &mut CountingWriter<impl Write>, chunk: &MapChunk) -> Result<()> {
-    let flags = [chunk.flag1, chunk.flag2, chunk.flag3];
-    write.write_all(&flags)?;
-    let count = assert_len!(u32, chunk.vertices.len(), "map chunk vertices")?;
+fn write_map_feature(
+    write: &mut CountingWriter<impl Write>,
+    feature: &MapFeature,
+    index: usize,
+) -> Result<()> {
+    debug!("Writing map feature {} at {}", index, write.offset);
+    write.write_struct(&feature.color)?;
+    let count = assert_len!(u32, feature.vertices.len(), "map feature vertices")?;
     write.write_u32(count)?;
-    for vertex in &chunk.vertices {
+    debug!(
+        "Writing {} x map feature vertices at {}",
+        count, write.offset
+    );
+    for vertex in &feature.vertices {
         write.write_struct(vertex)?;
     }
-    write.write_i32(chunk.tail)?;
+    write.write_i32(feature.objective)?;
     Ok(())
 }
 
 pub fn write_map(write: &mut CountingWriter<impl Write>, map: &MapRc) -> Result<()> {
+    debug!(
+        "Writing map header ({}) at {}",
+        MapHeaderC::SIZE,
+        write.offset
+    );
     let header = MapHeaderC {
         version: MAP_VERSION,
         unk04: map.unk04,
@@ -27,9 +41,11 @@ pub fn write_map(write: &mut CountingWriter<impl Write>, map: &MapRc) -> Result<
         zero24: 0,
         max_y: map.max_y,
     };
+    trace!("{:#?}", header);
     write.write_struct(&header)?;
-    for chunk in &map.chunks {
-        write_map_chunk(write, chunk)?;
+
+    for (index, feature) in map.features.iter().enumerate() {
+        write_map_feature(write, feature, index)?;
     }
     Ok(())
 }

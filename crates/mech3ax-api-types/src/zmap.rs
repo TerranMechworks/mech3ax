@@ -2,7 +2,16 @@ use crate::static_assert_size;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, ValStruct};
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy, ValStruct)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, ValStruct)]
+#[repr(C)]
+pub struct MapColor {
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
+}
+static_assert_size!(MapColor, 3);
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, ValStruct)]
 #[repr(C)]
 pub struct MapVertex {
     pub x: f32,
@@ -12,12 +21,10 @@ pub struct MapVertex {
 static_assert_size!(MapVertex, 12);
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct MapChunk {
-    pub flag1: u8,
-    pub flag2: u8,
-    pub flag3: u8,
+pub struct MapFeature {
+    pub color: MapColor,
     pub vertices: Vec<MapVertex>,
-    pub tail: i32,
+    pub objective: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
@@ -25,5 +32,5 @@ pub struct MapRc {
     pub unk04: u32,
     pub max_x: f32,
     pub max_y: f32,
-    pub chunks: Vec<MapChunk>,
+    pub features: Vec<MapFeature>,
 }
