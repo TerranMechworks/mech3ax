@@ -114,6 +114,31 @@ struct ZrdOpts {
     output: String,
 }
 
+#[derive(clap::Args)]
+struct ZMapArgs {
+    #[clap(help = "The source JSON path")]
+    input: String,
+    #[clap(help = "The destination ZMAP path (will be overwritten)")]
+    output: String,
+}
+
+impl ZMapArgs {
+    fn opts(self, game: GameType) -> Result<ZMapOpts> {
+        let Self { input, output } = self;
+        Ok(ZMapOpts {
+            game,
+            input,
+            output,
+        })
+    }
+}
+
+struct ZMapOpts {
+    game: GameType,
+    input: String,
+    output: String,
+}
+
 #[derive(clap::Subcommand)]
 enum SubCommand {
     #[clap(about = "Prints license information")]
@@ -140,6 +165,8 @@ enum SubCommand {
     Savegame(ZipArgs),
     #[clap(about = "Reconstruct reader '*.zrd' files from JSON")]
     Zrd(ZrdOpts),
+    #[clap(about = "Reconstruct map '*.zmap' files from JSON (RC)")]
+    Zmap(ZMapArgs),
 }
 
 fn main() -> Result<()> {
@@ -167,6 +194,7 @@ fn main() -> Result<()> {
         SubCommand::Anim(args) => commands::anim(args.opts(game)?),
         SubCommand::Savegame(args) => commands::savegame(args.opts(game)?),
         SubCommand::Zrd(opts) => modding::zrd(opts),
+        SubCommand::Zmap(args) => commands::zmap(args.opts(game)?),
         SubCommand::License => commands::license(),
     }
 }

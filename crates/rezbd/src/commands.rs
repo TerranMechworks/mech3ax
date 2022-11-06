@@ -1,12 +1,12 @@
-use crate::{InterpOpts, ZipOpts};
+use crate::{InterpOpts, ZMapOpts, ZipOpts};
 use anyhow::{bail, Context, Result};
 use log::debug;
 use mech3ax_anim::write_anim;
 use mech3ax_api_types::saves::AnimActivation;
 use mech3ax_api_types::{
     AnimMetadata, ArchiveEntry, GameZCsData, GameZCsMetadata, GameZMwData, GameZMwMetadata,
-    GameZPmData, GameZPmMetadata, GameZRcData, GameZRcMetadata, Material, MeshMw, ModelMw, Motion,
-    NodeMw, Script, TextureManifest,
+    GameZPmData, GameZPmMetadata, GameZRcData, GameZRcMetadata, MapRc, Material, MeshMw, ModelMw,
+    Motion, NodeMw, Script, TextureManifest,
 };
 use mech3ax_archive::{write_archive, Mode, Version};
 use mech3ax_common::io_ext::CountingWriter;
@@ -374,6 +374,21 @@ pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
             }
         },
     )
+}
+
+pub(crate) fn zmap(opts: ZMapOpts) -> Result<()> {
+    match opts.game {
+        GameType::RC => {}
+        GameType::MW => bail!("MechWarrior 3 does not have zmap"),
+        GameType::PM => bail!("Pirate's Moon does not have zmap"),
+        GameType::CS => bail!("Crimson Skies does not have zmap"),
+    }
+
+    let buf = std::fs::read(opts.input).context("Failed to open input")?;
+    let map: MapRc = serde_json::from_slice(&buf).context("Failed to parse input")?;
+
+    let mut write = buf_writer(opts.output)?;
+    mech3ax_zmap::write_map(&mut write, &map).context("Failed to write interpreter data")
 }
 
 pub(crate) fn license() -> Result<()> {

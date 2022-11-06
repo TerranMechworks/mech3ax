@@ -1,4 +1,4 @@
-use crate::{InterpOpts, MsgOpts, ReaderOpts, ZipOpts};
+use crate::{InterpOpts, MsgOpts, ReaderOpts, ZMapOpts, ZipOpts};
 use anyhow::{bail, Context, Result};
 use image::ImageOutputFormat;
 use log::debug;
@@ -386,6 +386,20 @@ pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
             }
         },
     )
+}
+
+pub(crate) fn zmap(opts: ZMapOpts) -> Result<()> {
+    match opts.game {
+        GameType::RC => {}
+        GameType::MW => bail!("MechWarrior 3 does not have zmap"),
+        GameType::PM => bail!("Pirate's Moon does not have zmap"),
+        GameType::CS => bail!("Crimson Skies does not have zmap"),
+    }
+
+    let mut input = CountingReader::new(buf_reader(opts.input)?);
+    let map = mech3ax_zmap::read_map(&mut input).context("Failed to read zmap data")?;
+    let contents = serde_json::to_vec_pretty(&map)?;
+    std::fs::write(opts.output, contents).context("Failed to write output")
 }
 
 pub(crate) fn license() -> Result<()> {

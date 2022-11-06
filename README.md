@@ -30,7 +30,7 @@ Obviously, this is an unofficial fan effort and not connected to the developers,
 | `motion.zbd`                                           | ⬛ | ✅ | ✅ | ⬛ |
 | `gamez.zbd`                                            | ❌ | ✅ | ❌ | ❌ |
 | `anim.zbd`/`cam_anim.zbd`/`mis_anim.zbd`               | ❌ | ✅ | ❌ | ❌ |
-| `m*.zmap`                                              | ❌ | ⬛ | ⬛ | ⬛ |
+| `m*.zmap`                                              | ✅ | ⬛ | ⬛ | ⬛ |
 | `planes.zbd`                                           | ⬛ | ⬛ | ⬛ | ❌ |
 
 Legend:
@@ -68,7 +68,7 @@ Not supported (yet?):
 
 ### Recoil
 
-Maps (`m*.zmap`), `anim.zbd`, and `gamez.zbd` files are not supported yet.
+`anim.zbd` and `gamez.zbd` files are not supported yet.
 
 ### Crimson Skies
 

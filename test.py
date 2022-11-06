@@ -295,6 +295,29 @@ class Tester:
                 self.rezbd("anim", game, zip_path, output_zbd)
                 self.compare(input_zbd, output_zbd)
 
+    def test_zmap(self) -> None:
+        print("--- ZMAP ---")
+        for name, zbd_dir, output_base in self.versions:
+            game = name_to_game(name)
+            if game != GAME_RC:
+                continue
+
+            map_dir = zbd_dir.parent / "maps"
+            output_dir = output_base / "zmap"
+            output_dir.mkdir(exist_ok=True)
+
+            for input_zmap in sorted(map_dir.rglob("*.zmap"), key=lambda p: int(p.stem.strip("m"))):
+                json_name = f"{input_zmap.stem}.json"
+                zmap_name = input_zmap.name
+
+                json_path = output_dir / json_name
+                output_zmap = output_dir / zmap_name
+
+                print(name, input_zmap.name, game)
+                self.unzbd("zmap", game, input_zmap, json_path)
+                self.rezbd("zmap", game, json_path, output_zmap)
+                self.compare(input_zmap, output_zmap)
+
 
 def main() -> None:
     parser = ArgumentParser()
@@ -316,11 +339,12 @@ def main() -> None:
     tester.test_interp()
     tester.test_messages()
     tester.test_reader()
+    tester.test_textures()
     tester.test_mechlib()
     tester.test_motion()
-    tester.test_textures()
     tester.test_gamez()
     tester.test_anim()
+    tester.test_zmap()
     tester.print_miscompares()
 
 
