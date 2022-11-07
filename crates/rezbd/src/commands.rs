@@ -5,8 +5,8 @@ use mech3ax_anim::write_anim;
 use mech3ax_api_types::saves::AnimActivation;
 use mech3ax_api_types::{
     AnimMetadata, ArchiveEntry, GameZCsData, GameZCsMetadata, GameZMwData, GameZMwMetadata,
-    GameZPmData, GameZPmMetadata, GameZRcData, GameZRcMetadata, MapRc, Material, MeshMw, ModelMw,
-    Motion, NodeMw, Script, TextureManifest,
+    GameZPmData, GameZPmMetadata, GameZRcData, GameZRcMetadata, MapRc, Material, MeshMw, MeshPm,
+    ModelMw, Motion, NodeMw, Script, TextureManifest,
 };
 use mech3ax_archive::{write_archive, Mode, Version};
 use mech3ax_common::io_ext::CountingWriter;
@@ -184,6 +184,10 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                             })?;
                         }
                         GameType::PM => {
+                            // let mut model: ModelPm = zip_json(zip, &name)?;
+                            // mechlib::pm::write_model(&mut buf, &mut model).with_context(|| {
+                            //     format!("Failed to write mechlib model for `{}`", original)
+                            // })?;
                             return Err(mech3ax_common::assert_with_msg!("TODO").into());
                         }
                         GameType::RC => unreachable!("Recoil does not have mechlib"),
@@ -256,9 +260,8 @@ fn gamez_pm(opts: ZipOpts) -> Result<()> {
     let metadata: GameZPmMetadata = zip_json(&mut zip, "metadata.json")?;
     let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
     let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
-    // let meshes: Vec<MeshPm> = zip_json(&mut zip, "meshes.json")?;
+    let meshes: Vec<MeshPm> = zip_json(&mut zip, "meshes.json")?;
     // let nodes: Vec<NodePm> = zip_json(&mut zip, "nodes.json")?;
-    let meshes: Vec<u8> = zip_read(&mut zip, "meshes.bin")?;
     let nodes: Vec<u8> = zip_read(&mut zip, "nodes.bin")?;
 
     drop(zip);

@@ -32,7 +32,7 @@ pub struct GameZMwData {
 pub struct GameZPmMetadata {
     pub gamez_header_unk08: u32,
     pub material_array_size: i16,
-    // pub meshes_array_size: i32,
+    pub meshes_array_size: i32,
     pub node_array_size: u32,
     pub node_data_count: u32,
     pub texture_ptrs: Vec<Option<u32>>,
@@ -42,11 +42,10 @@ pub struct GameZPmMetadata {
 pub struct GameZPmData {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
-    // pub meshes: Vec<MeshCs>,
+    pub meshes: Vec<MeshPm>,
+    pub nodes: Vec<u8>,
     // pub nodes: Vec<NodePm>,
     pub metadata: GameZPmMetadata,
-    pub meshes: Vec<u8>,
-    pub nodes: Vec<u8>,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
@@ -63,11 +62,11 @@ pub struct GameZCsMetadata {
 pub struct GameZCsData {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
+    pub meshes: Vec<u8>,
     // pub meshes: Vec<MeshCs>,
+    pub nodes: Vec<u8>,
     // pub nodes: Vec<NodeMw>,
     pub metadata: GameZCsMetadata,
-    pub meshes: Vec<u8>,
-    pub nodes: Vec<u8>,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
@@ -82,9 +81,9 @@ pub struct GameZRcMetadata {
 pub struct GameZRcData {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
+    pub meshes: Vec<u8>,
     // pub meshes: Vec<MeshRc>,
+    pub nodes: Vec<u8>,
     // pub nodes: Vec<NodeRc>,
     pub metadata: GameZRcMetadata,
-    pub meshes: Vec<u8>,
-    pub nodes: Vec<u8>,
 }

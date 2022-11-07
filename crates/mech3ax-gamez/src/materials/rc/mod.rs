@@ -38,6 +38,7 @@ bitflags::bitflags! {
 }
 
 pub fn size_materials(array_size: i16) -> u32 {
+    // Cast safety: truncation simply leads to incorrect size (TODO?)
     MaterialInfoC::SIZE + (MaterialC::SIZE + 2 + 2) * array_size as u32
 }
 

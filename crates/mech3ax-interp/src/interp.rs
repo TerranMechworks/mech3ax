@@ -30,6 +30,7 @@ fn read_script(read: &mut CountingReader<impl Read>, offset: &mut u64) -> Result
 
         let mut buf = vec![0u8; size as usize];
         read.read_exact(&mut buf)?;
+        // Cast safety: u64 > u32
         *offset += size as u64;
 
         let mut zero_count = 0;

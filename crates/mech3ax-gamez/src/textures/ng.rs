@@ -48,12 +48,12 @@ pub fn read_texture_infos(
             assert_that!("used", info.used in [1, 2], read.prev + 32)?;
             let ptr = if info.used == 2 {
                 // this is the rarer case
-                assert_that!("field 00", info.unk00.0 == 0, read.prev + 0)?;
+                assert_that!("field 00", info.unk00 == Ptr::NULL, read.prev + 0)?;
                 None
             } else {
                 // not sure what this is. a pointer to the previous texture in the global
                 // array? or a pointer to the texture?
-                assert_that!("field 00", info.unk00.0 != 0, read.prev + 0)?;
+                assert_that!("field 00", info.unk00 != Ptr::NULL, read.prev + 0)?;
                 Some(info.unk00.0)
             };
 

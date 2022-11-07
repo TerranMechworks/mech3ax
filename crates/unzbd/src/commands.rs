@@ -206,7 +206,13 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                             })?;
                             zip_json(zip, options, &name, &root)
                         }
-                        GameType::PM => Err(mech3ax_common::assert_with_msg!("TODO").into()),
+                        GameType::PM => {
+                            // let root = mechlib::pm::read_model(&mut read).with_context(|| {
+                            //     format!("Failed to read mechlib model for `{}`", original)
+                            // })?;
+                            // zip_json(zip, options, &name, &root)
+                            Err(mech3ax_common::assert_with_msg!("TODO").into())
+                        }
                         GameType::RC => unreachable!("Recoil does not have mechlib"),
                         GameType::CS => unreachable!("Crimson Skies does not have mechlib"),
                     }
@@ -279,9 +285,8 @@ fn gamez_pm(opts: ZipOpts) -> Result<()> {
     zip_json(&mut zip, options, "metadata.json", &gamez.metadata)?;
     zip_json(&mut zip, options, "textures.json", &gamez.textures)?;
     zip_json(&mut zip, options, "materials.json", &gamez.materials)?;
-    // zip_json(&mut zip, options, "meshes.json", &gamez.meshes)?;
+    zip_json(&mut zip, options, "meshes.json", &gamez.meshes)?;
     // zip_json(&mut zip, options, "nodes.json", &gamez.nodes)?;
-    zip_write(&mut zip, options, "meshes.bin", &gamez.meshes)?;
     zip_write(&mut zip, options, "nodes.bin", &gamez.nodes)?;
 
     zip.finish()?;

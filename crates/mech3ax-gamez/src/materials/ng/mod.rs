@@ -19,16 +19,15 @@ static_assert_size!(MaterialInfoC, 16);
 #[derive(Debug)]
 #[repr(C)]
 struct MaterialC {
-    alpha: u8,    // 00
-    flags: u8,    // 01
-    rgb: u16,     // 02
-    color: Color, // 04
-    /// ptr in mechlib, texture index in gamez
-    index: u32, // 16
-    zero20: f32,  // 20
-    half24: f32,  // 24
-    half28: f32,  // 28
-    specular: f32, // 32
+    alpha: u8,      // 00
+    flags: u8,      // 01
+    rgb: u16,       // 02
+    color: Color,   // 04
+    index: u32,     // 16, ptr in mechlib, texture index in gamez
+    zero20: f32,    // 20
+    half24: f32,    // 24
+    half28: f32,    // 28
+    specular: f32,  // 32
     cycle_ptr: u32, // 36
 }
 static_assert_size!(MaterialC, 40);
@@ -71,6 +70,7 @@ bitflags::bitflags! {
 }
 
 pub fn size_materials(array_size: i16, materials: &[Material]) -> u32 {
+    // Cast safety: truncation simply leads to incorrect size (TODO?)
     let mut size = MaterialInfoC::SIZE + (MaterialC::SIZE + 2 + 2) * array_size as u32;
     for material in materials {
         if let Material::Textured(mat) = material {

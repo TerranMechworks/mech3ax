@@ -1,16 +1,17 @@
 use super::common::*;
 use log::{debug, trace};
 use mech3ax_api_types::{
-    static_assert_size, Color, MeshLightMw, MeshMw, PolygonMw, ReprSize as _, UvCoord, Vec3,
+    static_assert_size, Color, MeshLightPm, MeshPm, MeshTexture, PolygonFlags, PolygonPm,
+    ReprSize as _, UvCoord, Vec3,
 };
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_len, assert_that, bool_c, Result};
+use mech3ax_common::{assert_len, assert_that, assert_with_msg, bool_c, Result};
 use mech3ax_debug::{Hex, Ptr};
 use std::io::{Read, Write};
 
 #[derive(Debug)]
 #[repr(C)]
-struct MeshMwC {
+struct MeshPmC {
     file_ptr: u32,      // 00
     unk04: u32,         // 04
     unk08: u32,         // 08
@@ -34,40 +35,83 @@ struct MeshMwC {
     unk80: f32,         // 80
     unk84: f32,         // 84
     zero88: u32,        // 88
+    texture_count: u32, // 92
+    texture_ptr: Ptr,   // 96
 }
-static_assert_size!(MeshMwC, 92);
-pub const MESH_MW_C_SIZE: u32 = MeshMwC::SIZE;
+static_assert_size!(MeshPmC, 100);
+pub const MESH_PM_C_SIZE: u32 = MeshPmC::SIZE;
 
 #[derive(Debug)]
 #[repr(C)]
-struct PolygonMwC {
+struct PolygonPmC {
     vertex_info: Hex<u32>, // 00
     unk04: i32,            // 04
     vertices_ptr: Ptr,     // 08
     normals_ptr: Ptr,      // 12
-    uvs_ptr: Ptr,          // 16
-    colors_ptr: Ptr,       // 20
-    unk_ptr: Ptr,          // 24
-    texture_index: u32,    // 28
-    texture_info: u32,     // 32
+    texture_count: u32,    // 16
+    uvs_ptr: Ptr,          // 20
+    colors_ptr: Ptr,       // 24
+    unk28: Ptr,            // 28
+    unk32: Ptr,            // 32
+    unk36: Hex<u32>,       // 36
 }
-static_assert_size!(PolygonMwC, 36);
+static_assert_size!(PolygonPmC, 40);
+
+bitflags::bitflags! {
+    pub struct PolygonBitFlags: u32 {
+        const UNK2 = 1 << 2;
+        const UNK3 = 1 << 3; // not in mechlib
+        const NORMALS = 1 << 4;
+        const TRI_STRIP = 1 << 5;
+        const UNK6 = 1 << 6; // not in mechlib
+    }
+}
+
+impl From<PolygonBitFlags> for PolygonFlags {
+    fn from(flags: PolygonBitFlags) -> Self {
+        Self {
+            unk2: flags.contains(PolygonBitFlags::UNK2),
+            unk3: flags.contains(PolygonBitFlags::UNK3),
+            triangle_strip: flags.contains(PolygonBitFlags::TRI_STRIP),
+            unk6: flags.contains(PolygonBitFlags::UNK6),
+        }
+    }
+}
+
+impl From<&PolygonFlags> for PolygonBitFlags {
+    fn from(flags: &PolygonFlags) -> Self {
+        let mut bitflags = Self::empty();
+        if flags.unk2 {
+            bitflags |= PolygonBitFlags::UNK2;
+        }
+        if flags.unk3 {
+            bitflags |= PolygonBitFlags::UNK3;
+        }
+        if flags.triangle_strip {
+            bitflags |= PolygonBitFlags::TRI_STRIP;
+        }
+        if flags.unk6 {
+            bitflags |= PolygonBitFlags::UNK6;
+        }
+        bitflags
+    }
+}
 
 #[derive(Debug)]
 #[repr(C)]
-struct LightMwC {
+struct LightPmC {
     unk00: u32,       // 00
     unk04: u32,       // 04
-    unk08: u32,       // 08
+    unk08: f32,       // 08
     extra_count: u32, // 12
     unk16: u32,       // 16
     unk20: u32,       // 20
-    unk24: u32,       // 24
+    unk24: Ptr,       // 24
     unk28: f32,       // 28
     unk32: f32,       // 32
     unk36: f32,       // 36
-    unk40: f32,       // 40
-    ptr: u32,         // 44
+    unk40: Ptr,       // 40
+    unk44: Ptr,       // 44
     unk48: f32,       // 48
     unk52: f32,       // 52
     unk56: f32,       // 56
@@ -75,40 +119,62 @@ struct LightMwC {
     unk64: f32,       // 64
     unk68: f32,       // 68
     unk72: f32,       // 72
+                      // unk76: f32,       // 76
 }
-static_assert_size!(LightMwC, 76);
+static_assert_size!(LightPmC, 76);
 
-pub struct WrappedMeshMw {
-    pub mesh: MeshMw,
+pub struct WrappedMeshPm {
+    pub mesh: MeshPm,
     pub polygon_count: u32,
     pub vertex_count: u32,
     pub normal_count: u32,
     pub morph_count: u32,
     pub light_count: u32,
+    pub texture_count: u32,
+}
+
+fn read_mesh_texture_info(
+    read: &mut CountingReader<impl Read>,
+    texture_count: u32,
+) -> Result<Vec<MeshTexture>> {
+    (0..texture_count)
+        .map(|_| Ok(read.read_struct()?))
+        .collect()
+}
+
+fn write_mesh_texture_info(
+    write: &mut CountingWriter<impl Write>,
+    textures: &[MeshTexture],
+) -> Result<()> {
+    for texture in textures {
+        write.write_struct(texture)?;
+    }
+    Ok(())
 }
 
 pub fn read_mesh_info(
     read: &mut CountingReader<impl Read>,
     mesh_index: i32,
-) -> Result<WrappedMeshMw> {
+) -> Result<WrappedMeshPm> {
     debug!(
-        "Reading mesh info {} (mw, {}) at {}",
+        "Reading mesh info {} (pm, {}) at {}",
         mesh_index,
-        MeshMwC::SIZE,
+        MeshPmC::SIZE,
         read.offset
     );
-    let mesh: MeshMwC = read.read_struct()?;
+    let mesh: MeshPmC = read.read_struct()?;
     trace!("{:#?}", mesh);
     let wrapped = assert_mesh_info(mesh, read.prev)?;
     Ok(wrapped)
 }
 
-fn assert_mesh_info(mesh: MeshMwC, offset: u32) -> Result<WrappedMeshMw> {
+fn assert_mesh_info(mesh: MeshPmC, offset: u32) -> Result<WrappedMeshPm> {
     let file_ptr = assert_that!("file ptr", bool mesh.file_ptr, offset + 0)?;
-    assert_that!("field 04", mesh.unk04 in [0, 1], offset + 4)?;
+    assert_that!("field 04", mesh.unk04 in [0, 1, 2], offset + 4)?;
     // unk08
     assert_that!("parent count", mesh.parent_count > 0, offset + 12)?;
     assert_that!("field 32", mesh.zero36 == 0, offset + 36)?;
+    // assert_that!("field 44", mesh.zero44 == 0, offset + 44)?;
     assert_that!("field 48", mesh.zero48 == 0, offset + 48)?;
     assert_that!("field 88", mesh.zero88 == 0, offset + 88)?;
 
@@ -147,17 +213,25 @@ fn assert_mesh_info(mesh: MeshMwC, offset: u32) -> Result<WrappedMeshMw> {
         assert_that!("morphs ptr", mesh.morphs_ptr != Ptr::NULL, offset + 68)?;
     }
 
-    let m = MeshMw {
+    if mesh.texture_count == 0 {
+        assert_that!("unk ptr", mesh.texture_ptr == Ptr::NULL, offset + 96)?;
+    } else {
+        assert_that!("unk ptr", mesh.texture_ptr != Ptr::NULL, offset + 96)?;
+    }
+
+    let m = MeshPm {
         vertices: vec![],
         normals: vec![],
         morphs: vec![],
         lights: vec![],
         polygons: vec![],
+        textures: vec![],
         polygons_ptr: mesh.polygons_ptr.0,
         vertices_ptr: mesh.vertices_ptr.0,
         normals_ptr: mesh.normals_ptr.0,
         lights_ptr: mesh.lights_ptr.0,
         morphs_ptr: mesh.morphs_ptr.0,
+        texture_ptr: mesh.texture_ptr.0,
         file_ptr,
         unk04: mesh.unk04,
         unk08: mesh.unk08,
@@ -170,48 +244,49 @@ fn assert_mesh_info(mesh: MeshMwC, offset: u32) -> Result<WrappedMeshMw> {
         unk84: mesh.unk84,
     };
 
-    Ok(WrappedMeshMw {
+    Ok(WrappedMeshPm {
         mesh: m,
         polygon_count: mesh.polygon_count,
         vertex_count: mesh.vertex_count,
         normal_count: mesh.normal_count,
         morph_count: mesh.morph_count,
         light_count: mesh.light_count,
+        texture_count: mesh.texture_count,
     })
 }
 
-fn read_lights(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<MeshLightMw>> {
+fn read_lights(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<MeshLightPm>> {
     let lights = (0..count)
         .map(|index| {
             trace!(
-                "Reading light {} (mw, {}) at {}",
+                "Reading light {} (pm, {}) at {}",
                 index,
-                LightMwC::SIZE,
+                LightPmC::SIZE,
                 read.offset
             );
-            let light = read.read_struct()?;
+            let light: LightPmC = read.read_struct()?;
             trace!("{:#?}", light);
             Ok(light)
         })
-        .collect::<Result<Vec<LightMwC>>>()?;
+        .collect::<Result<Vec<LightPmC>>>()?;
 
     lights
         .into_iter()
         .map(|light| {
             let extra = read_vec3s(read, light.extra_count)?;
-            Ok(MeshLightMw {
+            Ok(MeshLightPm {
                 unk00: light.unk00,
                 unk04: light.unk04,
                 unk08: light.unk08,
                 extra,
                 unk16: light.unk16,
                 unk20: light.unk20,
-                unk24: light.unk24,
+                unk24: light.unk24.0,
                 unk28: light.unk28,
                 unk32: light.unk32,
                 unk36: light.unk36,
-                unk40: light.unk40,
-                ptr: light.ptr,
+                unk40: light.unk40.0,
+                unk44: light.unk44.0,
                 unk48: light.unk48,
                 unk52: light.unk52,
                 unk56: light.unk56,
@@ -225,63 +300,91 @@ fn read_lights(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<M
 }
 
 fn assert_polygon(
-    poly: PolygonMwC,
+    poly: PolygonPmC,
     offset: u32,
     poly_index: u32,
-) -> Result<(u32, u32, bool, bool, PolygonMw)> {
+) -> Result<(u32, u32, bool, PolygonPm)> {
     let vertex_info = poly.vertex_info.0;
-    assert_that!("vertex info", vertex_info < 0x3FF, offset + 0)?;
-    assert_that!("field 04", 0 <= poly.unk04 <= 20, offset + 4)?;
+    assert_that!("vertex info", vertex_info < 0xFFFF, offset + 0)?;
+    let verts_in_poly = vertex_info & 0x1FF;
+    let verts_bits = (vertex_info & 0xFE00) >> 8;
 
-    let unk_bit = (vertex_info & 0x100) != 0;
-    let vtx_bit = (vertex_info & 0x200) != 0;
-    let verts_in_poly = vertex_info & 0xFF;
+    // must have at least 3 vertices for a triangle, upper bound is arbitrary.
+    assert_that!("verts in poly", 3 <= verts_in_poly <= 0x1FF, offset + 0)?;
 
-    assert_that!("verts in poly", verts_in_poly > 0, offset + 0)?;
+    let flags = PolygonBitFlags::from_bits(verts_bits).ok_or_else(|| {
+        assert_with_msg!(
+            "Expected valid polygon flags, but was 0x{:02X} (at {})",
+            verts_bits,
+            offset + 1,
+        )
+    })?;
+
+    let has_normals = flags.contains(PolygonBitFlags::NORMALS);
+    let triangle_strip = flags.contains(PolygonBitFlags::TRI_STRIP);
+    if triangle_strip {
+        // triangle strip always have normals
+        assert_that!(
+            "has normals when tri strip",
+            has_normals == true,
+            offset + 1
+        )?;
+    }
+
+    assert_that!("field 04", -1 <= poly.unk04 <= 32, offset + 4)?;
+    // must always have a vertices ptr
     assert_that!("vertices ptr", poly.vertices_ptr != Ptr::NULL, offset + 8)?;
+    if has_normals {
+        assert_that!("normals ptr", poly.normals_ptr != Ptr::NULL, offset + 12)?;
+    } else {
+        assert_that!("normals ptr", poly.normals_ptr == Ptr::NULL, offset + 12)?;
+    };
+    assert_that!("texture count", poly.texture_count == 1, offset + 16)?;
+    // always has UVs
+    assert_that!("uvs ptr", poly.uvs_ptr != Ptr::NULL, offset + 20)?;
+    // always has colors
+    assert_that!("colors ptr", poly.colors_ptr != Ptr::NULL, offset + 24)?;
+    // ptr?
+    assert_that!("field 28", poly.unk28 != Ptr::NULL, offset + 28)?;
+    // ptr?
+    assert_that!("field 32", poly.unk32 != Ptr::NULL, offset + 32)?;
 
-    // ???
-    let has_normals = vtx_bit && (poly.vertices_ptr != Ptr::NULL);
-    let has_uvs = poly.uvs_ptr != Ptr::NULL;
-
-    assert_that!("colors ptr", poly.colors_ptr != Ptr::NULL, offset + 20)?;
-    assert_that!("unknown ptr", poly.unk_ptr != Ptr::NULL, offset + 24)?;
-
-    let polygon = PolygonMw {
+    let polygon = PolygonPm {
+        flags: flags.into(),
         vertex_indices: vec![],
-        vertex_colors: vec![],
         normal_indices: None,
-        uv_coords: None,
-        texture_index: poly.texture_index,
-        texture_info: poly.texture_info,
+        uv_coords: vec![],
+        vertex_colors: vec![],
+        texture_index: 0,
+
         unk04: poly.unk04,
-        unk_bit,
-        vtx_bit,
         vertices_ptr: poly.vertices_ptr.0,
         normals_ptr: poly.normals_ptr.0,
         uvs_ptr: poly.uvs_ptr.0,
         colors_ptr: poly.colors_ptr.0,
-        unk_ptr: poly.unk_ptr.0,
+        unk28: poly.unk28.0,
+        unk32: poly.unk32.0,
+        unk36: poly.unk36.0,
     };
 
-    Ok((poly_index, verts_in_poly, has_normals, has_uvs, polygon))
+    Ok((poly_index, verts_in_poly, has_normals, polygon))
 }
 
 fn read_polygons(
     read: &mut CountingReader<impl Read>,
     count: u32,
     mesh_index: i32,
-) -> Result<Vec<PolygonMw>> {
+) -> Result<Vec<PolygonPm>> {
     (0..count)
         .map(|poly_index| {
             debug!(
-                "Reading polygon info {}:{} (mw, {}) at {}",
+                "Reading polygon info {}:{} (pm, {}) at {}",
                 mesh_index,
                 poly_index,
-                PolygonMwC::SIZE,
+                PolygonPmC::SIZE,
                 read.offset
             );
-            let poly: PolygonMwC = read.read_struct()?;
+            let poly: PolygonPmC = read.read_struct()?;
             trace!("{:#?}", poly);
 
             let result = assert_polygon(poly, read.prev, poly_index)?;
@@ -289,48 +392,45 @@ fn read_polygons(
         })
         .collect::<Result<Vec<_>>>()?
         .into_iter()
-        .map(
-            |(poly_index, verts_in_poly, has_normals, has_uvs, mut polygon)| {
+        .map(|(poly_index, verts_in_poly, has_normals, mut polygon)| {
+            debug!(
+                "Reading polygon data {}:{} (pm) at {}",
+                mesh_index, poly_index, read.offset
+            );
+            debug!(
+                "Reading vertex indices (verts: {}) at {}",
+                verts_in_poly, read.offset
+            );
+            polygon.vertex_indices = read_u32s(read, verts_in_poly)?;
+            if has_normals {
                 debug!(
-                    "Reading polygon data {}:{} (mw) at {}",
-                    mesh_index, poly_index, read.offset
-                );
-                debug!(
-                    "Reading vertex indices (verts: {}) at {}",
+                    "Reading normal indices (verts: {}) at {}",
                     verts_in_poly, read.offset
                 );
-                polygon.vertex_indices = read_u32s(read, verts_in_poly)?;
-                if has_normals {
-                    debug!(
-                        "Reading normal indices (verts: {}) at {}",
-                        verts_in_poly, read.offset
-                    );
-                    polygon.normal_indices = Some(read_u32s(read, verts_in_poly)?);
-                }
-                if has_uvs {
-                    debug!(
-                        "Reading UV coords (verts: {}) at {}",
-                        verts_in_poly, read.offset
-                    );
-                    polygon.uv_coords = Some(read_uvs(read, verts_in_poly)?);
-                }
-                debug!(
-                    "Reading vertex colors (verts: {}) at {}",
-                    verts_in_poly, read.offset
-                );
-                polygon.vertex_colors = read_colors(read, verts_in_poly)?;
-                Ok(polygon)
-            },
-        )
+                polygon.normal_indices = Some(read_u32s(read, verts_in_poly)?);
+            }
+            polygon.texture_index = read.read_u32()?;
+            debug!(
+                "Reading UV coords (verts: {}) at {}",
+                verts_in_poly, read.offset
+            );
+            polygon.uv_coords = read_uvs(read, verts_in_poly)?;
+            debug!(
+                "Reading vertex colors (verts: {}) at {}",
+                verts_in_poly, read.offset
+            );
+            polygon.vertex_colors = read_colors(read, verts_in_poly)?;
+            Ok(polygon)
+        })
         .collect()
 }
 
 pub fn read_mesh_data(
     read: &mut CountingReader<impl Read>,
-    wrapped: WrappedMeshMw,
+    wrapped: WrappedMeshPm,
     mesh_index: i32,
-) -> Result<MeshMw> {
-    debug!("Reading mesh data {} (mw) at {}", mesh_index, read.offset);
+) -> Result<MeshPm> {
+    debug!("Reading mesh data {} (pm) at {}", mesh_index, read.offset);
     let mut mesh = wrapped.mesh;
     trace!(
         "Reading {} x vertices at {}",
@@ -357,23 +457,29 @@ pub fn read_mesh_data(
     );
     mesh.lights = read_lights(read, wrapped.light_count)?;
     debug!(
-        "Reading {} x polygons (mw) at {}",
+        "Reading {} x polygons (pm) at {}",
         wrapped.polygon_count, read.offset
     );
     mesh.polygons = read_polygons(read, wrapped.polygon_count, mesh_index)?;
-    trace!("Finished mesh data {} (mw) at {}", mesh_index, read.offset);
+    trace!(
+        "Reading {} x mesh texture info (pm) at {}",
+        wrapped.texture_count,
+        read.offset
+    );
+    mesh.textures = read_mesh_texture_info(read, wrapped.texture_count)?;
+    trace!("Finished mesh data {} (pm) at {}", mesh_index, read.offset);
     Ok(mesh)
 }
 
 pub fn write_mesh_info(
     write: &mut CountingWriter<impl Write>,
-    mesh: &MeshMw,
+    mesh: &MeshPm,
     mesh_index: usize,
 ) -> Result<()> {
     debug!(
-        "Writing mesh info {} (mw, {}) at {}",
+        "Writing mesh info {} (pm, {}) at {}",
         mesh_index,
-        MeshMwC::SIZE,
+        MeshPmC::SIZE,
         write.offset
     );
     let polygon_count = assert_len!(u32, mesh.polygons.len(), "mesh polygons")?;
@@ -381,7 +487,8 @@ pub fn write_mesh_info(
     let normal_count = assert_len!(u32, mesh.normals.len(), "mesh normals")?;
     let morph_count = assert_len!(u32, mesh.morphs.len(), "mesh morphs")?;
     let light_count = assert_len!(u32, mesh.lights.len(), "mesh lights")?;
-    let mesh = MeshMwC {
+    let texture_count = assert_len!(u32, mesh.textures.len(), "mesh textures")?;
+    let mesh = MeshPmC {
         file_ptr: bool_c!(mesh.file_ptr),
         unk04: mesh.unk04,
         unk08: mesh.unk08,
@@ -405,34 +512,36 @@ pub fn write_mesh_info(
         unk80: mesh.unk80,
         unk84: mesh.unk84,
         zero88: 0,
+        texture_count,
+        texture_ptr: Ptr(mesh.texture_ptr),
     };
     trace!("{:#?}", mesh);
     write.write_struct(&mesh)?;
     Ok(())
 }
 
-fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[MeshLightMw]) -> Result<()> {
+fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[MeshLightPm]) -> Result<()> {
     for (index, light) in lights.iter().enumerate() {
         trace!(
-            "Writing light {} (mw, {}) at {}",
+            "Writing light {} (pm, {}) at {}",
             index,
-            LightMwC::SIZE,
+            LightPmC::SIZE,
             write.offset
         );
         let extra_count = assert_len!(u32, light.extra.len(), "light extra")?;
-        let light = LightMwC {
+        let light = LightPmC {
             unk00: light.unk00,
             unk04: light.unk04,
             unk08: light.unk08,
             extra_count,
             unk16: light.unk16,
             unk20: light.unk20,
-            unk24: light.unk24,
+            unk24: Ptr(light.unk24),
             unk28: light.unk28,
             unk32: light.unk32,
             unk36: light.unk36,
-            unk40: light.unk40,
-            ptr: light.ptr,
+            unk40: Ptr(light.unk40),
+            unk44: Ptr(light.unk44),
             unk48: light.unk48,
             unk52: light.unk52,
             unk56: light.unk56,
@@ -451,36 +560,35 @@ fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[MeshLightMw]) 
 
 fn write_polygons(
     write: &mut CountingWriter<impl Write>,
-    polygons: &[PolygonMw],
+    polygons: &[PolygonPm],
     mesh_index: usize,
 ) -> Result<()> {
     for (index, polygon) in polygons.iter().enumerate() {
         debug!(
-            "Writing polygon info {}:{} (mw, {}) at {}",
+            "Writing polygon info {}:{} (pm, {}) at {}",
             mesh_index,
             index,
-            PolygonMwC::SIZE,
+            PolygonPmC::SIZE,
             write.offset
         );
         let vertex_indices_len =
             assert_len!(u32, polygon.vertex_indices.len(), "polygon vertex indices")?;
-        let mut vertex_info = vertex_indices_len;
-        if polygon.unk_bit {
-            vertex_info |= 0x100;
+        let mut flags: PolygonBitFlags = (&polygon.flags).into();
+        if polygon.normal_indices.is_some() {
+            flags |= PolygonBitFlags::NORMALS;
         }
-        if polygon.vtx_bit {
-            vertex_info |= 0x200;
-        }
-        let poly = PolygonMwC {
-            vertex_info: Hex(vertex_info),
+        let vertex_info = Hex(vertex_indices_len | (flags.bits() << 8));
+        let poly = PolygonPmC {
+            vertex_info,
             unk04: polygon.unk04,
             vertices_ptr: Ptr(polygon.vertices_ptr),
             normals_ptr: Ptr(polygon.normals_ptr),
+            texture_count: 1,
             uvs_ptr: Ptr(polygon.uvs_ptr),
             colors_ptr: Ptr(polygon.colors_ptr),
-            unk_ptr: Ptr(polygon.unk_ptr),
-            texture_index: polygon.texture_index,
-            texture_info: polygon.texture_info,
+            unk28: Ptr(polygon.unk28),
+            unk32: Ptr(polygon.unk32),
+            unk36: Hex(polygon.unk36),
         };
         trace!("{:#?}", poly);
         write.write_struct(&poly)?;
@@ -500,14 +608,13 @@ fn write_polygons(
             );
             write_u32s(write, normal_indices)?;
         }
-        if let Some(uv_coords) = &polygon.uv_coords {
-            debug!(
-                "Writing UV coords (verts: {}) at {}",
-                uv_coords.len(),
-                write.offset
-            );
-            write_uvs(write, uv_coords)?;
-        }
+        write.write_u32(polygon.texture_index)?;
+        debug!(
+            "Writing UV coords (verts: {}) at {}",
+            polygon.uv_coords.len(),
+            write.offset
+        );
+        write_uvs(write, &polygon.uv_coords)?;
         debug!(
             "Writing vertex colors (verts: {}) at {}",
             polygon.vertex_colors.len(),
@@ -520,10 +627,10 @@ fn write_polygons(
 
 pub fn write_mesh_data(
     write: &mut CountingWriter<impl Write>,
-    mesh: &MeshMw,
+    mesh: &MeshPm,
     mesh_index: usize,
 ) -> Result<()> {
-    debug!("Writing mesh data {} (mw) at {}", mesh_index, write.offset);
+    debug!("Writing mesh data {} (pm) at {}", mesh_index, write.offset);
     trace!(
         "Writing {} x vertices at {}",
         mesh.vertices.len(),
@@ -541,12 +648,18 @@ pub fn write_mesh_data(
     trace!("Writing {} x lights at {}", mesh.lights.len(), write.offset);
     write_lights(write, &mesh.lights)?;
     debug!(
-        "Writing {} x polygons (mw) at {}",
+        "Writing {} x polygons (pm) at {}",
         mesh.polygons.len(),
         write.offset
     );
     write_polygons(write, &mesh.polygons, mesh_index)?;
-    trace!("Wrote mesh data (mw) at {}", write.offset);
+    trace!(
+        "Writing {} x unknown (pm) at {}",
+        mesh.textures.len(),
+        write.offset
+    );
+    write_mesh_texture_info(write, &mesh.textures)?;
+    trace!("Wrote mesh data (pm) at {}", write.offset);
     Ok(())
 }
 
@@ -557,12 +670,12 @@ pub fn read_mesh_infos_zero(
 ) -> Result<()> {
     for index in start..end {
         debug!(
-            "Reading mesh info zero {} (mw, {}) at {}",
+            "Reading mesh info zero {} (pm, {}) at {}",
             index,
-            MeshMwC::SIZE,
+            MeshPmC::SIZE,
             read.offset
         );
-        let mesh: MeshMwC = read.read_struct()?;
+        let mesh: MeshPmC = read.read_struct()?;
 
         assert_that!("file_ptr", mesh.file_ptr == 0, read.prev + 0)?;
         assert_that!("unk04", mesh.unk04 == 0, read.prev + 4)?;
@@ -595,6 +708,8 @@ pub fn read_mesh_infos_zero(
         assert_that!("unk80", mesh.unk80 == 0.0, read.prev + 80)?;
         assert_that!("unk84", mesh.unk84 == 0.0, read.prev + 84)?;
         assert_that!("zero88", mesh.zero88 == 0, read.prev + 88)?;
+        assert_that!("texture_count", mesh.texture_count == 0, read.prev + 92)?;
+        assert_that!("texture_ptr", mesh.texture_ptr == Ptr::NULL, read.prev + 96)?;
 
         let mut expected_index = index + 1;
         if expected_index == end {
@@ -611,7 +726,7 @@ pub fn write_mesh_infos_zero(
     start: i32,
     end: i32,
 ) -> Result<()> {
-    let mesh = MeshMwC {
+    let mesh = MeshPmC {
         file_ptr: 0,
         unk04: 0,
         unk08: 0,
@@ -635,13 +750,15 @@ pub fn write_mesh_infos_zero(
         unk80: 0.0,
         unk84: 0.0,
         zero88: 0,
+        texture_count: 0,
+        texture_ptr: Ptr::NULL,
     };
 
     for index in start..end {
         debug!(
-            "Writing mesh info zero {} (mw, {}) at {}",
+            "Writing mesh info zero {} (pm, {}) at {}",
             index,
-            MeshMwC::SIZE,
+            MeshPmC::SIZE,
             write.offset
         );
         write.write_struct(&mesh)?;
@@ -657,12 +774,12 @@ pub fn write_mesh_infos_zero(
 
 const U32_SIZE: u32 = std::mem::size_of::<u32>() as _;
 
-pub fn size_mesh(mesh: &MeshMw) -> u32 {
+pub fn size_mesh(mesh: &MeshPm) -> u32 {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let mut size =
         Vec3::SIZE * (mesh.vertices.len() + mesh.normals.len() + mesh.morphs.len()) as u32;
     for light in &mesh.lights {
-        size += LightMwC::SIZE + Vec3::SIZE * light.extra.len() as u32;
+        size += LightPmC::SIZE + Vec3::SIZE * light.extra.len() as u32;
     }
     for polygon in &mesh.polygons {
         let normal_indices_len = polygon
@@ -670,16 +787,13 @@ pub fn size_mesh(mesh: &MeshMw) -> u32 {
             .as_ref()
             .map(|v| v.len() as u32)
             .unwrap_or(0);
-        let uv_coords_len = polygon
-            .uv_coords
-            .as_ref()
-            .map(|v| v.len() as u32)
-            .unwrap_or(0);
-        size += PolygonMwC::SIZE
+        size += PolygonPmC::SIZE
             + U32_SIZE * polygon.vertex_indices.len() as u32
             + U32_SIZE * normal_indices_len
-            + UvCoord::SIZE * uv_coords_len
+            + U32_SIZE
+            + UvCoord::SIZE * polygon.uv_coords.len() as u32
             + Color::SIZE * polygon.vertex_colors.len() as u32;
     }
+    size += MeshTexture::SIZE * mesh.textures.len() as u32;
     size
 }

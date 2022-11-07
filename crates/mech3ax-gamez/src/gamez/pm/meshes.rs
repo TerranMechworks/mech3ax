@@ -1,9 +1,9 @@
-use crate::mesh::mw::{
+use crate::mesh::pm::{
     read_mesh_data, read_mesh_info, read_mesh_infos_zero, size_mesh, write_mesh_data,
-    write_mesh_info, write_mesh_infos_zero, MESH_MW_C_SIZE,
+    write_mesh_info, write_mesh_infos_zero, MESH_PM_C_SIZE,
 };
 use log::{debug, trace};
-use mech3ax_api_types::{static_assert_size, MeshMw, ReprSize as _};
+use mech3ax_api_types::{static_assert_size, MeshPm, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};
@@ -20,9 +20,9 @@ static_assert_size!(MeshesInfoC, 12);
 pub fn read_meshes(
     read: &mut CountingReader<impl Read>,
     end_offset: u32,
-) -> Result<(Vec<MeshMw>, i32)> {
+) -> Result<(Vec<MeshPm>, i32)> {
     debug!(
-        "Reading mesh info (mw, {}) at {}",
+        "Reading mesh info (pm, {}) at {}",
         MeshesInfoC::SIZE,
         read.offset
     );
@@ -63,12 +63,12 @@ pub fn read_meshes(
 
 pub fn write_meshes(
     write: &mut CountingWriter<impl Write>,
-    meshes: &[MeshMw],
+    meshes: &[MeshPm],
     offsets: &[u32],
     array_size: i32,
 ) -> Result<()> {
     debug!(
-        "Writing mesh info (mw, {}) at {}",
+        "Writing mesh info (pm, {}) at {}",
         MeshesInfoC::SIZE,
         write.offset
     );
@@ -95,10 +95,12 @@ pub fn write_meshes(
     Ok(())
 }
 
-pub fn size_meshes(offset: u32, array_size: i32, meshes: &[MeshMw]) -> (u32, Vec<u32>) {
+const U32_SIZE: u32 = std::mem::size_of::<u32>() as _;
+
+pub fn size_meshes(offset: u32, array_size: i32, meshes: &[MeshPm]) -> (u32, Vec<u32>) {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let array_size = array_size as u32;
-    let mut offset = offset + MeshesInfoC::SIZE + (MESH_MW_C_SIZE + 4) * array_size;
+    let mut offset = offset + MeshesInfoC::SIZE + (MESH_PM_C_SIZE + U32_SIZE) * array_size;
     let mesh_offsets = meshes
         .iter()
         .map(|mesh| {
