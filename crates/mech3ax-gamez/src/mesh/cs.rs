@@ -1,8 +1,8 @@
 use super::common::*;
 use log::{debug, trace};
 use mech3ax_api_types::{
-    static_assert_size, Color, MeshLightPm, MeshPm, MeshTexture, PolygonFlags, PolygonPm,
-    ReprSize as _, UvCoord, Vec3,
+    static_assert_size, Color, MeshCs, MeshLightPm, MeshTexture, PolygonCs, PolygonFlags,
+    PolygonTextureCs, ReprSize as _, UvCoord, Vec3,
 };
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, bool_c, Result};
@@ -124,7 +124,7 @@ struct LightPmC {
 static_assert_size!(LightPmC, 76);
 
 pub struct WrappedMeshPm {
-    pub mesh: MeshPm,
+    pub mesh: MeshCs,
     pub polygon_count: u32,
     pub vertex_count: u32,
     pub normal_count: u32,
@@ -219,7 +219,7 @@ fn assert_mesh_info(mesh: MeshPmC, offset: u32) -> Result<WrappedMeshPm> {
         assert_that!("unk ptr", mesh.texture_ptr != Ptr::NULL, offset + 96)?;
     }
 
-    let m = MeshPm {
+    let m = MeshCs {
         vertices: vec![],
         normals: vec![],
         morphs: vec![],
@@ -303,7 +303,7 @@ fn assert_polygon(
     poly: PolygonPmC,
     offset: u32,
     poly_index: u32,
-) -> Result<(u32, u32, bool, PolygonPm)> {
+) -> Result<(u32, u32, bool, u32, PolygonCs)> {
     let vertex_info = poly.vertex_info.0;
     assert_that!("vertex info", vertex_info < 0xFFFF, offset + 0)?;
     let verts_in_poly = vertex_info & 0x1FF;
@@ -331,7 +331,7 @@ fn assert_polygon(
         )?;
     }
 
-    assert_that!("field 04", -1 <= poly.unk04 <= 32, offset + 4)?;
+    assert_that!("field 04", -50 <= poly.unk04 <= 32, offset + 4)?;
     // must always have a vertices ptr
     assert_that!("vertices ptr", poly.vertices_ptr != Ptr::NULL, offset + 8)?;
     if has_normals {
@@ -339,7 +339,7 @@ fn assert_polygon(
     } else {
         assert_that!("normals ptr", poly.normals_ptr == Ptr::NULL, offset + 12)?;
     };
-    assert_that!("texture count", poly.texture_count == 1, offset + 16)?;
+    assert_that!("texture count", poly.texture_count > 0, offset + 16)?;
     // always has UVs
     assert_that!("uvs ptr", poly.uvs_ptr != Ptr::NULL, offset + 20)?;
     // always has colors
@@ -349,13 +349,12 @@ fn assert_polygon(
     // ptr?
     assert_that!("field 32", poly.unk32 != Ptr::NULL, offset + 32)?;
 
-    let polygon = PolygonPm {
+    let polygon = PolygonCs {
         flags: flags.into(),
         vertex_indices: vec![],
         vertex_colors: vec![],
         normal_indices: None,
-        uv_coords: vec![],
-        texture_index: 0,
+        textures: vec![],
 
         unk04: poly.unk04,
         vertices_ptr: poly.vertices_ptr.0,
@@ -367,14 +366,20 @@ fn assert_polygon(
         unk36: poly.unk36.0,
     };
 
-    Ok((poly_index, verts_in_poly, has_normals, polygon))
+    Ok((
+        poly_index,
+        verts_in_poly,
+        has_normals,
+        poly.texture_count,
+        polygon,
+    ))
 }
 
 fn read_polygons(
     read: &mut CountingReader<impl Read>,
     count: u32,
     mesh_index: i32,
-) -> Result<Vec<PolygonPm>> {
+) -> Result<Vec<PolygonCs>> {
     (0..count)
         .map(|poly_index| {
             debug!(
@@ -392,36 +397,56 @@ fn read_polygons(
         })
         .collect::<Result<Vec<_>>>()?
         .into_iter()
-        .map(|(poly_index, verts_in_poly, has_normals, mut polygon)| {
-            debug!(
-                "Reading polygon data {}:{} (pm) at {}",
-                mesh_index, poly_index, read.offset
-            );
-            debug!(
-                "Reading vertex indices (verts: {}) at {}",
-                verts_in_poly, read.offset
-            );
-            polygon.vertex_indices = read_u32s(read, verts_in_poly)?;
-            if has_normals {
+        .map(
+            |(poly_index, verts_in_poly, has_normals, texture_count, mut polygon)| {
                 debug!(
-                    "Reading normal indices (verts: {}) at {}",
+                    "Reading polygon data {}:{} (pm) at {}",
+                    mesh_index, poly_index, read.offset
+                );
+                debug!(
+                    "Reading vertex indices (verts: {}) at {}",
                     verts_in_poly, read.offset
                 );
-                polygon.normal_indices = Some(read_u32s(read, verts_in_poly)?);
-            }
-            polygon.texture_index = read.read_u32()?;
-            debug!(
-                "Reading UV coords (verts: {}) at {}",
-                verts_in_poly, read.offset
-            );
-            polygon.uv_coords = read_uvs(read, verts_in_poly)?;
-            debug!(
-                "Reading vertex colors (verts: {}) at {}",
-                verts_in_poly, read.offset
-            );
-            polygon.vertex_colors = read_colors(read, verts_in_poly)?;
-            Ok(polygon)
-        })
+                polygon.vertex_indices = read_u32s(read, verts_in_poly)?;
+                if has_normals {
+                    debug!(
+                        "Reading normal indices (verts: {}) at {}",
+                        verts_in_poly, read.offset
+                    );
+                    polygon.normal_indices = Some(read_u32s(read, verts_in_poly)?);
+                }
+                debug!(
+                    "Reading texture indices (count: {}) at {}",
+                    texture_count, read.offset
+                );
+                let texture_indices = (0..texture_count)
+                    .map(|_index| Ok(read.read_u32()?))
+                    .collect::<Result<Vec<_>>>()?;
+
+                polygon.textures = texture_indices
+                    .into_iter()
+                    .enumerate()
+                    .map(|(index, texture_index)| {
+                        debug!(
+                            "Reading UV coords {} (verts: {}) at {}",
+                            index, verts_in_poly, read.offset
+                        );
+                        let uv_coords = read_uvs(read, verts_in_poly)?;
+                        Ok(PolygonTextureCs {
+                            texture_index,
+                            uv_coords,
+                        })
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+
+                debug!(
+                    "Reading vertex colors (verts: {}) at {}",
+                    verts_in_poly, read.offset
+                );
+                polygon.vertex_colors = read_colors(read, verts_in_poly)?;
+                Ok(polygon)
+            },
+        )
         .collect()
 }
 
@@ -429,7 +454,7 @@ pub fn read_mesh_data(
     read: &mut CountingReader<impl Read>,
     wrapped: WrappedMeshPm,
     mesh_index: i32,
-) -> Result<MeshPm> {
+) -> Result<MeshCs> {
     debug!("Reading mesh data {} (pm) at {}", mesh_index, read.offset);
     let mut mesh = wrapped.mesh;
     trace!(
@@ -473,7 +498,7 @@ pub fn read_mesh_data(
 
 pub fn write_mesh_info(
     write: &mut CountingWriter<impl Write>,
-    mesh: &MeshPm,
+    mesh: &MeshCs,
     mesh_index: usize,
 ) -> Result<()> {
     debug!(
@@ -560,7 +585,7 @@ fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[MeshLightPm]) 
 
 fn write_polygons(
     write: &mut CountingWriter<impl Write>,
-    polygons: &[PolygonPm],
+    polygons: &[PolygonCs],
     mesh_index: usize,
 ) -> Result<()> {
     for (index, polygon) in polygons.iter().enumerate() {
@@ -571,6 +596,7 @@ fn write_polygons(
             PolygonPmC::SIZE,
             write.offset
         );
+        let texture_count = assert_len!(u32, polygon.textures.len(), "polygon texture count")?;
         let vertex_indices_len =
             assert_len!(u32, polygon.vertex_indices.len(), "polygon vertex indices")?;
         let mut flags: PolygonBitFlags = (&polygon.flags).into();
@@ -583,7 +609,7 @@ fn write_polygons(
             unk04: polygon.unk04,
             vertices_ptr: Ptr(polygon.vertices_ptr),
             normals_ptr: Ptr(polygon.normals_ptr),
-            texture_count: 1,
+            texture_count,
             uvs_ptr: Ptr(polygon.uvs_ptr),
             colors_ptr: Ptr(polygon.colors_ptr),
             unk28: Ptr(polygon.unk28),
@@ -608,13 +634,23 @@ fn write_polygons(
             );
             write_u32s(write, normal_indices)?;
         }
-        write.write_u32(polygon.texture_index)?;
         debug!(
-            "Writing UV coords (verts: {}) at {}",
-            polygon.uv_coords.len(),
+            "Writing texture indices (count: {}) at {}",
+            polygon.textures.len(),
             write.offset
         );
-        write_uvs(write, &polygon.uv_coords)?;
+        for texture_info in polygon.textures.iter() {
+            write.write_u32(texture_info.texture_index)?;
+        }
+        for (index, texture_info) in polygon.textures.iter().enumerate() {
+            debug!(
+                "Writing UV coords {} (verts: {}) at {}",
+                index,
+                texture_info.uv_coords.len(),
+                write.offset
+            );
+            write_uvs(write, &texture_info.uv_coords)?;
+        }
         debug!(
             "Writing vertex colors (verts: {}) at {}",
             polygon.vertex_colors.len(),
@@ -627,7 +663,7 @@ fn write_polygons(
 
 pub fn write_mesh_data(
     write: &mut CountingWriter<impl Write>,
-    mesh: &MeshPm,
+    mesh: &MeshCs,
     mesh_index: usize,
 ) -> Result<()> {
     debug!("Writing mesh data {} (pm) at {}", mesh_index, write.offset);
@@ -774,7 +810,7 @@ pub fn write_mesh_infos_zero(
 
 const U32_SIZE: u32 = std::mem::size_of::<u32>() as _;
 
-pub fn size_mesh(mesh: &MeshPm) -> u32 {
+pub fn size_mesh(mesh: &MeshCs) -> u32 {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let mut size =
         Vec3::SIZE * (mesh.vertices.len() + mesh.normals.len() + mesh.morphs.len()) as u32;
@@ -790,9 +826,10 @@ pub fn size_mesh(mesh: &MeshPm) -> u32 {
         size += PolygonPmC::SIZE
             + U32_SIZE * polygon.vertex_indices.len() as u32
             + U32_SIZE * normal_indices_len
-            + U32_SIZE
-            + UvCoord::SIZE * polygon.uv_coords.len() as u32
             + Color::SIZE * polygon.vertex_colors.len() as u32;
+        for texture in &polygon.textures {
+            size += U32_SIZE + UvCoord::SIZE * texture.uv_coords.len() as u32;
+        }
     }
     size += MeshTexture::SIZE * mesh.textures.len() as u32;
     size

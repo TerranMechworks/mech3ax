@@ -1,4 +1,5 @@
-// mod meshes;
+mod fixup;
+mod meshes;
 // mod nodes;
 
 use super::common::{SIGNATURE, VERSION_CS};
@@ -68,11 +69,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         header.meshes_offset < header.nodes_offset,
         read.prev + 24
     )?;
-    if is_dodgy_unmodified_c4_gamez_read(&header) {
-        // hack for dodgy c4 gamez.zbd, where the node array size is smaller
-        // than the node count (and correct)
-        header.node_count = header.node_array_size;
-    }
+    let fixup = fixup::Fixups::read(&mut header);
     assert_that!(
         "node count",
         header.node_count <= header.node_array_size,
@@ -96,9 +93,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         read.offset == header.meshes_offset,
         read.offset
     )?;
-    // let (meshes, mesh_array_size) = meshes::read_meshes(read, header.nodes_offset)?;
-    let mut meshes = vec![0; (header.nodes_offset - header.meshes_offset) as _];
-    read.read_exact(&mut meshes)?;
+    let (meshes, mesh_array_size) = meshes::read_meshes(read, header.nodes_offset, fixup)?;
     assert_that!(
         "nodes offset",
         read.offset == header.nodes_offset,
@@ -111,7 +106,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
     let metadata = GameZCsMetadata {
         gamez_header_unk08: header.unk08,
         material_array_size,
-        // meshes_array_size: mesh_array_size,
+        meshes_array_size: mesh_array_size,
         node_array_size: header.node_array_size,
         node_data_count: header.node_count,
         texture_ptrs,
@@ -128,16 +123,15 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
 pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) -> Result<()> {
     let texture_count = assert_len!(u32, gamez.textures.len(), "GameZ textures")?;
     let material_array_size = gamez.metadata.material_array_size;
-    // let meshes_array_size = gamez.metadata.meshes_array_size;
+    let meshes_array_size = gamez.metadata.meshes_array_size;
     // let node_count = assert_len_u32(gamez.nodes.len(), "GameZ nodes")?;
 
     let textures_offset = HeaderCsC::SIZE;
     let materials_offset = textures_offset + textures::size_texture_infos(texture_count);
     let meshes_offset =
         materials_offset + materials::size_materials(material_array_size, &gamez.materials);
-    // let (nodes_offset, mesh_offsets) =
-    //     meshes::size_meshes(meshes_offset, meshes_array_size, &gamez.meshes);
-    let nodes_offset = meshes_offset + gamez.meshes.len() as u32;
+    let (nodes_offset, mesh_offsets) =
+        meshes::size_meshes(meshes_offset, meshes_array_size, &gamez.meshes);
 
     debug!(
         "Writing gamez header (cs, {}) at {}",
@@ -156,11 +150,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) 
         node_count: gamez.metadata.node_data_count,
         nodes_offset,
     };
-    if is_dodgy_unmodified_c4_gamez_write(&header) {
-        // hack for dodgy c4 gamez.zbd, where the node array size is smaller
-        // than the node count (and correct)
-        header.node_count = 8437;
-    }
+    let fixup = fixup::Fixups::write(&mut header);
     trace!("{:#?}", header);
     write.write_struct(&header)?;
 
@@ -171,8 +161,13 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) 
         &gamez.materials,
         material_array_size,
     )?;
-    // meshes::write_meshes(write, &gamez.meshes, &mesh_offsets, meshes_array_size)?;
-    write.write_all(&gamez.meshes)?;
+    meshes::write_meshes(
+        write,
+        &gamez.meshes,
+        &mesh_offsets,
+        meshes_array_size,
+        fixup,
+    )?;
     // nodes::write_nodes(
     //     write,
     //     &gamez.nodes,

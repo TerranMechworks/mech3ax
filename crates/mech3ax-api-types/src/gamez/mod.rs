@@ -52,7 +52,7 @@ pub struct GameZPmData {
 pub struct GameZCsMetadata {
     pub gamez_header_unk08: u32,
     pub material_array_size: i16,
-    // pub meshes_array_size: i32,
+    pub meshes_array_size: i32,
     pub node_array_size: u32,
     pub node_data_count: u32,
     pub texture_ptrs: Vec<Option<u32>>,
@@ -62,8 +62,7 @@ pub struct GameZCsMetadata {
 pub struct GameZCsData {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
-    pub meshes: Vec<u8>,
-    // pub meshes: Vec<MeshCs>,
+    pub meshes: Vec<MeshCs>,
     pub nodes: Vec<u8>,
     // pub nodes: Vec<NodeMw>,
     pub metadata: GameZCsMetadata,
