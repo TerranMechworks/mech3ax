@@ -1,4 +1,3 @@
-mod fixup;
 mod meshes;
 // mod nodes;
 
@@ -69,7 +68,13 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         header.meshes_offset < header.nodes_offset,
         read.prev + 24
     )?;
-    let fixup = fixup::Fixups::read(&mut header);
+    if is_dodgy_unmodified_c4_gamez_read(&header) {
+        log::info!("Applying C4 fixup");
+        // hack for dodgy c4 gamez.zbd, where the node array size is smaller
+        // than the node count (and correct)
+        header.node_count = header.node_array_size;
+        trace!("{:#?}", header);
+    }
     assert_that!(
         "node count",
         header.node_count <= header.node_array_size,
@@ -93,7 +98,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         read.offset == header.meshes_offset,
         read.offset
     )?;
-    let (meshes, mesh_array_size) = meshes::read_meshes(read, header.nodes_offset, fixup)?;
+    let (meshes, mesh_array_size) = meshes::read_meshes(read, header.nodes_offset)?;
     assert_that!(
         "nodes offset",
         read.offset == header.nodes_offset,
@@ -150,7 +155,11 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) 
         node_count: gamez.metadata.node_data_count,
         nodes_offset,
     };
-    let fixup = fixup::Fixups::write(&mut header);
+    if is_dodgy_unmodified_c4_gamez_write(&header) {
+        // hack for dodgy c4 gamez.zbd, where the node array size is smaller
+        // than the node count (and correct)
+        header.node_count = 8437;
+    }
     trace!("{:#?}", header);
     write.write_struct(&header)?;
 
@@ -161,13 +170,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) 
         &gamez.materials,
         material_array_size,
     )?;
-    meshes::write_meshes(
-        write,
-        &gamez.meshes,
-        &mesh_offsets,
-        meshes_array_size,
-        fixup,
-    )?;
+    meshes::write_meshes(write, &gamez.meshes, &mesh_offsets, meshes_array_size)?;
     // nodes::write_nodes(
     //     write,
     //     &gamez.nodes,

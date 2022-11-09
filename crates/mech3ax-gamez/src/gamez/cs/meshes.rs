@@ -1,10 +1,9 @@
-use super::fixup::Fixups;
-use crate::mesh::cs::{
+use crate::mesh::ng::{
     read_mesh_data, read_mesh_info, read_mesh_infos_zero, size_mesh, write_mesh_data,
-    write_mesh_info, write_mesh_infos_zero, MESH_PM_C_SIZE,
+    write_mesh_info, write_mesh_infos_zero, MESH_C_SIZE,
 };
 use log::{debug, trace};
-use mech3ax_api_types::{static_assert_size, MeshCs, ReprSize as _};
+use mech3ax_api_types::{static_assert_size, MeshNg, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};
@@ -21,27 +20,21 @@ static_assert_size!(MeshesInfoC, 12);
 pub(super) fn read_meshes(
     read: &mut CountingReader<impl Read>,
     end_offset: u32,
-    fixup: Fixups,
-) -> Result<(Vec<MeshCs>, i32)> {
+) -> Result<(Vec<MeshNg>, i32)> {
     debug!(
         "Reading mesh info (pm, {}) at {}",
         MeshesInfoC::SIZE,
         read.offset
     );
-    let mut info: MeshesInfoC = read.read_struct()?;
+    let info: MeshesInfoC = read.read_struct()?;
     trace!("{:#?}", info);
 
     assert_that!("mesh count", info.count < info.array_size, read.prev + 4)?;
-    match fixup {
-        Fixups::None => {
-            assert_that!(
-                "mesh index max",
-                info.index_max == info.count,
-                read.prev + 8
-            )?;
-        }
-        Fixups::CsC4GameZ => {}
-    }
+    assert_that!(
+        "mesh index max",
+        info.index_max == info.count,
+        read.prev + 8
+    )?;
 
     let mut prev_offset = read.offset;
     let meshes = (0..info.count)
@@ -70,10 +63,9 @@ pub(super) fn read_meshes(
 
 pub(super) fn write_meshes(
     write: &mut CountingWriter<impl Write>,
-    meshes: &[MeshCs],
+    meshes: &[MeshNg],
     offsets: &[u32],
     array_size: i32,
-    fixup: Fixups,
 ) -> Result<()> {
     debug!(
         "Writing mesh info (pm, {}) at {}",
@@ -105,10 +97,10 @@ pub(super) fn write_meshes(
 
 const U32_SIZE: u32 = std::mem::size_of::<u32>() as _;
 
-pub fn size_meshes(offset: u32, array_size: i32, meshes: &[MeshCs]) -> (u32, Vec<u32>) {
+pub fn size_meshes(offset: u32, array_size: i32, meshes: &[MeshNg]) -> (u32, Vec<u32>) {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let array_size = array_size as u32;
-    let mut offset = offset + MeshesInfoC::SIZE + (MESH_PM_C_SIZE + U32_SIZE) * array_size;
+    let mut offset = offset + MeshesInfoC::SIZE + (MESH_C_SIZE + U32_SIZE) * array_size;
     let mesh_offsets = meshes
         .iter()
         .map(|mesh| {

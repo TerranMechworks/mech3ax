@@ -36,7 +36,7 @@ struct MeshMwC {
     zero88: u32,        // 88
 }
 static_assert_size!(MeshMwC, 92);
-pub const MESH_MW_C_SIZE: u32 = MeshMwC::SIZE;
+pub const MESH_C_SIZE: u32 = MeshMwC::SIZE;
 
 #[derive(Debug)]
 #[repr(C)]

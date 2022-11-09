@@ -42,7 +42,7 @@ pub struct GameZPmMetadata {
 pub struct GameZPmData {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
-    pub meshes: Vec<MeshPm>,
+    pub meshes: Vec<MeshNg>,
     pub nodes: Vec<u8>,
     // pub nodes: Vec<NodePm>,
     pub metadata: GameZPmMetadata,
@@ -62,7 +62,7 @@ pub struct GameZCsMetadata {
 pub struct GameZCsData {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
-    pub meshes: Vec<MeshCs>,
+    pub meshes: Vec<MeshNg>,
     pub nodes: Vec<u8>,
     // pub nodes: Vec<NodeMw>,
     pub metadata: GameZCsMetadata,

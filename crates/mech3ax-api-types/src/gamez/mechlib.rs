@@ -1,4 +1,4 @@
-use crate::gamez::mesh::{MeshMw, MeshPm};
+use crate::gamez::mesh::{MeshMw, MeshNg};
 use crate::gamez::nodes::{NodeMw, NodePm};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::RefStruct;
@@ -13,6 +13,6 @@ pub struct ModelMw {
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct ModelPm {
     pub nodes: Vec<NodePm>,
-    pub meshes: Vec<MeshPm>,
+    pub meshes: Vec<MeshNg>,
     pub mesh_ptrs: Vec<i32>,
 }

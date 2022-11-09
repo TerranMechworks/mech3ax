@@ -1,6 +1,6 @@
 use crate::mesh::mw::{
     read_mesh_data, read_mesh_info, read_mesh_infos_zero, size_mesh, write_mesh_data,
-    write_mesh_info, write_mesh_infos_zero, MESH_MW_C_SIZE,
+    write_mesh_info, write_mesh_infos_zero, MESH_C_SIZE,
 };
 use log::{debug, trace};
 use mech3ax_api_types::{static_assert_size, MeshMw, ReprSize as _};
@@ -98,7 +98,7 @@ pub fn write_meshes(
 pub fn size_meshes(offset: u32, array_size: i32, meshes: &[MeshMw]) -> (u32, Vec<u32>) {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let array_size = array_size as u32;
-    let mut offset = offset + MeshesInfoC::SIZE + (MESH_MW_C_SIZE + 4) * array_size;
+    let mut offset = offset + MeshesInfoC::SIZE + (MESH_C_SIZE + 4) * array_size;
     let mesh_offsets = meshes
         .iter()
         .map(|mesh| {

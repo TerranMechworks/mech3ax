@@ -1,8 +1,9 @@
+//! GameZ and mechlib mesh support for PM, CS
 use super::common::*;
 use log::{debug, trace};
 use mech3ax_api_types::{
-    static_assert_size, Color, MeshCs, MeshLightPm, MeshTexture, PolygonCs, PolygonFlags,
-    PolygonTextureCs, ReprSize as _, UvCoord, Vec3,
+    static_assert_size, Color, MeshLightNg, MeshNg, MeshTexture, PolygonFlags, PolygonNg,
+    PolygonTextureNg, ReprSize as _, UvCoord, Vec3,
 };
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, bool_c, Result};
@@ -11,7 +12,7 @@ use std::io::{Read, Write};
 
 #[derive(Debug)]
 #[repr(C)]
-struct MeshPmC {
+struct MeshNgC {
     file_ptr: u32,      // 00
     unk04: u32,         // 04
     unk08: u32,         // 08
@@ -38,12 +39,12 @@ struct MeshPmC {
     texture_count: u32, // 92
     texture_ptr: Ptr,   // 96
 }
-static_assert_size!(MeshPmC, 100);
-pub const MESH_PM_C_SIZE: u32 = MeshPmC::SIZE;
+static_assert_size!(MeshNgC, 100);
+pub const MESH_C_SIZE: u32 = MeshNgC::SIZE;
 
 #[derive(Debug)]
 #[repr(C)]
-struct PolygonPmC {
+struct PolygonNgC {
     vertex_info: Hex<u32>, // 00
     unk04: i32,            // 04
     vertices_ptr: Ptr,     // 08
@@ -55,7 +56,7 @@ struct PolygonPmC {
     unk32: Ptr,            // 32
     unk36: Hex<u32>,       // 36
 }
-static_assert_size!(PolygonPmC, 40);
+static_assert_size!(PolygonNgC, 40);
 
 bitflags::bitflags! {
     pub struct PolygonBitFlags: u32 {
@@ -99,7 +100,7 @@ impl From<&PolygonFlags> for PolygonBitFlags {
 
 #[derive(Debug)]
 #[repr(C)]
-struct LightPmC {
+struct LightNgC {
     unk00: u32,       // 00
     unk04: u32,       // 04
     unk08: f32,       // 08
@@ -121,10 +122,10 @@ struct LightPmC {
     unk72: f32,       // 72
                       // unk76: f32,       // 76
 }
-static_assert_size!(LightPmC, 76);
+static_assert_size!(LightNgC, 76);
 
-pub struct WrappedMeshPm {
-    pub mesh: MeshCs,
+pub struct WrappedMeshNg {
+    pub mesh: MeshNg,
     pub polygon_count: u32,
     pub vertex_count: u32,
     pub normal_count: u32,
@@ -155,20 +156,20 @@ fn write_mesh_texture_info(
 pub fn read_mesh_info(
     read: &mut CountingReader<impl Read>,
     mesh_index: i32,
-) -> Result<WrappedMeshPm> {
+) -> Result<WrappedMeshNg> {
     debug!(
-        "Reading mesh info {} (pm, {}) at {}",
+        "Reading mesh info {} (ng, {}) at {}",
         mesh_index,
-        MeshPmC::SIZE,
+        MeshNgC::SIZE,
         read.offset
     );
-    let mesh: MeshPmC = read.read_struct()?;
+    let mesh: MeshNgC = read.read_struct()?;
     trace!("{:#?}", mesh);
     let wrapped = assert_mesh_info(mesh, read.prev)?;
     Ok(wrapped)
 }
 
-fn assert_mesh_info(mesh: MeshPmC, offset: u32) -> Result<WrappedMeshPm> {
+fn assert_mesh_info(mesh: MeshNgC, offset: u32) -> Result<WrappedMeshNg> {
     let file_ptr = assert_that!("file ptr", bool mesh.file_ptr, offset + 0)?;
     assert_that!("field 04", mesh.unk04 in [0, 1, 2], offset + 4)?;
     // unk08
@@ -219,7 +220,7 @@ fn assert_mesh_info(mesh: MeshPmC, offset: u32) -> Result<WrappedMeshPm> {
         assert_that!("unk ptr", mesh.texture_ptr != Ptr::NULL, offset + 96)?;
     }
 
-    let m = MeshCs {
+    let m = MeshNg {
         vertices: vec![],
         normals: vec![],
         morphs: vec![],
@@ -244,7 +245,7 @@ fn assert_mesh_info(mesh: MeshPmC, offset: u32) -> Result<WrappedMeshPm> {
         unk84: mesh.unk84,
     };
 
-    Ok(WrappedMeshPm {
+    Ok(WrappedMeshNg {
         mesh: m,
         polygon_count: mesh.polygon_count,
         vertex_count: mesh.vertex_count,
@@ -255,26 +256,26 @@ fn assert_mesh_info(mesh: MeshPmC, offset: u32) -> Result<WrappedMeshPm> {
     })
 }
 
-fn read_lights(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<MeshLightPm>> {
+fn read_lights(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<MeshLightNg>> {
     let lights = (0..count)
         .map(|index| {
             trace!(
-                "Reading light {} (pm, {}) at {}",
+                "Reading light {} (ng, {}) at {}",
                 index,
-                LightPmC::SIZE,
+                LightNgC::SIZE,
                 read.offset
             );
-            let light: LightPmC = read.read_struct()?;
+            let light: LightNgC = read.read_struct()?;
             trace!("{:#?}", light);
             Ok(light)
         })
-        .collect::<Result<Vec<LightPmC>>>()?;
+        .collect::<Result<Vec<LightNgC>>>()?;
 
     lights
         .into_iter()
         .map(|light| {
             let extra = read_vec3s(read, light.extra_count)?;
-            Ok(MeshLightPm {
+            Ok(MeshLightNg {
                 unk00: light.unk00,
                 unk04: light.unk04,
                 unk08: light.unk08,
@@ -300,10 +301,10 @@ fn read_lights(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<M
 }
 
 fn assert_polygon(
-    poly: PolygonPmC,
+    poly: PolygonNgC,
     offset: u32,
     poly_index: u32,
-) -> Result<(u32, u32, bool, u32, PolygonCs)> {
+) -> Result<(u32, u32, bool, u32, PolygonNg)> {
     let vertex_info = poly.vertex_info.0;
     assert_that!("vertex info", vertex_info < 0xFFFF, offset + 0)?;
     let verts_in_poly = vertex_info & 0x1FF;
@@ -349,7 +350,7 @@ fn assert_polygon(
     // ptr?
     assert_that!("field 32", poly.unk32 != Ptr::NULL, offset + 32)?;
 
-    let polygon = PolygonCs {
+    let polygon = PolygonNg {
         flags: flags.into(),
         vertex_indices: vec![],
         vertex_colors: vec![],
@@ -379,17 +380,17 @@ fn read_polygons(
     read: &mut CountingReader<impl Read>,
     count: u32,
     mesh_index: i32,
-) -> Result<Vec<PolygonCs>> {
+) -> Result<Vec<PolygonNg>> {
     (0..count)
         .map(|poly_index| {
             debug!(
-                "Reading polygon info {}:{} (pm, {}) at {}",
+                "Reading polygon info {}:{} (ng, {}) at {}",
                 mesh_index,
                 poly_index,
-                PolygonPmC::SIZE,
+                PolygonNgC::SIZE,
                 read.offset
             );
-            let poly: PolygonPmC = read.read_struct()?;
+            let poly: PolygonNgC = read.read_struct()?;
             trace!("{:#?}", poly);
 
             let result = assert_polygon(poly, read.prev, poly_index)?;
@@ -400,7 +401,7 @@ fn read_polygons(
         .map(
             |(poly_index, verts_in_poly, has_normals, texture_count, mut polygon)| {
                 debug!(
-                    "Reading polygon data {}:{} (pm) at {}",
+                    "Reading polygon data {}:{} (ng) at {}",
                     mesh_index, poly_index, read.offset
                 );
                 debug!(
@@ -432,7 +433,7 @@ fn read_polygons(
                             index, verts_in_poly, read.offset
                         );
                         let uv_coords = read_uvs(read, verts_in_poly)?;
-                        Ok(PolygonTextureCs {
+                        Ok(PolygonTextureNg {
                             texture_index,
                             uv_coords,
                         })
@@ -452,10 +453,10 @@ fn read_polygons(
 
 pub fn read_mesh_data(
     read: &mut CountingReader<impl Read>,
-    wrapped: WrappedMeshPm,
+    wrapped: WrappedMeshNg,
     mesh_index: i32,
-) -> Result<MeshCs> {
-    debug!("Reading mesh data {} (pm) at {}", mesh_index, read.offset);
+) -> Result<MeshNg> {
+    debug!("Reading mesh data {} (ng) at {}", mesh_index, read.offset);
     let mut mesh = wrapped.mesh;
     trace!(
         "Reading {} x vertices at {}",
@@ -482,29 +483,29 @@ pub fn read_mesh_data(
     );
     mesh.lights = read_lights(read, wrapped.light_count)?;
     debug!(
-        "Reading {} x polygons (pm) at {}",
+        "Reading {} x polygons (ng) at {}",
         wrapped.polygon_count, read.offset
     );
     mesh.polygons = read_polygons(read, wrapped.polygon_count, mesh_index)?;
     trace!(
-        "Reading {} x mesh texture info (pm) at {}",
+        "Reading {} x mesh texture info (ng) at {}",
         wrapped.texture_count,
         read.offset
     );
     mesh.textures = read_mesh_texture_info(read, wrapped.texture_count)?;
-    trace!("Finished mesh data {} (pm) at {}", mesh_index, read.offset);
+    trace!("Finished mesh data {} (ng) at {}", mesh_index, read.offset);
     Ok(mesh)
 }
 
 pub fn write_mesh_info(
     write: &mut CountingWriter<impl Write>,
-    mesh: &MeshCs,
+    mesh: &MeshNg,
     mesh_index: usize,
 ) -> Result<()> {
     debug!(
-        "Writing mesh info {} (pm, {}) at {}",
+        "Writing mesh info {} (ng, {}) at {}",
         mesh_index,
-        MeshPmC::SIZE,
+        MeshNgC::SIZE,
         write.offset
     );
     let polygon_count = assert_len!(u32, mesh.polygons.len(), "mesh polygons")?;
@@ -513,7 +514,7 @@ pub fn write_mesh_info(
     let morph_count = assert_len!(u32, mesh.morphs.len(), "mesh morphs")?;
     let light_count = assert_len!(u32, mesh.lights.len(), "mesh lights")?;
     let texture_count = assert_len!(u32, mesh.textures.len(), "mesh textures")?;
-    let mesh = MeshPmC {
+    let mesh = MeshNgC {
         file_ptr: bool_c!(mesh.file_ptr),
         unk04: mesh.unk04,
         unk08: mesh.unk08,
@@ -545,16 +546,16 @@ pub fn write_mesh_info(
     Ok(())
 }
 
-fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[MeshLightPm]) -> Result<()> {
+fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[MeshLightNg]) -> Result<()> {
     for (index, light) in lights.iter().enumerate() {
         trace!(
-            "Writing light {} (pm, {}) at {}",
+            "Writing light {} (ng, {}) at {}",
             index,
-            LightPmC::SIZE,
+            LightNgC::SIZE,
             write.offset
         );
         let extra_count = assert_len!(u32, light.extra.len(), "light extra")?;
-        let light = LightPmC {
+        let light = LightNgC {
             unk00: light.unk00,
             unk04: light.unk04,
             unk08: light.unk08,
@@ -585,15 +586,15 @@ fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[MeshLightPm]) 
 
 fn write_polygons(
     write: &mut CountingWriter<impl Write>,
-    polygons: &[PolygonCs],
+    polygons: &[PolygonNg],
     mesh_index: usize,
 ) -> Result<()> {
     for (index, polygon) in polygons.iter().enumerate() {
         debug!(
-            "Writing polygon info {}:{} (pm, {}) at {}",
+            "Writing polygon info {}:{} (ng, {}) at {}",
             mesh_index,
             index,
-            PolygonPmC::SIZE,
+            PolygonNgC::SIZE,
             write.offset
         );
         let texture_count = assert_len!(u32, polygon.textures.len(), "polygon texture count")?;
@@ -604,7 +605,7 @@ fn write_polygons(
             flags |= PolygonBitFlags::NORMALS;
         }
         let vertex_info = Hex(vertex_indices_len | (flags.bits() << 8));
-        let poly = PolygonPmC {
+        let poly = PolygonNgC {
             vertex_info,
             unk04: polygon.unk04,
             vertices_ptr: Ptr(polygon.vertices_ptr),
@@ -663,10 +664,10 @@ fn write_polygons(
 
 pub fn write_mesh_data(
     write: &mut CountingWriter<impl Write>,
-    mesh: &MeshCs,
+    mesh: &MeshNg,
     mesh_index: usize,
 ) -> Result<()> {
-    debug!("Writing mesh data {} (pm) at {}", mesh_index, write.offset);
+    debug!("Writing mesh data {} (ng) at {}", mesh_index, write.offset);
     trace!(
         "Writing {} x vertices at {}",
         mesh.vertices.len(),
@@ -684,18 +685,18 @@ pub fn write_mesh_data(
     trace!("Writing {} x lights at {}", mesh.lights.len(), write.offset);
     write_lights(write, &mesh.lights)?;
     debug!(
-        "Writing {} x polygons (pm) at {}",
+        "Writing {} x polygons (ng) at {}",
         mesh.polygons.len(),
         write.offset
     );
     write_polygons(write, &mesh.polygons, mesh_index)?;
     trace!(
-        "Writing {} x unknown (pm) at {}",
+        "Writing {} x unknown (ng) at {}",
         mesh.textures.len(),
         write.offset
     );
     write_mesh_texture_info(write, &mesh.textures)?;
-    trace!("Wrote mesh data (pm) at {}", write.offset);
+    trace!("Wrote mesh data (ng) at {}", write.offset);
     Ok(())
 }
 
@@ -706,12 +707,12 @@ pub fn read_mesh_infos_zero(
 ) -> Result<()> {
     for index in start..end {
         debug!(
-            "Reading mesh info zero {} (pm, {}) at {}",
+            "Reading mesh info zero {} (ng, {}) at {}",
             index,
-            MeshPmC::SIZE,
+            MeshNgC::SIZE,
             read.offset
         );
-        let mesh: MeshPmC = read.read_struct()?;
+        let mesh: MeshNgC = read.read_struct()?;
 
         assert_that!("file_ptr", mesh.file_ptr == 0, read.prev + 0)?;
         assert_that!("unk04", mesh.unk04 == 0, read.prev + 4)?;
@@ -762,7 +763,7 @@ pub fn write_mesh_infos_zero(
     start: i32,
     end: i32,
 ) -> Result<()> {
-    let mesh = MeshPmC {
+    let mesh = MeshNgC {
         file_ptr: 0,
         unk04: 0,
         unk08: 0,
@@ -792,9 +793,9 @@ pub fn write_mesh_infos_zero(
 
     for index in start..end {
         debug!(
-            "Writing mesh info zero {} (pm, {}) at {}",
+            "Writing mesh info zero {} (ng, {}) at {}",
             index,
-            MeshPmC::SIZE,
+            MeshNgC::SIZE,
             write.offset
         );
         write.write_struct(&mesh)?;
@@ -810,12 +811,12 @@ pub fn write_mesh_infos_zero(
 
 const U32_SIZE: u32 = std::mem::size_of::<u32>() as _;
 
-pub fn size_mesh(mesh: &MeshCs) -> u32 {
+pub fn size_mesh(mesh: &MeshNg) -> u32 {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let mut size =
         Vec3::SIZE * (mesh.vertices.len() + mesh.normals.len() + mesh.morphs.len()) as u32;
     for light in &mesh.lights {
-        size += LightPmC::SIZE + Vec3::SIZE * light.extra.len() as u32;
+        size += LightNgC::SIZE + Vec3::SIZE * light.extra.len() as u32;
     }
     for polygon in &mesh.polygons {
         let normal_indices_len = polygon
@@ -823,7 +824,7 @@ pub fn size_mesh(mesh: &MeshCs) -> u32 {
             .as_ref()
             .map(|v| v.len() as u32)
             .unwrap_or(0);
-        size += PolygonPmC::SIZE
+        size += PolygonNgC::SIZE
             + U32_SIZE * polygon.vertex_indices.len() as u32
             + U32_SIZE * normal_indices_len
             + Color::SIZE * polygon.vertex_colors.len() as u32;

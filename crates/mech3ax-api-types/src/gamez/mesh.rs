@@ -90,26 +90,7 @@ pub struct PolygonFlags {
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct PolygonPm {
-    pub flags: PolygonFlags,
-    pub vertex_indices: Vec<u32>,
-    pub vertex_colors: Vec<Color>,
-    pub normal_indices: Option<Vec<u32>>,
-    pub texture_index: u32,
-    pub uv_coords: Vec<UvCoord>,
-
-    pub unk04: i32,
-    pub vertices_ptr: u32,
-    pub normals_ptr: u32,
-    pub uvs_ptr: u32,
-    pub colors_ptr: u32,
-    pub unk28: u32,
-    pub unk32: u32,
-    pub unk36: u32,
-}
-
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct MeshLightPm {
+pub struct MeshLightNg {
     pub unk00: u32,
     pub unk04: u32,
     pub unk08: f32,
@@ -141,44 +122,18 @@ pub struct MeshTexture {
 static_assert_size!(MeshTexture, 12);
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct MeshPm {
-    pub vertices: Vec<Vec3>,
-    pub normals: Vec<Vec3>,
-    pub morphs: Vec<Vec3>,
-    pub lights: Vec<MeshLightPm>,
-    pub polygons: Vec<PolygonPm>,
-    pub textures: Vec<MeshTexture>,
-    pub polygons_ptr: u32,
-    pub vertices_ptr: u32,
-    pub normals_ptr: u32,
-    pub lights_ptr: u32,
-    pub morphs_ptr: u32,
-    pub texture_ptr: u32,
-    pub file_ptr: bool,
-    pub unk04: u32,
-    pub unk08: u32,
-    pub parent_count: u32,
-    pub unk40: f32,
-    pub unk44: f32,
-    pub unk72: f32,
-    pub unk76: f32,
-    pub unk80: f32,
-    pub unk84: f32,
-}
-
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct PolygonTextureCs {
+pub struct PolygonTextureNg {
     pub texture_index: u32,
     pub uv_coords: Vec<UvCoord>,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct PolygonCs {
+pub struct PolygonNg {
     pub flags: PolygonFlags,
     pub vertex_indices: Vec<u32>,
     pub vertex_colors: Vec<Color>,
     pub normal_indices: Option<Vec<u32>>,
-    pub textures: Vec<PolygonTextureCs>,
+    pub textures: Vec<PolygonTextureNg>,
 
     pub unk04: i32,
     pub vertices_ptr: u32,
@@ -191,12 +146,12 @@ pub struct PolygonCs {
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct MeshCs {
+pub struct MeshNg {
     pub vertices: Vec<Vec3>,
     pub normals: Vec<Vec3>,
     pub morphs: Vec<Vec3>,
-    pub lights: Vec<MeshLightPm>,
-    pub polygons: Vec<PolygonCs>,
+    pub lights: Vec<MeshLightNg>,
+    pub polygons: Vec<PolygonNg>,
     pub textures: Vec<MeshTexture>,
     pub polygons_ptr: u32,
     pub vertices_ptr: u32,

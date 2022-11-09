@@ -5,8 +5,8 @@ use mech3ax_anim::write_anim;
 use mech3ax_api_types::saves::AnimActivation;
 use mech3ax_api_types::{
     AnimMetadata, ArchiveEntry, GameZCsData, GameZCsMetadata, GameZMwData, GameZMwMetadata,
-    GameZPmData, GameZPmMetadata, GameZRcData, GameZRcMetadata, MapRc, Material, MeshCs, MeshMw,
-    MeshPm, ModelMw, Motion, NodeMw, Script, TextureManifest,
+    GameZPmData, GameZPmMetadata, GameZRcData, GameZRcMetadata, MapRc, Material, MeshMw, MeshNg,
+    ModelMw, Motion, NodeMw, Script, TextureManifest,
 };
 use mech3ax_archive::{write_archive, Mode, Version};
 use mech3ax_common::io_ext::CountingWriter;
@@ -260,7 +260,7 @@ fn gamez_pm(opts: ZipOpts) -> Result<()> {
     let metadata: GameZPmMetadata = zip_json(&mut zip, "metadata.json")?;
     let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
     let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
-    let meshes: Vec<MeshPm> = zip_json(&mut zip, "meshes.json")?;
+    let meshes: Vec<MeshNg> = zip_json(&mut zip, "meshes.json")?;
     // let nodes: Vec<NodePm> = zip_json(&mut zip, "nodes.json")?;
     let nodes: Vec<u8> = zip_read(&mut zip, "nodes.bin")?;
 
@@ -285,7 +285,7 @@ fn gamez_cs(opts: ZipOpts) -> Result<()> {
     let metadata: GameZCsMetadata = zip_json(&mut zip, "metadata.json")?;
     let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
     let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
-    let meshes: Vec<MeshCs> = zip_json(&mut zip, "meshes.json")?;
+    let meshes: Vec<MeshNg> = zip_json(&mut zip, "meshes.json")?;
     // let nodes: Vec<NodeCs> = zip_json(&mut zip, "nodes.json")?;
     let nodes: Vec<u8> = zip_read(&mut zip, "nodes.bin")?;
 
