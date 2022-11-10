@@ -108,7 +108,7 @@ fn assert_mesh_info(mesh: MeshMwC, offset: u32) -> Result<WrappedMeshMw> {
     assert_that!("field 04", mesh.unk04 in [0, 1], offset + 4)?;
     // unk08
     assert_that!("parent count", mesh.parent_count > 0, offset + 12)?;
-    assert_that!("field 32", mesh.zero36 == 0, offset + 36)?;
+    assert_that!("field 36", mesh.zero36 == 0, offset + 36)?;
     assert_that!("field 48", mesh.zero48 == 0, offset + 48)?;
     assert_that!("field 88", mesh.zero88 == 0, offset + 88)?;
 
