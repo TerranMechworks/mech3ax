@@ -1,4 +1,5 @@
 //! GameZ texture support for PM, CS
+use super::STATE_USED;
 use log::{debug, trace};
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::assert::assert_utf8;
@@ -40,14 +41,14 @@ pub fn read_texture_infos(
             // validate field 00 later, with used
             assert_that!("field 04", info.zero04 == 0, read.prev + 4)?;
             assert_that!("field 08", info.zero08 == 0, read.prev + 8)?;
-            let name = assert_utf8("texture", read.prev + 8, || {
+            let name = assert_utf8("texture", read.prev + 12, || {
                 str_from_c_suffix(&info.texture.0)
             })?;
             // 2 if the texture is used, 0 if the texture is unused
             // 1 or 3 if the texture is being processed (deallocated?)
-            assert_that!("used", info.used in [1, 2], read.prev + 32)?;
-            let ptr = if info.used == 2 {
-                // this is the rarer case
+            assert_that!("field 32", info.used in [1, STATE_USED], read.prev + 32)?;
+            let ptr = if info.used == STATE_USED {
+                // somehow, this is now the rarer case
                 assert_that!("field 00", info.unk00 == Ptr::NULL, read.prev + 0)?;
                 None
             } else {
@@ -57,7 +58,7 @@ pub fn read_texture_infos(
                 Some(info.unk00.0)
             };
 
-            assert_that!("index", info.index == 0, read.prev + 36)?;
+            assert_that!("field 36", info.index == 0, read.prev + 36)?;
             assert_that!("field 40", info.unk40 == -1, read.prev + 40)?;
 
             ptrs.push(ptr);
@@ -82,7 +83,7 @@ pub fn write_texture_infos(
         );
         let mut texture = Ascii::new();
         str_to_c_suffix(name, &mut texture.0);
-        let used = if ptr.is_some() { 1 } else { 2 };
+        let used = if ptr.is_some() { 1 } else { STATE_USED };
         let unk00 = Ptr(ptr.unwrap_or(0));
         let info = TextureInfoNgC {
             unk00,

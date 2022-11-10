@@ -1,3 +1,4 @@
+use super::STATE_USED;
 use log::{debug, trace};
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::assert::assert_utf8;
@@ -31,8 +32,6 @@ pub fn read_texture_infos(read: &mut CountingReader<impl Read>, count: u32) -> R
             let info: TextureInfoMwC = read.read_struct()?;
             trace!("{:#?}", info);
 
-            // not sure what this is. a pointer to the previous texture in the global
-            // array? or a pointer to the texture?
             assert_that!("field 00", info.zero00 == 0, read.prev + 0)?;
             assert_that!("field 04", info.zero04 == 0, read.prev + 4)?;
             let texture = assert_utf8("texture", read.prev + 8, || {
@@ -40,9 +39,9 @@ pub fn read_texture_infos(read: &mut CountingReader<impl Read>, count: u32) -> R
             })?;
             // 2 if the texture is used, 0 if the texture is unused
             // 1 or 3 if the texture is being processed (deallocated?)
-            assert_that!("used", info.used == 2, read.prev + 28)?;
+            assert_that!("field 28", info.used == STATE_USED, read.prev + 28)?;
             // stores the texture's index in the global texture array
-            assert_that!("index", info.index == 0, read.prev + 32)?;
+            assert_that!("field 32", info.index == 0, read.prev + 32)?;
             assert_that!("field 36", info.unk36 == -1, read.prev + 36)?;
             Ok(texture)
         })
@@ -66,7 +65,7 @@ pub fn write_texture_infos(
             zero00: 0,
             zero04: 0,
             texture,
-            used: 2,
+            used: STATE_USED,
             index: 0,
             unk36: -1,
         };

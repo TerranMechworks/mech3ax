@@ -1,3 +1,4 @@
+use super::STATE_USED;
 use log::{debug, trace};
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::assert::assert_utf8;
@@ -35,7 +36,7 @@ pub fn read_texture_infos(read: &mut CountingReader<impl Read>, count: u32) -> R
             let texture = assert_utf8("texture", read.prev + 8, || {
                 str_from_c_suffix(&info.texture.0)
             })?;
-            assert_that!("used", info.used == 2, read.prev + 28)?;
+            assert_that!("field 28", info.used == STATE_USED, read.prev + 28)?;
             assert_that!("field 32", info.unk32 == -1, read.prev + 32)?;
             Ok(texture)
         })
@@ -59,7 +60,7 @@ pub fn write_texture_infos(
             zero00: 0,
             zero04: 0,
             texture,
-            used: 2,
+            used: STATE_USED,
             unk32: -1,
         };
         trace!("{:#?}", info);
