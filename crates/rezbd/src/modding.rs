@@ -3,7 +3,7 @@ use crate::ZrdOpts;
 use anyhow::{Context, Result};
 use image::{ColorType, DynamicImage, GenericImageView, ImageFormat};
 use mech3ax_api_types::{TextureAlpha, TextureManifest};
-use mech3ax_common::assert_len;
+use mech3ax_common::assert_with_msg;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_image::write_textures;
 use mech3ax_reader::write_reader;
@@ -12,6 +12,17 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, ErrorKind};
 use std::path::Path;
+
+fn convert_dim(value: u32, name: &str) -> mech3ax_common::Result<u16> {
+    value.try_into().map_err(|_e| {
+        assert_with_msg!(
+            "Too big: `{}` must be <= {}, but was {}",
+            name,
+            u16::MAX,
+            value,
+        )
+    })
+}
 
 pub(crate) fn textures(input: String, output: String) -> Result<()> {
     let path = Path::new(&input);
@@ -36,8 +47,8 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
                 .decode()
                 .with_context(|| format!("Failed to read image \"{:?}\"", &path))?;
             let (width, height) = image.dimensions();
-            info.width = assert_len!(u16, width, "image width")?;
-            info.height = assert_len!(u16, height, "image height")?;
+            info.width = convert_dim(width, "image width")?;
+            info.height = convert_dim(height, "image height")?;
             if info.alpha == TextureAlpha::None && image.color() == ColorType::Rgba8 {
                 println!("WARNING: removing alpha from `{}`", info.name);
                 image = DynamicImage::ImageRgb8(image.to_rgb8());

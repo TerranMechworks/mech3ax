@@ -1,7 +1,7 @@
 use crate::materials::ng::{read_material, write_material, RawMaterial};
 use mech3ax_api_types::{Material, TexturedMaterial};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, GameType, Result};
+use mech3ax_common::{assert_len, assert_that, assert_with_msg, GameType, Result};
 use std::io::{Read, Write};
 
 pub const VERSION_MW: u32 = 27;
@@ -73,7 +73,9 @@ pub fn write_materials(
     write: &mut CountingWriter<impl Write>,
     materials: &[Material],
 ) -> Result<()> {
-    write.write_u32(materials.len() as u32)?;
+    let materials_len = assert_len!(u32, materials.len(), "materials")?;
+    write.write_u32(materials_len)?;
+
     for (index, material) in materials.iter().enumerate() {
         write_material(write, material, None, index)?;
         if let Material::Textured(textured) = material {

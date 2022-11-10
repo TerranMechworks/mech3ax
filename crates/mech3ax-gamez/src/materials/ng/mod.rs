@@ -4,33 +4,8 @@ mod read_single;
 mod write_multi;
 mod write_single;
 
-use mech3ax_api_types::{static_assert_size, Color, ColoredMaterial, Material, ReprSize as _};
-
-#[derive(Debug)]
-#[repr(C)]
-struct MaterialInfoC {
-    array_size: i32,
-    count: i32,
-    index_max: i32,
-    index_last: i32,
-}
-static_assert_size!(MaterialInfoC, 16);
-
-#[derive(Debug)]
-#[repr(C)]
-struct MaterialC {
-    alpha: u8,      // 00
-    flags: u8,      // 01
-    rgb: u16,       // 02
-    color: Color,   // 04
-    index: u32,     // 16, ptr in mechlib, texture index in gamez
-    zero20: f32,    // 20
-    half24: f32,    // 24
-    half28: f32,    // 28
-    specular: f32,  // 32
-    cycle_ptr: u32, // 36
-}
-static_assert_size!(MaterialC, 40);
+use super::{assert_material_info, find_texture_index_by_name, MaterialC, MaterialInfoC};
+use mech3ax_api_types::{static_assert_size, ColoredMaterial, Material, ReprSize as _};
 
 #[derive(Debug)]
 #[repr(C)]

@@ -1,7 +1,7 @@
 use super::{CycleInfoC, MaterialC, MaterialFlags, RawMaterial, RawTexturedMaterial};
 use log::{debug, trace};
 use mech3ax_api_types::{
-    Color, ColoredMaterial, CycleData, Material, ReprSize as _, TexturedMaterial,
+    u32_to_usize, Color, ColoredMaterial, CycleData, Material, ReprSize as _, TexturedMaterial,
 };
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
@@ -107,7 +107,7 @@ pub fn read_cycle(
 ) -> Result<Material> {
     Ok(match material {
         RawMaterial::Textured(mat) => {
-            let texture_index = mat.pointer as usize;
+            let texture_index = u32_to_usize(mat.pointer);
             assert_that!("texture index", texture_index < textures.len(), read.offset)?;
             let texture = textures[texture_index].clone();
 
@@ -132,15 +132,12 @@ pub fn read_cycle(
                 assert_that!("cycle data ptr", info.data_ptr != 0, read.prev + 24)?;
 
                 debug!(
-                    "Reading {} x cycle textures {} ({}) at {}",
-                    info.count1,
-                    index,
-                    std::mem::size_of::<u32>(),
-                    read.offset
+                    "Reading {} x cycle textures {} at {}",
+                    info.count1, index, read.offset
                 );
                 let textures = (0..info.count1)
                     .map(|_| {
-                        let texture_index = read.read_u32()? as usize;
+                        let texture_index = u32_to_usize(read.read_u32()?);
                         assert_that!("texture index", texture_index < textures.len(), read.prev)?;
                         let texture = textures[texture_index].clone();
                         Ok(texture)

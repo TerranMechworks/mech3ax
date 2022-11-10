@@ -1,6 +1,8 @@
 use super::{MaterialC, MaterialFlags};
 use log::{debug, trace};
-use mech3ax_api_types::{Color, ColoredMaterial, Material, ReprSize as _, TexturedMaterial};
+use mech3ax_api_types::{
+    u32_to_usize, Color, ColoredMaterial, Material, ReprSize as _, TexturedMaterial,
+};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use std::io::Read;
@@ -8,7 +10,7 @@ use std::io::Read;
 pub fn read_material(
     read: &mut CountingReader<impl Read>,
     textures: &[String],
-    index: u32,
+    index: i16,
 ) -> Result<Material> {
     debug!(
         "Reading material {} ({}) at {}",
@@ -30,6 +32,7 @@ pub fn read_material(
     assert_that!("field 20", material.zero20 == 0.0, read.prev + 20)?;
     assert_that!("field 24", material.half24 == 0.5, read.prev + 24)?;
     assert_that!("field 28", material.half28 == 0.5, read.prev + 28)?;
+    // Recoil doesn't have cycles
     assert_that!("cycle ptr", material.cycle_ptr == 0, read.prev + 36)?;
 
     let material = if bitflags.contains(MaterialFlags::TEXTURED) {
@@ -38,8 +41,7 @@ pub fn read_material(
         assert_that!("rgb", material.rgb == 0x7FFF, read.prev + 2)?;
         assert_that!("color", material.color == Color::WHITE_FULL, read.prev + 4)?;
 
-        // cast safety: material.index is u32
-        let texture_index = material.index as usize;
+        let texture_index = u32_to_usize(material.index);
         assert_that!("texture index", texture_index < textures.len(), read.offset)?;
         let texture = textures[texture_index].clone();
 

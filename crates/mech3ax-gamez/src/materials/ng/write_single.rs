@@ -1,8 +1,8 @@
-use super::{CycleInfoC, MaterialC, MaterialFlags};
+use super::{find_texture_index_by_name, CycleInfoC, MaterialC, MaterialFlags};
 use log::{debug, trace};
 use mech3ax_api_types::{Color, Material, ReprSize as _};
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_with_msg, bool_c, Result};
+use mech3ax_common::{assert_len, bool_c, Result};
 use std::io::Write;
 
 pub fn write_material(
@@ -11,6 +11,12 @@ pub fn write_material(
     pointer: Option<u32>,
     index: usize,
 ) -> Result<()> {
+    debug!(
+        "Writing material {} ({}) at {}",
+        index,
+        MaterialC::SIZE,
+        write.offset
+    );
     let mat_c = match material {
         Material::Textured(material) => {
             let mut bitflags = MaterialFlags::ALWAYS | MaterialFlags::TEXTURED;
@@ -54,12 +60,6 @@ pub fn write_material(
             }
         }
     };
-    debug!(
-        "Writing material {} ({}) at {}",
-        index,
-        MaterialC::SIZE,
-        write.offset
-    );
     trace!("{:#?}", mat_c);
     write.write_struct(&mat_c)?;
     Ok(())
@@ -81,7 +81,7 @@ pub fn write_cycle(
             );
 
             let unk00 = bool_c!(cycle.unk00);
-            let count = cycle.textures.len() as u32;
+            let count = assert_len!(u32, cycle.textures.len(), "cycle textures")?;
             let info = CycleInfoC {
                 unk00,
                 unk04: cycle.unk04,
@@ -95,20 +95,12 @@ pub fn write_cycle(
             write.write_struct(&info)?;
 
             debug!(
-                "Writing {} x cycle textures {} ({}) at {}",
-                cycle.textures.len(),
-                index,
-                std::mem::size_of::<u32>(),
-                write.offset
+                "Writing {} x cycle textures {} at {}",
+                count, index, write.offset
             );
-            for texture in &cycle.textures {
-                let texture_index = textures
-                    .iter()
-                    .position(|name| name == texture)
-                    .ok_or_else(|| {
-                        assert_with_msg!("Texture `{}` not found in textures list", texture)
-                    })?;
-                write.write_u32(texture_index as _)?;
+            for texture_name in &cycle.textures {
+                let index = find_texture_index_by_name(textures, texture_name)?;
+                write.write_u32(index)?;
             }
         }
     }

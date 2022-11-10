@@ -1,4 +1,4 @@
-use super::{MaterialC, MaterialFlags};
+use super::{find_texture_index_by_name, MaterialC, MaterialFlags};
 use log::{debug, trace};
 use mech3ax_api_types::{Color, Material, ReprSize as _, TexturedMaterial};
 use mech3ax_common::io_ext::CountingWriter;
@@ -34,7 +34,7 @@ pub fn write_material(
     write: &mut CountingWriter<impl Write>,
     material: &Material,
     textures: &[String],
-    index: usize,
+    index: i16,
 ) -> Result<()> {
     debug!(
         "Writing material {} ({}) at {}",
@@ -45,13 +45,7 @@ pub fn write_material(
     let mat_c = match material {
         Material::Textured(material) => {
             validate_unused_fields(material)?;
-            let texture_index = textures
-                .iter()
-                .position(|name| name == &material.texture)
-                .ok_or_else(|| {
-                    assert_with_msg!("Texture `{}` not found in textures list", material.texture)
-                })?;
-            let index = texture_index as u32;
+            let index = find_texture_index_by_name(textures, &material.texture)?;
             MaterialC {
                 alpha: 0xFF,
                 flags: FLAGS_TEXTURES,

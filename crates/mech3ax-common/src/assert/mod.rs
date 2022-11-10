@@ -304,7 +304,7 @@ macro_rules! bool_c {
 #[macro_export]
 macro_rules! assert_len {
     ($ty:ty, $value:expr, $name:literal) => {{
-        let value = $value;
+        let value: usize = $value;
         let r: $crate::Result<$ty> = value.try_into().map_err(|_e| {
             $crate::assert_with_msg!(
                 "Too big: `{}` must be <= {}, but was {}",

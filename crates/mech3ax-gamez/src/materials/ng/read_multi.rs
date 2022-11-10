@@ -1,5 +1,5 @@
 use super::read_single::{read_cycle, read_material, read_material_zero};
-use super::MaterialInfoC;
+use super::{assert_material_info, MaterialInfoC};
 use log::{debug, trace};
 use mech3ax_api_types::{Material, ReprSize as _};
 use mech3ax_common::io_ext::CountingReader;
@@ -18,23 +18,13 @@ pub fn read_materials(
     let info: MaterialInfoC = read.read_struct()?;
     trace!("{:#?}", info);
 
-    assert_that!("mat array size", 0 <= info.array_size <= i16::MAX as i32, read.prev + 0)?;
-    assert_that!("mat count", 0 <= info.count <= info.array_size, read.prev + 0)?;
-    assert_that!("mat index max", info.index_max == info.count, read.prev + 8)?;
-    assert_that!(
-        "mat index last",
-        info.index_last == info.count - 1,
-        read.prev + 12
-    )?;
-
-    let count = info.count as i16;
-    let array_size = info.array_size as i16;
+    let (array_size, count) = assert_material_info(info, read.prev)?;
 
     // read materials without cycle data
     let materials = (0..count)
         .map(|index| {
             // Cast safety: index is >= 0, and count is i16
-            let material = read_material(read, index as _)?;
+            let material = read_material(read, index as u32)?;
 
             let mut expected_index1 = index + 1;
             if expected_index1 >= count {
