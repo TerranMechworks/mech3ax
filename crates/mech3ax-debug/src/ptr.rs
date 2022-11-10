@@ -12,6 +12,6 @@ impl fmt::Debug for Ptr {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // upper, prefixed hex
-        write!(f, "{:#08X}", self.0)
+        write!(f, "0x{:08X}", self.0)
     }
 }

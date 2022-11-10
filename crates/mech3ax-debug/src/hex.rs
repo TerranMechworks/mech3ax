@@ -8,7 +8,7 @@ impl HexDebug for u8 {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // upper, prefixed hex
-        write!(f, "{:#02X}", self)
+        write!(f, "0x{:04X}", self)
     }
 }
 
@@ -16,7 +16,7 @@ impl HexDebug for u16 {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // upper, prefixed hex
-        write!(f, "{:#04}", self)
+        write!(f, "0x{:04X}", self)
     }
 }
 
@@ -24,7 +24,7 @@ impl HexDebug for u32 {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // upper, prefixed hex
-        write!(f, "{:#08X}", self)
+        write!(f, "0x{:08X}", self)
     }
 }
 
