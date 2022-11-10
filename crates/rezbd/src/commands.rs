@@ -6,7 +6,7 @@ use mech3ax_api_types::saves::AnimActivation;
 use mech3ax_api_types::{
     AnimMetadata, ArchiveEntry, GameZCsData, GameZCsMetadata, GameZMwData, GameZMwMetadata,
     GameZPmData, GameZPmMetadata, GameZRcData, GameZRcMetadata, MapRc, Material, MeshMw, MeshNg,
-    ModelMw, Motion, NodeMw, Script, TextureManifest,
+    MeshRc, ModelMw, Motion, NodeMw, Script, TextureManifest,
 };
 use mech3ax_archive::{write_archive, Mode, Version};
 use mech3ax_common::io_ext::CountingWriter;
@@ -310,9 +310,8 @@ fn gamez_rc(opts: ZipOpts) -> Result<()> {
     let metadata: GameZRcMetadata = zip_json(&mut zip, "metadata.json")?;
     let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
     let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
-    // let meshes: Vec<MeshRc> = zip_json(&mut zip, "meshes.json")?;
+    let meshes: Vec<MeshRc> = zip_json(&mut zip, "meshes.json")?;
     // let nodes: Vec<NodeRc> = zip_json(&mut zip, "nodes.json")?;
-    let meshes: Vec<u8> = zip_read(&mut zip, "meshes.bin")?;
     let nodes: Vec<u8> = zip_read(&mut zip, "nodes.bin")?;
 
     drop(zip);
