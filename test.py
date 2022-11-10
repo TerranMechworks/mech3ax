@@ -23,18 +23,43 @@ def name_to_game(name: str) -> Game:
     return GAME_MW
 
 
-def campaign_mission(input_zbd: Path, zbd_dir: Path) -> Tuple[str, str, List[str]]:
-    zip_name = f"{input_zbd.stem}.zip"
-    zbd_name = f"{input_zbd.stem}.zbd"
+def campaign_mission(input_zbd: Path, zbd_dir: Path) -> Tuple[str, List[str]]:
+    base_name = input_zbd.stem
     rel_path = input_zbd.relative_to(zbd_dir)
     parents = []
     for parent in rel_path.parents:
         parent_name = parent.name
         if parent_name:
-            zip_name = f"{parent_name}-{zip_name}"
-            zbd_name = f"{parent_name}-{zbd_name}"
+            base_name = f"{parent_name}-{base_name}"
             parents.append(parent_name)
-    return (zip_name, zbd_name, parents)
+    return (base_name, parents)
+
+
+def valid_messages(data: object) -> bool:
+    if not isinstance(data, dict):
+        print("Data is not a dict:", repr(data))
+        return False
+
+    try:
+        language_id = data["language_id"]
+        entries = data["entries"]
+    except KeyError as e:
+        print("Key missing:", e)
+        return False
+
+    if not isinstance(language_id, int):
+        print("Language is not an int:", repr(language_id))
+        return False
+
+    if not isinstance(entries, list):
+        print("Entries is not a list:", repr(language_id))
+        return False
+
+    if len(entries) < 30:
+        print("Too few entries:", len(entries))
+        return False
+
+    return True
 
 
 class Tester:
@@ -58,13 +83,23 @@ class Tester:
         for _, _, output_dir in self.versions:
             output_dir.mkdir(exist_ok=True)
 
-    def unzbd(self, command: str, game: Game, one: Path, two: Path) -> None:
+    def unzbd(self, command: str, game: Game, one: Path, two: Path, log: Path) -> None:
+        env = {"RUST_LOG": "trace"}
         cmd = [str(self.unzbd_exe), game, command, str(one), str(two)]
-        subprocess.run(cmd, check=True)
+        try:
+            with log.open("wb") as f:
+                subprocess.run(cmd, check=True, env=env, stderr=f)
+        except subprocess.CalledProcessError:
+            print(" ".join(cmd))
+            raise
 
     def rezbd(self, command: str, game: Game, one: Path, two: Path) -> None:
         cmd = [str(self.rezbd_exe), game, command, str(one), str(two)]
-        subprocess.run(cmd, check=True)
+        try:
+            subprocess.run(cmd, check=True)
+        except subprocess.CalledProcessError:
+            print(" ".join(cmd))
+            raise
 
     def compare(self, one: Path, two: Path) -> None:
         if not filecmp.cmp(one, two, shallow=False):
@@ -84,6 +119,9 @@ class Tester:
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
 
+            output_dir = output_base / "sounds"
+            output_dir.mkdir(exist_ok=True)
+
             if game == GAME_RC:
                 sounds_names = ["soundsl", "soundsm", "soundsh"]
             elif game == GAME_CS:
@@ -92,12 +130,14 @@ class Tester:
                 sounds_names = ["soundsL", "soundsH"]
 
             for sounds in sounds_names:
-                print(name, f"{sounds}.zbd", game)
                 input_zbd = zbd_dir / f"{sounds}.zbd"
-                zip_path = output_base / f"{sounds}.zip"
-                output_zbd = output_base / f"{sounds}.zbd"
+                zip_path = output_dir / f"{sounds}.zip"
+                output_zbd = output_dir / f"{sounds}.zbd"
+                read_log = output_dir / f"{sounds}-read.log"
 
-                self.unzbd("sounds", game, input_zbd, zip_path)
+                print(game, name, sounds)
+
+                self.unzbd("sounds", game, input_zbd, zip_path, read_log)
                 self.rezbd("sounds", game, zip_path, output_zbd)
                 self.compare(input_zbd, output_zbd)
 
@@ -106,11 +146,17 @@ class Tester:
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
 
-            print(name, "interp.zbd", game)
+            output_dir = output_base / "interp"
+            output_dir.mkdir(exist_ok=True)
+
             input_zbd = zbd_dir / "interp.zbd"
-            zip_path = output_base / "interp.json"
-            output_zbd = output_base / "interp.zbd"
-            self.unzbd("interp", game, input_zbd, zip_path)
+            zip_path = output_dir / "interp.json"
+            output_zbd = output_dir / "interp.zbd"
+            read_log = output_dir / "interp-read.log"
+
+            print(game, name, "interp")
+
+            self.unzbd("interp", game, input_zbd, zip_path, read_log)
             self.rezbd("interp", game, zip_path, output_zbd)
             self.compare(input_zbd, output_zbd)
 
@@ -119,6 +165,9 @@ class Tester:
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
 
+            output_dir = output_base / "messages"
+            output_dir.mkdir(exist_ok=True)
+
             if game == GAME_RC:
                 msg_name = "messages"
             elif game == GAME_CS:
@@ -126,9 +175,11 @@ class Tester:
             else:
                 msg_name = "Mech3Msg"
 
-            print(name, f"{msg_name}.dll", game)
             input_dll = zbd_dir.parent / f"{msg_name}.dll"
-            output_json = output_base / f"{msg_name}.json"
+            output_json = output_dir / f"{msg_name}.json"
+
+            print(game, name, f"{msg_name}")
+
             cmd = [
                 str(self.unzbd_exe),
                 game,
@@ -141,33 +192,7 @@ class Tester:
             with output_json.open("r") as f:
                 data = json.load(f)
 
-            def _valid_messages(data: object) -> bool:
-                if not isinstance(data, dict):
-                    print("Data is not a dict:", repr(data))
-                    return False
-
-                try:
-                    language_id = data["language_id"]
-                    entries = data["entries"]
-                except KeyError as e:
-                    print("Key missing:", e)
-                    return False
-
-                if not isinstance(language_id, int):
-                    print("Language is not an int:", repr(language_id))
-                    return False
-
-                if not isinstance(entries, list):
-                    print("Entries is not a list:", repr(language_id))
-                    return False
-
-                if len(entries) < 30:
-                    print("Too few entries:", len(entries))
-                    return False
-
-                return True
-
-            if not _valid_messages(data):
+            if not valid_messages(data):
                 print("*** MISMATCH ***", input_dll, output_json)
                 self.miscompares.append((input_dll, output_json))
 
@@ -186,19 +211,15 @@ class Tester:
                 texture_zbds += [zbd_dir / "rimage.zbd"]
 
             for input_zbd in sorted(texture_zbds):
-                rel_path = input_zbd.relative_to(zbd_dir)
-                campaign = rel_path.parent.name
-                if not campaign:
-                    zip_name = f"{input_zbd.stem}.zip"
-                    zbd_name = f"{input_zbd.stem}.zbd"
-                else:
-                    zip_name = f"{campaign}-{input_zbd.stem}.zip"
-                    zbd_name = f"{campaign}-{input_zbd.stem}.zbd"
+                base_name, parents = campaign_mission(input_zbd, zbd_dir)
 
-                zip_path = output_dir / zip_name
-                output_zbd = output_dir / zbd_name
-                print(name, campaign, input_zbd.name, game)
-                self.unzbd("textures", game, input_zbd, zip_path)
+                zip_path = output_dir / f"{base_name}.zip"
+                output_zbd = output_dir / f"{base_name}.zbd"
+                read_log = output_dir / f"{base_name}-log.log"
+
+                print(game, name, *parents, input_zbd.name)
+
+                self.unzbd("textures", game, input_zbd, zip_path, read_log)
                 self.rezbd("textures", game, zip_path, output_zbd)
                 self.compare(input_zbd, output_zbd)
 
@@ -207,20 +228,24 @@ class Tester:
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
 
+            output_dir = output_base / "reader"
+            output_dir.mkdir(exist_ok=True)
+
             if game == GAME_RC or game == GAME_CS:
                 rdr_glob = "zrdr.zbd"
             else:
                 rdr_glob = "reader*.zbd"
 
-            output_dir = output_base / "reader"
-            output_dir.mkdir(exist_ok=True)
-
             for input_zbd in sorted(zbd_dir.rglob(rdr_glob)):
-                zip_name, zbd_name, parents = campaign_mission(input_zbd, zbd_dir)
-                zip_path = output_dir / zip_name
-                output_zbd = output_dir / zbd_name
-                print(name, *parents, input_zbd.name, game)
-                self.unzbd("reader", game, input_zbd, zip_path)
+                base_name, parents = campaign_mission(input_zbd, zbd_dir)
+
+                zip_path = output_dir / f"{base_name}.zip"
+                output_zbd = output_dir / f"{base_name}.zbd"
+                read_log = output_dir / f"{base_name}-log.log"
+
+                print(game, name, *parents, input_zbd.name)
+
+                self.unzbd("reader", game, input_zbd, zip_path, read_log)
                 self.rezbd("reader", game, zip_path, output_zbd)
                 self.compare(input_zbd, output_zbd)
 
@@ -228,16 +253,22 @@ class Tester:
         print("--- MOTION ---")
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
+
             if game == GAME_RC or game == GAME_CS:
                 print("SKIPPING", name)
                 continue
 
-            print(name, "motion.zbd", game)
+            output_dir = output_base / "motion"
+            output_dir.mkdir(exist_ok=True)
 
             input_zbd = zbd_dir / "motion.zbd"
-            zip_path = output_base / "motion.zip"
-            output_zbd = output_base / "motion.zbd"
-            self.unzbd("motion", game, input_zbd, zip_path)
+            zip_path = output_dir / "motion.zip"
+            output_zbd = output_dir / "motion.zbd"
+            read_log = output_dir / "motion-read.log"
+
+            print(game, name, "motion")
+
+            self.unzbd("motion", game, input_zbd, zip_path, read_log)
             self.rezbd("motion", game, zip_path, output_zbd)
             self.compare(input_zbd, output_zbd)
 
@@ -245,16 +276,22 @@ class Tester:
         print("--- MECHLIB ---")
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
-            if game == GAME_RC or game == GAME_CS:
+            # if game == GAME_RC or game == GAME_CS:
+            if game != GAME_MW:
                 print("SKIPPING", name)
                 continue
 
-            print(name, "mechlib.zbd", game)
+            output_dir = output_base / "mechlib"
+            output_dir.mkdir(exist_ok=True)
 
             input_zbd = zbd_dir / "mechlib.zbd"
             zip_path = output_base / "mechlib.zip"
             output_zbd = output_base / "mechlib.zbd"
-            self.unzbd("mechlib", game, input_zbd, zip_path)
+            read_log = output_base / "mechlib-read.log"
+
+            print(game, name, "mechlib")
+
+            self.unzbd("mechlib", game, input_zbd, zip_path, read_log)
             self.rezbd("mechlib", game, zip_path, output_zbd)
             self.compare(input_zbd, output_zbd)
 
@@ -262,16 +299,26 @@ class Tester:
         print("--- GAMEZ ---")
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
+            # if game != GAME_RC:
+            #     print("SKIPPING", name)
+            #     continue
 
             output_dir = output_base / "gamez"
             output_dir.mkdir(exist_ok=True)
 
             for input_zbd in sorted(zbd_dir.rglob("gamez.zbd")):
-                zip_name, zbd_name, parents = campaign_mission(input_zbd, zbd_dir)
-                zip_path = output_dir / zip_name
-                output_zbd = output_dir / zbd_name
-                print(name, *parents, input_zbd.name, game)
-                self.unzbd("gamez", game, input_zbd, zip_path)
+                base_name, parents = campaign_mission(input_zbd, zbd_dir)
+                if game == GAME_CS and base_name == "c4-gamez":
+                    print("BORKED", GAME_CS, base_name)
+                    continue
+
+                zip_path = output_dir / f"{base_name}.zip"
+                output_zbd = output_dir / f"{base_name}.zbd"
+                read_log = output_dir / f"{base_name}-read.log"
+
+                print(game, name, *parents, input_zbd.name)
+
+                self.unzbd("gamez", game, input_zbd, zip_path, read_log)
                 self.rezbd("gamez", game, zip_path, output_zbd)
                 self.compare(input_zbd, output_zbd)
 
@@ -287,11 +334,15 @@ class Tester:
             output_dir.mkdir(exist_ok=True)
 
             for input_zbd in sorted(zbd_dir.rglob("anim.zbd")):
-                zip_name, zbd_name, parents = campaign_mission(input_zbd, zbd_dir)
-                zip_path = output_dir / zip_name
-                output_zbd = output_dir / zbd_name
-                print(name, *parents, input_zbd.name, game)
-                self.unzbd("anim", game, input_zbd, zip_path)
+                base_name, parents = campaign_mission(input_zbd, zbd_dir)
+
+                zip_path = output_dir / f"{base_name}.zip"
+                output_zbd = output_dir / f"{base_name}.zbd"
+                read_log = output_dir / f"{base_name}-read.log"
+
+                print(game, name, *parents, input_zbd.name)
+
+                self.unzbd("anim", game, input_zbd, zip_path, read_log)
                 self.rezbd("anim", game, zip_path, output_zbd)
                 self.compare(input_zbd, output_zbd)
 
@@ -302,19 +353,24 @@ class Tester:
             if game != GAME_RC:
                 continue
 
+            # maps are not in the zbd dir
             map_dir = zbd_dir.parent / "maps"
+
             output_dir = output_base / "zmap"
             output_dir.mkdir(exist_ok=True)
 
-            for input_zmap in sorted(map_dir.rglob("*.zmap"), key=lambda p: int(p.stem.strip("m"))):
-                json_name = f"{input_zmap.stem}.json"
-                zmap_name = input_zmap.name
+            for input_zmap in sorted(
+                map_dir.rglob("*.zmap"), key=lambda p: int(p.stem.strip("m"))
+            ):
+                base_name = input_zmap.stem
 
-                json_path = output_dir / json_name
-                output_zmap = output_dir / zmap_name
+                json_path = output_dir / f"{base_name}.json"
+                output_zmap = output_dir / f"{base_name}.zmap"
+                read_log = output_dir / f"{base_name}-read.log"
 
-                print(name, input_zmap.name, game)
-                self.unzbd("zmap", game, input_zmap, json_path)
+                print(game, name, base_name)
+
+                self.unzbd("zmap", game, input_zmap, json_path, read_log)
                 self.rezbd("zmap", game, json_path, output_zmap)
                 self.compare(input_zmap, output_zmap)
 
