@@ -3,6 +3,7 @@ use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
+use std::ops::Range;
 
 pub const SIGNATURE: u32 = 0x02971222;
 
@@ -21,7 +22,44 @@ struct MeshesInfoC {
 static_assert_size!(MeshesInfoC, 12);
 pub const MESHES_INFO_C_SIZE: u32 = MeshesInfoC::SIZE;
 
-pub fn read_meshes_info_sequential(read: &mut CountingReader<impl Read>) -> Result<(i32, i32)> {
+#[derive(Debug)]
+#[repr(transparent)]
+pub struct MeshIndexIter(Range<i32>);
+
+impl Iterator for MeshIndexIter {
+    type Item = (i32, i32);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let index = self.0.next()?;
+        let mut expected_index = index + 1;
+        if expected_index == self.0.end {
+            expected_index = -1;
+        }
+        Some((index, expected_index))
+    }
+}
+
+#[derive(Debug)]
+pub struct MeshIndices {
+    count: i32,
+    array_size: i32,
+}
+
+impl MeshIndices {
+    pub fn valid(&self) -> Range<i32> {
+        0..self.count
+    }
+
+    pub fn zeros(&self) -> MeshIndexIter {
+        MeshIndexIter(self.count..self.array_size)
+    }
+
+    pub fn array_size(self) -> i32 {
+        self.array_size
+    }
+}
+
+pub fn read_meshes_info_sequential(read: &mut CountingReader<impl Read>) -> Result<MeshIndices> {
     debug!(
         "Reading mesh info ({}) at {}",
         MeshesInfoC::SIZE,
@@ -38,14 +76,17 @@ pub fn read_meshes_info_sequential(read: &mut CountingReader<impl Read>) -> Resu
         read.prev + 8
     )?;
 
-    Ok((info.array_size, info.count))
+    Ok(MeshIndices {
+        array_size: info.array_size,
+        count: info.count,
+    })
 }
 
 pub fn write_meshes_info_sequential(
     write: &mut CountingWriter<impl Write>,
     array_size: i32,
     count: i32,
-) -> Result<()> {
+) -> Result<MeshIndexIter> {
     debug!(
         "Writing mesh info (rc, {}) at {}",
         MeshesInfoC::SIZE,
@@ -58,5 +99,5 @@ pub fn write_meshes_info_sequential(
     };
     trace!("{:#?}", info);
     write.write_struct(&info)?;
-    Ok(())
+    Ok(MeshIndexIter(count..array_size))
 }

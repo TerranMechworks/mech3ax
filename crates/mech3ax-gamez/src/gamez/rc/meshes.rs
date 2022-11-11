@@ -14,10 +14,11 @@ pub fn read_meshes(
     read: &mut CountingReader<impl Read>,
     end_offset: u32,
 ) -> Result<(Vec<MeshRc>, i32)> {
-    let (mesh_array_size, mesh_count) = read_meshes_info_sequential(read)?;
+    let mesh_indices = read_meshes_info_sequential(read)?;
 
     let mut prev_offset = read.offset;
-    let meshes = (0..mesh_count)
+    let meshes = mesh_indices
+        .valid()
         .map(|mesh_index| {
             let wrapped_mesh = read_mesh_info(read, mesh_index)?;
             let mesh_offset = read.read_u32()?;
@@ -27,12 +28,8 @@ pub fn read_meshes(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    for index in mesh_count..mesh_array_size {
-        read_mesh_info_zero(read, index)?;
-        let mut expected_index = index + 1;
-        if expected_index == mesh_array_size {
-            expected_index = -1;
-        }
+    for (mesh_index, expected_index) in mesh_indices.zeros() {
+        read_mesh_info_zero(read, mesh_index)?;
         let actual_index = read.read_i32()?;
         assert_that!("mesh index", actual_index == expected_index, read.prev)?;
     }
@@ -46,7 +43,7 @@ pub fn read_meshes(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    Ok((meshes, mesh_array_size))
+    Ok((meshes, mesh_indices.array_size()))
 }
 
 pub fn write_meshes(
@@ -56,19 +53,15 @@ pub fn write_meshes(
     array_size: i32,
 ) -> Result<()> {
     let count = assert_len!(i32, meshes.len(), "GameZ meshes")?;
-    write_meshes_info_sequential(write, array_size, count)?;
+    let mesh_indices_zero = write_meshes_info_sequential(write, array_size, count)?;
 
     for (mesh_index, (mesh, offset)) in meshes.iter().zip(offsets.iter().copied()).enumerate() {
         write_mesh_info(write, mesh, mesh_index)?;
         write.write_u32(offset)?;
     }
 
-    for mesh_index in count..array_size {
+    for (mesh_index, expected_index) in mesh_indices_zero {
         write_mesh_info_zero(write, mesh_index)?;
-        let mut expected_index = mesh_index + 1;
-        if expected_index == array_size {
-            expected_index = -1;
-        }
         write.write_i32(expected_index)?;
     }
 
