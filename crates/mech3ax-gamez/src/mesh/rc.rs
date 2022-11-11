@@ -36,6 +36,32 @@ struct MeshRcC {
 static_assert_size!(MeshRcC, 84);
 pub const MESH_C_SIZE: u32 = MeshRcC::SIZE;
 
+impl MeshRcC {
+    pub const ZERO: MeshRcC = MeshRcC {
+        file_ptr: 0,
+        unk04: 0,
+        parent_count: 0,
+        polygon_count: 0,
+        vertex_count: 0,
+        normal_count: 0,
+        morph_count: 0,
+        light_count: 0,
+        zero32: 0,
+        zero36: 0,
+        zero40: 0,
+        zero44: 0,
+        polygons_ptr: Ptr::NULL,
+        vertices_ptr: Ptr::NULL,
+        normals_ptr: Ptr::NULL,
+        lights_ptr: Ptr::NULL,
+        morphs_ptr: Ptr::NULL,
+        unk68: 0.0,
+        unk72: 0.0,
+        unk76: 0.0,
+        unk80: 0.0,
+    };
+}
+
 #[derive(Debug)]
 #[repr(C)]
 struct PolygonRcC {
@@ -540,104 +566,56 @@ pub fn write_mesh_data(
     Ok(())
 }
 
-pub fn read_mesh_infos_zero(
-    read: &mut CountingReader<impl Read>,
-    start: i32,
-    end: i32,
-) -> Result<()> {
-    for index in start..end {
-        debug!(
-            "Reading mesh info zero {} (rc, {}) at {}",
-            index,
-            MeshRcC::SIZE,
-            read.offset
-        );
-        let mesh: MeshRcC = read.read_struct()?;
+pub fn read_mesh_info_zero(read: &mut CountingReader<impl Read>, mesh_index: i32) -> Result<()> {
+    debug!(
+        "Reading mesh info zero {} (rc, {}) at {}",
+        mesh_index,
+        MeshRcC::SIZE,
+        read.offset
+    );
+    let mesh: MeshRcC = read.read_struct()?;
 
-        assert_that!("file_ptr", mesh.file_ptr == 0, read.prev + 0)?;
-        assert_that!("unk04", mesh.unk04 == 0, read.prev + 4)?;
-        assert_that!("parent_count", mesh.parent_count == 0, read.prev + 8)?;
-        assert_that!("polygon_count", mesh.polygon_count == 0, read.prev + 12)?;
-        assert_that!("vertex_count", mesh.vertex_count == 0, read.prev + 16)?;
-        assert_that!("normal_count", mesh.normal_count == 0, read.prev + 20)?;
-        assert_that!("morph_count", mesh.morph_count == 0, read.prev + 24)?;
-        assert_that!("light_count", mesh.light_count == 0, read.prev + 28)?;
-        assert_that!("zero32", mesh.zero32 == 0, read.prev + 32)?;
-        assert_that!("zero36", mesh.zero36 == 0, read.prev + 36)?;
-        assert_that!("zero40", mesh.zero40 == 0, read.prev + 40)?;
-        assert_that!("zero44", mesh.zero44 == 0, read.prev + 44)?;
-        assert_that!(
-            "polygons_ptr",
-            mesh.polygons_ptr == Ptr::NULL,
-            read.prev + 48
-        )?;
-        assert_that!(
-            "vertices_ptr",
-            mesh.vertices_ptr == Ptr::NULL,
-            read.prev + 52
-        )?;
-        assert_that!("normals_ptr", mesh.normals_ptr == Ptr::NULL, read.prev + 56)?;
-        assert_that!("lights_ptr", mesh.lights_ptr == Ptr::NULL, read.prev + 60)?;
-        assert_that!("morphs_ptr", mesh.morphs_ptr == Ptr::NULL, read.prev + 64)?;
-        assert_that!("unk68", mesh.unk68 == 0.0, read.prev + 68)?;
-        assert_that!("unk72", mesh.unk72 == 0.0, read.prev + 72)?;
-        assert_that!("unk76", mesh.unk76 == 0.0, read.prev + 76)?;
-        assert_that!("unk80", mesh.unk80 == 0.0, read.prev + 80)?;
+    assert_that!("file_ptr", mesh.file_ptr == 0, read.prev + 0)?;
+    assert_that!("unk04", mesh.unk04 == 0, read.prev + 4)?;
+    assert_that!("parent_count", mesh.parent_count == 0, read.prev + 8)?;
+    assert_that!("polygon_count", mesh.polygon_count == 0, read.prev + 12)?;
+    assert_that!("vertex_count", mesh.vertex_count == 0, read.prev + 16)?;
+    assert_that!("normal_count", mesh.normal_count == 0, read.prev + 20)?;
+    assert_that!("morph_count", mesh.morph_count == 0, read.prev + 24)?;
+    assert_that!("light_count", mesh.light_count == 0, read.prev + 28)?;
+    assert_that!("zero32", mesh.zero32 == 0, read.prev + 32)?;
+    assert_that!("zero36", mesh.zero36 == 0, read.prev + 36)?;
+    assert_that!("zero40", mesh.zero40 == 0, read.prev + 40)?;
+    assert_that!("zero44", mesh.zero44 == 0, read.prev + 44)?;
+    assert_that!(
+        "polygons_ptr",
+        mesh.polygons_ptr == Ptr::NULL,
+        read.prev + 48
+    )?;
+    assert_that!(
+        "vertices_ptr",
+        mesh.vertices_ptr == Ptr::NULL,
+        read.prev + 52
+    )?;
+    assert_that!("normals_ptr", mesh.normals_ptr == Ptr::NULL, read.prev + 56)?;
+    assert_that!("lights_ptr", mesh.lights_ptr == Ptr::NULL, read.prev + 60)?;
+    assert_that!("morphs_ptr", mesh.morphs_ptr == Ptr::NULL, read.prev + 64)?;
+    assert_that!("unk68", mesh.unk68 == 0.0, read.prev + 68)?;
+    assert_that!("unk72", mesh.unk72 == 0.0, read.prev + 72)?;
+    assert_that!("unk76", mesh.unk76 == 0.0, read.prev + 76)?;
+    assert_that!("unk80", mesh.unk80 == 0.0, read.prev + 80)?;
 
-        let mut expected_index = index + 1;
-        if expected_index == end {
-            expected_index = -1;
-        }
-        let actual_index = read.read_i32()?;
-        assert_that!("mesh index", actual_index == expected_index, read.prev)?;
-    }
     Ok(())
 }
 
-pub fn write_mesh_infos_zero(
-    write: &mut CountingWriter<impl Write>,
-    start: i32,
-    end: i32,
-) -> Result<()> {
-    let mesh = MeshRcC {
-        file_ptr: 0,
-        unk04: 0,
-        parent_count: 0,
-        polygon_count: 0,
-        vertex_count: 0,
-        normal_count: 0,
-        morph_count: 0,
-        light_count: 0,
-        zero32: 0,
-        zero36: 0,
-        zero40: 0,
-        zero44: 0,
-        polygons_ptr: Ptr::NULL,
-        vertices_ptr: Ptr::NULL,
-        normals_ptr: Ptr::NULL,
-        lights_ptr: Ptr::NULL,
-        morphs_ptr: Ptr::NULL,
-        unk68: 0.0,
-        unk72: 0.0,
-        unk76: 0.0,
-        unk80: 0.0,
-    };
-
-    for index in start..end {
-        debug!(
-            "Writing mesh info zero {} (rc, {}) at {}",
-            index,
-            MeshRcC::SIZE,
-            write.offset
-        );
-        write.write_struct(&mesh)?;
-
-        let mut expected_index = index + 1;
-        if expected_index == end {
-            expected_index = -1;
-        }
-        write.write_i32(expected_index)?;
-    }
+pub fn write_mesh_info_zero(write: &mut CountingWriter<impl Write>, mesh_index: i32) -> Result<()> {
+    debug!(
+        "Writing mesh info zero {} (rc, {}) at {}",
+        mesh_index,
+        MeshRcC::SIZE,
+        write.offset
+    );
+    write.write_struct(&MeshRcC::ZERO)?;
     Ok(())
 }
 

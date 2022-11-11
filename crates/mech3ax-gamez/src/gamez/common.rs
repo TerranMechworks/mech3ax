@@ -30,7 +30,7 @@ pub fn read_meshes_info_sequential(read: &mut CountingReader<impl Read>) -> Resu
     let info: MeshesInfoC = read.read_struct()?;
     trace!("{:#?}", info);
 
-    assert_that!("mesh array size", info.array_size > 0, read.prev + 0)?;
+    assert_that!("mesh array size", 1 <= info.array_size <= i32::MAX - 1, read.prev + 0)?;
     assert_that!("mesh count", info.count < info.array_size, read.prev + 4)?;
     assert_that!(
         "mesh index max",

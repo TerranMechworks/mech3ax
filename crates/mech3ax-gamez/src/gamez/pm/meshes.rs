@@ -2,8 +2,8 @@ use crate::gamez::common::{
     read_meshes_info_sequential, write_meshes_info_sequential, MESHES_INFO_C_SIZE,
 };
 use crate::mesh::ng::{
-    read_mesh_data, read_mesh_info, read_mesh_infos_zero, size_mesh, write_mesh_data,
-    write_mesh_info, write_mesh_infos_zero, MESH_C_SIZE,
+    read_mesh_data, read_mesh_info, read_mesh_info_zero, size_mesh, write_mesh_data,
+    write_mesh_info, write_mesh_info_zero, MESH_C_SIZE,
 };
 use mech3ax_api_types::MeshNg;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -27,7 +27,15 @@ pub fn read_meshes(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    read_mesh_infos_zero(read, mesh_count, mesh_array_size)?;
+    for index in mesh_count..mesh_array_size {
+        read_mesh_info_zero(read, index)?;
+        let mut expected_index = index + 1;
+        if expected_index == mesh_array_size {
+            expected_index = -1;
+        }
+        let actual_index = read.read_i32()?;
+        assert_that!("mesh index", actual_index == expected_index, read.prev)?;
+    }
 
     let meshes = meshes
         .into_iter()
@@ -55,7 +63,14 @@ pub fn write_meshes(
         write.write_u32(offset)?;
     }
 
-    write_mesh_infos_zero(write, count, array_size)?;
+    for mesh_index in count..array_size {
+        write_mesh_info_zero(write, mesh_index)?;
+        let mut expected_index = mesh_index + 1;
+        if expected_index == array_size {
+            expected_index = -1;
+        }
+        write.write_i32(expected_index)?;
+    }
 
     for (mesh_index, mesh) in meshes.iter().enumerate() {
         write_mesh_data(write, mesh, mesh_index)?;
