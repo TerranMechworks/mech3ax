@@ -382,7 +382,7 @@ fn assert_polygon(
         )?;
     }
 
-    assert_that!("field 04", -50 <= poly.unk04 <= 32, offset + 4)?;
+    assert_that!("field 04", -50 <= poly.unk04 <= 50, offset + 4)?;
     // must always have a vertices ptr
     assert_that!("vertices ptr", poly.vertices_ptr != Ptr::NULL, offset + 8)?;
     if has_normals {

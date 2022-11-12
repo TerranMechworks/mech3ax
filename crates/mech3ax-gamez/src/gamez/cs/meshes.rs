@@ -1,3 +1,4 @@
+use super::fixup::Fixup;
 use crate::gamez::common::{read_meshes_info_nonseq, write_meshes_info_nonseq, MESHES_INFO_C_SIZE};
 use crate::mesh::ng::{
     read_mesh_data, read_mesh_info_maybe, size_mesh, write_mesh_data, write_mesh_info,
@@ -11,6 +12,7 @@ use std::io::{Read, Write};
 pub fn read_meshes(
     read: &mut CountingReader<impl Read>,
     end_offset: u32,
+    fixup: Fixup,
 ) -> Result<Vec<Option<MeshNg>>> {
     let meshes_info = read_meshes_info_nonseq(read)?;
 
@@ -31,21 +33,21 @@ pub fn read_meshes(
                 Ok(Some((wrapped_mesh, mesh_offset, mesh_index)))
             }
             None => {
+                let expected_index = fixup.mesh_index_remap(expected_index);
                 let actual_index = read.read_i32()?;
-                log::debug!("zero mesh info: {} == {} at {}", actual_index, expected_index, read.prev);
-                // assert_that!("mesh index", actual_index == expected_index, read.prev)?;
+                assert_that!("mesh index", actual_index == expected_index, read.prev)?;
                 Ok(None)
             }
         })
         .collect::<Result<Vec<_>>>()?;
 
     assert_that!("mesh count", count == meshes_info.count, read.offset)?;
-    // assert_that!(
-    //     "mesh last index",
-    //     last_index == meshes_info.last_index,
-    //     read.offset
-    // )?;
-    log::debug!("mesh last index: {} == {}", last_index, meshes_info.last_index);
+    let last_index = fixup.last_index_remap(last_index);
+    assert_that!(
+        "mesh last index",
+        last_index == meshes_info.last_index,
+        read.offset
+    )?;
 
     let meshes = meshes
         .into_iter()
@@ -65,6 +67,7 @@ pub fn read_meshes(
 pub fn write_meshes(
     write: &mut CountingWriter<impl Write>,
     meshes: Vec<Option<(&MeshNg, u32)>>,
+    fixup: Fixup,
 ) -> Result<()> {
     let array_size = assert_len!(i32, meshes.len(), "GameZ meshes")?;
     let count = meshes.iter().filter(|mesh| mesh.is_some()).count() as i32;
@@ -73,6 +76,7 @@ pub fn write_meshes(
         .rposition(|mesh| mesh.is_some())
         .map(|i| i + 1)
         .unwrap_or(0) as i32;
+    let last_index = fixup.last_index_remap(last_index);
 
     let meshes_info = write_meshes_info_nonseq(write, array_size, count, last_index)?;
 
@@ -84,6 +88,7 @@ pub fn write_meshes(
             }
             None => {
                 write_mesh_info_zero(write, mesh_index)?;
+                let expected_index = fixup.mesh_index_remap(expected_index);
                 write.write_i32(expected_index)?;
             }
         }

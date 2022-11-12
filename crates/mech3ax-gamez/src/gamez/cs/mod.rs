@@ -1,3 +1,4 @@
+mod fixup;
 mod meshes;
 // mod nodes;
 
@@ -10,7 +11,7 @@ use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 #[repr(C)]
 struct HeaderCsC {
     signature: u32,        // 00
@@ -26,20 +27,6 @@ struct HeaderCsC {
 }
 static_assert_size!(HeaderCsC, 40);
 
-fn is_dodgy_unmodified_c4_gamez_read(header: &HeaderCsC) -> bool {
-    header.unk08 == 967279328
-        && header.node_array_size == 8289
-        && header.node_count == 8437
-        && header.nodes_offset == 5107144
-}
-
-fn is_dodgy_unmodified_c4_gamez_write(header: &HeaderCsC) -> bool {
-    header.unk08 == 967279328
-        && header.node_array_size == 8289
-        && header.node_count == 8289
-        && header.nodes_offset == 5107144
-}
-
 pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
     debug!(
         "Reading gamez header (cs, {}) at {}",
@@ -51,6 +38,8 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
 
     assert_that!("signature", header.signature == SIGNATURE, read.prev + 0)?;
     assert_that!("version", header.version == VERSION_CS, read.prev + 4)?;
+
+    let fixup = fixup::Fixup::read(&mut header);
     // unk08
     assert_that!("texture count", header.texture_count < 4096, read.prev + 12)?;
     assert_that!(
@@ -68,19 +57,11 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         header.meshes_offset < header.nodes_offset,
         read.prev + 24
     )?;
-    if is_dodgy_unmodified_c4_gamez_read(&header) {
-        log::info!("Applying C4 fixup");
-        // hack for dodgy c4 gamez.zbd, where the node array size is smaller
-        // than the node count (and correct)
-        header.node_count = header.node_array_size;
-        trace!("{:#?}", header);
-    }
     assert_that!(
         "node count",
         header.node_count <= header.node_array_size,
         read.prev + 28
     )?;
-
     assert_that!(
         "textures offset",
         read.offset == header.textures_offset,
@@ -98,7 +79,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         read.offset == header.meshes_offset,
         read.offset
     )?;
-    let meshes = meshes::read_meshes(read, header.nodes_offset)?;
+    let meshes = meshes::read_meshes(read, header.nodes_offset, fixup)?;
     assert_that!(
         "nodes offset",
         read.offset == header.nodes_offset,
@@ -152,11 +133,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) 
         node_count: gamez.metadata.node_data_count,
         nodes_offset,
     };
-    if is_dodgy_unmodified_c4_gamez_write(&header) {
-        // hack for dodgy c4 gamez.zbd, where the node array size is smaller
-        // than the node count (and correct)
-        header.node_count = 8437;
-    }
+    let fixup = fixup::Fixup::write(&mut header);
     trace!("{:#?}", header);
     write.write_struct(&header)?;
 
@@ -167,7 +144,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) 
         &gamez.materials,
         material_array_size,
     )?;
-    meshes::write_meshes(write, meshes)?;
+    meshes::write_meshes(write, meshes, fixup)?;
     // nodes::write_nodes(
     //     write,
     //     &gamez.nodes,
