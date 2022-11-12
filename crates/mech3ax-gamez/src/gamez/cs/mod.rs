@@ -98,7 +98,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         read.offset == header.meshes_offset,
         read.offset
     )?;
-    let (meshes, mesh_array_size) = meshes::read_meshes(read, header.nodes_offset)?;
+    let meshes = meshes::read_meshes(read, header.nodes_offset)?;
     assert_that!(
         "nodes offset",
         read.offset == header.nodes_offset,
@@ -111,7 +111,6 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
     let metadata = GameZCsMetadata {
         gamez_header_unk08: header.unk08,
         material_array_size,
-        meshes_array_size: mesh_array_size,
         node_array_size: header.node_array_size,
         node_data_count: header.node_count,
         texture_ptrs,
@@ -128,15 +127,13 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
 pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) -> Result<()> {
     let texture_count = assert_len!(u32, gamez.textures.len(), "GameZ textures")?;
     let material_array_size = gamez.metadata.material_array_size;
-    let meshes_array_size = gamez.metadata.meshes_array_size;
     // let node_count = assert_len_u32(gamez.nodes.len(), "GameZ nodes")?;
 
     let textures_offset = HeaderCsC::SIZE;
     let materials_offset = textures_offset + textures::size_texture_infos(texture_count);
     let meshes_offset =
         materials_offset + materials::size_materials(material_array_size, &gamez.materials);
-    let (nodes_offset, mesh_offsets) =
-        meshes::size_meshes(meshes_offset, meshes_array_size, &gamez.meshes);
+    let (nodes_offset, meshes) = meshes::size_meshes(meshes_offset, &gamez.meshes);
 
     debug!(
         "Writing gamez header (cs, {}) at {}",
@@ -170,7 +167,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) 
         &gamez.materials,
         material_array_size,
     )?;
-    meshes::write_meshes(write, &gamez.meshes, &mesh_offsets, meshes_array_size)?;
+    meshes::write_meshes(write, meshes)?;
     // nodes::write_nodes(
     //     write,
     //     &gamez.nodes,

@@ -285,7 +285,7 @@ fn gamez_cs(opts: ZipOpts) -> Result<()> {
     let metadata: GameZCsMetadata = zip_json(&mut zip, "metadata.json")?;
     let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
     let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
-    let meshes: Vec<MeshNg> = zip_json(&mut zip, "meshes.json")?;
+    let meshes: Vec<Option<MeshNg>> = zip_json(&mut zip, "meshes.json")?;
     // let nodes: Vec<NodeCs> = zip_json(&mut zip, "nodes.json")?;
     let nodes: Vec<u8> = zip_read(&mut zip, "nodes.bin")?;
 

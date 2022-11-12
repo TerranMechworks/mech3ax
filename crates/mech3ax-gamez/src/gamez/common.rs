@@ -14,10 +14,10 @@ pub const VERSION_CS: u32 = 42;
 
 #[derive(Debug)]
 #[repr(C)]
-struct MeshesInfoC {
-    array_size: i32, // 00
-    count: i32,      // 04
-    index_max: i32,  // 08
+pub struct MeshesInfoC {
+    pub array_size: i32, // 00
+    pub count: i32,      // 04
+    pub last_index: i32, // 08
 }
 static_assert_size!(MeshesInfoC, 12);
 pub const MESHES_INFO_C_SIZE: u32 = MeshesInfoC::SIZE;
@@ -41,8 +41,9 @@ impl Iterator for MeshIndexIter {
 
 #[derive(Debug)]
 pub struct MeshIndices {
-    count: i32,
-    array_size: i32,
+    pub count: i32,
+    pub array_size: i32,
+    pub last_index: i32,
 }
 
 impl MeshIndices {
@@ -72,14 +73,33 @@ pub fn read_meshes_info_sequential(read: &mut CountingReader<impl Read>) -> Resu
     assert_that!("mesh count", info.count < info.array_size, read.prev + 4)?;
     assert_that!(
         "mesh index max",
-        info.index_max == info.count,
+        info.last_index == info.count,
         read.prev + 8
     )?;
 
     Ok(MeshIndices {
         array_size: info.array_size,
         count: info.count,
+        last_index: info.last_index,
     })
+}
+
+impl MeshesInfoC {
+    pub fn iter(&self) -> MeshIndexIter {
+        MeshIndexIter(0..self.array_size)
+    }
+}
+
+pub fn read_meshes_info_nonseq(read: &mut CountingReader<impl Read>) -> Result<MeshesInfoC> {
+    debug!(
+        "Reading mesh info ({}) at {}",
+        MeshesInfoC::SIZE,
+        read.offset
+    );
+    let info: MeshesInfoC = read.read_struct()?;
+    trace!("{:#?}", info);
+    assert_that!("mesh array size", 1 <= info.array_size <= i32::MAX - 1, read.prev + 0)?;
+    Ok(info)
 }
 
 pub fn write_meshes_info_sequential(
@@ -95,9 +115,31 @@ pub fn write_meshes_info_sequential(
     let info = MeshesInfoC {
         array_size,
         count,
-        index_max: count,
+        last_index: count,
     };
     trace!("{:#?}", info);
     write.write_struct(&info)?;
     Ok(MeshIndexIter(count..array_size))
+}
+
+pub fn write_meshes_info_nonseq(
+    write: &mut CountingWriter<impl Write>,
+    array_size: i32,
+    count: i32,
+    last_index: i32,
+) -> Result<MeshesInfoC> {
+    debug!(
+        "Writing mesh info (rc, {}) at {}",
+        MeshesInfoC::SIZE,
+        write.offset
+    );
+    assert_that!("mesh array size", 1 <= array_size <= i32::MAX - 1, write.offset)?;
+    let info = MeshesInfoC {
+        array_size,
+        count,
+        last_index,
+    };
+    trace!("{:#?}", info);
+    write.write_struct(&info)?;
+    Ok(info)
 }

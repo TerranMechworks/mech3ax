@@ -198,6 +198,27 @@ pub fn read_mesh_info(
     Ok(wrapped)
 }
 
+pub fn read_mesh_info_maybe(
+    read: &mut CountingReader<impl Read>,
+    mesh_index: i32,
+) -> Result<Option<WrappedMeshNg>> {
+    debug!(
+        "Reading mesh info {} (ng, {}) at {}",
+        mesh_index,
+        MeshNgC::SIZE,
+        read.offset
+    );
+    let mesh: MeshNgC = read.read_struct()?;
+    trace!("{:#?}", mesh);
+    if mesh.parent_count > 0 {
+        let wrapped = assert_mesh_info(mesh, read.prev)?;
+        Ok(Some(wrapped))
+    } else {
+        assert_mesh_info_zero(mesh, read.prev)?;
+        Ok(None)
+    }
+}
+
 fn assert_mesh_info(mesh: MeshNgC, offset: u32) -> Result<WrappedMeshNg> {
     let file_ptr = assert_that!("file ptr", bool mesh.file_ptr, offset + 0)?;
     assert_that!("field 04", mesh.unk04 in [0, 1, 2], offset + 4)?;
@@ -529,7 +550,7 @@ pub fn read_mesh_data(
 pub fn write_mesh_info(
     write: &mut CountingWriter<impl Write>,
     mesh: &MeshNg,
-    mesh_index: usize,
+    mesh_index: i32,
 ) -> Result<()> {
     debug!(
         "Writing mesh info {} (ng, {}) at {}",
@@ -737,41 +758,35 @@ pub fn read_mesh_info_zero(read: &mut CountingReader<impl Read>, mesh_index: i32
         read.offset
     );
     let mesh: MeshNgC = read.read_struct()?;
+    assert_mesh_info_zero(mesh, read.prev)
+}
 
-    assert_that!("file_ptr", mesh.file_ptr == 0, read.prev + 0)?;
-    assert_that!("unk04", mesh.unk04 == 0, read.prev + 4)?;
-    assert_that!("unk08", mesh.unk08 == 0, read.prev + 8)?;
-    assert_that!("parent_count", mesh.parent_count == 0, read.prev + 12)?;
-    assert_that!("polygon_count", mesh.polygon_count == 0, read.prev + 16)?;
-    assert_that!("vertex_count", mesh.vertex_count == 0, read.prev + 20)?;
-    assert_that!("normal_count", mesh.normal_count == 0, read.prev + 24)?;
-    assert_that!("morph_count", mesh.morph_count == 0, read.prev + 28)?;
-    assert_that!("light_count", mesh.light_count == 0, read.prev + 32)?;
-    assert_that!("zero36", mesh.zero36 == 0, read.prev + 36)?;
-    assert_that!("unk40", mesh.unk40 == 0.0, read.prev + 40)?;
-    assert_that!("unk44", mesh.unk44 == 0.0, read.prev + 44)?;
-    assert_that!("zero48", mesh.zero48 == 0, read.prev + 48)?;
-    assert_that!(
-        "polygons_ptr",
-        mesh.polygons_ptr == Ptr::NULL,
-        read.prev + 52
-    )?;
-    assert_that!(
-        "vertices_ptr",
-        mesh.vertices_ptr == Ptr::NULL,
-        read.prev + 56
-    )?;
-    assert_that!("normals_ptr", mesh.normals_ptr == Ptr::NULL, read.prev + 60)?;
-    assert_that!("lights_ptr", mesh.lights_ptr == Ptr::NULL, read.prev + 64)?;
-    assert_that!("morphs_ptr", mesh.morphs_ptr == Ptr::NULL, read.prev + 68)?;
-    assert_that!("unk72", mesh.unk72 == 0.0, read.prev + 72)?;
-    assert_that!("unk76", mesh.unk76 == 0.0, read.prev + 76)?;
-    assert_that!("unk80", mesh.unk80 == 0.0, read.prev + 80)?;
-    assert_that!("unk84", mesh.unk84 == 0.0, read.prev + 84)?;
-    assert_that!("zero88", mesh.zero88 == 0, read.prev + 88)?;
-    assert_that!("texture_count", mesh.texture_count == 0, read.prev + 92)?;
-    assert_that!("texture_ptr", mesh.texture_ptr == Ptr::NULL, read.prev + 96)?;
-
+fn assert_mesh_info_zero(mesh: MeshNgC, offset: u32) -> Result<()> {
+    assert_that!("file_ptr", mesh.file_ptr == 0, offset + 0)?;
+    assert_that!("unk04", mesh.unk04 == 0, offset + 4)?;
+    assert_that!("unk08", mesh.unk08 == 0, offset + 8)?;
+    assert_that!("parent_count", mesh.parent_count == 0, offset + 12)?;
+    assert_that!("polygon_count", mesh.polygon_count == 0, offset + 16)?;
+    assert_that!("vertex_count", mesh.vertex_count == 0, offset + 20)?;
+    assert_that!("normal_count", mesh.normal_count == 0, offset + 24)?;
+    assert_that!("morph_count", mesh.morph_count == 0, offset + 28)?;
+    assert_that!("light_count", mesh.light_count == 0, offset + 32)?;
+    assert_that!("zero36", mesh.zero36 == 0, offset + 36)?;
+    assert_that!("unk40", mesh.unk40 == 0.0, offset + 40)?;
+    assert_that!("unk44", mesh.unk44 == 0.0, offset + 44)?;
+    assert_that!("zero48", mesh.zero48 == 0, offset + 48)?;
+    assert_that!("polygons_ptr", mesh.polygons_ptr == Ptr::NULL, offset + 52)?;
+    assert_that!("vertices_ptr", mesh.vertices_ptr == Ptr::NULL, offset + 56)?;
+    assert_that!("normals_ptr", mesh.normals_ptr == Ptr::NULL, offset + 60)?;
+    assert_that!("lights_ptr", mesh.lights_ptr == Ptr::NULL, offset + 64)?;
+    assert_that!("morphs_ptr", mesh.morphs_ptr == Ptr::NULL, offset + 68)?;
+    assert_that!("unk72", mesh.unk72 == 0.0, offset + 72)?;
+    assert_that!("unk76", mesh.unk76 == 0.0, offset + 76)?;
+    assert_that!("unk80", mesh.unk80 == 0.0, offset + 80)?;
+    assert_that!("unk84", mesh.unk84 == 0.0, offset + 84)?;
+    assert_that!("zero88", mesh.zero88 == 0, offset + 88)?;
+    assert_that!("texture_count", mesh.texture_count == 0, offset + 92)?;
+    assert_that!("texture_ptr", mesh.texture_ptr == Ptr::NULL, offset + 96)?;
     Ok(())
 }
 

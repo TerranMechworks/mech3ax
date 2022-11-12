@@ -55,7 +55,7 @@ pub fn write_meshes(
     let count = assert_len!(i32, meshes.len(), "GameZ meshes")?;
     let mesh_indices_zero = write_meshes_info_sequential(write, array_size, count)?;
 
-    for (mesh_index, (mesh, offset)) in meshes.iter().zip(offsets.iter().copied()).enumerate() {
+    for (mesh_index, (mesh, offset)) in (0i32..).zip(meshes.iter().zip(offsets.iter().copied())) {
         write_mesh_info(write, mesh, mesh_index)?;
         write.write_u32(offset)?;
     }
