@@ -34,6 +34,12 @@ pub fn write_materials(
         let pointer = if let Material::Textured(textured) = material {
             // reconstruct the texture index
             let texture_index = find_texture_index_by_name(textures, &textured.texture)?;
+            trace!(
+                "Material {} texture `{}` index: {}",
+                index,
+                textured.texture,
+                texture_index
+            );
             Some(texture_index)
         } else {
             None

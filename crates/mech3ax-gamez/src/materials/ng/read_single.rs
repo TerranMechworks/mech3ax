@@ -110,6 +110,12 @@ pub fn read_cycle(
             let texture_index = u32_to_usize(mat.pointer);
             assert_that!("texture index", texture_index < textures.len(), read.offset)?;
             let texture = textures[texture_index].clone();
+            trace!(
+                "Material {} texture `{}` index: {}",
+                index,
+                texture,
+                texture_index
+            );
 
             let cycle = if let Some(info_ptr) = mat.cycle_ptr {
                 assert_that!("cycle info ptr", info_ptr != 0, read.prev + 0)?;
