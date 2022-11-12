@@ -207,11 +207,10 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                             zip_json(zip, options, &name, &root)
                         }
                         GameType::PM => {
-                            // let root = mechlib::pm::read_model(&mut read).with_context(|| {
-                            //     format!("Failed to read mechlib model for `{}`", original)
-                            // })?;
-                            // zip_json(zip, options, &name, &root)
-                            Err(mech3ax_common::assert_with_msg!("TODO").into())
+                            let root = mechlib::pm::read_model(&mut read).with_context(|| {
+                                format!("Failed to read mechlib model for `{}`", original)
+                            })?;
+                            zip_json(zip, options, &name, &root)
                         }
                         GameType::RC => unreachable!("Recoil does not have mechlib"),
                         GameType::CS => unreachable!("Crimson Skies does not have mechlib"),

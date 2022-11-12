@@ -6,7 +6,7 @@ use mech3ax_api_types::saves::AnimActivation;
 use mech3ax_api_types::{
     AnimMetadata, ArchiveEntry, GameZCsData, GameZCsMetadata, GameZMwData, GameZMwMetadata,
     GameZPmData, GameZPmMetadata, GameZRcData, GameZRcMetadata, MapRc, Material, MeshMw, MeshNg,
-    MeshRc, ModelMw, Motion, NodeMw, Script, TextureManifest,
+    MeshRc, ModelMw, ModelPm, Motion, NodeMw, Script, TextureManifest,
 };
 use mech3ax_archive::{write_archive, Mode, Version};
 use mech3ax_common::io_ext::CountingWriter;
@@ -184,11 +184,10 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                             })?;
                         }
                         GameType::PM => {
-                            // let mut model: ModelPm = zip_json(zip, &name)?;
-                            // mechlib::pm::write_model(&mut buf, &mut model).with_context(|| {
-                            //     format!("Failed to write mechlib model for `{}`", original)
-                            // })?;
-                            return Err(mech3ax_common::assert_with_msg!("TODO").into());
+                            let mut model: ModelPm = zip_json(zip, &name)?;
+                            mechlib::pm::write_model(&mut buf, &mut model).with_context(|| {
+                                format!("Failed to write mechlib model for `{}`", original)
+                            })?;
                         }
                         GameType::RC => unreachable!("Recoil does not have mechlib"),
                         GameType::CS => unreachable!("Crimson Skies does not have mechlib"),
