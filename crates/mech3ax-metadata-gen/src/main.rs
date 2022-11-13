@@ -45,7 +45,7 @@ fn main() {
     // gamez mesh
     resolver.push_struct::<api::UvCoord>();
     resolver.push_struct::<api::PolygonMw>();
-    resolver.push_struct::<api::MeshLightMw>();
+    resolver.push_struct::<api::MeshLight>();
     resolver.push_struct::<api::MeshMw>();
     // gamez nodes
     resolver.push_struct::<api::AreaPartition>();

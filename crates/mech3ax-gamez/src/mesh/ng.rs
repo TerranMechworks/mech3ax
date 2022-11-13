@@ -2,8 +2,8 @@
 use super::common::*;
 use log::{debug, trace};
 use mech3ax_api_types::{
-    static_assert_size, Color, MeshLightNg, MeshNg, MeshTexture, PolygonFlags, PolygonNg,
-    PolygonTextureNg, ReprSize as _, UvCoord, Vec3,
+    static_assert_size, Color, MeshNg, MeshTexture, PolygonFlags, PolygonNg, PolygonTextureNg,
+    ReprSize as _, UvCoord, Vec3,
 };
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, bool_c, Result};
@@ -127,31 +127,6 @@ impl From<&PolygonFlags> for PolygonBitFlags {
         bitflags
     }
 }
-
-#[derive(Debug)]
-#[repr(C)]
-struct LightNgC {
-    unk00: u32,       // 00
-    unk04: u32,       // 04
-    unk08: f32,       // 08
-    extra_count: u32, // 12
-    unk16: u32,       // 16
-    unk20: u32,       // 20
-    unk24: Ptr,       // 24
-    unk28: f32,       // 28
-    unk32: f32,       // 32
-    unk36: f32,       // 36
-    unk40: Ptr,       // 40
-    unk44: Ptr,       // 44
-    unk48: f32,       // 48
-    unk52: f32,       // 52
-    unk56: f32,       // 56
-    unk60: f32,       // 60
-    unk64: f32,       // 64
-    unk68: f32,       // 68
-    unk72: f32,       // 72
-}
-static_assert_size!(LightNgC, 76);
 
 pub struct WrappedMeshNg {
     pub mesh: MeshNg,
@@ -304,50 +279,6 @@ fn assert_mesh_info(mesh: MeshNgC, offset: u32) -> Result<WrappedMeshNg> {
         light_count: mesh.light_count,
         texture_count: mesh.texture_count,
     })
-}
-
-fn read_lights(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<MeshLightNg>> {
-    let lights = (0..count)
-        .map(|index| {
-            trace!(
-                "Reading light {} (ng, {}) at {}",
-                index,
-                LightNgC::SIZE,
-                read.offset
-            );
-            let light: LightNgC = read.read_struct()?;
-            trace!("{:#?}", light);
-            Ok(light)
-        })
-        .collect::<Result<Vec<LightNgC>>>()?;
-
-    lights
-        .into_iter()
-        .map(|light| {
-            let extra = read_vec3s(read, light.extra_count)?;
-            Ok(MeshLightNg {
-                unk00: light.unk00,
-                unk04: light.unk04,
-                unk08: light.unk08,
-                extra,
-                unk16: light.unk16,
-                unk20: light.unk20,
-                unk24: light.unk24.0,
-                unk28: light.unk28,
-                unk32: light.unk32,
-                unk36: light.unk36,
-                unk40: light.unk40.0,
-                unk44: light.unk44.0,
-                unk48: light.unk48,
-                unk52: light.unk52,
-                unk56: light.unk56,
-                unk60: light.unk60,
-                unk64: light.unk64,
-                unk68: light.unk68,
-                unk72: light.unk72,
-            })
-        })
-        .collect::<Result<Vec<_>>>()
 }
 
 fn assert_polygon(
@@ -596,44 +527,6 @@ pub fn write_mesh_info(
     Ok(())
 }
 
-fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[MeshLightNg]) -> Result<()> {
-    for (index, light) in lights.iter().enumerate() {
-        trace!(
-            "Writing light {} (ng, {}) at {}",
-            index,
-            LightNgC::SIZE,
-            write.offset
-        );
-        let extra_count = assert_len!(u32, light.extra.len(), "light extra")?;
-        let light = LightNgC {
-            unk00: light.unk00,
-            unk04: light.unk04,
-            unk08: light.unk08,
-            extra_count,
-            unk16: light.unk16,
-            unk20: light.unk20,
-            unk24: Ptr(light.unk24),
-            unk28: light.unk28,
-            unk32: light.unk32,
-            unk36: light.unk36,
-            unk40: Ptr(light.unk40),
-            unk44: Ptr(light.unk44),
-            unk48: light.unk48,
-            unk52: light.unk52,
-            unk56: light.unk56,
-            unk60: light.unk60,
-            unk64: light.unk64,
-            unk68: light.unk68,
-            unk72: light.unk72,
-        };
-        write.write_struct(&light)?;
-    }
-    for light in lights {
-        write_vec3s(write, &light.extra)?;
-    }
-    Ok(())
-}
-
 fn write_polygons(
     write: &mut CountingWriter<impl Write>,
     polygons: &[PolygonNg],
@@ -808,7 +701,7 @@ pub fn size_mesh(mesh: &MeshNg) -> u32 {
     let mut size =
         Vec3::SIZE * (mesh.vertices.len() + mesh.normals.len() + mesh.morphs.len()) as u32;
     for light in &mesh.lights {
-        size += LightNgC::SIZE + Vec3::SIZE * light.extra.len() as u32;
+        size += LightC::SIZE + Vec3::SIZE * light.extra.len() as u32;
     }
     for polygon in &mesh.polygons {
         let normal_indices_len = polygon

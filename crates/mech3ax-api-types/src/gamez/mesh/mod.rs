@@ -31,34 +31,11 @@ pub struct PolygonMw {
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct MeshLightMw {
-    pub unk00: u32,
-    pub unk04: u32,
-    pub unk08: u32,
-    pub extra: Vec<Vec3>,
-    pub unk16: u32,
-    pub unk20: u32,
-    pub unk24: u32,
-    pub unk28: f32,
-    pub unk32: f32,
-    pub unk36: f32,
-    pub unk40: f32,
-    pub ptr: u32,
-    pub unk48: f32,
-    pub unk52: f32,
-    pub unk56: f32,
-    pub unk60: f32,
-    pub unk64: f32,
-    pub unk68: f32,
-    pub unk72: f32,
-}
-
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct MeshMw {
     pub vertices: Vec<Vec3>,
     pub normals: Vec<Vec3>,
     pub morphs: Vec<Vec3>,
-    pub lights: Vec<MeshLightMw>,
+    pub lights: Vec<MeshLight>,
     pub polygons: Vec<PolygonMw>,
     pub polygons_ptr: u32,
     pub vertices_ptr: u32,
@@ -90,23 +67,19 @@ pub struct PolygonFlags {
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct MeshLightNg {
+pub struct MeshLight {
     pub unk00: u32,
     pub unk04: u32,
     pub unk08: f32,
     pub extra: Vec<Vec3>,
-    pub unk16: u32,
-    pub unk20: u32,
     pub unk24: u32,
-    pub unk28: f32,
-    pub unk32: f32,
-    pub unk36: f32,
-    pub unk40: u32,
-    pub unk44: u32,
+    pub color: Color,
+    pub flags: u16,
+    pub ptr: u32,
     pub unk48: f32,
     pub unk52: f32,
     pub unk56: f32,
-    pub unk60: f32,
+    pub unk60: u32,
     pub unk64: f32,
     pub unk68: f32,
     pub unk72: f32,
@@ -150,7 +123,7 @@ pub struct MeshNg {
     pub vertices: Vec<Vec3>,
     pub normals: Vec<Vec3>,
     pub morphs: Vec<Vec3>,
-    pub lights: Vec<MeshLightNg>,
+    pub lights: Vec<MeshLight>,
     pub polygons: Vec<PolygonNg>,
     pub textures: Vec<MeshTexture>,
     pub polygons_ptr: u32,
@@ -192,7 +165,7 @@ pub struct MeshRc {
     pub vertices: Vec<Vec3>,
     pub normals: Vec<Vec3>,
     pub morphs: Vec<Vec3>,
-    pub lights: Vec<MeshLightMw>,
+    pub lights: Vec<MeshLight>,
     pub polygons: Vec<PolygonRc>,
     pub polygons_ptr: u32,
     pub vertices_ptr: u32,

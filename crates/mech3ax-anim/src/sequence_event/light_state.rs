@@ -49,7 +49,6 @@ impl ScriptObject for LightState {
         })?;
         let expected_name =
             anim_def.light_from_index(light_state.light_index as usize, read.prev + 32)?;
-        #[allow(unused_parens)]
         assert_that!(
             "light state name",
             &actual_name == &expected_name,
