@@ -149,7 +149,7 @@ fn assert_light(light: &LightC, offset: u32) -> Result<LightFlags> {
             offset + 42
         )
     })?;
-    assert_that!("light flags", flags != LightFlags::INACTIVE, offset + 42)?;
+    // assert_that!("light flags", flags != LightFlags::INACTIVE, offset + 42)?;
 
     assert_that!("light field 44", light.ptr != Ptr::NULL, offset + 44)?;
     // RC: 0.0/889, 40.0/835, 50.0/1144, 100.0/404
