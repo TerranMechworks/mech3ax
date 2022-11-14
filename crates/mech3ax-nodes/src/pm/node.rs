@@ -9,7 +9,7 @@ use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
 use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
-use mech3ax_debug::Ascii;
+use mech3ax_debug::{Ascii, Hex, Ptr};
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
 
@@ -17,12 +17,12 @@ use std::io::{Read, Write};
 #[repr(C)]
 struct NodePmC {
     name: Ascii<36>,               // 000
-    flags: u32,                    // 036
+    flags: Hex<u32>,               // 036
     zero040: u32,                  // 040
     unk044: u32,                   // 044
     zone_id: u32,                  // 048
     node_type: u32,                // 052
-    data_ptr: u32,                 // 056
+    data_ptr: Ptr,                 // 056
     mesh_index: i32,               // 060
     environment_data: u32,         // 064
     action_priority: u32,          // 068
@@ -30,8 +30,8 @@ struct NodePmC {
     area_partition: AreaPartition, // 076
     parent_count: u16,             // 084
     children_count: u16,           // 086
-    parent_array_ptr: u32,         // 088
-    children_array_ptr: u32,       // 092
+    parent_array_ptr: Ptr,         // 088
+    children_array_ptr: Ptr,       // 092
     zero096: u32,                  // 096
     zero100: u32,                  // 100
     zero104: u32,                  // 104
@@ -54,9 +54,9 @@ fn assert_node(node: NodePmC, offset: u32) -> Result<(NodeType, NodeVariantsPm)>
     // invariants for every node type
 
     let name = assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name.0))?;
-    let flags = NodeBitFlags::from_bits(node.flags).ok_or_else(|| {
+    let flags = NodeBitFlags::from_bits(node.flags.0).ok_or_else(|| {
         assert_with_msg!(
-            "Expected valid node flags, but was 0x{:08X} (at {})",
+            "Expected valid node flags, but was {:?} (at {})",
             node.flags,
             offset + 36
         )
@@ -111,9 +111,17 @@ fn assert_node(node: NodePmC, offset: u32) -> Result<(NodeType, NodeVariantsPm)>
     // can only have one parent
     let has_parent = assert_that!("parent count", bool node.parent_count as _, offset + 84)?;
     if has_parent {
-        assert_that!("parent array ptr", node.parent_array_ptr != 0, offset + 88)?;
+        assert_that!(
+            "parent array ptr",
+            node.parent_array_ptr != Ptr::NULL,
+            offset + 88
+        )?;
     } else {
-        assert_that!("parent array ptr", node.parent_array_ptr == 0, offset + 88)?;
+        assert_that!(
+            "parent array ptr",
+            node.parent_array_ptr == Ptr::NULL,
+            offset + 88
+        )?;
     };
 
     // upper bound is arbitrary
@@ -121,13 +129,13 @@ fn assert_node(node: NodePmC, offset: u32) -> Result<(NodeType, NodeVariantsPm)>
     if node.children_count == 0 {
         assert_that!(
             "children array ptr",
-            node.children_array_ptr == 0,
+            node.children_array_ptr == Ptr::NULL,
             offset + 92
         )?;
     } else {
         assert_that!(
             "children array ptr",
-            node.children_array_ptr != 0,
+            node.children_array_ptr != Ptr::NULL,
             offset + 92
         )?;
     };
@@ -137,13 +145,13 @@ fn assert_node(node: NodePmC, offset: u32) -> Result<(NodeType, NodeVariantsPm)>
         flags,
         unk044: node.unk044,
         // zone_id: node.zone_id,
-        data_ptr: node.data_ptr,
+        data_ptr: node.data_ptr.0,
         mesh_index: node.mesh_index,
         // area_partition,
         has_parent,
-        parent_array_ptr: node.parent_array_ptr,
+        parent_array_ptr: node.parent_array_ptr.0,
         children_count: node.children_count,
-        children_array_ptr: node.children_array_ptr,
+        children_array_ptr: node.children_array_ptr.0,
         unk112: node.unk112,
         unk116: node.unk116,
         unk140: node.unk140,
@@ -212,13 +220,13 @@ fn write_variant(
 
     let node = NodePmC {
         name,
-        flags: variant.flags.bits(),
+        flags: Hex(variant.flags.bits()),
         zero040: 0,
         unk044: variant.unk044,
         // zone_id: variant.zone_id,
         zone_id: ZONE_DEFAULT,
         node_type: node_type as u32,
-        data_ptr: variant.data_ptr,
+        data_ptr: Ptr(variant.data_ptr),
         mesh_index: variant.mesh_index,
         environment_data: 0,
         action_priority: 1,
@@ -226,8 +234,8 @@ fn write_variant(
         area_partition: AreaPartition::DEFAULT_PM,
         parent_count: bool_c!(variant.has_parent),
         children_count: variant.children_count,
-        parent_array_ptr: variant.parent_array_ptr,
-        children_array_ptr: variant.children_array_ptr,
+        parent_array_ptr: Ptr(variant.parent_array_ptr),
+        children_array_ptr: Ptr(variant.children_array_ptr),
         zero096: 0,
         zero100: 0,
         zero104: 0,
