@@ -8,6 +8,7 @@ use tera::Tera;
 macro_rules! tera_unwrap {
     ($stmt:expr) => {{
         if let Err(e) = $stmt {
+            // with tera, the error source is very useful for debugging
             if let Some(source) = e.source() {
                 eprintln!("{}", source);
             }

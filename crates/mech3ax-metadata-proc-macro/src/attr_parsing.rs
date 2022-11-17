@@ -1,5 +1,5 @@
 use mech3ax_metadata_types::DefaultHandling;
-use syn::{AttrStyle, Attribute, Error, Lit, Meta, NestedMeta, Result};
+use syn::{AttrStyle, Attribute, Error, Lit, Meta, NestedMeta, Path, Result};
 
 fn find_attr<'a, 'b>(attrs: &'a [Attribute], ident: &'b str) -> Option<&'a Attribute> {
     attrs
@@ -51,15 +51,10 @@ pub fn parse_serde_attr(attrs: &[Attribute]) -> Result<DefaultHandling> {
     Ok(DefaultHandling::Normal)
 }
 
-fn parse_generic_param(nested: NestedMeta) -> Result<(String, String)> {
+fn parse_generic_param(nested: NestedMeta) -> Result<(Path, String)> {
     match nested {
         // Parse `#[generic(foo = "foo"...)]`
         NestedMeta::Meta(Meta::NameValue(nv)) => {
-            let ident = nv
-                .path
-                .get_ident()
-                .ok_or_else(|| Error::new_spanned(&nv, "Expected #[generic(foo = \"foo\"...)]"))?;
-            let name = ident.to_string();
             let value = match nv.lit {
                 Lit::Str(litstr) => Ok(litstr.value()),
                 other => Err(Error::new_spanned(
@@ -67,7 +62,8 @@ fn parse_generic_param(nested: NestedMeta) -> Result<(String, String)> {
                     "Expected #[generic(foo = \"foo\"...)]",
                 )),
             }?;
-            Ok((name, value))
+            let path = nv.path;
+            Ok((path, value))
         }
         other => Err(Error::new_spanned(
             other,
@@ -76,7 +72,7 @@ fn parse_generic_param(nested: NestedMeta) -> Result<(String, String)> {
     }
 }
 
-pub fn parse_generic_attr(attrs: &[Attribute]) -> Result<Option<Vec<(String, String)>>> {
+pub fn parse_generic_attr(attrs: &[Attribute]) -> Result<Option<Vec<(Path, String)>>> {
     let attr = match find_attr(attrs, "generic") {
         Some(attr) => attr,
         None => return Ok(None),

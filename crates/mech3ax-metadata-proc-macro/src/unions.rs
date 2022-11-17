@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::ToTokens as _;
 use syn::{
     parse_quote, Data, DataEnum, DeriveInput, Error, ExprTuple, Field, Fields, FieldsUnnamed,
-    Generics, Ident, ImplItemConst, ItemImpl, Result, Type, TypePath, Variant,
+    Ident, ImplItemConst, ItemImpl, Path, Result, Type, TypePath, Variant,
 };
 
 macro_rules! cannot_derive {
@@ -16,13 +16,8 @@ macro_rules! cannot_derive {
 
 #[derive(Debug)]
 enum VariantInfo {
-    ForeignStruct {
-        variant_name: String,
-        struct_name: String,
-    },
-    Unit {
-        variant_name: String,
-    },
+    ForeignStruct { name: String, path: Path },
+    Unit { name: String },
 }
 
 #[derive(Debug)]
@@ -41,7 +36,7 @@ fn parse_variant(variant: Variant) -> Result<VariantInfo> {
     } = variant;
     match fields {
         Fields::Unit => Ok(VariantInfo::Unit {
-            variant_name: ident.to_string(),
+            name: ident.to_string(),
         }),
         Fields::Named(_) => cannot_derive!(&ident, "a variant with named fields"),
         Fields::Unnamed(fields_unnamed) => {
@@ -69,8 +64,8 @@ fn parse_variant(variant: Variant) -> Result<VariantInfo> {
                         Type::Path(path) => {
                             let TypePath { qself: _, path } = path;
                             Ok(VariantInfo::ForeignStruct {
-                                variant_name: ident.to_string(),
-                                struct_name: path.get_ident().unwrap().to_string(),
+                                name: ident.to_string(),
+                                path: path.clone(),
                             })
                         }
                         other => cannot_derive!(&other, "a field with a non-path type"),
@@ -100,51 +95,44 @@ fn parse_union(ident: Ident, data: DataEnum) -> Result<UnionInfo> {
     })
 }
 
-fn generate_union_name(name: String) -> ImplItemConst {
-    parse_quote! {
-        const NAME: &'static str = #name;
-    }
-}
-
 fn generate_union_variant(variant: VariantInfo) -> ExprTuple {
     match variant {
-        VariantInfo::Unit { variant_name } => {
+        VariantInfo::Unit { name } => {
             parse_quote! {
-                ( #variant_name, None )
+                ( #name, None )
             }
         }
-        VariantInfo::ForeignStruct {
-            variant_name,
-            struct_name,
-        } => {
+        VariantInfo::ForeignStruct { name, path } => {
             parse_quote! {
-                ( #variant_name, Some(#struct_name) )
+                ( #name, Some(<#path as ::mech3ax_metadata_types::DerivedMetadata>::TYPE_INFO) )
             }
         }
     }
 }
 
-fn generate_union_variants(variants: Vec<VariantInfo>) -> ImplItemConst {
-    let variants: Vec<ExprTuple> = variants.into_iter().map(generate_union_variant).collect();
+fn generate_union_type(name: String, variants: Vec<VariantInfo>) -> ImplItemConst {
+    let variants: Vec<_> = variants.into_iter().map(generate_union_variant).collect();
     parse_quote! {
-        const VARIANTS: &'static [(&'static str, Option<&'static str>)] = &[
-            #( #variants, )*
-        ];
+        const TYPE_INFO: &'static ::mech3ax_metadata_types::TypeInfo =
+            &::mech3ax_metadata_types::TypeInfo::Union(::mech3ax_metadata_types::TypeInfoUnion {
+                name: #name,
+                variants: &[
+                    #( #variants, )*
+                ],
+            });
     }
 }
 
-fn generate_union(info: UnionInfo, union_generics: Generics) -> ItemImpl {
+fn generate_union(info: UnionInfo) -> ItemImpl {
     let UnionInfo {
         ident,
         name,
         variants,
     } = info;
-    let name = generate_union_name(name);
-    let variants = generate_union_variants(variants);
+    let type_type = generate_union_type(name, variants);
     parse_quote! {
-        impl #union_generics ::mech3ax_metadata_types::Union for #ident #union_generics {
-            #name
-            #variants
+        impl ::mech3ax_metadata_types::DerivedMetadata for #ident {
+            #type_type
         }
     }
 }
@@ -154,13 +142,13 @@ pub fn derive(input: DeriveInput) -> Result<TokenStream> {
         attrs: _,
         vis: _,
         ident,
-        generics,
+        generics: _,
         data,
     } = input;
     match data {
         Data::Enum(data) => {
             let info = parse_union(ident, data)?;
-            Ok(generate_union(info, generics).into_token_stream())
+            Ok(generate_union(info).into_token_stream())
         }
         Data::Struct(_) => cannot_derive!(&ident, "a struct"),
         Data::Union(_) => cannot_derive!(&ident, "a union"),

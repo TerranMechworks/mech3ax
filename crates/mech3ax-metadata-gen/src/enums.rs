@@ -1,19 +1,32 @@
+use crate::csharp_type::{CSharpType, TypeKind};
+use crate::resolver::TypeResolver;
+use mech3ax_metadata_types::TypeInfoEnum;
 use serde::Serialize;
+use std::borrow::Cow;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Enum {
+    /// The enum's C# enum name.
     pub name: &'static str,
+    /// The enum's C# variant names.
     pub variants: &'static [&'static str],
 }
 
 impl Enum {
-    pub fn new<E>() -> Self
-    where
-        E: mech3ax_metadata_types::Enum,
-    {
+    pub fn make_type(&self) -> CSharpType {
+        // our "enums" are a C# enum, which are a C# `struct` (value type)
+        CSharpType {
+            name: Cow::Borrowed(self.name),
+            kind: TypeKind::Val,
+            generics: None,
+        }
+    }
+
+    pub fn new(_resolver: &mut TypeResolver, ei: &TypeInfoEnum) -> Self {
+        // luckily, Rust's casing for enum and variant names matches C#.
         Self {
-            name: E::NAME,
-            variants: E::VARIANTS,
+            name: ei.name,
+            variants: ei.variants,
         }
     }
 

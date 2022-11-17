@@ -52,17 +52,15 @@ fn parse_enum(ident: Ident, data: DataEnum) -> Result<EnumInfo> {
     })
 }
 
-fn generate_enum_name(name: String) -> ImplItemConst {
+fn generate_enum_type(name: String, variants: Vec<String>) -> ImplItemConst {
     parse_quote! {
-        const NAME: &'static str = #name;
-    }
-}
-
-fn generate_enum_variants(variants: Vec<String>) -> ImplItemConst {
-    parse_quote! {
-        const VARIANTS: &'static [&'static str] = &[
-            #(#variants,)*
-        ];
+        const TYPE_INFO: &'static ::mech3ax_metadata_types::TypeInfo =
+            &::mech3ax_metadata_types::TypeInfo::Enum(::mech3ax_metadata_types::TypeInfoEnum {
+                name: #name,
+                variants: &[
+                    #(#variants,)*
+                ],
+            });
     }
 }
 
@@ -72,12 +70,10 @@ fn generate_enum(info: EnumInfo) -> ItemImpl {
         name,
         variants,
     } = info;
-    let name = generate_enum_name(name);
-    let variants = generate_enum_variants(variants);
+    let type_type = generate_enum_type(name, variants);
     parse_quote! {
-        impl ::mech3ax_metadata_types::Enum for #ident {
-            #name
-            #variants
+        impl ::mech3ax_metadata_types::DerivedMetadata for #ident {
+            #type_type
         }
     }
 }

@@ -1,8 +1,7 @@
+//! Procedural macros for generating API type metadata.
 mod attr_parsing;
 mod enums;
 mod structs;
-mod type_generation;
-mod type_parsing;
 mod unions;
 
 use mech3ax_metadata_types::TypeSemantic;

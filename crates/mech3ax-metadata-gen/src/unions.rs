@@ -1,35 +1,75 @@
+use crate::csharp_type::{CSharpType, TypeKind};
 use crate::resolver::TypeResolver;
-use mech3ax_metadata_types::TypeSemantic;
+use mech3ax_metadata_types::{TypeInfo, TypeInfoUnion};
 use serde::Serialize;
+use std::borrow::Cow;
+
+#[derive(Debug, Clone, Serialize)]
+pub struct Variant {
+    /// The union variant's C# class and enum name.
+    pub name: &'static str,
+    /// The union variant's C# type, or `None` for unit variants.
+    pub ty: Option<String>,
+    /// Whether the type requires a null check on deserialization.
+    pub null_check: bool,
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Union {
+    /// The union's C# class name.
     pub name: &'static str,
+    /// The union variant's C# enum name.
     pub choice: String,
-    pub variants: Vec<(&'static str, Option<&'static str>, bool)>,
+    /// The union variant types.
+    pub variants: Vec<Variant>,
+}
+
+fn resolve_variant(
+    union_name: &'static str,
+    resolver: &TypeResolver,
+    variant_name: &'static str,
+    variant_type: Option<&'static TypeInfo>,
+) -> Variant {
+    // Luckily, Rust's casing for variant names matches C#.
+    match variant_type {
+        None => Variant {
+            name: variant_name,
+            ty: None,
+            null_check: false,
+        },
+        Some(type_info) => {
+            let ty = resolver.resolve(type_info, union_name);
+            Variant {
+                name: variant_name,
+                ty: Some(ty.name.to_string()),
+                null_check: ty.null_check(),
+            }
+        }
+    }
 }
 
 impl Union {
-    pub fn new<S>(resolver: &TypeResolver) -> Self
-    where
-        S: mech3ax_metadata_types::Union,
-    {
-        let name = S::NAME;
+    pub fn make_type(&self) -> CSharpType {
+        // our "unions" get transformed into C# classes (reference type)
+        // disallow generics for now
+        CSharpType {
+            name: Cow::Borrowed(self.name),
+            kind: TypeKind::Ref,
+            generics: None,
+        }
+    }
+
+    pub fn new(resolver: &TypeResolver, ui: &TypeInfoUnion) -> Self {
+        // luckily, Rust's casing for enum names matches C# classes.
+        let name = ui.name;
         let choice = format!("{}Variant", name);
-        let variants = S::VARIANTS
+
+        let variants = ui
+            .variants
             .into_iter()
-            .map(|(variant_name, struct_name)| {
-                let mut varant_null_check = true;
-                if let Some(name) = struct_name {
-                    match resolver.lookup_struct(name) {
-                        None => eprintln!("WARNING: structure {} not found", name),
-                        Some(s) => match s.semantic {
-                            TypeSemantic::Ref => varant_null_check = true,
-                            TypeSemantic::Val => varant_null_check = false,
-                        },
-                    }
-                }
-                (*variant_name, struct_name.clone(), varant_null_check)
+            .copied()
+            .map(|(variant_name, variant_type)| {
+                resolve_variant(name, resolver, variant_name, variant_type)
             })
             .collect();
 
@@ -63,24 +103,24 @@ namespace Mech3DotNet.Json
     public enum {{ union.choice }}
     {
 {%- for variant in union.variants %}
-        {{ variant.0 }},
+        {{ variant.name }},
 {%- endfor %}
     }
 
     [JsonConverter(typeof({{ union.name }}Converter))]
     public class {{ union.name }} : IDiscriminatedUnion<{{ union.choice }}>
     {
-{%- for variant in union.variants %}{% if not variant.1 %}
-        public sealed class {{ variant.0 }}
+{%- for variant in union.variants %}{% if not variant.ty %}
+        public sealed class {{ variant.name }}
         {
-            public {{ variant.0 }}() { }
+            public {{ variant.name }}() { }
         }
 {% endif %}{% endfor %}
 {%- for variant in union.variants %}
-        public {{ union.name }}({% if variant.1 %}{{ variant.1 }}{% else %}{{ variant.0 }}{% endif %} value)
+        public {{ union.name }}({% if variant.ty %}{{ variant.ty }}{% else %}{{ variant.name }}{% endif %} value)
         {
             this.value = value;
-            Variant = {{ union.choice }}.{{ variant.0 }};
+            Variant = {{ union.choice }}.{{ variant.name }};
         }
 {% endfor %}
         protected object value;
@@ -105,17 +145,17 @@ namespace Mech3DotNet.Json.Converters
         {
             switch (name)
             {
-{%- for variant in union.variants %}{%- if not variant.1 %}
-                case "{{ variant.0 }}":
+{%- for variant in union.variants %}{%- if not variant.ty %}
+                case "{{ variant.name }}":
                     {
-                        var inner = new {{ union.name }}.{{ variant.0 }}();
+                        var inner = new {{ union.name }}.{{ variant.name }}();
                         return new {{ union.name }}(inner);
                     }
 {%- endif %}{% endfor %}
-{%- for variant in union.variants %}{%- if variant.1 %}
-                case "{{ variant.0 }}":
+{%- for variant in union.variants %}{%- if variant.ty %}
+                case "{{ variant.name }}":
                     {
-                        System.Diagnostics.Debug.WriteLine("Invalid unit variant '{{ variant.0 }}' for '{{ union.name }}'");
+                        System.Diagnostics.Debug.WriteLine("Invalid unit variant '{{ variant.name }}' for '{{ union.name }}'");
                         throw new JsonException();
                     }
 {%- endif %}{% endfor %}
@@ -136,24 +176,24 @@ namespace Mech3DotNet.Json.Converters
         {
             switch (name)
             {
-{%- for variant in union.variants %}{%- if variant.1 %}
-                case "{{ variant.0 }}":
+{%- for variant in union.variants %}{%- if variant.ty %}
+                case "{{ variant.name }}":
                     {
-                        var inner = JsonSerializer.Deserialize<{{ variant.1 }}>(ref reader, options);
-{%- if variant.2 %}
+                        var inner = JsonSerializer.Deserialize<{{ variant.ty }}>(ref reader, options);
+{%- if variant.null_check %}
                         if (inner is null)
                         {
-                            System.Diagnostics.Debug.WriteLine("Value of '{{ variant.0 }}' was null for '{{ union.name }}'");
+                            System.Diagnostics.Debug.WriteLine("Value of '{{ variant.name }}' was null for '{{ union.name }}'");
                             throw new JsonException();
                         }
 {%- endif %}
                         return new {{ union.name }}(inner);
                     }
 {%- endif %}{% endfor %}
-{%- for variant in union.variants %}{%- if not variant.1 %}
-                case "{{ variant.0 }}":
+{%- for variant in union.variants %}{%- if not variant.ty %}
+                case "{{ variant.name }}":
                     {
-                        System.Diagnostics.Debug.WriteLine("Invalid struct variant '{{ variant.0 }}' for '{{ union.name }}'");
+                        System.Diagnostics.Debug.WriteLine("Invalid struct variant '{{ variant.name }}' for '{{ union.name }}'");
                         throw new JsonException();
                     }
 {%- endif %}{% endfor %}
@@ -175,19 +215,19 @@ namespace Mech3DotNet.Json.Converters
             switch (value.Variant)
             {
 {%- for variant in union.variants %}
-                case {{ union.choice }}.{{ variant.0 }}:
-{%- if variant.1 %}
+                case {{ union.choice }}.{{ variant.name }}:
+{%- if variant.ty %}
                     {
-                        var inner = value.As<{{ variant.1 }}>();
+                        var inner = value.As<{{ variant.ty }}>();
                         writer.WriteStartObject();
-                        writer.WritePropertyName("{{ variant.0 }}");
+                        writer.WritePropertyName("{{ variant.name }}");
                         JsonSerializer.Serialize(writer, inner, options);
                         writer.WriteEndObject();
                         break;
                     }
 {%- else %}
                     {
-                        writer.WriteStringValue("{{ variant.0 }}");
+                        writer.WriteStringValue("{{ variant.name }}");
                         break;
                     }
 {%- endif %}

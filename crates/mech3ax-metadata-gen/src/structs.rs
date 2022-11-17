@@ -1,52 +1,71 @@
-use crate::fields::{Field, Generics};
+use crate::csharp_type::{CSharpType, TypeKind};
+use crate::fields::{join_generics, Field};
 use crate::resolver::TypeResolver;
-use mech3ax_metadata_types::TypeSemantic;
+use mech3ax_metadata_types::{TypeInfoStruct, TypeSemantic};
 use serde::Serialize;
+use std::borrow::Cow;
 use std::collections::HashSet;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Struct {
+    /// The struct's C# struct name, without generics.
     pub name: &'static str,
-    pub type_name: String,
+    /// The struct's C# type name, with generics.
+    pub type_name: Cow<'static, str>,
+    /// The struct's C# converter type name, with generics.
     pub conv_name: String,
+    /// The struct's C# semantic type as a string, `class` or `struct`.
     pub sem_type: &'static str,
+    /// The struct's fields.
     pub fields: Vec<Field>,
+    /// The struct's C# semantic type.
+    ///
+    /// Used for `make_type()`, but not inside any templates.
     #[serde(skip)]
     pub semantic: TypeSemantic,
+    /// The struct's generic arguments.
+    ///
+    /// Used for selecting the converter template, but not inside any templates.
     #[serde(skip)]
-    pub generics: Generics,
+    pub generics: Option<HashSet<&'static str>>,
 }
 
 impl Struct {
-    pub fn new<S>(resolver: &mut TypeResolver) -> Self
-    where
-        S: mech3ax_metadata_types::Struct,
-    {
-        let name = S::NAME;
-        let semantic = S::SEMANTIC;
-        let sem_type = match S::SEMANTIC {
+    pub fn make_type(&self) -> CSharpType {
+        // our "structs" can either be
+        // * a C# `class` (reference type)
+        // * a C# `struct` (value type)
+        let kind = match self.semantic {
+            TypeSemantic::Ref => TypeKind::Ref,
+            TypeSemantic::Val => TypeKind::Val,
+        };
+        CSharpType {
+            name: self.type_name.clone(),
+            kind,
+            generics: self.generics.clone(),
+        }
+    }
+
+    pub fn new(resolver: &mut TypeResolver, si: &TypeInfoStruct) -> Self {
+        // luckily, Rust's casing for structs matches C#.
+        let name = si.name;
+        let semantic = si.semantic;
+        let sem_type = match semantic {
             TypeSemantic::Ref => "class",
             TypeSemantic::Val => "struct",
         };
-
-        // collect this struct's generics. this must be done before the fields,
-        // so types can be substituted. even though we may inherit more
-        // generics from the fields later, if they aren't declared on this
-        // struct, they cannot appear as field types.
-        let mut generics: HashSet<(&'static str, &'static str)> = match S::GENERICS {
-            None => HashSet::new(),
-            Some(gen) => gen
-                .iter()
-                .map(|(ty_old, generic)| (*ty_old, *generic))
-                .collect(),
-        };
-
-        let fields: Vec<_> = S::FIELDS
+        // field generics must be declared on this struct specifically.
+        let fields: Vec<_> = si
+            .fields
             .iter()
-            .map(|ti| Field::new(ti, &generics, resolver))
+            .map(|field_info| Field::new(si.name, si.generics, field_info, resolver))
             .collect();
 
-        // inherit generics from fields
+        // since the struct's generics should've be used in fields, we can
+        // simply inherit all the generics from the fields. note that this also
+        // includes fields that might not be directly generic (e.g. fields that
+        // are in themselves generic structures).
+        let mut generics: HashSet<&'static str> = HashSet::new();
         for field in fields.iter() {
             if let Some(field_generics) = &field.generics {
                 generics.extend(field_generics.iter());
@@ -55,23 +74,15 @@ impl Struct {
 
         let (type_name, conv_name, generics) = if generics.is_empty() {
             // type is not generic, so converter isn't either
-            let type_name = S::NAME.to_string();
-            let conv_name = format!("{}Converter", S::NAME);
+            let type_name = Cow::Borrowed(si.name);
+            let conv_name = format!("{}Converter", si.name);
             (type_name, conv_name, None)
         } else {
-            let mut generics_split = generics
-                .iter()
-                .map(|(_concrete, generic)| *generic)
-                .collect::<Vec<&str>>();
-            // sort the generics by name for a nice, stable display order.
-            generics_split.sort();
-            let generics_joined = generics_split.join(", ");
-
-            let type_name = format!("{}<{}>", name, generics_joined);
-            let conv_name = format!("{}Converter<{}>", S::NAME, generics_joined);
-
-            resolver.push_factory_converter(S::NAME.to_string(), generics.len());
-
+            // the is generic, so the converter is also generic
+            let generics_joined = join_generics(&generics);
+            let type_name = Cow::Owned(format!("{}<{}>", name, generics_joined));
+            let conv_name = format!("{}Converter<{}>", si.name, generics_joined);
+            resolver.push_factory_converter(si.name.to_string(), generics.len());
             (type_name, conv_name, Some(generics))
         };
 
@@ -95,9 +106,9 @@ impl Struct {
     pub fn render_conv(&self, tera: &tera::Tera) -> tera::Result<String> {
         let mut context = tera::Context::new();
         context.insert("struct", self);
-        match self.generics {
-            None => tera.render("struct_normal_conv.cs", &context),
-            Some(_) => tera.render("struct_generic_conv.cs", &context),
+        match self.generics.is_some() {
+            false => tera.render("struct_normal_conv.cs", &context),
+            true => tera.render("struct_generic_conv.cs", &context),
         }
     }
 }

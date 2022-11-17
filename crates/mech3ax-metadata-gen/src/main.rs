@@ -1,3 +1,4 @@
+mod csharp_type;
 mod enums;
 mod fields;
 mod options;
@@ -13,149 +14,190 @@ fn main() {
     let mut resolver = TypeResolver::new();
 
     // types
-    resolver.push_struct::<api::Range>();
-    resolver.push_struct::<api::Vec3>();
-    resolver.push_struct::<api::Color>();
-    resolver.push_struct::<api::Quaternion>();
-    resolver.push_struct::<api::Matrix>();
+    resolver.push::<api::Range>();
+    resolver.push::<api::Vec3>();
+    resolver.push::<api::Color>();
+    resolver.push::<api::Quaternion>();
+    resolver.push::<api::Matrix>();
+
     // archive
-    resolver.push_struct::<api::ArchiveEntry>();
+    resolver.push::<api::ArchiveEntry>();
+
     // image
-    resolver.push_enum::<api::TextureAlpha>();
-    resolver.push_enum::<api::TextureStretch>();
-    resolver.push_struct::<api::PaletteData>();
-    resolver.push_struct::<api::GlobalPalette>();
-    resolver.push_union::<api::TexturePalette>();
-    resolver.push_struct::<api::TextureInfo>();
-    resolver.push_struct::<api::TextureManifest>();
+    resolver.push::<api::TextureAlpha>();
+    resolver.push::<api::TextureStretch>();
+    resolver.push::<api::PaletteData>();
+    resolver.push::<api::GlobalPalette>();
+    resolver.push::<api::TexturePalette>();
+    resolver.push::<api::TextureInfo>();
+    resolver.push::<api::TextureManifest>();
+
     // interp
-    resolver.push_struct::<api::Script>();
+    resolver.push::<api::Script>();
+
     // messages
-    resolver.push_struct::<api::MessageEntry>();
-    resolver.push_struct::<api::Messages>();
+    resolver.push::<api::MessageEntry>();
+    resolver.push::<api::Messages>();
+
     // motion
-    resolver.push_struct::<api::MotionFrame>();
-    resolver.push_struct::<api::MotionPart>();
-    resolver.push_struct::<api::Motion>();
+    resolver.push::<api::MotionFrame>();
+    resolver.push::<api::MotionPart>();
+    resolver.push::<api::Motion>();
+
+    // zmap
+    resolver.push::<api::zmap::MapColor>();
+    resolver.push::<api::zmap::MapVertex>();
+    resolver.push::<api::zmap::MapFeature>();
+    resolver.push::<api::zmap::MapRc>();
+
     // gamez materials
-    resolver.push_struct::<api::CycleData>();
-    resolver.push_struct::<api::TexturedMaterial>();
-    resolver.push_struct::<api::ColoredMaterial>();
-    resolver.push_union::<api::Material>();
+    resolver.push::<api::ColoredMaterial>();
+    resolver.push::<api::CycleData>();
+    resolver.push::<api::TexturedMaterial>();
+    resolver.push::<api::Material>();
+
     // gamez mesh
-    resolver.push_struct::<api::UvCoord>();
-    resolver.push_struct::<api::PolygonMw>();
-    resolver.push_struct::<api::MeshLight>();
-    resolver.push_struct::<api::MeshMw>();
+    resolver.push::<api::UvCoord>();
+    resolver.push::<api::MeshLight>();
+    resolver.push::<api::PolygonMw>();
+    resolver.push::<api::MeshMw>();
+    resolver.push::<api::PolygonFlags>();
+    resolver.push::<api::MeshTexture>();
+    resolver.push::<api::PolygonTextureNg>();
+    resolver.push::<api::PolygonNg>();
+    resolver.push::<api::MeshNg>();
+    resolver.push::<api::PolygonRc>();
+    resolver.push::<api::MeshRc>();
+
     // gamez nodes
-    resolver.push_struct::<api::AreaPartition>();
-    resolver.push_struct::<api::Area>();
-    resolver.push_struct::<api::BoundingBox>();
-    resolver.push_struct::<api::Transformation>();
-    resolver.push_struct::<api::Partition>();
-    resolver.push_struct::<api::NodeFlags>();
-    resolver.push_struct::<api::Camera>();
-    resolver.push_struct::<api::Display>();
-    resolver.push_struct::<api::Empty>();
-    resolver.push_struct::<api::Light>();
-    resolver.push_struct::<api::Lod>();
-    resolver.push_struct::<api::Object3d>();
-    resolver.push_struct::<api::Window>();
-    resolver.push_struct::<api::World>();
-    resolver.push_union::<api::NodeMw>();
+    resolver.push::<api::AreaPartition>();
+    resolver.push::<api::Area>();
+    resolver.push::<api::BoundingBox>();
+    resolver.push::<api::Transformation>();
+    resolver.push::<api::Partition>();
+    resolver.push::<api::NodeFlags>();
+
+    // gamez nodes mw
+    resolver.push::<api::Camera>();
+    resolver.push::<api::Display>();
+    resolver.push::<api::Empty>();
+    resolver.push::<api::Light>();
+    resolver.push::<api::Lod>();
+    resolver.push::<api::Object3d>();
+    resolver.push::<api::Window>();
+    resolver.push::<api::World>();
+    resolver.push::<api::NodeMw>();
+
+    // gamez nodes pm
+    resolver.push::<api::LodPm>();
+    resolver.push::<api::Object3dPm>();
+    resolver.push::<api::NodePm>();
+
     // gamez mechlib
-    resolver.push_struct::<api::ModelMw>();
+    resolver.push::<api::ModelMw>();
+    resolver.push::<api::ModelPm>();
+
     // gamez mod
-    resolver.push_struct::<api::GameZMwMetadata>();
-    resolver.push_struct::<api::GameZMwData>();
+    resolver.push::<api::GameZMwMetadata>();
+    resolver.push::<api::GameZMwData>();
+    resolver.push::<api::GameZPmMetadata>();
+    resolver.push::<api::GameZPmData>();
+    resolver.push::<api::GameZCsMetadata>();
+    resolver.push::<api::GameZCsData>();
+    resolver.push::<api::GameZRcMetadata>();
+    resolver.push::<api::GameZRcData>();
+
     // anim mod
-    resolver.push_struct::<api::AnimName>();
-    resolver.push_struct::<api::AnimPtr>();
-    resolver.push_struct::<api::AnimMetadata>();
-    resolver.push_enum::<api::AnimActivation>();
-    resolver.push_union::<api::Execution>();
-    resolver.push_struct::<api::NamePad>();
-    resolver.push_struct::<api::NamePtr>();
-    resolver.push_struct::<api::NamePtrFlags>();
-    resolver.push_enum::<api::SeqActivation>();
-    resolver.push_struct::<api::PrereqAnimation>();
-    resolver.push_struct::<api::PrereqObject>();
-    resolver.push_struct::<api::PrereqParent>();
-    resolver.push_union::<api::ActivationPrereq>();
+    resolver.push::<api::AnimName>();
+    resolver.push::<api::AnimPtr>();
+    resolver.push::<api::AnimMetadata>();
+    resolver.push::<api::AnimActivation>();
+    resolver.push::<api::Execution>();
+    resolver.push::<api::NamePad>();
+    resolver.push::<api::NamePtr>();
+    resolver.push::<api::NamePtrFlags>();
+    resolver.push::<api::SeqActivation>();
+    resolver.push::<api::PrereqAnimation>();
+    resolver.push::<api::PrereqObject>();
+    resolver.push::<api::PrereqParent>();
+    resolver.push::<api::ActivationPrereq>();
+
     // anim events
-    resolver.push_struct::<api::AtNode>();
-    resolver.push_struct::<api::StopAnimation>();
-    resolver.push_struct::<api::ResetAnimation>();
-    resolver.push_struct::<api::InvalidateAnimation>();
-    resolver.push_struct::<api::CallAnimationAtNode>();
-    resolver.push_struct::<api::CallAnimationWithNode>();
-    resolver.push_struct::<api::CallAnimationTargetNode>();
-    resolver.push_union::<api::CallAnimationParameters>();
-    resolver.push_struct::<api::CallAnimation>();
-    resolver.push_struct::<api::CallObjectConnector>();
-    resolver.push_struct::<api::Loop>();
-    resolver.push_struct::<api::RandomWeightCond>();
-    resolver.push_struct::<api::PlayerRangeCond>();
-    resolver.push_struct::<api::AnimationLodCond>();
-    resolver.push_struct::<api::HwRenderCond>();
-    resolver.push_struct::<api::PlayerFirstPersonCond>();
-    resolver.push_union::<api::If>();
-    resolver.push_union::<api::ElseIf>();
-    resolver.push_struct::<api::Else>();
-    resolver.push_struct::<api::EndIf>();
-    resolver.push_struct::<api::Callback>();
-    resolver.push_struct::<api::DetonateWeapon>();
-    resolver.push_struct::<api::Rgba>();
-    resolver.push_struct::<api::FrameBufferEffectColor>();
-    resolver.push_enum::<api::FogType>();
-    resolver.push_struct::<api::FogState>();
-    resolver.push_struct::<api::LightAnimation>();
-    resolver.push_struct::<api::LightState>();
-    resolver.push_struct::<api::ObjectActiveState>();
-    resolver.push_struct::<api::ObjectAddChild>();
-    resolver.push_struct::<api::ObjectConnector>();
-    resolver.push_struct::<api::ObjectCycleTexture>();
-    resolver.push_struct::<api::FloatFromTo>();
-    resolver.push_struct::<api::Vec3FromTo>();
-    resolver.push_struct::<api::ObjectMotionFromTo>();
-    resolver.push_struct::<api::TranslateData>();
-    resolver.push_struct::<api::RotateData>();
-    resolver.push_struct::<api::ScaleData>();
-    resolver.push_struct::<api::ObjectMotionSiFrame>();
-    resolver.push_struct::<api::ObjectMotionSiScript>();
-    resolver.push_enum::<api::GravityMode>();
-    resolver.push_struct::<api::Gravity>();
-    resolver.push_struct::<api::ForwardRotationTime>();
-    resolver.push_struct::<api::ForwardRotationDistance>();
-    resolver.push_union::<api::ForwardRotation>();
-    resolver.push_struct::<api::XyzRotation>();
-    resolver.push_struct::<api::ObjectMotionTranslation>();
-    resolver.push_struct::<api::ObjectMotionScale>();
-    resolver.push_struct::<api::BounceSequence>();
-    resolver.push_struct::<api::BounceSound>();
-    resolver.push_struct::<api::ObjectMotion>();
-    resolver.push_struct::<api::ObjectOpacity>();
-    resolver.push_struct::<api::ObjectOpacityFromTo>();
-    resolver.push_struct::<api::ObjectOpacityState>();
-    resolver.push_union::<api::RotateState>();
-    resolver.push_struct::<api::ObjectRotateState>();
-    resolver.push_struct::<api::ObjectScaleState>();
-    resolver.push_struct::<api::ObjectTranslateState>();
-    resolver.push_enum::<api::IntervalType>();
-    resolver.push_struct::<api::Interval>();
-    resolver.push_struct::<api::PufferStateCycleTextures>();
-    resolver.push_struct::<api::PufferState>();
-    resolver.push_struct::<api::CallSequence>();
-    resolver.push_struct::<api::StopSequence>();
-    resolver.push_struct::<api::SoundNode>();
-    resolver.push_struct::<api::Sound>();
-    resolver.push_union::<api::EventData>();
-    resolver.push_enum::<api::StartOffset>();
-    resolver.push_struct::<api::EventStart>();
-    resolver.push_struct::<api::Event>();
+    resolver.push::<api::AtNode>();
+    resolver.push::<api::StopAnimation>();
+    resolver.push::<api::ResetAnimation>();
+    resolver.push::<api::InvalidateAnimation>();
+    resolver.push::<api::CallAnimationAtNode>();
+    resolver.push::<api::CallAnimationWithNode>();
+    resolver.push::<api::CallAnimationTargetNode>();
+    resolver.push::<api::CallAnimationParameters>();
+    resolver.push::<api::CallAnimation>();
+    resolver.push::<api::CallObjectConnector>();
+    resolver.push::<api::Loop>();
+    resolver.push::<api::RandomWeightCond>();
+    resolver.push::<api::PlayerRangeCond>();
+    resolver.push::<api::AnimationLodCond>();
+    resolver.push::<api::HwRenderCond>();
+    resolver.push::<api::PlayerFirstPersonCond>();
+    resolver.push::<api::If>();
+    resolver.push::<api::ElseIf>();
+    resolver.push::<api::Else>();
+    resolver.push::<api::EndIf>();
+    resolver.push::<api::Callback>();
+    resolver.push::<api::DetonateWeapon>();
+    resolver.push::<api::Rgba>();
+    resolver.push::<api::FrameBufferEffectColor>();
+    resolver.push::<api::FogType>();
+    resolver.push::<api::FogState>();
+    resolver.push::<api::LightAnimation>();
+    resolver.push::<api::LightState>();
+    resolver.push::<api::ObjectActiveState>();
+    resolver.push::<api::ObjectAddChild>();
+    resolver.push::<api::ObjectConnector>();
+    resolver.push::<api::ObjectCycleTexture>();
+    resolver.push::<api::FloatFromTo>();
+    resolver.push::<api::Vec3FromTo>();
+    resolver.push::<api::ObjectMotionFromTo>();
+    resolver.push::<api::TranslateData>();
+    resolver.push::<api::RotateData>();
+    resolver.push::<api::ScaleData>();
+    resolver.push::<api::ObjectMotionSiFrame>();
+    resolver.push::<api::ObjectMotionSiScript>();
+    resolver.push::<api::GravityMode>();
+    resolver.push::<api::Gravity>();
+    resolver.push::<api::ForwardRotationTime>();
+    resolver.push::<api::ForwardRotationDistance>();
+    resolver.push::<api::ForwardRotation>();
+    resolver.push::<api::XyzRotation>();
+    resolver.push::<api::ObjectMotionTranslation>();
+    resolver.push::<api::ObjectMotionScale>();
+    resolver.push::<api::BounceSequence>();
+    resolver.push::<api::BounceSound>();
+    resolver.push::<api::ObjectMotion>();
+    resolver.push::<api::ObjectOpacity>();
+    resolver.push::<api::ObjectOpacityFromTo>();
+    resolver.push::<api::ObjectOpacityState>();
+    resolver.push::<api::RotateState>();
+    resolver.push::<api::ObjectRotateState>();
+    resolver.push::<api::ObjectScaleState>();
+    resolver.push::<api::ObjectTranslateState>();
+    resolver.push::<api::IntervalType>();
+    resolver.push::<api::Interval>();
+    resolver.push::<api::PufferStateCycleTextures>();
+    resolver.push::<api::PufferState>();
+    resolver.push::<api::CallSequence>();
+    resolver.push::<api::StopSequence>();
+    resolver.push::<api::SoundNode>();
+    resolver.push::<api::Sound>();
+    resolver.push::<api::EventData>();
+    resolver.push::<api::StartOffset>();
+    resolver.push::<api::EventStart>();
+    resolver.push::<api::Event>();
+
     // anim mod
-    resolver.push_struct::<api::SeqDef>();
-    resolver.push_struct::<api::AnimDef>();
+    resolver.push::<api::SeqDef>();
+    resolver.push::<api::ResetState>();
+    resolver.push::<api::AnimDef>();
 
     let tera = templates::make_tera();
     let (enums, structs, unions, options) = resolver.into_values();

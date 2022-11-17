@@ -1,12 +1,10 @@
-use crate::attr_parsing::parse_generic_attr;
-use crate::type_generation::generate_type_infos;
-use crate::type_parsing::parse_type_info;
-use mech3ax_metadata_types::{TypeInfoOwned, TypeSemantic};
+use crate::attr_parsing::{parse_generic_attr, parse_serde_attr};
+use mech3ax_metadata_types::{DefaultHandling, TypeSemantic};
 use proc_macro2::TokenStream;
 use quote::ToTokens as _;
 use syn::{
-    parse_quote, Attribute, Data, DataStruct, DeriveInput, Error, Field, Fields, FieldsNamed,
-    Generics, Ident, ImplItemConst, ItemImpl, Result,
+    parse_quote, Attribute, Data, DataStruct, DeriveInput, Error, Expr, ExprStruct, Field, Fields,
+    FieldsNamed, Generics, Ident, ImplItemConst, ItemImpl, Path, Result, Type,
 };
 
 macro_rules! cannot_derive {
@@ -19,19 +17,35 @@ macro_rules! cannot_derive {
 }
 
 #[derive(Debug)]
+pub struct FieldInfoOwned {
+    pub name: String,
+    pub ty: Type,
+    pub default: DefaultHandling,
+}
+
+#[derive(Debug)]
 struct StructInfo {
     pub ident: Ident,
     pub name: String,
     pub semantic: TypeSemantic,
-    pub generics: Option<Vec<(String, String)>>,
-    pub fields: Vec<TypeInfoOwned>,
+    pub generics: Option<Vec<(Path, String)>>,
+    pub fields: Vec<FieldInfoOwned>,
 }
 
-fn parse_struct_generics(attrs: &[Attribute]) -> Result<Option<Vec<(String, String)>>> {
+fn parse_struct_generics(attrs: &[Attribute]) -> Result<Option<Vec<(Path, String)>>> {
     parse_generic_attr(attrs)
 }
 
-fn parse_struct_fields(fields: FieldsNamed) -> Result<Vec<TypeInfoOwned>> {
+fn parse_struct_field(ident: Ident, attrs: &[Attribute], ty: &Type) -> Result<FieldInfoOwned> {
+    let default = parse_serde_attr(attrs)?;
+    Ok(FieldInfoOwned {
+        name: ident.to_string(),
+        ty: ty.clone(),
+        default,
+    })
+}
+
+fn parse_struct_fields(fields: FieldsNamed) -> Result<Vec<FieldInfoOwned>> {
     let FieldsNamed {
         brace_token: _,
         named,
@@ -49,7 +63,7 @@ fn parse_struct_fields(fields: FieldsNamed) -> Result<Vec<TypeInfoOwned>> {
             } = field;
             let ident = ident
                 .ok_or_else(|| Error::new_spanned(&ty, "Expected field to have an identifier"))?;
-            parse_type_info(ident, &attrs, &ty)
+            parse_struct_field(ident, &attrs, &ty)
         })
         .collect::<Result<Vec<_>>>()
 }
@@ -91,50 +105,76 @@ fn parse_struct(
     }
 }
 
-fn generate_struct_name(name: String) -> ImplItemConst {
-    parse_quote! {
-        const NAME: &'static str = #name;
-    }
-}
-
-fn generate_struct_semantic(semantic: TypeSemantic) -> ImplItemConst {
+fn generate_struct_semantic(semantic: TypeSemantic) -> Path {
     match semantic {
-        TypeSemantic::Ref => {
+        TypeSemantic::Ref => parse_quote! { ::mech3ax_metadata_types::TypeSemantic::Ref },
+        TypeSemantic::Val => parse_quote! { ::mech3ax_metadata_types::TypeSemantic::Val },
+    }
+}
+
+fn generate_struct_generics(generics: Option<Vec<(Path, String)>>) -> Expr {
+    match generics {
+        None => parse_quote! { None },
+        Some(generics) => {
+            let (path, value): (Vec<_>, Vec<_>) = generics.into_iter().unzip();
             parse_quote! {
-                const SEMANTIC: ::mech3ax_metadata_types::TypeSemantic = ::mech3ax_metadata_types::TypeSemantic::Ref;
-            }
-        }
-        TypeSemantic::Val => {
-            parse_quote! {
-                const SEMANTIC: ::mech3ax_metadata_types::TypeSemantic = ::mech3ax_metadata_types::TypeSemantic::Val;
+                Some(&[
+                    #( (<#path as ::mech3ax_metadata_types::DerivedMetadata>::TYPE_INFO, #value), )*
+                ])
             }
         }
     }
 }
 
-fn generate_struct_generics(generics: Option<Vec<(String, String)>>) -> ImplItemConst {
-    let res = match generics {
-        None => parse_quote! {
-            const GENERICS: Option<&'static [(&'static str, &'static str)]> = None;
+fn generate_struct_field_default(default: DefaultHandling) -> Path {
+    match default {
+        DefaultHandling::Normal => parse_quote! {
+            ::mech3ax_metadata_types::DefaultHandling::Normal
         },
-        Some(generics) => {
-            let (name, value): (Vec<_>, Vec<_>) = generics.into_iter().unzip();
-            parse_quote! {
-                const GENERICS: Option<&'static [(&'static str, &'static str)]> = Some(&[
-                    #( (#name, #value), )*
-                ]);
-            }
-        }
-    };
-    res
+        DefaultHandling::OptionIsNone => parse_quote! {
+            ::mech3ax_metadata_types::DefaultHandling::OptionIsNone
+        },
+        DefaultHandling::BoolFalse => parse_quote! {
+            ::mech3ax_metadata_types::DefaultHandling::BoolFalse
+        },
+        DefaultHandling::PointerZero => parse_quote! {
+            ::mech3ax_metadata_types::DefaultHandling::PointerZero
+        },
+    }
 }
 
-fn generate_struct_fields(fields: Vec<TypeInfoOwned>) -> ImplItemConst {
-    let fields = generate_type_infos(fields);
+fn generate_struct_field(field: FieldInfoOwned) -> ExprStruct {
+    let FieldInfoOwned { name, ty, default } = field;
+    let default = generate_struct_field_default(default);
     parse_quote! {
-        const FIELDS: &'static [::mech3ax_metadata_types::TypeInfo<'static>] = &[
-            #( #fields, )*
-        ];
+        ::mech3ax_metadata_types::TypeInfoStructField {
+            name: #name,
+            type_info: <#ty as ::mech3ax_metadata_types::DerivedMetadata>::TYPE_INFO,
+            default: #default,
+        }
+    }
+}
+
+fn generate_struct_type(
+    name: String,
+    semantic: TypeSemantic,
+    generics: Option<Vec<(Path, String)>>,
+    fields: Vec<FieldInfoOwned>,
+) -> ImplItemConst {
+    let semantic = generate_struct_semantic(semantic);
+    let generics = generate_struct_generics(generics);
+    let fields: Vec<_> = fields.into_iter().map(generate_struct_field).collect();
+
+    parse_quote! {
+        const TYPE_INFO: &'static ::mech3ax_metadata_types::TypeInfo =
+            &::mech3ax_metadata_types::TypeInfo::Struct(::mech3ax_metadata_types::TypeInfoStruct {
+                name: #name,
+                semantic: #semantic,
+                generics: #generics,
+                fields: &[
+                    #( #fields, )*
+                ],
+            });
     }
 }
 
@@ -146,18 +186,10 @@ fn generate_struct(info: StructInfo, struct_generics: Generics) -> ItemImpl {
         generics,
         fields,
     } = info;
-
-    let name = generate_struct_name(name);
-    let semantic = generate_struct_semantic(semantic);
-    let generics = generate_struct_generics(generics);
-    let fields = generate_struct_fields(fields);
-
+    let type_type = generate_struct_type(name, semantic, generics, fields);
     parse_quote! {
-        impl #struct_generics ::mech3ax_metadata_types::Struct for #ident #struct_generics {
-            #name
-            #semantic
-            #generics
-            #fields
+        impl #struct_generics ::mech3ax_metadata_types::DerivedMetadata for #ident #struct_generics {
+            #type_type
         }
     }
 }
