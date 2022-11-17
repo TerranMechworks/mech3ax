@@ -1,9 +1,8 @@
-import filecmp
 import json
 import subprocess
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import List, Literal, Tuple
+from typing import List, Literal, Tuple, Optional
 
 Build = Literal["debug", "release"]
 Game = Literal["mw", "pm", "rc", "cs"]
@@ -11,6 +10,37 @@ GAME_MW: Game = "mw"
 GAME_PM: Game = "pm"
 GAME_RC: Game = "rc"
 GAME_CS: Game = "cs"
+
+
+BUFSIZE = 8 * 1024
+
+
+def cmp(one: Path, two: Path) -> bool:
+    with one.open("rb") as fp1, two.open("rb") as fp2:
+        while True:
+            buf1 = fp1.read(BUFSIZE)
+            buf2 = fp2.read(BUFSIZE)
+            if buf1 != buf2:
+                return False
+            if not buf1:
+                return True
+
+
+def cmp_fuzzy(one: Path, two: Path, limit: int) -> bool:
+    diffs = 0
+    with one.open("rb") as fp1, two.open("rb") as fp2:
+        while True:
+            buf1 = fp1.read(BUFSIZE)
+            buf2 = fp2.read(BUFSIZE)
+            if buf1 != buf2:
+                if len(buf1) != len(buf2):
+                    return False
+                diff = sum(b1 != b2 for (b1, b2) in zip(buf1, buf2))
+                diffs += diff
+                if diffs > limit:
+                    return False
+            if not buf1:
+                return True
 
 
 def name_to_game(name: str) -> Game:
@@ -101,8 +131,12 @@ class Tester:
             print(" ".join(cmd))
             raise
 
-    def compare(self, one: Path, two: Path) -> None:
-        if not filecmp.cmp(one, two, shallow=False):
+    def compare(self, one: Path, two: Path, limit: Optional[int] = None) -> None:
+        if limit is None:
+            res = cmp(one, two)
+        else:
+            res = cmp_fuzzy(one, two, limit)
+        if not res:
             print("*** MISMATCH ***", one, two)
             self.miscompares.append((one, two))
 
@@ -254,8 +288,7 @@ class Tester:
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
 
-            if game == GAME_RC or game == GAME_CS:
-                print("SKIPPING", name)
+            if game != GAME_MW and game != GAME_PM:
                 continue
 
             output_dir = output_base / "motion"
@@ -276,18 +309,17 @@ class Tester:
         print("--- MECHLIB ---")
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
-            # if game == GAME_RC or game == GAME_CS:
-            if game != GAME_MW:
-                print("SKIPPING", name)
+
+            if game != GAME_MW and game != GAME_PM:
                 continue
 
             output_dir = output_base / "mechlib"
             output_dir.mkdir(exist_ok=True)
 
             input_zbd = zbd_dir / "mechlib.zbd"
-            zip_path = output_base / "mechlib.zip"
-            output_zbd = output_base / "mechlib.zbd"
-            read_log = output_base / "mechlib-read.log"
+            zip_path = output_dir / "mechlib.zip"
+            output_zbd = output_dir / "mechlib.zbd"
+            read_log = output_dir / "mechlib-read.log"
 
             print(game, name, "mechlib")
 
@@ -299,18 +331,12 @@ class Tester:
         print("--- GAMEZ ---")
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
-            # if game != GAME_RC:
-            #     print("SKIPPING", name)
-            #     continue
 
             output_dir = output_base / "gamez"
             output_dir.mkdir(exist_ok=True)
 
             for input_zbd in sorted(zbd_dir.rglob("gamez.zbd")):
                 base_name, parents = campaign_mission(input_zbd, zbd_dir)
-                if game == GAME_CS and base_name == "c4-gamez":
-                    print("BORKED", GAME_CS, base_name)
-                    continue
 
                 zip_path = output_dir / f"{base_name}.zip"
                 output_zbd = output_dir / f"{base_name}.zbd"
@@ -326,6 +352,7 @@ class Tester:
         print("--- ANIM ---")
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
+
             if game != GAME_MW:
                 print("SKIPPING", name)
                 continue
@@ -350,6 +377,7 @@ class Tester:
         print("--- ZMAP ---")
         for name, zbd_dir, output_base in self.versions:
             game = name_to_game(name)
+
             if game != GAME_RC:
                 continue
 
@@ -373,6 +401,32 @@ class Tester:
                 self.unzbd("zmap", game, input_zmap, json_path, read_log)
                 self.rezbd("zmap", game, json_path, output_zmap)
                 self.compare(input_zmap, output_zmap)
+
+    def test_planes(self) -> None:
+        print("--- PLANES ---")
+        for name, zbd_dir, output_base in self.versions:
+            game = name_to_game(name)
+
+            if game != GAME_CS:
+                continue
+
+            output_dir = output_base / "planes"
+            output_dir.mkdir(exist_ok=True)
+
+            input_zbd = zbd_dir / "planes.zbd"
+            zip_path = output_dir / "planes.zip"
+            output_zbd = output_dir / "planes.zbd"
+            read_log = output_dir / "planes-read.log"
+
+            print(game, name, "planes")
+
+            self.unzbd("gamez", game, input_zbd, zip_path, read_log)
+            self.rezbd("gamez", game, zip_path, output_zbd)
+            # planes has textures with duplicate names. this would actually
+            # be surprisingly hard to fix, and with very little upside. so
+            # instead, we'll simply ignore mismatches up to a certain limit,
+            # since planes uses similar code to gamez, so we have coverage.
+            self.compare(input_zbd, output_zbd, limit=100)
 
 
 def main() -> None:
@@ -401,6 +455,7 @@ def main() -> None:
     tester.test_gamez()
     tester.test_anim()
     tester.test_zmap()
+    tester.test_planes()
     tester.print_miscompares()
 
 
