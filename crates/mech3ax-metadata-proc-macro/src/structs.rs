@@ -174,6 +174,7 @@ fn generate_struct_type(
                 fields: &[
                     #( #fields, )*
                 ],
+                module_path: ::std::module_path!(),
             });
     }
 }

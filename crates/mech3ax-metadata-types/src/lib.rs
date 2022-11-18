@@ -47,6 +47,15 @@ pub struct TypeInfoOption {
 pub struct TypeInfoEnum {
     pub name: &'static str,
     pub variants: &'static [&'static str],
+    pub module_path: &'static str,
+}
+
+/// A discriminant union type.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TypeInfoUnion {
+    pub name: &'static str,
+    pub variants: &'static [(&'static str, Option<&'static TypeInfo>)],
+    pub module_path: &'static str,
 }
 
 /// A janky way of specifying whether the struct should be a reference type
@@ -91,13 +100,7 @@ pub struct TypeInfoStruct {
     pub semantic: TypeSemantic,
     pub generics: Option<&'static [(&'static TypeInfo, &'static str)]>,
     pub fields: &'static [TypeInfoStructField],
-}
-
-/// A discriminant union type.
-#[derive(Debug, Clone, PartialEq)]
-pub struct TypeInfoUnion {
-    pub name: &'static str,
-    pub variants: &'static [(&'static str, Option<&'static TypeInfo>)],
+    pub module_path: &'static str,
 }
 
 /// A type.

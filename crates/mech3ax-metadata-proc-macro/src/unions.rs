@@ -119,6 +119,7 @@ fn generate_union_type(name: String, variants: Vec<VariantInfo>) -> ImplItemCons
                 variants: &[
                     #( #variants, )*
                 ],
+                module_path: ::std::module_path!(),
             });
     }
 }

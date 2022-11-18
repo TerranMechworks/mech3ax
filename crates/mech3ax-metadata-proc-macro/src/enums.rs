@@ -60,6 +60,7 @@ fn generate_enum_type(name: String, variants: Vec<String>) -> ImplItemConst {
                 variants: &[
                     #(#variants,)*
                 ],
+                module_path: ::std::module_path!(),
             });
     }
 }
