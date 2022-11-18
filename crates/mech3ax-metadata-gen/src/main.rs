@@ -1,6 +1,7 @@
 mod csharp_type;
 mod enums;
 mod fields;
+mod module_path;
 mod options;
 mod resolver;
 mod structs;

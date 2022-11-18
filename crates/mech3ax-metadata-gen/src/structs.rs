@@ -1,5 +1,6 @@
 use crate::csharp_type::{CSharpType, TypeKind};
 use crate::fields::{join_generics, Field};
+use crate::module_path::convert_mod_path;
 use crate::resolver::TypeResolver;
 use mech3ax_metadata_types::{TypeInfoStruct, TypeSemantic};
 use serde::Serialize;
@@ -12,6 +13,10 @@ pub struct Struct {
     pub name: &'static str,
     /// The struct's C# type name, with generics.
     pub type_name: Cow<'static, str>,
+    /// The struct's C# namespace.
+    pub namespace: String,
+    /// The struct's full C# type, with namespace and generics.
+    pub full_name: String,
     /// The struct's C# converter type name, with generics.
     pub conv_name: String,
     /// The struct's C# semantic type as a string, `class` or `struct`.
@@ -40,7 +45,7 @@ impl Struct {
             TypeSemantic::Val => TypeKind::Val,
         };
         CSharpType {
-            name: self.type_name.clone(),
+            name: Cow::Owned(self.full_name.clone()),
             kind,
             generics: self.generics.clone(),
         }
@@ -49,6 +54,8 @@ impl Struct {
     pub fn new(resolver: &mut TypeResolver, si: &TypeInfoStruct) -> Self {
         // luckily, Rust's casing for structs matches C#.
         let name = si.name;
+        let namespace = convert_mod_path(si.module_path);
+
         let semantic = si.semantic;
         let sem_type = match semantic {
             TypeSemantic::Ref => "class",
@@ -82,13 +89,17 @@ impl Struct {
             let generics_joined = join_generics(&generics);
             let type_name = Cow::Owned(format!("{}<{}>", name, generics_joined));
             let conv_name = format!("{}Converter<{}>", si.name, generics_joined);
-            resolver.push_factory_converter(si.name.to_string(), generics.len());
+            resolver.push_factory_converter(namespace.clone(), si.name.to_string(), generics.len());
             (type_name, conv_name, Some(generics))
         };
+
+        let full_name = format!("{}.{}", namespace, type_name);
 
         Self {
             name,
             type_name,
+            namespace,
+            full_name,
             conv_name,
             sem_type,
             fields,
@@ -113,10 +124,10 @@ impl Struct {
     }
 }
 
-pub const STRUCT_IMPL: &'static str = r###"namespace Mech3DotNet.Json
+pub const STRUCT_IMPL: &'static str = r###"namespace {{ struct.namespace }}
 {
 {%- if struct.name == struct.type_name %}
-    [System.Text.Json.Serialization.JsonConverter(typeof(Mech3DotNet.Json.Converters.{{ struct.name }}Converter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof({{ struct.namespace }}.Converters.{{ struct.name }}Converter))]
 {%- endif %}
     public {{ struct.sem_type }} {{ struct.type_name }}
     {
@@ -136,11 +147,11 @@ pub const STRUCT_IMPL: &'static str = r###"namespace Mech3DotNet.Json
 
 pub const STRUCT_NORMAL_CONV: &'static str = r###"using System.Text.Json;
 
-namespace Mech3DotNet.Json.Converters
+namespace {{ struct.namespace }}.Converters
 {
-    public class {{ struct.name }}Converter : Mech3DotNet.Json.Converters.StructConverter<{{ struct.name }}>
+    public class {{ struct.name }}Converter : Mech3DotNet.Json.Converters.StructConverter<{{ struct.full_name }}>
     {
-        protected override {{ struct.name }} ReadStruct(ref Utf8JsonReader __reader, JsonSerializerOptions __options)
+        protected override {{ struct.full_name }} ReadStruct(ref Utf8JsonReader __reader, JsonSerializerOptions __options)
         {
 {%- for field in struct.fields %}
             var {{ field.name }}Field = new Mech3DotNet.Json.Converters.Option<{{ field.ty }}>({% if field.default %}{{ field.default }}{% endif %});
@@ -176,10 +187,10 @@ namespace Mech3DotNet.Json.Converters
 {%- for field in struct.fields %}
             var {{ field.name }} = {{ field.name }}Field.Unwrap("{{ field.json_name }}");
 {%- endfor %}
-            return new {{ struct.name }}({% for field in struct.fields %}{{ field.name }}{% if not loop.last %}, {% endif %}{% endfor %});
+            return new {{ struct.full_name }}({% for field in struct.fields %}{{ field.name }}{% if not loop.last %}, {% endif %}{% endfor %});
         }
 
-        public override void Write(Utf8JsonWriter writer, {{ struct.name }} value, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, {{ struct.full_name }} value, JsonSerializerOptions options)
         {
             writer.WriteStartObject();
 {%- for field in struct.fields %}{% if field.default %}
@@ -200,9 +211,9 @@ namespace Mech3DotNet.Json.Converters
 
 pub const STRUCT_GENERIC_CONV: &'static str = r###"using System.Text.Json;
 
-namespace Mech3DotNet.Json.Converters
+namespace {{ struct.namespace }}.Converters
 {
-    public class {{ struct.conv_name }} : Mech3DotNet.Json.Converters.StructConverter<{{ struct.type_name }}>
+    public class {{ struct.conv_name }} : Mech3DotNet.Json.Converters.StructConverter<{{ struct.full_name }}>
     {
 {%- for field in struct.fields %}{% if field.generics %}
         private readonly System.Type __{{ field.name }}Type;
@@ -217,7 +228,7 @@ namespace Mech3DotNet.Json.Converters
 {%- endif %}{% endfor %}
         }
 
-        protected override {{ struct.type_name }} ReadStruct(ref Utf8JsonReader __reader, JsonSerializerOptions __options)
+        protected override {{ struct.full_name }} ReadStruct(ref Utf8JsonReader __reader, JsonSerializerOptions __options)
         {
 {%- for field in struct.fields %}
             var {{ field.name }}Field = new Mech3DotNet.Json.Converters.Option<{{ field.ty }}>({% if field.default %}{{ field.default }}{% endif %});
@@ -262,10 +273,10 @@ namespace Mech3DotNet.Json.Converters
 {%- for field in struct.fields %}
             var {{ field.name }} = {{ field.name }}Field.Unwrap("{{ field.json_name }}");
 {%- endfor %}
-            return new {{ struct.type_name }}({% for field in struct.fields %}{{ field.name }}{% if not loop.last %}, {% endif %}{% endfor %});
+            return new {{ struct.full_name }}({% for field in struct.fields %}{{ field.name }}{% if not loop.last %}, {% endif %}{% endfor %});
         }
 
-        public override void Write(Utf8JsonWriter writer, {{ struct.type_name }} value, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, {{ struct.full_name }} value, JsonSerializerOptions options)
         {
             writer.WriteStartObject();
 {%- for field in struct.fields %}{% if field.default %}

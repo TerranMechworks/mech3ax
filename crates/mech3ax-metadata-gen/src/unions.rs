@@ -1,4 +1,5 @@
 use crate::csharp_type::{CSharpType, TypeKind};
+use crate::module_path::convert_mod_path;
 use crate::resolver::TypeResolver;
 use mech3ax_metadata_types::{TypeInfo, TypeInfoUnion};
 use serde::Serialize;
@@ -16,8 +17,12 @@ pub struct Variant {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Union {
-    /// The union's C# class name.
+    /// The union's C# type name.
     pub name: &'static str,
+    /// The union's C# namespace.
+    pub namespace: String,
+    /// The union's full C# type, with namespace.
+    pub full_name: String,
     /// The union variant's C# enum name.
     pub choice: String,
     /// The union variant types.
@@ -53,7 +58,7 @@ impl Union {
         // our "unions" get transformed into C# classes (reference type)
         // disallow generics for now
         CSharpType {
-            name: Cow::Borrowed(self.name),
+            name: Cow::Owned(self.full_name.clone()),
             kind: TypeKind::Ref,
             generics: None,
         }
@@ -62,6 +67,8 @@ impl Union {
     pub fn new(resolver: &TypeResolver, ui: &TypeInfoUnion) -> Self {
         // luckily, Rust's casing for enum names matches C# classes.
         let name = ui.name;
+        let namespace = convert_mod_path(ui.module_path);
+        let full_name = format!("{}.{}", namespace, ui.name);
         let choice = format!("{}Variant", name);
 
         let variants = ui
@@ -75,6 +82,8 @@ impl Union {
 
         Self {
             name,
+            namespace,
+            full_name,
             choice,
             variants,
         }
@@ -93,7 +102,7 @@ impl Union {
     }
 }
 
-pub const UNION_IMPL: &'static str = r###"namespace Mech3DotNet.Json
+pub const UNION_IMPL: &'static str = r###"namespace {{ union.namespace }}
 {
     public enum {{ union.choice }}
     {
@@ -102,7 +111,7 @@ pub const UNION_IMPL: &'static str = r###"namespace Mech3DotNet.Json
 {%- endfor %}
     }
 
-    [System.Text.Json.Serialization.JsonConverter(typeof(Mech3DotNet.Json.Converters.{{ union.name }}Converter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof({{ union.namespace }}.Converters.{{ union.name }}Converter))]
     public class {{ union.name }} : Mech3DotNet.Json.Converters.IDiscriminatedUnion<{{ union.choice }}>
     {
 {%- for variant in union.variants %}{% if not variant.ty %}
@@ -129,19 +138,19 @@ pub const UNION_IMPL: &'static str = r###"namespace Mech3DotNet.Json
 
 pub const UNION_CONV: &'static str = r###"using System.Text.Json;
 
-namespace Mech3DotNet.Json.Converters
+namespace {{ union.namespace }}.Converters
 {
-    public class {{ union.name }}Converter : Mech3DotNet.Json.Converters.UnionConverter<{{ union.name }}>
+    public class {{ union.name }}Converter : Mech3DotNet.Json.Converters.UnionConverter<{{ union.full_name }}>
     {
-        public override {{ union.name }} ReadUnitVariant(string? name)
+        public override {{ union.full_name }} ReadUnitVariant(string? name)
         {
             switch (name)
             {
 {%- for variant in union.variants %}{%- if not variant.ty %}
                 case "{{ variant.name }}":
                     {
-                        var inner = new {{ union.name }}.{{ variant.name }}();
-                        return new {{ union.name }}(inner);
+                        var inner = new {{ union.full_name }}.{{ variant.name }}();
+                        return new {{ union.full_name }}(inner);
                     }
 {%- endif %}{% endfor %}
 {%- for variant in union.variants %}{%- if variant.ty %}
@@ -164,7 +173,7 @@ namespace Mech3DotNet.Json.Converters
             }
         }
 
-        public override {{ union.name }} ReadStructVariant(ref Utf8JsonReader reader, string? name, JsonSerializerOptions options)
+        public override {{ union.full_name }} ReadStructVariant(ref Utf8JsonReader reader, string? name, JsonSerializerOptions options)
         {
             switch (name)
             {
@@ -179,7 +188,7 @@ namespace Mech3DotNet.Json.Converters
                             throw new JsonException();
                         }
 {%- endif %}
-                        return new {{ union.name }}(inner);
+                        return new {{ union.full_name }}(inner);
                     }
 {%- endif %}{% endfor %}
 {%- for variant in union.variants %}{%- if not variant.ty %}
@@ -202,12 +211,12 @@ namespace Mech3DotNet.Json.Converters
             }
         }
 
-        public override void Write(Utf8JsonWriter writer, {{ union.name }} value, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, {{ union.full_name }} value, JsonSerializerOptions options)
         {
             switch (value.Variant)
             {
 {%- for variant in union.variants %}
-                case {{ union.choice }}.{{ variant.name }}:
+                case {{ union.namespace }}.{{ union.choice }}.{{ variant.name }}:
 {%- if variant.ty %}
                     {
                         var inner = value.As<{{ variant.ty }}>();

@@ -29,6 +29,7 @@ pub enum TypeKind {
 /// example "Foo<T>".
 #[derive(Debug, Clone, PartialEq)]
 pub struct CSharpType {
+    /// The fully-qualified C# type name.
     pub name: Cow<'static, str>,
     pub kind: TypeKind,
     pub generics: Option<HashSet<&'static str>>,

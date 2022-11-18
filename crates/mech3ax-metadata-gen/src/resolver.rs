@@ -11,33 +11,50 @@ use std::collections::{HashMap, HashSet};
 
 #[derive(Debug)]
 pub struct TypeResolver {
-    names: HashSet<&'static str>,
-    enums: HashMap<&'static str, Enum>,
-    structs: HashMap<&'static str, Struct>,
-    unions: HashMap<&'static str, Union>,
-    factory_converters: Vec<(String, usize)>,
+    names: HashSet<String>,
+    enums: HashMap<(&'static str, &'static str), Enum>,
+    structs: HashMap<(&'static str, &'static str), Struct>,
+    unions: HashMap<(&'static str, &'static str), Union>,
+    factory_converters: Vec<(String, String, usize)>,
 }
 
 #[derive(Debug)]
-struct ResolveError(Vec<&'static str>);
+struct ResolveErrorInner {
+    path: Vec<&'static str>,
+    name: &'static str,
+    module_path: &'static str,
+}
+
+#[derive(Debug)]
+struct ResolveError(Box<ResolveErrorInner>);
 
 impl ResolveError {
     const DELIM: &'static str = ".";
 
-    pub fn new(name: &'static str) -> Self {
-        Self(vec![name, Self::DELIM])
+    pub fn new(module_path: &'static str, name: &'static str) -> Self {
+        let inner = ResolveErrorInner {
+            path: vec![name, Self::DELIM],
+            name,
+            module_path,
+        };
+        Self(Box::new(inner))
     }
 
     pub fn push(mut self, name: &'static str) -> Self {
-        self.0.push(name);
-        self.0.push(Self::DELIM);
+        self.0.path.push(name);
+        self.0.path.push(Self::DELIM);
         self
     }
 
-    pub fn to_string(mut self) -> String {
-        self.0.pop(); // remove last delimiter
-        self.0.reverse();
-        self.0.into_iter().collect()
+    pub fn to_string(self) -> String {
+        let mut inner = self.0;
+        inner.path.pop(); // remove last delimiter
+        inner.path.reverse();
+        let path: String = inner.path.into_iter().collect();
+        format!(
+            "type `{}::{}` required by `{}` not found",
+            inner.module_path, inner.name, path
+        )
     }
 }
 
@@ -54,8 +71,8 @@ impl TypeResolver {
         }
     }
 
-    pub fn push_factory_converter(&mut self, converter: String, count: usize) {
-        self.factory_converters.push((converter, count));
+    pub fn push_factory_converter(&mut self, namespace: String, converter: String, count: usize) {
+        self.factory_converters.push((namespace, converter, count));
     }
 
     pub fn push<TI>(&mut self)
@@ -74,26 +91,26 @@ impl TypeResolver {
 
     fn push_enum(&mut self, ei: &TypeInfoEnum) {
         let e = Enum::new(self, ei);
-        if !self.names.insert(e.name) {
-            panic!("Duplicate type name `{}`", e.name);
+        if !self.names.insert(e.full_name.clone()) {
+            panic!("Duplicate type name `{}`", e.full_name);
         }
-        self.enums.insert(e.name, e);
+        self.enums.insert((ei.module_path, ei.name), e);
     }
 
     fn push_struct(&mut self, si: &TypeInfoStruct) {
         let s = Struct::new(self, si);
-        if !self.names.insert(s.name) {
-            panic!("Duplicate type name `{}`", s.name);
+        if !self.names.insert(s.full_name.clone()) {
+            panic!("Duplicate type name `{}`", s.full_name);
         }
-        self.structs.insert(s.name, s);
+        self.structs.insert((si.module_path, si.name), s);
     }
 
     fn push_union(&mut self, ui: &TypeInfoUnion) {
         let u = Union::new(self, ui);
-        if !self.names.insert(u.name) {
-            panic!("Duplicate type name `{}`", u.name);
+        if !self.names.insert(u.full_name.clone()) {
+            panic!("Duplicate type name `{}`", u.full_name);
         }
-        self.unions.insert(u.name, u);
+        self.unions.insert((ui.module_path, ui.name), u);
     }
 
     pub fn resolve<'a, 'b>(&'a self, ti: &'b TypeInfo, name: &'static str) -> CSharpType {
@@ -138,25 +155,25 @@ impl TypeResolver {
     fn resolve_enum<'a, 'b>(&'a self, ei: &'b TypeInfoEnum) -> ResolveResult {
         // enums must be pushed before they can be resolved
         self.enums
-            .get(ei.name)
+            .get(&(ei.module_path, ei.name))
             .map(Enum::make_type)
-            .ok_or_else(|| ResolveError::new(ei.name))
+            .ok_or_else(|| ResolveError::new(ei.module_path, ei.name))
     }
 
     fn resolve_struct<'a, 'b>(&'a self, si: &'b TypeInfoStruct) -> ResolveResult {
         // enums must be pushed before they can be resolved
         self.structs
-            .get(si.name)
+            .get(&(si.module_path, si.name))
             .map(Struct::make_type)
-            .ok_or_else(|| ResolveError::new(si.name))
+            .ok_or_else(|| ResolveError::new(si.module_path, si.name))
     }
 
     fn resolve_union<'a, 'b>(&'a self, ui: &'b TypeInfoUnion) -> ResolveResult {
         // enums must be pushed before they can be resolved
         self.unions
-            .get(ui.name)
+            .get(&(ui.module_path, ui.name))
             .map(Union::make_type)
-            .ok_or_else(|| ResolveError::new(ui.name))
+            .ok_or_else(|| ResolveError::new(ui.module_path, ui.name))
     }
 
     pub fn into_values(self) -> (Vec<Enum>, Vec<Struct>, Vec<Union>, Options) {

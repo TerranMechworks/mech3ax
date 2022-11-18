@@ -2,11 +2,11 @@ use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Options {
-    pub factory_converters: Vec<(String, usize)>,
+    pub factory_converters: Vec<(String, String, usize)>,
 }
 
 impl Options {
-    pub fn new(factory_converters: Vec<(String, usize)>) -> Self {
+    pub fn new(factory_converters: Vec<(String, String, usize)>) -> Self {
         Self { factory_converters }
     }
 
@@ -19,21 +19,23 @@ impl Options {
     pub fn into_factories(self) -> Vec<Factory> {
         self.factory_converters
             .into_iter()
-            .map(|(name, count)| Factory::new(name, count))
+            .map(|(namespace, name, count)| Factory::new(namespace, name, count))
             .collect()
     }
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Factory {
+    namespace: String,
     pub name: String,
     generic_commas: String,
 }
 
 impl Factory {
-    pub fn new(name: String, count: usize) -> Self {
+    pub fn new(namespace: String, name: String, count: usize) -> Self {
         let generic_commas = ",".repeat(count.saturating_sub(1));
         Self {
+            namespace,
             name,
             generic_commas,
         }
@@ -47,7 +49,6 @@ impl Factory {
 }
 
 pub const OPTIONS_IMPL: &'static str = r###"using System.Collections.Generic;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Mech3DotNet.Json.Converters
@@ -57,7 +58,7 @@ namespace Mech3DotNet.Json.Converters
         public static List<JsonConverter> GetDefaultConverters() => new List<JsonConverter>
         {
 {%- for converter in options.factory_converters %}
-            new {{ converter.0 }}ConverterFactory(),
+            new {{ converter.0 }}.Converters.{{ converter.1 }}ConverterFactory(),
 {%- endfor %}
         };
     }
@@ -69,11 +70,11 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Mech3DotNet.Json.Converters
+namespace {{ factory.namespace }}.Converters
 {
     public class {{ factory.name }}ConverterFactory : JsonConverterFactory
     {
-        public override bool CanConvert(Type typeToConvert)
+        public override bool CanConvert(System.Type typeToConvert)
         {
             if (!typeToConvert.IsGenericType)
                 return false;
@@ -82,7 +83,7 @@ namespace Mech3DotNet.Json.Converters
             return true;
         }
 
-        public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options)
+        public override JsonConverter CreateConverter(System.Type type, JsonSerializerOptions options)
         {
             return (JsonConverter)Activator.CreateInstance(
                 typeof({{ factory.name }}Converter<{{ factory.generic_commas }}>).MakeGenericType(type.GetGenericArguments()),
