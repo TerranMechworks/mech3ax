@@ -46,7 +46,7 @@ impl From<&TypeInfoBase> for CSharpType {
             I16 => ("short", TypeKind::Val),
             I32 => ("int", TypeKind::Val),
             F32 => ("float", TypeKind::Val),
-            DateTime => ("DateTime", TypeKind::Val),
+            DateTime => ("System.DateTime", TypeKind::Val),
             String => ("string", TypeKind::Ref),
         };
         let name = Cow::Borrowed(name);
@@ -108,7 +108,7 @@ impl CSharpType {
 
     /// Convert a type into a vec/list type.
     pub fn vec(inner: Self) -> Self {
-        let name = Cow::Owned(format!("List<{}>", inner.name));
+        let name = Cow::Owned(format!("System.Collections.Generic.List<{}>", inner.name));
         // a list is always a reference type, and has it's own nullability,
         // independent of the inner type.
         Self {

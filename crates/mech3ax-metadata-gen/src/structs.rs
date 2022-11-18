@@ -113,16 +113,10 @@ impl Struct {
     }
 }
 
-pub const STRUCT_IMPL: &'static str = r###"using System;
-using System.Collections.Generic;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Mech3DotNet.Json.Converters;
-
-namespace Mech3DotNet.Json
+pub const STRUCT_IMPL: &'static str = r###"namespace Mech3DotNet.Json
 {
 {%- if struct.name == struct.type_name %}
-    [JsonConverter(typeof({{ struct.name }}Converter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(Mech3DotNet.Json.Converters.{{ struct.name }}Converter))]
 {%- endif %}
     public {{ struct.sem_type }} {{ struct.type_name }}
     {
@@ -140,20 +134,16 @@ namespace Mech3DotNet.Json
 }
 "###;
 
-pub const STRUCT_NORMAL_CONV: &'static str = r###"using System;
-using System.Collections.Generic;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Mech3DotNet.Json;
+pub const STRUCT_NORMAL_CONV: &'static str = r###"using System.Text.Json;
 
 namespace Mech3DotNet.Json.Converters
 {
-    public class {{ struct.name }}Converter : StructConverter<{{ struct.name }}>
+    public class {{ struct.name }}Converter : Mech3DotNet.Json.Converters.StructConverter<{{ struct.name }}>
     {
         protected override {{ struct.name }} ReadStruct(ref Utf8JsonReader __reader, JsonSerializerOptions __options)
         {
 {%- for field in struct.fields %}
-            var {{ field.name }}Field = new Option<{{ field.ty }}>({% if field.default %}{{ field.default }}{% endif %});
+            var {{ field.name }}Field = new Mech3DotNet.Json.Converters.Option<{{ field.ty }}>({% if field.default %}{{ field.default }}{% endif %});
 {%- endfor %}
             string? __fieldName = null;
             while (ReadFieldName(ref __reader, out __fieldName))
@@ -208,33 +198,29 @@ namespace Mech3DotNet.Json.Converters
 }
 "###;
 
-pub const STRUCT_GENERIC_CONV: &'static str = r###"using System;
-using System.Collections.Generic;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Mech3DotNet.Json;
+pub const STRUCT_GENERIC_CONV: &'static str = r###"using System.Text.Json;
 
 namespace Mech3DotNet.Json.Converters
 {
-    public class {{ struct.conv_name }} : StructConverter<{{ struct.type_name }}>
+    public class {{ struct.conv_name }} : Mech3DotNet.Json.Converters.StructConverter<{{ struct.type_name }}>
     {
 {%- for field in struct.fields %}{% if field.generics %}
-        private readonly Type __{{ field.name }}Type;
-        private readonly JsonConverter<{{ field.ty }}{% if field.null_check %}?{% endif %}>? __{{ field.name }}Converter;
+        private readonly System.Type __{{ field.name }}Type;
+        private readonly System.Text.Json.Serialization.JsonConverter<{{ field.ty }}{% if field.null_check %}?{% endif %}>? __{{ field.name }}Converter;
 {%- endif %}{% endfor %}
 
         public {{ struct.name }}Converter(JsonSerializerOptions options)
         {
 {%- for field in struct.fields %}{% if field.generics %}
             __{{ field.name }}Type = typeof({{ field.ty | trim_end_matches(pat="?") }});
-            __{{ field.name }}Converter = (JsonConverter<{{ field.ty }}{% if field.null_check %}?{% endif %}>?)options.GetConverter(__{{ field.name }}Type);
+            __{{ field.name }}Converter = (System.Text.Json.Serialization.JsonConverter<{{ field.ty }}{% if field.null_check %}?{% endif %}>?)options.GetConverter(__{{ field.name }}Type);
 {%- endif %}{% endfor %}
         }
 
         protected override {{ struct.type_name }} ReadStruct(ref Utf8JsonReader __reader, JsonSerializerOptions __options)
         {
 {%- for field in struct.fields %}
-            var {{ field.name }}Field = new Option<{{ field.ty }}>({% if field.default %}{{ field.default }}{% endif %});
+            var {{ field.name }}Field = new Mech3DotNet.Json.Converters.Option<{{ field.ty }}>({% if field.default %}{{ field.default }}{% endif %});
 {%- endfor %}
             string? __fieldName = null;
             while (ReadFieldName(ref __reader, out __fieldName))

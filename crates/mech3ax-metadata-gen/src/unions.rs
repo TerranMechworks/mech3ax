@@ -93,12 +93,7 @@ impl Union {
     }
 }
 
-pub const UNION_IMPL: &'static str = r###"using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Mech3DotNet.Json.Converters;
-
-namespace Mech3DotNet.Json
+pub const UNION_IMPL: &'static str = r###"namespace Mech3DotNet.Json
 {
     public enum {{ union.choice }}
     {
@@ -107,8 +102,8 @@ namespace Mech3DotNet.Json
 {%- endfor %}
     }
 
-    [JsonConverter(typeof({{ union.name }}Converter))]
-    public class {{ union.name }} : IDiscriminatedUnion<{{ union.choice }}>
+    [System.Text.Json.Serialization.JsonConverter(typeof(Mech3DotNet.Json.Converters.{{ union.name }}Converter))]
+    public class {{ union.name }} : Mech3DotNet.Json.Converters.IDiscriminatedUnion<{{ union.choice }}>
     {
 {%- for variant in union.variants %}{% if not variant.ty %}
         public sealed class {{ variant.name }}
@@ -132,14 +127,11 @@ namespace Mech3DotNet.Json
 }
 "###;
 
-pub const UNION_CONV: &'static str = r###"using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Mech3DotNet.Json;
+pub const UNION_CONV: &'static str = r###"using System.Text.Json;
 
 namespace Mech3DotNet.Json.Converters
 {
-    public class {{ union.name }}Converter : UnionConverter<{{ union.name }}>
+    public class {{ union.name }}Converter : Mech3DotNet.Json.Converters.UnionConverter<{{ union.name }}>
     {
         public override {{ union.name }} ReadUnitVariant(string? name)
         {
@@ -233,7 +225,7 @@ namespace Mech3DotNet.Json.Converters
 {%- endif %}
 {%- endfor %}
                 default:
-                    throw new ArgumentOutOfRangeException("Variant", $"Invalid variant '{value.Variant}' for '{{ union.name }}'");
+                    throw new System.ArgumentOutOfRangeException("Variant", $"Invalid variant '{value.Variant}' for '{{ union.name }}'");
             }
         }
     }

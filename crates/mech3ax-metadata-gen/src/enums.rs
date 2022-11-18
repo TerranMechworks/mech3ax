@@ -43,14 +43,9 @@ impl Enum {
     }
 }
 
-pub const ENUM_IMPL: &'static str = r###"using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Mech3DotNet.Json.Converters;
-
-namespace Mech3DotNet.Json
+pub const ENUM_IMPL: &'static str = r###"namespace Mech3DotNet.Json
 {
-    [JsonConverter(typeof({{ enum.name }}Converter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(Mech3DotNet.Json.Converters.{{ enum.name }}Converter))]
     public enum {{ enum.name }}
     {
 {%- for variant in enum.variants %}
@@ -60,14 +55,9 @@ namespace Mech3DotNet.Json
 }
 "###;
 
-pub const ENUM_CONV: &'static str = r###"using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Mech3DotNet.Json;
-
-namespace Mech3DotNet.Json.Converters
+pub const ENUM_CONV: &'static str = r###"namespace Mech3DotNet.Json.Converters
 {
-    public class {{ enum.name }}Converter : EnumConverter<{{ enum.name }}>
+    public class {{ enum.name }}Converter : Mech3DotNet.Json.Converters.EnumConverter<{{ enum.name }}>
     {
         public override {{ enum.name }} ReadVariant(string? name) => name switch
         {
@@ -83,7 +73,7 @@ namespace Mech3DotNet.Json.Converters
 {%- for variant in enum.variants %}
             {{ enum.name }}.{{ variant }} => "{{ variant }}",
 {%- endfor %}
-            _ => throw new ArgumentOutOfRangeException("{{ enum.name }}"),
+            _ => throw new System.ArgumentOutOfRangeException("{{ enum.name }}"),
         };
     }
 }
