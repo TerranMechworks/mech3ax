@@ -1,7 +1,7 @@
 use super::write_single::{write_cycle, write_material};
 use super::{find_texture_index_by_name, MaterialC, MaterialFlags, MaterialInfoC};
 use log::{debug, trace};
-use mech3ax_api_types::gamez::Material;
+use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::{Color, ReprSize as _};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, Result};

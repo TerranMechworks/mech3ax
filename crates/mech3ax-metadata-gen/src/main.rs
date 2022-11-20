@@ -44,10 +44,10 @@ fn main() {
     resolver.push::<api::zmap::MapFeature>();
     resolver.push::<api::zmap::MapRc>();
 
-    resolver.push::<api::gamez::ColoredMaterial>();
-    resolver.push::<api::gamez::CycleData>();
-    resolver.push::<api::gamez::TexturedMaterial>();
-    resolver.push::<api::gamez::Material>();
+    resolver.push::<api::gamez::materials::ColoredMaterial>();
+    resolver.push::<api::gamez::materials::CycleData>();
+    resolver.push::<api::gamez::materials::TexturedMaterial>();
+    resolver.push::<api::gamez::materials::Material>();
 
     // gamez mesh
     resolver.push::<api::gamez::UvCoord>();

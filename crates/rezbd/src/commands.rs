@@ -4,11 +4,12 @@ use log::debug;
 use mech3ax_anim::write_anim;
 use mech3ax_api_types::anim::AnimMetadata;
 use mech3ax_api_types::archive::ArchiveEntry;
+use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::gamez::{
     GameZCsData, GameZCsMetadata, GameZMwData, GameZMwMetadata, GameZPmData, GameZPmMetadata,
     GameZRcData, GameZRcMetadata,
 };
-use mech3ax_api_types::gamez::{Material, MeshMw, MeshNg, MeshRc, ModelMw, ModelPm, NodeMw};
+use mech3ax_api_types::gamez::{MeshMw, MeshNg, MeshRc, ModelMw, ModelPm, NodeMw};
 use mech3ax_api_types::image::TextureManifest;
 use mech3ax_api_types::interp::Script;
 use mech3ax_api_types::motion::Motion;

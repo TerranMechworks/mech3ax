@@ -1,9 +1,9 @@
-mod materials;
-mod mechlib;
-mod mesh;
-mod nodes;
+pub mod materials;
+pub mod mechlib;
+pub mod mesh;
+pub mod nodes;
 
-pub use materials::*;
+use materials::*;
 pub use mechlib::*;
 pub use mesh::*;
 pub use nodes::*;
