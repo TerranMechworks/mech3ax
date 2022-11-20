@@ -2,10 +2,12 @@ use crate::buffer::CallbackBuffer;
 use crate::error::err_to_c;
 use crate::filename_to_string;
 use anyhow::{anyhow, bail, Context, Result};
-use mech3ax_api_types::{
-    AnimDef, AnimMetadata, ArchiveEntry, GameZMwData, Material, ModelMw, Motion, Script,
-    TextureManifest,
-};
+use mech3ax_api_types::anim::{AnimDef, AnimMetadata};
+use mech3ax_api_types::archive::ArchiveEntry;
+use mech3ax_api_types::gamez::{GameZMwData, Material, ModelMw};
+use mech3ax_api_types::image::TextureManifest;
+use mech3ax_api_types::interp::Script;
+use mech3ax_api_types::motion::Motion;
 use mech3ax_archive::{Mode, Version};
 use mech3ax_common::io_ext::CountingWriter;
 use serde_json::Value;

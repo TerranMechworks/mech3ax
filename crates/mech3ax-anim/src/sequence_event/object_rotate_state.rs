@@ -1,8 +1,7 @@
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
-use mech3ax_api_types::{
-    static_assert_size, AnimDef, ObjectRotateState, ReprSize as _, RotateState, Vec3,
-};
+use mech3ax_api_types::anim::{AnimDef, ObjectRotateState, RotateState};
+use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};

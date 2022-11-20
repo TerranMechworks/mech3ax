@@ -1,6 +1,7 @@
 use super::{Mode, Version};
 use log::{debug, trace};
-use mech3ax_api_types::{static_assert_size, ArchiveEntry, ReprSize as _};
+use mech3ax_api_types::archive::ArchiveEntry;
+use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{bytes_to_c, str_from_c_padded, str_to_c_padded};

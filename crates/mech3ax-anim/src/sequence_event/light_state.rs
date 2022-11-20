@@ -2,9 +2,8 @@ use super::types::INPUT_NODE;
 use super::utils::assert_color;
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
-use mech3ax_api_types::{
-    static_assert_size, AnimDef, AtNode, Color, LightState, Range, ReprSize as _, Vec3,
-};
+use mech3ax_api_types::anim::{AnimDef, AtNode, LightState};
+use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _, Vec3};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlags;

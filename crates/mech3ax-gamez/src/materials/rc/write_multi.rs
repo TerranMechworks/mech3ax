@@ -1,7 +1,8 @@
 use super::write_single::write_material;
 use super::{MaterialC, MaterialInfoC};
 use log::{debug, trace};
-use mech3ax_api_types::{Color, Material, ReprSize as _};
+use mech3ax_api_types::gamez::Material;
+use mech3ax_api_types::{Color, ReprSize as _};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, Result};
 use std::io::Write;

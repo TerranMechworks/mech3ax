@@ -3,9 +3,8 @@ use crate::flags::NodeBitFlags;
 use crate::math::{apply_zero_signs, euler_to_matrix, extract_zero_signs, PI};
 use crate::types::{NodeVariantPm, NodeVariantsPm};
 use log::{debug, trace};
-use mech3ax_api_types::{
-    static_assert_size, Matrix, Object3dPm, ReprSize as _, Transformation, Vec3,
-};
+use mech3ax_api_types::gamez::{Object3dPm, Transformation};
+use mech3ax_api_types::{static_assert_size, Matrix, ReprSize as _, Vec3};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};

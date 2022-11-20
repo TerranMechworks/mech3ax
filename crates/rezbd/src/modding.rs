@@ -2,7 +2,7 @@ use crate::commands::buf_writer;
 use crate::ZrdOpts;
 use anyhow::{Context, Result};
 use image::{ColorType, DynamicImage, GenericImageView, ImageFormat};
-use mech3ax_api_types::{TextureAlpha, TextureManifest};
+use mech3ax_api_types::image::{TextureAlpha, TextureManifest};
 use mech3ax_common::assert_with_msg;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_image::write_textures;

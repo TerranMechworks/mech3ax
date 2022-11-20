@@ -1,6 +1,6 @@
 use crate::flags::NodeBitFlags;
 use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
-use mech3ax_api_types::Empty;
+use mech3ax_api_types::gamez::Empty;
 use mech3ax_common::{assert_that, Result};
 
 const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::BASE;

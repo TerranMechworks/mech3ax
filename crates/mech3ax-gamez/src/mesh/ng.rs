@@ -1,10 +1,10 @@
 //! GameZ and mechlib mesh support for PM, CS
 use super::common::*;
 use log::{debug, trace};
-use mech3ax_api_types::{
-    static_assert_size, Color, MeshNg, MeshTexture, PolygonFlags, PolygonNg, PolygonTextureNg,
-    ReprSize as _, UvCoord, Vec3,
+use mech3ax_api_types::gamez::{
+    MeshNg, MeshTexture, PolygonFlags, PolygonNg, PolygonTextureNg, UvCoord,
 };
+use mech3ax_api_types::{static_assert_size, Color, ReprSize as _, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, bool_c, Result};
 use mech3ax_debug::{Hex, Ptr};

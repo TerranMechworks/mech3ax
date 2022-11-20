@@ -1,5 +1,6 @@
 use log::trace;
-use mech3ax_api_types::{static_assert_size, NamePad, NamePtr, NamePtrFlags, ReprSize as _};
+use mech3ax_api_types::anim::{NamePad, NamePtr, NamePtrFlags};
+use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{

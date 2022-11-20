@@ -1,8 +1,3 @@
-use mech3ax_api_types::AnimDef;
-use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::Result;
-use std::io::{Read, Write};
-
 mod animation;
 mod call_animation;
 mod call_object_connector;
@@ -33,8 +28,12 @@ mod sound_node;
 mod types;
 mod utils;
 
+use mech3ax_api_types::anim::AnimDef;
+use mech3ax_common::io_ext::{CountingReader, CountingWriter};
+use mech3ax_common::Result;
 use object_motion_si_script::object_motion_si_script_size;
 pub use parse::{read_events, size_events, write_events};
+use std::io::{Read, Write};
 
 pub trait ScriptObject: Sized {
     const INDEX: u8;

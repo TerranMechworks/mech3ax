@@ -4,9 +4,8 @@ use crate::math::partition_diag;
 use crate::range::RangeI32;
 use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
 use log::{debug, trace};
-use mech3ax_api_types::{
-    static_assert_size, Area, BoundingBox, Color, Partition, Range, ReprSize as _, World,
-};
+use mech3ax_api_types::gamez::{Area, BoundingBox, Partition, World};
+use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};

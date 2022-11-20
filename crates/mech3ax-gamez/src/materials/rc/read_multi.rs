@@ -1,7 +1,8 @@
 use super::read_single::{read_material, read_material_zero};
 use super::{assert_material_info, MaterialInfoC};
 use log::{debug, trace};
-use mech3ax_api_types::{Material, ReprSize as _};
+use mech3ax_api_types::gamez::Material;
+use mech3ax_api_types::ReprSize as _;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Result};
 use std::io::Read;

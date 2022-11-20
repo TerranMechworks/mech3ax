@@ -1,6 +1,5 @@
-use mech3ax_api_types::{
-    static_assert_size, ActivationPrereq, PrereqAnimation, PrereqObject, PrereqParent,
-};
+use mech3ax_api_types::anim::{ActivationPrereq, PrereqAnimation, PrereqObject, PrereqParent};
+use mech3ax_api_types::static_assert_size;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};

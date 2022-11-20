@@ -1,4 +1,4 @@
-use mech3ax_api_types::NodeFlags;
+use mech3ax_api_types::gamez::NodeFlags;
 
 bitflags::bitflags! {
     pub struct NodeBitFlags: u32 {

@@ -2,10 +2,11 @@ use super::activation_prereq::{read_activ_prereqs, write_activ_prereqs};
 use super::support::*;
 use crate::sequence_event::{read_events, size_events, write_events};
 use log::trace;
-use mech3ax_api_types::{
-    static_assert_size, AnimActivation, AnimDef, AnimPtr, EventData, Execution, NamePad, Range,
-    ReprSize as _, ResetState, SeqActivation, SeqDef,
+use mech3ax_api_types::anim::{
+    AnimActivation, AnimDef, AnimPtr, EventData, Execution, NamePad, ResetState, SeqActivation,
+    SeqDef,
 };
+use mech3ax_api_types::{static_assert_size, Range, ReprSize as _};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{

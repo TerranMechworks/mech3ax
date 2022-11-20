@@ -5,7 +5,8 @@ mod write_multi;
 mod write_single;
 
 use super::{assert_material_info, find_texture_index_by_name, MaterialC, MaterialInfoC};
-use mech3ax_api_types::{static_assert_size, ColoredMaterial, Material, ReprSize as _};
+use mech3ax_api_types::gamez::{ColoredMaterial, Material};
+use mech3ax_api_types::{static_assert_size, ReprSize as _};
 
 #[derive(Debug)]
 #[repr(C)]

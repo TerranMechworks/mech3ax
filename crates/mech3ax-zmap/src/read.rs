@@ -1,6 +1,7 @@
 use super::{MapHeaderC, MAP_VERSION};
 use log::{debug, trace};
-use mech3ax_api_types::{MapColor, MapFeature, MapRc, MapVertex, ReprSize};
+use mech3ax_api_types::zmap::{MapColor, MapFeature, MapRc, MapVertex};
+use mech3ax_api_types::ReprSize as _;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Result};
 use std::io::Read;

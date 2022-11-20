@@ -1,4 +1,4 @@
-use mech3ax_api_types::AnimDef;
+use mech3ax_api_types::anim::AnimDef;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 
 pub trait AnimDefLookup {

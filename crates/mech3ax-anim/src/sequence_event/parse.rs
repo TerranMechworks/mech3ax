@@ -1,14 +1,15 @@
 use super::*;
 use log::trace;
-use mech3ax_api_types::{
-    static_assert_size, AnimDef, CallAnimation, CallObjectConnector, CallSequence, Callback,
-    DetonateWeapon, Else, ElseIf, EndIf, Event, EventData, EventStart, FogState,
-    FrameBufferEffectColor, If, InvalidateAnimation, LightAnimation, LightState, Loop,
-    ObjectActiveState, ObjectAddChild, ObjectConnector, ObjectCycleTexture, ObjectMotion,
-    ObjectMotionFromTo, ObjectMotionSiScript, ObjectOpacityFromTo, ObjectOpacityState,
-    ObjectRotateState, ObjectScaleState, ObjectTranslateState, PufferState, ReprSize as _,
-    ResetAnimation, Sound, SoundNode, StartOffset, StopAnimation, StopSequence,
+use mech3ax_api_types::anim::{
+    AnimDef, CallAnimation, CallObjectConnector, CallSequence, Callback, DetonateWeapon, Else,
+    ElseIf, EndIf, Event, EventData, EventStart, FogState, FrameBufferEffectColor, If,
+    InvalidateAnimation, LightAnimation, LightState, Loop, ObjectActiveState, ObjectAddChild,
+    ObjectConnector, ObjectCycleTexture, ObjectMotion, ObjectMotionFromTo, ObjectMotionSiScript,
+    ObjectOpacityFromTo, ObjectOpacityState, ObjectRotateState, ObjectScaleState,
+    ObjectTranslateState, PufferState, ResetAnimation, Sound, SoundNode, StartOffset,
+    StopAnimation, StopSequence,
 };
+use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use num_traits::FromPrimitive;

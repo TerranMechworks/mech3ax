@@ -1,5 +1,6 @@
 use log::trace;
-use mech3ax_api_types::{static_assert_size, Color, MeshLight, ReprSize as _, UvCoord, Vec3};
+use mech3ax_api_types::gamez::{MeshLight, UvCoord};
+use mech3ax_api_types::{static_assert_size, Color, ReprSize as _, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlags;
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};

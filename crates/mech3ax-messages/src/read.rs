@@ -5,7 +5,7 @@ use crate::size::u32_to_usize;
 use crate::string_table;
 use crate::zloc::read_zlocids;
 use log::trace;
-use mech3ax_api_types::{MessageEntry, Messages};
+use mech3ax_api_types::messages::{MessageEntry, Messages};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, assert_with_msg, GameType, Result};
 use std::collections::HashMap;

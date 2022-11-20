@@ -2,9 +2,8 @@ use crate::flags::NodeBitFlags;
 use crate::math::cotangent;
 use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
 use log::{debug, trace};
-use mech3ax_api_types::{
-    static_assert_size, BoundingBox, Camera, Matrix, Range, ReprSize as _, Vec3,
-};
+use mech3ax_api_types::gamez::{BoundingBox, Camera};
+use mech3ax_api_types::{static_assert_size, Matrix, Range, ReprSize as _, Vec3};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};

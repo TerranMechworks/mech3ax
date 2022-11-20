@@ -1,5 +1,6 @@
 use super::ScriptObject;
-use mech3ax_api_types::{static_assert_size, AnimDef, CallSequence, ReprSize as _, StopSequence};
+use mech3ax_api_types::anim::{AnimDef, CallSequence, StopSequence};
+use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};

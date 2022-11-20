@@ -1,5 +1,5 @@
 use crate::materials::ng::{read_material, write_material, RawMaterial};
-use mech3ax_api_types::{Material, TexturedMaterial};
+use mech3ax_api_types::gamez::{Material, TexturedMaterial};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, GameType, Result};
 use std::io::{Read, Write};

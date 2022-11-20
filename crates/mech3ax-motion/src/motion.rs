@@ -1,4 +1,5 @@
-use mech3ax_api_types::{static_assert_size, Motion, MotionFrame, MotionPart};
+use mech3ax_api_types::motion::{Motion, MotionFrame, MotionPart};
+use mech3ax_api_types::static_assert_size;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
 use std::io::{Read, Write};

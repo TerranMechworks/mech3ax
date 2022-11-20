@@ -1,6 +1,7 @@
 use super::delta::{dec_f32, delta};
 use super::ScriptObject;
-use mech3ax_api_types::{static_assert_size, AnimDef, FrameBufferEffectColor, ReprSize as _, Rgba};
+use mech3ax_api_types::anim::{AnimDef, FrameBufferEffectColor, Rgba};
+use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};

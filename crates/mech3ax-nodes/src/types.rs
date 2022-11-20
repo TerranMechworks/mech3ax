@@ -1,5 +1,5 @@
 use super::flags::NodeBitFlags;
-use mech3ax_api_types::{AreaPartition, BoundingBox, Empty};
+use mech3ax_api_types::gamez::{AreaPartition, BoundingBox, Empty};
 use num_derive::FromPrimitive;
 
 pub const ZONE_DEFAULT: u32 = 255;
