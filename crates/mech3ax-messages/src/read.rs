@@ -177,7 +177,7 @@ fn combine(
     Ok(entries)
 }
 
-pub fn read_message_table(read: &mut impl Read, skip_data: Option<usize>) -> Result<Messages> {
+fn read_message_table(read: &mut impl Read, skip_data: Option<usize>) -> Result<Messages> {
     let mut mem = Vec::new();
     read.read_to_end(&mut mem)?;
     let buf = &mem[..];

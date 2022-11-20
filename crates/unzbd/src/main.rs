@@ -79,7 +79,6 @@ struct ZipOpts {
 impl ZipOpts {
     fn version(&self, mode: Mode) -> Version {
         match self.game {
-            // TODO: CS
             GameType::MW | GameType::RC | GameType::CS => Version::One,
             GameType::PM => Version::Two(mode),
         }
@@ -214,15 +213,15 @@ enum SubCommand {
     Messages(MsgArgs),
     #[clap(about = "Extract texture packages to ZIP")]
     Textures(TextureOpts),
-    #[clap(about = "Extract 'motion.zbd' archives to ZIP (MW3, PM)")]
+    #[clap(about = "Extract 'motion.zbd' archives to ZIP (MW, PM)")]
     Motion(ZipArgs),
-    #[clap(about = "Extract 'mechlib.zbd' archives to ZIP (MW3, PM)")]
+    #[clap(about = "Extract 'mechlib.zbd' archives to ZIP (MW, PM)")]
     Mechlib(ZipArgs),
     #[clap(about = "Extract 'gamez.zbd' archives to ZIP")]
     Gamez(ZipArgs),
-    #[clap(about = "Extract 'anim.zbd' archives to ZIP (MW3)")]
+    #[clap(about = "Extract 'anim.zbd' archives to ZIP (MW)")]
     Anim(ZipArgs),
-    #[clap(about = "Extract savegames '*.mw3' archives to ZIP (MW3)")]
+    #[clap(about = "Extract savegames '*.mw3' archives to ZIP (MW)")]
     Savegame(ZipArgs),
     #[clap(about = "Extract map '*.zmap' files to JSON (RC)")]
     Zmap(ZMapArgs),

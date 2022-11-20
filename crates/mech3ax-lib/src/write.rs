@@ -1,17 +1,18 @@
 use crate::buffer::CallbackBuffer;
 use crate::error::err_to_c;
-use crate::filename_to_string;
+use crate::{filename_to_string, i32_to_game};
 use anyhow::{anyhow, bail, Context, Result};
 use mech3ax_api_types::anim::{AnimDef, AnimMetadata};
 use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_api_types::gamez::materials::Material;
-use mech3ax_api_types::gamez::mechlib::ModelMw;
-use mech3ax_api_types::gamez::GameZMwData;
+use mech3ax_api_types::gamez::mechlib::{ModelMw, ModelPm};
+use mech3ax_api_types::gamez::{GameZCsData, GameZMwData, GameZPmData, GameZRcData};
 use mech3ax_api_types::image::TextureManifest;
 use mech3ax_api_types::interp::Script;
 use mech3ax_api_types::motion::Motion;
 use mech3ax_archive::{Mode, Version};
 use mech3ax_common::io_ext::CountingWriter;
+use mech3ax_common::GameType;
 use serde_json::Value;
 use std::fs::File;
 use std::io::{BufWriter, Cursor};
@@ -40,7 +41,7 @@ type NameBufferCb = extern "C" fn(*const u8, usize, *mut CallbackBuffer) -> i32;
 #[no_mangle]
 pub extern "C" fn write_interp(
     filename: *const c_char,
-    _is_pm: i32,
+    _game_type_id: i32,
     data: *const u8,
     len: usize,
 ) -> i32 {
@@ -67,32 +68,24 @@ fn parse_entries(ptr: *const u8, len: usize) -> Result<Vec<ArchiveEntry>> {
 }
 
 fn write_archive(
-    mode: Mode,
+    version: Version,
     filename: *const c_char,
-    is_pm: i32,
     entries_ptr: *const u8,
     entries_len: usize,
     callback: NameBufferCb,
     transform: fn(&str, Vec<u8>) -> Result<Vec<u8>>,
-) -> i32 {
-    err_to_c(|| {
-        let version = if is_pm == 0 {
-            Version::One
-        } else {
-            Version::Two(mode)
-        };
-        let entries = parse_entries(entries_ptr, entries_len)?;
-        let mut write = buf_writer(filename)?;
-        mech3ax_archive::write_archive(
-            &mut write,
-            &entries,
-            |name, _offset| -> Result<Vec<u8>> {
-                let data = buffer_callback(callback, name)?;
-                transform(name, data)
-            },
-            version,
-        )
-    })
+) -> Result<()> {
+    let entries = parse_entries(entries_ptr, entries_len)?;
+    let mut write = buf_writer(filename)?;
+    mech3ax_archive::write_archive(
+        &mut write,
+        &entries,
+        |name, _offset| -> Result<Vec<u8>> {
+            let data = buffer_callback(callback, name)?;
+            transform(name, data)
+        },
+        version,
+    )
 }
 
 fn write_passthrough_transform(_name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
@@ -102,20 +95,26 @@ fn write_passthrough_transform(_name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
 #[no_mangle]
 pub extern "C" fn write_sounds(
     filename: *const c_char,
-    is_pm: i32,
+    game_type_id: i32,
     entries_ptr: *const u8,
     entries_len: usize,
     callback: NameBufferCb,
 ) -> i32 {
-    write_archive(
-        Mode::Sounds,
-        filename,
-        is_pm,
-        entries_ptr,
-        entries_len,
-        callback,
-        write_passthrough_transform,
-    )
+    err_to_c(|| {
+        let game = i32_to_game(game_type_id)?;
+        let version = match game {
+            GameType::MW | GameType::RC | GameType::CS => Version::One,
+            GameType::PM => Version::Two(Mode::Sounds),
+        };
+        write_archive(
+            version,
+            filename,
+            entries_ptr,
+            entries_len,
+            callback,
+            write_passthrough_transform,
+        )
+    })
 }
 
 fn write_reader_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
@@ -131,39 +130,51 @@ fn write_reader_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
 #[no_mangle]
 pub extern "C" fn write_reader(
     filename: *const c_char,
-    is_pm: i32,
+    game_type_id: i32,
     entries_ptr: *const u8,
     entries_len: usize,
     callback: NameBufferCb,
 ) -> i32 {
-    write_archive(
-        Mode::Reader,
-        filename,
-        is_pm,
-        entries_ptr,
-        entries_len,
-        callback,
-        write_reader_transform,
-    )
+    err_to_c(|| {
+        let game = i32_to_game(game_type_id)?;
+        let version = match game {
+            GameType::MW | GameType::RC | GameType::CS => Version::One,
+            GameType::PM => Version::Two(Mode::Reader),
+        };
+        write_archive(
+            version,
+            filename,
+            entries_ptr,
+            entries_len,
+            callback,
+            write_reader_transform,
+        )
+    })
 }
 
 #[no_mangle]
 pub extern "C" fn write_reader_raw(
     filename: *const c_char,
-    is_pm: i32,
+    game_type_id: i32,
     entries_ptr: *const u8,
     entries_len: usize,
     callback: NameBufferCb,
 ) -> i32 {
-    write_archive(
-        Mode::Reader,
-        filename,
-        is_pm,
-        entries_ptr,
-        entries_len,
-        callback,
-        write_passthrough_transform,
-    )
+    err_to_c(|| {
+        let game = i32_to_game(game_type_id)?;
+        let version = match game {
+            GameType::MW | GameType::RC | GameType::CS => Version::One,
+            GameType::PM => Version::Two(Mode::Reader),
+        };
+        write_archive(
+            version,
+            filename,
+            entries_ptr,
+            entries_len,
+            callback,
+            write_passthrough_transform,
+        )
+    })
 }
 
 fn write_motion_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
@@ -179,22 +190,31 @@ fn write_motion_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
 #[no_mangle]
 pub extern "C" fn write_motion(
     filename: *const c_char,
-    is_pm: i32,
+    game_type_id: i32,
     entries_ptr: *const u8,
     entries_len: usize,
     callback: NameBufferCb,
 ) -> i32 {
-    write_archive(
-        Mode::Motion,
-        filename,
-        is_pm,
-        entries_ptr,
-        entries_len,
-        callback,
-        write_motion_transform,
-    )
+    err_to_c(|| {
+        let game = i32_to_game(game_type_id)?;
+        let version = match game {
+            GameType::MW => Version::One,
+            GameType::PM => Version::Two(Mode::Motion),
+            GameType::RC => bail!("Recoil does not have motion"),
+            GameType::CS => bail!("Crimson Skies does not have motion"),
+        };
+        write_archive(
+            version,
+            filename,
+            entries_ptr,
+            entries_len,
+            callback,
+            write_motion_transform,
+        )
+    })
 }
-fn write_mechlib_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
+
+fn write_mechlib_transform_mw(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
     match name {
         "format" => Ok(data),
         "version" => Ok(data),
@@ -219,23 +239,61 @@ fn write_mechlib_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
     }
 }
 
+fn write_mechlib_transform_pm(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
+    match name {
+        "format" => Ok(data),
+        "version" => Ok(data),
+        "materials" => {
+            let materials: Vec<Material> =
+                serde_json::from_slice(&data).context("Materials data is invalid")?;
+
+            let mut buf = CountingWriter::new(Vec::new(), 0);
+            mech3ax_gamez::mechlib::write_materials(&mut buf, &materials)
+                .context("Failed to write materials data")?;
+            Ok(buf.into_inner())
+        }
+        original => {
+            let mut model: ModelPm = serde_json::from_slice(&data)
+                .with_context(|| format!("Model data for `{}` is invalid", original))?;
+
+            let mut buf = CountingWriter::new(Vec::new(), 0);
+            mech3ax_gamez::mechlib::pm::write_model(&mut buf, &mut model)
+                .with_context(|| format!("Failed to write model data for `{}`", original))?;
+            Ok(buf.into_inner())
+        }
+    }
+}
+
 #[no_mangle]
 pub extern "C" fn write_mechlib(
     filename: *const c_char,
-    is_pm: i32,
+    game_type_id: i32,
     entries_ptr: *const u8,
     entries_len: usize,
     callback: NameBufferCb,
 ) -> i32 {
-    write_archive(
-        Mode::Sounds,
-        filename,
-        is_pm,
-        entries_ptr,
-        entries_len,
-        callback,
-        write_mechlib_transform,
-    )
+    err_to_c(|| {
+        let game = i32_to_game(game_type_id)?;
+        let version = match game {
+            GameType::MW => Version::One,
+            GameType::PM => Version::Two(Mode::Sounds),
+            GameType::RC => bail!("Recoil does not have mechlib"),
+            GameType::CS => bail!("Crimson Skies does not have mechlib"),
+        };
+        let transform = match game {
+            GameType::MW => write_mechlib_transform_mw,
+            GameType::PM => write_mechlib_transform_pm,
+            GameType::RC | GameType::CS => unreachable!(),
+        };
+        write_archive(
+            version,
+            filename,
+            entries_ptr,
+            entries_len,
+            callback,
+            transform,
+        )
+    })
 }
 
 fn parse_manifest(ptr: *const u8, len: usize) -> Result<TextureManifest> {
@@ -249,7 +307,7 @@ fn parse_manifest(ptr: *const u8, len: usize) -> Result<TextureManifest> {
 #[no_mangle]
 pub extern "C" fn write_textures(
     filename: *const c_char,
-    _is_pm: i32,
+    _game_type_id: i32,
     manifest_ptr: *const u8,
     manifest_len: usize,
     callback: NameBufferCb,
@@ -278,23 +336,43 @@ pub extern "C" fn write_textures(
 #[no_mangle]
 pub extern "C" fn write_gamez(
     filename: *const c_char,
-    is_pm: i32,
+    game_type_id: i32,
     data: *const u8,
     len: usize,
 ) -> i32 {
     err_to_c(|| {
-        if is_pm != 0 {
-            bail!("Pirate's Moon support for Anim isn't implemented yet");
-        }
         if data.is_null() {
             bail!("gamez data is null");
         }
+        let game = i32_to_game(game_type_id)?;
         let buf = unsafe { std::slice::from_raw_parts(data, len) };
-        let gamez: GameZMwData =
-            serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
         let mut write = buf_writer(filename)?;
-        mech3ax_gamez::gamez::mw::write_gamez(&mut write, &gamez)
-            .context("Failed to write GameZ data")
+        match game {
+            GameType::MW => {
+                let gamez: GameZMwData =
+                    serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
+                mech3ax_gamez::gamez::mw::write_gamez(&mut write, &gamez)
+                    .context("Failed to write GameZ data")
+            }
+            GameType::PM => {
+                let gamez: GameZPmData =
+                    serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
+                mech3ax_gamez::gamez::pm::write_gamez(&mut write, &gamez)
+                    .context("Failed to write GameZ data")
+            }
+            GameType::RC => {
+                let gamez: GameZRcData =
+                    serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
+                mech3ax_gamez::gamez::rc::write_gamez(&mut write, &gamez)
+                    .context("Failed to write GameZ data")
+            }
+            GameType::CS => {
+                let gamez: GameZCsData =
+                    serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
+                mech3ax_gamez::gamez::cs::write_gamez(&mut write, &gamez)
+                    .context("Failed to write GameZ data")
+            }
+        }
     })
 }
 
@@ -309,14 +387,18 @@ fn parse_metadata(ptr: *const u8, len: usize) -> Result<AnimMetadata> {
 #[no_mangle]
 pub extern "C" fn write_anim(
     filename: *const c_char,
-    is_pm: i32,
+    game_type_id: i32,
     metadata_ptr: *const u8,
     metadata_len: usize,
     callback: NameBufferCb,
 ) -> i32 {
     err_to_c(|| {
-        if is_pm != 0 {
-            bail!("Pirate's Moon support for Anim isn't implemented yet");
+        let game = i32_to_game(game_type_id)?;
+        match game {
+            GameType::MW => {}
+            GameType::PM => bail!("Pirate's Moon support for Anim isn't implemented yet"),
+            GameType::RC => bail!("Recoil support for Anim isn't implemented yet"),
+            GameType::CS => bail!("Crimson Skies support for Anim isn't implemented yet"),
         }
         let metadata = parse_metadata(metadata_ptr, metadata_len)?;
         let mut write = buf_writer(filename)?;

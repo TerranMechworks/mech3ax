@@ -10,4 +10,4 @@ mod resources;
 mod string_table;
 mod zloc;
 
-pub use read::{read_message_table, read_messages};
+pub use read::read_messages;
