@@ -86,9 +86,8 @@ fn main() {
     resolver.push::<api::gamez::Object3dPm>();
     resolver.push::<api::gamez::NodePm>();
 
-    // gamez mechlib
-    resolver.push::<api::gamez::ModelMw>();
-    resolver.push::<api::gamez::ModelPm>();
+    resolver.push::<api::gamez::mechlib::ModelMw>();
+    resolver.push::<api::gamez::mechlib::ModelPm>();
 
     // gamez mod
     resolver.push::<api::gamez::GameZMwMetadata>();

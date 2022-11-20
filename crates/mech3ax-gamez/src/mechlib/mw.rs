@@ -1,5 +1,6 @@
 use crate::mesh::mw::{read_mesh_data, read_mesh_info, write_mesh_data, write_mesh_info};
-use mech3ax_api_types::gamez::{MeshMw, ModelMw, NodeMw, Object3d};
+use mech3ax_api_types::gamez::mechlib::ModelMw;
+use mech3ax_api_types::gamez::{MeshMw, NodeMw, Object3d};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::Result;
 use mech3ax_nodes::mw::{

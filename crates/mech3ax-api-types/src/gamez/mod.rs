@@ -4,7 +4,6 @@ pub mod mesh;
 pub mod nodes;
 
 use materials::*;
-pub use mechlib::*;
 pub use mesh::*;
 pub use nodes::*;
 
