@@ -1,6 +1,24 @@
 [workspace]
 members = ["crates/*"]
 
+[workspace.package]
+authors = ["Toby Fleming <tobywf@users.noreply.github.com>"]
+# categories
+# description
+# documentation
+edition = "2021"
+# exclude
+# homepage
+# include
+# keywords
+# license
+# license-file
+publish = false
+# readme
+# repository
+# rust-version
+version = "0.0.0"
+
 [profile.dev]
 opt-level = 1
 panic = "unwind"

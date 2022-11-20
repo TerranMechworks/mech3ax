@@ -1,9 +1,9 @@
 [package]
 name = "mech3ax-messages"
-version = "0.0.0"
-authors = ["Toby Fleming <tobywf@users.noreply.github.com>"]
-edition = "2021"
-publish = false
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+publish.workspace = true
 
 autoexamples = false
 autobenches = false
