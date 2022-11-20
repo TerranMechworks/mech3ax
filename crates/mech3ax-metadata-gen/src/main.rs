@@ -62,34 +62,30 @@ fn main() {
     resolver.push::<api::gamez::mesh::PolygonRc>();
     resolver.push::<api::gamez::mesh::MeshRc>();
 
-    // gamez nodes
-    resolver.push::<api::gamez::nodes::AreaPartition>();
-    resolver.push::<api::gamez::nodes::Area>();
-    resolver.push::<api::gamez::nodes::BoundingBox>();
-    resolver.push::<api::gamez::nodes::Transformation>();
-    resolver.push::<api::gamez::nodes::Partition>();
-    resolver.push::<api::gamez::nodes::NodeFlags>();
+    resolver.push::<api::nodes::AreaPartition>();
+    resolver.push::<api::nodes::Area>();
+    resolver.push::<api::nodes::BoundingBox>();
+    resolver.push::<api::nodes::Transformation>();
+    resolver.push::<api::nodes::Partition>();
+    resolver.push::<api::nodes::NodeFlags>();
 
-    // gamez nodes mw
-    resolver.push::<api::gamez::nodes::mw::Camera>();
-    resolver.push::<api::gamez::nodes::mw::Display>();
-    resolver.push::<api::gamez::nodes::mw::Empty>();
-    resolver.push::<api::gamez::nodes::mw::Light>();
-    resolver.push::<api::gamez::nodes::mw::Lod>();
-    resolver.push::<api::gamez::nodes::mw::Object3d>();
-    resolver.push::<api::gamez::nodes::mw::Window>();
-    resolver.push::<api::gamez::nodes::mw::World>();
-    resolver.push::<api::gamez::nodes::mw::NodeMw>();
+    resolver.push::<api::nodes::mw::Camera>();
+    resolver.push::<api::nodes::mw::Display>();
+    resolver.push::<api::nodes::mw::Empty>();
+    resolver.push::<api::nodes::mw::Light>();
+    resolver.push::<api::nodes::mw::Lod>();
+    resolver.push::<api::nodes::mw::Object3d>();
+    resolver.push::<api::nodes::mw::Window>();
+    resolver.push::<api::nodes::mw::World>();
+    resolver.push::<api::nodes::mw::NodeMw>();
 
-    // gamez nodes pm
-    resolver.push::<api::gamez::nodes::pm::LodPm>();
-    resolver.push::<api::gamez::nodes::pm::Object3dPm>();
-    resolver.push::<api::gamez::nodes::pm::NodePm>();
+    resolver.push::<api::nodes::pm::LodPm>();
+    resolver.push::<api::nodes::pm::Object3dPm>();
+    resolver.push::<api::nodes::pm::NodePm>();
 
     resolver.push::<api::gamez::mechlib::ModelMw>();
     resolver.push::<api::gamez::mechlib::ModelPm>();
 
-    // gamez mod
     resolver.push::<api::gamez::GameZMwMetadata>();
     resolver.push::<api::gamez::GameZMwData>();
     resolver.push::<api::gamez::GameZPmMetadata>();

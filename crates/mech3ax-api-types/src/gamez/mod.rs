@@ -1,15 +1,13 @@
 pub mod materials;
 pub mod mechlib;
 pub mod mesh;
-pub mod nodes;
 
-use materials::Material;
-use mesh::{MeshMw, MeshNg, MeshRc};
-use nodes::mw::NodeMw;
-
+use crate::nodes::mw::NodeMw;
 use crate::serde::base64;
 use ::serde::{Deserialize, Serialize};
+use materials::Material;
 use mech3ax_metadata_proc_macro::RefStruct;
+use mesh::{MeshMw, MeshNg, MeshRc};
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct GameZMwMetadata {

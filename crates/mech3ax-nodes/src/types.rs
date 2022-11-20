@@ -1,6 +1,6 @@
 use super::flags::NodeBitFlags;
-use mech3ax_api_types::gamez::nodes::mw::Empty;
-use mech3ax_api_types::gamez::nodes::{AreaPartition, BoundingBox};
+use mech3ax_api_types::nodes::mw::Empty;
+use mech3ax_api_types::nodes::{AreaPartition, BoundingBox};
 use num_derive::FromPrimitive;
 
 pub const ZONE_DEFAULT: u32 = 255;

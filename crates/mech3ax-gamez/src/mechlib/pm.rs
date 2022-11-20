@@ -1,7 +1,7 @@
 use crate::mesh::ng::{read_mesh_data, read_mesh_info, write_mesh_data, write_mesh_info};
 use mech3ax_api_types::gamez::mechlib::ModelPm;
 use mech3ax_api_types::gamez::mesh::MeshNg;
-use mech3ax_api_types::gamez::nodes::pm::{LodPm, NodePm, Object3dPm};
+use mech3ax_api_types::nodes::pm::{LodPm, NodePm, Object3dPm};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::Result;
 use mech3ax_nodes::pm::{

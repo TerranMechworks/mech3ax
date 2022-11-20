@@ -1,6 +1,4 @@
-use mech3ax_api_types::gamez::nodes::mw::{
-    Camera, Display, Empty, Light, Lod, Object3d, Window, World,
-};
+use mech3ax_api_types::nodes::mw::{Camera, Display, Empty, Light, Lod, Object3d, Window, World};
 
 pub struct WrapperMw<T> {
     pub wrapped: T,

@@ -1,8 +1,8 @@
 use crate::flags::NodeBitFlags;
 use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
 use log::{debug, trace};
-use mech3ax_api_types::gamez::nodes::mw::Display;
-use mech3ax_api_types::gamez::nodes::BoundingBox;
+use mech3ax_api_types::nodes::mw::Display;
+use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_api_types::{static_assert_size, Color, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};

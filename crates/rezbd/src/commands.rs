@@ -7,7 +7,6 @@ use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::gamez::mechlib::{ModelMw, ModelPm};
 use mech3ax_api_types::gamez::mesh::{MeshMw, MeshNg, MeshRc};
-use mech3ax_api_types::gamez::nodes::mw::NodeMw;
 use mech3ax_api_types::gamez::{
     GameZCsData, GameZCsMetadata, GameZMwData, GameZMwMetadata, GameZPmData, GameZPmMetadata,
     GameZRcData, GameZRcMetadata,
@@ -15,6 +14,7 @@ use mech3ax_api_types::gamez::{
 use mech3ax_api_types::image::TextureManifest;
 use mech3ax_api_types::interp::Script;
 use mech3ax_api_types::motion::Motion;
+use mech3ax_api_types::nodes::mw::NodeMw;
 use mech3ax_api_types::saves::AnimActivation;
 use mech3ax_api_types::zmap::MapRc;
 use mech3ax_archive::{write_archive, Mode, Version};

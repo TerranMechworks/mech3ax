@@ -6,6 +6,7 @@ pub mod image;
 pub mod interp;
 pub mod messages;
 pub mod motion;
+pub mod nodes;
 pub mod saves;
 mod serde;
 mod size;
