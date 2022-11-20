@@ -2,11 +2,11 @@ name: Check
 on:
   push:
     branches:
-    - master
+    - main
     - workflow_check
   pull_request:
     branches:
-    - master
+    - main
 jobs:
   check:
     name: Check
