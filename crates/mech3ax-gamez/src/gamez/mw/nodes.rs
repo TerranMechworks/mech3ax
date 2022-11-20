@@ -1,4 +1,4 @@
-use mech3ax_api_types::gamez::NodeMw;
+use mech3ax_api_types::gamez::nodes::mw::NodeMw;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_nodes::mw::{

@@ -7,7 +7,7 @@ use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::gamez::mechlib::{ModelMw, ModelPm};
 use mech3ax_api_types::gamez::mesh::{MeshMw, MeshNg, MeshRc};
-use mech3ax_api_types::gamez::NodeMw;
+use mech3ax_api_types::gamez::nodes::mw::NodeMw;
 use mech3ax_api_types::gamez::{
     GameZCsData, GameZCsMetadata, GameZMwData, GameZMwMetadata, GameZPmData, GameZPmMetadata,
     GameZRcData, GameZRcMetadata,

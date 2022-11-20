@@ -1,4 +1,4 @@
-use mech3ax_api_types::gamez::{LodPm, Object3dPm};
+use mech3ax_api_types::gamez::nodes::pm::{LodPm, Object3dPm};
 
 pub struct WrapperPm<T> {
     pub wrapped: T,

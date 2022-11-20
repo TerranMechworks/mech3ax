@@ -63,28 +63,28 @@ fn main() {
     resolver.push::<api::gamez::mesh::MeshRc>();
 
     // gamez nodes
-    resolver.push::<api::gamez::AreaPartition>();
-    resolver.push::<api::gamez::Area>();
-    resolver.push::<api::gamez::BoundingBox>();
-    resolver.push::<api::gamez::Transformation>();
-    resolver.push::<api::gamez::Partition>();
-    resolver.push::<api::gamez::NodeFlags>();
+    resolver.push::<api::gamez::nodes::AreaPartition>();
+    resolver.push::<api::gamez::nodes::Area>();
+    resolver.push::<api::gamez::nodes::BoundingBox>();
+    resolver.push::<api::gamez::nodes::Transformation>();
+    resolver.push::<api::gamez::nodes::Partition>();
+    resolver.push::<api::gamez::nodes::NodeFlags>();
 
     // gamez nodes mw
-    resolver.push::<api::gamez::Camera>();
-    resolver.push::<api::gamez::Display>();
-    resolver.push::<api::gamez::Empty>();
-    resolver.push::<api::gamez::Light>();
-    resolver.push::<api::gamez::Lod>();
-    resolver.push::<api::gamez::Object3d>();
-    resolver.push::<api::gamez::Window>();
-    resolver.push::<api::gamez::World>();
-    resolver.push::<api::gamez::NodeMw>();
+    resolver.push::<api::gamez::nodes::mw::Camera>();
+    resolver.push::<api::gamez::nodes::mw::Display>();
+    resolver.push::<api::gamez::nodes::mw::Empty>();
+    resolver.push::<api::gamez::nodes::mw::Light>();
+    resolver.push::<api::gamez::nodes::mw::Lod>();
+    resolver.push::<api::gamez::nodes::mw::Object3d>();
+    resolver.push::<api::gamez::nodes::mw::Window>();
+    resolver.push::<api::gamez::nodes::mw::World>();
+    resolver.push::<api::gamez::nodes::mw::NodeMw>();
 
     // gamez nodes pm
-    resolver.push::<api::gamez::LodPm>();
-    resolver.push::<api::gamez::Object3dPm>();
-    resolver.push::<api::gamez::NodePm>();
+    resolver.push::<api::gamez::nodes::pm::LodPm>();
+    resolver.push::<api::gamez::nodes::pm::Object3dPm>();
+    resolver.push::<api::gamez::nodes::pm::NodePm>();
 
     resolver.push::<api::gamez::mechlib::ModelMw>();
     resolver.push::<api::gamez::mechlib::ModelPm>();

@@ -5,7 +5,7 @@ pub mod nodes;
 
 use materials::Material;
 use mesh::{MeshMw, MeshNg, MeshRc};
-pub use nodes::*;
+use nodes::mw::NodeMw;
 
 use crate::serde::base64;
 use ::serde::{Deserialize, Serialize};

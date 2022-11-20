@@ -1,5 +1,6 @@
 use crate::gamez::mesh::{MeshMw, MeshNg};
-use crate::gamez::nodes::{NodeMw, NodePm};
+use crate::gamez::nodes::mw::NodeMw;
+use crate::gamez::nodes::pm::NodePm;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::RefStruct;
 
