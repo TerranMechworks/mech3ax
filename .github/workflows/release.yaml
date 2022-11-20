@@ -7,6 +7,9 @@ on:
     - workflow_release
     tags:
     - 'v[0-9]+.[0-9]+.[0-9]+'
+    - 'v[0-9]+.[0-9]+.[0-9]+-rc[0-9]+'
+    - 'v[0-9]+.[0-9]+.[0-9]+-alpha'
+    - 'v[0-9]+.[0-9]+.[0-9]+-beta'
 jobs:
   create-release:
     name: create-release
@@ -117,15 +120,15 @@ jobs:
         cp {README.md,LICENSE,mechlib2blend.py,gamez2blend.py} "$staging/"
         if [ "${{ matrix.os }}" = "windows-2019" ]; then
           cp target/${{ matrix.target }}/release/{unzbd,rezbd}.exe "$staging/"
-          cp target/${{ matrix.target }}/release/mech3ax.dll "$staging/"
+          cp target/${{ matrix.target }}/release/mech3ax.dll "$staging/$staging.dll"
           7z a "$archive.zip" "$staging"
           echo "::set-output name=asset::$archive.zip"
         else
           cp target/${{ matrix.target }}/release/{unzbd,rezbd} "$staging/"
           if [ "${{ matrix.os }}" = "macos-latest" ]; then
-            cp target/${{ matrix.target }}/release/libmech3ax.dylib "$staging/"
+            cp target/${{ matrix.target }}/release/libmech3ax.dylib "$staging/lib$staging.dylib"
           else
-            cp target/${{ matrix.target }}/release/libmech3ax.so "$staging/"
+            cp target/${{ matrix.target }}/release/libmech3ax.so "$staging/lib$staging.so"
           fi
           tar czvf "$archive.tar.gz" "$staging"
           echo "::set-output name=asset::$archive.tar.gz"
