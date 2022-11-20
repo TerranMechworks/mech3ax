@@ -7,13 +7,23 @@ MechWarrior 3 Asset Extractor (`mech3ax`) is a cross-platform, open-source proje
 * the MechWarrior 3 Pirate's Moon™ expansion (1999)
 * the Crimson Skies™ game (2000)
 
-Please note that the goal is to extract all assets information comprehensively, and not necessarily make it easy to work with this data. In other words, the tools can be used for modding, but don't make it easy. This is expected and unlikely to change (sorry!).
-
 Zipper Interactive™ was trademark or registered trademark of Sony Computer Entertainment America LLC. Other trademarks belong to the respective rightsholders.
 
 Obviously, this is an unofficial fan effort and not connected to the developers, publishers, or rightsholders. [Join us on MW3 Discord](https://discord.gg/Be53gMy), or the Recoil Discord!
 
 [![The Annihilator 'Mech running](.github/mech_annihilator_run.gif)](https://imgur.com/a/H5pB1Vd)
+
+## How do I use this?
+
+`mech3ax` is a very low-level tool. The goal is to extract all assets information comprehensively, and not necessarily make it easy to work with this data. In other words, the tools can be used for modding, but don't make it easy. This is expected and unlikely to change (sorry!).
+
+There are three ways to use `mech3ax`:
+
+* The two command-line executables, `unzbd` and `rezbd`. If you don't know what a command-line is, this project may not be for you.
+* The `mech3ax` library, with a C-compatible interface/API. This is the lowest level.
+* An unreleased C# wrapper for the `mech3ax` library. This is recommended, as the API is strongly typed, and so it is relatively easy to upgrade to new versions.
+
+Roughly speaking, the output of from ZBD conversions will be one or more JSON documents, or PNG images. In the case of multiple documents/images, `unzbd` will write everything into a single ZIP file, along with metadata.
 
 ## Currently supported
 
@@ -26,16 +36,19 @@ Obviously, this is an unofficial fan effort and not connected to the developers,
 | `messages.dll`/`Mech3Msg.dll`/`strings.dll`            | ✅ | ✅ | ✅ | ✅ |
 | `zrdr.zbd`/`reader*.zbd`                               | ✅ | ✅ | ✅ | ✅ |
 | Image/texture ZBDs                                     | ✅ | ✅ | ✅ | ✅ |
-| `mechlib.zbd`                                          | ⬛ | ✅ | ❌ | ⬛ |
+| `mechlib.zbd`                                          | ⬛ | ✅ | ✅ | ⬛ |
 | `motion.zbd`                                           | ⬛ | ✅ | ✅ | ⬛ |
-| `gamez.zbd`                                            | ❌ | ✅ | ❌ | ❌ |
+| `gamez.zbd`                                            | ✔️ | ✅ | ✔️ | ✔️ |
 | `anim.zbd`/`cam_anim.zbd`/`mis_anim.zbd`               | ❌ | ✅ | ❌ | ❌ |
 | `m*.zmap`                                              | ✅ | ⬛ | ⬛ | ⬛ |
-| `planes.zbd`                                           | ⬛ | ⬛ | ⬛ | ❌ |
+| `planes.zbd` *                                         | ⬛ | ⬛ | ⬛ | ✔️ |
+
+\* For `planes.zbd`, please use the `gamez` mode.
 
 Legend:
 
 * ✅ works
+* ✔️ largely works, with some caveats
 * ❌ not implemented
 * ⬛ not applicable
 
@@ -64,17 +77,21 @@ Not supported (yet?):
 
 ### Pirate's Moon
 
-`mechlib.zbd`, `anim.zbd`, and `gamez.zbd` files are not supported yet.
+* `gamez.zbd` files are supported, but nodes are not supported yet
+* `anim.zbd` files are not supported yet
 
 ### Recoil
 
-`anim.zbd` and `gamez.zbd` files are not supported yet.
+* `gamez.zbd` files are supported, but nodes are not supported yet
+* `anim.zbd` files are not supported yet
 
 ### Crimson Skies
 
-`planes.zbd`, `cam_anim.zbd`/`mis_anim.zbd`, and `gamez.zbd` files are not supported yet.
+* `gamez.zbd` files are supported, but nodes are not supported
+* `planes.zbd` files are supported, but nodes are not supported
+* `cam_anim.zbd`/`mis_anim.zbd` files are not supported yet
 
-## How to use
+## Using the command-line executables
 
 **You will need a copy of the game. Do not ask me for an (illegal) copy.**
 
@@ -110,15 +127,17 @@ Supported games (support may be partial):
 
 Provided subcommands:
 
+* `license` prints license information
 * `sounds` (produces a `*.zip` file)
 * `interp` (produces a `*.json` file)
 * `reader` (produces a `*.zip` file)
 * `messages` (produces a `*.json` file, `unzbd` only)
 * `textures` (produces a `*.zip` file)
 * `motion` (produces a `*.zip` file, `mw` and `pm` only)
-* `mechlib` (produces a `*.zip` file, `mw` only)
+* `mechlib` (produces a `*.zip` file, `mw` and `pm` only)
+* `gamez` (produces a `*.zip` file)
 * `anim` (produces a `*.zip` file, `mw` only)
-* `gamez` (produces a `*.zip` file, `mw` only)
+* `zmap` (produces a `*.json` file, `rc` only)
 
 ## Blender scripts
 
@@ -169,19 +188,24 @@ where `--rtexture` and `--rmechtex` are optional.
 
 ## Changelog
 
-### [0.6.0] - unreleased
+### [0.6.0-rc1] - unreleased
 
 Big features:
 
 * Introduce API types crates, to clarify external structures
 * Implement Rust structures to C# structures code generation
 * Updated CLI to support multiple games
+* Support files from Recoil, Pirate's Moon, and Crimson Skies
 
 
 Detailed changes:
 
-* Support Crimson Skies' textures (`unzbd`)
+* Support Recoil zmaps (`unzbd`/`rezbd`)
+* Support Crimson Skies' textures (`unzbd`/`rezbd`)
 * Support Crimson Skies' `strings.dll` (`unzbd`)
+* Detailed logging for many operations
+* Display helpers for displaying the raw C data structures
+* Update unzbd/rezbd CLI to support multiple games (`unzbd`/`rezbd`, breaking change)
 * Removed `--dump-ids` flag (`unzbd`, breaking change)
 * `AnimDef` contains reset state seq def - thanks Skyfaller (`anim`, breaking change)
 * Update Blender scripts to match breaking API changes
@@ -200,7 +224,6 @@ Detailed changes:
 * Many changes to public anim structures (`anim`, breaking change)
 * Add reader raw/passthrough functions to mech3ax-lib (`lib`)
 * Remove old mech3ax-lib v1 API except anim (`lib`, breaking change)
-* Flatten nodes when reading Mechlib (`mechlib`, breaking change). This means mechlib data can now be read similarly to gamez; as a list of nodes
 * Convert `Vec3` tuple to structure (breaking change)
 * Convert `Matrix` tuple to structure (breaking change)
 * Convert `Block` tuple to `BoundingBox` structure (`mechlib`/`gamez`, breaking change)

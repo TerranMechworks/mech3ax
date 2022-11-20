@@ -216,11 +216,11 @@ enum SubCommand {
     Textures(TextureOpts),
     #[clap(about = "Extract 'motion.zbd' archives to ZIP (MW3, PM)")]
     Motion(ZipArgs),
-    #[clap(about = "Extract 'mechlib.zbd' archives to ZIP (MW3)")]
+    #[clap(about = "Extract 'mechlib.zbd' archives to ZIP (MW3, PM)")]
     Mechlib(ZipArgs),
-    #[clap(about = "Extract 'gamez.zbd' archives to ZIP (MW3, PM)")]
+    #[clap(about = "Extract 'gamez.zbd' archives to ZIP")]
     Gamez(ZipArgs),
-    #[clap(about = "Extract 'anim.zbd' archives to ZIP (MW3, PM)")]
+    #[clap(about = "Extract 'anim.zbd' archives to ZIP (MW3)")]
     Anim(ZipArgs),
     #[clap(about = "Extract savegames '*.mw3' archives to ZIP (MW3)")]
     Savegame(ZipArgs),

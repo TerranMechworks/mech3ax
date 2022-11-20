@@ -154,15 +154,15 @@ enum SubCommand {
         about = "Reconstruct 'rimage.zbd', 'rmechtex*.zbd', 'rtexture*.zbd', 'texture*.zbd' archives from ZIP"
     )]
     Textures(TextureOpts),
-    #[clap(about = "Reconstruct 'motion.zbd' archives from ZIP")]
+    #[clap(about = "Reconstruct 'motion.zbd' archives from ZIP (MW, PM)")]
     Motion(ZipArgs),
-    #[clap(about = "Reconstruct 'mechlib.zbd' archives from ZIP")]
+    #[clap(about = "Reconstruct 'mechlib.zbd' archives from ZIP (MW, PM)")]
     Mechlib(ZipArgs),
     #[clap(about = "Reconstruct 'gamez.zbd' archives from ZIP")]
     Gamez(ZipArgs),
-    #[clap(about = "Reconstruct 'anim.zbd' archives from ZIP")]
+    #[clap(about = "Reconstruct 'anim.zbd' archives from ZIP (MW)")]
     Anim(ZipArgs),
-    #[clap(about = "Reconstruct savegames '*.mw3' archives from ZIP")]
+    #[clap(about = "Reconstruct savegames '*.mw3' archives from ZIP (MW)")]
     Savegame(ZipArgs),
     #[clap(about = "Reconstruct reader '*.zrd' files from JSON")]
     Zrd(ZrdOpts),
