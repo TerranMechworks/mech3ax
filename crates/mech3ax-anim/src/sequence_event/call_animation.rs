@@ -1,10 +1,11 @@
 use super::types::INPUT_NODE;
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
-use mech3ax_api_types::anim::{
-    AnimDef, CallAnimation, CallAnimationAtNode, CallAnimationParameters, CallAnimationTargetNode,
+use mech3ax_api_types::anim::events::{
+    CallAnimation, CallAnimationAtNode, CallAnimationParameters, CallAnimationTargetNode,
     CallAnimationWithNode,
 };
+use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};

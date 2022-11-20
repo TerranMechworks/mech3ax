@@ -1,5 +1,6 @@
 use super::ScriptObject;
-use mech3ax_api_types::anim::{AnimDef, Callback, Else, ElseIf, EndIf, If, Loop};
+use mech3ax_api_types::anim::events::{Callback, Else, ElseIf, EndIf, If, Loop};
+use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};

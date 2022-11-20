@@ -1,6 +1,7 @@
 use super::utils::assert_color;
 use super::ScriptObject;
-use mech3ax_api_types::anim::{AnimDef, FogState, FogType};
+use mech3ax_api_types::anim::events::{FogState, FogType};
+use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::str_to_c_padded;

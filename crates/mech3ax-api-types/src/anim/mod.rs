@@ -1,12 +1,11 @@
-mod events;
+pub mod events;
 
 use crate::serde::base64;
 use crate::Range;
 use ::serde::{Deserialize, Serialize};
+use events::Event;
 use mech3ax_metadata_proc_macro::{Enum, RefStruct, Union, ValStruct};
 use num_derive::FromPrimitive;
-
-pub use events::*;
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct AnimName {

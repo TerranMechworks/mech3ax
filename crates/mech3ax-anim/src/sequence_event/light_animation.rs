@@ -1,6 +1,7 @@
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
-use mech3ax_api_types::anim::{AnimDef, LightAnimation};
+use mech3ax_api_types::anim::events::LightAnimation;
+use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};

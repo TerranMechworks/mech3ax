@@ -1,7 +1,8 @@
 use super::delta::{dec_f32, delta};
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
-use mech3ax_api_types::anim::{AnimDef, ObjectOpacity, ObjectOpacityFromTo};
+use mech3ax_api_types::anim::events::{ObjectOpacity, ObjectOpacityFromTo};
+use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};

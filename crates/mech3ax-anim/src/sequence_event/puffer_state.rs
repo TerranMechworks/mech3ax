@@ -1,8 +1,9 @@
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
-use mech3ax_api_types::anim::{
-    AnimDef, AtNode, Interval, IntervalType, PufferState, PufferStateCycleTextures,
+use mech3ax_api_types::anim::events::{
+    AtNode, Interval, IntervalType, PufferState, PufferStateCycleTextures,
 };
+use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{static_assert_size, Range, ReprSize as _, Vec3};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};

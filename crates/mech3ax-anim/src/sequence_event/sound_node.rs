@@ -1,6 +1,7 @@
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
-use mech3ax_api_types::anim::{AnimDef, AtNode, SoundNode};
+use mech3ax_api_types::anim::events::{AtNode, SoundNode};
+use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};

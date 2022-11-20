@@ -1,10 +1,10 @@
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
-use mech3ax_api_types::anim::{
-    AnimDef, BounceSequence, BounceSound, ForwardRotation, ForwardRotationDistance,
-    ForwardRotationTime, Gravity, GravityMode, ObjectMotion, ObjectMotionScale,
-    ObjectMotionTranslation, XyzRotation,
+use mech3ax_api_types::anim::events::{
+    BounceSequence, BounceSound, ForwardRotation, ForwardRotationDistance, ForwardRotationTime,
+    Gravity, GravityMode, ObjectMotion, ObjectMotionScale, ObjectMotionTranslation, XyzRotation,
 };
+use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{static_assert_size, Quaternion, ReprSize as _, Vec3};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};

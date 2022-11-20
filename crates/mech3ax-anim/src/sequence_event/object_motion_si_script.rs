@@ -1,8 +1,9 @@
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
-use mech3ax_api_types::anim::{
-    AnimDef, ObjectMotionSiFrame, ObjectMotionSiScript, RotateData, ScaleData, TranslateData,
+use mech3ax_api_types::anim::events::{
+    ObjectMotionSiFrame, ObjectMotionSiScript, RotateData, ScaleData, TranslateData,
 };
+use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{static_assert_size, Quaternion, ReprSize as _, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::bytes_to_c;
