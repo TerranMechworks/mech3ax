@@ -41,7 +41,7 @@ pub struct AnimMetadata {
     pub anim_ptrs: Vec<AnimPtr>,
 }
 
-#[derive(Debug, Serialize, Deserialize, FromPrimitive, PartialEq, Clone, Copy, Enum)]
+#[derive(Debug, Serialize, Deserialize, FromPrimitive, PartialEq, Eq, Clone, Copy, Enum)]
 #[repr(u32)]
 pub enum AnimActivation {
     WeaponHit = 0,
@@ -78,7 +78,7 @@ pub struct NamePtrFlags {
     pub flags: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, FromPrimitive, PartialEq, Enum)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, FromPrimitive, Enum)]
 #[repr(u32)]
 pub enum SeqActivation {
     Initial = 0,

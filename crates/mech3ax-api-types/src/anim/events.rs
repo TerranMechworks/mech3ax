@@ -222,7 +222,7 @@ pub struct FrameBufferEffectColor {
     pub fudge_alpha: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Enum)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Enum)]
 #[repr(u32)]
 pub enum FogType {
     Off = 0,
@@ -372,7 +372,7 @@ pub struct ObjectMotionSiScript {
     pub frames: Vec<ObjectMotionSiFrame>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Enum)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Enum)]
 pub enum GravityMode {
     Local,
     Complex,
@@ -512,7 +512,7 @@ pub struct ObjectTranslateState {
     pub at_node: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Enum)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Enum)]
 pub enum IntervalType {
     Unset,
     Time,
@@ -635,7 +635,7 @@ pub enum EventData {
     PufferState(PufferState),
 }
 
-#[derive(Debug, Serialize, Deserialize, FromPrimitive, Clone, Copy, PartialEq, Enum)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, FromPrimitive, Enum)]
 #[repr(u8)]
 pub enum StartOffset {
     Animation = 1,

@@ -616,7 +616,7 @@ fn write_reset_state(
     size: u32,
 ) -> Result<()> {
     write.write_struct(&SeqDefInfoC {
-        name: RESET_SEQUENCE.clone(),
+        name: *RESET_SEQUENCE,
         flags: 0,
         zero36: [0; 20],
         pointer: anim_def
@@ -742,7 +742,7 @@ pub fn write_anim_def(
         .unwrap_or(0);
 
     let reset_state = SeqDefInfoC {
-        name: RESET_SEQUENCE.clone(),
+        name: *RESET_SEQUENCE,
         flags: 0,
         zero36: [0; 20],
         pointer: anim_ptr.reset_state_ptr,

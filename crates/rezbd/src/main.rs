@@ -40,6 +40,7 @@ impl clap::ValueEnum for Game {
     }
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<GameType> for Game {
     fn into(self) -> GameType {
         match self {

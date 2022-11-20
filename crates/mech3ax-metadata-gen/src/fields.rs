@@ -86,7 +86,7 @@ impl Field {
                     field_info.name,
                     field_generics
                 );
-                field_generics = hashset_generics(&rename);
+                field_generics = hashset_generics(rename);
                 type_name = rename.to_string();
             }
         }

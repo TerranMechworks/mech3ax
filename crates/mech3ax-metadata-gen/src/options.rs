@@ -48,7 +48,7 @@ impl Factory {
     }
 }
 
-pub const OPTIONS_IMPL: &'static str = r###"using System.Collections.Generic;
+pub const OPTIONS_IMPL: &str = r###"using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Mech3DotNet.Json.Converters
@@ -65,7 +65,7 @@ namespace Mech3DotNet.Json.Converters
 }
 "###;
 
-pub const CONV_FACTORY: &'static str = r###"using System;
+pub const CONV_FACTORY: &str = r###"using System;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;

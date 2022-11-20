@@ -2,7 +2,7 @@ use crate::static_assert_size;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, ValStruct};
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, ValStruct)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, ValStruct)]
 #[repr(C)]
 pub struct MapColor {
     pub r: u8,

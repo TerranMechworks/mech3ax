@@ -35,7 +35,7 @@ pub fn read_string_block(
         let bytes = data.read_u16_vec(len)?;
         let chars = utf16_decode(bytes)?;
         trace!("Message {} ({}): {}", string_id, len, chars);
-        if let Some(_) = messages.insert(string_id, chars) {
+        if messages.insert(string_id, chars).is_some() {
             panic!("Duplicate string ID {}", string_id);
         }
     }

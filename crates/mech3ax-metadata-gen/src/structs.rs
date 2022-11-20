@@ -124,7 +124,7 @@ impl Struct {
     }
 }
 
-pub const STRUCT_IMPL: &'static str = r###"namespace {{ struct.namespace }}
+pub const STRUCT_IMPL: &str = r###"namespace {{ struct.namespace }}
 {
 {%- if struct.name == struct.type_name %}
     [System.Text.Json.Serialization.JsonConverter(typeof({{ struct.namespace }}.Converters.{{ struct.name }}Converter))]
@@ -145,7 +145,7 @@ pub const STRUCT_IMPL: &'static str = r###"namespace {{ struct.namespace }}
 }
 "###;
 
-pub const STRUCT_NORMAL_CONV: &'static str = r###"using System.Text.Json;
+pub const STRUCT_NORMAL_CONV: &str = r###"using System.Text.Json;
 
 namespace {{ struct.namespace }}.Converters
 {
@@ -209,7 +209,7 @@ namespace {{ struct.namespace }}.Converters
 }
 "###;
 
-pub const STRUCT_GENERIC_CONV: &'static str = r###"using System.Text.Json;
+pub const STRUCT_GENERIC_CONV: &str = r###"using System.Text.Json;
 
 namespace {{ struct.namespace }}.Converters
 {

@@ -3,7 +3,7 @@ use ::serde::{Deserialize, Serialize};
 use num_derive::FromPrimitive;
 use std::num::NonZeroU32;
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, FromPrimitive, Copy, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, FromPrimitive)]
 #[repr(u8)]
 pub enum ActivationStatus {
     Unk1 = 1,

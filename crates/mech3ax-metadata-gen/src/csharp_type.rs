@@ -9,7 +9,7 @@ use std::collections::HashSet;
 /// # See also
 ///
 /// https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TypeKind {
     /// Value type, non-null
     Val,
@@ -27,7 +27,7 @@ pub enum TypeKind {
 ///
 /// For generic types, the generic parameters must be part of the name, for
 /// example "Foo<T>".
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CSharpType {
     /// The fully-qualified C# type name.
     pub name: Cow<'static, str>,

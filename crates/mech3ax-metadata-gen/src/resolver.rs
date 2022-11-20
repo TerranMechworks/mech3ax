@@ -46,7 +46,7 @@ impl ResolveError {
         self
     }
 
-    pub fn to_string(self) -> String {
+    pub fn into_string(self) -> String {
         let mut inner = self.0;
         inner.path.pop(); // remove last delimiter
         inner.path.reverse();
@@ -113,14 +113,14 @@ impl TypeResolver {
         self.unions.insert((ui.module_path, ui.name), u);
     }
 
-    pub fn resolve<'a, 'b>(&'a self, ti: &'b TypeInfo, name: &'static str) -> CSharpType {
+    pub fn resolve(&self, ti: &TypeInfo, name: &'static str) -> CSharpType {
         self.resolve_inner(ti).unwrap_or_else(|e| {
-            let msg = e.push(name).to_string();
+            let msg = e.push(name).into_string();
             panic!("`{}` not found", msg);
         })
     }
 
-    fn resolve_inner<'a, 'b>(&'a self, ti: &'b TypeInfo) -> ResolveResult {
+    fn resolve_inner(&self, ti: &TypeInfo) -> ResolveResult {
         match ti {
             TypeInfo::Base(bi) => self.resolve_base(bi),
             TypeInfo::Enum(ei) => self.resolve_enum(ei),
@@ -131,12 +131,12 @@ impl TypeResolver {
         }
     }
 
-    fn resolve_base<'a, 'b>(&'a self, bi: &'b TypeInfoBase) -> ResolveResult {
+    fn resolve_base(&self, bi: &TypeInfoBase) -> ResolveResult {
         // base types are cheap to resolve (being leaves)
         Ok(bi.into())
     }
 
-    fn resolve_vec<'a, 'b>(&'a self, vi: &'b TypeInfoVec) -> ResolveResult {
+    fn resolve_vec(&self, vi: &TypeInfoVec) -> ResolveResult {
         match self.resolve_inner(vi.inner) {
             // remap byte vec
             Ok(inner) if inner.is_byte() => Ok(CSharpType::byte_vec()),
@@ -145,14 +145,14 @@ impl TypeResolver {
         }
     }
 
-    fn resolve_option<'a, 'b>(&'a self, oi: &'b TypeInfoOption) -> ResolveResult {
+    fn resolve_option(&self, oi: &TypeInfoOption) -> ResolveResult {
         match self.resolve_inner(oi.inner) {
             Ok(inner) => Ok(CSharpType::option(inner)),
             Err(e) => Err(e.push("Option")),
         }
     }
 
-    fn resolve_enum<'a, 'b>(&'a self, ei: &'b TypeInfoEnum) -> ResolveResult {
+    fn resolve_enum(&self, ei: &TypeInfoEnum) -> ResolveResult {
         // enums must be pushed before they can be resolved
         self.enums
             .get(&(ei.module_path, ei.name))
@@ -160,7 +160,7 @@ impl TypeResolver {
             .ok_or_else(|| ResolveError::new(ei.module_path, ei.name))
     }
 
-    fn resolve_struct<'a, 'b>(&'a self, si: &'b TypeInfoStruct) -> ResolveResult {
+    fn resolve_struct(&self, si: &TypeInfoStruct) -> ResolveResult {
         // enums must be pushed before they can be resolved
         self.structs
             .get(&(si.module_path, si.name))
@@ -168,7 +168,7 @@ impl TypeResolver {
             .ok_or_else(|| ResolveError::new(si.module_path, si.name))
     }
 
-    fn resolve_union<'a, 'b>(&'a self, ui: &'b TypeInfoUnion) -> ResolveResult {
+    fn resolve_union(&self, ui: &TypeInfoUnion) -> ResolveResult {
         // enums must be pushed before they can be resolved
         self.unions
             .get(&(ui.module_path, ui.name))

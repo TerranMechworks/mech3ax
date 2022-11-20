@@ -73,7 +73,7 @@ impl Union {
 
         let variants = ui
             .variants
-            .into_iter()
+            .iter()
             .copied()
             .map(|(variant_name, variant_type)| {
                 resolve_variant(name, resolver, variant_name, variant_type)
@@ -102,7 +102,7 @@ impl Union {
     }
 }
 
-pub const UNION_IMPL: &'static str = r###"namespace {{ union.namespace }}
+pub const UNION_IMPL: &str = r###"namespace {{ union.namespace }}
 {
     public enum {{ union.choice }}
     {
@@ -136,7 +136,7 @@ pub const UNION_IMPL: &'static str = r###"namespace {{ union.namespace }}
 }
 "###;
 
-pub const UNION_CONV: &'static str = r###"using System.Text.Json;
+pub const UNION_CONV: &str = r###"using System.Text.Json;
 
 namespace {{ union.namespace }}.Converters
 {

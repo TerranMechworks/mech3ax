@@ -3,14 +3,14 @@ use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{Enum, RefStruct, Union};
 use num_derive::FromPrimitive;
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Enum)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Enum)]
 pub enum TextureAlpha {
     None,
     Simple,
     Full,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, FromPrimitive, Enum)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, FromPrimitive, Enum)]
 #[repr(u16)]
 pub enum TextureStretch {
     None = 0,

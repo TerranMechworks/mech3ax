@@ -53,7 +53,7 @@ impl Enum {
     }
 }
 
-pub const ENUM_IMPL: &'static str = r###"namespace {{ enum.namespace }}
+pub const ENUM_IMPL: &str = r###"namespace {{ enum.namespace }}
 {
     [System.Text.Json.Serialization.JsonConverter(typeof({{ enum.namespace }}.Converters.{{ enum.name }}Converter))]
     public enum {{ enum.name }}
@@ -65,7 +65,7 @@ pub const ENUM_IMPL: &'static str = r###"namespace {{ enum.namespace }}
 }
 "###;
 
-pub const ENUM_CONV: &'static str = r###"namespace {{ enum.namespace }}.Converters
+pub const ENUM_CONV: &str = r###"namespace {{ enum.namespace }}.Converters
 {
     public class {{ enum.name }}Converter : Mech3DotNet.Json.Converters.EnumConverter<{{ enum.full_name }}>
     {

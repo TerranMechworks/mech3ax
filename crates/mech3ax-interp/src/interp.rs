@@ -92,7 +92,14 @@ pub fn read_interp(read: &mut CountingReader<impl Read>) -> Result<Vec<Script>> 
     scripts
 }
 
-fn write_script(lines: &[String]) -> Result<(u32, Vec<(u32, u32, Vec<u8>)>)> {
+#[derive(Debug)]
+struct LineInfo {
+    pub line_size: u32,
+    pub arg_count: u32,
+    pub command: Vec<u8>,
+}
+
+fn write_script(lines: &[String]) -> Result<(u32, Vec<LineInfo>)> {
     let mut size = 0;
     let transformed = lines
         .iter()
@@ -108,7 +115,11 @@ fn write_script(lines: &[String]) -> Result<(u32, Vec<(u32, u32, Vec<u8>)>)> {
                 }
             }
             size += 8 + line_size;
-            Ok((zero_count, line_size, buf))
+            Ok(LineInfo {
+                line_size,
+                arg_count: zero_count,
+                command: buf,
+            })
         })
         .collect::<Result<Vec<_>>>()?;
     // zero "size" u32 written to signify end of script
@@ -144,10 +155,10 @@ pub fn write_interp(write: &mut CountingWriter<impl Write>, scripts: &[Script]) 
         .collect::<Result<Vec<_>>>()?;
 
     for lines in transformed.into_iter() {
-        for (arg_count, line_size, command) in lines.into_iter() {
-            write.write_u32(line_size)?;
-            write.write_u32(arg_count)?;
-            write.write_all(&command)?;
+        for line_info in lines.into_iter() {
+            write.write_u32(line_info.line_size)?;
+            write.write_u32(line_info.arg_count)?;
+            write.write_all(&line_info.command)?;
         }
         write.write_u32(0)?;
     }

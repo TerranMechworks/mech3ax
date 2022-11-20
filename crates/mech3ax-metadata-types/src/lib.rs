@@ -6,7 +6,7 @@
 use time::OffsetDateTime;
 
 /// Base types that can always be used, without special declaration.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TypeInfoBase {
     /// Rust: bool, C#: bool
     Bool,
@@ -30,20 +30,20 @@ pub enum TypeInfoBase {
     DateTime,
 }
 
-/// A Vec<T>/List<T> type.
+/// A `Vec<T>`/`List<T>` type.
 #[derive(Debug, Clone, PartialEq)]
 pub struct TypeInfoVec {
     pub inner: &'static TypeInfo,
 }
 
-/// An Option<T>/Nullable<T> type.
+/// An `Option<T>`/`Nullable<T>` type.
 #[derive(Debug, Clone, PartialEq)]
 pub struct TypeInfoOption {
     pub inner: &'static TypeInfo,
 }
 
 /// An enum type, with string variants.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeInfoEnum {
     pub name: &'static str,
     pub variants: &'static [&'static str],
@@ -62,7 +62,7 @@ pub struct TypeInfoUnion {
 /// (C# `class`) or a value type (C# `struct`).
 ///
 /// In other words, a leaky abstraction.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TypeSemantic {
     Val,
     Ref,
@@ -77,7 +77,7 @@ pub enum TypeSemantic {
 ///   and implied during deserialization.
 /// * `PointerZero` indicates `0` values can be omitted from serialization,
 ///   and implied during deserialization.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DefaultHandling {
     Normal,
     OptionIsNone,

@@ -5,7 +5,7 @@ use num_derive::FromPrimitive;
 
 pub const ZONE_DEFAULT: u32 = 255;
 
-#[derive(Debug, PartialEq, FromPrimitive, Copy, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromPrimitive)]
 #[repr(u32)]
 pub enum NodeType {
     Empty = 0,

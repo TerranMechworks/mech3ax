@@ -88,6 +88,7 @@ impl<R: Read> CountingReader<R> {
         match self.read_exact(buf) {
             Ok(()) => Ok(unsafe { mem.assume_init() }),
             Err(e) => {
+                #[allow(clippy::forget_non_drop)]
                 std::mem::forget(mem);
                 Err(e)
             }
@@ -170,7 +171,7 @@ impl<W: Write> CountingWriter<W> {
     #[inline(always)]
     pub fn write_all(&mut self, buf: &[u8]) -> Result<()> {
         self.offset += buf.len();
-        self.inner.write_all(&buf)
+        self.inner.write_all(buf)
     }
 
     #[inline]
@@ -212,7 +213,7 @@ impl<W: Write> CountingWriter<W> {
     pub fn write_struct<S: ReprSize>(&mut self, value: &S) -> Result<()> {
         let size = std::mem::size_of::<S>();
         let buf = unsafe { std::slice::from_raw_parts(value as *const S as *const u8, size) };
-        self.write_all(&buf)
+        self.write_all(buf)
     }
 
     pub fn write_string(&mut self, value: &str) -> crate::Result<()> {

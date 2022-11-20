@@ -303,7 +303,7 @@ where
         .into_iter()
         .map(|(name, start_offset, palette_index)| {
             assert_that!("texture offset", read.offset == start_offset, read.offset)
-                .map_err(|e| Error::Assert(e))?;
+                .map_err(Error::Assert)?;
             debug!("Reading texture `{}` at {}", name, read.offset);
             let global_palette = if palette_index > -1 {
                 Some((palette_index, &global_palettes[palette_index as usize]))

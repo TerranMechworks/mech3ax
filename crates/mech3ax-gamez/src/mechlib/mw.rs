@@ -110,8 +110,8 @@ fn write_node_and_mesh(
         _ => return Err(mechlib_only_err_mw()),
     };
 
-    write_node_info(write, &node, index)?;
-    write_node_data(write, &node, index)?;
+    write_node_info(write, node, index)?;
+    write_node_data(write, node, index)?;
 
     // if mesh_index isn't -1, then we need to write out the mesh, too
     if let Some(mesh_index) = restore_index {

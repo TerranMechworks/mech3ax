@@ -4,7 +4,7 @@ mod archive;
 
 pub use archive::{read_archive, write_archive};
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
     Reader,
     Sounds,
@@ -12,7 +12,7 @@ pub enum Mode {
     ReaderBypass,
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Version {
     One,
     Two(Mode),

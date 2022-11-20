@@ -1,4 +1,5 @@
 #![warn(clippy::all, clippy::cargo)]
+#![allow(clippy::identity_op)]
 mod size;
 
 mod bin;

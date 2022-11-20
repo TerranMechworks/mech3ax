@@ -6,7 +6,7 @@ pub mod string;
 
 use thiserror::Error;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GameType {
     MW,
     PM,

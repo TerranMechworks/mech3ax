@@ -7,7 +7,7 @@ use crate::types::{Matrix, Vec3};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, ValStruct};
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, ValStruct)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, ValStruct)]
 #[repr(C)]
 pub struct AreaPartition {
     pub x: i32,
@@ -21,7 +21,7 @@ impl AreaPartition {
     pub const ZERO: Self = Self { x: 0, y: 0 };
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, ValStruct)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, ValStruct)]
 pub struct Area {
     pub left: i32,
     pub top: i32,
