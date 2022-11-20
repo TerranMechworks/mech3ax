@@ -5,7 +5,7 @@ use crate::mesh::ng::{
     read_mesh_data, read_mesh_info, read_mesh_info_zero, size_mesh, write_mesh_data,
     write_mesh_info, write_mesh_info_zero, MESH_C_SIZE,
 };
-use mech3ax_api_types::gamez::MeshNg;
+use mech3ax_api_types::gamez::mesh::MeshNg;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};

@@ -50,17 +50,17 @@ fn main() {
     resolver.push::<api::gamez::materials::Material>();
 
     // gamez mesh
-    resolver.push::<api::gamez::UvCoord>();
-    resolver.push::<api::gamez::MeshLight>();
-    resolver.push::<api::gamez::PolygonMw>();
-    resolver.push::<api::gamez::MeshMw>();
-    resolver.push::<api::gamez::PolygonFlags>();
-    resolver.push::<api::gamez::MeshTexture>();
-    resolver.push::<api::gamez::PolygonTextureNg>();
-    resolver.push::<api::gamez::PolygonNg>();
-    resolver.push::<api::gamez::MeshNg>();
-    resolver.push::<api::gamez::PolygonRc>();
-    resolver.push::<api::gamez::MeshRc>();
+    resolver.push::<api::gamez::mesh::UvCoord>();
+    resolver.push::<api::gamez::mesh::MeshLight>();
+    resolver.push::<api::gamez::mesh::PolygonMw>();
+    resolver.push::<api::gamez::mesh::MeshMw>();
+    resolver.push::<api::gamez::mesh::PolygonFlags>();
+    resolver.push::<api::gamez::mesh::MeshTexture>();
+    resolver.push::<api::gamez::mesh::PolygonTextureNg>();
+    resolver.push::<api::gamez::mesh::PolygonNg>();
+    resolver.push::<api::gamez::mesh::MeshNg>();
+    resolver.push::<api::gamez::mesh::PolygonRc>();
+    resolver.push::<api::gamez::mesh::MeshRc>();
 
     // gamez nodes
     resolver.push::<api::gamez::AreaPartition>();

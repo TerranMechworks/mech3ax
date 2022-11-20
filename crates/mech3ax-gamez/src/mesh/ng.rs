@@ -1,7 +1,7 @@
 //! GameZ and mechlib mesh support for PM, CS
 use super::common::*;
 use log::{debug, trace};
-use mech3ax_api_types::gamez::{
+use mech3ax_api_types::gamez::mesh::{
     MeshNg, MeshTexture, PolygonFlags, PolygonNg, PolygonTextureNg, UvCoord,
 };
 use mech3ax_api_types::{static_assert_size, Color, ReprSize as _, Vec3};

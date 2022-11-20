@@ -1,6 +1,6 @@
 use super::common::*;
 use log::{debug, trace};
-use mech3ax_api_types::gamez::{MeshMw, PolygonMw, UvCoord};
+use mech3ax_api_types::gamez::mesh::{MeshMw, PolygonMw, UvCoord};
 use mech3ax_api_types::{static_assert_size, Color, ReprSize as _, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, bool_c, Result};

@@ -3,8 +3,8 @@ pub mod mechlib;
 pub mod mesh;
 pub mod nodes;
 
-use materials::*;
-pub use mesh::*;
+use materials::Material;
+use mesh::{MeshMw, MeshNg, MeshRc};
 pub use nodes::*;
 
 use crate::serde::base64;
