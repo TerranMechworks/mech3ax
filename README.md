@@ -188,15 +188,14 @@ where `--rtexture` and `--rmechtex` are optional.
 
 ## Changelog
 
-### [0.6.0-rc1] - unreleased
+### [0.6.0-rc1] - 2022-11-20
 
 Big features:
 
 * Introduce API types crates, to clarify external structures
 * Implement Rust structures to C# structures code generation
-* Updated CLI to support multiple games
+* Updated CLI and library to support multiple games
 * Support files from Recoil, Pirate's Moon, and Crimson Skies
-
 
 Detailed changes:
 
