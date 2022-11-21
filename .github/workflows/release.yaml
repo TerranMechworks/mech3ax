@@ -86,9 +86,6 @@ jobs:
     - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
-        toolchain: stable
-        profile: minimal
-        override: true
         target: ${{ matrix.target }}
     - name: Get release download URL
       uses: actions/download-artifact@v1
