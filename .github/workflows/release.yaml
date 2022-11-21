@@ -17,7 +17,6 @@ jobs:
     steps:
       - name: Get the branch and tag
         id: info
-        shell: bash
         run: |
           branch="${GITHUB_REF#refs/heads/}"
           echo "branch: $branch"
@@ -33,9 +32,11 @@ jobs:
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "draft=$draft" >> $GITHUB_OUTPUT
           echo "date=$date" >> $GITHUB_OUTPUT
+        shell: bash
 
       - name: Create artifacts directory
         run: mkdir artifacts
+        shell: bash
 
       - name: Create GitHub release
         id: release
@@ -54,7 +55,7 @@ jobs:
         run: echo "${{ steps.info.outputs.version }}" > artifacts/release-version
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v3
         with:
           name: artifacts
           path: artifacts
@@ -80,21 +81,23 @@ jobs:
         - build: win-msvc
           os: windows-2019
           target: x86_64-pc-windows-msvc
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        target: ${{ matrix.target }}
+
+    - name: Install toolchain
+      run: rustup show
+      shell: bash
+
     - name: Get release download URL
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v3
       with:
         name: artifacts
         path: artifacts
+
     - name: Set release upload URL and release version
       id: release
-      shell: bash
       run: |
         release_upload_url="$(cat artifacts/release-upload-url)"
         echo "upload_url=$release_upload_url" >> $GITHUB_OUTPUT
@@ -102,14 +105,14 @@ jobs:
         release_version="$(cat artifacts/release-version)"
         echo "version=$release_version" >> $GITHUB_OUTPUT
         echo "release version: $release_version"
+      shell: bash
+
     - name: Build release binary
-      uses: actions-rs/cargo@v1
-      with:
-        command: build
-        args: --verbose --release --target "${{ matrix.target }}"
+      run: cargo build --verbose --release --target "${{ matrix.target }}"
+      shell: bash
+
     - name: Build archive
       id: build
-      shell: bash
       run: |
         staging="mech3ax-${{ steps.release.outputs.version }}"
         mkdir "$staging"
@@ -130,6 +133,8 @@ jobs:
           tar czvf "$archive.tar.gz" "$staging"
           echo "asset=$archive.tar.gz" >> $GITHUB_OUTPUT
         fi
+      shell: bash
+
     - name: Upload release archive
       uses: actions/upload-release-asset@v1.0.1
       env:

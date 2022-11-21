@@ -12,27 +12,25 @@ jobs:
     name: Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          components: rustfmt, clippy
-      - name: Run cargo check
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --all --all-targets --profile=test
-      - name: Run cargo fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
-      - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args:  --all --all-targets --no-fail-fast
-      - name: Run cargo clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install toolchain
+      run: rustup show
+      shell: bash
+
+    - name: Run cargo check
+      run: cargo check --all --all-targets
+      shell: bash
+
+    - name: Run cargo fmt
+      run: cargo fmt --all -- --check
+      shell: bash
+
+    - name: Run cargo test
+      run: cargo test --all --all-targets --no-fail-fast
+      shell: bash
+
+    - name: Run cargo clippy
+      run: cargo clippy
+      shell: bash
