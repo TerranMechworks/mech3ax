@@ -30,9 +30,9 @@ jobs:
           fi
           date=$(env TZ=':America/Los_Angeles' date +'%Y-%m-%d')
           echo "version: $version, draft: $draft, date: $date"
-          echo "::set-output name=version::$version"
-          echo "::set-output name=draft::$draft"
-          echo "::set-output name=date::$date"
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "draft=$draft" >> $GITHUB_OUTPUT
+          echo "date=$date" >> $GITHUB_OUTPUT
 
       - name: Create artifacts directory
         run: mkdir artifacts
@@ -97,10 +97,10 @@ jobs:
       shell: bash
       run: |
         release_upload_url="$(cat artifacts/release-upload-url)"
-        echo "::set-output name=upload_url::$release_upload_url"
+        echo "upload_url=$release_upload_url" >> $GITHUB_OUTPUT
         echo "release upload url: $release_upload_url"
         release_version="$(cat artifacts/release-version)"
-        echo "::set-output name=version::$release_version"
+        echo "version=$release_version" >> $GITHUB_OUTPUT
         echo "release version: $release_version"
     - name: Build release binary
       uses: actions-rs/cargo@v1
@@ -119,7 +119,7 @@ jobs:
           cp target/${{ matrix.target }}/release/{unzbd,rezbd}.exe "$staging/"
           cp target/${{ matrix.target }}/release/mech3ax.dll "$staging/$staging.dll"
           7z a "$archive.zip" "$staging"
-          echo "::set-output name=asset::$archive.zip"
+          echo "asset=$archive.zip" >> $GITHUB_OUTPUT
         else
           cp target/${{ matrix.target }}/release/{unzbd,rezbd} "$staging/"
           if [ "${{ matrix.os }}" = "macos-latest" ]; then
@@ -128,7 +128,7 @@ jobs:
             cp target/${{ matrix.target }}/release/libmech3ax.so "$staging/lib$staging.so"
           fi
           tar czvf "$archive.tar.gz" "$staging"
-          echo "::set-output name=asset::$archive.tar.gz"
+          echo "asset=$archive.tar.gz" >> $GITHUB_OUTPUT
         fi
     - name: Upload release archive
       uses: actions/upload-release-asset@v1.0.1
