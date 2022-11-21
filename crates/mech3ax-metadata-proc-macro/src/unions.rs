@@ -56,7 +56,7 @@ fn parse_variant(variant: Variant) -> Result<VariantInfo> {
                     } = field;
                     if let Some(field_ident) = field_ident {
                         return Err(Error::new_spanned(
-                            &field_ident,
+                            field_ident,
                             "Expected field to have no identifier",
                         ));
                     }

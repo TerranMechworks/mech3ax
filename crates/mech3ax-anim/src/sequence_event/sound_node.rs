@@ -64,7 +64,7 @@ impl ScriptObject for SoundNode {
     fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
         let mut name = [0; 32];
         str_to_c_padded(&self.name, &mut name);
-        let active_state = if self.active_state { 1 } else { 0 };
+        let active_state = u32::from(self.active_state);
 
         let (inherit_translation, node_index, translation) = if let Some(at_node) = &self.at_node {
             let node_index = anim_def.node_to_index(&at_node.node)? as u32;
