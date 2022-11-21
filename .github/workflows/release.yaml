@@ -15,50 +15,50 @@ jobs:
     name: create-release
     runs-on: ubuntu-latest
     steps:
-      - name: Get the branch and tag
-        id: info
-        run: |
-          branch="${GITHUB_REF#refs/heads/}"
-          echo "branch: $branch"
-          if [[ "$branch" == "workflow_release" ]]; then
-            version="TEST-0.0.0"
-            draft="true"
-          else
-            version="${GITHUB_REF#refs/tags/}"
-            draft="false"
-          fi
-          date=$(env TZ=':America/Los_Angeles' date +'%Y-%m-%d')
-          echo "version: $version, draft: $draft, date: $date"
-          echo "version=$version" >> $GITHUB_OUTPUT
-          echo "draft=$draft" >> $GITHUB_OUTPUT
-          echo "date=$date" >> $GITHUB_OUTPUT
-        shell: bash
+    - name: Get the branch and tag
+      id: info
+      run: |
+        branch="${GITHUB_REF#refs/heads/}"
+        echo "branch: $branch"
+        if [[ "$branch" == "workflow_release" ]]; then
+          version="TEST-0.0.0"
+          draft="true"
+        else
+          version="${GITHUB_REF#refs/tags/}"
+          draft="false"
+        fi
+        date=$(env TZ=':America/Los_Angeles' date +'%Y-%m-%d')
+        echo "version: $version, draft: $draft, date: $date"
+        echo "version=$version" >> $GITHUB_OUTPUT
+        echo "draft=$draft" >> $GITHUB_OUTPUT
+        echo "date=$date" >> $GITHUB_OUTPUT
+      shell: bash
 
-      - name: Create artifacts directory
-        run: mkdir artifacts
-        shell: bash
+    - name: Create artifacts directory
+      run: mkdir artifacts
+      shell: bash
 
-      - name: Create GitHub release
-        id: release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.info.outputs.version }}
-          release_name: ${{ steps.info.outputs.version }} (${{ steps.info.outputs.date }})
-          draft: ${{ steps.info.outputs.draft }}
+    - name: Create GitHub release
+      id: release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.info.outputs.version }}
+        release_name: ${{ steps.info.outputs.version }} (${{ steps.info.outputs.date }})
+        draft: ${{ steps.info.outputs.draft }}
 
-      - name: Save release upload URL to artifact
-        run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
+    - name: Save release upload URL to artifact
+      run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
 
-      - name: Save version number to artifact
-        run: echo "${{ steps.info.outputs.version }}" > artifacts/release-version
+    - name: Save version number to artifact
+      run: echo "${{ steps.info.outputs.version }}" > artifacts/release-version
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: artifacts
-          path: artifacts
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: artifacts
+        path: artifacts
 
   build-release:
     name: build-release
