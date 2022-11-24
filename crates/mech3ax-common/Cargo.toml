@@ -17,6 +17,3 @@ num-traits.workspace = true
 thiserror.workspace = true
 
 mech3ax-api-types = { path = "../mech3ax-api-types" }
-
-[dev-dependencies]
-matches = "0.1.8"

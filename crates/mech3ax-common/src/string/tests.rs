@@ -1,5 +1,20 @@
 use super::*;
-use matches::assert_matches;
+
+/// Over-simplified assert_matches implementation until it lands in Rust.
+///
+/// See https://github.com/rust-lang/rust/issues/82775.
+macro_rules! assert_matches {
+    ($left:expr, $right:pat $(,)?) => {
+        match $left {
+            $right => (),
+            ref v => panic!(
+                "assertion failed: `{:?}` does not match `{}`",
+                v,
+                stringify!($right)
+            ),
+        }
+    };
+}
 
 #[test]
 fn str_from_c_padded_with_zeros() {
