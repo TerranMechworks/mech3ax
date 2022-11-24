@@ -1,4 +1,4 @@
-use crate::serde::base64_opt;
+use crate::serde::bytes::Bytes;
 use ::serde::{Deserialize, Serialize};
 use num_derive::FromPrimitive;
 use std::num::NonZeroU32;
@@ -17,8 +17,8 @@ pub enum ActivationStatus {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ActivationType {
     One,
-    Two(#[serde(with = "base64_opt")] Option<Vec<u8>>),
-    Five(#[serde(with = "base64_opt")] Option<Vec<u8>>),
+    Two(Option<Bytes>),
+    Five(Option<Bytes>),
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -3,7 +3,7 @@ pub mod mechlib;
 pub mod mesh;
 
 use crate::nodes::mw::NodeMw;
-use crate::serde::base64;
+use crate::serde::bytes;
 use ::serde::{Deserialize, Serialize};
 use materials::Material;
 use mech3ax_metadata_proc_macro::RefStruct;
@@ -41,7 +41,7 @@ pub struct GameZPmData {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
     pub meshes: Vec<MeshNg>,
-    #[serde(with = "base64")]
+    #[serde(with = "bytes")]
     pub nodes: Vec<u8>,
     // pub nodes: Vec<NodePm>,
     pub metadata: GameZPmMetadata,
@@ -61,7 +61,7 @@ pub struct GameZCsData {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
     pub meshes: Vec<Option<MeshNg>>,
-    #[serde(with = "base64")]
+    #[serde(with = "bytes")]
     pub nodes: Vec<u8>,
     // pub nodes: Vec<NodeMw>,
     pub metadata: GameZCsMetadata,
@@ -80,7 +80,7 @@ pub struct GameZRcData {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
     pub meshes: Vec<MeshRc>,
-    #[serde(with = "base64")]
+    #[serde(with = "bytes")]
     pub nodes: Vec<u8>,
     // pub nodes: Vec<NodeRc>,
     pub metadata: GameZRcMetadata,

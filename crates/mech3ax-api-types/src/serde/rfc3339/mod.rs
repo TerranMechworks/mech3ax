@@ -40,3 +40,6 @@ pub fn deserialize<'a, D: Deserializer<'a>>(deserializer: D) -> Result<OffsetDat
         Err(e) => Err(de::Error::custom(e)),
     }
 }
+
+#[cfg(test)]
+mod tests;

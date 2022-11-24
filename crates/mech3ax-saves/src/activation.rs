@@ -1,6 +1,6 @@
 use log::debug;
 use mech3ax_api_types::saves::{ActivationStatus, ActivationType, AnimActivation};
-use mech3ax_api_types::static_assert_size;
+use mech3ax_api_types::{static_assert_size, Bytes};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
@@ -129,7 +129,7 @@ pub fn read_activation(read: &mut CountingReader<impl Read>) -> Result<AnimActiv
             if unzeroed.iter().all(|&v| v == 0) {
                 ActivationType::Two(None)
             } else {
-                ActivationType::Two(Some(unzeroed))
+                ActivationType::Two(Some(Bytes(unzeroed)))
             }
         }
         5 => {
@@ -146,7 +146,7 @@ pub fn read_activation(read: &mut CountingReader<impl Read>) -> Result<AnimActiv
             if unzeroed.iter().all(|&v| v == 0) {
                 ActivationType::Five(None)
             } else {
-                ActivationType::Five(Some(unzeroed))
+                ActivationType::Five(Some(Bytes(unzeroed)))
             }
         }
         _ => unreachable!(),
@@ -213,22 +213,22 @@ pub fn write_activation(
             // nothing to do, values is already zero
         }
         ActivationType::Two(Some(ref values)) => {
-            let src: &[u8; 6 * 4] = &values[..].try_into().map_err(|_| {
+            let src: &[u8; 6 * 4] = &values.0[..].try_into().map_err(|_| {
                 assert_with_msg!(
                     "Expected activation type to have exactly {} bytes, but was {}",
                     6 * 4,
-                    values.len()
+                    values.0.len()
                 )
             })?;
             let (_one, two) = activ.values.split_at_mut(3 * 4);
             two.copy_from_slice(src);
         }
         ActivationType::Five(Some(ref values)) => {
-            let src: &[u8; VALUES_SIZE] = &values[..].try_into().map_err(|_| {
+            let src: &[u8; VALUES_SIZE] = &values.0[..].try_into().map_err(|_| {
                 assert_with_msg!(
                     "Expected activation type to have exactly {} bytes, but was {}",
                     VALUES_SIZE,
-                    values.len()
+                    values.0.len()
                 )
             })?;
             activ.values.copy_from_slice(src);

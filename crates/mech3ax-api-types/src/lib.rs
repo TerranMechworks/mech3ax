@@ -13,5 +13,6 @@ mod size;
 mod types;
 pub mod zmap;
 
+pub use crate::serde::bytes::Bytes;
 pub use size::{u16_to_usize, u32_to_usize, ReprSize};
 pub use types::*;

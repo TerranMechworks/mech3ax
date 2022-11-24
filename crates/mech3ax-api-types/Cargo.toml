@@ -23,3 +23,4 @@ mech3ax-metadata-types = { path = "../mech3ax-metadata-types" }
 
 [dev-dependencies]
 serde_json.workspace = true
+serde_test.workspace = true

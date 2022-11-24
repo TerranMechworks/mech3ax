@@ -1,4 +1,4 @@
-use crate::serde::{base64, bool_false};
+use crate::serde::{bool_false, bytes};
 use crate::types::{Color, Quaternion, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{Enum, RefStruct, Union, ValStruct};
@@ -336,21 +336,21 @@ pub struct ObjectMotionFromTo {
 #[derive(Debug, Serialize, Deserialize, Clone, RefStruct)]
 pub struct TranslateData {
     pub value: Vec3,
-    #[serde(with = "base64")]
+    #[serde(with = "bytes")]
     pub unk: Vec<u8>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, RefStruct)]
 pub struct RotateData {
     pub value: Quaternion,
-    #[serde(with = "base64")]
+    #[serde(with = "bytes")]
     pub unk: Vec<u8>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, RefStruct)]
 pub struct ScaleData {
     pub value: Vec3,
-    #[serde(with = "base64")]
+    #[serde(with = "bytes")]
     pub unk: Vec<u8>,
 }
 

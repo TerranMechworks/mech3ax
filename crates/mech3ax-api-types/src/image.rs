@@ -1,4 +1,4 @@
-use crate::serde::base64;
+use crate::serde::bytes;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{Enum, RefStruct, Union};
 use num_derive::FromPrimitive;
@@ -27,7 +27,7 @@ pub enum TextureStretch {
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct PaletteData {
-    #[serde(with = "base64")]
+    #[serde(with = "bytes")]
     pub data: Vec<u8>,
 }
 

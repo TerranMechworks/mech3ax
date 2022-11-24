@@ -1,6 +1,6 @@
 pub mod events;
 
-use crate::serde::base64;
+use crate::serde::bytes;
 use crate::Range;
 use ::serde::{Deserialize, Serialize};
 use events::Event;
@@ -10,7 +10,7 @@ use num_derive::FromPrimitive;
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct AnimName {
     pub name: String,
-    #[serde(with = "base64")]
+    #[serde(with = "bytes")]
     pub pad: Vec<u8>,
     pub unknown: u32,
 }
@@ -61,7 +61,7 @@ pub enum Execution {
 #[derive(Debug, Serialize, Deserialize, ValStruct)]
 pub struct NamePad {
     pub name: String,
-    #[serde(with = "base64")]
+    #[serde(with = "bytes")]
     pub pad: Vec<u8>,
 }
 
