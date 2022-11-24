@@ -13,8 +13,8 @@ doctest = false
 test = false
 
 [dependencies]
-log = "0.4"
-num-traits = "0.2"
+log.workspace = true
+num-traits.workspace = true
 
 mech3ax-api-types = { path = "../mech3ax-api-types" }
 mech3ax-common = { path = "../mech3ax-common" }

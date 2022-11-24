@@ -125,7 +125,6 @@ struct ReaderOpts {
 impl ReaderOpts {
     fn version(&self) -> Version {
         match self.game {
-            // TODO: CS
             GameType::MW | GameType::RC | GameType::CS => Version::One,
             GameType::PM if self.skip_crc => Version::Two(Mode::ReaderBypass),
             GameType::PM => Version::Two(Mode::Reader),

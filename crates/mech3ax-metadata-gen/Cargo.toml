@@ -9,9 +9,9 @@ autoexamples = false
 autobenches = false
 
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
-heck = "0.4"
-tera = "1.16"
+heck.workspace = true
+serde.workspace = true
+tera.workspace = true
 
 mech3ax-api-types = { path = "../mech3ax-api-types" }
 mech3ax-metadata-proc-macro = { path = "../mech3ax-metadata-proc-macro" }

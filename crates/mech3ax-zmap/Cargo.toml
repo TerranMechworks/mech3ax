@@ -12,8 +12,7 @@ autobenches = false
 doctest = false
 
 [dependencies]
-log = "0.4"
+log.workspace = true
 
 mech3ax-api-types = { path = "../mech3ax-api-types" }
 mech3ax-common = { path = "../mech3ax-common" }
-mech3ax-debug = { path = "../mech3ax-debug" }

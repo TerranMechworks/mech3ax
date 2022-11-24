@@ -9,4 +9,4 @@ publish.workspace = true
 doctest = false
 
 [dependencies]
-time = { version = "0.3.5" }
+time.workspace = true

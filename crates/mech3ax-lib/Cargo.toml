@@ -21,10 +21,10 @@ name = "mech3ax"
 crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
-anyhow = "1.0"
-image = { version = "0.23", default-features = false, features = ["png"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+anyhow.workspace = true
+image.workspace = true
+serde.workspace = true
+serde_json.workspace = true
 
 mech3ax-anim = { path = "../mech3ax-anim" }
 mech3ax-api-types = { path = "../mech3ax-api-types" }

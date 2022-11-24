@@ -10,3 +10,4 @@ autobenches = false
 
 [lib]
 doctest = false
+test = true
