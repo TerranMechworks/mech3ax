@@ -1,5 +1,5 @@
-use crate::csharp_type::{CSharpType, TypeKind};
-use crate::fields::{join_generics, Field};
+use crate::csharp_type::{CSharpType, SerializeType, TypeKind};
+use crate::fields::{sort_generics, Field};
 use crate::module_path::convert_mod_path;
 use crate::resolver::TypeResolver;
 use mech3ax_metadata_types::{TypeInfoStruct, TypeSemantic};
@@ -33,6 +33,7 @@ pub struct Struct {
     /// Used for selecting the converter template, but not inside any templates.
     #[serde(skip)]
     pub generics: Option<HashSet<&'static str>>,
+    pub generics_sorted: Vec<&'static str>,
 }
 
 impl Struct {
@@ -48,6 +49,7 @@ impl Struct {
             name: Cow::Owned(self.full_name.clone()),
             kind,
             generics: self.generics.clone(),
+            serde: SerializeType::Struct(self.full_name.clone()),
         }
     }
 
@@ -58,7 +60,7 @@ impl Struct {
 
         let semantic = si.semantic;
         let sem_type = match semantic {
-            TypeSemantic::Ref => "class",
+            TypeSemantic::Ref => "sealed class",
             TypeSemantic::Val => "struct",
         };
         // field generics must be declared on this struct specifically.
@@ -79,18 +81,19 @@ impl Struct {
             }
         }
 
-        let (type_name, conv_name, generics) = if generics.is_empty() {
+        let (type_name, conv_name, generics, generics_sorted) = if generics.is_empty() {
             // type is not generic, so converter isn't either
             let type_name = Cow::Borrowed(si.name);
             let conv_name = format!("{}Converter", si.name);
-            (type_name, conv_name, None)
+            (type_name, conv_name, None, Vec::new())
         } else {
             // the is generic, so the converter is also generic
-            let generics_joined = join_generics(&generics);
+            let generics_sorted = sort_generics(&generics);
+            let generics_joined = generics_sorted.join(", ");
             let type_name = Cow::Owned(format!("{}<{}>", name, generics_joined));
             let conv_name = format!("{}Converter<{}>", si.name, generics_joined);
             resolver.push_factory_converter(namespace.clone(), si.name.to_string(), generics.len());
-            (type_name, conv_name, Some(generics))
+            (type_name, conv_name, Some(generics), generics_sorted)
         };
 
         let full_name = format!("{}.{}", namespace, type_name);
@@ -105,6 +108,7 @@ impl Struct {
             fields,
             semantic,
             generics,
+            generics_sorted,
         }
     }
 
@@ -113,24 +117,20 @@ impl Struct {
         context.insert("struct", self);
         tera.render("struct_impl.cs", &context)
     }
-
-    pub fn render_conv(&self, tera: &tera::Tera) -> tera::Result<String> {
-        let mut context = tera::Context::new();
-        context.insert("struct", self);
-        match self.generics.is_some() {
-            false => tera.render("struct_normal_conv.cs", &context),
-            true => tera.render("struct_generic_conv.cs", &context),
-        }
-    }
 }
 
-pub const STRUCT_IMPL: &str = r###"namespace {{ struct.namespace }}
+pub const STRUCT_IMPL: &str = r###"using System;
+using Mech3DotNet.Exchange;
+
+namespace {{ struct.namespace }}
 {
-{%- if struct.name == struct.type_name %}
-    [System.Text.Json.Serialization.JsonConverter(typeof({{ struct.namespace }}.Converters.{{ struct.name }}Converter))]
-{%- endif %}
     public {{ struct.sem_type }} {{ struct.type_name }}
+{%- for generic in struct.generics_sorted %}
+        where {{ generic }} : notnull
+{%- endfor %}
     {
+        public static readonly TypeConverter<{{ struct.type_name }}> Converter = new TypeConverter<{{ struct.type_name }}>(Deserialize, Serialize);
+
 {%- for field in struct.fields %}
         public {{ field.ty }} {{ field.name }}{% if field.default %} = {{ field.default }}{% endif %};
 {%- endfor %}
@@ -141,169 +141,49 @@ pub const STRUCT_IMPL: &str = r###"namespace {{ struct.namespace }}
             this.{{ field.name }} = {{ field.name }};
 {%- endfor %}
         }
-    }
-}
-"###;
 
-pub const STRUCT_NORMAL_CONV: &str = r###"using System.Text.Json;
-
-namespace {{ struct.namespace }}.Converters
-{
-    public class {{ struct.name }}Converter : Mech3DotNet.Json.Converters.StructConverter<{{ struct.full_name }}>
-    {
-        protected override {{ struct.full_name }} ReadStruct(ref Utf8JsonReader __reader, JsonSerializerOptions __options)
+        private struct Fields
         {
 {%- for field in struct.fields %}
-            var {{ field.name }}Field = new Mech3DotNet.Json.Converters.Option<{{ field.ty }}>({% if field.default %}{{ field.default }}{% endif %});
+            public Field<{{ field.ty }}> {{ field.name }};
 {%- endfor %}
-            string? __fieldName = null;
-            while (ReadFieldName(ref __reader, out __fieldName))
+        }
+
+        public static void Serialize({{ struct.full_name }} v, Serializer s)
+        {
+            s.SerializeStruct("{{ struct.name }}", {{ struct.fields | length }});
+{%- for field in struct.fields %}
+            s.SerializeFieldName("{{ field.key }}");
+            {{ field.serde.serialize }}(v.{{ field.name }});
+{%- endfor %}
+        }
+
+        public static {{ struct.full_name }} Deserialize(Deserializer d)
+        {
+            var fields = new Fields()
             {
-                switch (__fieldName)
+{%- for field in struct.fields %}
+                {{ field.name }} = new Field<{{ field.ty }}>({% if field.default %}{{ field.default }}{% endif %}),
+{%- endfor %}
+            };
+            foreach (var fieldName in d.DeserializeStruct("{{ struct.name }}"))
+            {
+                switch (fieldName)
                 {
 {%- for field in struct.fields %}
-                    case "{{ field.json_name }}":
-                        {
-                            {{ field.ty }}{% if field.null_check %}?{% endif %} __value = ReadFieldValue<{{ field.ty }}{% if field.null_check %}?{% endif %}>(ref __reader, __options);
-{%- if field.null_check %}
-                            if (__value is null)
-                            {
-                                System.Diagnostics.Debug.WriteLine("Value of '{{ field.json_name }}' was null for '{{ struct.name }}'");
-                                throw new JsonException();
-                            }
-{%- endif %}
-                            {{ field.name }}Field.Set(__value);
-                            break;
-                        }
+                    case "{{ field.key }}":
+                        fields.{{ field.name }}.Value = {{ field.serde.deserialize }}();
+                        break;
 {%- endfor %}
                     default:
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Invalid field '{__fieldName}' for '{{ struct.name }}'");
-                            throw new JsonException();
-                        }
+                        throw new UnknownFieldException("{{ struct.name }}", fieldName);
                 }
             }
-            // pray there are no naming collisions
-{%- for field in struct.fields %}
-            var {{ field.name }} = {{ field.name }}Field.Unwrap("{{ field.json_name }}");
-{%- endfor %}
-            return new {{ struct.full_name }}({% for field in struct.fields %}{{ field.name }}{% if not loop.last %}, {% endif %}{% endfor %});
-        }
-
-        public override void Write(Utf8JsonWriter writer, {{ struct.full_name }} value, JsonSerializerOptions options)
-        {
-            writer.WriteStartObject();
-{%- for field in struct.fields %}{% if field.default %}
-            if (value.{{ field.name }} != {{ field.default}})
-            {
-                writer.WritePropertyName("{{ field.json_name }}");
-                JsonSerializer.Serialize(writer, value.{{ field.name }}, options);
-            }
-{%- else %}
-            writer.WritePropertyName("{{ field.json_name }}");
-            JsonSerializer.Serialize(writer, value.{{ field.name }}, options);
-{%- endif %}{% endfor %}
-            writer.WriteEndObject();
-        }
-    }
-}
-"###;
-
-pub const STRUCT_GENERIC_CONV: &str = r###"using System.Text.Json;
-
-namespace {{ struct.namespace }}.Converters
-{
-    public class {{ struct.conv_name }} : Mech3DotNet.Json.Converters.StructConverter<{{ struct.full_name }}>
-    {
-{%- for field in struct.fields %}{% if field.generics %}
-        private readonly System.Type __{{ field.name }}Type;
-        private readonly System.Text.Json.Serialization.JsonConverter<{{ field.ty }}{% if field.null_check %}?{% endif %}>? __{{ field.name }}Converter;
-{%- endif %}{% endfor %}
-
-        public {{ struct.name }}Converter(JsonSerializerOptions options)
-        {
-{%- for field in struct.fields %}{% if field.generics %}
-            __{{ field.name }}Type = typeof({{ field.ty | trim_end_matches(pat="?") }});
-            __{{ field.name }}Converter = (System.Text.Json.Serialization.JsonConverter<{{ field.ty }}{% if field.null_check %}?{% endif %}>?)options.GetConverter(__{{ field.name }}Type);
-{%- endif %}{% endfor %}
-        }
-
-        protected override {{ struct.full_name }} ReadStruct(ref Utf8JsonReader __reader, JsonSerializerOptions __options)
-        {
-{%- for field in struct.fields %}
-            var {{ field.name }}Field = new Mech3DotNet.Json.Converters.Option<{{ field.ty }}>({% if field.default %}{{ field.default }}{% endif %});
-{%- endfor %}
-            string? __fieldName = null;
-            while (ReadFieldName(ref __reader, out __fieldName))
-            {
-                switch (__fieldName)
-                {
-{%- for field in struct.fields %}
-                    case "{{ field.json_name }}":
-                        {
-{%- if field.generics %}
-                            {{ field.ty }}{% if field.null_check %}?{% endif %} __value = ReadFieldGeneric<{{ field.ty }}{% if field.null_check %}?{% endif %}>(
-                                ref __reader,
-                                __options,
-                                __{{ field.name }}Converter,
-                                __{{ field.name }}Type);
-{%- else %}
-                            {{ field.ty }}{% if field.null_check %}?{% endif %} __value = ReadFieldValue<{{ field.ty }}{% if field.null_check %}?{% endif %}>(
-                                ref __reader, __options);
-{%- endif %}
-{%- if field.null_check %}
-                            if (__value is null)
-                            {
-                                System.Diagnostics.Debug.WriteLine("Value of '{{ field.json_name }}' was null for '{{ struct.name }}'");
-                                throw new JsonException();
-                            }
-{%- endif %}
-                            {{ field.name }}Field.Set(__value);
-                            break;
-                        }
-{%- endfor %}
-                    default:
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Invalid field '{__fieldName}' for '{{ struct.name }}'");
-                            throw new JsonException();
-                        }
-                }
-            }
-            // pray there are no naming collisions
-{%- for field in struct.fields %}
-            var {{ field.name }} = {{ field.name }}Field.Unwrap("{{ field.json_name }}");
-{%- endfor %}
-            return new {{ struct.full_name }}({% for field in struct.fields %}{{ field.name }}{% if not loop.last %}, {% endif %}{% endfor %});
-        }
-
-        public override void Write(Utf8JsonWriter writer, {{ struct.full_name }} value, JsonSerializerOptions options)
-        {
-            writer.WriteStartObject();
-{%- for field in struct.fields %}{% if field.default %}
-            if (value.{{ field.name }} != {{ field.default}})
-            {
-                writer.WritePropertyName("{{ field.json_name }}");
-{%- if field.generics %}
-                if (__{{ field.name }}Converter != null)
-                    __{{ field.name }}Converter.Write(writer, value.{{ field.name }}, options);
-                else
-                    JsonSerializer.Serialize(writer, value.{{ field.name }}, options);
-{%- else %}
-                JsonSerializer.Serialize(writer, value.{{ field.name }}, options);
-{%- endif %}
-            }
-{%- else %}
-            writer.WritePropertyName("{{ field.json_name }}");
-{%- if field.generics %}
-            if (__{{ field.name }}Converter != null)
-                __{{ field.name }}Converter.Write(writer, value.{{ field.name }}, options);
-            else
-                JsonSerializer.Serialize(writer, value.{{ field.name }}, options);
-{%- else %}
-            JsonSerializer.Serialize(writer, value.{{ field.name }}, options);
-{%- endif %}
-{%- endif %}{% endfor %}
-            writer.WriteEndObject();
+            return new {{ struct.type_name }}(
+{% for field in struct.fields %}
+                fields.{{ field.name }}.Unwrap("{{ struct.name }}", "{{ field.name }}"){% if not loop.last %},{% endif %}
+{% endfor %}
+            );
         }
     }
 }

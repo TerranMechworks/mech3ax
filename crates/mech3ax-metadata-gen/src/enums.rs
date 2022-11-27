@@ -1,9 +1,17 @@
-use crate::csharp_type::{CSharpType, TypeKind};
+use crate::csharp_type::{CSharpType, SerializeType, TypeKind};
 use crate::module_path::convert_mod_path;
 use crate::resolver::TypeResolver;
 use mech3ax_metadata_types::TypeInfoEnum;
 use serde::Serialize;
 use std::borrow::Cow;
+
+#[derive(Debug, Clone, Serialize)]
+pub struct Variant {
+    /// The enum variant's name.
+    pub name: &'static str,
+    /// The enum variant's index.
+    pub index: u32,
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Enum {
@@ -14,7 +22,7 @@ pub struct Enum {
     /// The enum's full C# type, with namespace.
     pub full_name: String,
     /// The enum's C# variant names.
-    pub variants: &'static [&'static str],
+    pub variants: Vec<Variant>,
 }
 
 impl Enum {
@@ -24,6 +32,7 @@ impl Enum {
             name: Cow::Owned(self.full_name.clone()),
             kind: TypeKind::Val,
             generics: None,
+            serde: SerializeType::Enum(self.full_name.clone()),
         }
     }
 
@@ -32,11 +41,18 @@ impl Enum {
         let name = ei.name;
         let namespace = convert_mod_path(ei.module_path);
         let full_name = format!("{}.{}", namespace, ei.name);
+        let variants = ei
+            .variants
+            .iter()
+            .copied()
+            .zip(0u32..)
+            .map(|(name, index)| Variant { name, index })
+            .collect();
         Self {
             name,
             namespace,
             full_name,
-            variants: ei.variants,
+            variants,
         }
     }
 
@@ -45,46 +61,62 @@ impl Enum {
         context.insert("enum", self);
         tera.render("enum_impl.cs", &context)
     }
-
-    pub fn render_conv(&self, tera: &tera::Tera) -> tera::Result<String> {
-        let mut context = tera::Context::new();
-        context.insert("enum", self);
-        tera.render("enum_conv.cs", &context)
-    }
 }
 
-pub const ENUM_IMPL: &str = r###"namespace {{ enum.namespace }}
-{
-    [System.Text.Json.Serialization.JsonConverter(typeof({{ enum.namespace }}.Converters.{{ enum.name }}Converter))]
-    public enum {{ enum.name }}
-    {
-{%- for variant in enum.variants %}
-        {{ variant }},
-{%- endfor %}
-    }
-}
-"###;
+pub const ENUM_IMPL: &str = r###"using Mech3DotNet.Exchange;
 
-pub const ENUM_CONV: &str = r###"namespace {{ enum.namespace }}.Converters
+namespace {{ enum.namespace }}
 {
-    public class {{ enum.name }}Converter : Mech3DotNet.Json.Converters.EnumConverter<{{ enum.full_name }}>
+    public sealed class {{ enum.name }}
     {
-        public override {{ enum.full_name }} ReadVariant(string? name) => name switch
+        public static readonly TypeConverter<{{ enum.name }}> Converter = new TypeConverter<{{ enum.name }}>(Deserialize, Serialize);
+
+        public enum Variants
         {
 {%- for variant in enum.variants %}
-            "{{ variant }}" => {{ enum.full_name }}.{{ variant }},
+            {{ variant.name }},
 {%- endfor %}
-            null => DebugAndThrow("Variant cannot be null for '{{ enum.name }}'"),
-            _ => DebugAndThrow($"Invalid variant '{name}' for '{{ enum.name }}'"),
-        };
+        }
 
-        public override string WriteVariant({{ enum.full_name }} value) => value switch
+        private {{ enum.name }}(Variants variant)
         {
+            Variant = variant;
+        }
+
 {%- for variant in enum.variants %}
-            {{ enum.full_name }}.{{ variant }} => "{{ variant }}",
+        public static readonly {{ enum.name }} {{ variant.name }} = new {{ enum.name }}(Variants.{{ variant.name }});
+{% endfor %}
+        public Variants Variant { get; private set; }
+{%- for variant in enum.variants %}
+        public bool Is{{ variant.name }}() => Variant == Variants.{{ variant.name }};
 {%- endfor %}
-            _ => throw new System.ArgumentOutOfRangeException("{{ enum.name }}"),
-        };
+        public override bool Equals(object obj) => Equals(obj as {{ enum.name }});
+        public bool Equals({{ enum.name }}? other) => other != null && Variant == other.Variant;
+        public override int GetHashCode() => System.HashCode.Combine(Variant);
+
+        private static void Serialize({{ enum.name }} v, Serializer s)
+        {
+            uint variantIndex = v.Variant switch
+            {
+{%- for variant in enum.variants %}
+                Variants.{{ variant.name }} => {{ variant.index }},
+{%- endfor %}
+                _ => throw new System.ArgumentOutOfRangeException(),
+            };
+            s.SerializeUnitVariant("{{ enum.name }}", variantIndex);
+        }
+
+        private static {{ enum.name }} Deserialize(Deserializer d)
+        {
+            var variantIndex = d.DeserializeUnitVariant("{{ enum.name }}");
+            return variantIndex switch
+            {
+{%- for variant in enum.variants %}
+                {{ variant.index }} => {{ enum.name }}.{{ variant.name }},
+{%- endfor %}
+                _ => throw new UnknownVariantException("{{ enum.name }}", variantIndex),
+            };
+        }
     }
 }
 "###;

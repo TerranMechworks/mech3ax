@@ -1,0 +1,16 @@
+[package]
+name = "mech3ax-exchange"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+autoexamples = false
+autobenches = false
+
+[lib]
+doctest = false
+test = true
+
+[dependencies]
+serde.workspace = true

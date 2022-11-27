@@ -1,7 +1,7 @@
 use heck::ToUpperCamelCase as _;
 
 const RUST_MOD_ROOT: &str = "mech3ax_api_types::";
-const CSHARP_MOD_ROOT: &str = "Mech3DotNet.Json";
+const CSHARP_MOD_ROOT: &str = "Mech3DotNet.Types";
 
 pub fn convert_mod_path(module_path: &'static str) -> String {
     let components = module_path

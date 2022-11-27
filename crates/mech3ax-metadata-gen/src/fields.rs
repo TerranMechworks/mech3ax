@@ -1,19 +1,28 @@
+use crate::csharp_type::SerializeType;
 use crate::resolver::TypeResolver;
 use heck::ToLowerCamelCase as _;
 use mech3ax_metadata_types::{DefaultHandling, TypeInfo, TypeInfoStructField};
 use serde::Serialize;
+use std::borrow::Cow;
 use std::collections::HashSet;
+
+#[derive(Debug, Clone, Serialize)]
+pub struct FieldSerde {
+    pub serialize: String,
+    pub deserialize: String,
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Field {
     /// The struct field's JSON key name.
-    pub json_name: String,
+    pub key: String,
     /// The struct field's C# field name.
     pub name: String,
     /// The struct field's C# type, with generics.
     pub ty: String,
+    pub serde: FieldSerde,
     /// Whether the type requires a null check on deserialization.
-    pub null_check: bool,
+    // pub null_check: bool,
     /// The struct field's default value, if any.
     pub default: Option<String>,
     /// The struct field type generic parameters.
@@ -50,11 +59,11 @@ fn hashset_generics(rename: &'static str) -> Option<HashSet<&'static str>> {
     Some(h)
 }
 
-pub fn join_generics(generics: &HashSet<&'static str>) -> String {
+pub fn sort_generics(generics: &HashSet<&'static str>) -> Vec<&'static str> {
     // sort the generics by name for a nice, stable display order.
     let mut generics_sorted: Vec<&'static str> = generics.iter().copied().collect();
     generics_sorted.sort();
-    generics_sorted.join(", ")
+    generics_sorted
 }
 
 impl Field {
@@ -66,14 +75,11 @@ impl Field {
     ) -> Self {
         // the JSON field name should match the type name, barring any serde
         // rename shenanigans.
-        let json_name = field_info.name.to_string();
+        let key = field_info.name.to_string();
         // sadly, Rust's casing for field names doesn't match C#.
         let csharp_name = rust_to_csharp_field_name(field_info.name);
 
-        let ty = resolver.resolve(field_info.type_info, struct_name);
-        let null_check = ty.null_check();
-        let mut type_name = ty.name.to_string();
-        let mut field_generics = ty.generics;
+        let mut ty = resolver.resolve(field_info.type_info, struct_name);
 
         // this is kinda janky, and won't work for nested generics (e.g. Vec<T>)
         // however, the types use generics sparingly, and so this is better
@@ -81,15 +87,20 @@ impl Field {
         if let Some(generics) = struct_generics {
             if let Some(rename) = find_generic_type(field_info, generics) {
                 assert!(
-                    field_generics.is_none(),
+                    ty.generics.is_none(),
                     "field `{}` type cannot be made generic if it is already generic: {:#?}",
                     field_info.name,
-                    field_generics
+                    ty.generics
                 );
-                field_generics = hashset_generics(rename);
-                type_name = rename.to_string();
+                ty.generics = hashset_generics(rename);
+                ty.name = Cow::Borrowed(rename);
+                ty.serde = SerializeType::Generic(rename);
             }
         }
+        let serde = FieldSerde {
+            serialize: ty.serde.make_serialize(),
+            deserialize: ty.serde.make_deserialize(),
+        };
 
         let default = match field_info.default {
             DefaultHandling::Normal => None,
@@ -99,12 +110,12 @@ impl Field {
         };
 
         Self {
-            json_name,
+            key,
             name: csharp_name,
-            ty: type_name,
-            null_check,
+            ty: ty.name.to_string(),
+            serde,
             default,
-            generics: field_generics,
+            generics: ty.generics,
         }
     }
 }
