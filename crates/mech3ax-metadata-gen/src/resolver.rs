@@ -1,6 +1,5 @@
 use crate::csharp_type::CSharpType;
 use crate::enums::Enum;
-use crate::options::Options;
 use crate::structs::Struct;
 use crate::unions::Union;
 use mech3ax_metadata_types::{
@@ -15,7 +14,6 @@ pub struct TypeResolver {
     enums: HashMap<(&'static str, &'static str), Enum>,
     structs: HashMap<(&'static str, &'static str), Struct>,
     unions: HashMap<(&'static str, &'static str), Union>,
-    factory_converters: Vec<(String, String, usize)>,
 }
 
 #[derive(Debug)]
@@ -67,12 +65,7 @@ impl TypeResolver {
             enums: HashMap::new(),
             structs: HashMap::new(),
             unions: HashMap::new(),
-            factory_converters: Vec::new(),
         }
-    }
-
-    pub fn push_factory_converter(&mut self, namespace: String, converter: String, count: usize) {
-        self.factory_converters.push((namespace, converter, count));
     }
 
     pub fn push<TI>(&mut self)
@@ -176,14 +169,11 @@ impl TypeResolver {
             .ok_or_else(|| ResolveError::new(ui.module_path, ui.name))
     }
 
-    pub fn into_values(self) -> (Vec<Enum>, Vec<Struct>, Vec<Union>, Options) {
-        let mut factory_converters = self.factory_converters;
-        factory_converters.sort();
+    pub fn into_values(self) -> (Vec<Enum>, Vec<Struct>, Vec<Union>) {
         (
             self.enums.into_values().collect(),
             self.structs.into_values().collect(),
             self.unions.into_values().collect(),
-            Options::new(factory_converters),
         )
     }
 }

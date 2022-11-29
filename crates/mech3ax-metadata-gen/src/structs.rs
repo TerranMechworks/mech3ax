@@ -19,8 +19,6 @@ pub struct Struct {
     pub full_name: String,
     /// The struct's C# converter type name, with generics.
     pub conv_name: String,
-    /// The struct's C# semantic type as a string, `class` or `struct`.
-    pub sem_type: &'static str,
     /// The struct's fields.
     pub fields: Vec<Field>,
     /// The struct's C# semantic type.
@@ -45,11 +43,15 @@ impl Struct {
             TypeSemantic::Ref => TypeKind::Ref,
             TypeSemantic::Val => TypeKind::Val,
         };
+        let serde = match self.semantic {
+            TypeSemantic::Ref => SerializeType::Class(self.full_name.clone()),
+            TypeSemantic::Val => SerializeType::Struct(self.full_name.clone()),
+        };
         CSharpType {
             name: Cow::Owned(self.full_name.clone()),
             kind,
             generics: self.generics.clone(),
-            serde: SerializeType::Struct(self.full_name.clone()),
+            serde,
         }
     }
 
@@ -59,10 +61,6 @@ impl Struct {
         let namespace = convert_mod_path(si.module_path);
 
         let semantic = si.semantic;
-        let sem_type = match semantic {
-            TypeSemantic::Ref => "sealed class",
-            TypeSemantic::Val => "struct",
-        };
         // field generics must be declared on this struct specifically.
         let fields: Vec<_> = si
             .fields
@@ -87,12 +85,14 @@ impl Struct {
             let conv_name = format!("{}Converter", si.name);
             (type_name, conv_name, None, Vec::new())
         } else {
+            if semantic == TypeSemantic::Val {
+                panic!("Value type `{}` cannot have generics", si.name);
+            }
             // the is generic, so the converter is also generic
             let generics_sorted = sort_generics(&generics);
             let generics_joined = generics_sorted.join(", ");
             let type_name = Cow::Owned(format!("{}<{}>", name, generics_joined));
             let conv_name = format!("{}Converter<{}>", si.name, generics_joined);
-            resolver.push_factory_converter(namespace.clone(), si.name.to_string(), generics.len());
             (type_name, conv_name, Some(generics), generics_sorted)
         };
 
@@ -104,7 +104,6 @@ impl Struct {
             namespace,
             full_name,
             conv_name,
-            sem_type,
             fields,
             semantic,
             generics,
@@ -115,16 +114,20 @@ impl Struct {
     pub fn render_impl(&self, tera: &tera::Tera) -> tera::Result<String> {
         let mut context = tera::Context::new();
         context.insert("struct", self);
-        tera.render("struct_impl.cs", &context)
+        let template_name = match self.semantic {
+            TypeSemantic::Ref => "class_impl.cs",
+            TypeSemantic::Val => "struct_impl.cs",
+        };
+        tera.render(template_name, &context)
     }
 }
 
-pub const STRUCT_IMPL: &str = r###"using System;
+pub const CLASS_IMPL: &str = r###"using System;
 using Mech3DotNet.Exchange;
 
 namespace {{ struct.namespace }}
 {
-    public {{ struct.sem_type }} {{ struct.type_name }}
+    public sealed class {{ struct.type_name }}
 {%- for generic in struct.generics_sorted %}
         where {{ generic }} : notnull
 {%- endfor %}
@@ -149,7 +152,7 @@ namespace {{ struct.namespace }}
 {%- endfor %}
         }
 
-        public static void Serialize({{ struct.full_name }} v, Serializer s)
+        public static void Serialize({{ struct.type_name }} v, Serializer s)
         {
             s.SerializeStruct("{{ struct.name }}", {{ struct.fields | length }});
 {%- for field in struct.fields %}
@@ -158,7 +161,77 @@ namespace {{ struct.namespace }}
 {%- endfor %}
         }
 
-        public static {{ struct.full_name }} Deserialize(Deserializer d)
+        public static {{ struct.type_name }} Deserialize(Deserializer d)
+        {
+            var fields = new Fields()
+            {
+{%- for field in struct.fields %}
+                {{ field.name }} = new Field<{{ field.ty }}>({% if field.default %}{{ field.default }}{% endif %}),
+{%- endfor %}
+            };
+            foreach (var fieldName in d.DeserializeStruct("{{ struct.name }}"))
+            {
+                switch (fieldName)
+                {
+{%- for field in struct.fields %}
+                    case "{{ field.key }}":
+                        fields.{{ field.name }}.Value = {{ field.serde.deserialize }}();
+                        break;
+{%- endfor %}
+                    default:
+                        throw new UnknownFieldException("{{ struct.name }}", fieldName);
+                }
+            }
+            return new {{ struct.type_name }}(
+{% for field in struct.fields %}
+                fields.{{ field.name }}.Unwrap("{{ struct.name }}", "{{ field.name }}"){% if not loop.last %},{% endif %}
+{% endfor %}
+            );
+        }
+    }
+}
+"###;
+
+pub const STRUCT_IMPL: &str = r###"using System;
+using Mech3DotNet.Exchange;
+
+namespace {{ struct.namespace }}
+{
+    public struct {{ struct.type_name }}
+    {
+{%- for field in struct.fields %}
+        public {{ field.ty }} {{ field.name }}{% if field.default %} = {{ field.default }}{% endif %};
+{%- endfor %}
+
+        public {{ struct.name }}({% for field in struct.fields %}{{ field.ty }} {{ field.name }}{% if not loop.last %}, {% endif %}{% endfor %})
+        {
+{%- for field in struct.fields %}
+            this.{{ field.name }} = {{ field.name }};
+{%- endfor %}
+        }
+    }
+
+    public static class {{ struct.type_name }}Converter
+    {
+        public static readonly TypeConverter<{{ struct.type_name }}> Converter = new TypeConverter<{{ struct.type_name }}>(Deserialize, Serialize);
+
+        private struct Fields
+        {
+{%- for field in struct.fields %}
+            public Field<{{ field.ty }}> {{ field.name }};
+{%- endfor %}
+        }
+
+        public static void Serialize({{ struct.type_name }} v, Serializer s)
+        {
+            s.SerializeStruct("{{ struct.name }}", {{ struct.fields | length }});
+{%- for field in struct.fields %}
+            s.SerializeFieldName("{{ field.key }}");
+            {{ field.serde.serialize }}(v.{{ field.name }});
+{%- endfor %}
+        }
+
+        public static {{ struct.type_name }} Deserialize(Deserializer d)
         {
             var fields = new Fields()
             {

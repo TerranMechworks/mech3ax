@@ -2,7 +2,6 @@ mod csharp_type;
 mod enums;
 mod fields;
 mod module_path;
-mod options;
 mod resolver;
 mod structs;
 mod templates;
@@ -184,43 +183,23 @@ fn main() {
     resolver.push::<api::anim::AnimDef>();
 
     let tera = templates::make_tera();
-    let (enums, structs, unions, options) = resolver.into_values();
+    let (enums, structs, unions) = resolver.into_values();
 
     for item in enums {
         let contents = item.render_impl(&tera).unwrap();
         let path = format!("output/{}.cs", item.name);
         std::fs::write(path, contents).unwrap();
-        // let contents = item.render_conv(&tera).unwrap();
-        // let path = format!("output/Conv/{}Converter.cs", item.name);
-        // std::fs::write(path, contents).unwrap();
     }
 
     for item in structs {
         let contents = item.render_impl(&tera).unwrap();
         let path = format!("output/{}.cs", item.name);
         std::fs::write(path, contents).unwrap();
-        // let contents = item.render_conv(&tera).unwrap();
-        // let path = format!("output/Conv/{}Converter.cs", item.name);
-        // std::fs::write(path, contents).unwrap();
     }
 
     for item in unions {
         let contents = item.render_impl(&tera).unwrap();
         let path = format!("output/{}.cs", item.name);
         std::fs::write(path, contents).unwrap();
-        // let contents = item.render_conv(&tera).unwrap();
-        // let path = format!("output/Conv/{}Converter.cs", item.name);
-        // std::fs::write(path, contents).unwrap();
     }
-
-    // let contents = options.render_impl(&tera).unwrap();
-    // let path = format!("output/Conv/{}.cs", "Options");
-    // std::fs::write(path, contents).unwrap();
-
-    // let factories = options.into_factories();
-    // for item in factories {
-    //     let contents = item.render_impl(&tera).unwrap();
-    //     let path = format!("output/Conv/{}ConverterFactory.cs", item.name);
-    //     std::fs::write(path, contents).unwrap();
-    // }
 }

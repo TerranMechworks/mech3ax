@@ -39,6 +39,7 @@ pub enum SerializeType {
     String,
     Bytes,
     Vec(Box<SerializeType>),
+    Class(String),
     Struct(String),
     Enum(String),
     Union(String),
@@ -75,8 +76,11 @@ impl SerializeType {
                 inner.make_ser(s);
                 s.push(')');
             }
-            Struct(full_type) | Enum(full_type) | Union(full_type) => {
+            Class(full_type) | Enum(full_type) | Union(full_type) => {
                 write!(s, "s.Serialize({}.Converter)", full_type).unwrap()
+            }
+            Struct(full_type) => {
+                write!(s, "s.Serialize({}Converter.Converter)", full_type).unwrap()
             }
             Generic(full_type) => write!(s, "s.SerializeGeneric<{}>()", full_type).unwrap(),
         }
@@ -117,8 +121,11 @@ impl SerializeType {
                 inner.make_de(s);
                 s.push(')');
             }
-            Struct(full_type) | Enum(full_type) | Union(full_type) => {
+            Class(full_type) | Enum(full_type) | Union(full_type) => {
                 write!(s, "d.Deserialize({}.Converter)", full_type).unwrap()
+            }
+            Struct(full_type) => {
+                write!(s, "d.Deserialize({}Converter.Converter)", full_type).unwrap()
             }
             Generic(full_type) => write!(s, "d.DeserializeGeneric<{}>()", full_type).unwrap(),
         }
