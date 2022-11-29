@@ -154,7 +154,7 @@ namespace {{ struct.namespace }}
 
         public static void Serialize({{ struct.type_name }} v, Serializer s)
         {
-            s.SerializeStruct("{{ struct.name }}", {{ struct.fields | length }});
+            s.SerializeStruct({{ struct.fields | length }});
 {%- for field in struct.fields %}
             s.SerializeFieldName("{{ field.key }}");
             {{ field.serde.serialize }}(v.{{ field.name }});
@@ -169,7 +169,7 @@ namespace {{ struct.namespace }}
                 {{ field.name }} = new Field<{{ field.ty }}>({% if field.default %}{{ field.default }}{% endif %}),
 {%- endfor %}
             };
-            foreach (var fieldName in d.DeserializeStruct("{{ struct.name }}"))
+            foreach (var fieldName in d.DeserializeStruct())
             {
                 switch (fieldName)
                 {
@@ -224,7 +224,7 @@ namespace {{ struct.namespace }}
 
         public static void Serialize({{ struct.type_name }} v, Serializer s)
         {
-            s.SerializeStruct("{{ struct.name }}", {{ struct.fields | length }});
+            s.SerializeStruct({{ struct.fields | length }});
 {%- for field in struct.fields %}
             s.SerializeFieldName("{{ field.key }}");
             {{ field.serde.serialize }}(v.{{ field.name }});
@@ -239,7 +239,7 @@ namespace {{ struct.namespace }}
                 {{ field.name }} = new Field<{{ field.ty }}>({% if field.default %}{{ field.default }}{% endif %}),
 {%- endfor %}
             };
-            foreach (var fieldName in d.DeserializeStruct("{{ struct.name }}"))
+            foreach (var fieldName in d.DeserializeStruct())
             {
                 switch (fieldName)
                 {

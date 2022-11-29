@@ -153,10 +153,10 @@ namespace {{ union.namespace }}
                     {
 {%- if variant.serde %}
                         var inner = v.As{{ variant.name }}();
-                        s.SerializeNewTypeVariant("{{ union.name }}", {{ variant.index }});
+                        s.SerializeNewTypeVariant({{ variant.index }});
                         {{ variant.serde.serialize }}(inner);
 {%- else %}
-                        s.SerializeUnitVariant("{{ union.name }}", {{ variant.index }});
+                        s.SerializeUnitVariant({{ variant.index }});
 {%- endif %}
                         break;
                     }
@@ -168,7 +168,7 @@ namespace {{ union.namespace }}
 
         private static {{ union.name }} Deserialize(Deserializer d)
         {
-            var (enumType, variantIndex) = d.DeserializeEnum("{{ union.name }}");
+            var (enumType, variantIndex) = d.DeserializeEnum();
             switch (variantIndex)
             {
 {%- for variant in union.variants %}

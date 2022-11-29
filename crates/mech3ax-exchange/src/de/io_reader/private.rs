@@ -120,20 +120,8 @@ impl<R: Read> IoReader<R> {
     }
 
     #[inline]
-    fn expect_struct_name(&mut self, name: &'static str) -> Result<()> {
-        let expected = name;
-        let actual = self.read_string_raw()?;
-        if expected == actual {
-            Ok(())
-        } else {
-            Err(Error::unexpected_type(expected, actual))
-        }
-    }
-
-    #[inline]
-    pub fn read_struct(&mut self, name: &'static str) -> Result<usize> {
+    pub fn read_struct(&mut self) -> Result<usize> {
         self.expect_type(TypeMap::Struct)?;
-        self.expect_struct_name(name)?;
         self.read_usize()
     }
 
@@ -146,14 +134,13 @@ impl<R: Read> IoReader<R> {
     }
 
     #[inline]
-    pub fn read_enum(&mut self, name: &'static str) -> Result<(EnumType, u32)> {
+    pub fn read_enum(&mut self) -> Result<(EnumType, u32)> {
         let actual = self.read_type()?;
         let enum_type = match actual {
             TypeMap::EnumUnit => Ok(EnumType::Unit),
             TypeMap::EnumNewType => Ok(EnumType::NewType),
             actual => Err(Error::unexpected_type("enum", actual)),
         }?;
-        self.expect_struct_name(name)?;
         let variant_index = self.read_enum_variant()?;
         Ok((enum_type, variant_index))
     }

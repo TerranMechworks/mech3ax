@@ -103,7 +103,7 @@ namespace {{ enum.namespace }}
 {%- endfor %}
                 _ => throw new System.ArgumentOutOfRangeException(),
             };
-            s.SerializeUnitVariant("{{ enum.name }}", variantIndex);
+            s.SerializeUnitVariant(variantIndex);
         }
 
         private static {{ enum.name }} Deserialize(Deserializer d)

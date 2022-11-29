@@ -149,25 +149,25 @@ impl<'a, W: Write> ser::Serializer for &'a mut IoWriter<W> {
     }
 
     #[inline]
-    fn serialize_struct(self, name: &'static str, len: usize) -> Result<Self::SerializeStruct> {
-        self.write_struct(name, len)?;
+    fn serialize_struct(self, _name: &'static str, len: usize) -> Result<Self::SerializeStruct> {
+        self.write_struct(len)?;
         Ok(self)
     }
 
     #[inline]
     fn serialize_unit_variant(
         self,
-        name: &'static str,
+        _name: &'static str,
         variant_index: u32,
         _variant: &'static str,
     ) -> Result<()> {
-        self.write_enum_unit(name, variant_index)
+        self.write_enum_unit(variant_index)
     }
 
     #[inline]
     fn serialize_newtype_variant<T>(
         self,
-        name: &'static str,
+        _name: &'static str,
         variant_index: u32,
         _variant: &'static str,
         value: &T,
@@ -175,7 +175,7 @@ impl<'a, W: Write> ser::Serializer for &'a mut IoWriter<W> {
     where
         T: ?Sized + Serialize,
     {
-        self.write_enum_newtype(name, variant_index)?;
+        self.write_enum_newtype(variant_index)?;
         value.serialize(self)
     }
 

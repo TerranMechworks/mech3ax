@@ -209,14 +209,14 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
 
     fn deserialize_struct<V>(
         self,
-        name: &'static str,
+        _name: &'static str,
         _fields: &'static [&'static str],
         visitor: V,
     ) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
     {
-        let len = self.read_struct(name)?;
+        let len = self.read_struct()?;
         visitor.visit_map(SizedMapAccess {
             deserializer: self,
             len,
@@ -225,14 +225,14 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
 
     fn deserialize_enum<V>(
         self,
-        name: &'static str,
+        _name: &'static str,
         variants: &'static [&'static str],
         visitor: V,
     ) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
     {
-        let (enum_type, variant_index) = self.read_enum(name)?;
+        let (enum_type, variant_index) = self.read_enum()?;
         let variant = variants
             .get(variant_index as usize)
             .ok_or_else(|| Error::new(ErrorCode::InvalidVariant))?;

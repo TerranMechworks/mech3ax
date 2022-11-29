@@ -104,9 +104,8 @@ impl<W: Write> IoWriter<W> {
     }
 
     #[inline]
-    pub fn write_struct(&mut self, name: &'static str, len: usize) -> Result<()> {
+    pub fn write_struct(&mut self, len: usize) -> Result<()> {
         self.write_type(TypeMap::Struct)?;
-        self.write_string_raw(name)?;
         self.write_usize(len)
     }
 
@@ -116,16 +115,14 @@ impl<W: Write> IoWriter<W> {
     }
 
     #[inline]
-    pub fn write_enum_unit(&mut self, name: &'static str, variant_index: u32) -> Result<()> {
+    pub fn write_enum_unit(&mut self, variant_index: u32) -> Result<()> {
         self.write_type(TypeMap::EnumUnit)?;
-        self.write_string_raw(name)?;
         self.write_enum_variant(variant_index)
     }
 
     #[inline]
-    pub fn write_enum_newtype(&mut self, name: &'static str, variant_index: u32) -> Result<()> {
+    pub fn write_enum_newtype(&mut self, variant_index: u32) -> Result<()> {
         self.write_type(TypeMap::EnumNewType)?;
-        self.write_string_raw(name)?;
         self.write_enum_variant(variant_index)
     }
 
