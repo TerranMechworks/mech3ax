@@ -24,6 +24,7 @@ macro_rules! serde_unsupported {
 impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
     type Error = Error;
 
+    #[inline]
     fn is_human_readable(&self) -> bool {
         false
     }
@@ -34,6 +35,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
     serde_unsupported!(deserialize_char);
     serde_unsupported!(deserialize_any);
 
+    #[inline]
     fn deserialize_i8<V>(self, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -41,6 +43,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         visitor.visit_i8(self.read_i8()?)
     }
 
+    #[inline]
     fn deserialize_i16<V>(self, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -48,6 +51,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         visitor.visit_i16(self.read_i16()?)
     }
 
+    #[inline]
     fn deserialize_i32<V>(self, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -55,6 +59,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         visitor.visit_i32(self.read_i32()?)
     }
 
+    #[inline]
     fn deserialize_u8<V>(self, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -62,6 +67,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         visitor.visit_u8(self.read_u8()?)
     }
 
+    #[inline]
     fn deserialize_u16<V>(self, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -69,6 +75,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         visitor.visit_u16(self.read_u16()?)
     }
 
+    #[inline]
     fn deserialize_u32<V>(self, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -76,6 +83,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         visitor.visit_u32(self.read_u32()?)
     }
 
+    #[inline]
     fn deserialize_f32<V>(self, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -83,6 +91,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         visitor.visit_f32(self.read_f32()?)
     }
 
+    #[inline]
     fn deserialize_bool<V>(self, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -90,6 +99,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         visitor.visit_bool(self.read_bool()?)
     }
 
+    #[inline]
     fn deserialize_str<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -97,6 +107,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         err_unsupported!()
     }
 
+    #[inline]
     fn deserialize_string<V>(self, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -104,6 +115,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         visitor.visit_string(self.read_str()?)
     }
 
+    #[inline]
     fn deserialize_bytes<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -111,6 +123,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         err_unsupported!()
     }
 
+    #[inline]
     fn deserialize_byte_buf<V>(self, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -139,6 +152,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         })
     }
 
+    #[inline]
     fn deserialize_tuple<V>(self, _tuple_len: usize, _visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -146,6 +160,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         err_unsupported!()
     }
 
+    #[inline]
     fn deserialize_map<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -153,6 +168,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         err_unsupported!()
     }
 
+    #[inline]
     fn deserialize_unit<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -160,6 +176,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         err_unsupported!()
     }
 
+    #[inline]
     fn deserialize_unit_struct<V>(self, _name: &'static str, _visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -167,6 +184,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         err_unsupported!()
     }
 
+    #[inline]
     fn deserialize_newtype_struct<V>(self, _name: &'static str, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -176,6 +194,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         visitor.visit_newtype_struct(self)
     }
 
+    #[inline]
     fn deserialize_tuple_struct<V>(
         self,
         _name: &'static str,
@@ -226,6 +245,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         }
     }
 
+    #[inline]
     fn deserialize_identifier<V>(self, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -233,6 +253,7 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         self.deserialize_string(visitor)
     }
 
+    #[inline]
     fn deserialize_ignored_any<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -261,6 +282,7 @@ impl<'a, 'de: 'a, R: Read> de::SeqAccess<'de> for SizedSeqAccess<'a, R> {
         }
     }
 
+    #[inline]
     fn size_hint(&self) -> Option<usize> {
         Some(self.len)
     }
@@ -293,6 +315,7 @@ impl<'a, 'de: 'a, R: Read> de::MapAccess<'de> for SizedMapAccess<'a, R> {
         seed.deserialize(&mut *self.deserializer)
     }
 
+    #[inline]
     fn size_hint(&self) -> Option<usize> {
         Some(self.len)
     }
@@ -319,10 +342,12 @@ impl<'de> de::EnumAccess<'de> for EnumUnit {
 impl<'de> de::VariantAccess<'de> for EnumUnit {
     type Error = Error;
 
+    #[inline]
     fn unit_variant(self) -> Result<()> {
         Ok(())
     }
 
+    #[inline]
     fn newtype_variant_seed<T>(self, _seed: T) -> Result<T::Value>
     where
         T: de::DeserializeSeed<'de>,
@@ -330,6 +355,7 @@ impl<'de> de::VariantAccess<'de> for EnumUnit {
         Err(Error::new(ErrorCode::InvalidVariant))
     }
 
+    #[inline]
     fn tuple_variant<V>(self, _len: usize, _visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -337,6 +363,7 @@ impl<'de> de::VariantAccess<'de> for EnumUnit {
         err_unsupported!()
     }
 
+    #[inline]
     fn struct_variant<V>(self, _fields: &'static [&'static str], _visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -367,10 +394,12 @@ impl<'a, 'de: 'a, R: Read> de::EnumAccess<'de> for EnumNewType<'a, R> {
 impl<'a, 'de: 'a, R: Read> de::VariantAccess<'de> for EnumNewType<'a, R> {
     type Error = Error;
 
+    #[inline]
     fn unit_variant(self) -> Result<()> {
         Err(Error::new(ErrorCode::InvalidVariant))
     }
 
+    #[inline]
     fn newtype_variant_seed<T>(self, seed: T) -> Result<T::Value>
     where
         T: de::DeserializeSeed<'de>,
@@ -378,6 +407,7 @@ impl<'a, 'de: 'a, R: Read> de::VariantAccess<'de> for EnumNewType<'a, R> {
         seed.deserialize(self.deserializer)
     }
 
+    #[inline]
     fn tuple_variant<V>(self, _len: usize, _visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -385,6 +415,7 @@ impl<'a, 'de: 'a, R: Read> de::VariantAccess<'de> for EnumNewType<'a, R> {
         err_unsupported!()
     }
 
+    #[inline]
     fn struct_variant<V>(self, _fields: &'static [&'static str], _visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
