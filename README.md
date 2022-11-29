@@ -188,6 +188,13 @@ where `--rtexture` and `--rmechtex` are optional.
 
 ## Changelog
 
+### [0.6.0-rc2] - unreleased
+
+* Implement custom data exchange format to replace JSON (`lib`)
+* Use custom data exchange format for C# (`lib`, breaking change)
+* Update C# code generation for data exchange format (gen)
+* Remove old v1 `anim` API (`lib`)
+
 ### [0.6.0-rc1] - 2022-11-20
 
 Big features:
