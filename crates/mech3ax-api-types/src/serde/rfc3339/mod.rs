@@ -1,5 +1,6 @@
 use serde::de::{self, Deserialize, Deserializer};
 use serde::ser::{self, Serializer};
+use std::borrow::Cow;
 use time::format_description::{modifier, Component, FormatItem};
 use time::{OffsetDateTime, PrimitiveDateTime, UtcOffset};
 
@@ -34,8 +35,16 @@ pub fn serialize<S: Serializer>(
 
 /// Deserialize an `OffsetDateTime` from a RFC3339 timestamp with UTC offset
 pub fn deserialize<'a, D: Deserializer<'a>>(deserializer: D) -> Result<OffsetDateTime, D::Error> {
-    let input = <_>::deserialize(deserializer)?;
-    match PrimitiveDateTime::parse(input, &RFC_3339_FORMAT) {
+    let input = if deserializer.is_human_readable() {
+        let input: &str = <_>::deserialize(deserializer)?;
+        Cow::Borrowed(input)
+    } else {
+        // because mech3ax-exchange does not support deserialize_str, we must
+        // use deserialize_string and Cow.
+        let input: String = <_>::deserialize(deserializer)?;
+        Cow::Owned(input)
+    };
+    match PrimitiveDateTime::parse(input.as_ref(), &RFC_3339_FORMAT) {
         Ok(dt) => Ok(dt.assume_utc()),
         Err(e) => Err(de::Error::custom(e)),
     }
