@@ -29,6 +29,11 @@ impl<'a, W: Write> ser::Serializer for &'a mut IoWriter<W> {
     type SerializeStruct = Self;
     type SerializeStructVariant = Self;
 
+    #[inline]
+    fn is_human_readable(&self) -> bool {
+        false
+    }
+
     serde_unsupported!(serialize_i64, i64);
     serde_unsupported!(serialize_u64, u64);
     serde_unsupported!(serialize_f64, f64);
