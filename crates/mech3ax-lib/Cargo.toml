@@ -30,6 +30,7 @@ mech3ax-anim = { path = "../mech3ax-anim" }
 mech3ax-api-types = { path = "../mech3ax-api-types" }
 mech3ax-archive = { path = "../mech3ax-archive" }
 mech3ax-common = { path = "../mech3ax-common" }
+mech3ax-exchange = { path = "../mech3ax-exchange" }
 mech3ax-gamez = { path = "../mech3ax-gamez" }
 mech3ax-image = { path = "../mech3ax-image" }
 mech3ax-interp = { path = "../mech3ax-interp" }

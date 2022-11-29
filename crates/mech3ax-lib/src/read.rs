@@ -41,7 +41,7 @@ pub extern "C" fn read_interp(
         let mut read = CountingReader::new(input);
         let scripts =
             mech3ax_interp::read_interp(&mut read).context("Failed to read interpreter data")?;
-        let data = serde_json::to_vec(&scripts)?;
+        let data = mech3ax_exchange::to_vec(&scripts)?;
         callback(data.as_ptr(), data.len());
         Ok(())
     })
@@ -58,7 +58,7 @@ pub extern "C" fn read_messages(
         let mut read = buf_reader(filename)?;
         let messages = mech3ax_messages::read_messages(&mut read, game)
             .context("Failed to read message data")?;
-        let data = serde_json::to_vec(&messages)?;
+        let data = mech3ax_exchange::to_vec(&messages)?;
         callback(data.as_ptr(), data.len());
         Ok(())
     })
@@ -81,8 +81,8 @@ fn read_archive(
         version,
     )?;
 
-    let name = "manifest.json";
-    let data = serde_json::to_vec(&entries)?;
+    let name = "manifest.bin";
+    let data = mech3ax_exchange::to_vec(&entries)?;
     buffer_callback(callback, name, &data)
 }
 
@@ -155,7 +155,7 @@ fn read_motion_transform(name: &str, data: Vec<u8>, offset: u32) -> Result<Vec<u
     read.offset = offset;
     let root = mech3ax_motion::read_motion(&mut read)
         .with_context(|| format!("Failed to read motion data for `{}`", name))?;
-    Ok(serde_json::to_vec(&root)?)
+    Ok(mech3ax_exchange::to_vec(&root)?)
 }
 
 // callback filename will not end in .json!
@@ -196,12 +196,12 @@ fn read_mechlib_transform_mw(name: &str, data: Vec<u8>, offset: u32) -> Result<V
         "materials" => {
             let materials = mech3ax_gamez::mechlib::read_materials(&mut read)
                 .context("Failed to read mechlib format data")?;
-            Ok(serde_json::to_vec(&materials)?)
+            Ok(mech3ax_exchange::to_vec(&materials)?)
         }
         _ => {
             let root = mech3ax_gamez::mechlib::mw::read_model(&mut read)
                 .with_context(|| format!("Failed to read model data for `{}`", name))?;
-            Ok(serde_json::to_vec(&root)?)
+            Ok(mech3ax_exchange::to_vec(&root)?)
         }
     }
 }
@@ -225,12 +225,12 @@ fn read_mechlib_transform_pm(name: &str, data: Vec<u8>, offset: u32) -> Result<V
         "materials" => {
             let materials = mech3ax_gamez::mechlib::read_materials(&mut read)
                 .context("Failed to read mechlib format data")?;
-            Ok(serde_json::to_vec(&materials)?)
+            Ok(mech3ax_exchange::to_vec(&materials)?)
         }
         _ => {
             let root = mech3ax_gamez::mechlib::pm::read_model(&mut read)
                 .with_context(|| format!("Failed to read model data for `{}`", name))?;
-            Ok(serde_json::to_vec(&root)?)
+            Ok(mech3ax_exchange::to_vec(&root)?)
         }
     }
 }
@@ -278,8 +278,8 @@ pub extern "C" fn read_textures(
             buffer_callback(callback, name, &data)
         })?;
 
-        let data = serde_json::to_vec(&manifest)?;
-        let name = "manifest.json";
+        let data = mech3ax_exchange::to_vec(&manifest)?;
+        let name = "manifest.bin";
         buffer_callback(callback, name, &data)
     })
 }
@@ -296,28 +296,28 @@ pub extern "C" fn read_gamez(filename: *const c_char, game_type_id: i32, callbac
                     mech3ax_gamez::gamez::mw::read_gamez(&mut read)
                         .context("Failed to read gamez data")
                 }?;
-                serde_json::to_vec(&gamez)?
+                mech3ax_exchange::to_vec(&gamez)?
             }
             GameType::PM => {
                 let gamez = {
                     mech3ax_gamez::gamez::pm::read_gamez(&mut read)
                         .context("Failed to read gamez data")
                 }?;
-                serde_json::to_vec(&gamez)?
+                mech3ax_exchange::to_vec(&gamez)?
             }
             GameType::RC => {
                 let gamez = {
                     mech3ax_gamez::gamez::rc::read_gamez(&mut read)
                         .context("Failed to read gamez data")
                 }?;
-                serde_json::to_vec(&gamez)?
+                mech3ax_exchange::to_vec(&gamez)?
             }
             GameType::CS => {
                 let gamez = {
                     mech3ax_gamez::gamez::cs::read_gamez(&mut read)
                         .context("Failed to read gamez data")
                 }?;
-                serde_json::to_vec(&gamez)?
+                mech3ax_exchange::to_vec(&gamez)?
             }
         };
         callback(data.as_ptr(), data.len());
@@ -343,14 +343,14 @@ pub extern "C" fn read_anim(
         let input = buf_reader(filename)?;
         let mut read = CountingReader::new(input);
         let metadata = mech3ax_anim::read_anim(&mut read, |name, anim_def| {
-            let data = serde_json::to_vec(&anim_def)?;
+            let data = mech3ax_exchange::to_vec(&anim_def)?;
 
             buffer_callback(callback, name, &data)
         })
         .context("Failed to read anim data")?;
 
-        let data = serde_json::to_vec(&metadata)?;
-        let name = "metadata.json";
+        let data = mech3ax_exchange::to_vec(&metadata)?;
+        let name = "metadata.bin";
         buffer_callback(callback, name, &data)
     })
 }

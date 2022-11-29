@@ -51,7 +51,7 @@ pub extern "C" fn write_interp(
         }
         let buf = unsafe { std::slice::from_raw_parts(data, len) };
         let scripts: Vec<Script> =
-            serde_json::from_slice(buf).context("Failed to parse interpreter data")?;
+            mech3ax_exchange::from_slice(buf).context("Failed to parse interpreter data")?;
 
         let mut write = buf_writer(filename)?;
         mech3ax_interp::write_interp(&mut write, &scripts)
@@ -64,7 +64,7 @@ fn parse_entries(ptr: *const u8, len: usize) -> Result<Vec<ArchiveEntry>> {
         bail!("entries is null");
     }
     let buf = unsafe { std::slice::from_raw_parts(ptr, len) };
-    serde_json::from_slice(buf).context("entries is invalid")
+    mech3ax_exchange::from_slice(buf).context("entries is invalid")
 }
 
 fn write_archive(
@@ -178,7 +178,7 @@ pub extern "C" fn write_reader_raw(
 }
 
 fn write_motion_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
-    let motion: Motion = serde_json::from_slice(&data)
+    let motion: Motion = mech3ax_exchange::from_slice(&data)
         .with_context(|| format!("Motion data for `{}` is invalid", name))?;
 
     let mut buf = CountingWriter::new(Vec::new(), 0);
@@ -220,7 +220,7 @@ fn write_mechlib_transform_mw(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
         "version" => Ok(data),
         "materials" => {
             let materials: Vec<Material> =
-                serde_json::from_slice(&data).context("Materials data is invalid")?;
+                mech3ax_exchange::from_slice(&data).context("Materials data is invalid")?;
 
             let mut buf = CountingWriter::new(Vec::new(), 0);
             mech3ax_gamez::mechlib::write_materials(&mut buf, &materials)
@@ -228,7 +228,7 @@ fn write_mechlib_transform_mw(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
             Ok(buf.into_inner())
         }
         original => {
-            let mut model: ModelMw = serde_json::from_slice(&data)
+            let mut model: ModelMw = mech3ax_exchange::from_slice(&data)
                 .with_context(|| format!("Model data for `{}` is invalid", original))?;
 
             let mut buf = CountingWriter::new(Vec::new(), 0);
@@ -245,7 +245,7 @@ fn write_mechlib_transform_pm(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
         "version" => Ok(data),
         "materials" => {
             let materials: Vec<Material> =
-                serde_json::from_slice(&data).context("Materials data is invalid")?;
+                mech3ax_exchange::from_slice(&data).context("Materials data is invalid")?;
 
             let mut buf = CountingWriter::new(Vec::new(), 0);
             mech3ax_gamez::mechlib::write_materials(&mut buf, &materials)
@@ -253,7 +253,7 @@ fn write_mechlib_transform_pm(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
             Ok(buf.into_inner())
         }
         original => {
-            let mut model: ModelPm = serde_json::from_slice(&data)
+            let mut model: ModelPm = mech3ax_exchange::from_slice(&data)
                 .with_context(|| format!("Model data for `{}` is invalid", original))?;
 
             let mut buf = CountingWriter::new(Vec::new(), 0);
@@ -301,7 +301,7 @@ fn parse_manifest(ptr: *const u8, len: usize) -> Result<TextureManifest> {
         bail!("texture manifest is null");
     }
     let buf = unsafe { std::slice::from_raw_parts(ptr, len) };
-    serde_json::from_slice(buf).context("texture manifest is invalid")
+    mech3ax_exchange::from_slice(buf).context("texture manifest is invalid")
 }
 
 #[no_mangle]
@@ -350,25 +350,25 @@ pub extern "C" fn write_gamez(
         match game {
             GameType::MW => {
                 let gamez: GameZMwData =
-                    serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
+                    mech3ax_exchange::from_slice(buf).context("Failed to parse GameZ data")?;
                 mech3ax_gamez::gamez::mw::write_gamez(&mut write, &gamez)
                     .context("Failed to write GameZ data")
             }
             GameType::PM => {
                 let gamez: GameZPmData =
-                    serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
+                    mech3ax_exchange::from_slice(buf).context("Failed to parse GameZ data")?;
                 mech3ax_gamez::gamez::pm::write_gamez(&mut write, &gamez)
                     .context("Failed to write GameZ data")
             }
             GameType::RC => {
                 let gamez: GameZRcData =
-                    serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
+                    mech3ax_exchange::from_slice(buf).context("Failed to parse GameZ data")?;
                 mech3ax_gamez::gamez::rc::write_gamez(&mut write, &gamez)
                     .context("Failed to write GameZ data")
             }
             GameType::CS => {
                 let gamez: GameZCsData =
-                    serde_json::from_slice(buf).context("Failed to parse GameZ data")?;
+                    mech3ax_exchange::from_slice(buf).context("Failed to parse GameZ data")?;
                 mech3ax_gamez::gamez::cs::write_gamez(&mut write, &gamez)
                     .context("Failed to write GameZ data")
             }
@@ -381,7 +381,7 @@ fn parse_metadata(ptr: *const u8, len: usize) -> Result<AnimMetadata> {
         bail!("anim metadata is null");
     }
     let buf = unsafe { std::slice::from_raw_parts(ptr, len) };
-    serde_json::from_slice(buf).context("anim metadata is invalid")
+    mech3ax_exchange::from_slice(buf).context("anim metadata is invalid")
 }
 
 #[no_mangle]
@@ -405,7 +405,7 @@ pub extern "C" fn write_anim(
         mech3ax_anim::write_anim(&mut write, &metadata, |name| -> Result<AnimDef> {
             let data = buffer_callback(callback, name)?;
 
-            let anim_def: AnimDef = serde_json::from_slice(&data)
+            let anim_def: AnimDef = mech3ax_exchange::from_slice(&data)
                 .with_context(|| format!("Anim data for `{}` is invalid", name))?;
             Ok(anim_def)
         })
