@@ -4,7 +4,6 @@ mod buffer;
 mod error;
 mod panic;
 mod read;
-mod v1;
 mod wave;
 mod write;
 
