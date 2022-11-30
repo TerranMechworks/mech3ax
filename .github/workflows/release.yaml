@@ -27,7 +27,7 @@ jobs:
             target_commitish='${{ github.sha }}'
           else
             version="$ref_name"
-            target_commitish="$ref_name"
+            target_commitish=""
           fi
           echo "version: $version"
           echo "target_commitish: $target_commitish"
