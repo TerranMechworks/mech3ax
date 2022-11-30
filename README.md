@@ -188,7 +188,7 @@ where `--rtexture` and `--rmechtex` are optional.
 
 ## Changelog
 
-### [0.6.0-rc2] - unreleased
+### [0.6.0-rc2] - 2022-11-29
 
 * Implement custom data exchange format to replace JSON (`lib`)
 * Use custom data exchange format for C# (`lib`, breaking change)
