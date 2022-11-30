@@ -130,7 +130,7 @@ fn tuple_struct_tests() {
     #[derive(serde::Serialize)]
     struct Tuple(bool, bool);
 
-    assert_supported!(Tuple, Tuple(false, true));
+    assert_unsupported!(Tuple, Tuple(false, true));
 }
 
 #[test]
@@ -161,4 +161,24 @@ fn enum_newtype_tests() {
     }
 
     assert_supported!(NewType, NewType::A(true));
+}
+
+#[test]
+fn enum_tuple_tests() {
+    #[derive(serde::Serialize)]
+    enum Tuple {
+        A(bool, bool),
+    }
+
+    assert_unsupported!(Tuple, Tuple::A(true, false));
+}
+
+#[test]
+fn enum_struct_tests() {
+    #[derive(serde::Serialize)]
+    enum Struct {
+        A { a: bool, b: bool },
+    }
+
+    assert_unsupported!(Struct, Struct::A { a: true, b: false });
 }
