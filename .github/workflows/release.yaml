@@ -22,21 +22,21 @@ jobs:
           echo "ref_name: $ref_name"
 
           # is this a test release, or a real release?
-          if [[ "$ref_name" == "workflow_release" ]]; then
-            version="v0.0.0-test"
+          if [[ "$ref_name" == 'workflow_release' ]]; then
+            version='v0.0.0-test'
             target_commitish='${{ github.sha }}'
           else
             version="$ref_name"
-            target_commitish=""
+            target_commitish=''
           fi
           echo "version: $version"
           echo "target_commitish: $target_commitish"
 
           # is this a pre-release (-rc*, -alpha, -beta, -test)?
           if [[ "$version" == *"-"* ]]; then
-            prerelease="true"
+            prerelease='true'
           else
-            prerelease="false"
+            prerelease='false'
           fi
           echo "prerelease: $prerelease"
 
@@ -54,7 +54,7 @@ jobs:
         run: |
           curl \
             --fail \
-            --request "POST" \
+            --request 'POST' \
             --url '${{ github.api_url }}/repos/${{ github.repository }}/releases' \
             --header 'Accept: application/vnd.github+json' \
             --header 'Authorization: Bearer ${{ github.token }}' \
@@ -123,7 +123,7 @@ jobs:
         shell: bash
 
       - name: Build release binary
-        run: cargo build --verbose --release --target "${{ matrix.target }}"
+        run: cargo build --verbose --release --target '${{ matrix.target }}'
         shell: bash
 
       - name: Build archive
@@ -135,17 +135,17 @@ jobs:
           cp {README.md,LICENSE,mechlib2blend.py,gamez2blend.py} "$staging/"
           # copy build artifacts and compress
           target_dir='target/${{ matrix.target }}/release'
-          if [ "${{ matrix.os }}" = "windows-2019" ]; then
+          if [ '${{ matrix.os }}' = 'windows-2019' ]; then
             cp "$target_dir/unzbd.exe" "$target_dir/rezbd.exe" "$staging/"
             cp "$target_dir/mech3ax.dll" "$staging/$staging.dll"
             ls -1 "$staging"
             archive="$staging-${{ matrix.target }}.zip"
             7z a "$archive" "$staging"
           else
-            if [ "${{ matrix.os }}" = "macos-latest" ]; then
-              ext="dylib"
+            if [ '${{ matrix.os }}' = 'macos-latest' ]; then
+              ext='dylib'
             else
-              ext="so"
+              ext='so'
             fi
             cp "$target_dir/unzbd" "$target_dir/rezbd" "$staging/"
             cp "$target_dir/libmech3ax.$ext" "$staging/lib$staging.$ext"
@@ -160,7 +160,7 @@ jobs:
         run: |
           curl \
             --fail \
-            --request "POST" \
+            --request 'POST' \
             --url '${{ needs.create_release.outputs.upload_url }}?name=${{ steps.build.outputs.asset }}' \
             --header 'Accept: application/vnd.github+json' \
             --header 'Authorization: Bearer ${{ github.token }}' \
