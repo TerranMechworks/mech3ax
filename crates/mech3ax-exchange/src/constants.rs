@@ -15,13 +15,14 @@ macro_rules! type_map {
             }
 
             #[inline]
-            pub const fn to_u32(&self) -> u32 {
+            pub const fn to_u32(self) -> u32 {
                 match self {
                     $(Self::$name => $num,)+
                 }
             }
         }
 
+        #[allow(clippy::from_over_into)]
         impl Into<String> for TypeMap {
             fn into(self) -> String {
                 match self {

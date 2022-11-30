@@ -64,7 +64,7 @@ pub fn deserialize<'a, D: serde::de::Deserializer<'a>>(
 }
 
 // normal byte arrays don't work: https://github.com/serde-rs/serde/issues/518
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Bytes(pub Vec<u8>);
 
 impl Bytes {
