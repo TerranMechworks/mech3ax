@@ -67,39 +67,23 @@ pub const ENUM_IMPL: &str = r###"using Mech3DotNet.Exchange;
 
 namespace {{ enum.namespace }}
 {
-    public sealed class {{ enum.name }}
+    public enum {{ enum.name }}
+    {
+{%- for variant in enum.variants %}
+        {{ variant.name }},
+{%- endfor %}
+    }
+
+    public static class {{ enum.name }}Converter
     {
         public static readonly TypeConverter<{{ enum.name }}> Converter = new TypeConverter<{{ enum.name }}>(Deserialize, Serialize);
 
-        public enum Variants
-        {
-{%- for variant in enum.variants %}
-            {{ variant.name }},
-{%- endfor %}
-        }
-
-        private {{ enum.name }}(Variants variant)
-        {
-            Variant = variant;
-        }
-
-{%- for variant in enum.variants %}
-        public static readonly {{ enum.name }} {{ variant.name }} = new {{ enum.name }}(Variants.{{ variant.name }});
-{% endfor %}
-        public Variants Variant { get; private set; }
-{%- for variant in enum.variants %}
-        public bool Is{{ variant.name }}() => Variant == Variants.{{ variant.name }};
-{%- endfor %}
-        public override bool Equals(object obj) => Equals(obj as {{ enum.name }});
-        public bool Equals({{ enum.name }}? other) => other != null && Variant == other.Variant;
-        public override int GetHashCode() => System.HashCode.Combine(Variant);
-
         private static void Serialize({{ enum.name }} v, Serializer s)
         {
-            uint variantIndex = v.Variant switch
+            uint variantIndex = v switch
             {
 {%- for variant in enum.variants %}
-                Variants.{{ variant.name }} => {{ variant.index }},
+                {{ enum.name }}.{{ variant.name }} => {{ variant.index }},
 {%- endfor %}
                 _ => throw new System.ArgumentOutOfRangeException(),
             };

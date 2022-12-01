@@ -76,10 +76,10 @@ impl SerializeType {
                 inner.make_ser(s);
                 s.push(')');
             }
-            Class(full_type) | Enum(full_type) | Union(full_type) => {
+            Class(full_type) | Union(full_type) => {
                 write!(s, "s.Serialize({}.Converter)", full_type).unwrap()
             }
-            Struct(full_type) => {
+            Struct(full_type) | Enum(full_type) => {
                 write!(s, "s.Serialize({}Converter.Converter)", full_type).unwrap()
             }
             Generic(full_type) => write!(s, "s.SerializeGeneric<{}>()", full_type).unwrap(),
@@ -121,10 +121,10 @@ impl SerializeType {
                 inner.make_de(s);
                 s.push(')');
             }
-            Class(full_type) | Enum(full_type) | Union(full_type) => {
+            Class(full_type) | Union(full_type) => {
                 write!(s, "d.Deserialize({}.Converter)", full_type).unwrap()
             }
-            Struct(full_type) => {
+            Struct(full_type) | Enum(full_type) => {
                 write!(s, "d.Deserialize({}Converter.Converter)", full_type).unwrap()
             }
             Generic(full_type) => write!(s, "d.DeserializeGeneric<{}>()", full_type).unwrap(),
