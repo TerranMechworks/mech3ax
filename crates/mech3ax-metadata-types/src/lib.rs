@@ -75,6 +75,8 @@ pub enum TypeSemantic {
 ///   and implied during deserialization.
 /// * `BoolFalse` indicates `false` values can be omitted from serialization,
 ///   and implied during deserialization.
+/// * `BoolTrue` indicates `true` values can be omitted from serialization,
+///   and implied during deserialization.
 /// * `PointerZero` indicates `0` values can be omitted from serialization,
 ///   and implied during deserialization.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -82,6 +84,7 @@ pub enum DefaultHandling {
     Normal,
     OptionIsNone,
     BoolFalse,
+    BoolTrue,
     PointerZero,
 }
 

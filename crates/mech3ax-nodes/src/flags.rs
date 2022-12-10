@@ -43,6 +43,7 @@ bitflags::bitflags! {
 impl From<NodeBitFlags> for NodeFlags {
     fn from(flags: NodeBitFlags) -> Self {
         Self {
+            active: flags.contains(NodeBitFlags::ACTIVE),
             altitude_surface: flags.contains(NodeBitFlags::ALTITUDE_SURFACE),
             intersect_surface: flags.contains(NodeBitFlags::INTERSECT_SURFACE),
             intersect_bbox: flags.contains(NodeBitFlags::INTERSECT_BBOX),
@@ -53,6 +54,8 @@ impl From<NodeBitFlags> for NodeFlags {
             terrain: flags.contains(NodeBitFlags::TERRAIN),
             can_modify: flags.contains(NodeBitFlags::CAN_MODIFY),
             clip_to: flags.contains(NodeBitFlags::CLIP_TO),
+            tree_valid: flags.contains(NodeBitFlags::TREE_VALID),
+            id_zone_check: flags.contains(NodeBitFlags::ID_ZONE_CHECK),
             unk25: flags.contains(NodeBitFlags::UNK25),
             unk28: flags.contains(NodeBitFlags::UNK28),
         }
@@ -61,7 +64,10 @@ impl From<NodeBitFlags> for NodeFlags {
 
 impl From<&NodeFlags> for NodeBitFlags {
     fn from(flags: &NodeFlags) -> Self {
-        let mut bitflags = Self::BASE;
+        let mut bitflags = Self::empty();
+        if flags.active {
+            bitflags |= NodeBitFlags::ACTIVE;
+        }
         if flags.altitude_surface {
             bitflags |= NodeBitFlags::ALTITUDE_SURFACE;
         }
@@ -91,6 +97,12 @@ impl From<&NodeFlags> for NodeBitFlags {
         }
         if flags.clip_to {
             bitflags |= NodeBitFlags::CLIP_TO;
+        }
+        if flags.tree_valid {
+            bitflags |= NodeBitFlags::TREE_VALID;
+        }
+        if flags.id_zone_check {
+            bitflags |= NodeBitFlags::ID_ZONE_CHECK;
         }
         if flags.unk25 {
             bitflags |= NodeBitFlags::UNK25;

@@ -1,7 +1,7 @@
 pub mod mw;
 pub mod pm;
 
-use crate::serde::bool_false;
+use crate::serde::{bool_false, bool_true};
 use crate::static_assert_size;
 use crate::types::{Matrix, Vec3};
 use ::serde::{Deserialize, Serialize};
@@ -61,8 +61,15 @@ pub struct Partition {
     pub ptr: u32,
 }
 
+#[inline]
+fn _true() -> bool {
+    true
+}
+
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct NodeFlags {
+    #[serde(skip_serializing_if = "bool_true", default = "_true")]
+    pub active: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
     pub altitude_surface: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
@@ -83,6 +90,10 @@ pub struct NodeFlags {
     pub can_modify: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
     pub clip_to: bool,
+    #[serde(skip_serializing_if = "bool_true", default = "_true")]
+    pub tree_valid: bool,
+    #[serde(skip_serializing_if = "bool_true", default = "_true")]
+    pub id_zone_check: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
     pub unk25: bool,
     #[serde(skip_serializing_if = "bool_false", default)]

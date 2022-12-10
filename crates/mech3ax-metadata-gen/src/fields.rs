@@ -106,6 +106,7 @@ impl Field {
             DefaultHandling::Normal => None,
             DefaultHandling::OptionIsNone => Some("null".to_string()),
             DefaultHandling::BoolFalse => Some("false".to_string()),
+            DefaultHandling::BoolTrue => Some("true".to_string()),
             DefaultHandling::PointerZero => Some("0".to_string()),
         };
 

@@ -137,6 +137,9 @@ fn generate_struct_field_default(default: DefaultHandling) -> Path {
         DefaultHandling::BoolFalse => parse_quote! {
             ::mech3ax_metadata_types::DefaultHandling::BoolFalse
         },
+        DefaultHandling::BoolTrue => parse_quote! {
+            ::mech3ax_metadata_types::DefaultHandling::BoolTrue
+        },
         DefaultHandling::PointerZero => parse_quote! {
             ::mech3ax_metadata_types::DefaultHandling::PointerZero
         },
