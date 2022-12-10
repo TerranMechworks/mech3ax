@@ -15,6 +15,7 @@ use mech3ax_api_types::image::TextureManifest;
 use mech3ax_api_types::interp::Script;
 use mech3ax_api_types::motion::Motion;
 use mech3ax_api_types::nodes::mw::NodeMw;
+use mech3ax_api_types::nodes::rc::NodeRc;
 use mech3ax_api_types::saves::AnimActivation;
 use mech3ax_api_types::zmap::MapRc;
 use mech3ax_archive::{write_archive, Mode, Version};
@@ -319,8 +320,8 @@ fn gamez_rc(opts: ZipOpts) -> Result<()> {
     let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
     let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
     let meshes: Vec<MeshRc> = zip_json(&mut zip, "meshes.json")?;
-    // let nodes: Vec<NodeRc> = zip_json(&mut zip, "nodes.json")?;
-    let nodes: Vec<u8> = zip_read(&mut zip, "nodes.bin")?;
+    let nodes: Vec<NodeRc> = zip_json(&mut zip, "nodes.json")?;
+    let node_data: Vec<u8> = zip_read(&mut zip, "nodes.bin")?;
 
     drop(zip);
 
@@ -330,6 +331,7 @@ fn gamez_rc(opts: ZipOpts) -> Result<()> {
         materials,
         meshes,
         nodes,
+        node_data,
     };
 
     let mut write = buf_writer(opts.output)?;

@@ -83,7 +83,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZMwData> {
         read.offset
     )?;
     let nodes = nodes::read_nodes(read, header.node_array_size)?;
-    read.assert_end()?;
+    // `read_nodes` calls `assert_end`
 
     let metadata = GameZMwMetadata {
         material_array_size,

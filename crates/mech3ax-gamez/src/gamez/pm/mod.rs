@@ -84,6 +84,10 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZPmData> {
         read.offset == header.nodes_offset,
         read.offset
     )?;
+    debug!(
+        "Reading {}/{} nodes at {}",
+        header.node_count, header.node_array_size, read.offset
+    );
     // let nodes = nodes::read_nodes(read, header.node_array_size)?;
     // read.assert_end()?;
     let nodes = read.read_to_end()?;
