@@ -8,9 +8,9 @@ use super::window;
 use super::world;
 use super::wrappers::WrappedNodeMw;
 use crate::flags::NodeBitFlags;
-use crate::types::{NodeType, NodeVariantMw, NodeVariantsMw};
+use crate::types::NodeType;
 use log::{debug, trace};
-use mech3ax_api_types::nodes::mw::NodeMw;
+use mech3ax_api_types::nodes::mw::{Empty, NodeMw};
 use mech3ax_api_types::nodes::{AreaPartition, BoundingBox};
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8};
@@ -20,6 +20,59 @@ use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
 use mech3ax_debug::{Ascii, Hex, Ptr};
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
+
+pub struct NodeVariantsMw {
+    pub name: String,
+    pub flags: NodeBitFlags,
+    pub unk044: u32,
+    pub zone_id: u32,
+    pub data_ptr: u32,
+    pub mesh_index: i32,
+    pub area_partition: Option<AreaPartition>,
+    pub has_parent: bool,
+    pub parent_array_ptr: u32,
+    pub children_count: u32,
+    pub children_array_ptr: u32,
+    pub unk116: BoundingBox,
+    pub unk140: BoundingBox,
+    pub unk164: BoundingBox,
+    pub unk196: u32,
+}
+
+pub struct NodeVariantLodMw {
+    pub name: String,
+    pub flags: NodeBitFlags,
+    pub zone_id: u32,
+    pub data_ptr: u32,
+    pub area_partition: Option<AreaPartition>,
+    pub parent_array_ptr: u32,
+    pub children_count: u32,
+    pub children_array_ptr: u32,
+    pub unk116: BoundingBox,
+}
+
+pub enum NodeVariantMw {
+    Camera {
+        data_ptr: u32,
+    },
+    Display {
+        data_ptr: u32,
+    },
+    Empty(Empty),
+    Light {
+        data_ptr: u32,
+    },
+    Lod(NodeVariantLodMw),
+    Object3d(NodeVariantsMw),
+    Window {
+        data_ptr: u32,
+    },
+    World {
+        data_ptr: u32,
+        children_count: u32,
+        children_array_ptr: u32,
+    },
+}
 
 #[derive(Debug)]
 #[repr(C)]
@@ -60,14 +113,6 @@ pub const NODE_MW_C_SIZE: u32 = NodeMwC::SIZE;
 fn assert_node(node: NodeMwC, offset: u32) -> Result<(NodeType, NodeVariantsMw)> {
     // invariants for every node type
 
-    let name = assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name.0))?;
-    let flags = NodeBitFlags::from_bits(node.flags.0).ok_or_else(|| {
-        assert_with_msg!(
-            "Expected valid node flags, but was {:?} (at {})",
-            node.flags,
-            offset + 36
-        )
-    })?;
     let node_type = FromPrimitive::from_u32(node.node_type).ok_or_else(|| {
         assert_with_msg!(
             "Expected valid node type, but was {} (at {})",
@@ -76,19 +121,38 @@ fn assert_node(node: NodeMwC, offset: u32) -> Result<(NodeType, NodeVariantsMw)>
         )
     })?;
 
+    let name = assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name.0))?;
+    let flags = NodeBitFlags::from_bits(node.flags.0).ok_or_else(|| {
+        assert_with_msg!(
+            "Expected valid node flags, but was {:?} (at {})",
+            node.flags,
+            offset + 36
+        )
+    })?;
     assert_that!("field 040", node.zero040 == 0, offset + 40)?;
-
+    // unk044 (44) is variable
+    // zone_id (48) is variable
+    // node_type (52) see above
+    // data_ptr (56) is variable
+    // mesh_index (60) is variable
     assert_that!("env data", node.environment_data == 0, offset + 64)?;
     assert_that!("action prio", node.action_priority == 1, offset + 68)?;
     assert_that!("action cb", node.action_callback == 0, offset + 72)?;
-
+    // area_partition (076) see below
+    // parent_count (084) see below
+    // parent_array_ptr (088) is variable
+    // children_count (092) is variable
+    // children_array_ptr (096) is variable
     assert_that!("field 100", node.zero100 == 0, offset + 100)?;
     assert_that!("field 104", node.zero104 == 0, offset + 104)?;
     assert_that!("field 108", node.zero108 == 0, offset + 108)?;
     assert_that!("field 112", node.zero112 == 0, offset + 112)?;
-
+    // unk116 (116) is variable
+    // unk140 (140) is variable
+    // unk164 (164) is variable
     assert_that!("field 188", node.zero188 == 0, offset + 188)?;
     assert_that!("field 192", node.zero192 == 0, offset + 192)?;
+    // unk196 (196) is variable
     assert_that!("field 200", node.zero200 == 0, offset + 200)?;
     assert_that!("field 204", node.zero204 == 0, offset + 204)?;
 
@@ -219,32 +283,34 @@ pub fn read_node_data(
     index: usize,
 ) -> Result<WrappedNodeMw> {
     match variant {
-        NodeVariantMw::Camera(data_ptr) => {
+        NodeVariantMw::Camera { data_ptr } => {
             Ok(WrappedNodeMw::Camera(camera::read(read, data_ptr, index)?))
         }
-        NodeVariantMw::Display(data_ptr) => Ok(WrappedNodeMw::Display(display::read(
+        NodeVariantMw::Display { data_ptr } => Ok(WrappedNodeMw::Display(display::read(
             read, data_ptr, index,
         )?)),
         NodeVariantMw::Empty(empty) => Ok(WrappedNodeMw::Empty(empty)),
-        NodeVariantMw::Light(data_ptr) => {
+        NodeVariantMw::Light { data_ptr } => {
             Ok(WrappedNodeMw::Light(light::read(read, data_ptr, index)?))
         }
         NodeVariantMw::Lod(node) => Ok(WrappedNodeMw::Lod(lod::read(read, node, index)?)),
         NodeVariantMw::Object3d(node) => {
             Ok(WrappedNodeMw::Object3d(object3d::read(read, node, index)?))
         }
-        NodeVariantMw::Window(data_ptr) => {
+        NodeVariantMw::Window { data_ptr } => {
             Ok(WrappedNodeMw::Window(window::read(read, data_ptr, index)?))
         }
-        NodeVariantMw::World(data_ptr, children_count, children_array_ptr) => {
-            Ok(WrappedNodeMw::World(world::read(
-                read,
-                data_ptr,
-                children_count,
-                children_array_ptr,
-                index,
-            )?))
-        }
+        NodeVariantMw::World {
+            data_ptr,
+            children_count,
+            children_array_ptr,
+        } => Ok(WrappedNodeMw::World(world::read(
+            read,
+            data_ptr,
+            children_count,
+            children_array_ptr,
+            index,
+        )?)),
     }
 }
 

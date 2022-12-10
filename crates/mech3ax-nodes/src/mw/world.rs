@@ -1,8 +1,9 @@
+use super::node::{NodeVariantMw, NodeVariantsMw};
 use super::wrappers::WrapperMw;
 use crate::flags::NodeBitFlags;
 use crate::math::partition_diag;
 use crate::range::RangeI32;
-use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
+use crate::types::ZONE_DEFAULT;
 use log::{debug, trace};
 use mech3ax_api_types::nodes::mw::World;
 use mech3ax_api_types::nodes::{Area, BoundingBox, Partition};
@@ -89,26 +90,34 @@ const FOG_STATE_LINEAR: u32 = 1;
 const WORLD_NAME: &str = "world1";
 
 pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantMw> {
-    let name = &node.name;
-    assert_that!("world name", name == WORLD_NAME, offset + 0)?;
+    assert_that!("world name", &node.name == WORLD_NAME, offset + 0)?;
     assert_that!(
         "world flags",
         node.flags == NodeBitFlags::DEFAULT,
         offset + 36
     )?;
+    // zero040 (40) already asserted
     assert_that!("world field 044", node.unk044 == 0, offset + 44)?;
     assert_that!("world zone id", node.zone_id == ZONE_DEFAULT, offset + 48)?;
+    // node_type (52) already asserted
     assert_that!("world data ptr", node.data_ptr != 0, offset + 56)?;
     assert_that!("world mesh index", node.mesh_index == -1, offset + 60)?;
+    // environment_data (64) already asserted
+    // action_priority (68) already asserted
+    // action_callback (72) already asserted
     assert_that!(
         "world area partition",
         node.area_partition == None,
         offset + 76
     )?;
     assert_that!("world has parent", node.has_parent == false, offset + 84)?;
-    // parent array ptr is already asserted
+    // parent_array_ptr (88) already asserted
     assert_that!("world children count", 1 <= node.children_count <= 64, offset + 92)?;
-    // children array ptr is already asserted
+    // children_array_ptr (96) already asserted
+    // zero100 (100) already asserted
+    // zero104 (104) already asserted
+    // zero108 (108) already asserted
+    // zero112 (112) already asserted
     assert_that!(
         "world bbox 1",
         node.unk116 == BoundingBox::EMPTY,
@@ -124,12 +133,16 @@ pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantM
         node.unk164 == BoundingBox::EMPTY,
         offset + 164
     )?;
+    // zero188 (188) already asserted
+    // zero192 (192) already asserted
     assert_that!("world field 196", node.unk196 == 0, offset + 196)?;
-    Ok(NodeVariantMw::World(
-        node.data_ptr,
-        node.children_count,
-        node.children_array_ptr,
-    ))
+    // zero200 (200) already asserted
+    // zero204 (204) already asserted
+    Ok(NodeVariantMw::World {
+        data_ptr: node.data_ptr,
+        children_count: node.children_count,
+        children_array_ptr: node.children_array_ptr,
+    })
 }
 
 fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Result<Partition> {

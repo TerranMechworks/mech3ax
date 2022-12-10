@@ -3,9 +3,8 @@ use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_nodes::mw::{
     read_node_data, read_node_info_gamez, read_node_info_zero, size_node, write_node_data,
-    write_node_info, write_node_info_zero, WrappedNodeMw, NODE_MW_C_SIZE,
+    write_node_info, write_node_info_zero, NodeVariantMw, WrappedNodeMw, NODE_MW_C_SIZE,
 };
-use mech3ax_nodes::NodeVariantMw;
 use std::io::{Read, Write};
 
 pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Result<Vec<NodeMw>> {
@@ -21,7 +20,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
         let node_info_pos = read.offset;
         let variant = read_node_info_gamez(read, index)?;
         // this is an index for empty/zero nodes, and the offset for others
-        let actual_index = read.read_u32()?;
+        let node_data_offset = read.read_u32()?;
         match variant {
             None => {
                 let mut expected_index = index + 1;
@@ -29,23 +28,31 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
                     // we'll never know why???
                     expected_index = 0xFFFFFF
                 }
-                assert_that!("node zero index", actual_index == expected_index, read.prev)?;
+                assert_that!(
+                    "node zero index",
+                    node_data_offset == expected_index,
+                    read.prev
+                )?;
 
                 actual_count = index + 1;
                 break;
             }
             Some(mut variant) => {
                 match &mut variant {
-                    NodeVariantMw::World(_, _, _) => {
+                    NodeVariantMw::World {
+                        data_ptr: _,
+                        children_count: _,
+                        children_array_ptr: _,
+                    } => {
                         assert_that!("node data position", index == 0, node_info_pos)?;
                     }
-                    NodeVariantMw::Window(_) => {
+                    NodeVariantMw::Window { data_ptr: _ } => {
                         assert_that!("node data position", index == 1, node_info_pos)?;
                     }
-                    NodeVariantMw::Camera(_) => {
+                    NodeVariantMw::Camera { data_ptr: _ } => {
                         assert_that!("node data position", index == 2, node_info_pos)?;
                     }
-                    NodeVariantMw::Display(_) => {
+                    NodeVariantMw::Display { data_ptr: _ } => {
                         match display_node {
                             0 => assert_that!("node data position", index == 3, node_info_pos)?,
                             1 => assert_that!("node data position", index == 4, node_info_pos)?,
@@ -61,10 +68,10 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
                     }
                     NodeVariantMw::Empty(empty) => {
                         assert_that!("node data position", index > 3, node_info_pos)?;
-                        assert_that!("empty ref index", 4 <= actual_index <= array_size, read.prev)?;
-                        empty.parent = actual_index;
+                        assert_that!("empty ref index", 4 <= node_data_offset <= array_size, read.prev)?;
+                        empty.parent = node_data_offset;
                     }
-                    NodeVariantMw::Light(_) => {
+                    NodeVariantMw::Light { data_ptr: _ } => {
                         assert_that!("node data position", index > 3, node_info_pos)?;
                         if light_node {
                             return Err(assert_with_msg!(
@@ -79,7 +86,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
                         assert_that!("node data position", index > 3, node_info_pos)?;
                     }
                 }
-                variants.push((variant, actual_index));
+                variants.push((variant, node_data_offset));
             }
         }
     }
@@ -101,14 +108,18 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
     let nodes = variants
         .into_iter()
         .enumerate()
-        .map(|(index, (variant, offset))| {
+        .map(|(index, (variant, node_data_offset))| {
             match &variant {
                 NodeVariantMw::Empty(_) => {
                     // in the case of an empty node, the offset is used as the parent
                     // index, and not the offset (there is no node data)
                 }
                 _ => {
-                    assert_that!("node data offset", offset == read.offset, read.offset)?;
+                    assert_that!(
+                        "node data offset",
+                        node_data_offset == read.offset,
+                        read.offset
+                    )?;
                 }
             }
             match read_node_data(read, variant, index)? {

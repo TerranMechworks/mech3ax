@@ -1,7 +1,8 @@
+use super::node::{NodeVariantMw, NodeVariantsMw};
 use super::wrappers::WrapperMw;
 use crate::flags::NodeBitFlags;
 use crate::math::{apply_zero_signs, euler_to_matrix, extract_zero_signs, PI};
-use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
+use crate::types::ZONE_DEFAULT;
 use log::{debug, trace};
 use mech3ax_api_types::nodes::mw::Object3d;
 use mech3ax_api_types::nodes::Transformation;
@@ -47,7 +48,7 @@ pub fn assert_variants(
 ) -> Result<NodeVariantMw> {
     // cannot assert name
     let const_flags = node.flags & (ALWAYS_PRESENT | NEVER_PRESENT);
-    assert_that!("empty flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
+    assert_that!("object3d flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
     // variable
     /*
     const ALTITUDE_SURFACE = 1 << 3;
@@ -61,11 +62,12 @@ pub fn assert_variants(
     const CAN_MODIFY = 1 << 16;
     const CLIP_TO = 1 << 17;
     */
-
+    // zero040 (40) already asserted
     assert_that!("object3d field 044", node.unk044 == 1, offset + 44)?;
     if node.zone_id != ZONE_DEFAULT {
         assert_that!("object3d zone id", 1 <= node.zone_id <= 80, offset + 48)?;
     }
+    // node_type (52) already asserted
     assert_that!("object3d data ptr", node.data_ptr != 0, offset + 56)?;
     if mesh_index_is_ptr {
         if node.flags.contains(NodeBitFlags::HAS_MESH) {
@@ -81,8 +83,26 @@ pub fn assert_variants(
             assert_that!("object3d mesh index", node.mesh_index == -1, offset + 60)?;
         }
     }
-    // can have area partition, parent, children
+    // environment_data (64) already asserted
+    // action_priority (68) already asserted
+    // action_callback (72) already asserted
+    // area_partition (76) is variable
+    // has_parent (84) is variable
+    // parent_array_ptr (88) already asserted
+    // children_count (92) is variable
+    // children_array_ptr (96) already asserted
+    // zero100 (100) already asserted
+    // zero104 (104) already asserted
+    // zero108 (108) already asserted
+    // zero112 (112) already asserted
+    // unk116 (116) is variable
+    // unk140 (140) is variable
+    // unk164 (164) is variable
+    // zero188 (188) already asserted
+    // zero192 (192) already asserted
     assert_that!("object3d field 196", node.unk196 == 160, offset + 196)?;
+    // zero200 (200) already asserted
+    // zero204 (204) already asserted
     Ok(NodeVariantMw::Object3d(node))
 }
 

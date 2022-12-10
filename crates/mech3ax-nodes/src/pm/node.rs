@@ -2,7 +2,7 @@ use super::lod;
 use super::object3d;
 use super::wrappers::WrappedNodePm;
 use crate::flags::NodeBitFlags;
-use crate::types::{NodeType, NodeVariantPm, NodeVariantsPm, ZONE_DEFAULT};
+use crate::types::{NodeType, ZONE_DEFAULT};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::pm::NodePm;
 use mech3ax_api_types::nodes::{AreaPartition, BoundingBox};
@@ -14,6 +14,29 @@ use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
 use mech3ax_debug::{Ascii, Hex, Ptr};
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
+
+pub struct NodeVariantsPm {
+    pub name: String,
+    pub flags: NodeBitFlags,
+    pub unk044: u32,
+    // pub zone_id: u32,
+    pub data_ptr: u32,
+    pub mesh_index: i32,
+    // pub area_partition: Option<AreaPartition>,
+    pub has_parent: bool,
+    pub parent_array_ptr: u32,
+    pub children_count: u16,
+    pub children_array_ptr: u32,
+    pub unk112: u32,
+    pub unk116: BoundingBox,
+    pub unk140: BoundingBox,
+    pub unk164: BoundingBox,
+}
+
+pub enum NodeVariantPm {
+    Lod(NodeVariantsPm),
+    Object3d(NodeVariantsPm),
+}
 
 #[derive(Debug)]
 #[repr(C)]

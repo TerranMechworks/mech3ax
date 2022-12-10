@@ -1,7 +1,7 @@
+use super::node::{NodeVariantPm, NodeVariantsPm};
 use super::wrappers::WrapperPm;
 use crate::flags::NodeBitFlags;
 use crate::math::{apply_zero_signs, euler_to_matrix, extract_zero_signs, PI};
-use crate::types::{NodeVariantPm, NodeVariantsPm};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::pm::Object3dPm;
 use mech3ax_api_types::nodes::Transformation;
@@ -55,7 +55,7 @@ pub fn assert_variants(
 ) -> Result<NodeVariantPm> {
     // cannot assert name
     let const_flags = node.flags & (ALWAYS_PRESENT | NEVER_PRESENT);
-    assert_that!("empty flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
+    assert_that!("object3d flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
     // variable
     /*
     const ALTITUDE_SURFACE = 1 << 3;

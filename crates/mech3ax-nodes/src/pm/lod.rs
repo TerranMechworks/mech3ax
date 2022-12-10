@@ -1,6 +1,6 @@
+use super::node::{NodeVariantPm, NodeVariantsPm};
 use super::wrappers::WrapperPm;
 use crate::flags::NodeBitFlags;
-use crate::types::{NodeVariantPm, NodeVariantsPm};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::pm::LodPm;
 use mech3ax_api_types::nodes::BoundingBox;

@@ -1,6 +1,7 @@
+use super::node::{NodeVariantLodMw, NodeVariantMw, NodeVariantsMw};
 use super::wrappers::WrapperMw;
 use crate::flags::NodeBitFlags;
-use crate::types::{NodeVariantMw, NodeVariantsMw, ZONE_DEFAULT};
+use crate::types::ZONE_DEFAULT;
 use log::{debug, trace};
 use mech3ax_api_types::nodes::mw::Lod;
 use mech3ax_api_types::nodes::BoundingBox;
@@ -50,19 +51,28 @@ pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantM
     const TERRAIN = 1 << 15;
     const UNK25 = 1 << 25;
     */
-
+    // zero040 (40) already asserted
     assert_that!("lod field 044", node.unk044 == 1, offset + 44)?;
     if node.zone_id != ZONE_DEFAULT {
         assert_that!("lod zone id", 1 <= node.zone_id <= 80, offset + 48)?;
     }
+    // node_type (52) already asserted
     assert_that!("lod data ptr", node.data_ptr != 0, offset + 56)?;
     assert_that!("lod mesh index", node.mesh_index == -1, offset + 60)?;
+    // environment_data (64) already asserted
+    // action_priority (68) already asserted
+    // action_callback (72) already asserted
+    // area_partition (76) is variable
     // must have one parent
     assert_that!("lod has parent", node.has_parent == true, offset + 84)?;
-    // parent array ptr is already asserted
+    // parent_array_ptr (88) already asserted
     // always has at least one child
     assert_that!("lod children count", 1 <= node.children_count <= 32, offset + 92)?;
-    // children array ptr is already asserted
+    // children_array_ptr (96) already asserted
+    // zero100 (100) already asserted
+    // zero104 (104) already asserted
+    // zero108 (108) already asserted
+    // zero112 (112) already asserted
     assert_that!(
         "lod bbox 1",
         node.unk116 != BoundingBox::EMPTY,
@@ -74,8 +84,22 @@ pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantM
         offset + 140
     )?;
     assert_that!("lod bbox 3", node.unk164 == node.unk116, offset + 164)?;
+    // zero188 (188) already asserted
+    // zero192 (192) already asserted
     assert_that!("lod field 196", node.unk196 == 160, offset + 196)?;
-    Ok(NodeVariantMw::Lod(node))
+    // zero200 (200) already asserted
+    // zero204 (204) already asserted
+    Ok(NodeVariantMw::Lod(NodeVariantLodMw {
+        name: node.name,
+        flags: node.flags,
+        zone_id: node.zone_id,
+        data_ptr: node.data_ptr,
+        area_partition: node.area_partition,
+        parent_array_ptr: node.parent_array_ptr,
+        children_count: node.children_count,
+        children_array_ptr: node.children_array_ptr,
+        unk116: node.unk116,
+    }))
 }
 
 fn assert_lod(lod: LodMwC, offset: u32) -> Result<(bool, Range, f32, Option<u32>)> {
@@ -114,7 +138,7 @@ fn assert_lod(lod: LodMwC, offset: u32) -> Result<(bool, Range, f32, Option<u32>
 
 pub fn read(
     read: &mut CountingReader<impl Read>,
-    node: NodeVariantsMw,
+    node: NodeVariantLodMw,
     index: usize,
 ) -> Result<WrapperMw<Lod>> {
     debug!(
