@@ -188,6 +188,10 @@ where `--rtexture` and `--rmechtex` are optional.
 
 ## Changelog
 
+### [0.6.0-rc3] - unreleased
+
+* Serialize C# enums as enums, not classes (codegen)
+
 ### [0.6.0-rc2] - 2022-11-29
 
 * Implement custom data exchange format to replace JSON (`lib`)
