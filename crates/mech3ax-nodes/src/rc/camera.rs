@@ -111,10 +111,10 @@ pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantR
     })
 }
 
-fn assert_camera(camera: CameraRcC, offset: u32) -> Result<(Range, Range)> {
+fn assert_camera(camera: &CameraRcC, offset: u32) -> Result<()> {
     assert_that!("world index", camera.world_index == 0, offset + 0)?;
     assert_that!("window index", camera.window_index == 1, offset + 4)?;
-    assert_that!("focus node xy", camera.focus_node_xy == -1, offset + 8)?;
+    // assert_that!("focus node xy", camera.focus_node_xy == -1, offset + 8)?;
     assert_that!("focus node xz", camera.focus_node_xz == -1, offset + 12)?;
     assert_that!("flags", camera.flags == 0, offset + 16)?;
     assert_that!(
@@ -136,7 +136,7 @@ fn assert_camera(camera: CameraRcC, offset: u32) -> Result<(Range, Range)> {
     )?;
     assert_that!(
         "mtw matrix",
-        camera.mtw_matrix == Matrix::EMPTY,
+        &camera.mtw_matrix == &Matrix::EMPTY,
         offset + 68
     )?;
     assert_that!("field 104", camera.unk104 == Vec3::DEFAULT, offset + 104)?;
@@ -145,7 +145,7 @@ fn assert_camera(camera: CameraRcC, offset: u32) -> Result<(Range, Range)> {
         camera.view_vector == Vec3::DEFAULT,
         offset + 116
     )?;
-    assert_that!("matrix", camera.matrix == Matrix::EMPTY, offset + 128)?;
+    assert_that!("matrix", &camera.matrix == &Matrix::EMPTY, offset + 128)?;
     assert_that!(
         "alt translate",
         camera.alt_translate == Vec3::DEFAULT,
@@ -221,7 +221,7 @@ fn assert_camera(camera: CameraRcC, offset: u32) -> Result<(Range, Range)> {
     assert_that!("zone set", camera.zone_set == 0, offset + 480)?;
     assert_that!("field 484", camera.unk484 == -256, offset + 484)?;
 
-    Ok((camera.clip, camera.fov))
+    Ok(())
 }
 
 pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -> Result<Camera> {
@@ -234,12 +234,13 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -
     let camera: CameraRcC = read.read_struct()?;
     trace!("{:#?}", camera);
 
-    let (clip, fov) = assert_camera(camera, read.prev)?;
+    assert_camera(&camera, read.prev)?;
 
     Ok(Camera {
-        // name: CAMERA_NAME.to_owned(),
-        // clip,
-        // fov,
+        name: CAMERA_NAME.to_owned(),
+        clip: camera.clip,
+        fov: camera.fov,
+        focus_node_xy: camera.focus_node_xy,
         data_ptr,
     })
 }
@@ -263,60 +264,60 @@ pub fn make_variants(camera: &Camera) -> NodeVariantsRc {
     }
 }
 
-// pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera, index: usize) -> Result<()> {
-//     debug!(
-//         "Writing camera node data {} (rc, {}) at {}",
-//         index,
-//         CameraRcC::SIZE,
-//         write.offset
-//     );
+pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera, index: usize) -> Result<()> {
+    debug!(
+        "Writing camera node data {} (rc, {}) at {}",
+        index,
+        CameraRcC::SIZE,
+        write.offset
+    );
 
-//     let fov_h_half = camera.fov.min / 2.0;
-//     let fov_v_half = camera.fov.max / 2.0;
+    let fov_h_half = camera.fov.min / 2.0;
+    let fov_v_half = camera.fov.max / 2.0;
 
-//     let camera = CameraRcC {
-//         world_index: 0,
-//         window_index: 1,
-//         focus_node_xy: -1,
-//         focus_node_xz: -1,
-//         flags: 0,
-//         translation: Vec3::DEFAULT,
-//         rotation: Vec3::DEFAULT,
-//         world_translate: Vec3::DEFAULT,
-//         world_rotate: Vec3::DEFAULT,
-//         mtw_matrix: Matrix::EMPTY,
-//         unk104: Vec3::DEFAULT,
-//         view_vector: Vec3::DEFAULT,
-//         matrix: Matrix::EMPTY,
-//         alt_translate: Vec3::DEFAULT,
-//         clip: camera.clip,
-//         zero184: Zeros::new(),
-//         lod_multiplier: 1.0,
-//         lod_inv_sq: 1.0,
-//         fov_h_zoom_factor: 1.0,
-//         fov_v_zoom_factor: 1.0,
-//         fov_h_base: camera.fov.min,
-//         fov_v_base: camera.fov.max,
-//         fov: camera.fov,
-//         fov_h_half,
-//         fov_v_half,
-//         one248: 1,
-//         zero252: Zeros::new(),
-//         one312: 1,
-//         zero316: Zeros::new(),
-//         one388: 1,
-//         zero392: Zeros::new(),
-//         zero464: 0,
-//         fov_h_cot: cotangent(fov_h_half),
-//         fov_v_cot: cotangent(fov_v_half),
-//         stride: 0,
-//         zone_set: 0,
-//         unk484: -256,
-//     };
-//     trace!("{:#?}", camera);
-//     write.write_struct(&camera)?;
-//     Ok(())
-// }
+    let camera = CameraRcC {
+        world_index: 0,
+        window_index: 1,
+        focus_node_xy: camera.focus_node_xy,
+        focus_node_xz: -1,
+        flags: 0,
+        translation: Vec3::DEFAULT,
+        rotation: Vec3::DEFAULT,
+        world_translate: Vec3::DEFAULT,
+        world_rotate: Vec3::DEFAULT,
+        mtw_matrix: Matrix::EMPTY,
+        unk104: Vec3::DEFAULT,
+        view_vector: Vec3::DEFAULT,
+        matrix: Matrix::EMPTY,
+        alt_translate: Vec3::DEFAULT,
+        clip: camera.clip,
+        zero184: Zeros::new(),
+        lod_multiplier: 1.0,
+        lod_inv_sq: 1.0,
+        fov_h_zoom_factor: 1.0,
+        fov_v_zoom_factor: 1.0,
+        fov_h_base: camera.fov.min,
+        fov_v_base: camera.fov.max,
+        fov: camera.fov,
+        fov_h_half,
+        fov_v_half,
+        one248: 1,
+        zero252: Zeros::new(),
+        one312: 1,
+        zero316: Zeros::new(),
+        one388: 1,
+        zero392: Zeros::new(),
+        zero464: 0,
+        fov_h_cot: cotangent(fov_h_half),
+        fov_v_cot: cotangent(fov_v_half),
+        stride: 0,
+        zone_set: 0,
+        unk484: -256,
+    };
+    trace!("{:#?}", camera);
+    write.write_struct(&camera)?;
+    Ok(())
+}
 
 pub fn size() -> u32 {
     CameraRcC::SIZE

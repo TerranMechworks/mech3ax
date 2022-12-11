@@ -19,7 +19,9 @@ const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     // | NodeBitFlags::CLIP_TO.bits()
     | NodeBitFlags::TREE_VALID.bits()
     | NodeBitFlags::ID_ZONE_CHECK.bits()
-    | NodeBitFlags::UNK25.bits(), // | NodeBitFlags::UNK28.bits()
+    | NodeBitFlags::UNK25.bits()
+    // | NodeBitFlags::UNK28.bits()
+    | 0,
 );
 const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     0
@@ -37,7 +39,8 @@ const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     // | NodeBitFlags::TREE_VALID.bits()
     // | NodeBitFlags::ID_ZONE_CHECK.bits()
     // | NodeBitFlags::UNK25.bits()
-    | NodeBitFlags::UNK28.bits(),
+    | NodeBitFlags::UNK28.bits()
+    | 0,
 );
 
 pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantRc> {

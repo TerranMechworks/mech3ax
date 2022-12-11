@@ -1,5 +1,4 @@
 use super::node::{NodeVariantRc, NodeVariantsRc};
-use super::wrappers::WrapperRc;
 use crate::flags::NodeBitFlags;
 use crate::math::{apply_zero_signs, euler_to_matrix, extract_zero_signs, PI};
 use crate::types::ZONE_DEFAULT;
@@ -45,7 +44,9 @@ const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     // | NodeBitFlags::CLIP_TO.bits()
     | NodeBitFlags::TREE_VALID.bits()
     // | NodeBitFlags::ID_ZONE_CHECK.bits()
-    | NodeBitFlags::UNK25.bits(), // | NodeBitFlags::UNK28.bits()
+    | NodeBitFlags::UNK25.bits()
+    // | NodeBitFlags::UNK28.bits()
+    | 0,
 );
 const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     0
@@ -61,8 +62,10 @@ const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     | NodeBitFlags::CAN_MODIFY.bits()
     | NodeBitFlags::CLIP_TO.bits()
     // | NodeBitFlags::TREE_VALID.bits()
-    | NodeBitFlags::ID_ZONE_CHECK.bits(), // | NodeBitFlags::UNK25.bits()
-                                          // | NodeBitFlags::UNK28.bits()
+    | NodeBitFlags::ID_ZONE_CHECK.bits()
+    // | NodeBitFlags::UNK25.bits()
+    // | NodeBitFlags::UNK28.bits()
+    | 0,
 );
 
 const SCALE_ONE: Vec3 = Vec3 {
@@ -153,7 +156,7 @@ pub fn read(
     read: &mut CountingReader<impl Read>,
     node: NodeVariantsRc,
     index: usize,
-) -> Result<WrapperRc<Object3d>> {
+) -> Result<Object3d> {
     debug!(
         "Reading object3d node data {} (rc, {}) at {}",
         index,
@@ -163,10 +166,24 @@ pub fn read(
     let object3d: Object3dRcC = read.read_struct()?;
     trace!("{:#?}", object3d);
 
-    let matrix_signs = extract_zero_signs(&object3d.matrix);
-    let transformation = assert_object3d(object3d, read.prev)?;
+    // let matrix_signs = extract_zero_signs(&object3d.matrix);
+    // let transformation = assert_object3d(object3d, read.prev)?;
 
-    let wrapped = Object3d {
+    let parent = if node.has_parent {
+        Some(read.read_u32()?)
+    } else {
+        None
+    };
+
+    debug!(
+        "Reading object3 {} x children {} (rc) at {}",
+        node.children_count, index, read.offset
+    );
+    let children = (0..node.children_count)
+        .map(|_| read.read_u32())
+        .collect::<std::io::Result<Vec<_>>>()?;
+
+    Ok(Object3d {
         name: node.name,
         flags: node.flags.into(),
         zone_id: node.zone_id,
@@ -174,20 +191,14 @@ pub fn read(
         area_partition: node.area_partition,
         // transformation,
         // matrix_signs,
-        parent: None,
-        children: Vec::new(),
+        parent,
+        children,
         data_ptr: node.data_ptr,
         parent_array_ptr: node.parent_array_ptr,
         children_array_ptr: node.children_array_ptr,
         unk116: node.unk116,
         unk140: node.unk140,
         unk164: node.unk164,
-    };
-
-    Ok(WrapperRc {
-        wrapped,
-        has_parent: node.has_parent,
-        children_count: node.children_count,
     })
 }
 
@@ -212,50 +223,69 @@ pub fn make_variants(object3d: &Object3d) -> Result<NodeVariantsRc> {
     })
 }
 
-// pub fn write(
-//     write: &mut CountingWriter<impl Write>,
-//     object3d: &Object3d,
-//     index: usize,
-// ) -> Result<()> {
-//     debug!(
-//         "Writing object3d node data {} (rc, {}) at {}",
-//         index,
-//         Object3dRcC::SIZE,
-//         write.offset
-//     );
+pub fn write(
+    write: &mut CountingWriter<impl Write>,
+    object3d: &Object3d,
+    index: usize,
+) -> Result<()> {
+    debug!(
+        "Writing object3d node data {} (rc, {}) at {}",
+        index,
+        Object3dRcC::SIZE,
+        write.offset
+    );
 
-//     let (flags, rotation, translation, matrix) = object3d
-//         .transformation
-//         .as_ref()
-//         .map(|tr| {
-//             let matrix = tr
-//                 .matrix
-//                 .as_ref()
-//                 .cloned()
-//                 .unwrap_or_else(|| euler_to_matrix(&tr.rotation));
-//             (32, tr.rotation, tr.translation, matrix)
-//         })
-//         .unwrap_or((40, Vec3::DEFAULT, Vec3::DEFAULT, Matrix::IDENTITY));
+    // let (flags, rotation, translation, matrix) = object3d
+    //     .transformation
+    //     .as_ref()
+    //     .map(|tr| {
+    //         let matrix = tr
+    //             .matrix
+    //             .as_ref()
+    //             .cloned()
+    //             .unwrap_or_else(|| euler_to_matrix(&tr.rotation));
+    //         (32, tr.rotation, tr.translation, matrix)
+    //     })
+    //     .unwrap_or((40, Vec3::DEFAULT, Vec3::DEFAULT, Matrix::IDENTITY));
+    let flags = 40;
+    let rotation = Vec3::DEFAULT;
+    let translation = Vec3::DEFAULT;
+    let matrix = Matrix::IDENTITY;
 
-//     let matrix = apply_zero_signs(&matrix, object3d.matrix_signs);
+    // let matrix = apply_zero_signs(&matrix, object3d.matrix_signs);
 
-//     let object3d = Object3dRcC {
-//         flags,
-//         opacity: 0.0,
-//         zero008: 0.0,
-//         zero012: 0.0,
-//         zero016: 0.0,
-//         zero020: 0.0,
-//         rotation,
-//         scale: SCALE_ONE,
-//         matrix,
-//         translation,
-//         zero096: Zeros([0u8; 48]),
-//     };
-//     trace!("{:#?}", object3d);
-//     write.write_struct(&object3d)?;
-//     Ok(())
-// }
+    let object3dc = Object3dRcC {
+        flags,
+        opacity: 0.0,
+        zero008: 0.0,
+        zero012: 0.0,
+        zero016: 0.0,
+        zero020: 0.0,
+        rotation,
+        scale: SCALE_ONE,
+        matrix,
+        translation,
+        zero096: Zeros([0u8; 48]),
+    };
+    trace!("{:#?}", object3dc);
+    write.write_struct(&object3dc)?;
+
+    if let Some(parent) = object3d.parent {
+        write.write_u32(parent)?;
+    }
+
+    debug!(
+        "Writing object3d {} x children {} (rc) at {}",
+        object3d.children.len(),
+        index,
+        write.offset
+    );
+    for child in &object3d.children {
+        write.write_u32(*child)?;
+    }
+
+    Ok(())
+}
 
 pub fn size(object3d: &Object3d) -> u32 {
     let parent_size = if object3d.parent.is_some() { 4 } else { 0 };

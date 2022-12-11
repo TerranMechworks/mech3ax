@@ -6,9 +6,8 @@ use super::lod;
 use super::object3d;
 use super::window;
 use super::world;
-use super::wrappers::WrappedNodeRc;
 use crate::flags::NodeBitFlags;
-use crate::types::{NodeType, ZONE_DEFAULT};
+use crate::types::NodeType;
 use log::{debug, trace};
 use mech3ax_api_types::nodes::rc::{Empty, NodeRc};
 use mech3ax_api_types::nodes::{AreaPartition, BoundingBox};
@@ -45,6 +44,7 @@ pub struct NodeVariantLodRc {
     pub flags: NodeBitFlags,
     pub zone_id: u32,
     pub data_ptr: u32,
+    pub has_parent: bool,
     pub parent_array_ptr: u32,
     pub children_count: u32,
     pub children_array_ptr: u32,
@@ -391,36 +391,6 @@ pub fn write_node_info(
     }
 }
 
-// pub fn write_node_data(
-//     write: &mut CountingWriter<impl Write>,
-//     node: &NodeRc,
-//     index: usize,
-// ) -> Result<()> {
-//     match node {
-//         NodeRc::Camera(camera) => camera::write(write, camera, index),
-//         NodeRc::Display(display) => display::write(write, display, index),
-//         NodeRc::Empty(_) => Ok(()),
-//         NodeRc::Light(light) => light::write(write, light, index),
-//         NodeRc::Lod(lod) => lod::write(write, lod, index),
-//         NodeRc::Object3d(object3d) => object3d::write(write, object3d, index),
-//         NodeRc::Window(window) => window::write(write, window, index),
-//         NodeRc::World(world) => world::write(write, world, index),
-//     }
-// }
-
-pub fn size_node(node: &NodeRc) -> u32 {
-    match node {
-        NodeRc::Camera(_) => camera::size(),
-        NodeRc::Empty(_) => empty::size(),
-        NodeRc::Display(_) => display::size(),
-        NodeRc::Light(_) => light::size(),
-        NodeRc::Lod(lod) => lod::size(lod),
-        NodeRc::Object3d(object3d) => object3d::size(object3d),
-        NodeRc::Window(_) => window::size(),
-        NodeRc::World(world) => world::size(world),
-    }
-}
-
 pub fn write_node_info_zero(write: &mut CountingWriter<impl Write>, index: u32) -> Result<()> {
     debug!(
         "Writing zero node info {} (rc, {}) at {}",
@@ -456,4 +426,67 @@ pub fn write_node_info_zero(write: &mut CountingWriter<impl Write>, index: u32) 
     };
     write.write_struct(&node)?;
     Ok(())
+}
+
+pub fn read_node_data(
+    read: &mut CountingReader<impl Read>,
+    variant: NodeVariantRc,
+    index: usize,
+) -> Result<NodeRc> {
+    match variant {
+        NodeVariantRc::Camera { data_ptr } => {
+            Ok(NodeRc::Camera(camera::read(read, data_ptr, index)?))
+        }
+        NodeVariantRc::Display { data_ptr } => {
+            Ok(NodeRc::Display(display::read(read, data_ptr, index)?))
+        }
+        NodeVariantRc::Empty(empty) => Ok(NodeRc::Empty(empty)),
+        NodeVariantRc::Light { data_ptr } => Ok(NodeRc::Light(light::read(read, data_ptr, index)?)),
+        NodeVariantRc::Lod(node) => Ok(NodeRc::Lod(lod::read(read, node, index)?)),
+        NodeVariantRc::Object3d(node) => Ok(NodeRc::Object3d(object3d::read(read, node, index)?)),
+        NodeVariantRc::Window { data_ptr } => {
+            Ok(NodeRc::Window(window::read(read, data_ptr, index)?))
+        }
+        NodeVariantRc::World {
+            data_ptr,
+            children_count,
+            children_array_ptr,
+        } => Ok(NodeRc::World(world::read(
+            read,
+            data_ptr,
+            children_count,
+            children_array_ptr,
+            index,
+        )?)),
+    }
+}
+
+pub fn size_node(node: &NodeRc) -> u32 {
+    match node {
+        NodeRc::Camera(_) => camera::size(),
+        NodeRc::Empty(_) => empty::size(),
+        NodeRc::Display(_) => display::size(),
+        NodeRc::Light(_) => light::size(),
+        NodeRc::Lod(lod) => lod::size(lod),
+        NodeRc::Object3d(object3d) => object3d::size(object3d),
+        NodeRc::Window(_) => window::size(),
+        NodeRc::World(world) => world::size(world),
+    }
+}
+
+pub fn write_node_data(
+    write: &mut CountingWriter<impl Write>,
+    node: &NodeRc,
+    index: usize,
+) -> Result<()> {
+    match node {
+        NodeRc::Camera(camera) => camera::write(write, camera, index),
+        NodeRc::Display(display) => display::write(write, display, index),
+        NodeRc::Empty(_) => Ok(()),
+        NodeRc::Light(light) => light::write(write, light, index),
+        NodeRc::Lod(lod) => lod::write(write, lod, index),
+        NodeRc::Object3d(object3d) => object3d::write(write, object3d, index),
+        NodeRc::Window(window) => window::write(write, window, index),
+        NodeRc::World(world) => world::write(write, world, index),
+    }
 }

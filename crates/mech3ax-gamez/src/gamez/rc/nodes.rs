@@ -1,17 +1,14 @@
 use super::NODE_ARRAY_SIZE;
 use mech3ax_api_types::nodes::rc::*;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
 use mech3ax_nodes::rc::{
-    read_node_info, read_node_info_zero, size_node, write_node_info, write_node_info_zero,
-    NodeVariantRc, NODE_RC_C_SIZE,
+    read_node_data, read_node_info, read_node_info_zero, size_node, write_node_data,
+    write_node_info, write_node_info_zero, NodeVariantRc, NODE_RC_C_SIZE,
 };
 use std::io::{Read, Write};
 
-pub fn read_nodes(
-    read: &mut CountingReader<impl Read>,
-    count: u32,
-) -> Result<(Vec<NodeRc>, Vec<u8>)> {
+pub fn read_nodes(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<NodeRc>> {
     let valid_offset = read.offset + NODE_RC_C_SIZE * count + 4 * count;
     let end_offset = read.offset + NODE_RC_C_SIZE * NODE_ARRAY_SIZE + 4 * NODE_ARRAY_SIZE;
 
@@ -82,77 +79,28 @@ pub fn read_nodes(
     let nodes = variants
         .into_iter()
         .enumerate()
-        .map(|(index, (variant, _node_data_offset))| {
-            match variant {
-                NodeVariantRc::Camera { data_ptr } => Ok(NodeRc::Camera(Camera { data_ptr })),
-                NodeVariantRc::Display { data_ptr } => Ok(NodeRc::Display(Display { data_ptr })),
-                NodeVariantRc::Empty(empty) => Ok(NodeRc::Empty(empty)),
-                NodeVariantRc::Light { data_ptr } => Ok(NodeRc::Light(Light { data_ptr })),
-                NodeVariantRc::Window { data_ptr } => Ok(NodeRc::Window(Window { data_ptr })),
-                NodeVariantRc::Lod(lod) => {
-                    let lod = Lod {
-                        name: lod.name,
-                        flags: lod.flags.into(),
-                        zone_id: lod.zone_id,
-                        // area_partition: lod.area_partition,
-                        // parent: lod.parent,
-                        children: (0..lod.children_count).collect(),
-                        data_ptr: lod.data_ptr,
-                        parent_array_ptr: lod.parent_array_ptr,
-                        children_array_ptr: lod.children_array_ptr,
-                        unk116: lod.unk116,
-                    };
-                    Ok(NodeRc::Lod(lod))
+        .map(|(index, (variant, node_data_offset))| {
+            match &variant {
+                NodeVariantRc::Empty(_) => {
+                    // in the case of an empty node, the offset is used as the parent
+                    // index, and not the offset (there is no node data)
                 }
-                NodeVariantRc::Object3d(object3d) => {
-                    let object3d = Object3d {
-                        name: object3d.name,
-                        flags: object3d.flags.into(),
-                        zone_id: object3d.zone_id,
-                        area_partition: object3d.area_partition,
-                        mesh_index: object3d.mesh_index,
-                        parent: if object3d.has_parent { Some(0) } else { None },
-                        children: (0..object3d.children_count).collect(),
-                        data_ptr: object3d.data_ptr,
-                        parent_array_ptr: object3d.parent_array_ptr,
-                        children_array_ptr: object3d.children_array_ptr,
-                        unk116: object3d.unk116,
-                        unk140: object3d.unk140,
-                        unk164: object3d.unk164,
-                    };
-                    Ok(NodeRc::Object3d(object3d))
-                }
-                NodeVariantRc::World {
-                    data_ptr,
-                    children_count,
-                    children_array_ptr,
-                } => {
-                    log::debug!("Reading world data at {}", read.offset);
-                    let wrapped_world = mech3ax_nodes::rc::world::read(
-                        read,
-                        data_ptr,
-                        children_count,
-                        children_array_ptr,
-                        index,
+                _ => {
+                    assert_that!(
+                        "node data offset",
+                        read.offset == node_data_offset,
+                        read.offset
                     )?;
-                    let mut world = wrapped_world.wrapped;
-                    log::debug!("Reading world children at {}", read.offset);
-                    world.children = (0..wrapped_world.children_count)
-                        .map(|_| read.read_u32())
-                        .collect::<std::io::Result<Vec<_>>>()?;
-                    Ok(NodeRc::World(world))
                 }
             }
+            read_node_data(read, variant, index)
         })
         .collect::<Result<Vec<_>>>()?;
 
-    log::debug!("would read node data at {}", read.offset);
-
-    let node_data = read.read_to_end()?;
     read.assert_end()?;
     // assert_area_partitions(&nodes, read.offset)?;
 
-    Ok((nodes, node_data))
+    Ok(nodes)
 }
 
 pub fn write_nodes(
@@ -161,6 +109,7 @@ pub fn write_nodes(
     offset: u32,
 ) -> Result<()> {
     let mut offset = offset + NODE_RC_C_SIZE * NODE_ARRAY_SIZE + 4 * NODE_ARRAY_SIZE;
+    let node_count = assert_len!(u32, nodes.len(), "nodes")?;
 
     for (index, node) in nodes.iter().enumerate() {
         write_node_info(write, node, index)?;
@@ -173,8 +122,6 @@ pub fn write_nodes(
         offset += size_node(node);
     }
 
-    let node_count = nodes.len() as u32;
-
     for index in node_count..NODE_ARRAY_SIZE {
         write_node_info_zero(write, index)?;
         let mut index = index + 1;
@@ -185,38 +132,7 @@ pub fn write_nodes(
     }
 
     for (index, node) in nodes.iter().enumerate() {
-        match node {
-            NodeRc::World(world) => {
-                mech3ax_nodes::rc::world::write(write, world, index)?;
-                for child in &world.children {
-                    write.write_u32(*child)?;
-                }
-            }
-            _ => {}
-        }
-        //     write_node_data(write, node, index)?;
-        //     match node {
-        //         NodeMw::Lod(lod) => {
-        //             write.write_u32(lod.parent)?;
-        //             for child in &lod.children {
-        //                 write.write_u32(*child)?;
-        //             }
-        //         }
-        //         NodeMw::Object3d(object3d) => {
-        //             if let Some(parent) = object3d.parent {
-        //                 write.write_u32(parent)?;
-        //             }
-        //             for child in &object3d.children {
-        //                 write.write_u32(*child)?;
-        //             }
-        //         }
-        //         NodeMw::World(world) => {
-        //             for child in &world.children {
-        //                 write.write_u32(*child)?;
-        //             }
-        //         }
-        //         _ => {}
-        //     }
+        write_node_data(write, node, index)?;
     }
 
     Ok(())

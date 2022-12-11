@@ -81,7 +81,5 @@ pub struct GameZRcData {
     pub materials: Vec<Material>,
     pub meshes: Vec<MeshRc>,
     pub nodes: Vec<NodeRc>,
-    #[serde(with = "bytes")]
-    pub node_data: Vec<u8>,
     pub metadata: GameZRcMetadata,
 }

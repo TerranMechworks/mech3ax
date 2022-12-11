@@ -321,7 +321,6 @@ fn gamez_rc(opts: ZipOpts) -> Result<()> {
     let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
     let meshes: Vec<MeshRc> = zip_json(&mut zip, "meshes.json")?;
     let nodes: Vec<NodeRc> = zip_json(&mut zip, "nodes.json")?;
-    let node_data: Vec<u8> = zip_read(&mut zip, "nodes.bin")?;
 
     drop(zip);
 
@@ -331,7 +330,6 @@ fn gamez_rc(opts: ZipOpts) -> Result<()> {
         materials,
         meshes,
         nodes,
-        node_data,
     };
 
     let mut write = buf_writer(opts.output)?;

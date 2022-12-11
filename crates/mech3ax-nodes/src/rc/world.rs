@@ -1,5 +1,4 @@
 use super::node::{NodeVariantRc, NodeVariantsRc};
-use super::wrappers::WrapperRc;
 use crate::flags::NodeBitFlags;
 use crate::math::partition_diag;
 use crate::range::RangeI32;
@@ -93,15 +92,6 @@ const DEFAULT_FLAGS_M2: NodeBitFlags =
 
 const WORLD_NAME: &str = "world1";
 const FOG_STATE_LINEAR: u32 = 1;
-
-struct WorldValues {
-    area: Area,
-    area_x: RangeI32,
-    area_y: RangeI32,
-    fog_color: Color,
-    fog_range: Range,
-    fog_altitude: Range,
-}
 
 pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantRc> {
     assert_that!("world name", &node.name == WORLD_NAME, offset + 0)?;
@@ -424,7 +414,7 @@ pub fn read(
     children_count: u32,
     children_array_ptr: u32,
     index: usize,
-) -> Result<WrapperRc<World>> {
+) -> Result<World> {
     debug!(
         "Reading world node data {} (rc, {}) at {}",
         index,
@@ -441,7 +431,15 @@ pub fn read(
 
     let partitions = read_partitions(read, area_x, area_y)?;
 
-    let wrapped = World {
+    debug!(
+        "Reading world {} x children {} (rc) at {}",
+        children_count, index, read.offset
+    );
+    let children = (0..children_count)
+        .map(|_| read.read_u32())
+        .collect::<std::io::Result<Vec<_>>>()?;
+
+    Ok(World {
         name: WORLD_NAME.to_owned(),
         area,
         fog_color: world.fog_color,
@@ -456,14 +454,9 @@ pub fn read(
         world_children_ptr: world.children_ptr,
         world_child_value,
         world_lights_ptr: world.lights_ptr,
-        children: Vec::new(),
+        children,
         data_ptr,
         children_array_ptr,
-    };
-    Ok(WrapperRc {
-        wrapped,
-        has_parent: false,
-        children_count,
     })
 }
 
@@ -607,7 +600,19 @@ pub fn write(write: &mut CountingWriter<impl Write>, world: &World, index: usize
     trace!("{:#?}", world_c);
     write.write_struct(&world_c)?;
     write.write_u32(world.world_child_value)?;
+
     write_partitions(write, &world.partitions)?;
+
+    debug!(
+        "Writing world {} x children {} (rc) at {}",
+        world.children.len(),
+        index,
+        write.offset
+    );
+    for child in &world.children {
+        write.write_u32(*child)?;
+    }
+
     Ok(())
 }
 

@@ -5,18 +5,19 @@ use mech3ax_metadata_proc_macro::{RefStruct, Union};
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Camera {
-    // pub name: String,
-    // pub clip: Range,
-    // pub fov: Range,
+    pub name: String,
+    pub clip: Range,
+    pub fov: Range,
+    pub focus_node_xy: i32,
     pub data_ptr: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Display {
-    // pub name: String,
-    // pub resolution_x: u32,
-    // pub resolution_y: u32,
-    // pub clear_color: Color,
+    pub name: String,
+    pub resolution_x: u32,
+    pub resolution_y: u32,
+    pub clear_color: Color,
     pub data_ptr: u32,
 }
 
@@ -34,30 +35,29 @@ pub struct Empty {
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Light {
-    // pub name: String,
+    pub name: String,
+    pub unk008: f32,
+    pub unk012: f32,
     // pub direction: Vec3,
     // pub diffuse: f32,
     // pub ambient: f32,
-    // pub color: Color,
-    // pub range: Range,
-    // pub parent_ptr: u32,
+    pub color: Color,
+    pub range: Range,
+    pub parent_ptr: u32,
     pub data_ptr: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Lod {
     pub name: String,
-
-    // pub level: bool,
-    // pub range: Range,
-    // pub unk60: f32,
-    // pub unk76: Option<u32>,
+    pub level: bool,
+    pub range: Range,
+    pub unk60: f32,
+    pub unk76: Option<u32>,
     pub flags: NodeFlags,
     pub zone_id: u32,
-    // pub area_partition: Option<AreaPartition>,
-    // pub parent: u32,
+    pub parent: Option<u32>,
     pub children: Vec<u32>,
-
     pub data_ptr: u32,
     pub parent_array_ptr: u32,
     pub children_array_ptr: u32,
@@ -86,9 +86,9 @@ pub struct Object3d {
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Window {
-    // pub name: String,
-    // pub resolution_x: u32,
-    // pub resolution_y: u32,
+    pub name: String,
+    pub resolution_x: u32,
+    pub resolution_y: u32,
     pub data_ptr: u32,
 }
 

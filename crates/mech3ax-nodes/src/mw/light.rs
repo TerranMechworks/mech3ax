@@ -162,9 +162,9 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -
 
     assert_light(&light, read.prev)?;
 
-    // read as a result of parent_count, but is always 0
-    let zero = read.read_u32()?;
-    assert_that!("parent value", zero == 0, read.prev)?;
+    // read as a result of parent_count, but is always 0 (= world node index)
+    let light_parent = read.read_u32()?;
+    assert_that!("light parent", light_parent == 0, read.prev)?;
 
     Ok(Light {
         name: LIGHT_NAME.to_owned(),
@@ -227,7 +227,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, light: &Light, index: usize
     };
     trace!("{:#?}", light);
     write.write_struct(&light)?;
-    // written as a result of parent_count, but is always 0
+    // written as a result of parent_count, but is always 0 (= world node index)
     write.write_u32(0)?;
     Ok(())
 }

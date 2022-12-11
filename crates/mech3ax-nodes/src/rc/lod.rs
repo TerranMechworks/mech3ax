@@ -1,5 +1,4 @@
 use super::node::{NodeVariantLodRc, NodeVariantRc, NodeVariantsRc};
-use super::wrappers::WrapperRc;
 use crate::flags::NodeBitFlags;
 use crate::types::ZONE_DEFAULT;
 use log::{debug, trace};
@@ -42,8 +41,10 @@ const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     // | NodeBitFlags::CAN_MODIFY.bits()
     // | NodeBitFlags::CLIP_TO.bits()
     | NodeBitFlags::TREE_VALID.bits()
-    | NodeBitFlags::ID_ZONE_CHECK.bits(), // | NodeBitFlags::UNK25.bits()
-                                          // | NodeBitFlags::UNK28.bits()
+    | NodeBitFlags::ID_ZONE_CHECK.bits()
+    // | NodeBitFlags::UNK25.bits()
+    // | NodeBitFlags::UNK28.bits()
+    | 0,
 );
 const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     0
@@ -54,13 +55,15 @@ const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     // | NodeBitFlags::LANDMARK.bits()
     | NodeBitFlags::UNK08.bits()
     // | NodeBitFlags::HAS_MESH.bits()
-    | NodeBitFlags::UNK10.bits(), // | NodeBitFlags::TERRAIN.bits()
-                                  // | NodeBitFlags::CAN_MODIFY.bits()
-                                  // | NodeBitFlags::CLIP_TO.bits()
-                                  // | NodeBitFlags::TREE_VALID.bits()
-                                  // | NodeBitFlags::ID_ZONE_CHECK.bits()
-                                  // | NodeBitFlags::UNK25.bits()
-                                  // | NodeBitFlags::UNK28.bits()
+    | NodeBitFlags::UNK10.bits()
+    // | NodeBitFlags::TERRAIN.bits()
+    // | NodeBitFlags::CAN_MODIFY.bits()
+    // | NodeBitFlags::CLIP_TO.bits()
+    // | NodeBitFlags::TREE_VALID.bits()
+    // | NodeBitFlags::ID_ZONE_CHECK.bits()
+    // | NodeBitFlags::UNK25.bits()
+    // | NodeBitFlags::UNK28.bits()
+    | 0,
 );
 
 const BORKED_UNK044: &[u32; 6] = &[
@@ -117,6 +120,7 @@ pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantR
         flags: node.flags,
         zone_id: node.zone_id,
         data_ptr: node.data_ptr,
+        has_parent: node.has_parent,
         parent_array_ptr: node.parent_array_ptr,
         children_count: node.children_count,
         children_array_ptr: node.children_array_ptr,
@@ -124,7 +128,7 @@ pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantR
     }))
 }
 
-fn assert_lod(lod: LodRcC, offset: u32) -> Result<(bool, Range, f32, Option<u32>)> {
+fn assert_lod(lod: &LodRcC, offset: u32) -> Result<(bool, Range, f32, Option<u32>)> {
     let level = assert_that!("level", bool lod.level, offset + 0)?;
     assert_that!("range near sq", 0.0 <= lod.range_near_sq <= 1000.0 * 1000.0, offset + 4)?;
     let range_near = lod.range_near_sq.sqrt();
@@ -162,7 +166,7 @@ pub fn read(
     read: &mut CountingReader<impl Read>,
     node: NodeVariantLodRc,
     index: usize,
-) -> Result<WrapperRc<Lod>> {
+) -> Result<Lod> {
     debug!(
         "Reading lod node data {} (rc, {}) at {}",
         index,
@@ -172,28 +176,36 @@ pub fn read(
     let lod: LodRcC = read.read_struct()?;
     trace!("{:#?}", lod);
 
-    let (level, range, unk60, unk76) = assert_lod(lod, read.prev)?;
+    let (level, range, unk60, unk76) = assert_lod(&lod, read.prev)?;
 
-    let wrapped = Lod {
+    let parent = if node.has_parent {
+        Some(read.read_u32()?)
+    } else {
+        None
+    };
+
+    debug!(
+        "Reading lod {} x children {} (rc) at {}",
+        node.children_count, index, read.offset
+    );
+    let children = (0..node.children_count)
+        .map(|_| read.read_u32())
+        .collect::<std::io::Result<Vec<_>>>()?;
+
+    Ok(Lod {
         name: node.name,
-        // level,
-        // range,
-        // unk60,
-        // unk76,
+        level,
+        range,
+        unk60,
+        unk76,
         flags: node.flags.into(),
         zone_id: node.zone_id,
-        // area_partition: None,
-        // parent: 0,
-        children: Vec::new(),
+        parent,
+        children,
         data_ptr: node.data_ptr,
         parent_array_ptr: node.parent_array_ptr,
         children_array_ptr: node.children_array_ptr,
         unk116: node.unk116,
-    };
-    Ok(WrapperRc {
-        wrapped,
-        has_parent: false,
-        children_count: node.children_count,
     })
 }
 
@@ -212,7 +224,7 @@ pub fn make_variants(lod: &Lod) -> Result<NodeVariantsRc> {
         data_ptr: lod.data_ptr,
         mesh_index: -1,
         area_partition: None,
-        has_parent: lod.parent_array_ptr != 0,
+        has_parent: lod.parent.is_some(),
         parent_array_ptr: lod.parent_array_ptr,
         children_count,
         children_array_ptr: lod.children_array_ptr,
@@ -222,32 +234,48 @@ pub fn make_variants(lod: &Lod) -> Result<NodeVariantsRc> {
     })
 }
 
-// pub fn write(write: &mut CountingWriter<impl Write>, lod: &Lod, index: usize) -> Result<()> {
-//     debug!(
-//         "Writing lod node data {} (rc, {}) at {}",
-//         index,
-//         LodRcC::SIZE,
-//         write.offset
-//     );
-//     let lod = LodRcC {
-//         level: bool_c!(lod.level),
-//         range_near_sq: lod.range.min * lod.range.min,
-//         range_far: lod.range.max,
-//         range_far_sq: lod.range.max * lod.range.max,
-//         zero16: Zeros::new(),
-//         unk60: lod.unk60,
-//         unk64: lod.unk60 * lod.unk60,
-//         one68: 1,
-//         unk72: bool_c!(lod.unk76.is_some()),
-//         unk76: lod.unk76.unwrap_or(0),
-//     };
-//     trace!("{:#?}", lod);
-//     write.write_struct(&lod)?;
-//     Ok(())
-// }
+pub fn write(write: &mut CountingWriter<impl Write>, lod: &Lod, index: usize) -> Result<()> {
+    debug!(
+        "Writing lod node data {} (rc, {}) at {}",
+        index,
+        LodRcC::SIZE,
+        write.offset
+    );
+    let lodc = LodRcC {
+        level: bool_c!(lod.level),
+        range_near_sq: lod.range.min * lod.range.min,
+        range_far: lod.range.max,
+        range_far_sq: lod.range.max * lod.range.max,
+        zero16: Zeros::new(),
+        unk60: lod.unk60,
+        unk64: lod.unk60 * lod.unk60,
+        one68: 1,
+        unk72: bool_c!(lod.unk76.is_some()),
+        unk76: lod.unk76.unwrap_or(0),
+    };
+    trace!("{:#?}", lodc);
+    write.write_struct(&lodc)?;
+
+    if let Some(parent) = lod.parent {
+        write.write_u32(parent)?;
+    }
+
+    debug!(
+        "Writing lod {} x children {} (rc) at {}",
+        lod.children.len(),
+        index,
+        write.offset
+    );
+    for child in &lod.children {
+        write.write_u32(*child)?;
+    }
+
+    Ok(())
+}
 
 pub fn size(lod: &Lod) -> u32 {
+    let parent_size = if lod.parent.is_some() { 4 } else { 0 };
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let children_length = lod.children.len() as u32;
-    LodRcC::SIZE + 4 + 4 * children_length
+    LodRcC::SIZE + parent_size + 4 * children_length
 }

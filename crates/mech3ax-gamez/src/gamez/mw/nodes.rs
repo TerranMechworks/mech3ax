@@ -1,6 +1,6 @@
 use mech3ax_api_types::nodes::mw::NodeMw;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
 use mech3ax_nodes::mw::{
     read_node_data, read_node_info_gamez, read_node_info_zero, size_node, write_node_data,
     write_node_info, write_node_info_zero, NodeVariantMw, WrappedNodeMw, NODE_MW_C_SIZE,
@@ -117,7 +117,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
                 _ => {
                     assert_that!(
                         "node data offset",
-                        node_data_offset == read.offset,
+                        read.offset == node_data_offset,
                         read.offset
                     )?;
                 }
@@ -199,6 +199,7 @@ pub fn write_nodes(
     offset: u32,
 ) -> Result<()> {
     let mut offset = offset + NODE_MW_C_SIZE * array_size + 4 * array_size;
+    let node_count = assert_len!(u32, nodes.len(), "nodes")?;
 
     for (index, node) in nodes.iter().enumerate() {
         write_node_info(write, node, index)?;
@@ -209,8 +210,6 @@ pub fn write_nodes(
         write.write_u32(index)?;
         offset += size_node(node);
     }
-
-    let node_count = nodes.len() as u32;
 
     for index in node_count..array_size {
         write_node_info_zero(write, index)?;

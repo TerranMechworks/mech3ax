@@ -105,9 +105,9 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -
     assert_that!("zero244", window.zero244 == 0, read.prev + 244)?;
 
     Ok(Window {
-        // name: WINDOW_NAME.to_owned(),
-        // resolution_x: window.resolution_x,
-        // resolution_y: window.resolution_y,
+        name: WINDOW_NAME.to_owned(),
+        resolution_x: window.resolution_x,
+        resolution_y: window.resolution_y,
         data_ptr,
     })
 }
@@ -131,29 +131,29 @@ pub fn make_variants(window: &Window) -> NodeVariantsRc {
     }
 }
 
-// pub fn write(write: &mut CountingWriter<impl Write>, window: &Window, index: usize) -> Result<()> {
-//     debug!(
-//         "Writing window node data {} (rc, {}) at {}",
-//         index,
-//         WindowRcC::SIZE,
-//         write.offset
-//     );
-//     let window = WindowRcC {
-//         origin_x: 0,
-//         origin_y: 0,
-//         resolution_x: window.resolution_x,
-//         resolution_y: window.resolution_y,
-//         zero016: Zeros::new(),
-//         buffer_index: -1,
-//         buffer_ptr: 0,
-//         zero236: 0,
-//         zero240: 0,
-//         zero244: 0,
-//     };
-//     trace!("{:#?}", window);
-//     write.write_struct(&window)?;
-//     Ok(())
-// }
+pub fn write(write: &mut CountingWriter<impl Write>, window: &Window, index: usize) -> Result<()> {
+    debug!(
+        "Writing window node data {} (rc, {}) at {}",
+        index,
+        WindowRcC::SIZE,
+        write.offset
+    );
+    let window = WindowRcC {
+        origin_x: 0,
+        origin_y: 0,
+        resolution_x: window.resolution_x,
+        resolution_y: window.resolution_y,
+        zero016: Zeros::new(),
+        buffer_index: -1,
+        buffer_ptr: 0,
+        zero236: 0,
+        zero240: 0,
+        zero244: 0,
+    };
+    trace!("{:#?}", window);
+    write.write_struct(&window)?;
+    Ok(())
+}
 
 pub fn size() -> u32 {
     WindowRcC::SIZE
