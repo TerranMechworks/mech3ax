@@ -394,16 +394,20 @@ fn assert_world(world: &WorldRcC, offset: u32) -> Result<(Area, RangeI32, RangeI
     )?;
 
     assert_that!("world vp ptr", world.virt_partition_ptr != 0, offset + 128)?;
-    assert_that!("field 132", world.one132 == 1.0, offset + 132)?;
-    assert_that!("field 136", world.one136 == 1.0, offset + 136)?;
-    assert_that!("field 140", world.one140 == 1.0, offset + 140)?;
-    assert_that!("children count", world.children_count == 1, offset + 144)?;
-    assert_that!("children ptr", world.children_ptr != 0, offset + 148)?;
-    assert_that!("lights ptr", world.lights_ptr != 0, offset + 152)?;
-    assert_that!("field 156", world.zero156 == 0, offset + 156)?;
-    assert_that!("field 160", world.zero160 == 0, offset + 160)?;
-    assert_that!("field 164", world.zero164 == 0, offset + 164)?;
-    assert_that!("field 168", world.zero168 == 0, offset + 168)?;
+    assert_that!("world field 132", world.one132 == 1.0, offset + 132)?;
+    assert_that!("world field 136", world.one136 == 1.0, offset + 136)?;
+    assert_that!("world field 140", world.one140 == 1.0, offset + 140)?;
+    assert_that!(
+        "world children count",
+        world.children_count == 1,
+        offset + 144
+    )?;
+    assert_that!("world children ptr", world.children_ptr != 0, offset + 148)?;
+    assert_that!("world lights ptr", world.lights_ptr != 0, offset + 152)?;
+    assert_that!("world field 156", world.zero156 == 0, offset + 156)?;
+    assert_that!("world field 160", world.zero160 == 0, offset + 160)?;
+    assert_that!("world field 164", world.zero164 == 0, offset + 164)?;
+    assert_that!("world field 168", world.zero168 == 0, offset + 168)?;
 
     Ok((area, area_x, area_y))
 }

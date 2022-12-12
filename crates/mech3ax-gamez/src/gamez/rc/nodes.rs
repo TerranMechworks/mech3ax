@@ -11,16 +11,16 @@ use std::io::{Read, Write};
 pub fn read_nodes(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<NodeRc>> {
     let valid_offset = read.offset + NODE_RC_C_SIZE * count + 4 * count;
     let end_offset = read.offset + NODE_RC_C_SIZE * NODE_ARRAY_SIZE + 4 * NODE_ARRAY_SIZE;
+    let last_index = count - 2;
 
     let mut variants = Vec::new();
-    let mut light_node = false;
     for index in 0..count {
         let node_info_pos = read.offset;
-        let mut variant = read_node_info(read, index)?;
+        let variant = read_node_info(read, index)?;
         // this is an index for empty/zero nodes, and the offset for others
         let node_data_offset = read.read_u32()?;
         log::debug!("Node {} data offset: {}", index, node_data_offset);
-        match &mut variant {
+        match &variant {
             NodeVariantRc::World {
                 data_ptr: _,
                 children_count: _,
@@ -37,24 +37,16 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, count: u32) -> Result<Ve
             NodeVariantRc::Display { data_ptr: _ } => {
                 assert_that!("node data position", index == 3, node_info_pos)?;
             }
-            NodeVariantRc::Empty(empty) => {
-                assert_that!("node data position", index > 3, node_info_pos)?;
-                assert_that!("empty ref index", 4 <= node_data_offset <= NODE_ARRAY_SIZE, read.prev)?;
-                empty.parent = node_data_offset;
+            NodeVariantRc::Empty(_) => {
+                assert_that!("node data position", 4 <= index <= last_index, node_info_pos)?;
+                // cannot be parented to world, window, camera, display, or light
+                assert_that!("empty ref index", 4 <= node_data_offset <= last_index, read.prev)?;
             }
             NodeVariantRc::Light { data_ptr: _ } => {
-                assert_that!("node data position", index > 3, node_info_pos)?;
-                if light_node {
-                    return Err(assert_with_msg!(
-                        "Unexpected light node in position {} (at {})",
-                        index,
-                        node_info_pos
-                    ));
-                }
-                light_node = true;
+                assert_that!("node data position", index == count - 1, node_info_pos)?;
             }
-            _ => {
-                assert_that!("node data position", index > 3, node_info_pos)?;
+            NodeVariantRc::Lod(_) | NodeVariantRc::Object3d(_) => {
+                assert_that!("node data position", 4 <= index <= last_index, node_info_pos)?;
             }
         }
         variants.push((variant, node_data_offset));
@@ -79,11 +71,12 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, count: u32) -> Result<Ve
     let nodes = variants
         .into_iter()
         .enumerate()
-        .map(|(index, (variant, node_data_offset))| {
-            match &variant {
-                NodeVariantRc::Empty(_) => {
+        .map(|(index, (mut variant, node_data_offset))| {
+            match &mut variant {
+                NodeVariantRc::Empty(empty) => {
                     // in the case of an empty node, the offset is used as the parent
                     // index, and not the offset (there is no node data)
+                    empty.parent = node_data_offset;
                 }
                 _ => {
                     assert_that!(

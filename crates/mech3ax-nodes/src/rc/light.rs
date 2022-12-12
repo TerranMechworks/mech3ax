@@ -115,7 +115,9 @@ fn assert_light(light: &LightRcC, offset: u32) -> Result<()> {
     assert_that!("light field 152", light.unk152 == 0, offset + 152)?;
     assert_that!("light field 156", light.unk156 == 0, offset + 156)?;
     assert_that!("light field 160", light.unk160 == 0, offset + 160)?;
-    // color
+    assert_that!("light color r", 0.0 <= light.color.r <= 1.0, offset + 164)?;
+    assert_that!("light color g", 0.0 <= light.color.g <= 1.0, offset + 168)?;
+    assert_that!("light color b", 0.0 <= light.color.b <= 1.0, offset + 172)?;
     assert_that!("light field 176", light.unk176 == 0, offset + 176)?;
     assert_that!("light field 180", light.unk180 == 0, offset + 180)?;
     assert_that!("light field 184", light.unk184 == 0, offset + 184)?;
@@ -123,14 +125,22 @@ fn assert_light(light: &LightRcC, offset: u32) -> Result<()> {
     assert_that!("light field 192", light.unk192 == 0, offset + 192)?;
     assert_that!("light field 196", light.unk196 == 1, offset + 196)?;
     assert_that!("light field 200", light.unk200 == 1, offset + 200)?;
-    assert_that!("range near", light.range.min > 0.0, offset + 204)?;
-    assert_that!("range far", light.range.max > light.range.min, offset + 208)?;
+    assert_that!("light range near", light.range.min > 0.0, offset + 204)?;
+    assert_that!(
+        "light range far",
+        light.range.max > light.range.min,
+        offset + 208
+    )?;
     let expected = light.range.max * light.range.max;
-    assert_that!("range far sq", light.range_far_sq == expected, offset + 212)?;
+    assert_that!(
+        "light range far sq",
+        light.range_far_sq == expected,
+        offset + 212
+    )?;
     let expected = 1.0 / (light.range.max - light.range.min);
-    assert_that!("range inv", light.range_inv == expected, offset + 216)?;
-    assert_that!("parent count", light.parent_count == 1, offset + 220)?;
-    assert_that!("parent ptr", light.parent_ptr != 0, offset + 224)?;
+    assert_that!("light range inv", light.range_inv == expected, offset + 216)?;
+    assert_that!("light parent count", light.parent_count == 1, offset + 220)?;
+    assert_that!("light parent ptr", light.parent_ptr != 0, offset + 224)?;
     Ok(())
 }
 

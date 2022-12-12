@@ -1,7 +1,28 @@
-use super::{Area, AreaPartition, BoundingBox, NodeFlags, Partition, Transformation};
-use crate::types::{Color, Range, Vec3};
+use super::{Area, AreaPartition, BoundingBox, NodeFlags, Partition};
+use crate::types::{Color, Matrix, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, Union};
+
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
+pub struct RotationTranslation {
+    pub rotation: Vec3,
+    pub translation: Vec3,
+}
+
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
+pub struct TranslationOnly {
+    pub translation: Vec3,
+    pub matrix: Option<Matrix>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Union)]
+#[repr(u16)]
+pub enum Transformation {
+    None,
+    ScaleOnly(Vec3),
+    RotationTranslation(RotationTranslation),
+    TranslationOnly(TranslationOnly),
+}
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Camera {
@@ -67,8 +88,8 @@ pub struct Lod {
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Object3d {
     pub name: String,
-    // pub transformation: Option<Transformation>,
-    // pub matrix_signs: u32,
+    pub transformation: Transformation,
+    pub matrix_signs: u32,
     pub flags: NodeFlags,
     pub zone_id: u32,
     pub area_partition: Option<AreaPartition>,

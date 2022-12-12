@@ -82,7 +82,7 @@ Not supported (yet?):
 
 ### Recoil
 
-* `gamez.zbd` files are supported, but nodes are not supported yet
+* `gamez.zbd` files are supported, but M6 and M9 are not supported yet
 * `anim.zbd` files are not supported yet
 
 ### Crimson Skies
@@ -191,6 +191,7 @@ where `--rtexture` and `--rmechtex` are optional.
 ### [0.6.0-rc3] - unreleased
 
 * Serialize C# enums as enums, not classes (codegen)
+* Support Recoil GameZ nodes (`lib`/`unzbd`/`rezbd`, breaking change)
 
 ### [0.6.0-rc2] - 2022-11-29
 

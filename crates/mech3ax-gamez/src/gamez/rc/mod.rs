@@ -120,7 +120,6 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZRcData) 
     let meshes_offset = materials_offset + materials::size_materials(material_array_size);
     let (nodes_offset, mesh_offsets) =
         meshes::size_meshes(meshes_offset, meshes_array_size, &gamez.meshes);
-    // let nodes_offset = meshes_offset + gamez.meshes.len() as u32;
 
     debug!(
         "Writing gamez header (rc, {}) at {}",

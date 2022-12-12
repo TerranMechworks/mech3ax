@@ -25,6 +25,21 @@ pub fn euler_to_matrix(rotation: &Vec3) -> Matrix {
     }
 }
 
+pub fn scale_to_matrix(scale: &Vec3) -> Matrix {
+    Matrix {
+        a: scale.x,
+        b: 0.0,
+        c: 0.0,
+        d: 0.0,
+        e: scale.y,
+        f: 0.0,
+        g: 0.0,
+        h: 0.0,
+        i: scale.z,
+    }
+}
+
+#[inline]
 fn extract_zero_sign(value: f32, index: u32) -> u32 {
     if value == 0.0 && 1.0f32.copysign(value) < 0.0 {
         1 << index

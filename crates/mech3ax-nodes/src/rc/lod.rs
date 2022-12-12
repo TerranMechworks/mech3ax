@@ -129,25 +129,29 @@ pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantR
 }
 
 fn assert_lod(lod: &LodRcC, offset: u32) -> Result<(bool, Range, f32, Option<u32>)> {
-    let level = assert_that!("level", bool lod.level, offset + 0)?;
-    assert_that!("range near sq", 0.0 <= lod.range_near_sq <= 1000.0 * 1000.0, offset + 4)?;
+    let level = assert_that!("lod level", bool lod.level, offset + 0)?;
+    assert_that!("lod range near sq", 0.0 <= lod.range_near_sq <= 1000.0 * 1000.0, offset + 4)?;
     let range_near = lod.range_near_sq.sqrt();
-    assert_that!("range far", lod.range_far > 0.0, offset + 8)?;
+    assert_that!("lod range far", lod.range_far > 0.0, offset + 8)?;
     let expected = lod.range_far * lod.range_far;
-    assert_that!("range far sq", lod.range_far_sq == expected, offset + 12)?;
+    assert_that!(
+        "lod range far sq",
+        lod.range_far_sq == expected,
+        offset + 12
+    )?;
 
-    assert_all_zero("field 16", offset + 16, &lod.zero16.0)?;
+    assert_all_zero("lod field 16", offset + 16, &lod.zero16.0)?;
 
-    assert_that!("field 60", lod.unk60 >= 0.0, offset + 60)?;
+    assert_that!("lod field 60", lod.unk60 >= 0.0, offset + 60)?;
     let expected = lod.unk60 * lod.unk60;
-    assert_that!("field 64", lod.unk64 == expected, offset + 64)?;
-    assert_that!("field 68", lod.one68 == 1, offset + 68)?;
-    let unk72 = assert_that!("field 72", bool lod.unk72, offset + 72)?;
+    assert_that!("lod field 64", lod.unk64 == expected, offset + 64)?;
+    assert_that!("lod field 68", lod.one68 == 1, offset + 68)?;
+    let unk72 = assert_that!("lod field 72", bool lod.unk72, offset + 72)?;
     let unk76 = if unk72 {
-        assert_that!("field 76", lod.unk76 != 0, offset + 76)?;
+        assert_that!("lod field 76", lod.unk76 != 0, offset + 76)?;
         Some(lod.unk76)
     } else {
-        assert_that!("field 76", lod.unk76 == 0, offset + 76)?;
+        assert_that!("lod field 76", lod.unk76 == 0, offset + 76)?;
         None
     };
 

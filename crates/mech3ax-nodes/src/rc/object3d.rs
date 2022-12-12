@@ -1,10 +1,11 @@
 use super::node::{NodeVariantRc, NodeVariantsRc};
 use crate::flags::NodeBitFlags;
-use crate::math::{apply_zero_signs, euler_to_matrix, extract_zero_signs, PI};
+use crate::math::{apply_zero_signs, euler_to_matrix, extract_zero_signs, scale_to_matrix, PI};
 use crate::types::ZONE_DEFAULT;
 use log::{debug, trace};
-use mech3ax_api_types::nodes::rc::Object3d;
-use mech3ax_api_types::nodes::Transformation;
+use mech3ax_api_types::nodes::rc::{
+    Object3d, RotationTranslation, Transformation, TranslationOnly,
+};
 use mech3ax_api_types::{static_assert_size, Matrix, ReprSize as _, Vec3};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -109,47 +110,116 @@ pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantR
     Ok(NodeVariantRc::Object3d(node))
 }
 
-fn assert_object3d(object3d: Object3dRcC, offset: u32) -> Result<Option<Transformation>> {
-    assert_that!("flags", object3d.flags in [32u32, 40u32], offset + 0)?;
-    assert_that!("opacity", object3d.opacity == 0.0, offset + 4)?;
-    assert_that!("field 008", object3d.zero008 == 0.0, offset + 8)?;
-    assert_that!("field 012", object3d.zero012 == 0.0, offset + 12)?;
-    assert_that!("field 016", object3d.zero016 == 0.0, offset + 16)?;
-    assert_that!("field 020", object3d.zero020 == 0.0, offset + 20)?;
-    assert_that!("scale", object3d.scale == SCALE_ONE, offset + 36)?;
-    assert_all_zero("field 096", offset + 96, &object3d.zero096.0)?;
+fn assert_object3d(object3d: Object3dRcC, offset: u32) -> Result<Transformation> {
+    assert_that!("object3d flags", object3d.flags in [32u32, 40u32, 48u32], offset + 0)?;
+    assert_that!("object3d opacity", object3d.opacity == 0.0, offset + 4)?;
+    assert_that!("object3d field 008", object3d.zero008 == 0.0, offset + 8)?;
+    assert_that!("object3d field 012", object3d.zero012 == 0.0, offset + 12)?;
+    assert_that!("object3d field 016", object3d.zero016 == 0.0, offset + 16)?;
+    assert_that!("object3d field 020", object3d.zero020 == 0.0, offset + 20)?;
+    assert_all_zero("object3d field 096", offset + 96, &object3d.zero096.0)?;
 
-    let transformation = if object3d.flags == 40 {
-        assert_that!("rotation", object3d.rotation == Vec3::DEFAULT, offset + 24)?;
-        assert_that!(
-            "translation",
-            object3d.translation == Vec3::DEFAULT,
-            offset + 84
-        )?;
-        assert_that!("matrix", object3d.matrix == Matrix::IDENTITY, offset + 48)?;
-        None
-    } else {
-        let rotation = object3d.rotation;
-        assert_that!("rotation x", -PI <= rotation.x <= PI, offset + 24)?;
-        assert_that!("rotation y", -PI <= rotation.y <= PI, offset + 28)?;
-        assert_that!("rotation z", -PI <= rotation.z <= PI, offset + 32)?;
-        let translation = object3d.translation;
-
-        let expected_matrix = euler_to_matrix(&rotation);
-        // in most cases, the calculated matrix is correct :/ for 2%, this fails (mw and pm)
-        let matrix = if expected_matrix == object3d.matrix {
-            None
-        } else {
-            Some(object3d.matrix)
-        };
-
-        Some(Transformation {
-            rotation,
-            translation,
-            matrix,
-        })
-    };
-    Ok(transformation)
+    match object3d.flags {
+        32 => {
+            // scale or rotation - possibly both, but never seen?
+            if object3d.scale != SCALE_ONE {
+                assert_that!(
+                    "object3d rotation 32",
+                    object3d.rotation == Vec3::DEFAULT,
+                    offset + 24
+                )?;
+                assert_that!(
+                    "object3d translation 32",
+                    object3d.translation == Vec3::DEFAULT,
+                    offset + 84
+                )?;
+                let expected = scale_to_matrix(&object3d.scale);
+                assert_that!(
+                    "object3d matrix 32",
+                    &object3d.matrix == &expected,
+                    offset + 48
+                )?;
+                Ok(Transformation::ScaleOnly(object3d.scale))
+            } else {
+                assert_that!("rotation x", -PI <= object3d.rotation.x <= PI, offset + 24)?;
+                assert_that!("rotation y", -PI <= object3d.rotation.y <= PI, offset + 28)?;
+                assert_that!("rotation z", -PI <= object3d.rotation.z <= PI, offset + 32)?;
+                let expected = euler_to_matrix(&object3d.rotation);
+                assert_that!(
+                    "object3d matrix 32",
+                    &object3d.matrix == &expected,
+                    offset + 48
+                )?;
+                Ok(Transformation::RotationTranslation(RotationTranslation {
+                    rotation: object3d.rotation,
+                    translation: object3d.translation,
+                }))
+            }
+        }
+        40 => {
+            // nothing
+            assert_that!(
+                "object3d scale 40",
+                object3d.scale == SCALE_ONE,
+                offset + 36
+            )?;
+            assert_that!(
+                "object3d rotation 40",
+                object3d.rotation == Vec3::DEFAULT,
+                offset + 24
+            )?;
+            assert_that!(
+                "object3d translation 40",
+                object3d.translation == Vec3::DEFAULT,
+                offset + 84
+            )?;
+            assert_that!(
+                "object3d matrix 40",
+                object3d.matrix == Matrix::IDENTITY,
+                offset + 48
+            )?;
+            Ok(Transformation::None)
+        }
+        48 => {
+            // translation only
+            assert_that!(
+                "object3d scale 48",
+                object3d.scale == SCALE_ONE,
+                offset + 36
+            )?;
+            assert_that!(
+                "object3d rotation 48",
+                object3d.rotation == Vec3::DEFAULT,
+                offset + 24
+            )?;
+            // in most cases, the calculated matrix is correct :/
+            // m1: 9.8%
+            // m2: 9.3%
+            // m3: 5.4%
+            // m4: 5.0%
+            // m5: 5.3%
+            // m6: N/A (couldn't parse)
+            // m7: 5.9%
+            // m8: 0.4%
+            // m9: N/A (couldn't parse)
+            // m10: 8.3%
+            // m11: 4.0%
+            // m12: 1.1%
+            // m13: 18.1%
+            let matrix = if object3d.matrix == Matrix::IDENTITY {
+                debug!("MAT PASS");
+                None
+            } else {
+                debug!("MAT FAIL");
+                Some(object3d.matrix)
+            };
+            Ok(Transformation::TranslationOnly(TranslationOnly {
+                translation: object3d.translation,
+                matrix,
+            }))
+        }
+        _ => unreachable!(),
+    }
 }
 
 pub fn read(
@@ -166,8 +236,8 @@ pub fn read(
     let object3d: Object3dRcC = read.read_struct()?;
     trace!("{:#?}", object3d);
 
-    // let matrix_signs = extract_zero_signs(&object3d.matrix);
-    // let transformation = assert_object3d(object3d, read.prev)?;
+    let matrix_signs = extract_zero_signs(&object3d.matrix);
+    let transformation = assert_object3d(object3d, read.prev)?;
 
     let parent = if node.has_parent {
         Some(read.read_u32()?)
@@ -189,8 +259,8 @@ pub fn read(
         zone_id: node.zone_id,
         mesh_index: node.mesh_index,
         area_partition: node.area_partition,
-        // transformation,
-        // matrix_signs,
+        transformation,
+        matrix_signs,
         parent,
         children,
         data_ptr: node.data_ptr,
@@ -235,24 +305,32 @@ pub fn write(
         write.offset
     );
 
-    // let (flags, rotation, translation, matrix) = object3d
-    //     .transformation
-    //     .as_ref()
-    //     .map(|tr| {
-    //         let matrix = tr
-    //             .matrix
-    //             .as_ref()
-    //             .cloned()
-    //             .unwrap_or_else(|| euler_to_matrix(&tr.rotation));
-    //         (32, tr.rotation, tr.translation, matrix)
-    //     })
-    //     .unwrap_or((40, Vec3::DEFAULT, Vec3::DEFAULT, Matrix::IDENTITY));
-    let flags = 40;
-    let rotation = Vec3::DEFAULT;
-    let translation = Vec3::DEFAULT;
-    let matrix = Matrix::IDENTITY;
+    let mut scale = SCALE_ONE;
+    let mut rotation = Vec3::DEFAULT;
+    let mut translation = Vec3::DEFAULT;
+    let mut matrix = Matrix::IDENTITY;
 
-    // let matrix = apply_zero_signs(&matrix, object3d.matrix_signs);
+    let flags = match &object3d.transformation {
+        Transformation::None => 40,
+        Transformation::ScaleOnly(scl) => {
+            matrix = scale_to_matrix(scl);
+            scale = scl.clone();
+            32
+        }
+        Transformation::RotationTranslation(tr) => {
+            matrix = euler_to_matrix(&tr.rotation);
+            rotation = tr.rotation.clone();
+            translation = tr.translation.clone();
+            32
+        }
+        Transformation::TranslationOnly(tr) => {
+            matrix = tr.matrix.as_ref().unwrap_or(&Matrix::IDENTITY).clone();
+            translation = tr.translation;
+            48
+        }
+    };
+
+    let matrix = apply_zero_signs(&matrix, object3d.matrix_signs);
 
     let object3dc = Object3dRcC {
         flags,
@@ -262,7 +340,7 @@ pub fn write(
         zero016: 0.0,
         zero020: 0.0,
         rotation,
-        scale: SCALE_ONE,
+        scale,
         matrix,
         translation,
         zero096: Zeros([0u8; 48]),
