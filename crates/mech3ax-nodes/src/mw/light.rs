@@ -106,22 +106,26 @@ pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantM
 
 fn assert_light(light: &LightMwC, offset: u32) -> Result<()> {
     assert_that!(
-        "translation",
+        "light translation",
         light.translation == Vec3::DEFAULT,
         offset + 12
     )?;
-    assert_all_zero("field 024", offset + 24, &light.zero024.0)?;
+    assert_all_zero("light field 024", offset + 24, &light.zero024.0)?;
 
-    assert_that!("field 136", light.one136 == 1.0, offset + 136)?;
-    assert_that!("field 140", light.zero140 == 0.0, offset + 140)?;
-    assert_that!("field 144", light.zero144 == 0.0, offset + 144)?;
-    assert_that!("field 148", light.zero148 == 0.0, offset + 148)?;
-    assert_that!("field 152", light.zero152 == 0.0, offset + 152)?;
+    assert_that!("light field 136", light.one136 == 1.0, offset + 136)?;
+    assert_that!("light field 140", light.zero140 == 0.0, offset + 140)?;
+    assert_that!("light field 144", light.zero144 == 0.0, offset + 144)?;
+    assert_that!("light field 148", light.zero148 == 0.0, offset + 148)?;
+    assert_that!("light field 152", light.zero152 == 0.0, offset + 152)?;
 
-    assert_that!("diffuse", 0.0 <= light.diffuse <= 1.0, offset + 156)?;
-    assert_that!("ambient", 0.0 <= light.ambient <= 1.0, offset + 160)?;
+    assert_that!("light diffuse", 0.0 <= light.diffuse <= 1.0, offset + 156)?;
+    assert_that!("light ambient", 0.0 <= light.ambient <= 1.0, offset + 160)?;
 
-    assert_that!("color", light.color == Color::WHITE_NORM, offset + 164)?;
+    assert_that!(
+        "light color",
+        light.color == Color::WHITE_NORM,
+        offset + 164
+    )?;
 
     let flags = LightFlags::from_bits(light.flags).ok_or_else(|| {
         assert_with_msg!(
@@ -130,23 +134,31 @@ fn assert_light(light: &LightMwC, offset: u32) -> Result<()> {
             offset + 176
         )
     })?;
-    assert_that!("flag", flags == LightFlags::DEFAULT, offset + 176)?;
+    assert_that!("light flag", flags == LightFlags::DEFAULT, offset + 176)?;
 
-    assert_that!("range near", light.range.min > 0.0, offset + 180)?;
-    assert_that!("range far", light.range.max > light.range.min, offset + 184)?;
+    assert_that!("light range near", light.range.min > 0.0, offset + 180)?;
+    assert_that!(
+        "light range far",
+        light.range.max > light.range.min,
+        offset + 184
+    )?;
     let expected = light.range.min * light.range.min;
     assert_that!(
-        "range near sq",
+        "light range near sq",
         light.range_near_sq == expected,
         offset + 188
     )?;
     let expected = light.range.max * light.range.max;
-    assert_that!("range far sq", light.range_far_sq == expected, offset + 192)?;
+    assert_that!(
+        "light range far sq",
+        light.range_far_sq == expected,
+        offset + 192
+    )?;
     let expected = 1.0 / (light.range.max - light.range.min);
-    assert_that!("range inv", light.range_inv == expected, offset + 196)?;
+    assert_that!("light range inv", light.range_inv == expected, offset + 196)?;
 
-    assert_that!("parent count", light.parent_count == 1, offset + 200)?;
-    assert_that!("parent ptr", light.parent_ptr != 0, offset + 204)?;
+    assert_that!("light parent count", light.parent_count == 1, offset + 200)?;
+    assert_that!("light parent ptr", light.parent_ptr != 0, offset + 204)?;
     Ok(())
 }
 

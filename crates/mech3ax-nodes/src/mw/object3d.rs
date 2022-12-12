@@ -108,28 +108,36 @@ pub fn assert_variants(
 
 fn assert_object3d(object3d: Object3dMwC, offset: u32) -> Result<Option<Transformation>> {
     assert_that!("flags", object3d.flags in [32u32, 40u32], offset + 0)?;
-    assert_that!("opacity", object3d.opacity == 0.0, offset + 4)?;
-    assert_that!("field 008", object3d.zero008 == 0.0, offset + 8)?;
-    assert_that!("field 012", object3d.zero012 == 0.0, offset + 12)?;
-    assert_that!("field 016", object3d.zero016 == 0.0, offset + 16)?;
-    assert_that!("field 020", object3d.zero020 == 0.0, offset + 20)?;
-    assert_that!("scale", object3d.scale == SCALE_ONE, offset + 36)?;
-    assert_all_zero("field 096", offset + 96, &object3d.zero096.0)?;
+    assert_that!("object3d opacity", object3d.opacity == 0.0, offset + 4)?;
+    assert_that!("object3d field 008", object3d.zero008 == 0.0, offset + 8)?;
+    assert_that!("object3d field 012", object3d.zero012 == 0.0, offset + 12)?;
+    assert_that!("object3d field 016", object3d.zero016 == 0.0, offset + 16)?;
+    assert_that!("object3d field 020", object3d.zero020 == 0.0, offset + 20)?;
+    assert_that!("object3d scale", object3d.scale == SCALE_ONE, offset + 36)?;
+    assert_all_zero("object3d field 096", offset + 96, &object3d.zero096.0)?;
 
     let transformation = if object3d.flags == 40 {
-        assert_that!("rotation", object3d.rotation == Vec3::DEFAULT, offset + 24)?;
         assert_that!(
-            "translation",
+            "object3d rotation",
+            object3d.rotation == Vec3::DEFAULT,
+            offset + 24
+        )?;
+        assert_that!(
+            "object3d translation",
             object3d.translation == Vec3::DEFAULT,
             offset + 84
         )?;
-        assert_that!("matrix", object3d.matrix == Matrix::IDENTITY, offset + 48)?;
+        assert_that!(
+            "object3d matrix",
+            object3d.matrix == Matrix::IDENTITY,
+            offset + 48
+        )?;
         None
     } else {
         let rotation = object3d.rotation;
-        assert_that!("rotation x", -PI <= rotation.x <= PI, offset + 24)?;
-        assert_that!("rotation y", -PI <= rotation.y <= PI, offset + 28)?;
-        assert_that!("rotation z", -PI <= rotation.z <= PI, offset + 32)?;
+        assert_that!("object3d rotation x", -PI <= rotation.x <= PI, offset + 24)?;
+        assert_that!("object3d rotation y", -PI <= rotation.y <= PI, offset + 28)?;
+        assert_that!("object3d rotation z", -PI <= rotation.z <= PI, offset + 32)?;
         let translation = object3d.translation;
 
         let expected_matrix = euler_to_matrix(&rotation);

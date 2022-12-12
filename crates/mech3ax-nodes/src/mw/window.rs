@@ -97,16 +97,28 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -
     let window: WindowMwC = read.read_struct()?;
     trace!("{:#?}", window);
 
-    assert_that!("origin x", window.origin_x == 0, read.prev + 0)?;
-    assert_that!("origin y", window.origin_y == 0, read.prev + 4)?;
-    assert_that!("resolution x", window.resolution_x == 320, read.prev + 8)?;
-    assert_that!("resolution y", window.resolution_y == 200, read.prev + 12)?;
-    assert_all_zero("field 016", read.prev + 16, &window.zero016.0)?;
-    assert_that!("buffer index", window.buffer_index == -1, read.prev + 228)?;
-    assert_that!("buffer ptr", window.buffer_ptr == 0, read.prev + 232)?;
-    assert_that!("zero236", window.zero236 == 0, read.prev + 236)?;
-    assert_that!("zero240", window.zero240 == 0, read.prev + 240)?;
-    assert_that!("zero244", window.zero244 == 0, read.prev + 244)?;
+    assert_that!("window origin x", window.origin_x == 0, read.prev + 0)?;
+    assert_that!("window origin y", window.origin_y == 0, read.prev + 4)?;
+    assert_that!(
+        "window resolution x",
+        window.resolution_x == 320,
+        read.prev + 8
+    )?;
+    assert_that!(
+        "window resolution y",
+        window.resolution_y == 200,
+        read.prev + 12
+    )?;
+    assert_all_zero("window field 016", read.prev + 16, &window.zero016.0)?;
+    assert_that!(
+        "window buffer index",
+        window.buffer_index == -1,
+        read.prev + 228
+    )?;
+    assert_that!("window buffer ptr", window.buffer_ptr == 0, read.prev + 232)?;
+    assert_that!("window zero236", window.zero236 == 0, read.prev + 236)?;
+    assert_that!("window zero240", window.zero240 == 0, read.prev + 240)?;
+    assert_that!("window zero244", window.zero244 == 0, read.prev + 244)?;
 
     Ok(Window {
         name: WINDOW_NAME.to_owned(),

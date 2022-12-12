@@ -251,22 +251,30 @@ fn read_partitions(
 }
 
 fn assert_world(world: &WorldMwC, offset: u32) -> Result<(Area, RangeI32, RangeI32, bool)> {
-    assert_that!("flag", world.flags == 0, offset + 0)?;
+    assert_that!("world flags", world.flags == 0, offset + 0)?;
 
     // LINEAR = 1, EXPONENTIAL = 2 (never set)
     assert_that!(
-        "fog state",
+        "world fog state",
         world.fog_state == FOG_STATE_LINEAR,
         offset + 16
     )?;
-    assert_that!("fog color", world.fog_color == Color::BLACK, offset + 20)?;
-    assert_that!("fog range", world.fog_range == Range::DEFAULT, offset + 32)?;
     assert_that!(
-        "fog altitude",
+        "world fog color",
+        world.fog_color == Color::BLACK,
+        offset + 20
+    )?;
+    assert_that!(
+        "world fog range",
+        world.fog_range == Range::DEFAULT,
+        offset + 32
+    )?;
+    assert_that!(
+        "world fog altitude",
         world.fog_altitude == Range::DEFAULT,
         offset + 40
     )?;
-    assert_that!("fog density", world.fog_density == 0.0, offset + 48)?;
+    assert_that!("world fog density", world.fog_density == 0.0, offset + 48)?;
 
     // we need these values to be integers for the partition logic
     let area_left = world.area_left as i32;
@@ -274,29 +282,37 @@ fn assert_world(world: &WorldMwC, offset: u32) -> Result<(Area, RangeI32, RangeI
     let area_right = world.area_right as i32;
     let area_top = world.area_top as i32;
     assert_that!(
-        "area left",
+        "world area left",
         world.area_left == area_left as f32,
         offset + 52
     )?;
     assert_that!(
-        "area bottom",
+        "world area bottom",
         world.area_bottom == area_bottom as f32,
         offset + 56
     )?;
     assert_that!(
-        "area right",
+        "world area right",
         world.area_right == area_right as f32,
         offset + 68
     )?;
-    assert_that!("area top", world.area_top == area_top as f32, offset + 72)?;
+    assert_that!(
+        "world area top",
+        world.area_top == area_top as f32,
+        offset + 72
+    )?;
     // validate rect
-    assert_that!("area right", area_right > area_left, offset + 68)?;
-    assert_that!("area bottom", area_bottom > area_top, offset + 72)?;
+    assert_that!("world area right", area_right > area_left, offset + 68)?;
+    assert_that!("world area bottom", area_bottom > area_top, offset + 72)?;
     let width = area_right - area_left;
     let height = area_top - area_bottom;
-    assert_that!("area width", world.area_width == width as f32, offset + 60)?;
     assert_that!(
-        "area height",
+        "world area width",
+        world.area_width == width as f32,
+        offset + 60
+    )?;
+    assert_that!(
+        "world area height",
         world.area_height == height as f32,
         offset + 64
     )?;
@@ -308,64 +324,72 @@ fn assert_world(world: &WorldMwC, offset: u32) -> Result<(Area, RangeI32, RangeI
     };
 
     assert_that!(
-        "partition max feat",
+        "world partition max feat",
         world.partition_max_dec_feature_count == 16,
         offset + 76
     )?;
     assert_that!(
-        "virtual partition",
+        "world virtual partition",
         world.virtual_partition == 1,
         offset + 80
     )?;
 
-    assert_that!("vp x min", world.virt_partition_x_min == 1, offset + 84)?;
-    assert_that!("vp y min", world.virt_partition_y_min == 1, offset + 88)?;
+    assert_that!(
+        "world vp x min",
+        world.virt_partition_x_min == 1,
+        offset + 84
+    )?;
+    assert_that!(
+        "world vp y min",
+        world.virt_partition_y_min == 1,
+        offset + 88
+    )?;
 
     assert_that!(
-        "vp x size",
+        "world vp x size",
         world.virt_partition_x_size == 256.0,
         offset + 100
     )?;
     assert_that!(
-        "vp y size",
+        "world vp y size",
         world.virt_partition_y_size == -256.0,
         offset + 104
     )?;
     assert_that!(
-        "vp x half",
+        "world vp x half",
         world.virt_partition_x_half == 128.0,
         offset + 108
     )?;
     assert_that!(
-        "vp y half",
+        "world vp y half",
         world.virt_partition_y_half == -128.0,
         offset + 112
     )?;
     assert_that!(
-        "vp x inv",
+        "world vp x inv",
         world.virt_partition_x_inv == 1.0 / 256.0,
         offset + 116
     )?;
     assert_that!(
-        "vp y inv",
+        "world vp y inv",
         world.virt_partition_y_inv == 1.0 / -256.0,
         offset + 120
     )?;
     // this is sqrt(x_size * x_size + y_size * y_size) * -0.5, but because of the
     // (poor) sqrt approximation used, it comes out as -192.0 instead of -181.0
     assert_that!(
-        "vp diagonal",
+        "world vp diagonal",
         world.virt_partition_diag == -192.0,
         offset + 124
     )?;
 
     assert_that!(
-        "vp inc tol low",
+        "world vp inc tol low",
         world.partition_inclusion_tol_low == 3.0,
         offset + 128
     )?;
     assert_that!(
-        "vp inc tol high",
+        "world vp inc tol high",
         world.partition_inclusion_tol_high == 3.0,
         offset + 132
     )?;
@@ -376,23 +400,23 @@ fn assert_world(world: &WorldMwC, offset: u32) -> Result<(Area, RangeI32, RangeI
     let area_y = RangeI32::new(area_bottom, area_top, -256);
 
     assert_that!(
-        "vp x count",
+        "world vp x count",
         world.virt_partition_x_count == area_x.len() as u32,
         offset + 136
     )?;
     assert_that!(
-        "vp y count",
+        "world vp y count",
         world.virt_partition_y_count == area_y.len() as u32,
         offset + 140
     )?;
-    assert_that!("ap used", world.area_partition_used == 0, offset + 4)?;
+    assert_that!("world ap used", world.area_partition_used == 0, offset + 4)?;
     assert_that!(
-        "vp x max",
+        "world vp x max",
         world.virt_partition_x_max == world.virt_partition_x_count - 1,
         offset + 92
     )?;
     assert_that!(
-        "vp y max",
+        "world vp y max",
         world.virt_partition_y_max == world.virt_partition_y_count - 1,
         offset + 96
     )?;
@@ -401,24 +425,28 @@ fn assert_world(world: &WorldMwC, offset: u32) -> Result<(Area, RangeI32, RangeI
     let virt_partition_count_max = world.virt_partition_x_count * world.virt_partition_y_count;
     let virt_partition_count_min = virt_partition_count_max - 1;
     assert_that!(
-        "ap count",
+        "world ap count",
         virt_partition_count_min <= world.area_partition_count <= virt_partition_count_max,
         offset + 8
     )?;
     let fudge_count = world.area_partition_count != virt_partition_count_max;
-    assert_that!("ap ptr", world.area_partition_ptr != 0, offset + 12)?;
-    assert_that!("vp ptr", world.virt_partition_ptr != 0, offset + 144)?;
+    assert_that!("world ap ptr", world.area_partition_ptr != 0, offset + 12)?;
+    assert_that!("world vp ptr", world.virt_partition_ptr != 0, offset + 144)?;
 
-    assert_that!("field 148", world.one148 == 1.0, offset + 148)?;
-    assert_that!("field 152", world.one152 == 1.0, offset + 152)?;
-    assert_that!("field 156", world.one156 == 1.0, offset + 156)?;
-    assert_that!("children count", world.children_count == 1, offset + 160)?;
-    assert_that!("children ptr", world.children_ptr != 0, offset + 164)?;
-    assert_that!("lights ptr", world.lights_ptr != 0, offset + 168)?;
-    assert_that!("field 172", world.zero172 == 0, offset + 172)?;
-    assert_that!("field 176", world.zero176 == 0, offset + 176)?;
-    assert_that!("field 180", world.zero180 == 0, offset + 180)?;
-    assert_that!("field 184", world.zero184 == 0, offset + 184)?;
+    assert_that!("world field 148", world.one148 == 1.0, offset + 148)?;
+    assert_that!("world field 152", world.one152 == 1.0, offset + 152)?;
+    assert_that!("world field 156", world.one156 == 1.0, offset + 156)?;
+    assert_that!(
+        "world children count",
+        world.children_count == 1,
+        offset + 160
+    )?;
+    assert_that!("world children ptr", world.children_ptr != 0, offset + 164)?;
+    assert_that!("world lights ptr", world.lights_ptr != 0, offset + 168)?;
+    assert_that!("world field 172", world.zero172 == 0, offset + 172)?;
+    assert_that!("world field 176", world.zero176 == 0, offset + 176)?;
+    assert_that!("world field 180", world.zero180 == 0, offset + 180)?;
+    assert_that!("world field 184", world.zero184 == 0, offset + 184)?;
 
     Ok((area, area_x, area_y, fudge_count))
 }

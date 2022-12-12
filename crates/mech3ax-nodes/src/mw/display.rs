@@ -96,12 +96,20 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -
     let display: DisplayMwC = read.read_struct()?;
     trace!("{:#?}", display);
 
-    assert_that!("origin x", display.origin_x == 0, read.prev + 0)?;
-    assert_that!("origin y", display.origin_y == 0, read.prev + 4)?;
-    assert_that!("resolution x", display.resolution_x == 640, read.prev + 8)?;
-    assert_that!("resolution y", display.resolution_y == 400, read.prev + 12)?;
+    assert_that!("display origin x", display.origin_x == 0, read.prev + 0)?;
+    assert_that!("display origin y", display.origin_y == 0, read.prev + 4)?;
     assert_that!(
-        "clear color",
+        "display resolution x",
+        display.resolution_x == 640,
+        read.prev + 8
+    )?;
+    assert_that!(
+        "display resolution y",
+        display.resolution_y == 400,
+        read.prev + 12
+    )?;
+    assert_that!(
+        "display clear color",
         display.clear_color == CLEAR_COLOR,
         read.prev + 16
     )?;
