@@ -5,28 +5,30 @@ use mech3ax_api_types::nodes::mw::Empty;
 use mech3ax_common::{assert_that, Result};
 
 const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::BASE;
-const NEVER_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
-    NodeBitFlags::LANDMARK.bits()
-        | NodeBitFlags::HAS_MESH.bits()
-        | NodeBitFlags::TERRAIN.bits()
-        | NodeBitFlags::CAN_MODIFY.bits()
-        | NodeBitFlags::CLIP_TO.bits(),
+const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
+    0
+    // | NodeBitFlags::ACTIVE.bits()
+    | NodeBitFlags::ALTITUDE_SURFACE.bits()
+    | NodeBitFlags::INTERSECT_SURFACE.bits()
+    | NodeBitFlags::INTERSECT_BBOX.bits()
+    // | NodeBitFlags::LANDMARK.bits()
+    | NodeBitFlags::UNK08.bits()
+    // | NodeBitFlags::HAS_MESH.bits()
+    | NodeBitFlags::UNK10.bits()
+    // | NodeBitFlags::TERRAIN.bits()
+    // | NodeBitFlags::CAN_MODIFY.bits()
+    // | NodeBitFlags::CLIP_TO.bits()
+    // | NodeBitFlags::TREE_VALID.bits()
+    // | NodeBitFlags::ID_ZONE_CHECK.bits()
+    | NodeBitFlags::UNK25.bits()
+    | NodeBitFlags::UNK28.bits()
+    | 0,
 );
 
 pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantMw> {
     // cannot assert name
-    let const_flags = node.flags & (ALWAYS_PRESENT | NEVER_PRESENT);
+    let const_flags = node.flags & !VARIABLE_FLAGS;
     assert_that!("empty flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
-    // variable
-    /*
-    const ALTITUDE_SURFACE = 1 << 3;
-    const INTERSECT_SURFACE = 1 << 4;
-    const INTERSECT_BBOX = 1 << 5;
-    const UNK08 = 1 << 8;
-    const UNK10 = 1 << 10;
-    const UNK25 = 1 << 25;
-    const UNK28 = 1 << 28;
-    */
     // zero040 (40) already asserted
     assert_that!("empty field 044", node.unk044 in [1, 3, 5, 7], offset + 44)?;
     assert_that!("empty zone id", node.zone_id in [1, ZONE_DEFAULT], offset + 48)?;

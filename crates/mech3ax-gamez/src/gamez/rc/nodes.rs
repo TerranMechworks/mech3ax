@@ -1,7 +1,7 @@
 use super::NODE_ARRAY_SIZE;
 use mech3ax_api_types::nodes::rc::*;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
+use mech3ax_common::{assert_len, assert_that, Result};
 use mech3ax_nodes::rc::{
     read_node_data, read_node_info, read_node_info_zero, size_node, write_node_data,
     write_node_info, write_node_info_zero, NodeVariantRc, NODE_RC_C_SIZE,

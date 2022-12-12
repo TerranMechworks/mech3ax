@@ -30,9 +30,42 @@ struct Object3dMwC {
 }
 static_assert_size!(Object3dMwC, 144);
 
-const ALWAYS_PRESENT: NodeBitFlags =
-    NodeBitFlags::from_bits_truncate(NodeBitFlags::BASE.bits() | NodeBitFlags::UNK25.bits());
-const NEVER_PRESENT: NodeBitFlags = NodeBitFlags::UNK28;
+const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
+    0
+    | NodeBitFlags::ACTIVE.bits()
+    // | NodeBitFlags::ALTITUDE_SURFACE.bits()
+    // | NodeBitFlags::INTERSECT_SURFACE.bits()
+    // | NodeBitFlags::INTERSECT_BBOX.bits()
+    // | NodeBitFlags::LANDMARK.bits()
+    // | NodeBitFlags::UNK08.bits()
+    // | NodeBitFlags::HAS_MESH.bits()
+    // | NodeBitFlags::UNK10.bits()
+    // | NodeBitFlags::TERRAIN.bits()
+    // | NodeBitFlags::CAN_MODIFY.bits()
+    // | NodeBitFlags::CLIP_TO.bits()
+    | NodeBitFlags::TREE_VALID.bits()
+    | NodeBitFlags::ID_ZONE_CHECK.bits()
+    | NodeBitFlags::UNK25.bits(), // | NodeBitFlags::UNK28.bits()
+);
+const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
+    0
+    // | NodeBitFlags::ACTIVE.bits()
+    | NodeBitFlags::ALTITUDE_SURFACE.bits()
+    | NodeBitFlags::INTERSECT_SURFACE.bits()
+    | NodeBitFlags::INTERSECT_BBOX.bits()
+    | NodeBitFlags::LANDMARK.bits()
+    | NodeBitFlags::UNK08.bits()
+    | NodeBitFlags::HAS_MESH.bits()
+    | NodeBitFlags::UNK10.bits()
+    | NodeBitFlags::TERRAIN.bits()
+    | NodeBitFlags::CAN_MODIFY.bits()
+    | NodeBitFlags::CLIP_TO.bits()
+    // | NodeBitFlags::TREE_VALID.bits()
+    // | NodeBitFlags::ID_ZONE_CHECK.bits()
+    // | NodeBitFlags::UNK25.bits()
+    // | NodeBitFlags::UNK28.bits()
+    | 0,
+);
 
 const SCALE_ONE: Vec3 = Vec3 {
     x: 1.0,
@@ -47,21 +80,8 @@ pub fn assert_variants(
     mesh_index_is_ptr: bool,
 ) -> Result<NodeVariantMw> {
     // cannot assert name
-    let const_flags = node.flags & (ALWAYS_PRESENT | NEVER_PRESENT);
+    let const_flags = node.flags & !VARIABLE_FLAGS;
     assert_that!("object3d flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
-    // variable
-    /*
-    const ALTITUDE_SURFACE = 1 << 3;
-    const INTERSECT_SURFACE = 1 << 4;
-    const INTERSECT_BBOX = 1 << 5;
-    const LANDMARK = 1 << 7;
-    const UNK08 = 1 << 8;
-    const HAS_MESH = 1 << 9;
-    const UNK10 = 1 << 10;
-    const TERRAIN = 1 << 15;
-    const CAN_MODIFY = 1 << 16;
-    const CLIP_TO = 1 << 17;
-    */
     // zero040 (40) already asserted
     assert_that!("object3d field 044", node.unk044 == 1, offset + 44)?;
     if node.zone_id != ZONE_DEFAULT {
