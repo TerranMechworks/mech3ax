@@ -145,6 +145,27 @@ pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantM
     })
 }
 
+pub fn make_variants(world: &World) -> Result<NodeVariantsMw> {
+    let children_count = assert_len!(u32, world.children.len(), "world children")?;
+    Ok(NodeVariantsMw {
+        name: WORLD_NAME.to_owned(),
+        flags: NodeBitFlags::DEFAULT,
+        unk044: 0,
+        zone_id: ZONE_DEFAULT,
+        data_ptr: world.data_ptr,
+        mesh_index: -1,
+        area_partition: None,
+        has_parent: false,
+        parent_array_ptr: 0,
+        children_count,
+        children_array_ptr: world.children_array_ptr,
+        unk116: BoundingBox::EMPTY,
+        unk140: BoundingBox::EMPTY,
+        unk164: BoundingBox::EMPTY,
+        unk196: 0,
+    })
+}
+
 fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Result<Partition> {
     debug!(
         "Reading world partition data x: {}, y: {} (mw, {}) at {}",
@@ -495,27 +516,6 @@ pub fn read(
         wrapped,
         has_parent: false,
         children_count,
-    })
-}
-
-pub fn make_variants(world: &World) -> Result<NodeVariantsMw> {
-    let children_count = assert_len!(u32, world.children.len(), "world children")?;
-    Ok(NodeVariantsMw {
-        name: WORLD_NAME.to_owned(),
-        flags: NodeBitFlags::DEFAULT,
-        unk044: 0,
-        zone_id: ZONE_DEFAULT,
-        data_ptr: world.data_ptr,
-        mesh_index: -1,
-        area_partition: None,
-        has_parent: false,
-        parent_array_ptr: 0,
-        children_count,
-        children_array_ptr: world.children_array_ptr,
-        unk116: BoundingBox::EMPTY,
-        unk140: BoundingBox::EMPTY,
-        unk164: BoundingBox::EMPTY,
-        unk196: 0,
     })
 }
 

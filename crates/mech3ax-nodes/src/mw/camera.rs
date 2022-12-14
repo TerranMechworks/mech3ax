@@ -115,6 +115,26 @@ pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantM
     })
 }
 
+pub fn make_variants(camera: &Camera) -> NodeVariantsMw {
+    NodeVariantsMw {
+        name: CAMERA_NAME.to_owned(),
+        flags: NodeBitFlags::DEFAULT,
+        unk044: 0,
+        zone_id: ZONE_DEFAULT,
+        data_ptr: camera.data_ptr,
+        mesh_index: -1,
+        area_partition: None,
+        has_parent: false,
+        parent_array_ptr: 0,
+        children_count: 0,
+        children_array_ptr: 0,
+        unk116: BoundingBox::EMPTY,
+        unk140: BoundingBox::EMPTY,
+        unk164: BoundingBox::EMPTY,
+        unk196: 0,
+    }
+}
+
 fn assert_camera(camera: CameraMwC, offset: u32) -> Result<(Range, Range)> {
     assert_that!("camera world index", camera.world_index == 0, offset + 0)?;
     assert_that!("camera window index", camera.window_index == 1, offset + 4)?;
@@ -266,26 +286,6 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -
         fov,
         data_ptr,
     })
-}
-
-pub fn make_variants(camera: &Camera) -> NodeVariantsMw {
-    NodeVariantsMw {
-        name: CAMERA_NAME.to_owned(),
-        flags: NodeBitFlags::DEFAULT,
-        unk044: 0,
-        zone_id: ZONE_DEFAULT,
-        data_ptr: camera.data_ptr,
-        mesh_index: -1,
-        area_partition: None,
-        has_parent: false,
-        parent_array_ptr: 0,
-        children_count: 0,
-        children_array_ptr: 0,
-        unk116: BoundingBox::EMPTY,
-        unk140: BoundingBox::EMPTY,
-        unk164: BoundingBox::EMPTY,
-        unk196: 0,
-    }
 }
 
 pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera, index: usize) -> Result<()> {

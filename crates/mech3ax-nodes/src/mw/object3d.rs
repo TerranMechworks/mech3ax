@@ -126,6 +126,27 @@ pub fn assert_variants(
     Ok(NodeVariantMw::Object3d(node))
 }
 
+pub fn make_variants(object3d: &Object3d) -> Result<NodeVariantsMw> {
+    let children_count = assert_len!(u32, object3d.children.len(), "object 3d children")?;
+    Ok(NodeVariantsMw {
+        name: object3d.name.clone(),
+        flags: NodeBitFlags::from(&object3d.flags),
+        unk044: 1,
+        zone_id: object3d.zone_id,
+        data_ptr: object3d.data_ptr,
+        mesh_index: object3d.mesh_index,
+        area_partition: object3d.area_partition,
+        has_parent: object3d.parent.is_some(),
+        parent_array_ptr: object3d.parent_array_ptr,
+        children_count,
+        children_array_ptr: object3d.children_array_ptr,
+        unk116: object3d.unk116,
+        unk140: object3d.unk140,
+        unk164: object3d.unk164,
+        unk196: 160,
+    })
+}
+
 fn assert_object3d(object3d: Object3dMwC, offset: u32) -> Result<Option<Transformation>> {
     assert_that!("flags", object3d.flags in [32u32, 40u32], offset + 0)?;
     assert_that!("object3d opacity", object3d.opacity == 0.0, offset + 4)?;
@@ -216,28 +237,6 @@ pub fn read(
         wrapped,
         has_parent: node.has_parent,
         children_count: node.children_count,
-    })
-}
-
-pub fn make_variants(object3d: &Object3d) -> Result<NodeVariantsMw> {
-    let flags = NodeBitFlags::from(&object3d.flags);
-    let children_count = assert_len!(u32, object3d.children.len(), "object 3d children")?;
-    Ok(NodeVariantsMw {
-        name: object3d.name.clone(),
-        flags,
-        unk044: 1,
-        zone_id: object3d.zone_id,
-        data_ptr: object3d.data_ptr,
-        mesh_index: object3d.mesh_index,
-        area_partition: object3d.area_partition,
-        has_parent: object3d.parent.is_some(),
-        parent_array_ptr: object3d.parent_array_ptr,
-        children_count,
-        children_array_ptr: object3d.children_array_ptr,
-        unk116: object3d.unk116,
-        unk140: object3d.unk140,
-        unk164: object3d.unk164,
-        unk196: 160,
     })
 }
 

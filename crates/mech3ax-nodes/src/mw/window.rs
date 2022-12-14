@@ -87,6 +87,26 @@ pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantM
     })
 }
 
+pub fn make_variants(window: &Window) -> NodeVariantsMw {
+    NodeVariantsMw {
+        name: WINDOW_NAME.to_owned(),
+        flags: NodeBitFlags::DEFAULT,
+        unk044: 0,
+        zone_id: ZONE_DEFAULT,
+        data_ptr: window.data_ptr,
+        mesh_index: -1,
+        area_partition: None,
+        has_parent: false,
+        parent_array_ptr: 0,
+        children_count: 0,
+        children_array_ptr: 0,
+        unk116: BoundingBox::EMPTY,
+        unk140: BoundingBox::EMPTY,
+        unk164: BoundingBox::EMPTY,
+        unk196: 0,
+    }
+}
+
 pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -> Result<Window> {
     debug!(
         "Reading window node data {} (mw, {}) at {}",
@@ -126,26 +146,6 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -
         resolution_y: window.resolution_y,
         data_ptr,
     })
-}
-
-pub fn make_variants(window: &Window) -> NodeVariantsMw {
-    NodeVariantsMw {
-        name: WINDOW_NAME.to_owned(),
-        flags: NodeBitFlags::DEFAULT,
-        unk044: 0,
-        zone_id: ZONE_DEFAULT,
-        data_ptr: window.data_ptr,
-        mesh_index: -1,
-        area_partition: None,
-        has_parent: false,
-        parent_array_ptr: 0,
-        children_count: 0,
-        children_array_ptr: 0,
-        unk116: BoundingBox::EMPTY,
-        unk140: BoundingBox::EMPTY,
-        unk164: BoundingBox::EMPTY,
-        unk196: 0,
-    }
 }
 
 pub fn write(write: &mut CountingWriter<impl Write>, window: &Window, index: usize) -> Result<()> {

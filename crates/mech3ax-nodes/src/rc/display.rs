@@ -76,6 +76,25 @@ pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantR
     })
 }
 
+pub fn make_variants(display: &Display) -> NodeVariantsRc {
+    NodeVariantsRc {
+        name: DISPLAY_NAME.to_owned(),
+        flags: NodeBitFlags::DEFAULT,
+        unk044: 0,
+        zone_id: ZONE_DEFAULT,
+        data_ptr: display.data_ptr,
+        mesh_index: -1,
+        area_partition: None,
+        has_parent: false,
+        parent_array_ptr: 0,
+        children_count: 0,
+        children_array_ptr: 0,
+        unk116: BoundingBox::EMPTY,
+        unk140: BoundingBox::EMPTY,
+        unk164: BoundingBox::EMPTY,
+    }
+}
+
 pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -> Result<Display> {
     debug!(
         "Reading display node data {} (rc, {}) at {}",
@@ -109,25 +128,6 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -
         clear_color: display.clear_color,
         data_ptr,
     })
-}
-
-pub fn make_variants(display: &Display) -> NodeVariantsRc {
-    NodeVariantsRc {
-        name: DISPLAY_NAME.to_owned(),
-        flags: NodeBitFlags::DEFAULT,
-        unk044: 0,
-        zone_id: ZONE_DEFAULT,
-        data_ptr: display.data_ptr,
-        mesh_index: -1,
-        area_partition: None,
-        has_parent: false,
-        parent_array_ptr: 0,
-        children_count: 0,
-        children_array_ptr: 0,
-        unk116: BoundingBox::EMPTY,
-        unk140: BoundingBox::EMPTY,
-        unk164: BoundingBox::EMPTY,
-    }
 }
 
 pub fn write(

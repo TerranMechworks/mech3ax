@@ -104,6 +104,25 @@ pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantR
     })
 }
 
+pub fn make_variants(light: &Light) -> NodeVariantsRc {
+    NodeVariantsRc {
+        name: LIGHT_NAME.to_owned(),
+        flags: NodeBitFlags::DEFAULT | NodeBitFlags::UNK08,
+        unk044: 0,
+        zone_id: ZONE_DEFAULT,
+        data_ptr: light.data_ptr,
+        mesh_index: -1,
+        area_partition: None,
+        has_parent: false,
+        parent_array_ptr: 0,
+        children_count: 0,
+        children_array_ptr: 0,
+        unk116: BBOX_LIGHT,
+        unk140: BoundingBox::EMPTY,
+        unk164: BoundingBox::EMPTY,
+    }
+}
+
 fn assert_light(light: &LightRcC, offset: u32) -> Result<()> {
     assert_that!("light field 000", light.unk000 == 1, offset + 0)?;
     assert_that!("light field 004", light.unk004 == 1, offset + 4)?;
@@ -172,25 +191,6 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -
         parent_ptr: light.parent_ptr,
         data_ptr,
     })
-}
-
-pub fn make_variants(light: &Light) -> NodeVariantsRc {
-    NodeVariantsRc {
-        name: LIGHT_NAME.to_owned(),
-        flags: NodeBitFlags::DEFAULT | NodeBitFlags::UNK08,
-        unk044: 0,
-        zone_id: ZONE_DEFAULT,
-        data_ptr: light.data_ptr,
-        mesh_index: -1,
-        area_partition: None,
-        has_parent: false,
-        parent_array_ptr: 0,
-        children_count: 0,
-        children_array_ptr: 0,
-        unk116: BBOX_LIGHT,
-        unk140: BoundingBox::EMPTY,
-        unk164: BoundingBox::EMPTY,
-    }
 }
 
 pub fn write(write: &mut CountingWriter<impl Write>, light: &Light, index: usize) -> Result<()> {

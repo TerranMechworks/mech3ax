@@ -146,6 +146,32 @@ pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantR
     })
 }
 
+pub fn make_variants(world: &World) -> Result<NodeVariantsRc> {
+    let children_count = assert_len!(u32, world.children.len(), "world children")?;
+    // yes, this is a nasty hack, but...
+    let flags = if world.data_ptr == 0x016D3D40 && world.children_array_ptr == 0x0170F360 {
+        DEFAULT_FLAGS_M2
+    } else {
+        DEFAULT_FLAGS
+    };
+    Ok(NodeVariantsRc {
+        name: WORLD_NAME.to_owned(),
+        flags,
+        unk044: 0,
+        zone_id: ZONE_DEFAULT,
+        data_ptr: world.data_ptr,
+        mesh_index: -1,
+        area_partition: None,
+        has_parent: false,
+        parent_array_ptr: 0,
+        children_count,
+        children_array_ptr: world.children_array_ptr,
+        unk116: BoundingBox::EMPTY,
+        unk140: BoundingBox::EMPTY,
+        unk164: BoundingBox::EMPTY,
+    })
+}
+
 fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Result<Partition> {
     debug!(
         "Reading world partition data x: {}, y: {} (rc, {}) at {}",
@@ -461,32 +487,6 @@ pub fn read(
         children,
         data_ptr,
         children_array_ptr,
-    })
-}
-
-pub fn make_variants(world: &World) -> Result<NodeVariantsRc> {
-    let children_count = assert_len!(u32, world.children.len(), "world children")?;
-    // yes, this is a nasty hack, but...
-    let flags = if world.data_ptr == 0x016D3D40 && world.children_array_ptr == 0x0170F360 {
-        DEFAULT_FLAGS_M2
-    } else {
-        DEFAULT_FLAGS
-    };
-    Ok(NodeVariantsRc {
-        name: WORLD_NAME.to_owned(),
-        flags,
-        unk044: 0,
-        zone_id: ZONE_DEFAULT,
-        data_ptr: world.data_ptr,
-        mesh_index: -1,
-        area_partition: None,
-        has_parent: false,
-        parent_array_ptr: 0,
-        children_count,
-        children_array_ptr: world.children_array_ptr,
-        unk116: BoundingBox::EMPTY,
-        unk140: BoundingBox::EMPTY,
-        unk164: BoundingBox::EMPTY,
     })
 }
 

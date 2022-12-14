@@ -110,6 +110,26 @@ pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantR
     Ok(NodeVariantRc::Object3d(node))
 }
 
+pub fn make_variants(object3d: &Object3d) -> Result<NodeVariantsRc> {
+    let children_count = assert_len!(u32, object3d.children.len(), "object 3d children")?;
+    Ok(NodeVariantsRc {
+        name: object3d.name.clone(),
+        flags: NodeBitFlags::from(&object3d.flags),
+        unk044: 4,
+        zone_id: object3d.zone_id,
+        data_ptr: object3d.data_ptr,
+        mesh_index: object3d.mesh_index,
+        area_partition: object3d.area_partition,
+        has_parent: object3d.parent.is_some(),
+        parent_array_ptr: object3d.parent_array_ptr,
+        children_count,
+        children_array_ptr: object3d.children_array_ptr,
+        unk116: object3d.unk116,
+        unk140: object3d.unk140,
+        unk164: object3d.unk164,
+    })
+}
+
 fn assert_object3d(object3d: Object3dRcC, offset: u32) -> Result<Transformation> {
     assert_that!("object3d flags", object3d.flags in [32u32, 40u32, 48u32], offset + 0)?;
     assert_that!("object3d opacity", object3d.opacity == 0.0, offset + 4)?;
@@ -269,27 +289,6 @@ pub fn read(
         unk116: node.unk116,
         unk140: node.unk140,
         unk164: node.unk164,
-    })
-}
-
-pub fn make_variants(object3d: &Object3d) -> Result<NodeVariantsRc> {
-    let flags = NodeBitFlags::from(&object3d.flags);
-    let children_count = assert_len!(u32, object3d.children.len(), "object 3d children")?;
-    Ok(NodeVariantsRc {
-        name: object3d.name.clone(),
-        flags,
-        unk044: 4,
-        zone_id: object3d.zone_id,
-        data_ptr: object3d.data_ptr,
-        mesh_index: object3d.mesh_index,
-        area_partition: object3d.area_partition,
-        has_parent: object3d.parent.is_some(),
-        parent_array_ptr: object3d.parent_array_ptr,
-        children_count,
-        children_array_ptr: object3d.children_array_ptr,
-        unk116: object3d.unk116,
-        unk140: object3d.unk140,
-        unk164: object3d.unk164,
     })
 }
 

@@ -120,6 +120,27 @@ pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantM
     }))
 }
 
+pub fn make_variants(lod: &Lod) -> Result<NodeVariantsMw> {
+    let children_count = assert_len!(u32, lod.children.len(), "lod children")?;
+    Ok(NodeVariantsMw {
+        name: lod.name.clone(),
+        flags: NodeBitFlags::from(&lod.flags),
+        unk044: 1,
+        zone_id: lod.zone_id,
+        data_ptr: lod.data_ptr,
+        mesh_index: -1,
+        area_partition: lod.area_partition,
+        has_parent: true,
+        parent_array_ptr: lod.parent_array_ptr,
+        children_count,
+        children_array_ptr: lod.children_array_ptr,
+        unk116: lod.unk116,
+        unk140: BoundingBox::EMPTY,
+        unk164: lod.unk116,
+        unk196: 160,
+    })
+}
+
 fn assert_lod(lod: LodMwC, offset: u32) -> Result<(bool, Range, f32, Option<u32>)> {
     let level = assert_that!("lod level", bool lod.level, offset + 0)?;
     assert_that!("lod range near sq", 0.0 <= lod.range_near_sq <= 1000.0 * 1000.0, offset + 4)?;
@@ -194,27 +215,6 @@ pub fn read(
         wrapped,
         has_parent: false,
         children_count: node.children_count,
-    })
-}
-
-pub fn make_variants(lod: &Lod) -> Result<NodeVariantsMw> {
-    let children_count = assert_len!(u32, lod.children.len(), "lod children")?;
-    Ok(NodeVariantsMw {
-        name: lod.name.clone(),
-        flags: NodeBitFlags::from(&lod.flags),
-        unk044: 1,
-        zone_id: lod.zone_id,
-        data_ptr: lod.data_ptr,
-        mesh_index: -1,
-        area_partition: lod.area_partition,
-        has_parent: true,
-        parent_array_ptr: lod.parent_array_ptr,
-        children_count,
-        children_array_ptr: lod.children_array_ptr,
-        unk116: lod.unk116,
-        unk140: BoundingBox::EMPTY,
-        unk164: lod.unk116,
-        unk196: 160,
     })
 }
 

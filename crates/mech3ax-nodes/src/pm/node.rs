@@ -78,14 +78,6 @@ pub const NODE_PM_C_SIZE: u32 = NodePmC::SIZE;
 fn assert_node(node: NodePmC, offset: u32) -> Result<(NodeType, NodeVariantsPm)> {
     // invariants for every node type
 
-    let name = assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name.0))?;
-    let flags = NodeBitFlags::from_bits(node.flags.0).ok_or_else(|| {
-        assert_with_msg!(
-            "Expected valid node flags, but was {:?} (at {})",
-            node.flags,
-            offset + 36
-        )
-    })?;
     let node_type = FromPrimitive::from_u32(node.node_type).ok_or_else(|| {
         assert_with_msg!(
             "Expected valid node type, but was {} (at {})",

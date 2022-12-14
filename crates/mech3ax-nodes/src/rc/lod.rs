@@ -128,6 +128,31 @@ pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantR
     }))
 }
 
+pub fn make_variants(lod: &Lod) -> Result<NodeVariantsRc> {
+    let children_count = assert_len!(u32, lod.children.len(), "lod children")?;
+    let unk044 = if BORKED_UNK044.contains(&lod.data_ptr) {
+        0
+    } else {
+        4
+    };
+    Ok(NodeVariantsRc {
+        name: lod.name.clone(),
+        flags: NodeBitFlags::from(&lod.flags),
+        unk044,
+        zone_id: lod.zone_id,
+        data_ptr: lod.data_ptr,
+        mesh_index: -1,
+        area_partition: None,
+        has_parent: lod.parent.is_some(),
+        parent_array_ptr: lod.parent_array_ptr,
+        children_count,
+        children_array_ptr: lod.children_array_ptr,
+        unk116: lod.unk116,
+        unk140: BoundingBox::EMPTY,
+        unk164: lod.unk116,
+    })
+}
+
 fn assert_lod(lod: &LodRcC, offset: u32) -> Result<(bool, Range, f32, Option<u32>)> {
     let level = assert_that!("lod level", bool lod.level, offset + 0)?;
     assert_that!("lod range near sq", 0.0 <= lod.range_near_sq <= 1000.0 * 1000.0, offset + 4)?;
@@ -210,31 +235,6 @@ pub fn read(
         parent_array_ptr: node.parent_array_ptr,
         children_array_ptr: node.children_array_ptr,
         unk116: node.unk116,
-    })
-}
-
-pub fn make_variants(lod: &Lod) -> Result<NodeVariantsRc> {
-    let children_count = assert_len!(u32, lod.children.len(), "lod children")?;
-    let unk044 = if BORKED_UNK044.contains(&lod.data_ptr) {
-        0
-    } else {
-        4
-    };
-    Ok(NodeVariantsRc {
-        name: lod.name.clone(),
-        flags: NodeBitFlags::from(&lod.flags),
-        unk044,
-        zone_id: lod.zone_id,
-        data_ptr: lod.data_ptr,
-        mesh_index: -1,
-        area_partition: None,
-        has_parent: lod.parent.is_some(),
-        parent_array_ptr: lod.parent_array_ptr,
-        children_count,
-        children_array_ptr: lod.children_array_ptr,
-        unk116: lod.unk116,
-        unk140: BoundingBox::EMPTY,
-        unk164: lod.unk116,
     })
 }
 

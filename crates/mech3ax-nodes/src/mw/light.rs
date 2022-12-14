@@ -104,6 +104,26 @@ pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantM
     })
 }
 
+pub fn make_variants(light: &Light) -> NodeVariantsMw {
+    NodeVariantsMw {
+        name: LIGHT_NAME.to_owned(),
+        flags: NodeBitFlags::DEFAULT | NodeBitFlags::UNK08,
+        unk044: 0,
+        zone_id: ZONE_DEFAULT,
+        data_ptr: light.data_ptr,
+        mesh_index: -1,
+        area_partition: None,
+        has_parent: false,
+        parent_array_ptr: 0,
+        children_count: 0,
+        children_array_ptr: 0,
+        unk116: BBOX_LIGHT,
+        unk140: BoundingBox::EMPTY,
+        unk164: BoundingBox::EMPTY,
+        unk196: 0,
+    }
+}
+
 fn assert_light(light: &LightMwC, offset: u32) -> Result<()> {
     assert_that!(
         "light translation",
@@ -188,26 +208,6 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -
         parent_ptr: light.parent_ptr,
         data_ptr,
     })
-}
-
-pub fn make_variants(light: &Light) -> NodeVariantsMw {
-    NodeVariantsMw {
-        name: LIGHT_NAME.to_owned(),
-        flags: NodeBitFlags::DEFAULT | NodeBitFlags::UNK08,
-        unk044: 0,
-        zone_id: ZONE_DEFAULT,
-        data_ptr: light.data_ptr,
-        mesh_index: -1,
-        area_partition: None,
-        has_parent: false,
-        parent_array_ptr: 0,
-        children_count: 0,
-        children_array_ptr: 0,
-        unk116: BBOX_LIGHT,
-        unk140: BoundingBox::EMPTY,
-        unk164: BoundingBox::EMPTY,
-        unk196: 0,
-    }
 }
 
 pub fn write(write: &mut CountingWriter<impl Write>, light: &Light, index: usize) -> Result<()> {
