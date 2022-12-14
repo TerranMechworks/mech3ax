@@ -1,7 +1,7 @@
 use super::NODE_ARRAY_SIZE;
 use mech3ax_api_types::nodes::rc::*;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_len, assert_that, Result};
+use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
 use mech3ax_nodes::rc::{
     read_node_data, read_node_info, read_node_info_zero, size_node, write_node_data,
     write_node_info, write_node_info_zero, NodeVariantRc, NODE_RC_C_SIZE,
@@ -91,9 +91,35 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, count: u32) -> Result<Ve
         .collect::<Result<Vec<_>>>()?;
 
     read.assert_end()?;
-    // assert_area_partitions(&nodes, read.offset)?;
+    assert_area_partitions(&nodes, read.offset)?;
 
     Ok(nodes)
+}
+
+fn assert_area_partitions(nodes: &[NodeRc], offset: u32) -> Result<()> {
+    let (x_count, y_count) = match nodes.first() {
+        Some(NodeRc::World(world)) => Ok((
+            world.virt_partition_x_count as i32,
+            world.virt_partition_y_count as i32,
+        )),
+        Some(_) => Err(assert_with_msg!("Expected the world node to be first")),
+        None => Err(assert_with_msg!("Expected to have read some nodes")),
+    }?;
+
+    for node in nodes {
+        let area_partition = match node {
+            NodeRc::Object3d(object3d) => &object3d.area_partition,
+            _ => &None,
+        };
+        if let Some(ap) = area_partition {
+            let x = ap.x;
+            let y = ap.y;
+            assert_that!("partition x", x < x_count, offset)?;
+            assert_that!("partition y", y < y_count, offset)?;
+        }
+    }
+
+    Ok(())
 }
 
 pub fn write_nodes(
