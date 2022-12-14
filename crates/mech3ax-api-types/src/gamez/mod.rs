@@ -3,6 +3,7 @@ pub mod mechlib;
 pub mod mesh;
 
 use crate::nodes::mw::NodeMw;
+use crate::nodes::pm::NodePm;
 use crate::nodes::rc::NodeRc;
 use crate::serde::bytes;
 use ::serde::{Deserialize, Serialize};
@@ -32,7 +33,6 @@ pub struct GameZPmMetadata {
     pub gamez_header_unk08: u32,
     pub material_array_size: i16,
     pub meshes_array_size: i32,
-    pub node_array_size: u32,
     pub node_data_count: u32,
     pub texture_ptrs: Vec<Option<u32>>,
 }
@@ -42,9 +42,9 @@ pub struct GameZPmData {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
     pub meshes: Vec<MeshNg>,
+    pub nodes: Vec<NodePm>,
     #[serde(with = "bytes")]
-    pub nodes: Vec<u8>,
-    // pub nodes: Vec<NodePm>,
+    pub node_data: Vec<u8>,
     pub metadata: GameZPmMetadata,
 }
 

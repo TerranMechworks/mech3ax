@@ -1,11 +1,12 @@
 use crate::mesh::ng::{read_mesh_data, read_mesh_info, write_mesh_data, write_mesh_info};
 use mech3ax_api_types::gamez::mechlib::ModelPm;
 use mech3ax_api_types::gamez::mesh::MeshNg;
-use mech3ax_api_types::nodes::pm::{LodPm, NodePm, Object3dPm};
+use mech3ax_api_types::nodes::pm::{Lod, NodePm, Object3d};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::Result;
 use mech3ax_nodes::pm::{
-    read_node_mechlib, write_node_data, write_node_info, WrappedNodePm, WrapperPm,
+    mechlib_only_err_pm, read_node_mechlib, write_node_data, write_node_info, WrappedNodePm,
+    WrapperPm,
 };
 use std::io::{Read, Write};
 
@@ -30,7 +31,7 @@ fn read_node_and_mesh_object3d(
     nodes: &mut Vec<NodePm>,
     meshes: &mut Vec<MeshNg>,
     mesh_ptrs: &mut Vec<i32>,
-    wrapped: WrapperPm<Object3dPm>,
+    wrapped: WrapperPm<Object3d>,
 ) -> Result<u32> {
     let WrapperPm {
         wrapped: mut object3d,
@@ -76,7 +77,7 @@ fn read_node_and_mesh_lod(
     nodes: &mut Vec<NodePm>,
     meshes: &mut Vec<MeshNg>,
     mesh_ptrs: &mut Vec<i32>,
-    wrapped: WrapperPm<LodPm>,
+    wrapped: WrapperPm<Lod>,
 ) -> Result<u32> {
     let WrapperPm {
         wrapped: lod,
@@ -138,7 +139,7 @@ fn write_node_and_mesh(
             }
         }
         NodePm::Lod(_) => None,
-        // _ => return Err(mechlib_only_err_pm()),
+        _ => return Err(mechlib_only_err_pm()),
     };
 
     write_node_info(write, node, true, index)?;
@@ -155,7 +156,7 @@ fn write_node_and_mesh(
     let child_indices = match node {
         NodePm::Object3d(object3d) => object3d.children.clone(),
         NodePm::Lod(lod) => lod.children.clone(),
-        // _ => unreachable!(),
+        _ => unreachable!(),
     };
 
     for child_index in child_indices.into_iter() {

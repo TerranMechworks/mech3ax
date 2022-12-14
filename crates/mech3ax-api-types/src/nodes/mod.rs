@@ -17,8 +17,7 @@ pub struct AreaPartition {
 static_assert_size!(AreaPartition, 8);
 
 impl AreaPartition {
-    pub const DEFAULT_MW: Self = Self { x: -1, y: -1 };
-    pub const DEFAULT_PM: Self = Self { x: -1, y: 0 };
+    pub const DEFAULT: Self = Self { x: -1, y: -1 };
     pub const ZERO: Self = Self { x: 0, y: 0 };
 }
 

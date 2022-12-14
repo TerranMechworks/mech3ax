@@ -78,8 +78,8 @@ fn main() {
     resolver.push::<api::nodes::mw::World>();
     resolver.push::<api::nodes::mw::NodeMw>();
 
-    resolver.push::<api::nodes::pm::LodPm>();
-    resolver.push::<api::nodes::pm::Object3dPm>();
+    resolver.push::<api::nodes::pm::Lod>();
+    resolver.push::<api::nodes::pm::Object3d>();
     resolver.push::<api::nodes::pm::NodePm>();
 
     resolver.push::<api::gamez::mechlib::ModelMw>();

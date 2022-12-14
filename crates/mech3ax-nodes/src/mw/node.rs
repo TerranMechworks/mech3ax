@@ -157,7 +157,7 @@ fn assert_node(node: NodeMwC, offset: u32) -> Result<(NodeType, NodeVariantsMw)>
     assert_that!("field 204", node.zero204 == 0, offset + 204)?;
 
     // assert area partition properly once we have read the world data
-    let area_partition = if node.area_partition == AreaPartition::DEFAULT_MW {
+    let area_partition = if node.area_partition == AreaPartition::DEFAULT {
         None
     } else {
         assert_that!("area partition x", 0 <= node.area_partition.x <= 64, offset + 76)?;
@@ -331,7 +331,7 @@ fn write_variant(
     let mut name = Ascii::new();
     str_to_c_node_name(variant.name, &mut name.0);
 
-    let area_partition = variant.area_partition.unwrap_or(AreaPartition::DEFAULT_MW);
+    let area_partition = variant.area_partition.unwrap_or(AreaPartition::DEFAULT);
 
     let node = NodeMwC {
         name,

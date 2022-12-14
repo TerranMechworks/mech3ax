@@ -1,20 +1,19 @@
-use super::node::{NodeVariantMw, NodeVariantsMw};
-use super::wrappers::WrapperMw;
+use super::node::{NodeVariantPm, NodeVariantsPm};
 use crate::flags::NodeBitFlags;
 use crate::math::partition_diag;
 use crate::range::RangeI32;
 use crate::types::ZONE_DEFAULT;
 use log::{debug, trace};
-use mech3ax_api_types::nodes::mw::World;
-use mech3ax_api_types::nodes::{Area, BoundingBox, Partition};
+use mech3ax_api_types::nodes::pm::{PartitionPm, PartitionValuePm, World};
+use mech3ax_api_types::nodes::{Area, BoundingBox};
 use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_len, assert_that, Result};
+use mech3ax_common::{assert_len, assert_that, bool_c, Result};
 use std::io::{Read, Write};
 
 #[derive(Debug)]
 #[repr(C)]
-struct WorldMwC {
+struct WorldPmC {
     flags: u32,                           // 000
     area_partition_used: u32,             // 004
     area_partition_count: u32,            // 008
@@ -30,40 +29,44 @@ struct WorldMwC {
     area_height: f32,                     // 064
     area_right: f32,                      // 068
     area_top: f32,                        // 072
-    partition_max_dec_feature_count: u32, // 076
-    virtual_partition: u32,               // 080
-    virt_partition_x_min: u32,            // 084
-    virt_partition_y_min: u32,            // 088
-    virt_partition_x_max: u32,            // 092
-    virt_partition_y_max: u32,            // 096
-    virt_partition_x_size: f32,           // 100
-    virt_partition_y_size: f32,           // 104
-    virt_partition_x_half: f32,           // 108
-    virt_partition_y_half: f32,           // 112
-    virt_partition_x_inv: f32,            // 116
-    virt_partition_y_inv: f32,            // 124
-    virt_partition_diag: f32,             // 128
-    partition_inclusion_tol_low: f32,     // 128
-    partition_inclusion_tol_high: f32,    // 132
-    virt_partition_x_count: u32,          // 136
-    virt_partition_y_count: u32,          // 140
-    virt_partition_ptr: u32,              // 144
-    one148: f32,                          // 148
-    one152: f32,                          // 152
-    one156: f32,                          // 156
-    children_count: u32,                  // 160
-    children_ptr: u32,                    // 164
-    lights_ptr: u32,                      // 168
-    zero172: u32,                         // 172
-    zero176: u32,                         // 176
-    zero180: u32,                         // 180
-    zero184: u32,                         // 184
+    area_left2: f32,                      // 076
+    area_bottom2: f32,                    // 080
+    area_right2: f32,                     // 084
+    area_top2: f32,                       // 088
+    partition_max_dec_feature_count: u32, // 092
+    virtual_partition: u32,               // 096
+    virt_partition_x_min: u32,            // 100
+    virt_partition_y_min: u32,            // 104
+    virt_partition_x_max: u32,            // 108
+    virt_partition_y_max: u32,            // 112
+    virt_partition_x_size: f32,           // 116
+    virt_partition_y_size: f32,           // 120
+    virt_partition_x_half: f32,           // 124
+    virt_partition_y_half: f32,           // 128
+    virt_partition_x_inv: f32,            // 132
+    virt_partition_y_inv: f32,            // 136
+    virt_partition_diag: f32,             // 140
+    partition_inclusion_tol_low: f32,     // 144
+    partition_inclusion_tol_high: f32,    // 148
+    virt_partition_x_count: u32,          // 152
+    virt_partition_y_count: u32,          // 156
+    virt_partition_ptr: u32,              // 160
+    one164: f32,                          // 164
+    one168: f32,                          // 168
+    one172: f32,                          // 172
+    children_count: u32,                  // 176
+    children_ptr: u32,                    // 180
+    lights_ptr: u32,                      // 184
+    zero188: u32,                         // 188
+    zero192: u32,                         // 192
+    zero196: u32,                         // 196
+    zero200: u32,                         // 200
 }
-static_assert_size!(WorldMwC, 188);
+static_assert_size!(WorldPmC, 204);
 
 #[derive(Debug)]
 #[repr(C)]
-struct PartitionMwC {
+struct PartitionPmC {
     flags: u32,    // 00
     mone04: i32,   // 04
     part_x: f32,   // 08
@@ -83,19 +86,35 @@ struct PartitionMwC {
     ptr: u32,      // 60
     zero64: u32,   // 64
     zero68: u32,   // 68
+    zero72: u32,   // 72
+    zero76: u32,   // 76
+    zero80: u32,   // 80
+    zero84: u32,   // 84
 }
-static_assert_size!(PartitionMwC, 72);
+static_assert_size!(PartitionPmC, 88);
 
-const FOG_STATE_LINEAR: u32 = 1;
+const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
+    0 | NodeBitFlags::ACTIVE.bits()
+        | NodeBitFlags::INTERSECT_SURFACE.bits()
+        | NodeBitFlags::TREE_VALID.bits()
+        | NodeBitFlags::ID_ZONE_CHECK.bits(),
+);
+const DEFAULT_FLAGS: NodeBitFlags =
+    NodeBitFlags::from_bits_truncate(ALWAYS_PRESENT.bits() | NodeBitFlags::ALTITUDE_SURFACE.bits());
+
 const WORLD_NAME: &str = "world1";
+const FOG_STATE_LINEAR: u32 = 1;
 
-pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantMw> {
+fn area_to_iter(area: &Area) -> (RangeI32, RangeI32) {
+    let area_x = RangeI32::new(area.left, area.right, 256);
+    // because the virtual partition y size is negative, this is inverted!
+    let area_y = RangeI32::new(area.bottom, area.top, -256);
+    (area_x, area_y)
+}
+
+pub fn assert_variants(node: NodeVariantsPm, offset: u32) -> Result<NodeVariantPm> {
     assert_that!("world name", &node.name == WORLD_NAME, offset + 0)?;
-    assert_that!(
-        "world flags",
-        node.flags == NodeBitFlags::DEFAULT,
-        offset + 36
-    )?;
+    assert_that!("world flags", node.flags == DEFAULT_FLAGS, offset + 36)?;
     // zero040 (40) already asserted
     assert_that!("world field 044", node.unk044 == 0, offset + 44)?;
     assert_that!("world zone id", node.zone_id == ZONE_DEFAULT, offset + 48)?;
@@ -112,12 +131,13 @@ pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantM
     )?;
     assert_that!("world has parent", node.has_parent == false, offset + 84)?;
     // parent_array_ptr (88) already asserted
-    assert_that!("world children count", 1 <= node.children_count <= 64, offset + 92)?;
-    // children_array_ptr (96) already asserted
+    assert_that!("world children count", 1 <= node.children_count <= 80, offset + 92)?;
+    // children_array_ptr (92) already asserted
+    // zero096 (96) already asserted
     // zero100 (100) already asserted
     // zero104 (104) already asserted
     // zero108 (108) already asserted
-    // zero112 (112) already asserted
+    assert_that!("world field 112", node.unk112 == 0, offset + 112)?;
     assert_that!(
         "world bbox 1",
         node.unk116 == BoundingBox::EMPTY,
@@ -138,18 +158,18 @@ pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantM
     assert_that!("world field 196", node.unk196 == 0, offset + 196)?;
     // zero200 (200) already asserted
     // zero204 (204) already asserted
-    Ok(NodeVariantMw::World {
+    Ok(NodeVariantPm::World {
         data_ptr: node.data_ptr,
         children_count: node.children_count,
         children_array_ptr: node.children_array_ptr,
     })
 }
 
-pub fn make_variants(world: &World) -> Result<NodeVariantsMw> {
-    let children_count = assert_len!(u32, world.children.len(), "world children")?;
-    Ok(NodeVariantsMw {
+pub fn make_variants(world: &World) -> Result<NodeVariantsPm> {
+    let children_count = assert_len!(u16, world.children.len(), "world children")?;
+    Ok(NodeVariantsPm {
         name: WORLD_NAME.to_owned(),
-        flags: NodeBitFlags::DEFAULT,
+        flags: DEFAULT_FLAGS,
         unk044: 0,
         zone_id: ZONE_DEFAULT,
         data_ptr: world.data_ptr,
@@ -159,6 +179,7 @@ pub fn make_variants(world: &World) -> Result<NodeVariantsMw> {
         parent_array_ptr: 0,
         children_count,
         children_array_ptr: world.children_array_ptr,
+        unk112: 0,
         unk116: BoundingBox::EMPTY,
         unk140: BoundingBox::EMPTY,
         unk164: BoundingBox::EMPTY,
@@ -166,15 +187,15 @@ pub fn make_variants(world: &World) -> Result<NodeVariantsMw> {
     })
 }
 
-fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Result<Partition> {
+fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Result<PartitionPm> {
     debug!(
-        "Reading world partition data x: {}, y: {} (mw, {}) at {}",
+        "Reading world partition data x: {}, y: {} (pm, {}) at {}",
         x,
         y,
-        PartitionMwC::SIZE,
+        PartitionPmC::SIZE,
         read.offset
     );
-    let partition: PartitionMwC = read.read_struct()?;
+    let partition: PartitionPmC = read.read_struct()?;
     trace!("{:#?}", partition);
 
     let xf = x as f32;
@@ -186,10 +207,7 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
         read.prev + 0
     )?;
     assert_that!("partition field 04", partition.mone04 == -1, read.prev + 4)?;
-
     assert_that!("partition field 56", partition.zero56 == 0, read.prev + 56)?;
-    assert_that!("partition field 64", partition.zero64 == 0, read.prev + 64)?;
-    assert_that!("partition field 68", partition.zero68 == 0, read.prev + 68)?;
 
     assert_that!("partition x", partition.part_x == xf, read.prev + 8)?;
     assert_that!("partition y", partition.part_y == yf, read.prev + 12)?;
@@ -235,17 +253,35 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
         read.prev + 52
     )?;
 
+    assert_that!("partition field 64", partition.zero64 == 0, read.prev + 64)?;
+    assert_that!("partition field 68", partition.zero68 == 0, read.prev + 68)?;
+    assert_that!("partition field 72", partition.zero72 == 0, read.prev + 72)?;
+    assert_that!("partition field 76", partition.zero76 == 0, read.prev + 76)?;
+    assert_that!("partition field 80", partition.zero80 == 0, read.prev + 80)?;
+    assert_that!("partition field 84", partition.zero84 == 0, read.prev + 84)?;
+
     let nodes = if partition.count == 0 {
         assert_that!("partition ptr", partition.ptr == 0, read.prev + 60)?;
         Vec::new()
     } else {
         assert_that!("partition ptr", partition.ptr != 0, read.prev + 60)?;
         (0..partition.count)
-            .map(|_| read.read_u32())
-            .collect::<std::io::Result<Vec<_>>>()?
+            .map(|index| {
+                trace!(
+                    "Reading partition x: {}, y: {} value {} at {}",
+                    x,
+                    y,
+                    index,
+                    read.offset
+                );
+                let value = read.read_struct()?;
+                trace!("{:#?}", value);
+                Ok(value)
+            })
+            .collect::<std::io::Result<Vec<PartitionValuePm>>>()?
     };
 
-    Ok(Partition {
+    Ok(PartitionPm {
         x,
         y,
         z_min: partition.z_min,
@@ -260,7 +296,7 @@ fn read_partitions(
     read: &mut CountingReader<impl Read>,
     area_x: RangeI32,
     area_y: RangeI32,
-) -> Result<Vec<Vec<Partition>>> {
+) -> Result<Vec<Vec<PartitionPm>>> {
     area_y
         .map(|y| {
             area_x
@@ -271,8 +307,11 @@ fn read_partitions(
         .collect::<Result<Vec<_>>>()
 }
 
-fn assert_world(world: &WorldMwC, offset: u32) -> Result<(Area, RangeI32, RangeI32, bool)> {
+fn assert_world(world: &WorldPmC, offset: u32) -> Result<(Area, RangeI32, RangeI32, bool)> {
     assert_that!("world flags", world.flags == 0, offset + 0)?;
+    assert_that!("world ap used", world.area_partition_used == 0, offset + 4)?;
+    // no idea about area_partition_count
+    assert_that!("world ap ptr", world.area_partition_ptr != 0, offset + 12)?;
 
     // LINEAR = 1, EXPONENTIAL = 2 (never set)
     assert_that!(
@@ -345,186 +384,205 @@ fn assert_world(world: &WorldMwC, offset: u32) -> Result<(Area, RangeI32, RangeI
     };
 
     assert_that!(
-        "world partition max feat",
-        world.partition_max_dec_feature_count == 16,
+        "world area left 2",
+        world.area_left2 == world.area_left - 3.0,
         offset + 76
     )?;
     assert_that!(
-        "world virtual partition",
-        world.virtual_partition == 1,
-        offset + 80
+        "world area bottom 2",
+        world.area_bottom2 == world.area_bottom + 3.0,
+        offset + 76
     )?;
+    assert_that!(
+        "world area right 2",
+        world.area_right2 == world.area_right + 3.0,
+        offset + 76
+    )?;
+    assert_that!(
+        "world area top 2",
+        world.area_top2 == world.area_top - 3.0,
+        offset + 76
+    )?;
+
+    assert_that!(
+        "world partition max feat",
+        world.partition_max_dec_feature_count == 16,
+        offset + 92
+    )?;
+    let virtual_partition = assert_that!("world vp", bool world.virtual_partition, offset + 96)?;
 
     assert_that!(
         "world vp x min",
         world.virt_partition_x_min == 1,
-        offset + 84
+        offset + 100
     )?;
     assert_that!(
         "world vp y min",
         world.virt_partition_y_min == 1,
-        offset + 88
+        offset + 104
     )?;
 
     assert_that!(
         "world vp x size",
         world.virt_partition_x_size == 256.0,
-        offset + 100
+        offset + 116
     )?;
     assert_that!(
         "world vp y size",
         world.virt_partition_y_size == -256.0,
-        offset + 104
+        offset + 120
     )?;
     assert_that!(
         "world vp x half",
         world.virt_partition_x_half == 128.0,
-        offset + 108
+        offset + 124
     )?;
     assert_that!(
         "world vp y half",
         world.virt_partition_y_half == -128.0,
-        offset + 112
+        offset + 128
     )?;
     assert_that!(
         "world vp x inv",
         world.virt_partition_x_inv == 1.0 / 256.0,
-        offset + 116
+        offset + 132
     )?;
     assert_that!(
         "world vp y inv",
         world.virt_partition_y_inv == 1.0 / -256.0,
-        offset + 120
+        offset + 136
     )?;
     // this is sqrt(x_size * x_size + y_size * y_size) * -0.5, but because of the
     // (poor) sqrt approximation used, it comes out as -192.0 instead of -181.0
     assert_that!(
         "world vp diagonal",
         world.virt_partition_diag == -192.0,
-        offset + 124
+        offset + 140
     )?;
 
     assert_that!(
         "world vp inc tol low",
         world.partition_inclusion_tol_low == 3.0,
-        offset + 128
+        offset + 144
     )?;
     assert_that!(
         "world vp inc tol high",
         world.partition_inclusion_tol_high == 3.0,
-        offset + 132
+        offset + 148
     )?;
 
-    //let area_x = range(area_left, area_right, 256);
-    let area_x = RangeI32::new(area_left, area_right, 256);
-    // because the virtual partition y size is negative, this is inverted!
-    let area_y = RangeI32::new(area_bottom, area_top, -256);
-
+    let (area_x, area_y) = area_to_iter(&area);
     assert_that!(
         "world vp x count",
         world.virt_partition_x_count == area_x.len() as u32,
-        offset + 136
+        offset + 152
     )?;
     assert_that!(
         "world vp y count",
         world.virt_partition_y_count == area_y.len() as u32,
-        offset + 140
-    )?;
-    assert_that!("world ap used", world.area_partition_used == 0, offset + 4)?;
-    assert_that!(
-        "world vp x max",
-        world.virt_partition_x_max == world.virt_partition_x_count - 1,
-        offset + 92
-    )?;
-    assert_that!(
-        "world vp y max",
-        world.virt_partition_y_max == world.virt_partition_y_count - 1,
-        offset + 96
+        offset + 156
     )?;
 
-    // TODO: why isn't this a perfect fit for T1?
-    let virt_partition_count_max = world.virt_partition_x_count * world.virt_partition_y_count;
-    let virt_partition_count_min = virt_partition_count_max - 1;
-    assert_that!(
-        "world ap count",
-        virt_partition_count_min <= world.area_partition_count <= virt_partition_count_max,
-        offset + 8
-    )?;
-    let fudge_count = world.area_partition_count != virt_partition_count_max;
-    assert_that!("world ap ptr", world.area_partition_ptr != 0, offset + 12)?;
-    assert_that!("world vp ptr", world.virt_partition_ptr != 0, offset + 144)?;
+    if virtual_partition {
+        assert_that!(
+            "world vp x max",
+            world.virt_partition_x_max == world.virt_partition_x_count - 1,
+            offset + 108
+        )?;
+        assert_that!(
+            "world vp y max",
+            world.virt_partition_y_max == world.virt_partition_y_count - 1,
+            offset + 112
+        )?;
+    } else {
+        assert_that!(
+            "world vp x max",
+            world.virt_partition_x_max == 0,
+            offset + 108
+        )?;
+        assert_that!(
+            "world vp y max",
+            world.virt_partition_y_max == 0,
+            offset + 112
+        )?;
+    }
 
-    assert_that!("world field 148", world.one148 == 1.0, offset + 148)?;
-    assert_that!("world field 152", world.one152 == 1.0, offset + 152)?;
-    assert_that!("world field 156", world.one156 == 1.0, offset + 156)?;
+    assert_that!("world vp ptr", world.virt_partition_ptr != 0, offset + 160)?;
+
+    assert_that!("world field 164", world.one164 == 1.0, offset + 164)?;
+    assert_that!("world field 168", world.one168 == 1.0, offset + 168)?;
+    assert_that!("world field 172", world.one172 == 1.0, offset + 172)?;
     assert_that!(
         "world children count",
         world.children_count == 1,
-        offset + 160
+        offset + 176
     )?;
-    assert_that!("world children ptr", world.children_ptr != 0, offset + 164)?;
-    assert_that!("world lights ptr", world.lights_ptr != 0, offset + 168)?;
-    assert_that!("world field 172", world.zero172 == 0, offset + 172)?;
-    assert_that!("world field 176", world.zero176 == 0, offset + 176)?;
-    assert_that!("world field 180", world.zero180 == 0, offset + 180)?;
-    assert_that!("world field 184", world.zero184 == 0, offset + 184)?;
+    assert_that!("world children ptr", world.children_ptr != 0, offset + 180)?;
+    assert_that!("world lights ptr", world.lights_ptr != 0, offset + 184)?;
+    assert_that!("world field 188", world.zero188 == 0, offset + 188)?;
+    assert_that!("world field 192", world.zero192 == 0, offset + 192)?;
+    assert_that!("world field 196", world.zero196 == 0, offset + 196)?;
+    assert_that!("world field 200", world.zero200 == 0, offset + 200)?;
 
-    Ok((area, area_x, area_y, fudge_count))
+    Ok((area, area_x, area_y, virtual_partition))
 }
 
 pub fn read(
     read: &mut CountingReader<impl Read>,
     data_ptr: u32,
-    children_count: u32,
+    children_count: u16,
     children_array_ptr: u32,
     index: usize,
-) -> Result<WrapperMw<World>> {
+) -> Result<World> {
     debug!(
-        "Reading world node data {} (mw, {}) at {}",
+        "Reading world node data {} (pm, {}) at {}",
         index,
-        WorldMwC::SIZE,
+        WorldPmC::SIZE,
         read.offset
     );
-    let world: WorldMwC = read.read_struct()?;
+    let world: WorldPmC = read.read_struct()?;
     trace!("{:#?}", world);
 
-    let (area, area_x, area_y, fudge_count) = assert_world(&world, read.prev)?;
+    let (area, area_x, area_y, virtual_partition) = assert_world(&world, read.prev)?;
 
     // read as a result of world.children_count (always 1, not node.children_count!)
     let world_child_value = read.read_u32()?;
-    // read as a result of world.zero172 (always 0, i.e. nothing to do)
 
     let partitions = read_partitions(read, area_x, area_y)?;
 
-    let wrapped = World {
+    debug!(
+        "Reading world {} x children {} (pm) at {}",
+        children_count, index, read.offset
+    );
+    let children = (0..children_count)
+        .map(|_| read.read_u32())
+        .collect::<std::io::Result<Vec<_>>>()?;
+
+    Ok(World {
         name: WORLD_NAME.to_owned(),
         area,
+        virtual_partition,
         partitions,
-        area_partition_x_count: world.virt_partition_x_count,
-        area_partition_y_count: world.virt_partition_y_count,
-        fudge_count,
+        area_partition_count: world.area_partition_count,
+        // virt_partition_x_count: world.virt_partition_x_count,
+        // virt_partition_y_count: world.virt_partition_y_count,
         area_partition_ptr: world.area_partition_ptr,
         virt_partition_ptr: world.virt_partition_ptr,
         world_children_ptr: world.children_ptr,
         world_child_value,
         world_lights_ptr: world.lights_ptr,
-        children: Vec::new(),
+        children,
         data_ptr,
         children_array_ptr,
-    };
-    Ok(WrapperMw {
-        wrapped,
-        has_parent: false,
-        children_count,
     })
 }
 
-fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition) -> Result<()> {
+fn write_partition(write: &mut CountingWriter<impl Write>, partition: &PartitionPm) -> Result<()> {
     debug!(
-        "Writing world partition data x: {}, y: {} (mw, {}) at {}",
+        "Writing world partition data x: {}, y: {} (pm, {}) at {}",
         partition.x,
         partition.y,
-        PartitionMwC::SIZE,
+        PartitionPmC::SIZE,
         write.offset
     );
 
@@ -533,7 +591,7 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
     let diagonal = partition_diag(partition.z_min, partition.z_max);
     let count = assert_len!(u16, partition.nodes.len(), "partition nodes")?;
 
-    let partition_c = PartitionMwC {
+    let partition_c = PartitionPmC {
         flags: 0x100,
         mone04: -1,
         part_x: x,
@@ -553,12 +611,24 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
         ptr: partition.ptr,
         zero64: 0,
         zero68: 0,
+        zero72: 0,
+        zero76: 0,
+        zero80: 0,
+        zero84: 0,
     };
     trace!("{:#?}", partition_c);
     write.write_struct(&partition_c)?;
 
-    for node in &partition.nodes {
-        write.write_u32(*node)?;
+    for (index, node) in partition.nodes.iter().enumerate() {
+        trace!(
+            "Writing partition x: {}, y: {} value {} at {}",
+            partition.x,
+            partition.y,
+            index,
+            write.offset
+        );
+        trace!("{:#?}", node);
+        write.write_struct(node)?;
     }
 
     Ok(())
@@ -566,7 +636,7 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
 
 fn write_partitions(
     write: &mut CountingWriter<impl Write>,
-    partitions: &[Vec<Partition>],
+    partitions: &[Vec<PartitionPm>],
 ) -> Result<()> {
     for sub_partitions in partitions {
         for partition in sub_partitions {
@@ -578,16 +648,12 @@ fn write_partitions(
 
 pub fn write(write: &mut CountingWriter<impl Write>, world: &World, index: usize) -> Result<()> {
     debug!(
-        "Writing world node data {} (mw, {}) at {}",
+        "Writing world node data {} (pm, {}) at {}",
         index,
-        WorldMwC::SIZE,
+        WorldPmC::SIZE,
         write.offset
     );
 
-    let mut area_partition_count = world.area_partition_x_count * world.area_partition_y_count;
-    if world.fudge_count {
-        area_partition_count -= 1;
-    }
     let area_left = world.area.left as f32;
     let area_top = world.area.top as f32;
     let area_right = world.area.right as f32;
@@ -595,10 +661,20 @@ pub fn write(write: &mut CountingWriter<impl Write>, world: &World, index: usize
     let area_width = area_right - area_left;
     let area_height = area_top - area_bottom;
 
-    let world_c = WorldMwC {
+    let (area_x, area_y) = area_to_iter(&world.area);
+    let virt_partition_x_count = area_x.len() as u32;
+    let virt_partition_y_count = area_y.len() as u32;
+
+    let (virt_partition_x_max, virt_partition_y_max) = if world.virtual_partition {
+        (virt_partition_x_count - 1, virt_partition_y_count - 1)
+    } else {
+        (0, 0)
+    };
+
+    let world_c = WorldPmC {
         flags: 0,
         area_partition_used: 0,
-        area_partition_count,
+        area_partition_count: world.area_partition_count,
         area_partition_ptr: world.area_partition_ptr,
         fog_state: FOG_STATE_LINEAR,
         fog_color: Color::BLACK,
@@ -611,12 +687,16 @@ pub fn write(write: &mut CountingWriter<impl Write>, world: &World, index: usize
         area_height,
         area_right,
         area_top,
+        area_left2: area_left - 3.0,
+        area_bottom2: area_bottom + 3.0,
+        area_right2: area_right + 3.0,
+        area_top2: area_top - 3.0,
         partition_max_dec_feature_count: 16,
-        virtual_partition: 1,
+        virtual_partition: bool_c!(world.virtual_partition),
         virt_partition_x_min: 1,
         virt_partition_y_min: 1,
-        virt_partition_x_max: world.area_partition_x_count - 1,
-        virt_partition_y_max: world.area_partition_y_count - 1,
+        virt_partition_x_max,
+        virt_partition_y_max,
         virt_partition_x_size: 256.0,
         virt_partition_y_size: -256.0,
         virt_partition_x_half: 128.0,
@@ -626,37 +706,35 @@ pub fn write(write: &mut CountingWriter<impl Write>, world: &World, index: usize
         virt_partition_diag: -192.0,
         partition_inclusion_tol_low: 3.0,
         partition_inclusion_tol_high: 3.0,
-        virt_partition_x_count: world.area_partition_x_count,
-        virt_partition_y_count: world.area_partition_y_count,
+        virt_partition_x_count: virt_partition_x_count,
+        virt_partition_y_count: virt_partition_y_count,
         virt_partition_ptr: world.virt_partition_ptr,
-        one148: 1.0,
-        one152: 1.0,
-        one156: 1.0,
+        one164: 1.0,
+        one168: 1.0,
+        one172: 1.0,
         children_count: 1,
         children_ptr: world.world_children_ptr,
         lights_ptr: world.world_lights_ptr,
-        zero172: 0,
-        zero176: 0,
-        zero180: 0,
-        zero184: 0,
+        zero188: 0,
+        zero192: 0,
+        zero196: 0,
+        zero200: 0,
     };
     trace!("{:#?}", world_c);
     write.write_struct(&world_c)?;
     write.write_u32(world.world_child_value)?;
-    write_partitions(write, &world.partitions)?;
-    Ok(())
-}
 
-pub fn size(world: &World) -> u32 {
-    let partition_count = world.area_partition_x_count * world.area_partition_y_count;
-    let mut item_count = 0;
-    for subpartition in &world.partitions {
-        for partition in subpartition {
-            // Cast safety: truncation simply leads to incorrect size (TODO?)
-            item_count += partition.nodes.len() as u32
-        }
+    write_partitions(write, &world.partitions)?;
+
+    debug!(
+        "Writing world {} x children {} (pm) at {}",
+        world.children.len(),
+        index,
+        write.offset
+    );
+    for child in &world.children {
+        write.write_u32(*child)?;
     }
-    // Cast safety: truncation simply leads to incorrect size (TODO?)
-    item_count += world.children.len() as u32;
-    WorldMwC::SIZE + 4 + PartitionMwC::SIZE * partition_count + 4 * item_count
+
+    Ok(())
 }

@@ -1,4 +1,4 @@
-use mech3ax_api_types::nodes::pm::{LodPm, Object3dPm};
+use mech3ax_api_types::nodes::pm::{Lod, Object3d};
 
 pub struct WrapperPm<T> {
     pub wrapped: T,
@@ -7,6 +7,6 @@ pub struct WrapperPm<T> {
 }
 
 pub enum WrappedNodePm {
-    Lod(WrapperPm<LodPm>),
-    Object3d(WrapperPm<Object3dPm>),
+    Lod(WrapperPm<Lod>),
+    Object3d(WrapperPm<Object3d>),
 }
