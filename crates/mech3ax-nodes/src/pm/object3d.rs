@@ -2,10 +2,9 @@ use super::node::{NodeVariantPm, NodeVariantsPm};
 use super::wrappers::WrapperPm;
 use crate::flags::NodeBitFlags;
 use crate::math::{apply_zero_signs, euler_to_matrix, extract_zero_signs, PI};
-use crate::types::ZONE_DEFAULT;
 use log::{debug, trace};
-use mech3ax_api_types::nodes::pm::{AreaPartitionPm, Object3d};
-use mech3ax_api_types::nodes::{BoundingBox, Transformation};
+use mech3ax_api_types::nodes::pm::Object3d;
+use mech3ax_api_types::nodes::Transformation;
 use mech3ax_api_types::{static_assert_size, Matrix, ReprSize as _, Vec3};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -30,17 +29,6 @@ struct Object3dPmC {
 }
 static_assert_size!(Object3dPmC, 144);
 
-// const ALWAYS_PRESENT: NodeBitFlags =
-//     NodeBitFlags::from_bits_truncate(NodeBitFlags::BASE.bits() | NodeBitFlags::UNK25.bits());
-// const NEVER_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
-//     NodeBitFlags::UNK28.bits() // MW
-//     | NodeBitFlags::CLIP_TO.bits() // PM (mechlib)
-//     | NodeBitFlags::INTERSECT_BBOX.bits() // PM (mechlib)
-//     | NodeBitFlags::LANDMARK.bits() // PM (mechlib)
-//     | NodeBitFlags::TERRAIN.bits() // PM (mechlib)
-//     | NodeBitFlags::CAN_MODIFY.bits() // PM (mechlib)
-//     | NodeBitFlags::CLIP_TO.bits(), // PM (mechlib)
-// );
 const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     0
     | NodeBitFlags::ACTIVE.bits()
@@ -96,7 +84,6 @@ pub fn assert_variants(
     let const_flags = node.flags & !VARIABLE_FLAGS;
     assert_that!("object3d flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
     // zero040 (40) already asserted
-    // mechlib only?
     assert_that!("object3d field 044", node.unk044 == 1, offset + 44)?;
     // zone_id (48) is variable
     // node_type (52) already asserted
@@ -161,141 +148,133 @@ pub fn make_variants(object3d: &Object3d) -> Result<NodeVariantsPm> {
     })
 }
 
-// fn assert_object3d(object3d: Object3dPmC, offset: u32) -> Result<Option<Transformation>> {
-//     assert_that!("flags", object3d.flags in [32u32, 40u32], offset + 0)?;
-//     assert_that!("opacity", object3d.opacity == 0.0, offset + 4)?;
-//     assert_that!("field 008", object3d.zero008 == 0.0, offset + 8)?;
-//     assert_that!("field 012", object3d.zero012 == 0.0, offset + 12)?;
-//     assert_that!("field 016", object3d.zero016 == 0.0, offset + 16)?;
-//     assert_that!("field 020", object3d.zero020 == 0.0, offset + 20)?;
-//     assert_that!("scale", object3d.scale == SCALE_ONE, offset + 36)?;
-//     assert_all_zero("field 096", offset + 96, &object3d.zero096.0)?;
+fn assert_object3d(object3d: Object3dPmC, offset: u32) -> Result<Option<Transformation>> {
+    assert_that!("flags", object3d.flags in [32u32, 40u32], offset + 0)?;
+    assert_that!("opacity", object3d.opacity == 0.0, offset + 4)?;
+    assert_that!("field 008", object3d.zero008 == 0.0, offset + 8)?;
+    assert_that!("field 012", object3d.zero012 == 0.0, offset + 12)?;
+    assert_that!("field 016", object3d.zero016 == 0.0, offset + 16)?;
+    assert_that!("field 020", object3d.zero020 == 0.0, offset + 20)?;
+    assert_that!("scale", object3d.scale == SCALE_ONE, offset + 36)?;
+    assert_all_zero("field 096", offset + 96, &object3d.zero096.0)?;
 
-//     let transformation = if object3d.flags == 40 {
-//         assert_that!("rotation", object3d.rotation == Vec3::DEFAULT, offset + 24)?;
-//         assert_that!(
-//             "translation",
-//             object3d.translation == Vec3::DEFAULT,
-//             offset + 84
-//         )?;
-//         assert_that!("matrix", object3d.matrix == Matrix::IDENTITY, offset + 48)?;
-//         None
-//     } else {
-//         let rotation = object3d.rotation;
-//         assert_that!("rotation x", -PI <= rotation.x <= PI, offset + 24)?;
-//         assert_that!("rotation y", -PI <= rotation.y <= PI, offset + 28)?;
-//         assert_that!("rotation z", -PI <= rotation.z <= PI, offset + 32)?;
-//         let translation = object3d.translation;
+    let transformation = if object3d.flags == 40 {
+        assert_that!("rotation", object3d.rotation == Vec3::DEFAULT, offset + 24)?;
+        assert_that!(
+            "translation",
+            object3d.translation == Vec3::DEFAULT,
+            offset + 84
+        )?;
+        assert_that!("matrix", object3d.matrix == Matrix::IDENTITY, offset + 48)?;
+        None
+    } else {
+        let rotation = object3d.rotation;
+        assert_that!("rotation x", -PI <= rotation.x <= PI, offset + 24)?;
+        assert_that!("rotation y", -PI <= rotation.y <= PI, offset + 28)?;
+        assert_that!("rotation z", -PI <= rotation.z <= PI, offset + 32)?;
+        let translation = object3d.translation;
 
-//         let expected_matrix = euler_to_matrix(&rotation);
-//         // in most cases, the calculated matrix is correct :/ for 2%, this fails (mw and pm)
-//         let matrix = if expected_matrix == object3d.matrix {
-//             None
-//         } else {
-//             Some(object3d.matrix)
-//         };
+        let expected_matrix = euler_to_matrix(&rotation);
+        // in most cases, the calculated matrix is correct :/ for 2%, this fails (mw and pm)
+        let matrix = if expected_matrix == object3d.matrix {
+            None
+        } else {
+            Some(object3d.matrix)
+        };
 
-//         Some(Transformation {
-//             rotation,
-//             translation,
-//             matrix,
-//         })
-//     };
-//     Ok(transformation)
-// }
+        Some(Transformation {
+            rotation,
+            translation,
+            matrix,
+        })
+    };
+    Ok(transformation)
+}
 
-// pub fn read(
-//     read: &mut CountingReader<impl Read>,
-//     node: NodeVariantsPm,
-//     index: usize,
-// ) -> Result<WrapperPm<Object3d>> {
-//     debug!(
-//         "Reading object3d node data {} (pm, {}) at {}",
-//         index,
-//         Object3dPmC::SIZE,
-//         read.offset
-//     );
-//     let object3d: Object3dPmC = read.read_struct()?;
-//     trace!("{:#?}", object3d);
+pub fn read(
+    read: &mut CountingReader<impl Read>,
+    node: NodeVariantsPm,
+    index: usize,
+) -> Result<WrapperPm<Object3d>> {
+    debug!(
+        "Reading object3d node data {} (pm, {}) at {}",
+        index,
+        Object3dPmC::SIZE,
+        read.offset
+    );
+    let object3d: Object3dPmC = read.read_struct()?;
+    trace!("{:#?}", object3d);
 
-//     let matrix_signs = extract_zero_signs(&object3d.matrix);
-//     let transformation = assert_object3d(object3d, read.prev)?;
+    let matrix_signs = extract_zero_signs(&object3d.matrix);
+    let transformation = assert_object3d(object3d, read.prev)?;
 
-//     let wrapped = Object3d {
-//         name: node.name,
-//         flags: node.flags.into(),
-//         unk044: node.unk044,
-//         zone_id: node.zone_id,
-//         mesh_index: node.mesh_index,
-//         area_partition: node.area_partition,
-//         transformation,
-//         matrix_signs,
-//         parent: None,
-//         children: Vec::new(),
-//         data_ptr: node.data_ptr,
-//         parent_array_ptr: node.parent_array_ptr,
-//         children_array_ptr: node.children_array_ptr,
-//         unk112: node.unk112,
-//         unk116: node.unk116,
-//         unk140: node.unk140,
-//         unk164: node.unk164,
-//     };
+    let wrapped = Object3d {
+        name: node.name,
+        flags: node.flags.into(),
+        zone_id: node.zone_id,
+        mesh_index: node.mesh_index,
+        area_partition: node.area_partition,
+        transformation,
+        matrix_signs,
+        parent: None,         // to be filled in later
+        children: Vec::new(), // to be filled in later
+        data_ptr: node.data_ptr,
+        parent_array_ptr: node.parent_array_ptr,
+        children_array_ptr: node.children_array_ptr,
+        unk112: node.unk112,
+        unk116: node.unk116,
+        unk140: node.unk140,
+        unk164: node.unk164,
+    };
 
-//     Ok(WrapperPm {
-//         wrapped,
-//         has_parent: node.has_parent,
-//         children_count: node.children_count,
-//     })
-// }
+    Ok(WrapperPm {
+        wrapped,
+        has_parent: node.has_parent,
+        children_count: node.children_count,
+    })
+}
 
-// pub fn write(
-//     write: &mut CountingWriter<impl Write>,
-//     object3d: &Object3d,
-//     index: usize,
-// ) -> Result<()> {
-//     debug!(
-//         "Writing object3d node data {} (pm, {}) at {}",
-//         index,
-//         Object3dPmC::SIZE,
-//         write.offset
-//     );
+pub fn write(
+    write: &mut CountingWriter<impl Write>,
+    object3d: &Object3d,
+    index: usize,
+) -> Result<()> {
+    debug!(
+        "Writing object3d node data {} (pm, {}) at {}",
+        index,
+        Object3dPmC::SIZE,
+        write.offset
+    );
 
-//     let (flags, rotation, translation, matrix) = object3d
-//         .transformation
-//         .as_ref()
-//         .map(|tr| {
-//             let matrix = tr
-//                 .matrix
-//                 .as_ref()
-//                 .cloned()
-//                 .unwrap_or_else(|| euler_to_matrix(&tr.rotation));
-//             (32, tr.rotation, tr.translation, matrix)
-//         })
-//         .unwrap_or((40, Vec3::DEFAULT, Vec3::DEFAULT, Matrix::IDENTITY));
+    let (flags, rotation, translation, matrix) = object3d
+        .transformation
+        .as_ref()
+        .map(|tr| {
+            let matrix = tr
+                .matrix
+                .as_ref()
+                .cloned()
+                .unwrap_or_else(|| euler_to_matrix(&tr.rotation));
+            (32, tr.rotation, tr.translation, matrix)
+        })
+        .unwrap_or((40, Vec3::DEFAULT, Vec3::DEFAULT, Matrix::IDENTITY));
 
-//     let matrix = apply_zero_signs(&matrix, object3d.matrix_signs);
+    let matrix = apply_zero_signs(&matrix, object3d.matrix_signs);
 
-//     let object3d = Object3dPmC {
-//         flags,
-//         opacity: 0.0,
-//         zero008: 0.0,
-//         zero012: 0.0,
-//         zero016: 0.0,
-//         zero020: 0.0,
-//         rotation,
-//         scale: SCALE_ONE,
-//         matrix,
-//         translation,
-//         zero096: Zeros([0u8; 48]),
-//     };
-//     trace!("{:#?}", object3d);
-//     write.write_struct(&object3d)?;
-//     Ok(())
-// }
-
-// pub fn size(object3d: &Object3d) -> u32 {
-//     let parent_size = if object3d.parent.is_some() { 4 } else { 0 };
-//     // Cast safety: truncation simply leads to incorrect size (TODO?)
-//     let children_length = object3d.children.len() as u32;
-//     Object3dPmC::SIZE + parent_size + 4 * children_length
-// }
+    let object3d = Object3dPmC {
+        flags,
+        opacity: 0.0,
+        zero008: 0.0,
+        zero012: 0.0,
+        zero016: 0.0,
+        zero020: 0.0,
+        rotation,
+        scale: SCALE_ONE,
+        matrix,
+        translation,
+        zero096: Zeros([0u8; 48]),
+    };
+    trace!("{:#?}", object3d);
+    write.write_struct(&object3d)?;
+    Ok(())
+}

@@ -12,7 +12,7 @@ use log::{debug, trace};
 use mech3ax_api_types::nodes::pm::{AreaPartitionPm, NodePm};
 use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
-use mech3ax_common::assert::{assert_all_zero, assert_utf8};
+use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
 use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
@@ -304,11 +304,38 @@ pub fn read_node_data(
     index: usize,
 ) -> Result<WrappedNodePm> {
     match variant {
-        // NodeVariantPm::Lod(node) => Ok(WrappedNodePm::Lod(lod::read(read, node, index)?)),
-        // NodeVariantPm::Object3d(node) => {
-        //     Ok(WrappedNodePm::Object3d(object3d::read(read, node, index)?))
-        // }
-        _ => Err(mechlib_only_err_pm()),
+        NodeVariantPm::World {
+            data_ptr,
+            children_count,
+            children_array_ptr,
+        } => {
+            let world = world::read(read, data_ptr, children_count, children_array_ptr, index)?;
+            Ok(WrappedNodePm::World(world))
+        }
+        NodeVariantPm::Window { data_ptr } => {
+            let window = window::read(read, data_ptr, index)?;
+            Ok(WrappedNodePm::Window(window))
+        }
+        NodeVariantPm::Camera { data_ptr } => {
+            let camera = camera::read(read, data_ptr, index)?;
+            Ok(WrappedNodePm::Camera(camera))
+        }
+        NodeVariantPm::Display { data_ptr } => {
+            let display = display::read(read, data_ptr, index)?;
+            Ok(WrappedNodePm::Display(display))
+        }
+        NodeVariantPm::Light { data_ptr } => {
+            let light = light::read(read, data_ptr, index)?;
+            Ok(WrappedNodePm::Light(light))
+        }
+        NodeVariantPm::Lod(node) => {
+            let lod = lod::read(read, node, index)?;
+            Ok(WrappedNodePm::Lod(lod))
+        }
+        NodeVariantPm::Object3d(node) => {
+            let object3d = object3d::read(read, node, index)?;
+            Ok(WrappedNodePm::Object3d(object3d))
+        }
     }
 }
 
@@ -410,16 +437,12 @@ pub fn write_node_data(
     index: usize,
 ) -> Result<()> {
     match node {
-        // NodePm::Lod(lod) => lod::write(write, lod, index),
-        // NodePm::Object3d(object3d) => object3d::write(write, object3d, index),
-        _ => Err(mechlib_only_err_pm()),
-    }
-}
-
-pub fn size_node(node: &NodePm) -> u32 {
-    match node {
-        // NodePm::Lod(lod) => lod::size(lod),
-        // NodePm::Object3d(object3d) => object3d::size(object3d),
-        _ => 0,
+        NodePm::World(world) => world::write(write, world, index),
+        NodePm::Window(window) => window::write(write, window, index),
+        NodePm::Camera(camera) => camera::write(write, camera, index),
+        NodePm::Display(display) => display::write(write, display, index),
+        NodePm::Light(light) => light::write(write, light, index),
+        NodePm::Lod(lod) => lod::write(write, lod, index),
+        NodePm::Object3d(object3d) => object3d::write(write, object3d, index),
     }
 }

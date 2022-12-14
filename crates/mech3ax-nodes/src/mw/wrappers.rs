@@ -1,4 +1,4 @@
-use mech3ax_api_types::nodes::mw::{Camera, Display, Empty, Light, Lod, Object3d, Window, World};
+use mech3ax_api_types::nodes::mw::*;
 
 pub struct WrapperMw<T> {
     pub wrapped: T,
@@ -7,12 +7,12 @@ pub struct WrapperMw<T> {
 }
 
 pub enum WrappedNodeMw {
+    World(WrapperMw<World>),
+    Window(Window),
     Camera(Camera),
     Display(Display),
     Empty(Empty),
     Light(Light),
     Lod(WrapperMw<Lod>),
     Object3d(WrapperMw<Object3d>),
-    Window(Window),
-    World(WrapperMw<World>),
 }

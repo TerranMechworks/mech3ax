@@ -1,6 +1,6 @@
 use super::{Area, BoundingBox, NodeFlags, Transformation};
 use crate::static_assert_size;
-use crate::types::Range;
+use crate::types::{Color, Range};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, Union};
 
@@ -51,61 +51,53 @@ pub struct PartitionPm {
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Camera {
-    // pub name: String,
-    // pub clip: Range,
-    // pub fov: Range,
+    pub name: String,
+    pub clip: Range,
+    pub fov: Range,
     pub data_ptr: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Display {
-    // pub name: String,
-    // pub resolution_x: u32,
-    // pub resolution_y: u32,
-    // pub clear_color: Color,
+    pub name: String,
+    pub resolution_x: u32,
+    pub resolution_y: u32,
+    pub clear_color: Color,
     pub data_ptr: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Light {
-    // pub name: String,
-    // pub direction: Vec3,
-    // pub diffuse: f32,
-    // pub ambient: f32,
-    // pub color: Color,
-    // pub range: Range,
+    pub name: String,
+    pub unk004: f32,
+    pub unk156: f32,
+    pub unk160: f32,
+    pub range: Range,
     pub parent_ptr: u32,
     pub data_ptr: u32,
-
-    pub node_data_offset: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Lod {
     pub name: String,
-
-    // pub level: bool,
-    // pub range: Range,
-    // pub unk64: f32,
-    // pub unk72: f32,
-    pub flags: NodeFlags,
+    pub level: bool,
+    pub range: Range,
+    pub unk64: f32,
+    pub unk72: f32,
     pub zone_id: u32,
-    // pub area_partition: Option<AreaPartition>,
-    // pub parent: u32,
+    pub parent: u32,
     pub children: Vec<u32>,
-    pub data_ptr: u32,
+    pub unk164: BoundingBox,
     pub parent_array_ptr: u32,
     pub children_array_ptr: u32,
-    pub unk164: BoundingBox,
-
-    pub node_data_offset: u32,
+    pub data_ptr: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Object3d {
     pub name: String,
-    // pub transformation: Option<Transformation>,
-    // pub matrix_signs: u32,
+    pub transformation: Option<Transformation>,
+    pub matrix_signs: u32,
     pub flags: NodeFlags,
     pub zone_id: u32,
     pub area_partition: Option<AreaPartitionPm>,
@@ -120,15 +112,13 @@ pub struct Object3d {
     pub unk116: BoundingBox,
     pub unk140: BoundingBox,
     pub unk164: BoundingBox,
-
-    pub node_data_offset: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Window {
-    // pub name: String,
-    // pub resolution_x: u32,
-    // pub resolution_y: u32,
+    pub name: String,
+    pub resolution_x: u32,
+    pub resolution_y: u32,
     pub data_ptr: u32,
 }
 

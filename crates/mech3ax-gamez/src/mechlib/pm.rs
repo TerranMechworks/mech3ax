@@ -22,7 +22,8 @@ fn read_node_and_mesh(
         }
         WrappedNodePm::Lod(wrapped) => {
             read_node_and_mesh_lod(read, nodes, meshes, mesh_ptrs, wrapped)
-        } // _ => Err(mechlib_only_err_pm()),
+        }
+        _ => Err(mechlib_only_err_pm()),
     }
 }
 

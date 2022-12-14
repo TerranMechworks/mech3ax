@@ -43,8 +43,6 @@ pub struct GameZPmData {
     pub materials: Vec<Material>,
     pub meshes: Vec<MeshNg>,
     pub nodes: Vec<NodePm>,
-    #[serde(with = "bytes")]
-    pub node_data: Vec<u8>,
     pub metadata: GameZPmMetadata,
 }
 

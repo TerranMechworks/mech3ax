@@ -2,7 +2,7 @@ use super::node::{NodeVariantPm, NodeVariantsPm};
 use crate::flags::NodeBitFlags;
 use crate::types::ZONE_DEFAULT;
 use log::{debug, trace};
-use mech3ax_api_types::nodes::pm::{AreaPartitionPm, Window};
+use mech3ax_api_types::nodes::pm::Window;
 use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::assert::assert_all_zero;
@@ -109,71 +109,67 @@ pub fn make_variants(window: &Window) -> NodeVariantsPm {
     }
 }
 
-// pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -> Result<Window> {
-//     debug!(
-//         "Reading window node data {} (pm, {}) at {}",
-//         index,
-//         WindowPmC::SIZE,
-//         read.offset
-//     );
-//     let window: WindowPmC = read.read_struct()?;
-//     trace!("{:#?}", window);
+pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -> Result<Window> {
+    debug!(
+        "Reading window node data {} (pm, {}) at {}",
+        index,
+        WindowPmC::SIZE,
+        read.offset
+    );
+    let window: WindowPmC = read.read_struct()?;
+    trace!("{:#?}", window);
 
-//     assert_that!("window origin x", window.origin_x == 0, read.prev + 0)?;
-//     assert_that!("window origin y", window.origin_y == 0, read.prev + 4)?;
-//     assert_that!(
-//         "window resolution x",
-//         window.resolution_x == 320,
-//         read.prev + 8
-//     )?;
-//     assert_that!(
-//         "window resolution y",
-//         window.resolution_y == 200,
-//         read.prev + 12
-//     )?;
-//     assert_all_zero("window field 016", read.prev + 16, &window.zero016.0)?;
-//     assert_that!(
-//         "window buffer index",
-//         window.buffer_index == -1,
-//         read.prev + 228
-//     )?;
-//     assert_that!("window buffer ptr", window.buffer_ptr == 0, read.prev + 232)?;
-//     assert_that!("window zero236", window.zero236 == 0, read.prev + 236)?;
-//     assert_that!("window zero240", window.zero240 == 0, read.prev + 240)?;
-//     assert_that!("window zero244", window.zero244 == 0, read.prev + 244)?;
+    assert_that!("window origin x", window.origin_x == 0, read.prev + 0)?;
+    assert_that!("window origin y", window.origin_y == 0, read.prev + 4)?;
+    assert_that!(
+        "window resolution x",
+        window.resolution_x == 320,
+        read.prev + 8
+    )?;
+    assert_that!(
+        "window resolution y",
+        window.resolution_y == 200,
+        read.prev + 12
+    )?;
+    assert_all_zero("window field 016", read.prev + 16, &window.zero016.0)?;
+    assert_that!(
+        "window buffer index",
+        window.buffer_index == -1,
+        read.prev + 228
+    )?;
+    assert_that!("window buffer ptr", window.buffer_ptr == 0, read.prev + 232)?;
+    assert_that!("window zero236", window.zero236 == 0, read.prev + 236)?;
+    assert_that!("window zero240", window.zero240 == 0, read.prev + 240)?;
+    assert_that!("window zero244", window.zero244 == 0, read.prev + 244)?;
 
-//     Ok(Window {
-//         name: WINDOW_NAME.to_owned(),
-//         resolution_x: window.resolution_x,
-//         resolution_y: window.resolution_y,
-//         data_ptr,
-//     })
-// }
+    Ok(Window {
+        name: WINDOW_NAME.to_owned(),
+        resolution_x: window.resolution_x,
+        resolution_y: window.resolution_y,
+        data_ptr,
+    })
+}
 
-// pub fn write(write: &mut CountingWriter<impl Write>, window: &Window, index: usize) -> Result<()> {
-//     debug!(
-//         "Writing window node data {} (pm, {}) at {}",
-//         index,
-//         WindowPmC::SIZE,
-//         write.offset
-//     );
-//     let window = WindowPmC {
-//         origin_x: 0,
-//         origin_y: 0,
-//         resolution_x: window.resolution_x,
-//         resolution_y: window.resolution_y,
-//         zero016: Zeros::new(),
-//         buffer_index: -1,
-//         buffer_ptr: 0,
-//         zero236: 0,
-//         zero240: 0,
-//         zero244: 0,
-//     };
-//     trace!("{:#?}", window);
-//     write.write_struct(&window)?;
-//     Ok(())
-// }
-
-// pub fn size() -> u32 {
-//     WindowPmC::SIZE
-// }
+pub fn write(write: &mut CountingWriter<impl Write>, window: &Window, index: usize) -> Result<()> {
+    debug!(
+        "Writing window node data {} (pm, {}) at {}",
+        index,
+        WindowPmC::SIZE,
+        write.offset
+    );
+    let window = WindowPmC {
+        origin_x: 0,
+        origin_y: 0,
+        resolution_x: window.resolution_x,
+        resolution_y: window.resolution_y,
+        zero016: Zeros::new(),
+        buffer_index: -1,
+        buffer_ptr: 0,
+        zero236: 0,
+        zero240: 0,
+        zero244: 0,
+    };
+    trace!("{:#?}", window);
+    write.write_struct(&window)?;
+    Ok(())
+}

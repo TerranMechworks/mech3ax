@@ -1,6 +1,7 @@
 use super::node::{NodeVariantPm, NodeVariantsPm};
 use crate::flags::NodeBitFlags;
 use crate::math::partition_diag;
+use crate::pm::WrapperPm;
 use crate::range::RangeI32;
 use crate::types::ZONE_DEFAULT;
 use log::{debug, trace};
@@ -533,7 +534,7 @@ pub fn read(
     children_count: u16,
     children_array_ptr: u32,
     index: usize,
-) -> Result<World> {
+) -> Result<WrapperPm<World>> {
     debug!(
         "Reading world node data {} (pm, {}) at {}",
         index,
@@ -550,30 +551,25 @@ pub fn read(
 
     let partitions = read_partitions(read, area_x, area_y)?;
 
-    debug!(
-        "Reading world {} x children {} (pm) at {}",
-        children_count, index, read.offset
-    );
-    let children = (0..children_count)
-        .map(|_| read.read_u32())
-        .collect::<std::io::Result<Vec<_>>>()?;
-
-    Ok(World {
+    let wrapped = World {
         name: WORLD_NAME.to_owned(),
         area,
         virtual_partition,
         partitions,
         area_partition_count: world.area_partition_count,
-        // virt_partition_x_count: world.virt_partition_x_count,
-        // virt_partition_y_count: world.virt_partition_y_count,
         area_partition_ptr: world.area_partition_ptr,
         virt_partition_ptr: world.virt_partition_ptr,
         world_children_ptr: world.children_ptr,
         world_child_value,
         world_lights_ptr: world.lights_ptr,
-        children,
+        children: Vec::new(), // to be filled in later
         data_ptr,
         children_array_ptr,
+    };
+    Ok(WrapperPm {
+        wrapped,
+        has_parent: false,
+        children_count,
     })
 }
 
