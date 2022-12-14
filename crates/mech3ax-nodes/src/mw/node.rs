@@ -263,6 +263,7 @@ pub fn read_node_info_gamez(
         Ok(None)
     } else {
         let (node_type, node) = assert_node(node, read.prev)?;
+        debug!("Node `{}` read", node.name);
         let variant = match node_type {
             NodeType::Camera => camera::assert_variants(node, read.prev)?,
             NodeType::Display => display::assert_variants(node, read.prev)?,

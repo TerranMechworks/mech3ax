@@ -16,7 +16,6 @@ pub struct TranslationOnly {
 }
 
 #[derive(Debug, Serialize, Deserialize, Union)]
-#[repr(u16)]
 pub enum Transformation {
     None,
     ScaleOnly(Vec3),

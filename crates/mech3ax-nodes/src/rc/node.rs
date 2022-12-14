@@ -229,6 +229,7 @@ pub fn read_node_info(read: &mut CountingReader<impl Read>, index: u32) -> Resul
     trace!("{:#?}", node);
 
     let (node_type, node) = assert_node(node, read.prev)?;
+    debug!("Node `{}` read", node.name);
     let variant = match node_type {
         // Empty nodes only occur in m6?
         NodeType::Empty => empty::assert_variants(node, read.prev)?,

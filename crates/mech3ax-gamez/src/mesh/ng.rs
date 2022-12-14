@@ -639,7 +639,7 @@ pub fn write_mesh_data(
         write.offset
     );
     write_mesh_texture_info(write, &mesh.textures)?;
-    trace!("Wrote mesh data (ng) at {}", write.offset);
+    trace!("Finished mesh data {} (ng) at {}", mesh_index, write.offset);
     Ok(())
 }
 
