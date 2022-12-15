@@ -1,7 +1,7 @@
-use log::debug;
+use log::{debug, trace};
 use mech3ax_api_types::nodes::pm::*;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_nodes::pm::{
     read_node_data, read_node_info_gamez, write_node_data, write_node_info, NodeVariantPm,
     WrappedNodePm, NODE_PM_C_SIZE,
@@ -21,8 +21,8 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
         let top = node_index & 0xFF000000;
         assert_that!("node index top", top == 0x02000000, read.prev)?;
         let node_index = node_index & 0x00FFFFFF;
+        trace!("Node {} index: {}", index, node_index);
 
-        // debug!("Node {} data offset: {}", index, node_data_offset);
         match &variant {
             NodeVariantPm::World {
                 data_ptr: _,
@@ -54,15 +54,12 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
                     ));
                 }
                 light_node = true;
-                debug!("LIGHT NODE {} index {}", index, node_index);
             }
             NodeVariantPm::Lod(_) => {
                 assert_that!("node data position", index > 3, node_info_pos)?;
-                debug!("LOD NODE {} index {}", index, node_index);
             }
             NodeVariantPm::Object3d(_) => {
                 assert_that!("node data position", index > 3, node_info_pos)?;
-                debug!("OBJECT3D NODE {} index {}", index, node_index);
             }
         }
         variants.push((variant, node_index));
@@ -74,7 +71,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
         .into_iter()
         .enumerate()
         .map(
-            |(index, (variant, node_data_offset))| match read_node_data(read, variant, index)? {
+            |(index, (variant, node_index))| match read_node_data(read, variant, index)? {
                 WrappedNodePm::World(wrapped_world) => {
                     let mut world = wrapped_world.wrapped;
                     debug!(
@@ -89,10 +86,14 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
                 WrappedNodePm::Window(window) => Ok(NodePm::Window(window)),
                 WrappedNodePm::Camera(camera) => Ok(NodePm::Camera(camera)),
                 WrappedNodePm::Display(display) => Ok(NodePm::Display(display)),
-                WrappedNodePm::Light(light) => Ok(NodePm::Light(light)),
+                WrappedNodePm::Light(mut light) => {
+                    light.node_index = node_index;
+                    Ok(NodePm::Light(light))
+                }
                 WrappedNodePm::Lod(wrapped_lod) => {
                     let mut lod = wrapped_lod.wrapped;
 
+                    lod.node_index = node_index;
                     lod.parent = read.read_u32()?;
                     debug!(
                         "Reading node {} children x{} (pm) at {}",
@@ -106,6 +107,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
                 WrappedNodePm::Object3d(wrapped_obj) => {
                     let mut object3d = wrapped_obj.wrapped;
 
+                    object3d.node_index = node_index;
                     object3d.parent = if wrapped_obj.has_parent {
                         Some(read.read_u32()?)
                     } else {
@@ -125,26 +127,51 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
         .collect::<Result<Vec<_>>>()?;
 
     read.assert_end()?;
-    // assert_area_partitions(&nodes, read.offset)?;
+    assert_area_partitions(&nodes, read.offset)?;
 
     Ok(nodes)
+}
+
+fn assert_area_partitions(nodes: &[NodePm], offset: u32) -> Result<()> {
+    let (x_count, y_count) = match nodes.first() {
+        Some(NodePm::World(world)) => {
+            Ok((world.area.x_count() as i16, world.area.y_count() as i16))
+        }
+        Some(_) => Err(assert_with_msg!("Expected the world node to be first")),
+        None => Err(assert_with_msg!("Expected to have read some nodes")),
+    }?;
+
+    for node in nodes {
+        let area_partition = match node {
+            NodePm::Object3d(object3d) => &object3d.area_partition,
+            _ => &None,
+        };
+        if let Some(ap) = area_partition {
+            assert_that!("area partition x", ap.x < x_count, offset)?;
+            assert_that!("area partition y", ap.y < y_count, offset)?;
+            assert_that!("virt partition x", ap.virtual_x <= x_count, offset)?;
+            assert_that!("virt partition y", ap.virtual_y <= y_count, offset)?;
+        }
+    }
+
+    Ok(())
 }
 
 pub fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NodePm]) -> Result<()> {
     for (index, node) in nodes.iter().enumerate() {
         write_node_info(write, node, false, index)?;
-        let node_data_offset = match node {
+        let node_index = match node {
             NodePm::World(_) => 1,
             NodePm::Window(_) => 2,
             NodePm::Camera(_) => 3,
             NodePm::Display(_) => 4,
-            NodePm::Light(o) => 0,
-            NodePm::Lod(o) => 0,
-            NodePm::Object3d(o) => 0,
+            NodePm::Light(light) => light.node_index,
+            NodePm::Lod(lod) => lod.node_index,
+            NodePm::Object3d(object3d) => object3d.node_index,
         };
-        debug!("Node {} data offset: {}", index, node_data_offset);
-        let node_data_offset = node_data_offset | 0x02000000;
-        write.write_u32(node_data_offset)?;
+        trace!("Node {} index: {}", index, node_index);
+        let node_index = node_index | 0x02000000;
+        write.write_u32(node_index)?;
     }
 
     for (index, node) in nodes.iter().enumerate() {

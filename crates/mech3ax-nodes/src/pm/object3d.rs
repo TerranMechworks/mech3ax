@@ -84,7 +84,8 @@ pub fn assert_variants(
     let const_flags = node.flags & !VARIABLE_FLAGS;
     assert_that!("object3d flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
     // zero040 (40) already asserted
-    assert_that!("object3d field 044", node.unk044 == 1, offset + 44)?;
+    // 45697 only in mechlib
+    assert_that!("object3d field 044", node.unk044 in [1, 45697], offset + 44)?;
     // zone_id (48) is variable
     // node_type (52) already asserted
     assert_that!("object3d data ptr", node.data_ptr != 0, offset + 56)?;
@@ -131,7 +132,7 @@ pub fn make_variants(object3d: &Object3d) -> Result<NodeVariantsPm> {
     Ok(NodeVariantsPm {
         name: object3d.name.clone(),
         flags: NodeBitFlags::from(&object3d.flags),
-        unk044: 1,
+        unk044: object3d.unk044,
         zone_id: object3d.zone_id,
         data_ptr: object3d.data_ptr,
         mesh_index: object3d.mesh_index,
@@ -221,10 +222,12 @@ pub fn read(
         data_ptr: node.data_ptr,
         parent_array_ptr: node.parent_array_ptr,
         children_array_ptr: node.children_array_ptr,
+        unk044: node.unk044,
         unk112: node.unk112,
         unk116: node.unk116,
         unk140: node.unk140,
         unk164: node.unk164,
+        node_index: 0, // to be filled in for gamez
     };
 
     Ok(WrapperPm {
@@ -246,7 +249,7 @@ pub fn write(
         write.offset
     );
 
-    let (flags, rotation, translation, matrix) = object3d
+    let (flags, mut rotation, translation, matrix) = object3d
         .transformation
         .as_ref()
         .map(|tr| {
@@ -260,6 +263,10 @@ pub fn write(
         .unwrap_or((40, Vec3::DEFAULT, Vec3::DEFAULT, Matrix::IDENTITY));
 
     let matrix = apply_zero_signs(&matrix, object3d.matrix_signs);
+    // nasty hack to fix up -0.0 in `collide04` object3d nodes
+    if object3d.name == "collide04" && rotation.x == 0.0 {
+        rotation.x = -0.0;
+    }
 
     let object3d = Object3dPmC {
         flags,

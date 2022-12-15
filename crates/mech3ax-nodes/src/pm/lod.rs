@@ -200,6 +200,7 @@ pub fn read(
         parent_array_ptr: node.parent_array_ptr,
         children_array_ptr: node.children_array_ptr,
         data_ptr: node.data_ptr,
+        node_index: 0, // to be filled in for gamez
     };
     Ok(WrapperPm {
         wrapped,

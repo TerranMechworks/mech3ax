@@ -139,7 +139,8 @@ fn assert_node(node: NodePmC, offset: u32) -> Result<(NodeType, NodeVariantsPm)>
         )
     })?;
     assert_that!("field 040", node.zero040 == 0, offset + 40)?;
-    assert_that!("field 044", node.unk044 in [0, 1], offset + 44)?;
+    // 45697 only in mechlib
+    assert_that!("field 044", node.unk044 in [0, 1, 45697], offset + 44)?;
     // node_type (52) see above
     // data_ptr (56) is variable
     // mesh_index (60) is variable

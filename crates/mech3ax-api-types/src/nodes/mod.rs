@@ -29,6 +29,16 @@ pub struct Area {
     pub bottom: i32,
 }
 
+impl Area {
+    pub const fn x_count(&self) -> i32 {
+        (self.right - self.left) / 256
+    }
+
+    pub const fn y_count(&self) -> i32 {
+        (self.bottom - self.top) / 256
+    }
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, RefStruct)]
 #[repr(C)]
 pub struct BoundingBox {

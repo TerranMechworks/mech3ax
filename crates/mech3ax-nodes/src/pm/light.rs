@@ -249,6 +249,7 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -
         range: light.range,
         parent_ptr: light.parent_ptr,
         data_ptr,
+        node_index: 0, // to be filled in for gamez
     })
 }
 
@@ -287,7 +288,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, light: &Light, index: usize
         unk212: unk_combined,
         unk216: unk_combined,
         unk220: unk_combined,
-        unk224: 2442,
+        unk224: 2443,
         range: light.range,
         unk236: 1024.0,
         range_far_sq: light.range.max * light.range.max,

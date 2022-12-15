@@ -1,4 +1,5 @@
 use super::NODE_ARRAY_SIZE;
+use log::trace;
 use mech3ax_api_types::nodes::rc::*;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
@@ -19,7 +20,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, count: u32) -> Result<Ve
         let variant = read_node_info(read, index)?;
         // this is an index for empty/zero nodes, and the offset for others
         let node_data_offset = read.read_u32()?;
-        log::debug!("Node {} data offset: {}", index, node_data_offset);
+        trace!("Node {} data offset: {}", index, node_data_offset);
         match &variant {
             NodeVariantRc::World {
                 data_ptr: _,
@@ -112,10 +113,8 @@ fn assert_area_partitions(nodes: &[NodeRc], offset: u32) -> Result<()> {
             _ => &None,
         };
         if let Some(ap) = area_partition {
-            let x = ap.x;
-            let y = ap.y;
-            assert_that!("partition x", x < x_count, offset)?;
-            assert_that!("partition y", y < y_count, offset)?;
+            assert_that!("partition x", ap.x < x_count, offset)?;
+            assert_that!("partition y", ap.y < y_count, offset)?;
         }
     }
 
@@ -136,7 +135,7 @@ pub fn write_nodes(
             NodeRc::Empty(empty) => empty.parent,
             _ => offset,
         };
-        log::debug!("Node {} data offset: {}", index, node_data_offset);
+        trace!("Node {} data offset: {}", index, node_data_offset);
         write.write_u32(node_data_offset)?;
         offset += size_node(node);
     }

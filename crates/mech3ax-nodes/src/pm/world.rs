@@ -106,13 +106,6 @@ const DEFAULT_FLAGS: NodeBitFlags =
 const WORLD_NAME: &str = "world1";
 const FOG_STATE_LINEAR: u32 = 1;
 
-fn area_to_iter(area: &Area) -> (RangeI32, RangeI32) {
-    let area_x = RangeI32::new(area.left, area.right, 256);
-    // because the virtual partition y size is negative, this is inverted!
-    let area_y = RangeI32::new(area.bottom, area.top, -256);
-    (area_x, area_y)
-}
-
 pub fn assert_variants(node: NodeVariantsPm, offset: u32) -> Result<NodeVariantPm> {
     assert_that!("world name", &node.name == WORLD_NAME, offset + 0)?;
     assert_that!("world flags", node.flags == DEFAULT_FLAGS, offset + 36)?;
@@ -472,7 +465,10 @@ fn assert_world(world: &WorldPmC, offset: u32) -> Result<(Area, RangeI32, RangeI
         offset + 148
     )?;
 
-    let (area_x, area_y) = area_to_iter(&area);
+    let area_x = RangeI32::new(area.left, area.right, 256);
+    // because the virtual partition y size is negative, this is inverted!
+    let area_y = RangeI32::new(area.bottom, area.top, -256);
+
     assert_that!(
         "world vp x count",
         world.virt_partition_x_count == area_x.len() as u32,
@@ -657,9 +653,8 @@ pub fn write(write: &mut CountingWriter<impl Write>, world: &World, index: usize
     let area_width = area_right - area_left;
     let area_height = area_top - area_bottom;
 
-    let (area_x, area_y) = area_to_iter(&world.area);
-    let virt_partition_x_count = area_x.len() as u32;
-    let virt_partition_y_count = area_y.len() as u32;
+    let virt_partition_x_count = world.area.x_count() as u32;
+    let virt_partition_y_count = world.area.y_count() as u32;
 
     let (virt_partition_x_max, virt_partition_y_max) = if world.virtual_partition {
         (virt_partition_x_count - 1, virt_partition_y_count - 1)
@@ -721,16 +716,6 @@ pub fn write(write: &mut CountingWriter<impl Write>, world: &World, index: usize
     write.write_u32(world.world_child_value)?;
 
     write_partitions(write, &world.partitions)?;
-
-    debug!(
-        "Writing world {} x children {} (pm) at {}",
-        world.children.len(),
-        index,
-        write.offset
-    );
-    for child in &world.children {
-        write.write_u32(*child)?;
-    }
 
     Ok(())
 }
