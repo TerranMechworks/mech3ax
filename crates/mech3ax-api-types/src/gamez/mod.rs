@@ -2,6 +2,7 @@ pub mod materials;
 pub mod mechlib;
 pub mod mesh;
 
+use crate::nodes::cs::NodeCs;
 use crate::nodes::mw::NodeMw;
 use crate::nodes::pm::NodePm;
 use crate::nodes::rc::NodeRc;
@@ -50,7 +51,6 @@ pub struct GameZPmData {
 pub struct GameZCsMetadata {
     pub gamez_header_unk08: u32,
     pub material_array_size: i16,
-    pub node_array_size: u32,
     pub node_data_count: u32,
     pub texture_ptrs: Vec<Option<u32>>,
 }
@@ -60,9 +60,9 @@ pub struct GameZCsData {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
     pub meshes: Vec<Option<MeshNg>>,
+    pub nodes: Vec<NodeCs>,
     #[serde(with = "bytes")]
-    pub nodes: Vec<u8>,
-    // pub nodes: Vec<NodeMw>,
+    pub node_data: Vec<u8>,
     pub metadata: GameZCsMetadata,
 }
 

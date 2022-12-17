@@ -1,6 +1,6 @@
 mod fixup;
 mod meshes;
-// mod nodes;
+mod nodes;
 
 use super::common::{SIGNATURE, VERSION_CS};
 use crate::materials::ng as materials;
@@ -34,13 +34,13 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         HeaderCsC::SIZE,
         read.offset
     );
-    let mut header: HeaderCsC = read.read_struct()?;
+    let header: HeaderCsC = read.read_struct()?;
     trace!("{:#?}", header);
 
     assert_that!("signature", header.signature == SIGNATURE, read.prev + 0)?;
     assert_that!("version", header.version == VERSION_CS, read.prev + 4)?;
 
-    let fixup = fixup::Fixup::read(&mut header);
+    let fixup = fixup::Fixup::read(&header);
     // unk08
     assert_that!("texture count", header.texture_count < 4096, read.prev + 12)?;
     assert_that!(
@@ -58,11 +58,11 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         header.meshes_offset < header.nodes_offset,
         read.prev + 24
     )?;
-    assert_that!(
-        "node count",
-        header.node_count <= header.node_array_size,
-        read.prev + 28
-    )?;
+    // assert_that!(
+    //     "node count",
+    //     header.node_count <= header.node_array_size,
+    //     read.prev + 28
+    // )?;
     assert_that!(
         "textures offset",
         read.offset == header.textures_offset,
@@ -90,14 +90,12 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         "Reading {}/{} nodes at {}",
         header.node_count, header.node_array_size, read.offset
     );
-    // let nodes = nodes::read_nodes(read, header.node_array_size)?;
-    // read.assert_end()?;
-    let nodes = read.read_to_end()?;
+    let (nodes, node_data) = nodes::read_nodes(read, header.node_array_size, header.node_count)?;
+    // `read_nodes` calls `assert_end`
 
     let metadata = GameZCsMetadata {
         gamez_header_unk08: header.unk08,
         material_array_size,
-        node_array_size: header.node_array_size,
         node_data_count: header.node_count,
         texture_ptrs,
     };
@@ -106,6 +104,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         materials,
         meshes,
         nodes,
+        node_data,
         metadata,
     })
 }
@@ -113,7 +112,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
 pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) -> Result<()> {
     let texture_count = assert_len!(u32, gamez.textures.len(), "GameZ textures")?;
     let material_array_size = gamez.metadata.material_array_size;
-    // let node_count = assert_len_u32(gamez.nodes.len(), "GameZ nodes")?;
+    let node_array_size = assert_len!(u32, gamez.nodes.len(), "GameZ nodes")?;
 
     let textures_offset = HeaderCsC::SIZE;
     let materials_offset = textures_offset + textures::size_texture_infos(texture_count);
@@ -126,7 +125,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) 
         HeaderCsC::SIZE,
         write.offset
     );
-    let mut header = HeaderCsC {
+    let header = HeaderCsC {
         signature: SIGNATURE,
         version: VERSION_CS,
         unk08: gamez.metadata.gamez_header_unk08,
@@ -134,11 +133,11 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) 
         textures_offset,
         materials_offset,
         meshes_offset,
-        node_array_size: gamez.metadata.node_array_size,
+        node_array_size,
         node_count: gamez.metadata.node_data_count,
         nodes_offset,
     };
-    let fixup = fixup::Fixup::write(&mut header);
+    let fixup = fixup::Fixup::write(&header);
     trace!("{:#?}", header);
     write.write_struct(&header)?;
 
@@ -150,12 +149,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) 
         material_array_size,
     )?;
     meshes::write_meshes(write, meshes, fixup)?;
-    // nodes::write_nodes(
-    //     write,
-    //     &gamez.nodes,
-    //     gamez.metadata.node_array_size,
-    //     nodes_offset,
-    // )?;
-    write.write_all(&gamez.nodes)?;
+    nodes::write_nodes(write, &gamez.nodes)?;
+    write.write_all(&gamez.node_data)?;
     Ok(())
 }

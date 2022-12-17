@@ -120,7 +120,6 @@ HeaderCsC {
 }
 */
 
-const C4_NODE_COUNT: u32 = 8437;
 const C4_HEADER_READ: HeaderCsC = HeaderCsC {
     signature: SIGNATURE,
     version: VERSION_CS,
@@ -130,20 +129,7 @@ const C4_HEADER_READ: HeaderCsC = HeaderCsC {
     materials_offset: 28816,
     meshes_offset: 72964,
     node_array_size: 8289,
-    node_count: C4_NODE_COUNT,
-    nodes_offset: 5107144,
-};
-
-const C4_HEADER_WRITE: HeaderCsC = HeaderCsC {
-    signature: SIGNATURE,
-    version: VERSION_CS,
-    unk08: 967279328,
-    texture_count: 654,
-    textures_offset: 40,
-    materials_offset: 28816,
-    meshes_offset: 72964,
-    node_array_size: 8289,
-    node_count: 8289,
+    node_count: 8437,
     nodes_offset: 5107144,
 };
 
@@ -167,13 +153,13 @@ pub enum Fixup {
 }
 
 impl Fixup {
-    pub(super) fn read(header: &mut HeaderCsC) -> Self {
+    pub(super) fn read(header: &HeaderCsC) -> Self {
         if header == &C4_HEADER_READ {
-            info!("Applying C4 fixup");
-            // hack for dodgy c4 gamez.zbd, where the node array size is smaller
-            // than the node count (and correct)
-            header.node_count = header.node_array_size;
-            trace!("{:#?}", header);
+            // info!("Applying C4 fixup");
+            // // hack for dodgy c4 gamez.zbd, where the node array size is smaller
+            // // than the node count (and correct)
+            // header.node_count = header.node_array_size;
+            // trace!("{:#?}", header);
             Self::C4
         } else if header == &PLANES_HEADER_READ {
             Self::Planes
@@ -182,13 +168,13 @@ impl Fixup {
         }
     }
 
-    pub(super) fn write(header: &mut HeaderCsC) -> Self {
-        if header == &C4_HEADER_WRITE {
-            trace!("{:#?}", header);
-            info!("Applying C4 fixup");
-            // hack for dodgy c4 gamez.zbd, where the node array size is smaller
-            // than the node count (and correct)
-            header.node_count = C4_NODE_COUNT;
+    pub(super) fn write(header: &HeaderCsC) -> Self {
+        if header == &C4_HEADER_READ {
+            // trace!("{:#?}", header);
+            // info!("Applying C4 fixup");
+            // // hack for dodgy c4 gamez.zbd, where the node array size is smaller
+            // // than the node count (and correct)
+            // header.node_count = C4_NODE_COUNT;
             Self::C4
         } else if header == &PLANES_HEADER_READ {
             Self::Planes

@@ -14,18 +14,18 @@ bitflags::bitflags! {
         const HAS_MESH = 1 << 9;
         const UNK10 = 1 << 10;
         // const UNK11 = 1 << 11;
-        // const UNK12 = 1 << 12;
+        // const UNK12 = 1 << 12; // CS only
         // const UNK13 = 1 << 13;
         // const UNK14 = 1 << 14;
         const TERRAIN = 1 << 15;
-        const CAN_MODIFY = 1 << 16;
-        const CLIP_TO = 1 << 17;
+        const CAN_MODIFY = 1 << 16; // CS never
+        const CLIP_TO = 1 << 17; // CS never
         // const UNK18 = 1 << 18;
         const TREE_VALID = 1 << 19;
         // const UNK20 = 1 << 20;
         // const UNK21 = 1 << 21;
         // const UNK22 = 1 << 22;
-        // const OVERRIDE = 1 << 23;
+        // const OVERRIDE = 1 << 23; // CS only
         const ID_ZONE_CHECK = 1 << 24;
         const UNK25 = 1 << 25;
         // const UNK26 = 1 << 26;
@@ -111,5 +111,24 @@ impl From<&NodeFlags> for NodeBitFlags {
             bitflags |= NodeBitFlags::UNK28;
         }
         bitflags
+    }
+}
+
+bitflags::bitflags! {
+    pub struct NodeBitFlagsCs: u32 {
+        const UNK02 = 1 << 2;
+        const UNK03 = 1 << 3;
+        const UNK04 = 1 << 4;
+        const UNK05 = 1 << 5;
+        const UNK07 = 1 << 7;
+        const UNK08 = 1 << 8;
+        const UNK09 = 1 << 9;
+        const UNK10 = 1 << 10;
+        const UNK12 = 1 << 12;
+        const UNK15 = 1 << 15;
+        const UNK19 = 1 << 19;
+        const UNK23 = 1 << 23;
+        const UNK24 = 1 << 24;
+        const UNK25 = 1 << 25;
     }
 }

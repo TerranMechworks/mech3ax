@@ -304,8 +304,8 @@ fn gamez_cs(opts: ZipOpts) -> Result<()> {
     zip_json(&mut zip, options, "textures.json", &gamez.textures)?;
     zip_json(&mut zip, options, "materials.json", &gamez.materials)?;
     zip_json(&mut zip, options, "meshes.json", &gamez.meshes)?;
-    // zip_json(&mut zip, options, "nodes.json", &gamez.nodes)?;
-    zip_write(&mut zip, options, "nodes.bin", &gamez.nodes)?;
+    zip_json(&mut zip, options, "nodes.json", &gamez.nodes)?;
+    zip_write(&mut zip, options, "nodes.bin", &gamez.node_data)?;
 
     zip.finish()?;
     Ok(())
