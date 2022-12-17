@@ -1,6 +1,5 @@
 use crate::{InterpOpts, ZMapOpts, ZipOpts};
 use anyhow::{bail, Context, Result};
-use log::debug;
 use mech3ax_anim::write_anim;
 use mech3ax_api_types::anim::AnimMetadata;
 use mech3ax_api_types::archive::ArchiveEntry;
@@ -95,7 +94,6 @@ where
         &mut write,
         &entries,
         |name, offset| {
-            debug!("Writing `{}` at {}", name, offset);
             load_file(&mut zip, name, offset)
         },
         version,

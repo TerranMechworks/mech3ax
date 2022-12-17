@@ -1,7 +1,6 @@
 use crate::{InterpOpts, MsgOpts, ReaderOpts, ZMapOpts, ZipOpts};
 use anyhow::{bail, Context, Result};
 use image::ImageOutputFormat;
-use log::debug;
 use mech3ax_anim::read_anim;
 use mech3ax_archive::{read_archive, Mode, Version};
 use mech3ax_common::io_ext::CountingReader;
@@ -94,7 +93,6 @@ where
     let manifest = read_archive(
         &mut input,
         |name, data, offset| {
-            debug!("Reading `{}` at {}", name, offset);
             save_file(&mut zip, name, data, offset)
         },
         version,

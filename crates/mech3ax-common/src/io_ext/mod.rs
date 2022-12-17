@@ -135,11 +135,14 @@ impl<R: Read> CountingReader<R> {
     }
 }
 
-impl<R: Read + Seek> Seek for CountingReader<R> {
+impl<R: Read + Seek> CountingReader<R> {
     #[inline]
-    fn seek(&mut self, pos: SeekFrom) -> Result<u64> {
+    pub fn seek(&mut self, pos: SeekFrom) -> crate::Result<u32> {
         let offset = self.inner.seek(pos)?;
-        self.offset = offset as u32;
+        let offset = offset
+            .try_into()
+            .map_err(|_e| assert_with_msg!("File is bigger than 4 GIB"))?;
+        self.offset = offset;
         Ok(offset)
     }
 }
