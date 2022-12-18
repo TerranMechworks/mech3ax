@@ -228,10 +228,10 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
         read.prev + 48
     )?;
 
-    // since x and y always have a side of 128.0/-128.0 length respectively, and the
-    // sign doesn't matter because the values are squared, only z_min and z_max are
-    // needed for this calculation.
-    let diagonal = partition_diag(partition.z_min, partition.z_max);
+    // since x and y always have a side of 128.0/-128.0 * 2 length respectively,
+    // and the sign doesn't matter because the values are squared, only z_min and
+    // z_max are needed for this calculation.
+    let diagonal = partition_diag(partition.z_min, partition.z_max, 128.0);
     assert_that!(
         "partition diagonal",
         partition.diagonal == diagonal,
@@ -501,7 +501,7 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
 
     let x = partition.x as f32;
     let y = partition.y as f32;
-    let diagonal = partition_diag(partition.z_min, partition.z_max);
+    let diagonal = partition_diag(partition.z_min, partition.z_max, 128.0);
     let count = assert_len!(u16, partition.nodes.len(), "partition nodes")?;
 
     let partition_c = PartitionRcC {

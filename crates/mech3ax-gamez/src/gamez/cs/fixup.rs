@@ -1,6 +1,5 @@
 use super::HeaderCsC;
 use crate::gamez::common::{SIGNATURE, VERSION_CS};
-use log::{info, trace};
 
 /*
 C1A
@@ -120,7 +119,7 @@ HeaderCsC {
 }
 */
 
-const C4_HEADER_READ: HeaderCsC = HeaderCsC {
+const HEADER_C4: HeaderCsC = HeaderCsC {
     signature: SIGNATURE,
     version: VERSION_CS,
     unk08: 967279328,
@@ -133,7 +132,7 @@ const C4_HEADER_READ: HeaderCsC = HeaderCsC {
     nodes_offset: 5107144,
 };
 
-const PLANES_HEADER_READ: HeaderCsC = HeaderCsC {
+const HEADER_PLANES: HeaderCsC = HeaderCsC {
     signature: SIGNATURE,
     version: VERSION_CS,
     unk08: 967277477,
@@ -154,14 +153,9 @@ pub enum Fixup {
 
 impl Fixup {
     pub(super) fn read(header: &HeaderCsC) -> Self {
-        if header == &C4_HEADER_READ {
-            // info!("Applying C4 fixup");
-            // // hack for dodgy c4 gamez.zbd, where the node array size is smaller
-            // // than the node count (and correct)
-            // header.node_count = header.node_array_size;
-            // trace!("{:#?}", header);
+        if header == &HEADER_C4 {
             Self::C4
-        } else if header == &PLANES_HEADER_READ {
+        } else if header == &HEADER_PLANES {
             Self::Planes
         } else {
             Self::None
@@ -169,14 +163,9 @@ impl Fixup {
     }
 
     pub(super) fn write(header: &HeaderCsC) -> Self {
-        if header == &C4_HEADER_READ {
-            // trace!("{:#?}", header);
-            // info!("Applying C4 fixup");
-            // // hack for dodgy c4 gamez.zbd, where the node array size is smaller
-            // // than the node count (and correct)
-            // header.node_count = C4_NODE_COUNT;
+        if header == &HEADER_C4 {
             Self::C4
-        } else if header == &PLANES_HEADER_READ {
+        } else if header == &HEADER_PLANES {
             Self::Planes
         } else {
             Self::None

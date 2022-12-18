@@ -7,38 +7,36 @@ use mech3ax_metadata_proc_macro::{RefStruct, Union};
 
 #[derive(Debug, Serialize, Deserialize, RefStruct, Clone, PartialEq)]
 #[repr(C)]
-pub struct PartitionValuePm {
+pub struct PartitionValueCs {
     pub index: u32,
     pub z_min: f32,
     pub z_max: f32,
 }
-static_assert_size!(PartitionValuePm, 12);
+static_assert_size!(PartitionValueCs, 12);
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct PartitionPm {
+pub struct PartitionCs {
     pub x: i32,
     pub y: i32,
     pub z_min: f32,
     pub z_max: f32,
-    pub z_mid: f32,
-    pub nodes: Vec<PartitionValuePm>,
+    pub nodes: Vec<PartitionValueCs>,
     pub ptr: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Camera {
     pub name: String,
-    // pub clip: Range,
-    // pub fov: Range,
+    pub focus_node_xy: i32,
     pub data_ptr: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Display {
-    // pub name: String,
-    // pub resolution_x: u32,
-    // pub resolution_y: u32,
-    // pub clear_color: Color,
+    pub name: String,
+    pub resolution_x: u32,
+    pub resolution_y: u32,
+    pub clear_color: Color,
     pub data_ptr: u32,
 }
 
@@ -105,25 +103,26 @@ pub struct Object3d {
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Window {
     pub name: String,
-    // pub resolution_x: u32,
-    // pub resolution_y: u32,
+    pub resolution_x: u32,
+    pub resolution_y: u32,
     pub data_ptr: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct World {
-    // pub name: String,
-    // pub area: Area,
-    // pub partitions: Vec<Vec<PartitionPm>>,
-    // pub virtual_partition: bool,
-    // pub area_partition_count: u32,
-    // pub area_partition_ptr: u32,
-    // pub virt_partition_ptr: u32,
-    // pub world_children_ptr: u32,
-    // pub world_child_value: u32,
-    // pub world_lights_ptr: u32,
-    // pub children: Vec<u32>,
-    pub children_count: u16,
+    pub name: String,
+    pub area: Area,
+    pub partitions: Vec<Vec<PartitionCs>>,
+    pub flags: bool,
+    pub area_partition_count: u32,
+    pub area_partition_ptr: u32,
+    pub virt_partition_x_min: u32,
+    pub virt_partition_y_min: u32,
+    pub virt_partition_ptr: u32,
+    pub world_children_ptr: u32,
+    pub world_child_value: u32,
+    pub world_lights_ptr: u32,
+    pub children: Vec<u32>,
     pub data_ptr: u32,
     pub children_array_ptr: u32,
 }

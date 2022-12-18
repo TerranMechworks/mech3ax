@@ -3,9 +3,9 @@ use crate::flags::NodeBitFlagsCs;
 use crate::types::ZONE_DEFAULT;
 use mech3ax_api_types::nodes::cs::World;
 use mech3ax_api_types::nodes::BoundingBox;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_len, assert_that, Result};
 
-const WORLD_NAME: &str = "world1";
+pub const WORLD_NAME: &str = "world1";
 
 const WORLD_FLAGS: NodeBitFlagsCs = NodeBitFlagsCs::from_bits_truncate(
     NodeBitFlagsCs::UNK02.bits()
@@ -68,8 +68,7 @@ pub fn assert_variants(node: NodeVariantsCs, offset: u32) -> Result<NodeVariantC
 }
 
 pub fn make_variants(world: &World) -> Result<NodeVariantsCs> {
-    // let children_count = assert_len!(u16, world.children.len(), "world children")?;
-    let children_count = world.children_count;
+    let children_count = assert_len!(u16, world.children.len(), "world children")?;
     Ok(NodeVariantsCs {
         name: WORLD_NAME.to_string(),
         flags: WORLD_FLAGS,

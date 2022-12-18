@@ -90,6 +90,7 @@ pub fn read_nodes(
     }
 
     assert_that!("node info end", end_offset == read.offset, read.offset)?;
+    trace!("Node data pos {}", read.offset);
 
     let nodes = variants
         .into_iter()
@@ -99,27 +100,27 @@ pub fn read_nodes(
                 data_ptr,
                 children_count,
                 children_array_ptr,
-            } => Ok(NodeCs::World(World {
-                children_count,
-                data_ptr,
-                children_array_ptr,
-            })),
-            NodeVariantCs::Display { data_ptr } => Ok(NodeCs::Display(Display { data_ptr })),
+            } => {
+                let world = mech3ax_nodes::cs::world::read(
+                    read,
+                    data_ptr,
+                    children_count,
+                    children_array_ptr,
+                    index,
+                )?;
+                Ok(NodeCs::World(world))
+            }
+            NodeVariantCs::Display { data_ptr } => {
+                let display = mech3ax_nodes::cs::display::read(read, data_ptr, index)?;
+                Ok(NodeCs::Display(display))
+            }
             NodeVariantCs::Window { data_ptr, spyglass } => {
-                let name = if spyglass {
-                    "sgwin".to_string()
-                } else {
-                    "window1".to_string()
-                };
-                Ok(NodeCs::Window(Window { name, data_ptr }))
+                let window = mech3ax_nodes::cs::window::read(read, data_ptr, spyglass, index)?;
+                Ok(NodeCs::Window(window))
             }
             NodeVariantCs::Camera { data_ptr, spyglass } => {
-                let name = if spyglass {
-                    "spyglass".to_string()
-                } else {
-                    "camera1".to_string()
-                };
-                Ok(NodeCs::Camera(Camera { name, data_ptr }))
+                let camera = mech3ax_nodes::cs::camera::read(read, data_ptr, spyglass, index)?;
+                Ok(NodeCs::Camera(camera))
             }
             NodeVariantCs::Light { data_ptr } => Ok(NodeCs::Light(Light {
                 name: "sunlight".to_string(),
@@ -223,6 +224,7 @@ pub fn read_nodes(
 
     // read.assert_end()?;
     // assert_area_partitions(&nodes, read.offset)?;
+    trace!("Unparsed data pos {}", read.offset);
     let node_data = read.read_to_end()?;
 
     Ok((nodes, node_data))
@@ -272,49 +274,56 @@ pub fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NodeCs]) -> 
         write.write_u32(node_index)?;
     }
 
-    // for (index, node) in nodes.iter().enumerate() {
-    //     write_node_data(write, node, index)?;
-    //     match node {
-    //         NodePm::World(world) => {
-    //             debug!(
-    //                 "Writing node {} children x{} (pm) at {}",
-    //                 index,
-    //                 world.children.len(),
-    //                 write.offset
-    //             );
-    //             for child in &world.children {
-    //                 write.write_u32(*child)?;
-    //             }
-    //         }
-    //         NodePm::Lod(lod) => {
-    //             write.write_u32(lod.parent)?;
-    //             debug!(
-    //                 "Writing node {} children x{} (pm) at {}",
-    //                 index,
-    //                 lod.children.len(),
-    //                 write.offset
-    //             );
-    //             for child in &lod.children {
-    //                 write.write_u32(*child)?;
-    //             }
-    //         }
-    //         NodePm::Object3d(object3d) => {
-    //             if let Some(parent) = object3d.parent {
-    //                 write.write_u32(parent)?;
-    //             }
-    //             debug!(
-    //                 "Writing node {} children x{} (pm) at {}",
-    //                 index,
-    //                 object3d.children.len(),
-    //                 write.offset
-    //             );
-    //             for child in &object3d.children {
-    //                 write.write_u32(*child)?;
-    //             }
-    //         }
-    //         _ => {}
-    //     }
-    // }
+    for (index, node) in nodes.iter().enumerate() {
+        match node {
+            NodeCs::World(world) => mech3ax_nodes::cs::world::write(write, world, index)?,
+            NodeCs::Display(display) => mech3ax_nodes::cs::display::write(write, display, index)?,
+            NodeCs::Window(window) => mech3ax_nodes::cs::window::write(write, window, index)?,
+            NodeCs::Camera(camera) => mech3ax_nodes::cs::camera::write(write, camera, index)?,
+            _ => {}
+        }
+        //     write_node_data(write, node, index)?;
+        //     match node {
+        //         NodePm::World(world) => {
+        //             debug!(
+        //                 "Writing node {} children x{} (pm) at {}",
+        //                 index,
+        //                 world.children.len(),
+        //                 write.offset
+        //             );
+        //             for child in &world.children {
+        //                 write.write_u32(*child)?;
+        //             }
+        //         }
+        //         NodePm::Lod(lod) => {
+        //             write.write_u32(lod.parent)?;
+        //             debug!(
+        //                 "Writing node {} children x{} (pm) at {}",
+        //                 index,
+        //                 lod.children.len(),
+        //                 write.offset
+        //             );
+        //             for child in &lod.children {
+        //                 write.write_u32(*child)?;
+        //             }
+        //         }
+        //         NodePm::Object3d(object3d) => {
+        //             if let Some(parent) = object3d.parent {
+        //                 write.write_u32(parent)?;
+        //             }
+        //             debug!(
+        //                 "Writing node {} children x{} (pm) at {}",
+        //                 index,
+        //                 object3d.children.len(),
+        //                 write.offset
+        //             );
+        //             for child in &object3d.children {
+        //                 write.write_u32(*child)?;
+        //             }
+        //         }
+        //         _ => {}
+        //     }
+    }
 
     Ok(())
 }

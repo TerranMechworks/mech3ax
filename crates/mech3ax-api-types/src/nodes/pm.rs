@@ -44,7 +44,6 @@ pub struct PartitionPm {
     pub y: i32,
     pub z_min: f32,
     pub z_max: f32,
-    pub z_mid: f32,
     pub nodes: Vec<PartitionValuePm>,
     pub ptr: u32,
 }

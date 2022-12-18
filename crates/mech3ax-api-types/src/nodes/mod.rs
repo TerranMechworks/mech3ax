@@ -31,12 +31,12 @@ pub struct Area {
 }
 
 impl Area {
-    pub const fn x_count(&self) -> i32 {
-        (self.right - self.left) / 256
+    pub const fn x_count(&self, size: i32) -> i32 {
+        (self.right - self.left) / size
     }
 
-    pub const fn y_count(&self) -> i32 {
-        (self.bottom - self.top) / 256
+    pub const fn y_count(&self, size: i32) -> i32 {
+        (self.bottom - self.top) / size
     }
 }
 

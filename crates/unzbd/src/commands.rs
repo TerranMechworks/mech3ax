@@ -92,9 +92,7 @@ where
 
     let manifest = read_archive(
         &mut input,
-        |name, data, offset| {
-            save_file(&mut zip, name, data, offset)
-        },
+        |name, data, offset| save_file(&mut zip, name, data, offset),
         version,
     )
     .context(context)?;

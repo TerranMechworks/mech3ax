@@ -5,8 +5,8 @@ use mech3ax_api_types::nodes::cs::Camera;
 use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 
-const CAMERA_NAME: &str = "camera1";
-const SPYGLASS_NAME: &str = "spyglass";
+pub const CAMERA_NAME: &str = "camera1";
+pub const SPYGLASS_NAME: &str = "spyglass";
 
 const CAMERA_FLAGS: NodeBitFlagsCs = NodeBitFlagsCs::from_bits_truncate(
     NodeBitFlagsCs::UNK02.bits()

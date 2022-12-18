@@ -5,8 +5,8 @@ use mech3ax_api_types::nodes::cs::Window;
 use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 
-const WINDOW_NAME: &str = "window1";
-const SPYGLASS_NAME: &str = "sgwin";
+pub const WINDOW_NAME: &str = "window1";
+pub const SPYGLASS_NAME: &str = "sgwin";
 
 const WINDOW_FLAGS: NodeBitFlagsCs = NodeBitFlagsCs::from_bits_truncate(
     NodeBitFlagsCs::UNK02.bits()

@@ -108,10 +108,10 @@ fn approx_sqrt(value: f32) -> f32 {
 }
 
 #[inline]
-pub fn partition_diag(min: f32, max: f32) -> f32 {
+pub fn partition_diag(z_min: f32, z_max: f32, sides: f64) -> f32 {
     // must perform this calculation with doubles to avoid loss of precision
-    let side = (min as f64 - max as f64) * 0.5;
-    let temp = 2.0 * 128.0 * 128.0 + side * side;
+    let z_side = (z_min as f64 - z_max as f64) * 0.5;
+    let temp = 2.0 * sides * sides + z_side * z_side;
     approx_sqrt(temp as f32)
 }
 

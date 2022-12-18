@@ -93,9 +93,7 @@ where
     write_archive(
         &mut write,
         &entries,
-        |name, offset| {
-            load_file(&mut zip, name, offset)
-        },
+        |name, offset| load_file(&mut zip, name, offset),
         version,
     )
     .context(context)

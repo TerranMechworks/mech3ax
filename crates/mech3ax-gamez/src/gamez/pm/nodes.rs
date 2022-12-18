@@ -134,9 +134,10 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
 
 fn assert_area_partitions(nodes: &[NodePm], offset: u32) -> Result<()> {
     let (x_count, y_count) = match nodes.first() {
-        Some(NodePm::World(world)) => {
-            Ok((world.area.x_count() as i16, world.area.y_count() as i16))
-        }
+        Some(NodePm::World(world)) => Ok((
+            world.area.x_count(256) as i16,
+            world.area.y_count(256) as i16,
+        )),
         Some(_) => Err(assert_with_msg!("Expected the world node to be first")),
         None => Err(assert_with_msg!("Expected to have read some nodes")),
     }?;

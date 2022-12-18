@@ -225,22 +225,19 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
         partition.x_mid == xf + 128.0,
         read.prev + 40
     )?;
-    // z mid:
-    // this should be (z_max + z_min) * 0.5, but for a small number of partitions,
-    // maybe due to floating point errors in the original calculation, this doesn't
-    // work (lower mantissa bits don't match in 0.9% of the cases).
-    // let z_mid = (partition.z_max + partition.z_min) * 0.5;
-    // assert_that!("partition z_mid", partition.z_mid == z_mid, read.prev + 44)?;
+    // z mid
+    let z_mid = (partition.z_max + partition.z_min) * 0.5;
+    assert_that!("partition z_mid", partition.z_mid == z_mid, read.prev + 44)?;
     assert_that!(
         "partition y mid",
         partition.y_mid == yf - 128.0,
         read.prev + 48
     )?;
 
-    // since x and y always have a side of 128.0/-128.0 length respectively, and the
-    // sign doesn't matter because the values are squared, only z_min and z_max are
-    // needed for this calculation.
-    let diagonal = partition_diag(partition.z_min, partition.z_max);
+    // since x and y always have a side of 128.0/-128.0 * 2 length respectively,
+    // and the sign doesn't matter because the values are squared, only z_min and
+    // z_max are needed for this calculation.
+    let diagonal = partition_diag(partition.z_min, partition.z_max, 128.0);
     assert_that!(
         "partition diagonal",
         partition.diagonal == diagonal,
@@ -280,7 +277,6 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
         y,
         z_min: partition.z_min,
         z_max: partition.z_max,
-        z_mid: partition.z_mid,
         nodes,
         ptr: partition.ptr,
     })
@@ -580,8 +576,9 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
 
     let x = partition.x as f32;
     let y = partition.y as f32;
-    let diagonal = partition_diag(partition.z_min, partition.z_max);
+    let diagonal = partition_diag(partition.z_min, partition.z_max, 128.0);
     let count = assert_len!(u16, partition.nodes.len(), "partition nodes")?;
+    let z_mid = (partition.z_max + partition.z_min) * 0.5;
 
     let partition_c = PartitionPmC {
         flags: 0x100,
@@ -595,7 +592,7 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
         z_max: partition.z_max,
         y_max: y,
         x_mid: x + 128.0,
-        z_mid: partition.z_mid,
+        z_mid,
         y_mid: y - 128.0,
         diagonal,
         zero56: 0,
@@ -653,8 +650,8 @@ pub fn write(write: &mut CountingWriter<impl Write>, world: &World, index: usize
     let area_width = area_right - area_left;
     let area_height = area_top - area_bottom;
 
-    let virt_partition_x_count = world.area.x_count() as u32;
-    let virt_partition_y_count = world.area.y_count() as u32;
+    let virt_partition_x_count = world.area.x_count(256) as u32;
+    let virt_partition_y_count = world.area.y_count(256) as u32;
 
     let (virt_partition_x_max, virt_partition_y_max) = if world.virtual_partition {
         (virt_partition_x_count - 1, virt_partition_y_count - 1)
@@ -697,8 +694,8 @@ pub fn write(write: &mut CountingWriter<impl Write>, world: &World, index: usize
         virt_partition_diag: -192.0,
         partition_inclusion_tol_low: 3.0,
         partition_inclusion_tol_high: 3.0,
-        virt_partition_x_count: virt_partition_x_count,
-        virt_partition_y_count: virt_partition_y_count,
+        virt_partition_x_count,
+        virt_partition_y_count,
         virt_partition_ptr: world.virt_partition_ptr,
         one164: 1.0,
         one168: 1.0,
