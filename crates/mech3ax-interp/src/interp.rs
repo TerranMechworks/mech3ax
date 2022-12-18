@@ -1,85 +1,119 @@
+use log::{debug, trace};
 use mech3ax_api_types::interp::Script;
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_from_c_sized, str_to_c_padded};
 use mech3ax_common::{assert_len, assert_that, Result};
+use mech3ax_debug::Ascii;
 use std::io::{Read, Write};
 use time::OffsetDateTime;
 
 const SIGNATURE: u32 = 0x08971119;
 const VERSION: u32 = 7;
 
+#[derive(Debug)]
 #[repr(C)]
-struct EntryC {
-    name: [u8; 120],
+struct InterpHeaderC {
+    signature: u32,
+    version: u32,
+    count: u32,
+}
+static_assert_size!(InterpHeaderC, 12);
+
+#[derive(Debug)]
+#[repr(C)]
+struct InterpEntryC {
+    name: Ascii<120>,
     last_modified: u32,
     start: u32,
 }
-static_assert_size!(EntryC, 128);
+static_assert_size!(InterpEntryC, 128);
 
-fn read_script(read: &mut CountingReader<impl Read>, offset: &mut u64) -> Result<Vec<String>> {
+fn read_line(read: &mut CountingReader<impl Read>, size: usize) -> Result<String> {
+    let arg_count = read.read_u32()?;
+
+    let mut buf = vec![0u8; size];
+    read.read_exact(&mut buf)?;
+
+    // replace null characters with spaces and count them
+    let mut zero_count = 0u32;
+    for v in &mut buf {
+        if *v == b'\0' {
+            zero_count += 1;
+            *v = b' ';
+        }
+    }
+    assert_that!("arg count", zero_count == arg_count, read.prev)?;
+
+    // remove terminating null (which is now a space)
+    // strictly speaking this always succeeds, as size > 0 here
+    let last = buf.pop();
+    assert_that!("command end", last == Some(b' '), read.prev)?;
+
+    let command = assert_utf8("command", read.prev, || str_from_c_sized(&buf))?;
+    Ok(command)
+}
+
+fn read_script(read: &mut CountingReader<impl Read>, script_index: usize) -> Result<Vec<String>> {
     let mut lines = Vec::new();
+    let mut line_index = 0;
     loop {
+        trace!(
+            "Reading interp script {} line {} at {}",
+            script_index,
+            line_index,
+            read.offset
+        );
         let size = read.read_u32()?;
-        *offset += 4;
+        // end of script
         if size == 0 {
             break;
         }
-        let arg_count = read.read_u32()? as usize;
-        *offset += 4;
-
-        let mut buf = vec![0u8; size as usize];
-        read.read_exact(&mut buf)?;
-        // Cast safety: u64 > u32
-        *offset += size as u64;
-
-        let mut zero_count = 0;
-        // replace null characters with spaces and count them
-        for v in &mut buf {
-            if *v == 0 {
-                zero_count += 1;
-                *v = 32;
-            }
-        }
-        assert_that!("arg count", zero_count == arg_count, *offset)?;
-        let last = buf.pop().unwrap();
-        assert_that!("command end", last == 32, *offset)?;
-
-        let command = assert_utf8("command", *offset, || str_from_c_sized(&buf))?;
+        // Cast safety: usize > u32 on x64/arm64
+        let command = read_line(read, size as usize)?;
         lines.push(command);
+        line_index += 1;
     }
     Ok(lines)
 }
 
 pub fn read_interp(read: &mut CountingReader<impl Read>) -> Result<Vec<Script>> {
-    let signature = read.read_u32()?;
-    assert_that!("signature", signature == SIGNATURE, 0)?;
-    let version = read.read_u32()?;
-    assert_that!("version", version == VERSION, 4)?;
-    let count = read.read_u32()?;
-    let mut offset = 12;
+    debug!(
+        "Reading interp header ({}) at {}",
+        InterpHeaderC::SIZE,
+        read.offset
+    );
+    let header: InterpHeaderC = read.read_struct()?;
+    trace!("{:#?}", header);
+    assert_that!("interp signature", header.signature == SIGNATURE, 0)?;
+    assert_that!("interp version", header.version == VERSION, 4)?;
 
-    let script_info = (0..count)
-        .map(|_| {
-            let entry: EntryC = read.read_struct()?;
-            let name = assert_utf8("name", offset, || str_from_c_padded(&entry.name))?;
+    let script_info = (0..header.count)
+        .map(|index| {
+            debug!(
+                "Reading interp entry {} ({}) at {}",
+                index,
+                InterpEntryC::SIZE,
+                read.offset
+            );
+            let entry: InterpEntryC = read.read_struct()?;
+            trace!("{:#?}", entry);
+            let name = assert_utf8("name", read.prev, || str_from_c_padded(&entry.name.0))?;
             // Cast safety: i64 > u32
             let last_modified =
                 OffsetDateTime::from_unix_timestamp(entry.last_modified as i64).unwrap();
-            // Cast safety: u64 > u32
-            offset += EntryC::SIZE as u64;
-            // Cast safety: u64 > u32
-            let start = entry.start as u64;
-            Ok((name, last_modified, start))
+            Ok((name, last_modified, entry.start))
         })
         .collect::<Result<Vec<_>>>()?;
 
     let scripts = script_info
         .into_iter()
-        .map(|(name, last_modified, start)| {
-            assert_that!("entry start", start == offset, offset)?;
-            let lines = read_script(read, &mut offset)?;
+        .enumerate()
+        .map(|(script_index, (name, last_modified, start))| {
+            debug!("Reading interp script {} at {}", script_index, read.offset);
+            assert_that!("entry start", start == read.offset, read.offset)?;
+            let lines = read_script(read, script_index)?;
             Ok(Script {
                 name,
                 last_modified,
@@ -92,74 +126,98 @@ pub fn read_interp(read: &mut CountingReader<impl Read>) -> Result<Vec<Script>> 
     scripts
 }
 
-#[derive(Debug)]
-struct LineInfo {
-    pub line_size: u32,
-    pub arg_count: u32,
-    pub command: Vec<u8>,
-}
-
-fn write_script(lines: &[String]) -> Result<(u32, Vec<LineInfo>)> {
+fn size_script(lines: &[String]) -> u32 {
     let mut size = 0;
-    let transformed = lines
-        .iter()
-        .map(|line| {
-            let mut buf = Vec::from(line.as_bytes());
-            buf.push(32); // add "zero" terminator
-            let line_size = assert_len!(u32, buf.len(), "line length in bytes")?;
-            let mut zero_count = 0;
-            for v in &mut buf {
-                if *v == 32 {
-                    zero_count += 1;
-                    *v = 0;
-                }
-            }
-            size += 8 + line_size;
-            Ok(LineInfo {
-                line_size,
-                arg_count: zero_count,
-                command: buf,
-            })
-        })
-        .collect::<Result<Vec<_>>>()?;
+    for line in lines {
+        // add size + arg_count
+        size += 8;
+        // add terminating null
+        let line_size = line.as_bytes().len() + 1;
+        // Cast safety: truncation simply leads to incorrect size, and is
+        // validated properly later.
+        size += line_size as u32;
+    }
     // zero "size" u32 written to signify end of script
     size += 4;
-    Ok((size, transformed))
+    size
+}
+
+fn write_line(write: &mut CountingWriter<impl Write>, line: &str) -> Result<()> {
+    let mut buf = Vec::from(line.as_bytes());
+
+    buf.push(32); // add terminating null (as a space for now)
+    let line_size = assert_len!(u32, buf.len(), "script line length in bytes")?;
+
+    // replace spaces with null characters and count them
+    let mut zero_count = 0;
+    for v in &mut buf {
+        if *v == b' ' {
+            zero_count += 1;
+            *v = b'\0';
+        }
+    }
+
+    write.write_u32(line_size)?;
+    write.write_u32(zero_count)?;
+    write.write_all(&buf)?;
+    Ok(())
 }
 
 pub fn write_interp(write: &mut CountingWriter<impl Write>, scripts: &[Script]) -> Result<()> {
+    debug!(
+        "Writing interp header ({}) at {}",
+        InterpHeaderC::SIZE,
+        write.offset
+    );
     let count = assert_len!(u32, scripts.len(), "scripts")?;
-    write.write_u32(SIGNATURE)?;
-    write.write_u32(VERSION)?;
-    write.write_u32(count)?;
+    let header = InterpHeaderC {
+        signature: SIGNATURE,
+        version: VERSION,
+        count,
+    };
+    trace!("{:#?}", header);
+    write.write_struct(&header)?;
 
-    let mut offset = 12 + count * EntryC::SIZE;
-    let transformed = scripts
-        .iter()
-        .map(|script| {
-            let mut name = [0; 120];
-            str_to_c_padded(&script.name, &mut name);
-            // Cast safety: truncation simply leads to incorrect timestamp
-            let last_modified = script.last_modified.unix_timestamp() as u32;
-            let entry = EntryC {
-                name,
-                last_modified,
-                start: offset,
-            };
-            write.write_struct(&entry)?;
+    let mut offset = 12 + count * InterpEntryC::SIZE;
+    for (index, script) in scripts.iter().enumerate() {
+        debug!(
+            "Writing interp entry {} ({}) at {}",
+            index,
+            InterpEntryC::SIZE,
+            write.offset
+        );
+        let mut name = Ascii::new();
+        str_to_c_padded(&script.name, &mut name.0);
+        // Cast safety: truncation simply leads to incorrect timestamp
+        let last_modified = script.last_modified.unix_timestamp() as u32;
+        let entry = InterpEntryC {
+            name,
+            last_modified,
+            start: offset,
+        };
+        trace!("{:#?}", entry);
+        write.write_struct(&entry)?;
+        offset += size_script(&script.lines);
+    }
 
-            let (size, lines) = write_script(&script.lines)?;
-            offset += size;
-            Ok(lines)
-        })
-        .collect::<Result<Vec<_>>>()?;
-
-    for lines in transformed.into_iter() {
-        for line_info in lines.into_iter() {
-            write.write_u32(line_info.line_size)?;
-            write.write_u32(line_info.arg_count)?;
-            write.write_all(&line_info.command)?;
+    for (script_index, script) in scripts.iter().enumerate() {
+        debug!("Writing interp script {} at {}", script_index, write.offset);
+        for (line_index, line) in script.lines.iter().enumerate() {
+            trace!(
+                "Writing interp script {} line {} at {}",
+                script_index,
+                line_index,
+                write.offset
+            );
+            write_line(write, line)?;
         }
+        trace!(
+            "Writing interp script {} line {} at {}",
+            script_index,
+            script.lines.len(),
+            write.offset
+        );
+        // end of script
         write.write_u32(0)?;
     }
 
