@@ -1,4 +1,4 @@
-use log::{debug, trace};
+use log::trace;
 use mech3ax_api_types::nodes::cs::*;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
@@ -11,6 +11,7 @@ pub fn read_nodes(
     read: &mut CountingReader<impl Read>,
     array_size: u32,
     light_index: u32,
+    is_gamez: bool,
 ) -> Result<Vec<NodeCs>> {
     let end_offset = read.offset + NODE_CS_C_SIZE * array_size + 4 * array_size;
 
@@ -80,19 +81,22 @@ pub fn read_nodes(
                 light_node = true;
             }
             NodeVariantCs::Lod(_) => {
-                // can't do this for planes.zbd
-                // assert_that!("node data position", index > 5, node_info_pos)?;
+                if is_gamez {
+                    // can't do this for planes.zbd
+                    assert_that!("node data position", index > 5, node_info_pos)?;
+                }
             }
             NodeVariantCs::Object3d(_) => {
-                // can't do this for planes.zbd
-                // assert_that!("node data position", index > 5, node_info_pos)?;
+                if is_gamez {
+                    // can't do this for planes.zbd
+                    assert_that!("node data position", index > 5, node_info_pos)?;
+                }
             }
         }
         variants.push((variant, node_index));
     }
 
     assert_that!("node info end", end_offset == read.offset, read.offset)?;
-    trace!("Node data pos {}", read.offset);
 
     let nodes = variants
         .into_iter()
@@ -101,35 +105,60 @@ pub fn read_nodes(
         .collect::<Result<Vec<_>>>()?;
 
     read.assert_end()?;
-    // assert_area_partitions(&nodes, read.offset)?;
+    if is_gamez {
+        // can't do this for planes.zbd
+        assert_gamez_area_partitions(&nodes, read.offset)?;
+    } else {
+        assert_planes_area_partitions(&nodes, read.offset)?;
+    }
 
     Ok(nodes)
 }
 
-// fn assert_area_partitions(nodes: &[NodePm], offset: u32) -> Result<()> {
-//     let (x_count, y_count) = match nodes.first() {
-//         Some(NodePm::World(world)) => {
-//             Ok((world.area.x_count() as i16, world.area.y_count() as i16))
-//         }
-//         Some(_) => Err(assert_with_msg!("Expected the world node to be first")),
-//         None => Err(assert_with_msg!("Expected to have read some nodes")),
-//     }?;
+fn assert_planes_area_partitions(nodes: &[NodeCs], offset: u32) -> Result<()> {
+    for node in nodes {
+        match node {
+            NodeCs::Object3d(object3d) => {
+                assert_that!(
+                    "object3d area partition",
+                    object3d.area_partition == None,
+                    offset
+                )?;
+            }
+            _ => {}
+        }
+    }
+    Ok(())
+}
 
-//     for node in nodes {
-//         let area_partition = match node {
-//             NodePm::Object3d(object3d) => &object3d.area_partition,
-//             _ => &None,
-//         };
-//         if let Some(ap) = area_partition {
-//             assert_that!("area partition x", ap.x < x_count, offset)?;
-//             assert_that!("area partition y", ap.y < y_count, offset)?;
-//             assert_that!("virt partition x", ap.virtual_x <= x_count, offset)?;
-//             assert_that!("virt partition y", ap.virtual_y <= y_count, offset)?;
-//         }
-//     }
+fn assert_gamez_area_partitions(nodes: &[NodeCs], offset: u32) -> Result<()> {
+    let (x_count, y_count) = match nodes.first() {
+        Some(NodeCs::World(world)) => Ok((
+            world.area.x_count(1024) as i16,
+            world.area.y_count(1024) as i16,
+        )),
+        Some(_) => Err(assert_with_msg!("Expected the world node to be first")),
+        None => Err(assert_with_msg!("Expected to have read some nodes")),
+    }?;
 
-//     Ok(())
-// }
+    for node in nodes {
+        let area_partition = match node {
+            NodeCs::Object3d(object3d) => &object3d.area_partition,
+            _ => &None,
+        };
+        if let Some(ap) = area_partition {
+            // this isn't really a great validation; the values can still be
+            // negative... this is because some AP values seem bogus, e.g.
+            // when either x or y are -1, but the other component isn't.
+            assert_that!("area partition x", ap.x < x_count, offset)?;
+            assert_that!("area partition y", ap.y < y_count, offset)?;
+            assert_that!("virt partition x", ap.virtual_x <= x_count, offset)?;
+            assert_that!("virt partition y", ap.virtual_y <= y_count, offset)?;
+        }
+    }
+
+    Ok(())
+}
 
 pub fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NodeCs]) -> Result<()> {
     for (index, node) in nodes.iter().enumerate() {

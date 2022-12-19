@@ -216,26 +216,26 @@ fn assert_node(node: NodeCsC, offset: u32) -> Result<(NodeType, NodeVariantsCs)>
     let area_partition = if node.area_partition == AreaPartitionPm::DEFAULT {
         None
     } else {
-        // assert_that!("area partition x", node.area_partition.x == -1, offset + 76)?;
-        // assert_that!("area partition y", node.area_partition.y == -1, offset + 78)?;
-        // assert_that!("area partition vx", node.area_partition.virtual_x == node.area_partition.x + 1, offset + 80)?;
-        // assert_that!("area partition vy", node.area_partition.virtual_y == node.area_partition.y + 1, offset + 82)?;
-        // assert_that!("area partition x", 0 <= node.area_partition.x <= 64, offset + 76)?;
-        // assert_that!("area partition y", 0 <= node.area_partition.y <= 64, offset + 78)?;
-        // assert_that!("area partition vx", node.area_partition.virtual_x == node.area_partition.x, offset + 80)?;
-        // assert_that!("area partition vy", node.area_partition.virtual_y == node.area_partition.y, offset + 82)?;
-        // assert_that!("area partition x", node.area_partition.x <= 64, offset + 76)?;
-        // assert_that!("area partition y", node.area_partition.y <= 64, offset + 78)?;
-        // assert_that!(
-        //     "area partition vx",
-        //     node.area_partition.virtual_x <= 64,
-        //     offset + 80
-        // )?;
-        // assert_that!(
-        //     "area partition vy",
-        //     node.area_partition.virtual_y <= 64,
-        //     offset + 82
-        // )?;
+        assert_that!(
+            "area partition x",
+            -1 <= node.area_partition.x <= 15,
+            offset + 76
+        )?;
+        assert_that!(
+            "area partition y",
+            -1 <= node.area_partition.y <= 15,
+            offset + 78
+        )?;
+        assert_that!(
+            "area partition vx",
+            0 <= node.area_partition.virtual_x <= 16,
+            offset + 80
+        )?;
+        assert_that!(
+            "area partition vy",
+            0 <= node.area_partition.virtual_y <= 16,
+            offset + 82
+        )?;
         Some(node.area_partition)
     };
 
@@ -317,26 +317,6 @@ pub fn read_node_info(read: &mut CountingReader<impl Read>, index: u32) -> Resul
         NodeType::Empty => unreachable!("empty nodes should not occur in cs"),
     };
     Ok(variant)
-    /*
-    let variant = match node_type {
-        NodeType::World => world::assert_variants(node, read.prev)?,
-        NodeType::Window => window::assert_variants(node, read.prev)?,
-        NodeType::Camera => camera::assert_variants(node, read.prev)?,
-        NodeType::Display => display::assert_variants(node, read.prev)?,
-        // NodeType::World => world::assert_variants(node, read.prev)?,
-        // NodeType::Window => window::assert_variants(node, read.prev)?,
-        // NodeType::Camera => camera::assert_variants(node, read.prev)?,
-        // NodeType::Display => display::assert_variants(node, read.prev)?,
-        // NodeType::Light => light::assert_variants(node, read.prev)?,
-        // NodeType::LoD => lod::assert_variants(node, read.prev, false)?,
-        // NodeType::Object3d => object3d::assert_variants(node, read.prev, false)?,
-        NodeType::Empty => unreachable!("empty nodes should not occur in pm"),
-        NodeType::Light => panic!("light node"),
-        NodeType::LoD => panic!("lod node"),
-        NodeType::Object3d => panic!("object3d node"),
-    };
-    Ok(variant)
-    */
 }
 
 fn write_variant(

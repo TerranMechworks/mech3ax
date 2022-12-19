@@ -148,6 +148,9 @@ fn assert_area_partitions(nodes: &[NodePm], offset: u32) -> Result<()> {
             _ => &None,
         };
         if let Some(ap) = area_partition {
+            // this isn't really a great validation; the values can still be
+            // negative... this is because some AP values seem bogus, e.g.
+            // when either x or y are -1, but the other component isn't.
             assert_that!("area partition x", ap.x < x_count, offset)?;
             assert_that!("area partition y", ap.y < y_count, offset)?;
             assert_that!("virt partition x", ap.virtual_x <= x_count, offset)?;

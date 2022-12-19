@@ -3,6 +3,7 @@ mod meshes;
 mod nodes;
 
 use super::common::{SIGNATURE, VERSION_CS};
+use crate::gamez::cs::fixup::Fixup;
 use crate::materials::ng as materials;
 use crate::textures::ng as textures;
 use log::{debug, trace};
@@ -90,7 +91,8 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         "Reading {}/{} nodes at {}",
         header.node_count, header.node_array_size, read.offset
     );
-    let nodes = nodes::read_nodes(read, header.node_array_size, header.node_count)?;
+    let is_gamez = fixup != Fixup::Planes;
+    let nodes = nodes::read_nodes(read, header.node_array_size, header.node_count, is_gamez)?;
     // `read_nodes` calls `assert_end`
 
     let metadata = GameZCsMetadata {

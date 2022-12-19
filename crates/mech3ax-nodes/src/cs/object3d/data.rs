@@ -63,9 +63,16 @@ fn assert_object3d(object3d: Object3dCsC, offset: u32) -> Result<Option<Transfor
         let translation = object3d.translation;
 
         let expected_matrix = euler_to_matrix(&rotation);
-        // assert_that!("matrix", object3d.matrix == expected_matrix, offset + 0)?;
-        // let matrix = None;
-        // in most cases, the calculated matrix is correct :/ for 2%, this fails (mw and pm)
+        // in most cases, the calculated matrix is correct :/
+        // * c1 : 27/2632 = 1.03%
+        // * c1b:  2/2151 = 0.09%
+        // * c1c:  1/1368 = 0.07%
+        // * c2 : 14/1680 = 0.83%
+        // * c2b:  1/1086 = 0.09%
+        // * c3 : 31/1787 = 1.73%
+        // * c4 : 22/3635 = 0.61%
+        // * c5 : 39/4065 = 0.96%
+        // * total: 137/18404 = 0.74%
         let matrix = if expected_matrix == object3d.matrix {
             None
         } else {

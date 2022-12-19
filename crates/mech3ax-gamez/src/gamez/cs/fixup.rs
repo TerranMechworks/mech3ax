@@ -145,6 +145,7 @@ const HEADER_PLANES: HeaderCsC = HeaderCsC {
     nodes_offset: 4881228,
 };
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Fixup {
     None,
     C4,
