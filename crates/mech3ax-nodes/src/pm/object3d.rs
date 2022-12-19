@@ -1,7 +1,7 @@
 use super::node::{NodeVariantPm, NodeVariantsPm};
 use super::wrappers::WrapperPm;
 use crate::flags::NodeBitFlags;
-use crate::math::{apply_zero_signs, euler_to_matrix, extract_zero_signs, PI};
+use crate::math::{apply_matrix_signs, euler_to_matrix, extract_matrix_signs, PI};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::pm::Object3d;
 use mech3ax_api_types::nodes::Transformation;
@@ -206,7 +206,7 @@ pub fn read(
     let object3d: Object3dPmC = read.read_struct()?;
     trace!("{:#?}", object3d);
 
-    let matrix_signs = extract_zero_signs(&object3d.matrix);
+    let matrix_signs = extract_matrix_signs(&object3d.matrix);
     let transformation = assert_object3d(object3d, read.prev)?;
 
     let wrapped = Object3d {
@@ -262,7 +262,7 @@ pub fn write(
         })
         .unwrap_or((40, Vec3::DEFAULT, Vec3::DEFAULT, Matrix::IDENTITY));
 
-    let matrix = apply_zero_signs(&matrix, object3d.matrix_signs);
+    let matrix = apply_matrix_signs(&matrix, object3d.matrix_signs);
     // nasty hack to fix up -0.0 in `collide04` object3d nodes
     if object3d.name == "collide04" && rotation.x == 0.0 {
         rotation.x = -0.0;

@@ -90,7 +90,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         "Reading {}/{} nodes at {}",
         header.node_count, header.node_array_size, read.offset
     );
-    let (nodes, node_data) = nodes::read_nodes(read, header.node_array_size, header.node_count)?;
+    let nodes = nodes::read_nodes(read, header.node_array_size, header.node_count)?;
     // `read_nodes` calls `assert_end`
 
     let metadata = GameZCsMetadata {
@@ -104,7 +104,6 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         materials,
         meshes,
         nodes,
-        node_data,
         metadata,
     })
 }
@@ -150,6 +149,5 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) 
     )?;
     meshes::write_meshes(write, meshes, fixup)?;
     nodes::write_nodes(write, &gamez.nodes)?;
-    write.write_all(&gamez.node_data)?;
     Ok(())
 }

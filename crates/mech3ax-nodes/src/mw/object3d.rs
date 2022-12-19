@@ -1,7 +1,7 @@
 use super::node::{NodeVariantMw, NodeVariantsMw};
 use super::wrappers::WrapperMw;
 use crate::flags::NodeBitFlags;
-use crate::math::{apply_zero_signs, euler_to_matrix, extract_zero_signs, PI};
+use crate::math::{apply_matrix_signs, euler_to_matrix, extract_matrix_signs, PI};
 use crate::types::ZONE_DEFAULT;
 use log::{debug, trace};
 use mech3ax_api_types::nodes::mw::Object3d;
@@ -212,7 +212,7 @@ pub fn read(
     let object3d: Object3dMwC = read.read_struct()?;
     trace!("{:#?}", object3d);
 
-    let matrix_signs = extract_zero_signs(&object3d.matrix);
+    let matrix_signs = extract_matrix_signs(&object3d.matrix);
     let transformation = assert_object3d(object3d, read.prev)?;
 
     let wrapped = Object3d {
@@ -265,7 +265,7 @@ pub fn write(
         })
         .unwrap_or((40, Vec3::DEFAULT, Vec3::DEFAULT, Matrix::IDENTITY));
 
-    let matrix = apply_zero_signs(&matrix, object3d.matrix_signs);
+    let matrix = apply_matrix_signs(&matrix, object3d.matrix_signs);
 
     let object3d = Object3dMwC {
         flags,

@@ -6,7 +6,6 @@ use crate::nodes::cs::NodeCs;
 use crate::nodes::mw::NodeMw;
 use crate::nodes::pm::NodePm;
 use crate::nodes::rc::NodeRc;
-use crate::serde::bytes;
 use ::serde::{Deserialize, Serialize};
 use materials::Material;
 use mech3ax_metadata_proc_macro::RefStruct;
@@ -61,8 +60,6 @@ pub struct GameZCsData {
     pub materials: Vec<Material>,
     pub meshes: Vec<Option<MeshNg>>,
     pub nodes: Vec<NodeCs>,
-    #[serde(with = "bytes")]
-    pub node_data: Vec<u8>,
     pub metadata: GameZCsMetadata,
 }
 

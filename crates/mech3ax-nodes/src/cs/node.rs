@@ -435,3 +435,61 @@ pub fn write_node_info(
         }
     }
 }
+
+pub fn read_node_data(
+    read: &mut CountingReader<impl Read>,
+    variant: NodeVariantCs,
+    node_index: u32,
+    index: usize,
+) -> Result<NodeCs> {
+    match variant {
+        NodeVariantCs::World {
+            data_ptr,
+            children_count,
+            children_array_ptr,
+        } => {
+            let world = world::read(read, data_ptr, children_count, children_array_ptr, index)?;
+            Ok(NodeCs::World(world))
+        }
+        NodeVariantCs::Display { data_ptr } => {
+            let display = display::read(read, data_ptr, index)?;
+            Ok(NodeCs::Display(display))
+        }
+        NodeVariantCs::Window { data_ptr, spyglass } => {
+            let window = window::read(read, data_ptr, spyglass, index)?;
+            Ok(NodeCs::Window(window))
+        }
+        NodeVariantCs::Camera { data_ptr, spyglass } => {
+            let camera = camera::read(read, data_ptr, spyglass, index)?;
+            Ok(NodeCs::Camera(camera))
+        }
+        NodeVariantCs::Light { data_ptr } => {
+            let light = light::read(read, data_ptr, node_index, index)?;
+            Ok(NodeCs::Light(light))
+        }
+        NodeVariantCs::Lod(lod) => {
+            let lod = lod::read(read, lod, node_index, index)?;
+            Ok(NodeCs::Lod(lod))
+        }
+        NodeVariantCs::Object3d(node) => {
+            let object3d = object3d::read(read, node, node_index, index)?;
+            Ok(NodeCs::Object3d(object3d))
+        }
+    }
+}
+
+pub fn write_node_data(
+    write: &mut CountingWriter<impl Write>,
+    node: &NodeCs,
+    index: usize,
+) -> Result<()> {
+    match node {
+        NodeCs::World(world) => world::write(write, world, index),
+        NodeCs::Display(display) => display::write(write, display, index),
+        NodeCs::Window(window) => window::write(write, window, index),
+        NodeCs::Camera(camera) => camera::write(write, camera, index),
+        NodeCs::Light(light) => light::write(write, light, index),
+        NodeCs::Lod(lod) => lod::write(write, lod, index),
+        NodeCs::Object3d(object3d) => object3d::write(write, object3d, index),
+    }
+}

@@ -6,7 +6,7 @@ use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_api_types::Vec3;
 use mech3ax_common::{assert_that, Result};
 
-const LIGHT_NAME: &str = "sunlight";
+pub const LIGHT_NAME: &str = "sunlight";
 
 const LIGHT_FLAGS: NodeBitFlagsCs = NodeBitFlagsCs::from_bits_truncate(
     NodeBitFlagsCs::UNK03.bits()

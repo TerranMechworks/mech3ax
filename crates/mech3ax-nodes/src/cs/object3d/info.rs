@@ -1,7 +1,7 @@
 use crate::cs::node::{NodeVariantCs, NodeVariantsCs};
 use crate::flags::NodeBitFlagsCs;
 use mech3ax_api_types::nodes::cs::Object3d;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_len, assert_that, Result};
 
 const ALWAYS_PRESENT: NodeBitFlagsCs = NodeBitFlagsCs::from_bits_truncate(
     NodeBitFlagsCs::UNK19.bits() | NodeBitFlagsCs::UNK24.bits() | NodeBitFlagsCs::UNK25.bits(),
@@ -60,6 +60,7 @@ pub fn assert_variants(node: NodeVariantsCs, offset: u32) -> Result<NodeVariantC
 }
 
 pub fn make_variants(object3d: &Object3d) -> Result<NodeVariantsCs> {
+    let children_count = assert_len!(u16, object3d.children.len(), "object3d children")?;
     //let mut flags = ALWAYS_PRESENT;
     let flags = NodeBitFlagsCs::from_bits_truncate(object3d.flags);
     Ok(NodeVariantsCs {
@@ -71,9 +72,9 @@ pub fn make_variants(object3d: &Object3d) -> Result<NodeVariantsCs> {
         data_ptr: object3d.data_ptr,
         mesh_index: object3d.mesh_index,
         area_partition: object3d.area_partition.clone(),
-        has_parent: object3d.has_parent,
+        has_parent: object3d.parent.is_some(),
         parent_array_ptr: object3d.parent_array_ptr,
-        children_count: object3d.children_count,
+        children_count,
         children_array_ptr: object3d.children_array_ptr,
         unk112: object3d.unk112,
         unk116: object3d.unk116,

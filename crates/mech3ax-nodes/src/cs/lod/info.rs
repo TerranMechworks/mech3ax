@@ -2,7 +2,7 @@ use crate::cs::node::{NodeVariantCs, NodeVariantLodCs, NodeVariantsCs};
 use crate::flags::NodeBitFlagsCs;
 use mech3ax_api_types::nodes::cs::Lod;
 use mech3ax_api_types::nodes::BoundingBox;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_len, assert_that, Result};
 
 const ALWAYS_PRESENT: NodeBitFlagsCs = NodeBitFlagsCs::from_bits_truncate(
     NodeBitFlagsCs::UNK02.bits()
@@ -81,6 +81,7 @@ pub fn assert_variants(node: NodeVariantsCs, offset: u32) -> Result<NodeVariantC
 }
 
 pub fn make_variants(lod: &Lod) -> Result<NodeVariantsCs> {
+    let children_count = assert_len!(u16, lod.children.len(), "lod children")?;
     let mut flags = ALWAYS_PRESENT;
     if lod.flags_unk03 {
         flags |= NodeBitFlagsCs::UNK03;
@@ -102,7 +103,7 @@ pub fn make_variants(lod: &Lod) -> Result<NodeVariantsCs> {
         area_partition: None,
         has_parent: true,
         parent_array_ptr: lod.parent_array_ptr,
-        children_count: lod.children_count,
+        children_count,
         children_array_ptr: lod.children_array_ptr,
         unk112: 2,
         unk116: BoundingBox::EMPTY,

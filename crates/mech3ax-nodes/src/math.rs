@@ -39,12 +39,36 @@ pub fn scale_to_matrix(scale: &Vec3) -> Matrix {
     }
 }
 
+#[inline(always)]
+fn is_negative_zero(value: f32) -> bool {
+    // SAFETY: Probably ok? The stdlib uses similar logic for both
+    // `f32::is_sign_negative` and `f32::classify`.
+    let b = unsafe { std::mem::transmute::<f32, u32>(value) };
+    b == 0x8000_0000
+}
+
 #[inline]
 fn extract_zero_sign(value: f32, index: u32) -> u32 {
-    if value == 0.0 && 1.0f32.copysign(value) < 0.0 {
+    // we really only care about if the value is negative zero. for both the
+    // positive zero case and all others, we don't have to remember the sign.
+    if is_negative_zero(value) {
         1 << index
     } else {
         0
+    }
+}
+
+fn apply_zero_sign(value: f32, signs: u32, index: u32) -> f32 {
+    if value == 0.0 {
+        let has_sign = value.is_sign_negative();
+        let has_bit = (signs & (1 << index)) != 0;
+        if has_sign != has_bit {
+            -value
+        } else {
+            value
+        }
+    } else {
+        value
     }
 }
 
@@ -53,7 +77,7 @@ fn extract_zero_sign(value: f32, index: u32) -> u32 {
 /// This is required for complete binary accuracy, since in Rust, ``0.0 == -0.0``. So
 /// when we compare against the calculated matrix or identity matrix, the zero sign will
 /// be ignored. This function saves them for writing.
-pub fn extract_zero_signs(matrix: &Matrix) -> u32 {
+pub fn extract_matrix_signs(matrix: &Matrix) -> u32 {
     let mut signs = 0;
     signs |= extract_zero_sign(matrix.a, 0);
     signs |= extract_zero_sign(matrix.b, 1);
@@ -67,26 +91,12 @@ pub fn extract_zero_signs(matrix: &Matrix) -> u32 {
     signs
 }
 
-fn apply_zero_sign(value: f32, signs: u32, index: u32) -> f32 {
-    if value == 0.0 {
-        let has_sign = 1.0f32.copysign(value) < 0.0;
-        let has_bit = (signs & (1 << index)) != 0;
-        if has_sign != has_bit {
-            -value
-        } else {
-            value
-        }
-    } else {
-        value
-    }
-}
-
 /// Apply the zero sign to a matrix (i.e. if the value is 0.0 or -0.0).
 ///
 /// This is required for complete binary accuracy, since in Rust, ``0.0 == -0.0``. So
 /// when we compare against the calculated matrix or identity matrix, the zero sign will
 /// be ignored. This function applies them from reading.
-pub fn apply_zero_signs(matrix: &Matrix, signs: u32) -> Matrix {
+pub fn apply_matrix_signs(matrix: &Matrix, signs: u32) -> Matrix {
     Matrix {
         a: apply_zero_sign(matrix.a, signs, 0),
         b: apply_zero_sign(matrix.b, signs, 1),
@@ -97,6 +107,22 @@ pub fn apply_zero_signs(matrix: &Matrix, signs: u32) -> Matrix {
         g: apply_zero_sign(matrix.g, signs, 6),
         h: apply_zero_sign(matrix.h, signs, 7),
         i: apply_zero_sign(matrix.i, signs, 8),
+    }
+}
+
+pub fn extract_vec3_signs(v: &Vec3) -> u32 {
+    let mut signs = 0;
+    signs |= extract_zero_sign(v.x, 0);
+    signs |= extract_zero_sign(v.y, 1);
+    signs |= extract_zero_sign(v.z, 2);
+    signs
+}
+
+pub fn apply_vec3_signs(v: Vec3, signs: u32) -> Vec3 {
+    Vec3 {
+        x: apply_zero_sign(v.x, signs, 0),
+        y: apply_zero_sign(v.y, signs, 1),
+        z: apply_zero_sign(v.z, signs, 2),
     }
 }
 

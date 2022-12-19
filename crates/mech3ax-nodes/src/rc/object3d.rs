@@ -1,6 +1,6 @@
 use super::node::{NodeVariantRc, NodeVariantsRc};
 use crate::flags::NodeBitFlags;
-use crate::math::{apply_zero_signs, euler_to_matrix, extract_zero_signs, scale_to_matrix, PI};
+use crate::math::{apply_matrix_signs, euler_to_matrix, extract_matrix_signs, scale_to_matrix, PI};
 use crate::types::ZONE_DEFAULT;
 use log::{debug, trace};
 use mech3ax_api_types::nodes::rc::{
@@ -256,7 +256,7 @@ pub fn read(
     let object3d: Object3dRcC = read.read_struct()?;
     trace!("{:#?}", object3d);
 
-    let matrix_signs = extract_zero_signs(&object3d.matrix);
+    let matrix_signs = extract_matrix_signs(&object3d.matrix);
     let transformation = assert_object3d(object3d, read.prev)?;
 
     let parent = if node.has_parent {
@@ -329,7 +329,7 @@ pub fn write(
         }
     };
 
-    let matrix = apply_zero_signs(&matrix, object3d.matrix_signs);
+    let matrix = apply_matrix_signs(&matrix, object3d.matrix_signs);
 
     let object3dc = Object3dRcC {
         flags,
