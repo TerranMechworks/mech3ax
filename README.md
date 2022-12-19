@@ -38,10 +38,10 @@ Roughly speaking, the output of from ZBD conversions will be one or more JSON do
 | Image/texture ZBDs                                     | ✅ | ✅ | ✅ | ✅ |
 | `mechlib.zbd`                                          | ⬛ | ✅ | ✅ | ⬛ |
 | `motion.zbd`                                           | ⬛ | ✅ | ✅ | ⬛ |
-| `gamez.zbd`                                            | ✔️ | ✅ | ✅ | ✔️ |
+| `gamez.zbd`                                            | ✔️ | ✅ | ✅ | ✅ |
 | `anim.zbd`/`cam_anim.zbd`/`mis_anim.zbd`               | ❌ | ✅ | ❌ | ❌ |
 | `m*.zmap`                                              | ✅ | ⬛ | ⬛ | ⬛ |
-| `planes.zbd` *                                         | ⬛ | ⬛ | ⬛ | ✔️ |
+| `planes.zbd` *                                         | ⬛ | ⬛ | ⬛ | ✅ |
 
 \* For `planes.zbd`, please use the `gamez` mode.
 
@@ -86,8 +86,6 @@ Not supported (yet?):
 
 ### Crimson Skies
 
-* `gamez.zbd` files are supported, but nodes are not supported
-* `planes.zbd` files are supported, but nodes are not supported
 * `cam_anim.zbd`/`mis_anim.zbd` files are not supported yet
 
 ## Using the command-line executables
@@ -192,6 +190,7 @@ where `--rtexture` and `--rmechtex` are optional.
 * Serialize C# enums as enums, not classes (codegen)
 * Support Recoil GameZ nodes (`lib`/`unzbd`/`rezbd`, breaking change)
 * Support Pirate's Moon GameZ nodes (`lib`/`unzbd`/`rezbd`, breaking change)
+* Support Crimson Skies GameZ nodes (`lib`/`unzbd`/`rezbd`, breaking change)
 
 ### [0.6.0-rc2] - 2022-11-29
 
