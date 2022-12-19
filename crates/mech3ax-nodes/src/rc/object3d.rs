@@ -313,13 +313,13 @@ pub fn write(
         Transformation::None => 40,
         Transformation::ScaleOnly(scl) => {
             matrix = scale_to_matrix(scl);
-            scale = scl.clone();
+            scale = *scl;
             32
         }
         Transformation::RotationTranslation(tr) => {
             matrix = euler_to_matrix(&tr.rotation);
-            rotation = tr.rotation.clone();
-            translation = tr.translation.clone();
+            rotation = tr.rotation;
+            translation = tr.translation;
             32
         }
         Transformation::TranslationOnly(tr) => {

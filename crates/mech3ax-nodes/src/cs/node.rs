@@ -121,7 +121,7 @@ pub const NODE_CS_C_SIZE: u32 = NodeCsC::SIZE;
 const GEOMETRY_NODE_NAME: &[u8; 36] = b"geometry\08\0e_name\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 const GEOMETRY_NAME: &str = "geometry";
 
-const COCKPIT_NODE_NAME: &[u8; 36] = b"cockpit1\00\0e_name\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+const COCKPIT_NODE_NAME: &[u8; 36] = b"cockpit1\x000\0e_name\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 const COCKPIT_NAME: &str = "cockpit1";
 
 const ALWAYS_PRESENT: NodeBitFlagsCs =

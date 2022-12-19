@@ -4,7 +4,7 @@ use crate::types::{Color, Range};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, Union};
 
-#[derive(Debug, Serialize, Deserialize, RefStruct, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, RefStruct, Clone, PartialEq, Eq)]
 #[repr(C)]
 pub struct AreaPartitionPm {
     pub x: i16,

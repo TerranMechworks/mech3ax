@@ -39,19 +39,13 @@ pub fn scale_to_matrix(scale: &Vec3) -> Matrix {
     }
 }
 
-#[inline(always)]
-fn is_negative_zero(value: f32) -> bool {
-    // SAFETY: Probably ok? The stdlib uses similar logic for both
-    // `f32::is_sign_negative` and `f32::classify`.
-    let b = unsafe { std::mem::transmute::<f32, u32>(value) };
-    b == 0x8000_0000
-}
+const NEG_ZERO: u32 = 0x8000_0000;
 
 #[inline]
 fn extract_zero_sign(value: f32, index: u32) -> u32 {
     // we really only care about if the value is negative zero. for both the
     // positive zero case and all others, we don't have to remember the sign.
-    if is_negative_zero(value) {
+    if value.to_bits() == NEG_ZERO {
         1 << index
     } else {
         0

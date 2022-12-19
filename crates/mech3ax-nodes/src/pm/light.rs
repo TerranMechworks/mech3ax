@@ -140,6 +140,7 @@ pub fn make_variants(light: &Light) -> NodeVariantsPm {
 }
 
 fn assert_light(light: &LightPmC, offset: u32) -> Result<()> {
+    #[allow(clippy::approx_constant)]
     assert_that!("light field 000", light.unk000 == -0.5235988, offset + 0)?;
     // unk008
     assert_all_zero("light field 008", offset + 8, &light.zero008.0)?;
@@ -263,6 +264,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, light: &Light, index: usize
     let unk_combined = light.unk156 + light.unk160;
 
     let light = LightPmC {
+        #[allow(clippy::approx_constant)]
         unk000: -0.5235988,
         unk004: light.unk004,
         zero008: Zeros::new(),

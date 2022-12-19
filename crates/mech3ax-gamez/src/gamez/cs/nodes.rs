@@ -117,15 +117,12 @@ pub fn read_nodes(
 
 fn assert_planes_area_partitions(nodes: &[NodeCs], offset: u32) -> Result<()> {
     for node in nodes {
-        match node {
-            NodeCs::Object3d(object3d) => {
-                assert_that!(
-                    "object3d area partition",
-                    object3d.area_partition == None,
-                    offset
-                )?;
-            }
-            _ => {}
+        if let NodeCs::Object3d(object3d) = node {
+            assert_that!(
+                "object3d area partition",
+                object3d.area_partition == None,
+                offset
+            )?;
         }
     }
     Ok(())
