@@ -123,10 +123,12 @@ class Tester:
             print(" ".join(cmd))
             raise
 
-    def rezbd(self, command: str, game: Game, one: Path, two: Path) -> None:
+    def rezbd(self, command: str, game: Game, one: Path, two: Path, log: Path) -> None:
+        env = {"RUST_LOG": "trace"}
         cmd = [str(self.rezbd_exe), game, command, str(one), str(two)]
         try:
-            subprocess.run(cmd, check=True)
+            with log.open("wb") as f:
+                subprocess.run(cmd, check=True, env=env, stderr=f)
         except subprocess.CalledProcessError:
             print(" ".join(cmd))
             raise
@@ -168,11 +170,12 @@ class Tester:
                 zip_path = output_dir / f"{sounds}.zip"
                 output_zbd = output_dir / f"{sounds}.zbd"
                 read_log = output_dir / f"{sounds}-read.log"
+                write_log = output_dir / f"{sounds}-write.log"
 
                 print(game, name, sounds)
 
                 self.unzbd("sounds", game, input_zbd, zip_path, read_log)
-                self.rezbd("sounds", game, zip_path, output_zbd)
+                self.rezbd("sounds", game, zip_path, output_zbd, write_log)
                 self.compare(input_zbd, output_zbd)
 
     def test_interp(self) -> None:
@@ -187,11 +190,12 @@ class Tester:
             zip_path = output_dir / "interp.json"
             output_zbd = output_dir / "interp.zbd"
             read_log = output_dir / "interp-read.log"
+            write_log = output_dir / "interp-write.log"
 
             print(game, name, "interp")
 
             self.unzbd("interp", game, input_zbd, zip_path, read_log)
-            self.rezbd("interp", game, zip_path, output_zbd)
+            self.rezbd("interp", game, zip_path, output_zbd, write_log)
             self.compare(input_zbd, output_zbd)
 
     def test_messages(self) -> None:
@@ -250,11 +254,12 @@ class Tester:
                 zip_path = output_dir / f"{base_name}.zip"
                 output_zbd = output_dir / f"{base_name}.zbd"
                 read_log = output_dir / f"{base_name}-log.log"
+                write_log = output_dir / f"{base_name}-write.log"
 
                 print(game, name, *parents, input_zbd.name)
 
                 self.unzbd("textures", game, input_zbd, zip_path, read_log)
-                self.rezbd("textures", game, zip_path, output_zbd)
+                self.rezbd("textures", game, zip_path, output_zbd, write_log)
                 self.compare(input_zbd, output_zbd)
 
     def test_reader(self) -> None:
@@ -276,11 +281,12 @@ class Tester:
                 zip_path = output_dir / f"{base_name}.zip"
                 output_zbd = output_dir / f"{base_name}.zbd"
                 read_log = output_dir / f"{base_name}-log.log"
+                write_log = output_dir / f"{base_name}-write.log"
 
                 print(game, name, *parents, input_zbd.name)
 
                 self.unzbd("reader", game, input_zbd, zip_path, read_log)
-                self.rezbd("reader", game, zip_path, output_zbd)
+                self.rezbd("reader", game, zip_path, output_zbd, write_log)
                 self.compare(input_zbd, output_zbd)
 
     def test_motion(self) -> None:
@@ -298,11 +304,12 @@ class Tester:
             zip_path = output_dir / "motion.zip"
             output_zbd = output_dir / "motion.zbd"
             read_log = output_dir / "motion-read.log"
+            write_log = output_dir / "motion-write.log"
 
             print(game, name, "motion")
 
             self.unzbd("motion", game, input_zbd, zip_path, read_log)
-            self.rezbd("motion", game, zip_path, output_zbd)
+            self.rezbd("motion", game, zip_path, output_zbd, write_log)
             self.compare(input_zbd, output_zbd)
 
     def test_mechlib(self) -> None:
@@ -320,11 +327,12 @@ class Tester:
             zip_path = output_dir / "mechlib.zip"
             output_zbd = output_dir / "mechlib.zbd"
             read_log = output_dir / "mechlib-read.log"
+            write_log = output_dir / "mechlib-write.log"
 
             print(game, name, "mechlib")
 
             self.unzbd("mechlib", game, input_zbd, zip_path, read_log)
-            self.rezbd("mechlib", game, zip_path, output_zbd)
+            self.rezbd("mechlib", game, zip_path, output_zbd, write_log)
             self.compare(input_zbd, output_zbd)
 
     def test_gamez(self) -> None:
@@ -338,14 +346,18 @@ class Tester:
             for input_zbd in sorted(zbd_dir.rglob("gamez.zbd")):
                 base_name, parents = campaign_mission(input_zbd, zbd_dir)
 
+                if game == GAME_RC and (parents == ["m6"] or parents == ["m9"]):
+                    continue
+
                 zip_path = output_dir / f"{base_name}.zip"
                 output_zbd = output_dir / f"{base_name}.zbd"
                 read_log = output_dir / f"{base_name}-read.log"
+                write_log = output_dir / f"{base_name}-write.log"
 
                 print(game, name, *parents, input_zbd.name)
 
                 self.unzbd("gamez", game, input_zbd, zip_path, read_log)
-                self.rezbd("gamez", game, zip_path, output_zbd)
+                self.rezbd("gamez", game, zip_path, output_zbd, write_log)
                 self.compare(input_zbd, output_zbd)
 
     def test_anim(self) -> None:
@@ -366,11 +378,12 @@ class Tester:
                 zip_path = output_dir / f"{base_name}.zip"
                 output_zbd = output_dir / f"{base_name}.zbd"
                 read_log = output_dir / f"{base_name}-read.log"
+                write_log = output_dir / f"{base_name}-write.log"
 
                 print(game, name, *parents, input_zbd.name)
 
                 self.unzbd("anim", game, input_zbd, zip_path, read_log)
-                self.rezbd("anim", game, zip_path, output_zbd)
+                self.rezbd("anim", game, zip_path, output_zbd, write_log)
                 self.compare(input_zbd, output_zbd)
 
     def test_zmap(self) -> None:
@@ -395,11 +408,12 @@ class Tester:
                 json_path = output_dir / f"{base_name}.json"
                 output_zmap = output_dir / f"{base_name}.zmap"
                 read_log = output_dir / f"{base_name}-read.log"
+                write_log = output_dir / f"{base_name}-write.log"
 
                 print(game, name, base_name)
 
                 self.unzbd("zmap", game, input_zmap, json_path, read_log)
-                self.rezbd("zmap", game, json_path, output_zmap)
+                self.rezbd("zmap", game, json_path, output_zmap, write_log)
                 self.compare(input_zmap, output_zmap)
 
     def test_planes(self) -> None:
@@ -417,11 +431,12 @@ class Tester:
             zip_path = output_dir / "planes.zip"
             output_zbd = output_dir / "planes.zbd"
             read_log = output_dir / "planes-read.log"
+            write_log = output_dir / "planes-write.log"
 
             print(game, name, "planes")
 
             self.unzbd("gamez", game, input_zbd, zip_path, read_log)
-            self.rezbd("gamez", game, zip_path, output_zbd)
+            self.rezbd("gamez", game, zip_path, output_zbd, write_log)
             # planes has textures with duplicate names. this would actually
             # be surprisingly hard to fix, and with very little upside. so
             # instead, we'll simply ignore mismatches up to a certain limit,
