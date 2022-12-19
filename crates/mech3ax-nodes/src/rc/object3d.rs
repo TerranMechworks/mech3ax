@@ -156,7 +156,7 @@ fn assert_object3d(object3d: Object3dRcC, offset: u32) -> Result<Transformation>
                 let expected = scale_to_matrix(&object3d.scale);
                 assert_that!(
                     "object3d matrix 32",
-                    &object3d.matrix == &expected,
+                    object3d.matrix == expected,
                     offset + 48
                 )?;
                 Ok(Transformation::ScaleOnly(object3d.scale))
@@ -167,7 +167,7 @@ fn assert_object3d(object3d: Object3dRcC, offset: u32) -> Result<Transformation>
                 let expected = euler_to_matrix(&object3d.rotation);
                 assert_that!(
                     "object3d matrix 32",
-                    &object3d.matrix == &expected,
+                    object3d.matrix == expected,
                     offset + 48
                 )?;
                 Ok(Transformation::RotationTranslation(RotationTranslation {

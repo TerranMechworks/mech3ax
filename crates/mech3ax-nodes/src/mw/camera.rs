@@ -58,7 +58,7 @@ static_assert_size!(CameraMwC, 488);
 const CAMERA_NAME: &str = "camera1";
 
 pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantMw> {
-    assert_that!("camera name", &node.name == CAMERA_NAME, offset + 0)?;
+    assert_that!("camera name", node.name eq CAMERA_NAME, offset + 0)?;
     assert_that!(
         "camera flags",
         node.flags == NodeBitFlags::DEFAULT,

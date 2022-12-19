@@ -45,7 +45,7 @@ impl ScriptObject for LightAnimation {
             anim_def.light_from_index(light_anim.light_index as usize, read.prev + 32)?;
         assert_that!(
             "light anim name",
-            &actual_name == &expected_name,
+            actual_name == expected_name,
             read.prev + 32
         )?;
 

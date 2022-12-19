@@ -122,7 +122,7 @@ fn read_reset_state(
     let reset_state: SeqDefInfoC = read.read_struct()?;
     assert_that!(
         "anim def reset state name",
-        &reset_state.name == RESET_SEQUENCE,
+        reset_state.name == *RESET_SEQUENCE,
         read.prev + 0
     )?;
     assert_that!(
@@ -363,7 +363,7 @@ pub fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<(AnimDef, A
     // reset state
     assert_that!(
         "anim def reset state name",
-        &anim_def.reset_state.name == RESET_SEQUENCE,
+        anim_def.reset_state.name == *RESET_SEQUENCE,
         prev + 200
     )?;
     assert_that!(

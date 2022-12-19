@@ -24,12 +24,12 @@ fn read_chunk_header(read: &mut CountingReader<impl Read>) -> Result<([u8; 4], u
 
 fn read_riff_chunk(read: &mut CountingReader<impl Read>) -> Result<()> {
     let (chunk_id, _chunk_size) = read_chunk_header(read)?;
-    assert_that!("RIFF chunk ID", &chunk_id == RIFF_CHUNK_ID, read.offset - 8)?;
+    assert_that!("RIFF chunk ID", chunk_id == *RIFF_CHUNK_ID, read.offset - 8)?;
     // TODO: validate chunk_size against the length of data - 8?
 
     let mut form_type = [0u8; 4];
     read.read_exact(&mut form_type)?;
-    assert_that!("RIFF form type", &form_type == FORM_TYPE_WAVE, read.prev)?;
+    assert_that!("RIFF form type", form_type == *FORM_TYPE_WAVE, read.prev)?;
     Ok(())
 }
 

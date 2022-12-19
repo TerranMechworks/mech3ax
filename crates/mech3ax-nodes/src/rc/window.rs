@@ -30,7 +30,7 @@ static_assert_size!(WindowRcC, 248);
 const WINDOW_NAME: &str = "window1";
 
 pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantRc> {
-    assert_that!("window name", &node.name == WINDOW_NAME, offset + 0)?;
+    assert_that!("window name", node.name eq WINDOW_NAME, offset + 0)?;
     assert_that!(
         "window flags",
         node.flags == NodeBitFlags::DEFAULT,

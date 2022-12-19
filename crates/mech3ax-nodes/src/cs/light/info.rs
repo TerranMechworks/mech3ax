@@ -29,7 +29,7 @@ const LIGHT_BBOX: BoundingBox = BoundingBox {
     },
 };
 pub fn assert_variants(node: NodeVariantsCs, offset: u32) -> Result<NodeVariantCs> {
-    assert_that!("light name", &node.name == LIGHT_NAME, offset + 0)?;
+    assert_that!("light name", node.name eq LIGHT_NAME, offset + 0)?;
     assert_that!("light flags", node.flags == LIGHT_FLAGS, offset + 36)?;
     assert_that!("light field 040", node.unk040 == 0x00000000, offset + 40)?;
     assert_that!("light field 044", node.unk044 == 0x00000000, offset + 44)?;

@@ -90,7 +90,7 @@ const FOG_STATE_LINEAR: u32 = 1;
 const WORLD_NAME: &str = "world1";
 
 pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantMw> {
-    assert_that!("world name", &node.name == WORLD_NAME, offset + 0)?;
+    assert_that!("world name", node.name eq WORLD_NAME, offset + 0)?;
     assert_that!(
         "world flags",
         node.flags == NodeBitFlags::DEFAULT,

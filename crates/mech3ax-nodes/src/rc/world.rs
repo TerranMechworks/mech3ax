@@ -94,7 +94,7 @@ const WORLD_NAME: &str = "world1";
 const FOG_STATE_LINEAR: u32 = 1;
 
 pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantRc> {
-    assert_that!("world name", &node.name == WORLD_NAME, offset + 0)?;
+    assert_that!("world name", node.name eq WORLD_NAME, offset + 0)?;
     // yes, this is a nasty hack, but...
     if node.data_ptr == 0x016D3D40 && node.children_array_ptr == 0x0170F360 {
         assert_that!("world flags", node.flags == DEFAULT_FLAGS_M2, offset + 36)?;

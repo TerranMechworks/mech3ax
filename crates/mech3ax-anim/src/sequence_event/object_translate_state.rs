@@ -59,7 +59,7 @@ impl ScriptObject for ObjectTranslateState {
     fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
         let node_index = anim_def.node_to_index(&self.node)? as u16;
         let at_node_index = if let Some(at_node) = &self.at_node {
-            assert_that!("object translate state at node", at_node == INPUT_NODE, 0)?;
+            assert_that!("object translate state at node", at_node eq INPUT_NODE, 0)?;
             INPUT_NODE_INDEX
         } else {
             0

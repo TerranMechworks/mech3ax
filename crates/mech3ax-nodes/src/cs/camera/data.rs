@@ -94,7 +94,7 @@ fn assert_camera(camera: &CameraCsC, spyglass: bool, offset: u32) -> Result<()> 
     )?;
     assert_that!(
         "camera mtw matrix",
-        &camera.mtw_matrix == &Matrix::EMPTY,
+        camera.mtw_matrix == Matrix::EMPTY,
         offset + 68
     )?;
     assert_that!(
@@ -109,7 +109,7 @@ fn assert_camera(camera: &CameraCsC, spyglass: bool, offset: u32) -> Result<()> 
     )?;
     assert_that!(
         "camera matrix",
-        &camera.matrix == &Matrix::EMPTY,
+        camera.matrix == Matrix::EMPTY,
         offset + 128
     )?;
     assert_that!(

@@ -51,7 +51,7 @@ impl ScriptObject for LightState {
             anim_def.light_from_index(light_state.light_index as usize, read.prev + 32)?;
         assert_that!(
             "light state name",
-            &actual_name == &expected_name,
+            actual_name == expected_name,
             read.prev + 32
         )?;
 

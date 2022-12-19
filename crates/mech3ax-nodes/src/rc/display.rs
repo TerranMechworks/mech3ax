@@ -23,7 +23,7 @@ static_assert_size!(DisplayRcC, 28);
 const DISPLAY_NAME: &str = "display";
 
 pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantRc> {
-    assert_that!("display name", &node.name == DISPLAY_NAME, offset + 0)?;
+    assert_that!("display name", node.name eq DISPLAY_NAME, offset + 0)?;
     assert_that!(
         "display flags",
         node.flags == NodeBitFlags::DEFAULT,

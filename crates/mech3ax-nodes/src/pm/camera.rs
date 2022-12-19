@@ -58,7 +58,7 @@ static_assert_size!(CameraPmC, 488);
 const CAMERA_NAME: &str = "camera1";
 
 pub fn assert_variants(node: NodeVariantsPm, offset: u32) -> Result<NodeVariantPm> {
-    assert_that!("camera name", &node.name == CAMERA_NAME, offset + 0)?;
+    assert_that!("camera name", node.name eq CAMERA_NAME, offset + 0)?;
     assert_that!(
         "camera flags",
         node.flags == NodeBitFlags::DEFAULT,
@@ -170,7 +170,7 @@ fn assert_camera(camera: &CameraPmC, offset: u32) -> Result<()> {
     )?;
     assert_that!(
         "camera mtw matrix",
-        &camera.mtw_matrix == &Matrix::EMPTY,
+        camera.mtw_matrix == Matrix::EMPTY,
         offset + 68
     )?;
     assert_that!(
@@ -185,7 +185,7 @@ fn assert_camera(camera: &CameraPmC, offset: u32) -> Result<()> {
     )?;
     assert_that!(
         "camera matrix",
-        &camera.matrix == &Matrix::EMPTY,
+        camera.matrix == Matrix::EMPTY,
         offset + 128
     )?;
     assert_that!(
