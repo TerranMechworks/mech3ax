@@ -1,6 +1,6 @@
-use super::{Area, BoundingBox, NodeFlags, Transformation};
+use super::{Area, BoundingBox, Display, NodeFlags, Transformation};
 use crate::static_assert_size;
-use crate::types::{Color, Range};
+use crate::types::Range;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, Union};
 
@@ -53,15 +53,6 @@ pub struct Camera {
     pub name: String,
     pub clip: Range,
     pub fov: Range,
-    pub data_ptr: u32,
-}
-
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct Display {
-    pub name: String,
-    pub resolution_x: u32,
-    pub resolution_y: u32,
-    pub clear_color: Color,
     pub data_ptr: u32,
 }
 

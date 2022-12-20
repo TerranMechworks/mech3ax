@@ -5,9 +5,17 @@ pub mod rc;
 
 use crate::serde::{bool_false, bool_true};
 use crate::static_assert_size;
-use crate::types::{Matrix, Vec3};
+use crate::types::{Color, Matrix, Vec3};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, ValStruct};
+
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
+pub struct Display {
+    pub resolution_x: u32,
+    pub resolution_y: u32,
+    pub clear_color: Color,
+    pub data_ptr: u32,
+}
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, ValStruct)]
 #[repr(C)]

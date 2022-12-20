@@ -1,4 +1,4 @@
-use super::{Area, AreaPartition, BoundingBox, NodeFlags, Partition, Transformation};
+use super::{Area, AreaPartition, BoundingBox, Display, NodeFlags, Partition, Transformation};
 use crate::types::{Color, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, Union};
@@ -8,15 +8,6 @@ pub struct Camera {
     pub name: String,
     pub clip: Range,
     pub fov: Range,
-    pub data_ptr: u32,
-}
-
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct Display {
-    pub name: String,
-    pub resolution_x: u32,
-    pub resolution_y: u32,
-    pub clear_color: Color,
     pub data_ptr: u32,
 }
 

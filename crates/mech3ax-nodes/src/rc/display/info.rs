@@ -1,8 +1,8 @@
 use crate::flags::NodeBitFlags;
 use crate::rc::node::{NodeVariantRc, NodeVariantsRc};
 use crate::types::ZONE_DEFAULT;
-use mech3ax_api_types::nodes::rc::Display;
 use mech3ax_api_types::nodes::BoundingBox;
+use mech3ax_api_types::nodes::Display;
 use mech3ax_api_types::{static_assert_size, Color};
 use mech3ax_common::{assert_that, Result};
 
@@ -17,7 +17,7 @@ struct DisplayRcC {
 }
 static_assert_size!(DisplayRcC, 28);
 
-pub const DISPLAY_NAME: &str = "display";
+const DISPLAY_NAME: &str = "display";
 
 pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantRc> {
     assert_that!("display name", node.name eq DISPLAY_NAME, offset + 0)?;

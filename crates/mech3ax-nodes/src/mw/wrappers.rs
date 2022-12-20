@@ -1,4 +1,5 @@
 use mech3ax_api_types::nodes::mw::*;
+use mech3ax_api_types::nodes::Display;
 
 pub struct WrapperMw<T> {
     pub wrapped: T,

@@ -1,6 +1,5 @@
-use super::info::DISPLAY_NAME;
 use log::{debug, trace};
-use mech3ax_api_types::nodes::mw::Display;
+use mech3ax_api_types::nodes::Display;
 use mech3ax_api_types::{static_assert_size, Color, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
@@ -8,52 +7,43 @@ use std::io::{Read, Write};
 
 #[derive(Debug)]
 #[repr(C)]
-struct DisplayMwC {
+struct DisplayC {
     origin_x: u32,
     origin_y: u32,
     resolution_x: u32,
     resolution_y: u32,
     clear_color: Color,
 }
-static_assert_size!(DisplayMwC, 28);
-
-#[allow(clippy::excessive_precision)]
-const CLEAR_COLOR: Color = Color {
-    r: 0.3919999897480011,
-    g: 0.3919999897480011,
-    b: 1.0,
-};
+static_assert_size!(DisplayC, 28);
 
 pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -> Result<Display> {
     debug!(
-        "Reading display node data {} (mw, {}) at {}",
+        "Reading display node data {} ({}) at {}",
         index,
-        DisplayMwC::SIZE,
+        DisplayC::SIZE,
         read.offset
     );
-    let display: DisplayMwC = read.read_struct()?;
+    let display: DisplayC = read.read_struct()?;
     trace!("{:#?}", display);
 
     assert_that!("display origin x", display.origin_x == 0, read.prev + 0)?;
     assert_that!("display origin y", display.origin_y == 0, read.prev + 4)?;
-    assert_that!(
-        "display resolution x",
-        display.resolution_x == 640,
-        read.prev + 8
-    )?;
-    assert_that!(
-        "display resolution y",
-        display.resolution_y == 400,
-        read.prev + 12
-    )?;
-    assert_that!(
-        "display clear color",
-        display.clear_color == CLEAR_COLOR,
-        read.prev + 16
-    )?;
+    // assert_that!(
+    //     "display resolution x",
+    //     display.resolution_x == 640,
+    //     read.prev + 8
+    // )?;
+    // // rc = 400, mw = 400, pm = 400, cs = 480
+    // assert_that!(
+    //     "display resolution y",
+    //     display.resolution_y in [400, 480],
+    //     read.prev + 12
+    // )?;
+    assert_that!("display clear color r", 0.0 <= display.clear_color.r <= 1.0, read.prev + 16)?;
+    assert_that!("display clear color g", 0.0 <= display.clear_color.g <= 1.0, read.prev + 20)?;
+    assert_that!("display clear color b", 0.0 <= display.clear_color.b <= 1.0, read.prev + 24)?;
 
     Ok(Display {
-        name: DISPLAY_NAME.to_owned(),
         resolution_x: display.resolution_x,
         resolution_y: display.resolution_y,
         clear_color: display.clear_color,
@@ -67,12 +57,12 @@ pub fn write(
     index: usize,
 ) -> Result<()> {
     debug!(
-        "Writing display node data {} (mw, {}) at {}",
+        "Writing display node data {} ({}) at {}",
         index,
-        DisplayMwC::SIZE,
+        DisplayC::SIZE,
         write.offset
     );
-    let display = DisplayMwC {
+    let display = DisplayC {
         origin_x: 0,
         origin_y: 0,
         resolution_x: display.resolution_x,
@@ -85,5 +75,5 @@ pub fn write(
 }
 
 pub fn size() -> u32 {
-    DisplayMwC::SIZE
+    DisplayC::SIZE
 }

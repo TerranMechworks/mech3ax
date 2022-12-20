@@ -1,7 +1,7 @@
 use super::pm::AreaPartitionPm;
-use super::{Area, BoundingBox, Transformation};
+use super::{Area, BoundingBox, Display, Transformation};
 use crate::static_assert_size;
-use crate::types::{Color, Range};
+use crate::types::Range;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, Union};
 
@@ -28,15 +28,6 @@ pub struct PartitionCs {
 pub struct Camera {
     pub name: String,
     pub focus_node_xy: i32,
-    pub data_ptr: u32,
-}
-
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct Display {
-    pub name: String,
-    pub resolution_x: u32,
-    pub resolution_y: u32,
-    pub clear_color: Color,
     pub data_ptr: u32,
 }
 

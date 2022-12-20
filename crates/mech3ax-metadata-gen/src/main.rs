@@ -69,7 +69,7 @@ fn main() {
     resolver.push::<api::nodes::NodeFlags>();
 
     resolver.push::<api::nodes::mw::Camera>();
-    resolver.push::<api::nodes::mw::Display>();
+    resolver.push::<api::nodes::Display>();
     resolver.push::<api::nodes::mw::Empty>();
     resolver.push::<api::nodes::mw::Light>();
     resolver.push::<api::nodes::mw::Lod>();

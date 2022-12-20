@@ -265,7 +265,7 @@ macro_rules! assert_that {
         $crate::assert::is_greater_than($name, &$expected, &$($actual).+, $pos)
     };
     ($name:expr, $($actual:tt).+ >= $expected:expr, $pos:expr) => {
-        $crate::assert::is_greater_than_or_equal_to( $name, &$expected, &$($actual).+, $pos)
+        $crate::assert::is_greater_than_or_equal_to($name, &$expected, &$($actual).+, $pos)
     };
     ($name:expr, $($actual:tt).+ in $haystack:expr, $pos:expr) => {
         $crate::assert::is_in($name, &$haystack, &$($actual).+, $pos)
