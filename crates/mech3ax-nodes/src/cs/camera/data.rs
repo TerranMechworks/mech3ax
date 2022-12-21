@@ -1,62 +1,20 @@
 use super::info::{CAMERA_NAME, SPYGLASS_NAME};
+use crate::node_data::camera::CameraC;
 use log::{debug, trace};
 use mech3ax_api_types::nodes::cs::Camera;
-use mech3ax_api_types::{static_assert_size, Matrix, Range, ReprSize as _, Vec3};
+use mech3ax_api_types::{Matrix, Range, ReprSize as _, Vec3};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use mech3ax_debug::Zeros;
 use std::io::{Read, Write};
 
-#[derive(Debug)]
-#[repr(C)]
-struct CameraCsC {
-    world_index: i32,       // 000
-    window_index: i32,      // 004
-    focus_node_xy: i32,     // 008
-    focus_node_xz: i32,     // 012
-    flags: u32,             // 016
-    translation: Vec3,      // 020
-    rotation: Vec3,         // 032
-    world_translate: Vec3,  // 044
-    world_rotate: Vec3,     // 056
-    mtw_matrix: Matrix,     // 068
-    unk104: Vec3,           // 104
-    view_vector: Vec3,      // 116
-    matrix: Matrix,         // 128
-    alt_translate: Vec3,    // 164
-    clip: Range,            // 176
-    zero184: Zeros<24>,     // 184
-    lod_multiplier: f32,    // 208
-    lod_inv_sq: f32,        // 212
-    fov_h_zoom_factor: f32, // 216
-    fov_v_zoom_factor: f32, // 220
-    fov_h_base: f32,        // 224
-    fov_v_base: f32,        // 228
-    fov: Range,             // 232
-    fov_h_half: f32,        // 240
-    fov_v_half: f32,        // 244
-    one248: u32,            // 248
-    zero252: Zeros<60>,     // 252
-    one312: u32,            // 312
-    zero316: Zeros<72>,     // 316
-    one388: u32,            // 388
-    zero392: Zeros<72>,     // 392
-    zero464: u32,           // 464
-    fov_h_cot: f32,         // 468
-    fov_v_cot: f32,         // 472
-    stride: i32,            // 476
-    zone_set: i32,          // 480
-    unk484: i32,            // 484
-}
-static_assert_size!(CameraCsC, 488);
-
 const CLIP: Range = Range {
     min: 1.0,
     max: 5000.0,
 };
 
-fn assert_camera(camera: &CameraCsC, spyglass: bool, offset: u32) -> Result<()> {
+fn assert_camera(camera: &CameraC, spyglass: bool, offset: u32) -> Result<()> {
     assert_that!("camera world index", camera.world_index == 0, offset + 0)?;
     let window_index = if spyglass { 4 } else { 2 };
     assert_that!(
@@ -179,10 +137,10 @@ pub fn read(
     debug!(
         "Reading camera node data {} (cs, {}) at {}",
         index,
-        CameraCsC::SIZE,
+        CameraC::SIZE,
         read.offset
     );
-    let camera: CameraCsC = read.read_struct()?;
+    let camera: CameraC = read.read_struct()?;
     trace!("{:#?}", camera);
 
     assert_camera(&camera, spyglass, read.prev)?;
@@ -199,13 +157,13 @@ pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera, index: usi
     debug!(
         "Writing camera node data {} (cs, {}) at {}",
         index,
-        CameraCsC::SIZE,
+        CameraC::SIZE,
         write.offset
     );
 
     let window_index = if camera.name == SPYGLASS_NAME { 4 } else { 2 };
 
-    let camera = CameraCsC {
+    let camera = CameraC {
         world_index: 0,
         window_index,
         focus_node_xy: camera.focus_node_xy,

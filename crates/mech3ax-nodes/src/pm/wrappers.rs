@@ -1,5 +1,5 @@
 use mech3ax_api_types::nodes::pm::*;
-use mech3ax_api_types::nodes::Display;
+use mech3ax_api_types::nodes::{Camera, Display};
 
 pub struct WrapperPm<T> {
     pub wrapped: T,

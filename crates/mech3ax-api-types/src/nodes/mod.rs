@@ -5,9 +5,17 @@ pub mod rc;
 
 use crate::serde::{bool_false, bool_true};
 use crate::static_assert_size;
-use crate::types::{Color, Matrix, Vec3};
+use crate::types::{Color, Matrix, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, ValStruct};
+
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
+pub struct Camera {
+    pub clip: Range,
+    pub fov: Range,
+    pub focus_node_xy: i32,
+    pub data_ptr: u32,
+}
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Display {

@@ -1,4 +1,4 @@
-use super::{Area, BoundingBox, Display, NodeFlags, Transformation};
+use super::{Area, BoundingBox, Camera, Display, NodeFlags, Transformation};
 use crate::static_assert_size;
 use crate::types::Range;
 use ::serde::{Deserialize, Serialize};
@@ -46,14 +46,6 @@ pub struct PartitionPm {
     pub z_max: f32,
     pub nodes: Vec<PartitionValuePm>,
     pub ptr: u32,
-}
-
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct Camera {
-    pub name: String,
-    pub clip: Range,
-    pub fov: Range,
-    pub data_ptr: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]

@@ -49,7 +49,7 @@ static_assert_size!(LightPmC, 256);
 fn assert_light(light: &LightPmC, offset: u32) -> Result<()> {
     #[allow(clippy::approx_constant)]
     assert_that!("light field 000", light.unk000 == -0.5235988, offset + 0)?;
-    // unk008
+    // unk004
     assert_all_zero("light field 008", offset + 8, &light.zero008.0)?;
     assert_that!("light field 136", light.unk136 == 1.0, offset + 136)?;
     assert_that!("light field 140", light.zero140 == 0, offset + 140)?;

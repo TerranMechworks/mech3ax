@@ -1,7 +1,6 @@
-use super::info::CAMERA_NAME;
 use crate::math::cotangent;
 use log::{debug, trace};
-use mech3ax_api_types::nodes::mw::Camera;
+use mech3ax_api_types::nodes::Camera;
 use mech3ax_api_types::{static_assert_size, Matrix, Range, ReprSize as _, Vec3};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -11,55 +10,52 @@ use std::io::{Read, Write};
 
 #[derive(Debug)]
 #[repr(C)]
-struct CameraMwC {
-    world_index: i32,       // 000
-    window_index: i32,      // 004
-    focus_node_xy: i32,     // 008
-    focus_node_xz: i32,     // 012
-    flags: u32,             // 016
-    translation: Vec3,      // 020
-    rotation: Vec3,         // 032
-    world_translate: Vec3,  // 044
-    world_rotate: Vec3,     // 056
-    mtw_matrix: Matrix,     // 068
-    unk104: Vec3,           // 104
-    view_vector: Vec3,      // 116
-    matrix: Matrix,         // 128
-    alt_translate: Vec3,    // 164
-    clip: Range,            // 176
-    zero184: Zeros<24>,     // 184
-    lod_multiplier: f32,    // 208
-    lod_inv_sq: f32,        // 212
-    fov_h_zoom_factor: f32, // 216
-    fov_v_zoom_factor: f32, // 220
-    fov_h_base: f32,        // 224
-    fov_v_base: f32,        // 228
-    fov: Range,             // 232
-    fov_h_half: f32,        // 240
-    fov_v_half: f32,        // 244
-    one248: u32,            // 248
-    zero252: Zeros<60>,     // 252
-    one312: u32,            // 312
-    zero316: Zeros<72>,     // 316
-    one388: u32,            // 388
-    zero392: Zeros<72>,     // 392
-    zero464: u32,           // 464
-    fov_h_cot: f32,         // 468
-    fov_v_cot: f32,         // 472
-    stride: i32,            // 476
-    zone_set: i32,          // 480
-    unk484: i32,            // 484
+pub struct CameraC {
+    pub world_index: i32,       // 000
+    pub window_index: i32,      // 004
+    pub focus_node_xy: i32,     // 008
+    pub focus_node_xz: i32,     // 012
+    pub flags: u32,             // 016
+    pub translation: Vec3,      // 020
+    pub rotation: Vec3,         // 032
+    pub world_translate: Vec3,  // 044
+    pub world_rotate: Vec3,     // 056
+    pub mtw_matrix: Matrix,     // 068
+    pub unk104: Vec3,           // 104
+    pub view_vector: Vec3,      // 116
+    pub matrix: Matrix,         // 128
+    pub alt_translate: Vec3,    // 164
+    pub clip: Range,            // 176
+    pub zero184: Zeros<24>,     // 184
+    pub lod_multiplier: f32,    // 208
+    pub lod_inv_sq: f32,        // 212
+    pub fov_h_zoom_factor: f32, // 216
+    pub fov_v_zoom_factor: f32, // 220
+    pub fov_h_base: f32,        // 224
+    pub fov_v_base: f32,        // 228
+    pub fov: Range,             // 232
+    pub fov_h_half: f32,        // 240
+    pub fov_v_half: f32,        // 244
+    pub one248: u32,            // 248
+    pub zero252: Zeros<60>,     // 252
+    pub one312: u32,            // 312
+    pub zero316: Zeros<72>,     // 316
+    pub one388: u32,            // 388
+    pub zero392: Zeros<72>,     // 392
+    pub zero464: u32,           // 464
+    pub fov_h_cot: f32,         // 468
+    pub fov_v_cot: f32,         // 472
+    pub stride: i32,            // 476
+    pub zone_set: i32,          // 480
+    pub unk484: i32,            // 484
 }
-static_assert_size!(CameraMwC, 488);
+static_assert_size!(CameraC, 488);
 
-fn assert_camera(camera: CameraMwC, offset: u32) -> Result<(Range, Range)> {
+fn assert_camera(camera: &CameraC, offset: u32) -> Result<()> {
     assert_that!("camera world index", camera.world_index == 0, offset + 0)?;
     assert_that!("camera window index", camera.window_index == 1, offset + 4)?;
-    assert_that!(
-        "camera focus node xy",
-        camera.focus_node_xy == -1,
-        offset + 8
-    )?;
+    // true for mw and pm
+    // assert_that!("focus node xy", camera.focus_node_xy == -1, offset + 8)?;
     assert_that!(
         "camera focus node xz",
         camera.focus_node_xz == -1,
@@ -182,44 +178,44 @@ fn assert_camera(camera: CameraMwC, offset: u32) -> Result<(Range, Range)> {
     assert_that!("camera zone set", camera.zone_set == 0, offset + 480)?;
     assert_that!("camera field 484", camera.unk484 == -256, offset + 484)?;
 
-    Ok((camera.clip, camera.fov))
+    Ok(())
 }
 
 pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -> Result<Camera> {
     debug!(
-        "Reading camera node data {} (mw, {}) at {}",
+        "Reading camera node data {} ({}) at {}",
         index,
-        CameraMwC::SIZE,
+        CameraC::SIZE,
         read.offset
     );
-    let camera: CameraMwC = read.read_struct()?;
+    let camera: CameraC = read.read_struct()?;
     trace!("{:#?}", camera);
 
-    let (clip, fov) = assert_camera(camera, read.prev)?;
+    assert_camera(&camera, read.prev)?;
 
     Ok(Camera {
-        name: CAMERA_NAME.to_owned(),
-        clip,
-        fov,
+        clip: camera.clip,
+        fov: camera.fov,
+        focus_node_xy: camera.focus_node_xy,
         data_ptr,
     })
 }
 
 pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera, index: usize) -> Result<()> {
     debug!(
-        "Writing camera node data {} (mw, {}) at {}",
+        "Writing camera node data {} ({}) at {}",
         index,
-        CameraMwC::SIZE,
+        CameraC::SIZE,
         write.offset
     );
 
     let fov_h_half = camera.fov.min / 2.0;
     let fov_v_half = camera.fov.max / 2.0;
 
-    let camera = CameraMwC {
+    let camera = CameraC {
         world_index: 0,
         window_index: 1,
-        focus_node_xy: -1,
+        focus_node_xy: camera.focus_node_xy,
         focus_node_xz: -1,
         flags: 0,
         translation: Vec3::DEFAULT,
@@ -261,5 +257,5 @@ pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera, index: usi
 }
 
 pub fn size() -> u32 {
-    CameraMwC::SIZE
+    CameraC::SIZE
 }

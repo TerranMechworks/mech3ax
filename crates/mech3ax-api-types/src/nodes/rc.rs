@@ -1,4 +1,4 @@
-use super::{Area, AreaPartition, BoundingBox, Display, NodeFlags, Partition};
+use super::{Area, AreaPartition, BoundingBox, Camera, Display, NodeFlags, Partition};
 use crate::types::{Color, Matrix, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, Union};
@@ -21,15 +21,6 @@ pub enum Transformation {
     ScaleOnly(Vec3),
     RotationTranslation(RotationTranslation),
     TranslationOnly(TranslationOnly),
-}
-
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct Camera {
-    pub name: String,
-    pub clip: Range,
-    pub fov: Range,
-    pub focus_node_xy: i32,
-    pub data_ptr: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]

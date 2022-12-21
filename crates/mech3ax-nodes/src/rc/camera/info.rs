@@ -1,11 +1,10 @@
 use crate::flags::NodeBitFlags;
 use crate::rc::node::{NodeVariantRc, NodeVariantsRc};
 use crate::types::ZONE_DEFAULT;
-use mech3ax_api_types::nodes::rc::Camera;
-use mech3ax_api_types::nodes::BoundingBox;
+use mech3ax_api_types::nodes::{BoundingBox, Camera};
 use mech3ax_common::{assert_that, Result};
 
-pub const CAMERA_NAME: &str = "camera1";
+const CAMERA_NAME: &str = "camera1";
 
 pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantRc> {
     assert_that!("camera name", node.name eq CAMERA_NAME, offset + 0)?;

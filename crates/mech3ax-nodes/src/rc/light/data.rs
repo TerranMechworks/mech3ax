@@ -21,7 +21,7 @@ struct LightRcC {
     unk152: u32,         // 152
     unk156: u32,         // 156
     unk160: u32,         // 160
-    color: Color,        // 164?
+    color: Color,        // 164
     unk176: u32,         // 176
     unk180: u32,         // 180
     unk184: u32,         // 184

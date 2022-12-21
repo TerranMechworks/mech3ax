@@ -1,5 +1,5 @@
 use mech3ax_api_types::nodes::mw::*;
-use mech3ax_api_types::nodes::Display;
+use mech3ax_api_types::nodes::{Camera, Display};
 
 pub struct WrapperMw<T> {
     pub wrapped: T,
