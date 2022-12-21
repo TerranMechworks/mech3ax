@@ -25,6 +25,13 @@ pub struct Display {
     pub data_ptr: u32,
 }
 
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
+pub struct Window {
+    pub resolution_x: u32,
+    pub resolution_y: u32,
+    pub data_ptr: u32,
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, ValStruct)]
 #[repr(C)]
 pub struct AreaPartition {

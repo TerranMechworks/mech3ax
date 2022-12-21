@@ -1,4 +1,4 @@
-use super::{Area, BoundingBox, Camera, Display, NodeFlags, Transformation};
+use super::{Area, BoundingBox, Camera, Display, NodeFlags, Transformation, Window};
 use crate::static_assert_size;
 use crate::types::Range;
 use ::serde::{Deserialize, Serialize};
@@ -98,14 +98,6 @@ pub struct Object3d {
     pub unk140: BoundingBox,
     pub unk164: BoundingBox,
     pub node_index: u32,
-}
-
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct Window {
-    pub name: String,
-    pub resolution_x: u32,
-    pub resolution_y: u32,
-    pub data_ptr: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]

@@ -70,11 +70,11 @@ fn main() {
 
     resolver.push::<api::nodes::Camera>();
     resolver.push::<api::nodes::Display>();
+    resolver.push::<api::nodes::Window>();
     resolver.push::<api::nodes::mw::Empty>();
     resolver.push::<api::nodes::mw::Light>();
     resolver.push::<api::nodes::mw::Lod>();
     resolver.push::<api::nodes::mw::Object3d>();
-    resolver.push::<api::nodes::mw::Window>();
     resolver.push::<api::nodes::mw::World>();
     resolver.push::<api::nodes::mw::NodeMw>();
 

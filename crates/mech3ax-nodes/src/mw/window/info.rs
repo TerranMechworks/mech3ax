@@ -1,11 +1,10 @@
 use crate::flags::NodeBitFlags;
 use crate::mw::node::{NodeVariantMw, NodeVariantsMw};
 use crate::types::ZONE_DEFAULT;
-use mech3ax_api_types::nodes::mw::Window;
-use mech3ax_api_types::nodes::BoundingBox;
+use mech3ax_api_types::nodes::{BoundingBox, Window};
 use mech3ax_common::{assert_that, Result};
 
-pub const WINDOW_NAME: &str = "window1";
+const WINDOW_NAME: &str = "window1";
 
 pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantMw> {
     assert_that!("window name", node.name eq WINDOW_NAME, offset + 0)?;

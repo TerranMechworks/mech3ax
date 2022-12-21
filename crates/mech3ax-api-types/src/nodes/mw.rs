@@ -1,5 +1,5 @@
 use super::{
-    Area, AreaPartition, BoundingBox, Camera, Display, NodeFlags, Partition, Transformation,
+    Area, AreaPartition, BoundingBox, Camera, Display, NodeFlags, Partition, Transformation, Window,
 };
 use crate::types::{Color, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
@@ -68,14 +68,6 @@ pub struct Object3d {
     pub unk116: BoundingBox,
     pub unk140: BoundingBox,
     pub unk164: BoundingBox,
-}
-
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct Window {
-    pub name: String,
-    pub resolution_x: u32,
-    pub resolution_y: u32,
-    pub data_ptr: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
