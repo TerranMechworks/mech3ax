@@ -11,6 +11,11 @@ impl<const N: usize> Bytes<N> {
     pub const fn new() -> Self {
         Self([0u8; N])
     }
+
+    #[inline]
+    pub fn to_vec(&self) -> Vec<u8> {
+        Vec::from(self.0)
+    }
 }
 
 impl<const N: usize> fmt::Debug for Bytes<N> {

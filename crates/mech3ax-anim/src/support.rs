@@ -58,7 +58,7 @@ pub fn write_objects(write: &mut CountingWriter<impl Write>, objects: &[NamePad]
         let mut name = Ascii::zero();
         str_to_c_node_name(&object.name, &mut name);
         let mut unk = Bytes::new();
-        bytes_to_c(&object.pad, &mut unk.0);
+        bytes_to_c(&object.pad, &mut unk);
         write.write_struct(&ObjectC {
             name,
             zero32: 0,

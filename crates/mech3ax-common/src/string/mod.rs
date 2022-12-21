@@ -1,4 +1,4 @@
-use mech3ax_debug::Ascii;
+use mech3ax_debug::{Ascii, Bytes};
 
 #[derive(Debug)]
 pub enum ConversionError {
@@ -20,10 +20,10 @@ fn from_ascii(v: &[u8]) -> Result<&str, usize> {
     Ok(unsafe { std::str::from_utf8_unchecked(v) })
 }
 
-pub fn bytes_to_c(bytes: &[u8], fill: &mut [u8]) {
+pub fn bytes_to_c<const N: usize>(bytes: &[u8], fill: &mut Bytes<N>) {
     let mut buf = Vec::from(bytes);
-    buf.resize(fill.len(), 0);
-    fill.copy_from_slice(&buf);
+    buf.resize(N, 0);
+    fill.0.copy_from_slice(&buf);
 }
 
 const DEFAULT_NODE_NAME: &str = "Default_node_name";

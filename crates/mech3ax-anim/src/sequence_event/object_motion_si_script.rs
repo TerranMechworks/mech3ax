@@ -8,6 +8,7 @@ use mech3ax_api_types::{static_assert_size, Quaternion, ReprSize as _, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::bytes_to_c;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_debug::Bytes;
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -32,21 +33,21 @@ static_assert_size!(FrameC, 12);
 #[repr(C)]
 struct TranslateDataC {
     value: Vec3,
-    unk: [u8; 64],
+    unk: Bytes<64>,
 }
 static_assert_size!(TranslateDataC, 76);
 
 #[repr(C)]
 struct RotateDataC {
     value: Quaternion,
-    unk: [u8; 60],
+    unk: Bytes<60>,
 }
 static_assert_size!(RotateDataC, 76);
 
 #[repr(C)]
 struct ScaleDataC {
     value: Vec3,
-    unk: [u8; 64],
+    unk: Bytes<64>,
 }
 static_assert_size!(ScaleDataC, 76);
 
@@ -195,7 +196,7 @@ impl ScriptObject for ObjectMotionSiScript {
             })?;
 
             if let Some(translation) = &frame.translation {
-                let mut unk = [0; 64];
+                let mut unk = Bytes::new();
                 bytes_to_c(&translation.unk, &mut unk);
                 write.write_struct(&TranslateDataC {
                     value: translation.value,
@@ -203,7 +204,7 @@ impl ScriptObject for ObjectMotionSiScript {
                 })?;
             }
             if let Some(rotation) = &frame.rotation {
-                let mut unk = [0; 60];
+                let mut unk = Bytes::new();
                 bytes_to_c(&rotation.unk, &mut unk);
                 write.write_struct(&RotateDataC {
                     value: rotation.value,
@@ -211,7 +212,7 @@ impl ScriptObject for ObjectMotionSiScript {
                 })?;
             }
             if let Some(scale) = &frame.scale {
-                let mut unk = [0; 64];
+                let mut unk = Bytes::new();
                 bytes_to_c(&scale.unk, &mut unk);
                 write.write_struct(&ScaleDataC {
                     value: scale.value,

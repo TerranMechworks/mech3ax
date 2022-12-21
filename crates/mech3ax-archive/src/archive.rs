@@ -179,7 +179,7 @@ fn entry_to_c(entry: &ArchiveEntry, start: u32, length: u32) -> EntryC {
     let mut name = Ascii::zero();
     str_to_c_padded(&entry.name, &mut name);
     let mut garbage = Bytes::new();
-    bytes_to_c(&entry.garbage, &mut garbage.0);
+    bytes_to_c(&entry.garbage, &mut garbage);
 
     EntryC {
         start,

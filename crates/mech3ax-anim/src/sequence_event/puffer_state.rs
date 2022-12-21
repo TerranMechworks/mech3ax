@@ -9,7 +9,7 @@ use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_debug::Ascii;
+use mech3ax_debug::{Ascii, Zeros};
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -44,13 +44,13 @@ struct PufferStateC {
     tex300: Ascii<36>,         // 300
     tex336: Ascii<36>,         // 336
     tex372: Ascii<36>,         // 372
-    zero408: [u8; 120],        // 408
+    zero408: Zeros<120>,       // 408
     unk528: u32,               // 528
     zero532: u32,              // 532
     unk536: f32,               // 536
     unk540: f32,               // 540
     growth_factor: f32,        // 544
-    zero548: [u8; 32],         // 548
+    zero548: Zeros<32>,        // 548
 }
 static_assert_size!(PufferStateC, 580);
 
@@ -505,7 +505,7 @@ impl ScriptObject for PufferState {
         assert_all_zero(
             "puffer state field 408",
             read.prev + 408,
-            &puffer_state.zero408,
+            &puffer_state.zero408.0,
         )?;
         assert_that!(
             "puffer state field 532",
@@ -548,7 +548,7 @@ impl ScriptObject for PufferState {
         assert_all_zero(
             "puffer state field 548",
             read.prev + 548,
-            &puffer_state.zero548,
+            &puffer_state.zero548.0,
         )?;
 
         let growth_factor = if flags.contains(PufferStateFlags::GROWTH_FACTOR) {
@@ -717,7 +717,7 @@ impl ScriptObject for PufferState {
             tex300,
             tex336,
             tex372,
-            zero408: [0; 120],
+            zero408: Zeros::new(),
             unk528: if self.active_state.is_some() { 2 } else { 0 },
             zero532: 0,
             unk536: if self.active_state.is_some() {
@@ -731,7 +731,7 @@ impl ScriptObject for PufferState {
                 0.0
             },
             growth_factor: self.growth_factor.unwrap_or(0.0),
-            zero548: [0; 32],
+            zero548: Zeros::new(),
         })?;
         Ok(())
     }

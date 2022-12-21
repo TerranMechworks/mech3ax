@@ -13,7 +13,7 @@ use mech3ax_common::string::{
     str_from_c_padded, str_from_c_partition, str_to_c_padded, str_to_c_partition,
 };
 use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_debug::Ascii;
+use mech3ax_debug::{Ascii, Zeros};
 use num_traits::FromPrimitive as _;
 use std::io::{Read, Write};
 
@@ -39,7 +39,7 @@ struct AnimDefC {
     anim_ptr: u32,                   // 064
     anim_root: Ascii<32>,            // 068
     anim_root_ptr: u32,              // 100
-    zero104: [u8; 44],               // 104
+    zero104: Zeros<44>,              // 104
     flags: u32,                      // 148
     status: u8,                      // 152
     activation: u8,                  // 153
@@ -84,11 +84,11 @@ static_assert_size!(AnimDefC, 316);
 
 #[repr(C)]
 struct SeqDefInfoC {
-    name: Ascii<32>,  // 00
-    flags: u32,       // 32
-    zero36: [u8; 20], // 36
-    pointer: u32,     // 56
-    size: u32,        // 60
+    name: Ascii<32>,   // 00
+    flags: u32,        // 32
+    zero36: Zeros<20>, // 36
+    pointer: u32,      // 56
+    size: u32,         // 60
 }
 static_assert_size!(SeqDefInfoC, 64);
 const RESET_SEQUENCE: Ascii<32> = Ascii::new(b"RESET_SEQUENCE\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
@@ -134,7 +134,7 @@ fn read_reset_state(
     assert_all_zero(
         "anim def reset state field 36",
         read.prev + 36,
-        &reset_state.zero36,
+        &reset_state.zero36.0,
     )?;
     assert_that!(
         "anim def reset state pointer",
@@ -181,7 +181,11 @@ fn read_sequence_def(read: &mut CountingReader<impl Read>, anim_def: &AnimDef) -
             read.prev + 32
         ));
     };
-    assert_all_zero("anim def seq def field 36", read.prev + 36, &seq_def.zero36)?;
+    assert_all_zero(
+        "anim def seq def field 36",
+        read.prev + 36,
+        &seq_def.zero36.0,
+    )?;
     // it doesn't make sense for a sequence to be empty
     assert_that!(
         "anim def seq def pointer",
@@ -253,7 +257,7 @@ pub fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<(AnimDef, A
         format!("{}-{}.json", base_name, anim_name.name)
     };
 
-    assert_all_zero("anim def field 104", prev + 104, &anim_def.zero104)?;
+    assert_all_zero("anim def field 104", prev + 104, &anim_def.zero104.0)?;
 
     let flags = AnimDefFlags::from_bits(anim_def.flags).ok_or_else(|| {
         assert_with_msg!(
@@ -375,7 +379,7 @@ pub fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<(AnimDef, A
     assert_all_zero(
         "anim def reset state field 36",
         prev + 236,
-        &anim_def.reset_state.zero36,
+        &anim_def.reset_state.zero36.0,
     )?;
     // the reset state pointer and size are used later in `read_reset_state`
 
@@ -619,7 +623,7 @@ fn write_reset_state(
     write.write_struct(&SeqDefInfoC {
         name: RESET_SEQUENCE,
         flags: 0,
-        zero36: [0; 20],
+        zero36: Zeros::new(),
         pointer: anim_def
             .reset_state
             .as_ref()
@@ -647,7 +651,7 @@ fn write_sequence_defs(write: &mut CountingWriter<impl Write>, anim_def: &AnimDe
         write.write_struct(&SeqDefInfoC {
             name,
             flags,
-            zero36: [0; 20],
+            zero36: Zeros::new(),
             pointer: seq_def.pointer,
             size,
         })?;
@@ -745,7 +749,7 @@ pub fn write_anim_def(
     let reset_state = SeqDefInfoC {
         name: RESET_SEQUENCE,
         flags: 0,
-        zero36: [0; 20],
+        zero36: Zeros::new(),
         pointer: anim_ptr.reset_state_ptr,
         size: reset_state_events_size,
     };
@@ -756,7 +760,7 @@ pub fn write_anim_def(
         anim_ptr: anim_ptr.anim_ptr,
         anim_root,
         anim_root_ptr: anim_ptr.anim_root_ptr,
-        zero104: [0; 44],
+        zero104: Zeros::new(),
         flags: flags.bits(),
         status: 0,
         activation: anim_def.activation as u8,
