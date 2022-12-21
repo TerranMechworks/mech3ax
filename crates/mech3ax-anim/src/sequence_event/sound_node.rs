@@ -7,11 +7,12 @@ use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
+use mech3ax_debug::Ascii;
 use std::io::{Read, Write};
 
 #[repr(C)]
 struct SoundNodeC {
-    name: [u8; 32],
+    name: Ascii<32>,
     one32: u32,
     inherit_translation: u32, // 36
     active_state: u32,        // 40
@@ -62,7 +63,7 @@ impl ScriptObject for SoundNode {
     }
 
     fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
-        let mut name = [0; 32];
+        let mut name = Ascii::zero();
         str_to_c_padded(&self.name, &mut name);
         let active_state = u32::from(self.active_state);
 

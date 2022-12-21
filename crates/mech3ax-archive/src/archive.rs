@@ -86,7 +86,7 @@ fn read_table(
             }
 
             let entry_name = assert_utf8("entry name", read.prev + 8, || {
-                str_from_c_padded(&entry.name.0)
+                str_from_c_padded(&entry.name)
             })?;
 
             Ok((entry_name, entry_start, entry_len, entry.garbage.0.to_vec()))
@@ -176,8 +176,8 @@ where
 }
 
 fn entry_to_c(entry: &ArchiveEntry, start: u32, length: u32) -> EntryC {
-    let mut name = Ascii::new();
-    str_to_c_padded(&entry.name, &mut name.0);
+    let mut name = Ascii::zero();
+    str_to_c_padded(&entry.name, &mut name);
     let mut garbage = Bytes::new();
     bytes_to_c(&entry.garbage, &mut garbage.0);
 

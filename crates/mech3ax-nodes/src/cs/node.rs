@@ -172,7 +172,7 @@ fn assert_node(node: NodeCsC, offset: u32) -> Result<(NodeType, NodeVariantsCs)>
     } else if &node.name.0 == COCKPIT_NODE_NAME {
         COCKPIT_NAME.to_string()
     } else {
-        assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name.0))?
+        assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name))?
     };
 
     let flags = NodeBitFlagsCs::from_bits(node.flags.0).ok_or_else(|| {
@@ -332,13 +332,13 @@ fn write_variant(
         write.offset
     );
 
-    let mut name = Ascii::new();
+    let mut name = Ascii::zero();
     if variant.name == GEOMETRY_NAME {
-        name.0.copy_from_slice(GEOMETRY_NODE_NAME);
+        name.copy_from(GEOMETRY_NODE_NAME);
     } else if variant.name == COCKPIT_NAME {
-        name.0.copy_from_slice(COCKPIT_NODE_NAME);
+        name.copy_from(COCKPIT_NODE_NAME);
     } else {
-        str_to_c_node_name(variant.name, &mut name.0);
+        str_to_c_node_name(variant.name, &mut name);
     }
 
     let area_partition = variant.area_partition.unwrap_or(AreaPartitionPm::DEFAULT);

@@ -13,6 +13,7 @@ use mech3ax_common::string::{
     str_from_c_padded, str_from_c_partition, str_to_c_padded, str_to_c_partition,
 };
 use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_debug::Ascii;
 use num_traits::FromPrimitive as _;
 use std::io::{Read, Write};
 
@@ -33,10 +34,10 @@ bitflags::bitflags! {
 
 #[repr(C)]
 struct AnimDefC {
-    anim_name: [u8; 32],             // 000
-    name: [u8; 32],                  // 032
+    anim_name: Ascii<32>,            // 000
+    name: Ascii<32>,                 // 032
     anim_ptr: u32,                   // 064
-    anim_root: [u8; 32],             // 068
+    anim_root: Ascii<32>,            // 068
     anim_root_ptr: u32,              // 100
     zero104: [u8; 44],               // 104
     flags: u32,                      // 148
@@ -83,14 +84,14 @@ static_assert_size!(AnimDefC, 316);
 
 #[repr(C)]
 struct SeqDefInfoC {
-    name: [u8; 32],   // 00
+    name: Ascii<32>,  // 00
     flags: u32,       // 32
     zero36: [u8; 20], // 36
     pointer: u32,     // 56
     size: u32,        // 60
 }
 static_assert_size!(SeqDefInfoC, 64);
-const RESET_SEQUENCE: &[u8; 32] = b"RESET_SEQUENCE\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+const RESET_SEQUENCE: Ascii<32> = Ascii::new(b"RESET_SEQUENCE\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
 
 pub fn read_anim_def_zero(read: &mut CountingReader<impl Read>) -> Result<()> {
     // the first entry is always zero
@@ -122,7 +123,7 @@ fn read_reset_state(
     let reset_state: SeqDefInfoC = read.read_struct()?;
     assert_that!(
         "anim def reset state name",
-        reset_state.name == *RESET_SEQUENCE,
+        reset_state.name == RESET_SEQUENCE,
         read.prev + 0
     )?;
     assert_that!(
@@ -363,7 +364,7 @@ pub fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<(AnimDef, A
     // reset state
     assert_that!(
         "anim def reset state name",
-        anim_def.reset_state.name == *RESET_SEQUENCE,
+        anim_def.reset_state.name == RESET_SEQUENCE,
         prev + 200
     )?;
     assert_that!(
@@ -616,7 +617,7 @@ fn write_reset_state(
     size: u32,
 ) -> Result<()> {
     write.write_struct(&SeqDefInfoC {
-        name: *RESET_SEQUENCE,
+        name: RESET_SEQUENCE,
         flags: 0,
         zero36: [0; 20],
         pointer: anim_def
@@ -635,7 +636,7 @@ fn write_reset_state(
 
 fn write_sequence_defs(write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
     for seq_def in &anim_def.sequences {
-        let mut name = [0; 32];
+        let mut name = Ascii::zero();
         str_to_c_padded(&seq_def.name, &mut name);
         let flags = if seq_def.activation == SeqActivation::OnCall {
             0x0303
@@ -660,15 +661,15 @@ pub fn write_anim_def(
     anim_def: &AnimDef,
     anim_ptr: &AnimPtr,
 ) -> Result<()> {
-    let mut anim_name = [0; 32];
+    let mut anim_name = Ascii::zero();
     str_to_c_partition(
         &anim_def.anim_name.name,
         &anim_def.anim_name.pad,
         &mut anim_name,
     );
-    let mut name = [0; 32];
+    let mut name = Ascii::zero();
     str_to_c_padded(&anim_def.name, &mut name);
-    let mut anim_root = [0; 32];
+    let mut anim_root = Ascii::zero();
     str_to_c_partition(
         &anim_def.anim_root.name,
         &anim_def.anim_root.pad,
@@ -742,7 +743,7 @@ pub fn write_anim_def(
         .unwrap_or(0);
 
     let reset_state = SeqDefInfoC {
-        name: *RESET_SEQUENCE,
+        name: RESET_SEQUENCE,
         flags: 0,
         zero36: [0; 20],
         pointer: anim_ptr.reset_state_ptr,

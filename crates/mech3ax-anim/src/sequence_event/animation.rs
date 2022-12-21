@@ -6,11 +6,12 @@ use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
+use mech3ax_debug::Ascii;
 use std::io::{Read, Write};
 
 #[repr(C)]
 struct AnimationC {
-    name: [u8; 32],
+    name: Ascii<32>,
     zero32: u32,
 }
 static_assert_size!(AnimationC, 36);
@@ -25,7 +26,7 @@ fn read_animation(read: &mut CountingReader<impl Read>) -> Result<String> {
 }
 
 fn write_animation(write: &mut CountingWriter<impl Write>, name: &str) -> Result<()> {
-    let mut fill = [0; 32];
+    let mut fill = Ascii::zero();
     str_to_c_padded(name, &mut fill);
     write.write_struct(&AnimationC {
         name: fill,

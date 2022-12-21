@@ -8,13 +8,14 @@ use mech3ax_common::string::{
     str_to_c_padded, str_to_c_partition,
 };
 use mech3ax_common::{assert_that, Result};
+use mech3ax_debug::{Ascii, Bytes};
 use std::io::{Read, Write};
 
 #[repr(C)]
 struct ObjectC {
-    name: [u8; 32], // 00
-    zero32: u32,    // 32
-    unk: [u8; 60],  // 36
+    name: Ascii<32>, // 00
+    zero32: u32,     // 32
+    unk: Bytes<60>,  // 36
 }
 static_assert_size!(ObjectC, 96);
 
@@ -22,13 +23,13 @@ pub fn read_objects(read: &mut CountingReader<impl Read>, count: u8) -> Result<V
     trace!("Reading anim def object 0 at {}", read.offset);
     // the first entry is always zero
     let object: ObjectC = read.read_struct()?;
-    assert_all_zero("anim def object zero name", read.prev + 0, &object.name)?;
+    assert_all_zero("anim def object zero name", read.prev + 0, &object.name.0)?;
     assert_that!(
         "anim def object zero field 32",
         object.zero32 == 0,
         read.prev + 32
     )?;
-    assert_all_zero("anim def object zero unk", read.prev + 0, &object.unk)?;
+    assert_all_zero("anim def object zero unk", read.prev + 0, &object.unk.0)?;
     (1..count)
         .map(|i| {
             trace!("Reading anim def object {} at {}", i, read.offset);
@@ -44,7 +45,7 @@ pub fn read_objects(read: &mut CountingReader<impl Read>, count: u8) -> Result<V
             // TODO: this is cheating, but i have no idea how to interpret this data.
             // sometimes it's sensible, e.g. floats. other times, it seems like random
             // garbage.
-            let pad = object.unk.to_vec();
+            let pad = object.unk.0.to_vec();
             Ok(NamePad { name, pad })
         })
         .collect()
@@ -54,10 +55,10 @@ pub fn write_objects(write: &mut CountingWriter<impl Write>, objects: &[NamePad]
     // the first entry is always zero
     write.write_zeros(ObjectC::SIZE)?;
     for object in objects {
-        let mut name = [0; 32];
+        let mut name = Ascii::zero();
         str_to_c_node_name(&object.name, &mut name);
-        let mut unk = [0; 60];
-        bytes_to_c(&object.pad, &mut unk);
+        let mut unk = Bytes::new();
+        bytes_to_c(&object.pad, &mut unk.0);
         write.write_struct(&ObjectC {
             name,
             zero32: 0,
@@ -69,9 +70,9 @@ pub fn write_objects(write: &mut CountingWriter<impl Write>, objects: &[NamePad]
 
 #[repr(C)]
 struct NodeInfoC {
-    name: [u8; 32], // 00
-    zero32: u32,    // 32
-    pointer: u32,   // 36
+    name: Ascii<32>, // 00
+    zero32: u32,     // 32
+    pointer: u32,    // 36
 }
 static_assert_size!(NodeInfoC, 40);
 
@@ -79,7 +80,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, count: u8) -> Result<Vec
     trace!("Reading anim def node 0 at {}", read.offset);
     // the first entry is always zero
     let node_info: NodeInfoC = read.read_struct()?;
-    assert_all_zero("anim def node zero name", read.prev + 0, &node_info.name)?;
+    assert_all_zero("anim def node zero name", read.prev + 0, &node_info.name.0)?;
     assert_that!(
         "anim def node zero field 32",
         node_info.zero32 == 0,
@@ -120,7 +121,7 @@ pub fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NamePtr]) ->
     // the first entry is always zero
     write.write_zeros(NodeInfoC::SIZE)?;
     for node_info in nodes {
-        let mut name = [0; 32];
+        let mut name = Ascii::zero();
         str_to_c_node_name(&node_info.name, &mut name);
         write.write_struct(&NodeInfoC {
             name,
@@ -133,10 +134,10 @@ pub fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NamePtr]) ->
 
 #[repr(C)]
 struct ReaderLookupC {
-    name: [u8; 32], // 00
-    flags: u32,     // 32
-    pointer: u32,   // 36
-    in_world: u32,  // 40
+    name: Ascii<32>, // 00
+    flags: u32,      // 32
+    pointer: u32,    // 36
+    in_world: u32,   // 40
 }
 static_assert_size!(ReaderLookupC, 44);
 
@@ -144,7 +145,7 @@ pub fn read_lights(read: &mut CountingReader<impl Read>, count: u8) -> Result<Ve
     trace!("Reading anim def light 0 at {}", read.offset);
     // the first entry is always zero
     let light: ReaderLookupC = read.read_struct()?;
-    assert_all_zero("anim def light zero name", read.prev + 0, &light.name)?;
+    assert_all_zero("anim def light zero name", read.prev + 0, &light.name.0)?;
     assert_that!(
         "anim def node light flags",
         light.flags == 0,
@@ -188,7 +189,7 @@ pub fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[NamePtr]) 
     // the first entry is always zero
     write.write_zeros(ReaderLookupC::SIZE)?;
     for light in lights {
-        let mut name = [0; 32];
+        let mut name = Ascii::zero();
         str_to_c_node_name(&light.name, &mut name);
         write.write_struct(&ReaderLookupC {
             name,
@@ -202,10 +203,10 @@ pub fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[NamePtr]) 
 
 #[repr(C)]
 struct PufferRefC {
-    name: [u8; 32], // 00
-    flags: u32,     // 32
-    pointer: u32,   // 36
-    zero40: u32,    // 40
+    name: Ascii<32>, // 00
+    flags: u32,      // 32
+    pointer: u32,    // 36
+    zero40: u32,     // 40
 }
 static_assert_size!(PufferRefC, 44);
 
@@ -257,7 +258,7 @@ pub fn write_puffers(
     // the first entry is always zero
     write.write_zeros(ReaderLookupC::SIZE)?;
     for puffer in puffers {
-        let mut name = [0; 32];
+        let mut name = Ascii::zero();
         str_to_c_padded(&puffer.name, &mut name);
         let flags = puffer.flags << 24;
         write.write_struct(&ReaderLookupC {
@@ -280,7 +281,7 @@ pub fn read_dynamic_sounds(
     assert_all_zero(
         "anim def dynamic sound zero name",
         read.prev + 0,
-        &dynamic_sound.name,
+        &dynamic_sound.name.0,
     )?;
     assert_that!(
         "anim def node dynamic sound flags",
@@ -335,7 +336,7 @@ pub fn write_dynamic_sounds(
     // the first entry is always zero
     write.write_zeros(ReaderLookupC::SIZE)?;
     for dynamic_sound in dynamic_sounds {
-        let mut name = [0; 32];
+        let mut name = Ascii::zero();
         str_to_c_node_name(&dynamic_sound.name, &mut name);
         write.write_struct(&ReaderLookupC {
             name,
@@ -349,8 +350,8 @@ pub fn write_dynamic_sounds(
 
 #[repr(C)]
 struct StaticSoundC {
-    name: [u8; 32], // 00
-    zero32: u32,    // 32
+    name: Ascii<32>, // 00
+    zero32: u32,     // 32
 }
 static_assert_size!(StaticSoundC, 36);
 
@@ -361,7 +362,7 @@ pub fn read_static_sounds(read: &mut CountingReader<impl Read>, count: u8) -> Re
     assert_all_zero(
         "anim def static sound zero name",
         read.prev + 0,
-        &static_sound.name,
+        &static_sound.name.0,
     )?;
     assert_that!(
         "anim def static sound zero field 32",
@@ -392,7 +393,7 @@ pub fn write_static_sounds(
     // the first entry is always zero
     write.write_zeros(StaticSoundC::SIZE)?;
     for static_sound in static_sounds {
-        let mut name = [0; 32];
+        let mut name = Ascii::zero();
         str_to_c_partition(&static_sound.name, &static_sound.pad, &mut name);
         write.write_struct(&StaticSoundC { name, zero32: 0 })?;
     }
@@ -401,9 +402,9 @@ pub fn write_static_sounds(
 
 #[repr(C)]
 struct AnimRefC {
-    name: [u8; 64], // 00
-    zero64: u32,    // 64
-    pointer: u32,   // 68
+    name: Ascii<64>, // 00
+    zero64: u32,     // 64
+    pointer: u32,    // 68
 }
 static_assert_size!(AnimRefC, 72);
 
@@ -441,7 +442,7 @@ pub fn write_anim_refs(
 ) -> Result<()> {
     // the first entry... is not zero! as this is not a node list
     for anim_ref in anim_refs {
-        let mut name = [0; 64];
+        let mut name = Ascii::zero();
         str_to_c_partition(&anim_ref.name, &anim_ref.pad, &mut name);
         write.write_struct(&AnimRefC {
             name,

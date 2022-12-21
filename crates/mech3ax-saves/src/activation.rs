@@ -5,6 +5,7 @@ use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_debug::Ascii;
 use num_traits::FromPrimitive;
 use std::convert::TryInto;
 use std::io::{Cursor, Read, Write};
@@ -17,7 +18,7 @@ const VALUES_SIZE: usize = 9 * 4;
 struct AnimActivationC {
     pub type_: i32,                // 00
     pub unk04: i32,                // 04
-    pub name: [u8; 32],            // 08
+    pub name: Ascii<32>,           // 08
     pub node_index: i32,           // 40
     pub values: [u8; VALUES_SIZE], // 44
     pub unk80: u32,                // 80
@@ -197,7 +198,7 @@ pub fn write_activation(
     let mut activ = AnimActivationC {
         type_,
         unk04: 0,
-        name: [0u8; 32],
+        name: Ascii::zero(),
         node_index,
         values: [0u8; VALUES_SIZE],
         unk80,

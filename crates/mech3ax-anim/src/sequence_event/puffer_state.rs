@@ -9,11 +9,12 @@ use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_debug::Ascii;
 use std::io::{Read, Write};
 
 #[repr(C)]
 struct PufferStateC {
-    name: [u8; 32],            // 000
+    name: Ascii<32>,           // 000
     puffer_index: u32,         // 032
     flags: u32,                // 036
     active_state: i32,         // 040
@@ -37,12 +38,12 @@ struct PufferStateC {
     zero180: u32,              // 180
     zero184: u32,              // 184
     zero188: u32,              // 188
-    tex192: [u8; 36],          // 192
-    tex228: [u8; 36],          // 228
-    tex264: [u8; 36],          // 264
-    tex300: [u8; 36],          // 300
-    tex336: [u8; 36],          // 336
-    tex372: [u8; 36],          // 372
+    tex192: Ascii<36>,         // 192
+    tex228: Ascii<36>,         // 228
+    tex264: Ascii<36>,         // 264
+    tex300: Ascii<36>,         // 300
+    tex336: Ascii<36>,         // 336
+    tex372: Ascii<36>,         // 372
     zero408: [u8; 120],        // 408
     unk528: u32,               // 528
     zero532: u32,              // 532
@@ -375,7 +376,7 @@ impl ScriptObject for PufferState {
         )?;
 
         let textures = if flags.contains(PufferStateFlags::CYCLE_TEXTURE) {
-            let texture1 = if puffer_state.tex192[0] != 0 {
+            let texture1 = if puffer_state.tex192.0[0] != 0 {
                 Some(assert_utf8(
                     "puffer state texture 192",
                     read.prev + 192,
@@ -385,11 +386,11 @@ impl ScriptObject for PufferState {
                 assert_all_zero(
                     "puffer state texture 192",
                     read.prev + 192,
-                    &puffer_state.tex192,
+                    &puffer_state.tex192.0,
                 )?;
                 None
             };
-            let texture2 = if puffer_state.tex228[0] != 0 {
+            let texture2 = if puffer_state.tex228.0[0] != 0 {
                 Some(assert_utf8(
                     "puffer state texture 228",
                     read.prev + 228,
@@ -399,11 +400,11 @@ impl ScriptObject for PufferState {
                 assert_all_zero(
                     "puffer state texture 228",
                     read.prev + 228,
-                    &puffer_state.tex228,
+                    &puffer_state.tex228.0,
                 )?;
                 None
             };
-            let texture3 = if puffer_state.tex264[0] != 0 {
+            let texture3 = if puffer_state.tex264.0[0] != 0 {
                 Some(assert_utf8(
                     "puffer state texture 264",
                     read.prev + 264,
@@ -413,11 +414,11 @@ impl ScriptObject for PufferState {
                 assert_all_zero(
                     "puffer state texture 264",
                     read.prev + 264,
-                    &puffer_state.tex264,
+                    &puffer_state.tex264.0,
                 )?;
                 None
             };
-            let texture4 = if puffer_state.tex300[0] != 0 {
+            let texture4 = if puffer_state.tex300.0[0] != 0 {
                 Some(assert_utf8(
                     "puffer state texture 300",
                     read.prev + 300,
@@ -427,11 +428,11 @@ impl ScriptObject for PufferState {
                 assert_all_zero(
                     "puffer state texture 300",
                     read.prev + 300,
-                    &puffer_state.tex300,
+                    &puffer_state.tex300.0,
                 )?;
                 None
             };
-            let texture5 = if puffer_state.tex336[0] != 0 {
+            let texture5 = if puffer_state.tex336.0[0] != 0 {
                 Some(assert_utf8(
                     "puffer state texture 336",
                     read.prev + 336,
@@ -441,11 +442,11 @@ impl ScriptObject for PufferState {
                 assert_all_zero(
                     "puffer state texture 336",
                     read.prev + 336,
-                    &puffer_state.tex336,
+                    &puffer_state.tex336.0,
                 )?;
                 None
             };
-            let texture6 = if puffer_state.tex372[0] != 0 {
+            let texture6 = if puffer_state.tex372.0[0] != 0 {
                 Some(assert_utf8(
                     "puffer state texture 372",
                     read.prev + 372,
@@ -455,7 +456,7 @@ impl ScriptObject for PufferState {
                 assert_all_zero(
                     "puffer state texture 372",
                     read.prev + 372,
-                    &puffer_state.tex372,
+                    &puffer_state.tex372.0,
                 )?;
                 None
             };
@@ -471,32 +472,32 @@ impl ScriptObject for PufferState {
             assert_all_zero(
                 "puffer state texture 192",
                 read.prev + 192,
-                &puffer_state.tex192,
+                &puffer_state.tex192.0,
             )?;
             assert_all_zero(
                 "puffer state texture 228",
                 read.prev + 228,
-                &puffer_state.tex228,
+                &puffer_state.tex228.0,
             )?;
             assert_all_zero(
                 "puffer state texture 264",
                 read.prev + 264,
-                &puffer_state.tex264,
+                &puffer_state.tex264.0,
             )?;
             assert_all_zero(
                 "puffer state texture 300",
                 read.prev + 300,
-                &puffer_state.tex300,
+                &puffer_state.tex300.0,
             )?;
             assert_all_zero(
                 "puffer state texture 336",
                 read.prev + 336,
-                &puffer_state.tex336,
+                &puffer_state.tex336.0,
             )?;
             assert_all_zero(
                 "puffer state texture 372",
                 read.prev + 372,
-                &puffer_state.tex372,
+                &puffer_state.tex372.0,
             )?;
             None
         };
@@ -589,7 +590,7 @@ impl ScriptObject for PufferState {
     }
 
     fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
-        let mut name = [0; 32];
+        let mut name = Ascii::zero();
         str_to_c_padded(&self.name, &mut name);
         let puffer_index = anim_def.puffer_to_index(&self.name)? as u32;
         let mut flags = PufferStateFlags::empty();
@@ -658,12 +659,12 @@ impl ScriptObject for PufferState {
         if self.growth_factor.is_some() {
             flags |= PufferStateFlags::GROWTH_FACTOR;
         }
-        let mut tex192 = [0; 36];
-        let mut tex228 = [0; 36];
-        let mut tex264 = [0; 36];
-        let mut tex300 = [0; 36];
-        let mut tex336 = [0; 36];
-        let mut tex372 = [0; 36];
+        let mut tex192 = Ascii::zero();
+        let mut tex228 = Ascii::zero();
+        let mut tex264 = Ascii::zero();
+        let mut tex300 = Ascii::zero();
+        let mut tex336 = Ascii::zero();
+        let mut tex372 = Ascii::zero();
         if let Some(textures) = &self.textures {
             flags |= PufferStateFlags::CYCLE_TEXTURE;
             if let Some(tex) = &textures.texture1 {

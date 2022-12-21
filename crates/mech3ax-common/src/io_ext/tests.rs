@@ -1,5 +1,6 @@
 use super::*;
 use crate::string::str_to_c_padded;
+use mech3ax_debug::Ascii;
 use std::io::Cursor;
 
 trait ReadAll {
@@ -84,14 +85,14 @@ fn i16_roundtrip() {
 #[derive(Debug, PartialEq)]
 #[repr(C)]
 struct TestStruct {
-    name: [u8; 32],
+    name: Ascii<32>,
     int: u32,
 }
 mech3ax_api_types::static_assert_size!(TestStruct, 36);
 
 #[test]
 fn struct_roundtrip() {
-    let mut name = [0u8; 32];
+    let mut name: Ascii<32> = Ascii::zero();
     str_to_c_padded("Hello World", &mut name);
     let expected = TestStruct {
         name,

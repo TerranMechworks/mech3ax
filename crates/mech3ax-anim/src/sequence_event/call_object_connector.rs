@@ -8,6 +8,7 @@ use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
+use mech3ax_debug::Ascii;
 use std::io::{Read, Write};
 
 // this flag isn't the same as OBJECT_CONNECTOR, and unfortunately,
@@ -19,7 +20,7 @@ const FLAGS: u32 = 1024 | 512 | 2;
 #[repr(C)]
 struct CallObjectConnectorC {
     flags: u32,
-    node: [u8; 32],
+    node: Ascii<32>,
     node_index: u16,
     save_index: i16,
     from_index: u16,
@@ -86,7 +87,7 @@ impl ScriptObject for CallObjectConnector {
     }
 
     fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
-        let mut node = [0; 32];
+        let mut node = Ascii::zero();
         str_to_c_padded(&self.node, &mut node);
         let from_index = anim_def.node_to_index(&self.from_node)? as u16;
         write.write_struct(&CallObjectConnectorC {

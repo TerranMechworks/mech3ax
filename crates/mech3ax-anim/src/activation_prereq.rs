@@ -4,6 +4,7 @@ use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
+use mech3ax_debug::Ascii;
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
@@ -18,17 +19,17 @@ enum ActivPrereqType {
 
 #[repr(C)]
 struct ActivPrereqAnimC {
-    name: [u8; 32], // 00
-    zero32: u32,    // 32
-    zero36: u32,    // 36
+    name: Ascii<32>, // 00
+    zero32: u32,     // 32
+    zero36: u32,     // 36
 }
 static_assert_size!(ActivPrereqAnimC, 40);
 
 #[repr(C)]
 struct ActivPrereqObjC {
-    active: u32,    // 00
-    name: [u8; 32], // 32
-    pointer: u32,   // 36
+    active: u32,     // 00
+    name: Ascii<32>, // 32
+    pointer: u32,    // 36
 }
 static_assert_size!(ActivPrereqObjC, 40);
 
@@ -129,7 +130,7 @@ pub fn read_activ_prereqs(
 }
 
 fn write_activ_prereq_anim(write: &mut CountingWriter<impl Write>, name: &str) -> Result<()> {
-    let mut fill = [0; 32];
+    let mut fill = Ascii::zero();
     str_to_c_padded(name, &mut fill);
     // always required (not optional)
     write.write_u32(bool_c!(false))?;
@@ -147,7 +148,7 @@ fn write_activ_prereq_object(
     object: &PrereqObject,
     prereq_type: ActivPrereqType,
 ) -> Result<()> {
-    let mut name = [0; 32];
+    let mut name = Ascii::zero();
     str_to_c_padded(&object.name, &mut name);
     write.write_u32(bool_c!(!object.required))?;
     write.write_u32(prereq_type as u32)?;
@@ -164,7 +165,7 @@ fn write_activ_prereq_parent(
     parent: &PrereqParent,
     prereq_type: ActivPrereqType,
 ) -> Result<()> {
-    let mut name = [0; 32];
+    let mut name = Ascii::zero();
     str_to_c_padded(&parent.name, &mut name);
     write.write_u32(bool_c!(!parent.required))?;
     write.write_u32(prereq_type as u32)?;

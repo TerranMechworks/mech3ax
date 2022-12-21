@@ -130,7 +130,7 @@ fn assert_node(node: NodePmC, offset: u32) -> Result<(NodeType, NodeVariantsPm)>
         ));
     }
 
-    let name = assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name.0))?;
+    let name = assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name))?;
     let flags = NodeBitFlags::from_bits(node.flags.0).ok_or_else(|| {
         assert_with_msg!(
             "Expected valid node flags, but was {:?} (at {})",
@@ -353,8 +353,8 @@ fn write_variant(
         write.offset
     );
 
-    let mut name = Ascii::new();
-    str_to_c_node_name(variant.name, &mut name.0);
+    let mut name = Ascii::zero();
+    str_to_c_node_name(variant.name, &mut name);
 
     let area_partition = variant.area_partition.unwrap_or(AreaPartitionPm::DEFAULT);
 

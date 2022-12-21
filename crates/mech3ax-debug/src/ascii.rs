@@ -8,8 +8,18 @@ pub struct Ascii<const N: usize>(pub [u8; N]);
 
 impl<const N: usize> Ascii<N> {
     #[inline]
-    pub const fn new() -> Self {
+    pub const fn zero() -> Self {
         Self([0u8; N])
+    }
+
+    #[inline]
+    pub const fn new(inner: &[u8; N]) -> Self {
+        Self(*inner)
+    }
+
+    #[inline]
+    pub fn copy_from(&mut self, from: &[u8; N]) {
+        self.0.copy_from_slice(from);
     }
 }
 

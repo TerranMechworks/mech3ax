@@ -282,7 +282,7 @@ where
                 -1 <= entry.palette_index <= palette_index_max,
                 read.prev + 36
             )?;
-            let name = assert_utf8("name", read.prev + 0, || str_from_c_padded(&entry.name.0))?;
+            let name = assert_utf8("name", read.prev + 0, || str_from_c_padded(&entry.name))?;
             Ok((name, entry.start_offset, entry.palette_index))
         })
         .collect::<Result<Vec<_>>>()?;
@@ -624,8 +624,8 @@ where
             TextureEntryC::SIZE,
             write.offset
         );
-        let mut name = Ascii::new();
-        str_to_c_padded(&info.name, &mut name.0);
+        let mut name = Ascii::zero();
+        str_to_c_padded(&info.name, &mut name);
         let palette_index = match &info.palette {
             TexturePalette::Global(global) => global.index,
             _ => -1,

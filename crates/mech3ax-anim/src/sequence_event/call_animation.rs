@@ -11,13 +11,14 @@ use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_debug::Ascii;
 use std::io::{Read, Write};
 
 const INPUT_NODE_INDEX: u32 = 65336;
 
 #[repr(C)]
 struct CallAnimationC {
-    name: [u8; 32],           // 00
+    name: Ascii<32>,          // 00
     operand_index: u16,       // 32
     flags: u16,               // 34
     anim_index: u16,          // 36
@@ -180,7 +181,7 @@ impl ScriptObject for CallAnimation {
     }
 
     fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
-        let mut name = [0; 32];
+        let mut name = Ascii::zero();
         str_to_c_padded(&self.name, &mut name);
         let mut flags = CallAnimationFlags::empty();
         if self.wait_for_completion.is_some() {

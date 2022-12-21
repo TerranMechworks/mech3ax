@@ -6,6 +6,7 @@ use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_partition, str_to_c_partition};
 use mech3ax_common::{assert_that, Error, Result};
+use mech3ax_debug::Ascii;
 use std::convert::From;
 use std::io::{Read, Write};
 
@@ -22,7 +23,7 @@ const GRAVITY: f32 = -9.800000190734863;
 
 #[repr(C)]
 struct AnimNameC {
-    name: [u8; 80],
+    name: Ascii<80>,
     unknown: u32,
 }
 static_assert_size!(AnimNameC, 84);
@@ -165,7 +166,7 @@ fn write_anim_header(
     write.write_u32(anim_names.len() as u32)?;
 
     for anim_name in anim_names {
-        let mut name = [0; 80];
+        let mut name = Ascii::zero();
         str_to_c_partition(&anim_name.name, &anim_name.pad, &mut name);
         write.write_struct(&AnimNameC {
             name,

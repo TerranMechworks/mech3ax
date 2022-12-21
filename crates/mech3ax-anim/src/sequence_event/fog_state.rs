@@ -6,6 +6,7 @@ use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::str_to_c_padded;
 use mech3ax_common::{assert_that, Result};
+use mech3ax_debug::Ascii;
 use std::io::{Read, Write};
 
 const DEFAULT_FOG_NAME: &str = "default_fog_name";
@@ -25,7 +26,7 @@ bitflags::bitflags! {
 
 #[repr(C)]
 struct FogStateC {
-    name: [u8; 32],  // 00
+    name: Ascii<32>, // 00
     flags: u32,      // 32
     fog_type: u32,   // 36
     color: Color,    // 40
@@ -42,7 +43,7 @@ impl ScriptObject for FogState {
         assert_that!("fog state size", size == Self::SIZE, read.offset)?;
         let fog_state: FogStateC = read.read_struct()?;
 
-        let mut name = [0; 32];
+        let mut name = Ascii::zero();
         str_to_c_padded(DEFAULT_FOG_NAME, &mut name);
         assert_that!("fog state name", fog_state.name == name, read.prev + 0)?;
 
@@ -69,7 +70,7 @@ impl ScriptObject for FogState {
     }
 
     fn write(&self, write: &mut CountingWriter<impl Write>, _anim_def: &AnimDef) -> Result<()> {
-        let mut name = [0; 32];
+        let mut name = Ascii::zero();
         str_to_c_padded(DEFAULT_FOG_NAME, &mut name);
         let fog_type = match &self.fog_type {
             FogType::Off => FogType::Off as u32,

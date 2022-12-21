@@ -7,11 +7,12 @@ use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
+use mech3ax_debug::Ascii;
 use std::io::{Read, Write};
 
 #[repr(C)]
 struct LightAnimationC {
-    name: [u8; 32],
+    name: Ascii<32>,
     light_index: u32, // 32
     range: Range,     // 36
     zero44: u32,
@@ -134,7 +135,7 @@ impl ScriptObject for LightAnimation {
     }
 
     fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
-        let mut name = [0; 32];
+        let mut name = Ascii::zero();
         str_to_c_padded(&self.name, &mut name);
         let light_index = anim_def.light_to_index(&self.name)? as u32;
 

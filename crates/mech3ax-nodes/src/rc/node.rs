@@ -107,8 +107,8 @@ static_assert_size!(NodeRcC, 192);
 
 pub const NODE_RC_C_SIZE: u32 = NodeRcC::SIZE;
 
-const ABORT_TEST_NODE_NAME: &[u8; 36] =
-    b"abort_test\0ng\0ame\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+const ABORT_TEST_NODE_NAME: Ascii<36> =
+    Ascii::new(b"abort_test\0ng\0ame\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
 const ABORT_TEST_NAME: &str = "abort_test";
 
 fn assert_node(node: NodeRcC, offset: u32) -> Result<(NodeType, NodeVariantsRc)> {
@@ -122,10 +122,10 @@ fn assert_node(node: NodeRcC, offset: u32) -> Result<(NodeType, NodeVariantsRc)>
         )
     })?;
 
-    let name = if &node.name.0 == ABORT_TEST_NODE_NAME {
+    let name = if node.name == ABORT_TEST_NODE_NAME {
         ABORT_TEST_NAME.to_string()
     } else {
-        assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name.0))?
+        assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name))?
     };
     let flags = NodeBitFlags::from_bits(node.flags.0).ok_or_else(|| {
         assert_with_msg!(
@@ -311,11 +311,11 @@ fn write_variant(
         write.offset
     );
 
-    let mut name = Ascii::new();
+    let mut name = Ascii::zero();
     if variant.name == ABORT_TEST_NAME {
-        name.0.copy_from_slice(ABORT_TEST_NODE_NAME);
+        name.copy_from(&ABORT_TEST_NODE_NAME.0);
     } else {
-        str_to_c_node_name(variant.name, &mut name.0);
+        str_to_c_node_name(variant.name, &mut name);
     }
 
     let area_partition = variant.area_partition.unwrap_or(AreaPartition::DEFAULT);
@@ -400,7 +400,7 @@ pub fn write_node_info_zero(write: &mut CountingWriter<impl Write>, index: u32) 
         write.offset
     );
     let node = NodeRcC {
-        name: Ascii::new(),
+        name: Ascii::zero(),
         flags: Hex(0),
         zero040: 0,
         unk044: 0,

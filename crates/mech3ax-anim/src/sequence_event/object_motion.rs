@@ -10,6 +10,7 @@ use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_debug::Ascii;
 use std::io::{Read, Write};
 
 #[repr(C)]
@@ -51,18 +52,18 @@ struct ObjectMotionC {
     // used for scale calculations
     scale_copy: Vec3, // 184
     // BOUNCE SEQUENCE/SOUND
-    bounce_seq0_name: [u8; 32], // 196
-    bounce_seq0_sentinel: i16,  // 228
-    bounce_snd0_index: u16,     // 230
-    bounce_snd0_volume: f32,    // 232
-    bounce_seq1_name: [u8; 32], // 236
-    bounce_seq1_sentinel: i16,  // 268
-    bounce_snd1_index: u16,     // 270
-    bounce_snd1_volume: f32,    // 272
-    bounce_seq2_name: [u8; 32], // 276
-    bounce_seq2_sentinel: i16,  // 308
-    bounce_snd2_index: u16,     // 310
-    bounce_snd2_volume: f32,    // 312
+    bounce_seq0_name: Ascii<32>, // 196
+    bounce_seq0_sentinel: i16,   // 228
+    bounce_snd0_index: u16,      // 230
+    bounce_snd0_volume: f32,     // 232
+    bounce_seq1_name: Ascii<32>, // 236
+    bounce_seq1_sentinel: i16,   // 268
+    bounce_snd1_index: u16,      // 270
+    bounce_snd1_volume: f32,     // 272
+    bounce_seq2_name: Ascii<32>, // 276
+    bounce_seq2_sentinel: i16,   // 308
+    bounce_snd2_index: u16,      // 310
+    bounce_snd2_volume: f32,     // 312
     // RUNTIME
     runtime: f32, // 316
 }
@@ -356,7 +357,7 @@ impl ScriptObject for ObjectMotion {
         )?;
 
         let bounce_sequence = if flags.contains(ObjectMotionFlags::BOUNCE_SEQ) {
-            let seq_name0 = if object_motion.bounce_seq0_name[0] != 0 {
+            let seq_name0 = if object_motion.bounce_seq0_name.0[0] != 0 {
                 let bounce_seq0 =
                     assert_utf8("object motion bounce seq 0 name", read.prev + 196, || {
                         str_from_c_padded(&object_motion.bounce_seq0_name)
@@ -369,7 +370,7 @@ impl ScriptObject for ObjectMotion {
                 ));
             };
 
-            let seq_name1 = if object_motion.bounce_seq1_name[0] != 0 {
+            let seq_name1 = if object_motion.bounce_seq1_name.0[0] != 0 {
                 let bounce_seq1 =
                     assert_utf8("object motion bounce seq 1 name", read.prev + 236, || {
                         str_from_c_padded(&object_motion.bounce_seq1_name)
@@ -379,7 +380,7 @@ impl ScriptObject for ObjectMotion {
                 None
             };
 
-            let seq_name2 = if object_motion.bounce_seq2_name[0] != 0 {
+            let seq_name2 = if object_motion.bounce_seq2_name.0[0] != 0 {
                 let bounce_seq2 =
                     assert_utf8("object motion bounce seq 2 name", read.prev + 276, || {
                         str_from_c_padded(&object_motion.bounce_seq2_name)
@@ -398,17 +399,17 @@ impl ScriptObject for ObjectMotion {
             assert_all_zero(
                 "object motion bounce seq 0",
                 read.prev + 196,
-                &object_motion.bounce_seq0_name,
+                &object_motion.bounce_seq0_name.0,
             )?;
             assert_all_zero(
                 "object motion bounce seq 1",
                 read.prev + 236,
-                &object_motion.bounce_seq1_name,
+                &object_motion.bounce_seq1_name.0,
             )?;
             assert_all_zero(
                 "object motion bounce seq 2",
                 read.prev + 276,
-                &object_motion.bounce_seq2_name,
+                &object_motion.bounce_seq2_name.0,
             )?;
             None
         };
@@ -564,9 +565,9 @@ impl ScriptObject for ObjectMotion {
             (Vec3::DEFAULT, Vec3::DEFAULT)
         };
 
-        let mut bounce_seq0_name = [0; 32];
-        let mut bounce_seq1_name = [0; 32];
-        let mut bounce_seq2_name = [0; 32];
+        let mut bounce_seq0_name = Ascii::zero();
+        let mut bounce_seq1_name = Ascii::zero();
+        let mut bounce_seq2_name = Ascii::zero();
 
         if let Some(bounce_seq) = &self.bounce_sequence {
             flags |= ObjectMotionFlags::BOUNCE_SEQ;

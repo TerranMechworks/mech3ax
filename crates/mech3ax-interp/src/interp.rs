@@ -99,7 +99,7 @@ pub fn read_interp(read: &mut CountingReader<impl Read>) -> Result<Vec<Script>> 
             );
             let entry: InterpEntryC = read.read_struct()?;
             trace!("{:#?}", entry);
-            let name = assert_utf8("name", read.prev, || str_from_c_padded(&entry.name.0))?;
+            let name = assert_utf8("name", read.prev, || str_from_c_padded(&entry.name))?;
             // Cast safety: i64 > u32
             let last_modified =
                 OffsetDateTime::from_unix_timestamp(entry.last_modified as i64).unwrap();
@@ -186,8 +186,8 @@ pub fn write_interp(write: &mut CountingWriter<impl Write>, scripts: &[Script]) 
             InterpEntryC::SIZE,
             write.offset
         );
-        let mut name = Ascii::new();
-        str_to_c_padded(&script.name, &mut name.0);
+        let mut name = Ascii::zero();
+        str_to_c_padded(&script.name, &mut name);
         // Cast safety: truncation simply leads to incorrect timestamp
         let last_modified = script.last_modified.unix_timestamp() as u32;
         let entry = InterpEntryC {
