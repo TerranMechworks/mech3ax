@@ -261,8 +261,8 @@ pub fn write(
         index,
         write.offset
     );
-    for child in &object3d.children {
-        write.write_u32(*child)?;
+    for child in object3d.children.iter().copied() {
+        write.write_u32(child)?;
     }
 
     Ok(())

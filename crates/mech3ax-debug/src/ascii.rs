@@ -44,7 +44,7 @@ mod tests {
 
     #[test]
     fn ascii_all_ascii() {
-        let a = Ascii(*b"hello!");
+        let a = Ascii::new(b"hello!");
         let f = format!("{:?}", a);
         assert_eq!(f, "[h, e, l, l, o, !]");
     }
@@ -58,7 +58,7 @@ mod tests {
 
     #[test]
     fn ascii_always_has_no_newlines() {
-        let a = Ascii(*b"hello!");
+        let a = Ascii::new(b"hello!");
         let f = format!("{:#?}", a);
         assert_eq!(f, "[h, e, l, l, o, !]");
     }

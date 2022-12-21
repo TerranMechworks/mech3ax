@@ -223,21 +223,21 @@ pub fn write_nodes(
         match node {
             NodeMw::Lod(lod) => {
                 write.write_u32(lod.parent)?;
-                for child in &lod.children {
-                    write.write_u32(*child)?;
+                for child in lod.children.iter().copied() {
+                    write.write_u32(child)?;
                 }
             }
             NodeMw::Object3d(object3d) => {
                 if let Some(parent) = object3d.parent {
                     write.write_u32(parent)?;
                 }
-                for child in &object3d.children {
-                    write.write_u32(*child)?;
+                for child in object3d.children.iter().copied() {
+                    write.write_u32(child)?;
                 }
             }
             NodeMw::World(world) => {
-                for child in &world.children {
-                    write.write_u32(*child)?;
+                for child in world.children.iter().copied() {
+                    write.write_u32(child)?;
                 }
             }
             _ => {}

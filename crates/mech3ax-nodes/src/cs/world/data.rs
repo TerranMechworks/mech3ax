@@ -622,8 +622,8 @@ pub fn write(write: &mut CountingWriter<impl Write>, world: &World, index: usize
         index,
         write.offset
     );
-    for child in &world.children {
-        write.write_u32(*child)?;
+    for child in world.children.iter().copied() {
+        write.write_u32(child)?;
     }
 
     Ok(())

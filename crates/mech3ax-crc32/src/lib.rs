@@ -13,9 +13,9 @@ pub const CRC32_INIT: u32 = 0x00000000;
 /// other implementations do.
 pub fn crc32_update(crc: u32, buf: &[u8]) -> u32 {
     let mut crc = crc;
-    for byte in buf {
+    for byte in buf.iter().copied() {
         // this could also be done by casting to u8 instead
-        let index = (crc >> 24) ^ (*byte as u32);
+        let index = (crc >> 24) ^ (byte as u32);
         crc = CRC32_TABLE[index as usize] ^ (crc << 8);
     }
     crc

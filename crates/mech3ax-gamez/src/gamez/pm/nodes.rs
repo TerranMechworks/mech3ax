@@ -188,8 +188,8 @@ pub fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NodePm]) -> 
                     world.children.len(),
                     write.offset
                 );
-                for child in &world.children {
-                    write.write_u32(*child)?;
+                for child in world.children.iter().copied() {
+                    write.write_u32(child)?;
                 }
             }
             NodePm::Lod(lod) => {
@@ -200,8 +200,8 @@ pub fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NodePm]) -> 
                     lod.children.len(),
                     write.offset
                 );
-                for child in &lod.children {
-                    write.write_u32(*child)?;
+                for child in lod.children.iter().copied() {
+                    write.write_u32(child)?;
                 }
             }
             NodePm::Object3d(object3d) => {
@@ -214,8 +214,8 @@ pub fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NodePm]) -> 
                     object3d.children.len(),
                     write.offset
                 );
-                for child in &object3d.children {
-                    write.write_u32(*child)?;
+                for child in object3d.children.iter().copied() {
+                    write.write_u32(child)?;
                 }
             }
             _ => {}

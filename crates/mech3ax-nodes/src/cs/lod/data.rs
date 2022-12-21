@@ -136,8 +136,8 @@ pub fn write(write: &mut CountingWriter<impl Write>, lod: &Lod, index: usize) ->
         lod.children.len(),
         write.offset
     );
-    for child in &lod.children {
-        write.write_u32(*child)?;
+    for child in lod.children.iter().copied() {
+        write.write_u32(child)?;
     }
 
     Ok(())

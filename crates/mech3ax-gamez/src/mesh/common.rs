@@ -17,8 +17,8 @@ pub(crate) fn read_u32s(
 
 #[inline(always)]
 pub(crate) fn write_u32s(write: &mut CountingWriter<impl Write>, values: &[u32]) -> Result<()> {
-    for value in values {
-        write.write_u32(*value)?;
+    for value in values.iter().copied() {
+        write.write_u32(value)?;
     }
     Ok(())
 }

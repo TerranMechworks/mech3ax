@@ -433,8 +433,8 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
     trace!("{:#?}", partition_c);
     write.write_struct(&partition_c)?;
 
-    for node in &partition.nodes {
-        write.write_u32(*node)?;
+    for node in partition.nodes.iter().copied() {
+        write.write_u32(node)?;
     }
 
     Ok(())
@@ -520,8 +520,8 @@ pub fn write(write: &mut CountingWriter<impl Write>, world: &World, index: usize
         index,
         write.offset
     );
-    for child in &world.children {
-        write.write_u32(*child)?;
+    for child in world.children.iter().copied() {
+        write.write_u32(child)?;
     }
 
     Ok(())
