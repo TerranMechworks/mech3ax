@@ -8,7 +8,7 @@ use log::{debug, trace};
 use mech3ax_api_types::gamez::{GameZMwData, GameZMwMetadata};
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};
 
 #[derive(Debug)]
@@ -53,6 +53,8 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZMwData> {
         header.meshes_offset < header.nodes_offset,
         read.prev + 20
     )?;
+    // need at least world, window, camera, display, and light
+    assert_that!("node count", header.node_count > 5, read.prev + 28)?;
     assert_that!(
         "node count",
         header.node_count < header.node_array_size,
@@ -100,7 +102,9 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZMwData> {
 }
 
 pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZMwData) -> Result<()> {
-    let texture_count = gamez.textures.len() as u32;
+    let texture_count = assert_len!(u32, gamez.textures.len(), "GameZ textures")?;
+
+    let node_array_size = gamez.metadata.node_array_size;
     let meshes_array_size = gamez.metadata.meshes_array_size;
 
     let textures_offset = HeaderMwC::SIZE;
@@ -121,7 +125,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZMwData) 
         textures_offset,
         materials_offset,
         meshes_offset,
-        node_array_size: gamez.metadata.node_array_size,
+        node_array_size,
         node_count: gamez.metadata.node_data_count,
         nodes_offset,
     };
@@ -131,11 +135,6 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZMwData) 
     textures::write_texture_infos(write, &gamez.textures)?;
     materials::write_materials(write, &gamez.textures, &gamez.materials)?;
     meshes::write_meshes(write, &gamez.meshes, &mesh_offsets, meshes_array_size)?;
-    nodes::write_nodes(
-        write,
-        &gamez.nodes,
-        gamez.metadata.node_array_size,
-        nodes_offset,
-    )?;
+    nodes::write_nodes(write, &gamez.nodes, node_array_size, nodes_offset)?;
     Ok(())
 }

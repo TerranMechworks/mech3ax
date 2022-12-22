@@ -151,6 +151,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) 
     textures::write_texture_infos(write, &gamez.textures, &gamez.metadata.texture_ptrs)?;
     materials::write_materials(write, &gamez.textures, &gamez.materials)?;
     meshes::write_meshes(write, meshes, fixup)?;
+    debug!("Writing {} nodes at {}", node_array_size, write.offset);
     nodes::write_nodes(write, &gamez.nodes)?;
     Ok(())
 }

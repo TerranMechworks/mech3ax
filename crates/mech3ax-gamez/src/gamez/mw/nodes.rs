@@ -103,6 +103,8 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
         assert_that!("node zero index", actual_index == expected_index, read.prev)?;
     }
 
+    assert_that!("has light node", light_node == true, read.offset)?;
+    assert_that!("has display node", display_node > 0, read.offset)?;
     assert_that!("node info end", end_offset == read.offset, read.offset)?;
 
     let nodes = variants
