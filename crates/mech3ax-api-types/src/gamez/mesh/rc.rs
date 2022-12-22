@@ -8,7 +8,7 @@ pub struct PolygonRc {
     pub vertex_indices: Vec<u32>,
     pub normal_indices: Option<Vec<u32>>,
     pub uv_coords: Option<Vec<UvCoord>>,
-    pub texture_index: u32,
+    pub material_index: u32,
 
     pub unk0_flag: bool,
     pub unk04: i32,

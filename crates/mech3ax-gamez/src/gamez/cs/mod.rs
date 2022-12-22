@@ -75,13 +75,14 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         read.offset == header.materials_offset,
         read.offset
     )?;
-    let (materials, material_array_size) = materials::read_materials(read, &textures)?;
+    let (materials, material_array_size, material_count) =
+        materials::read_materials(read, &textures)?;
     assert_that!(
         "meshes offset",
         read.offset == header.meshes_offset,
         read.offset
     )?;
-    let meshes = meshes::read_meshes(read, header.nodes_offset, fixup)?;
+    let meshes = meshes::read_meshes(read, header.nodes_offset, material_count, fixup)?;
     assert_that!(
         "nodes offset",
         read.offset == header.nodes_offset,

@@ -44,7 +44,9 @@ fn read_node_and_mesh_object3d(
         object3d.mesh_index = mesh_index;
 
         let wrapped_mesh = read_mesh_info(read, mesh_index)?;
-        let mesh = read_mesh_data(read, wrapped_mesh, mesh_index)?;
+        // TODO: we ought to base this on the materials in mechlib, but...
+        let material_count = 4096;
+        let mesh = read_mesh_data(read, wrapped_mesh, material_count, mesh_index)?;
         meshes.push(mesh);
     } else {
         object3d.mesh_index = -1;

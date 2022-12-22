@@ -9,7 +9,7 @@ pub struct PolygonMw {
     pub vertex_colors: Vec<Color>,
     pub normal_indices: Option<Vec<u32>>,
     pub uv_coords: Option<Vec<UvCoord>>,
-    pub texture_index: u32,
+    pub material_index: u32,
     pub texture_info: u32,
     pub unk04: i32,
     pub unk_bit: bool,

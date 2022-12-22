@@ -19,16 +19,16 @@ pub struct PolygonFlags {
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 #[repr(C)]
-pub struct MeshTexture {
-    pub texture_index: u32,       // 00
+pub struct MeshMaterialInfo {
+    pub material_index: u32,      // 00
     pub polygon_usage_count: u32, // 04
     pub unk_ptr: u32,             // 08
 }
-static_assert_size!(MeshTexture, 12);
+static_assert_size!(MeshMaterialInfo, 12);
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct PolygonTextureNg {
-    pub texture_index: u32,
+pub struct PolygonMaterialNg {
+    pub material_index: u32,
     pub uv_coords: Vec<UvCoord>,
 }
 
@@ -38,7 +38,7 @@ pub struct PolygonNg {
     pub vertex_indices: Vec<u32>,
     pub vertex_colors: Vec<Color>,
     pub normal_indices: Option<Vec<u32>>,
-    pub textures: Vec<PolygonTextureNg>,
+    pub materials: Vec<PolygonMaterialNg>,
 
     pub unk04: i32,
     pub vertices_ptr: u32,
@@ -57,13 +57,13 @@ pub struct MeshNg {
     pub morphs: Vec<Vec3>,
     pub lights: Vec<MeshLight>,
     pub polygons: Vec<PolygonNg>,
-    pub textures: Vec<MeshTexture>,
+    pub material_infos: Vec<MeshMaterialInfo>,
     pub polygons_ptr: u32,
     pub vertices_ptr: u32,
     pub normals_ptr: u32,
     pub lights_ptr: u32,
     pub morphs_ptr: u32,
-    pub texture_ptr: u32,
+    pub materials_ptr: u32,
     pub file_ptr: bool,
     pub unk04: u32,
     pub unk08: u32,

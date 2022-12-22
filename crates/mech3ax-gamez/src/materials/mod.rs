@@ -30,7 +30,7 @@ struct MaterialC {
 }
 static_assert_size!(MaterialC, 40);
 
-fn assert_material_info(info: MaterialInfoC, offset: u32) -> Result<(i16, i16)> {
+fn assert_material_info(info: MaterialInfoC, offset: u32) -> Result<(i16, i16, u32)> {
     assert_that!("mat array size", 0 <= info.array_size <= i16::MAX as i32, offset + 0)?;
     assert_that!("mat count", 0 <= info.count <= info.array_size, offset + 4)?;
     assert_that!("mat index max", info.index_max == info.count, offset + 8)?;
@@ -43,7 +43,8 @@ fn assert_material_info(info: MaterialInfoC, offset: u32) -> Result<(i16, i16)> 
     // Cast safety: see asserts above
     let array_size = info.array_size as i16;
     let count = info.count as i16;
-    Ok((array_size, count))
+    let material_count = info.count as u32;
+    Ok((array_size, count, material_count))
 }
 
 fn find_texture_index_by_name(textures: &[String], texture_name: &str) -> Result<u32> {

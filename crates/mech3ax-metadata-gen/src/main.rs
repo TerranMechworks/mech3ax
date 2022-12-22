@@ -54,8 +54,8 @@ fn main() {
     resolver.push::<api::gamez::mesh::PolygonMw>();
     resolver.push::<api::gamez::mesh::MeshMw>();
     resolver.push::<api::gamez::mesh::PolygonFlags>();
-    resolver.push::<api::gamez::mesh::MeshTexture>();
-    resolver.push::<api::gamez::mesh::PolygonTextureNg>();
+    resolver.push::<api::gamez::mesh::MeshMaterialInfo>();
+    resolver.push::<api::gamez::mesh::PolygonMaterialNg>();
     resolver.push::<api::gamez::mesh::PolygonNg>();
     resolver.push::<api::gamez::mesh::MeshNg>();
     resolver.push::<api::gamez::mesh::PolygonRc>();

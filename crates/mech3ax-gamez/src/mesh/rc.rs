@@ -69,7 +69,7 @@ struct PolygonRcC {
     vertices_ptr: Ptr,     // 08
     normals_ptr: Ptr,      // 12
     uvs_ptr: Ptr,          // 16
-    texture_index: u32,    // 28
+    material_index: u32,   // 28
     unk24: Hex<u32>,       // 24
 }
 static_assert_size!(PolygonRcC, 28);
@@ -184,6 +184,7 @@ fn assert_mesh_info(mesh: MeshRcC, offset: u32) -> Result<WrappedMeshRc> {
 fn assert_polygon(
     poly: PolygonRcC,
     offset: u32,
+    material_count: u32,
     poly_index: u32,
 ) -> Result<(u32, u32, bool, bool, PolygonRc)> {
     let vertex_info = poly.vertex_info.0;
@@ -211,11 +212,17 @@ fn assert_polygon(
     }
     let has_uvs = poly.uvs_ptr != Ptr::NULL;
 
+    assert_that!(
+        "material index",
+        poly.material_index < material_count,
+        offset + 28
+    )?;
+
     let polygon = PolygonRc {
         vertex_indices: vec![],
         normal_indices: None,
         uv_coords: None,
-        texture_index: poly.texture_index,
+        material_index: poly.material_index,
         unk0_flag,
         unk04: poly.unk04,
         unk24: poly.unk24.0,
@@ -230,6 +237,7 @@ fn assert_polygon(
 fn read_polygons(
     read: &mut CountingReader<impl Read>,
     count: u32,
+    material_count: u32,
     mesh_index: i32,
 ) -> Result<Vec<PolygonRc>> {
     (0..count)
@@ -244,7 +252,7 @@ fn read_polygons(
             let poly: PolygonRcC = read.read_struct()?;
             trace!("{:#?}", poly);
 
-            let result = assert_polygon(poly, read.prev, poly_index)?;
+            let result = assert_polygon(poly, read.prev, material_count, poly_index)?;
             Ok(result)
         })
         .collect::<Result<Vec<_>>>()?
@@ -283,6 +291,7 @@ fn read_polygons(
 pub fn read_mesh_data(
     read: &mut CountingReader<impl Read>,
     wrapped: WrappedMeshRc,
+    material_count: u32,
     mesh_index: i32,
 ) -> Result<MeshRc> {
     debug!("Reading mesh data {} (rc) at {}", mesh_index, read.offset);
@@ -315,7 +324,7 @@ pub fn read_mesh_data(
         "Reading {} x polygons (rc) at {}",
         wrapped.polygon_count, read.offset
     );
-    mesh.polygons = read_polygons(read, wrapped.polygon_count, mesh_index)?;
+    mesh.polygons = read_polygons(read, wrapped.polygon_count, material_count, mesh_index)?;
     trace!("Finished mesh data {} (rc) at {}", mesh_index, read.offset);
     Ok(mesh)
 }
@@ -393,7 +402,7 @@ fn write_polygons(
             vertices_ptr: Ptr(polygon.vertices_ptr),
             normals_ptr: Ptr(polygon.normals_ptr),
             uvs_ptr: Ptr(polygon.uvs_ptr),
-            texture_index: polygon.texture_index,
+            material_index: polygon.material_index,
             unk24: Hex(polygon.unk24),
         };
         trace!("{:#?}", poly);

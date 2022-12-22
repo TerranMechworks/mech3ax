@@ -75,7 +75,7 @@ struct PolygonMwC {
     uvs_ptr: Ptr,          // 16
     colors_ptr: Ptr,       // 20
     unk_ptr: Ptr,          // 24
-    texture_index: u32,    // 28
+    material_index: u32,   // 28
     texture_info: u32,     // 32
 }
 static_assert_size!(PolygonMwC, 36);
@@ -185,6 +185,7 @@ fn assert_mesh_info(mesh: MeshMwC, offset: u32) -> Result<WrappedMeshMw> {
 fn assert_polygon(
     poly: PolygonMwC,
     offset: u32,
+    material_count: u32,
     poly_index: u32,
 ) -> Result<(u32, u32, bool, bool, PolygonMw)> {
     let vertex_info = poly.vertex_info.0;
@@ -205,12 +206,18 @@ fn assert_polygon(
     assert_that!("colors ptr", poly.colors_ptr != Ptr::NULL, offset + 20)?;
     assert_that!("unknown ptr", poly.unk_ptr != Ptr::NULL, offset + 24)?;
 
+    assert_that!(
+        "material index",
+        poly.material_index < material_count,
+        offset + 28
+    )?;
+
     let polygon = PolygonMw {
         vertex_indices: vec![],
         vertex_colors: vec![],
         normal_indices: None,
         uv_coords: None,
-        texture_index: poly.texture_index,
+        material_index: poly.material_index,
         texture_info: poly.texture_info,
         unk04: poly.unk04,
         unk_bit,
@@ -228,6 +235,7 @@ fn assert_polygon(
 fn read_polygons(
     read: &mut CountingReader<impl Read>,
     count: u32,
+    material_count: u32,
     mesh_index: i32,
 ) -> Result<Vec<PolygonMw>> {
     (0..count)
@@ -242,7 +250,7 @@ fn read_polygons(
             let poly: PolygonMwC = read.read_struct()?;
             trace!("{:#?}", poly);
 
-            let result = assert_polygon(poly, read.prev, poly_index)?;
+            let result = assert_polygon(poly, read.prev, material_count, poly_index)?;
             Ok(result)
         })
         .collect::<Result<Vec<_>>>()?
@@ -286,6 +294,7 @@ fn read_polygons(
 pub fn read_mesh_data(
     read: &mut CountingReader<impl Read>,
     wrapped: WrappedMeshMw,
+    material_count: u32,
     mesh_index: i32,
 ) -> Result<MeshMw> {
     debug!("Reading mesh data {} (mw) at {}", mesh_index, read.offset);
@@ -318,7 +327,7 @@ pub fn read_mesh_data(
         "Reading {} x polygons (mw) at {}",
         wrapped.polygon_count, read.offset
     );
-    mesh.polygons = read_polygons(read, wrapped.polygon_count, mesh_index)?;
+    mesh.polygons = read_polygons(read, wrapped.polygon_count, material_count, mesh_index)?;
     trace!("Finished mesh data {} (mw) at {}", mesh_index, read.offset);
     Ok(mesh)
 }
@@ -399,7 +408,7 @@ fn write_polygons(
             uvs_ptr: Ptr(polygon.uvs_ptr),
             colors_ptr: Ptr(polygon.colors_ptr),
             unk_ptr: Ptr(polygon.unk_ptr),
-            texture_index: polygon.texture_index,
+            material_index: polygon.material_index,
             texture_info: polygon.texture_info,
         };
         trace!("{:#?}", poly);

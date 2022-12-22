@@ -2,7 +2,7 @@
 use super::common::*;
 use log::{debug, trace};
 use mech3ax_api_types::gamez::mesh::{
-    MeshNg, MeshTexture, PolygonFlags, PolygonNg, PolygonTextureNg, UvCoord,
+    MeshMaterialInfo, MeshNg, PolygonFlags, PolygonMaterialNg, PolygonNg, UvCoord,
 };
 use mech3ax_api_types::{static_assert_size, Color, ReprSize as _, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -13,31 +13,31 @@ use std::io::{Read, Write};
 #[derive(Debug)]
 #[repr(C)]
 struct MeshNgC {
-    file_ptr: u32,      // 00
-    unk04: u32,         // 04
-    unk08: u32,         // 08
-    parent_count: u32,  // 12
-    polygon_count: u32, // 16
-    vertex_count: u32,  // 20
-    normal_count: u32,  // 24
-    morph_count: u32,   // 28
-    light_count: u32,   // 32
-    zero36: u32,        // 36
-    unk40: f32,         // 40
-    unk44: f32,         // 44
-    zero48: u32,        // 48
-    polygons_ptr: Ptr,  // 52
-    vertices_ptr: Ptr,  // 56
-    normals_ptr: Ptr,   // 60
-    lights_ptr: Ptr,    // 64
-    morphs_ptr: Ptr,    // 68
-    unk72: f32,         // 72
-    unk76: f32,         // 76
-    unk80: f32,         // 80
-    unk84: f32,         // 84
-    zero88: u32,        // 88
-    texture_count: u32, // 92
-    texture_ptr: Ptr,   // 96
+    file_ptr: u32,       // 00
+    unk04: u32,          // 04
+    unk08: u32,          // 08
+    parent_count: u32,   // 12
+    polygon_count: u32,  // 16
+    vertex_count: u32,   // 20
+    normal_count: u32,   // 24
+    morph_count: u32,    // 28
+    light_count: u32,    // 32
+    zero36: u32,         // 36
+    unk40: f32,          // 40
+    unk44: f32,          // 44
+    zero48: u32,         // 48
+    polygons_ptr: Ptr,   // 52
+    vertices_ptr: Ptr,   // 56
+    normals_ptr: Ptr,    // 60
+    lights_ptr: Ptr,     // 64
+    morphs_ptr: Ptr,     // 68
+    unk72: f32,          // 72
+    unk76: f32,          // 76
+    unk80: f32,          // 80
+    unk84: f32,          // 84
+    zero88: u32,         // 88
+    material_count: u32, // 92
+    materials_ptr: Ptr,  // 96
 }
 static_assert_size!(MeshNgC, 100);
 pub const MESH_C_SIZE: u32 = MeshNgC::SIZE;
@@ -67,8 +67,8 @@ impl MeshNgC {
         unk80: 0.0,
         unk84: 0.0,
         zero88: 0,
-        texture_count: 0,
-        texture_ptr: Ptr::NULL,
+        material_count: 0,
+        materials_ptr: Ptr::NULL,
     };
 }
 
@@ -79,7 +79,7 @@ struct PolygonNgC {
     unk04: i32,            // 04
     vertices_ptr: Ptr,     // 08
     normals_ptr: Ptr,      // 12
-    texture_count: u32,    // 16
+    mat_count: u32,        // 16
     uvs_ptr: Ptr,          // 20
     colors_ptr: Ptr,       // 24
     unk28: Ptr,            // 28
@@ -135,24 +135,33 @@ pub struct WrappedMeshNg {
     pub normal_count: u32,
     pub morph_count: u32,
     pub light_count: u32,
-    pub texture_count: u32,
+    pub material_count: u32,
 }
 
-fn read_mesh_texture_info(
+fn read_mesh_material_infos(
     read: &mut CountingReader<impl Read>,
-    texture_count: u32,
-) -> Result<Vec<MeshTexture>> {
-    (0..texture_count)
-        .map(|_| Ok(read.read_struct()?))
+    info_count: u32,
+    material_count: u32,
+) -> Result<Vec<MeshMaterialInfo>> {
+    (0..info_count)
+        .map(|_| {
+            let tex: MeshMaterialInfo = read.read_struct()?;
+            assert_that!(
+                "material index",
+                tex.material_index < material_count,
+                read.prev
+            )?;
+            Ok(tex)
+        })
         .collect()
 }
 
-fn write_mesh_texture_info(
+fn write_mesh_material_infos(
     write: &mut CountingWriter<impl Write>,
-    textures: &[MeshTexture],
+    material_infos: &[MeshMaterialInfo],
 ) -> Result<()> {
-    for texture in textures {
-        write.write_struct(texture)?;
+    for mi in material_infos {
+        write.write_struct(mi)?;
     }
     Ok(())
 }
@@ -239,10 +248,10 @@ fn assert_mesh_info(mesh: MeshNgC, offset: u32) -> Result<WrappedMeshNg> {
         assert_that!("morphs ptr", mesh.morphs_ptr != Ptr::NULL, offset + 68)?;
     }
 
-    if mesh.texture_count == 0 {
-        assert_that!("unk ptr", mesh.texture_ptr == Ptr::NULL, offset + 96)?;
+    if mesh.material_count == 0 {
+        assert_that!("unk ptr", mesh.materials_ptr == Ptr::NULL, offset + 96)?;
     } else {
-        assert_that!("unk ptr", mesh.texture_ptr != Ptr::NULL, offset + 96)?;
+        assert_that!("unk ptr", mesh.materials_ptr != Ptr::NULL, offset + 96)?;
     }
 
     let m = MeshNg {
@@ -251,13 +260,13 @@ fn assert_mesh_info(mesh: MeshNgC, offset: u32) -> Result<WrappedMeshNg> {
         morphs: vec![],
         lights: vec![],
         polygons: vec![],
-        textures: vec![],
+        material_infos: vec![],
         polygons_ptr: mesh.polygons_ptr.0,
         vertices_ptr: mesh.vertices_ptr.0,
         normals_ptr: mesh.normals_ptr.0,
         lights_ptr: mesh.lights_ptr.0,
         morphs_ptr: mesh.morphs_ptr.0,
-        texture_ptr: mesh.texture_ptr.0,
+        materials_ptr: mesh.materials_ptr.0,
         file_ptr,
         unk04: mesh.unk04,
         unk08: mesh.unk08,
@@ -277,7 +286,7 @@ fn assert_mesh_info(mesh: MeshNgC, offset: u32) -> Result<WrappedMeshNg> {
         normal_count: mesh.normal_count,
         morph_count: mesh.morph_count,
         light_count: mesh.light_count,
-        texture_count: mesh.texture_count,
+        material_count: mesh.material_count,
     })
 }
 
@@ -321,7 +330,7 @@ fn assert_polygon(
     } else {
         assert_that!("normals ptr", poly.normals_ptr == Ptr::NULL, offset + 12)?;
     };
-    assert_that!("texture count", poly.texture_count > 0, offset + 16)?;
+    assert_that!("material count", poly.mat_count > 0, offset + 16)?;
     // always has UVs
     assert_that!("uvs ptr", poly.uvs_ptr != Ptr::NULL, offset + 20)?;
     // always has colors
@@ -336,7 +345,7 @@ fn assert_polygon(
         vertex_indices: vec![],
         vertex_colors: vec![],
         normal_indices: None,
-        textures: vec![],
+        materials: vec![],
 
         unk04: poly.unk04,
         vertices_ptr: poly.vertices_ptr.0,
@@ -352,7 +361,7 @@ fn assert_polygon(
         poly_index,
         verts_in_poly,
         has_normals,
-        poly.texture_count,
+        poly.mat_count,
         polygon,
     ))
 }
@@ -360,6 +369,7 @@ fn assert_polygon(
 fn read_polygons(
     read: &mut CountingReader<impl Read>,
     count: u32,
+    material_count: u32,
     mesh_index: i32,
 ) -> Result<Vec<PolygonNg>> {
     (0..count)
@@ -380,7 +390,7 @@ fn read_polygons(
         .collect::<Result<Vec<_>>>()?
         .into_iter()
         .map(
-            |(poly_index, verts_in_poly, has_normals, texture_count, mut polygon)| {
+            |(poly_index, verts_in_poly, has_normals, mat_count, mut polygon)| {
                 debug!(
                     "Reading polygon data {}:{} (ng) at {}",
                     mesh_index, poly_index, read.offset
@@ -398,24 +408,28 @@ fn read_polygons(
                     polygon.normal_indices = Some(read_u32s(read, verts_in_poly)?);
                 }
                 debug!(
-                    "Reading texture indices (count: {}) at {}",
-                    texture_count, read.offset
+                    "Reading material indices (count: {}) at {}",
+                    mat_count, read.offset
                 );
-                let texture_indices = (0..texture_count)
-                    .map(|_index| Ok(read.read_u32()?))
+                let mat_indices = (0..mat_count)
+                    .map(|_index| {
+                        let mat_index = read.read_u32()?;
+                        assert_that!("material index", mat_index < material_count, read.prev)?;
+                        Ok(mat_index)
+                    })
                     .collect::<Result<Vec<_>>>()?;
 
-                polygon.textures = texture_indices
+                polygon.materials = mat_indices
                     .into_iter()
                     .enumerate()
-                    .map(|(index, texture_index)| {
+                    .map(|(index, material_index)| {
                         debug!(
                             "Reading UV coords {} (verts: {}) at {}",
                             index, verts_in_poly, read.offset
                         );
                         let uv_coords = read_uvs(read, verts_in_poly)?;
-                        Ok(PolygonTextureNg {
-                            texture_index,
+                        Ok(PolygonMaterialNg {
+                            material_index,
                             uv_coords,
                         })
                     })
@@ -435,6 +449,7 @@ fn read_polygons(
 pub fn read_mesh_data(
     read: &mut CountingReader<impl Read>,
     wrapped: WrappedMeshNg,
+    material_count: u32,
     mesh_index: i32,
 ) -> Result<MeshNg> {
     debug!("Reading mesh data {} (ng) at {}", mesh_index, read.offset);
@@ -467,13 +482,13 @@ pub fn read_mesh_data(
         "Reading {} x polygons (ng) at {}",
         wrapped.polygon_count, read.offset
     );
-    mesh.polygons = read_polygons(read, wrapped.polygon_count, mesh_index)?;
+    mesh.polygons = read_polygons(read, wrapped.polygon_count, material_count, mesh_index)?;
     trace!(
-        "Reading {} x mesh texture info (ng) at {}",
-        wrapped.texture_count,
+        "Reading {} x mesh material infos (ng) at {}",
+        wrapped.material_count,
         read.offset
     );
-    mesh.textures = read_mesh_texture_info(read, wrapped.texture_count)?;
+    mesh.material_infos = read_mesh_material_infos(read, wrapped.material_count, material_count)?;
     trace!("Finished mesh data {} (ng) at {}", mesh_index, read.offset);
     Ok(mesh)
 }
@@ -494,7 +509,7 @@ pub fn write_mesh_info(
     let normal_count = assert_len!(u32, mesh.normals.len(), "mesh normals")?;
     let morph_count = assert_len!(u32, mesh.morphs.len(), "mesh morphs")?;
     let light_count = assert_len!(u32, mesh.lights.len(), "mesh lights")?;
-    let texture_count = assert_len!(u32, mesh.textures.len(), "mesh textures")?;
+    let material_count = assert_len!(u32, mesh.material_infos.len(), "mesh materials")?;
     let mesh = MeshNgC {
         file_ptr: bool_c!(mesh.file_ptr),
         unk04: mesh.unk04,
@@ -519,8 +534,8 @@ pub fn write_mesh_info(
         unk80: mesh.unk80,
         unk84: mesh.unk84,
         zero88: 0,
-        texture_count,
-        texture_ptr: Ptr(mesh.texture_ptr),
+        material_count,
+        materials_ptr: Ptr(mesh.materials_ptr),
     };
     trace!("{:#?}", mesh);
     write.write_struct(&mesh)?;
@@ -540,7 +555,7 @@ fn write_polygons(
             PolygonNgC::SIZE,
             write.offset
         );
-        let texture_count = assert_len!(u32, polygon.textures.len(), "polygon texture count")?;
+        let mat_count = assert_len!(u32, polygon.materials.len(), "polygon materials count")?;
         let vertex_indices_len =
             assert_len!(u32, polygon.vertex_indices.len(), "polygon vertex indices")?;
         let mut flags: PolygonBitFlags = (&polygon.flags).into();
@@ -553,7 +568,7 @@ fn write_polygons(
             unk04: polygon.unk04,
             vertices_ptr: Ptr(polygon.vertices_ptr),
             normals_ptr: Ptr(polygon.normals_ptr),
-            texture_count,
+            mat_count,
             uvs_ptr: Ptr(polygon.uvs_ptr),
             colors_ptr: Ptr(polygon.colors_ptr),
             unk28: Ptr(polygon.unk28),
@@ -579,21 +594,21 @@ fn write_polygons(
             write_u32s(write, normal_indices)?;
         }
         debug!(
-            "Writing texture indices (count: {}) at {}",
-            polygon.textures.len(),
+            "Writing material indices (count: {}) at {}",
+            polygon.materials.len(),
             write.offset
         );
-        for texture_info in polygon.textures.iter() {
-            write.write_u32(texture_info.texture_index)?;
+        for material in polygon.materials.iter() {
+            write.write_u32(material.material_index)?;
         }
-        for (index, texture_info) in polygon.textures.iter().enumerate() {
+        for (index, material) in polygon.materials.iter().enumerate() {
             debug!(
                 "Writing UV coords {} (verts: {}) at {}",
                 index,
-                texture_info.uv_coords.len(),
+                material.uv_coords.len(),
                 write.offset
             );
-            write_uvs(write, &texture_info.uv_coords)?;
+            write_uvs(write, &material.uv_coords)?;
         }
         debug!(
             "Writing vertex colors (verts: {}) at {}",
@@ -634,11 +649,11 @@ pub fn write_mesh_data(
     );
     write_polygons(write, &mesh.polygons, mesh_index)?;
     trace!(
-        "Writing {} x unknown (ng) at {}",
-        mesh.textures.len(),
+        "Writing {} x mesh material infos (ng) at {}",
+        mesh.material_infos.len(),
         write.offset
     );
-    write_mesh_texture_info(write, &mesh.textures)?;
+    write_mesh_material_infos(write, &mesh.material_infos)?;
     trace!("Finished mesh data {} (ng) at {}", mesh_index, write.offset);
     Ok(())
 }
@@ -678,8 +693,12 @@ fn assert_mesh_info_zero(mesh: MeshNgC, offset: u32) -> Result<()> {
     assert_that!("unk80", mesh.unk80 == 0.0, offset + 80)?;
     assert_that!("unk84", mesh.unk84 == 0.0, offset + 84)?;
     assert_that!("zero88", mesh.zero88 == 0, offset + 88)?;
-    assert_that!("texture_count", mesh.texture_count == 0, offset + 92)?;
-    assert_that!("texture_ptr", mesh.texture_ptr == Ptr::NULL, offset + 96)?;
+    assert_that!("material_count", mesh.material_count == 0, offset + 92)?;
+    assert_that!(
+        "materials_ptr",
+        mesh.materials_ptr == Ptr::NULL,
+        offset + 96
+    )?;
     Ok(())
 }
 
@@ -713,10 +732,10 @@ pub fn size_mesh(mesh: &MeshNg) -> u32 {
             + U32_SIZE * polygon.vertex_indices.len() as u32
             + U32_SIZE * normal_indices_len
             + Color::SIZE * polygon.vertex_colors.len() as u32;
-        for texture in &polygon.textures {
-            size += U32_SIZE + UvCoord::SIZE * texture.uv_coords.len() as u32;
+        for material in &polygon.materials {
+            size += U32_SIZE + UvCoord::SIZE * material.uv_coords.len() as u32;
         }
     }
-    size += MeshTexture::SIZE * mesh.textures.len() as u32;
+    size += MeshMaterialInfo::SIZE * mesh.material_infos.len() as u32;
     size
 }

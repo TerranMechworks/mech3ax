@@ -13,6 +13,7 @@ use std::io::{Read, Write};
 pub fn read_meshes(
     read: &mut CountingReader<impl Read>,
     end_offset: u32,
+    material_count: u32,
 ) -> Result<(Vec<MeshNg>, i32)> {
     let mesh_indices = read_meshes_info_sequential(read)?;
 
@@ -38,7 +39,7 @@ pub fn read_meshes(
         .into_iter()
         .map(|(wrapped_mesh, mesh_offset, mesh_index)| {
             assert_that!("mesh offset", read.offset == mesh_offset, read.offset)?;
-            let mesh = read_mesh_data(read, wrapped_mesh, mesh_index)?;
+            let mesh = read_mesh_data(read, wrapped_mesh, material_count, mesh_index)?;
             Ok(mesh)
         })
         .collect::<Result<Vec<_>>>()?;

@@ -193,6 +193,7 @@ where `--rtexture` and `--rmechtex` are optional.
 * Support Recoil GameZ nodes (`lib`/`unzbd`/`rezbd`, breaking change)
 * Support Pirate's Moon GameZ nodes (`lib`/`unzbd`/`rezbd`, breaking change)
 * Support Crimson Skies GameZ nodes (`lib`/`unzbd`/`rezbd`, breaking change)
+* Validate material indices, which renamed "texture index" to the more accurate "material index" (breaking change)
 
 ### [0.6.0-rc2] - 2022-11-29
 

@@ -10,7 +10,7 @@ use std::io::Read;
 pub fn read_materials(
     read: &mut CountingReader<impl Read>,
     textures: &[String],
-) -> Result<(Vec<Material>, i16)> {
+) -> Result<(Vec<Material>, i16, u32)> {
     debug!(
         "Reading material info header ({}) at {}",
         MaterialInfoC::SIZE,
@@ -19,7 +19,7 @@ pub fn read_materials(
     let info: MaterialInfoC = read.read_struct()?;
     trace!("{:#?}", info);
 
-    let (array_size, count) = assert_material_info(info, read.prev)?;
+    let (array_size, count, material_count) = assert_material_info(info, read.prev)?;
 
     // read materials without cycle data
     let materials = (0..count)
@@ -54,7 +54,7 @@ pub fn read_materials(
         .map(|(index, material)| read_cycle(read, material, textures, index))
         .collect::<Result<Vec<_>>>()?;
 
-    Ok((materials, array_size))
+    Ok((materials, array_size, material_count))
 }
 
 pub fn read_materials_zero(
