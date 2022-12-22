@@ -85,14 +85,14 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZRcData> {
         read.offset == header.meshes_offset,
         read.offset
     )?;
-    let meshes = meshes::read_meshes(read, header.nodes_offset, material_count)?;
+    let (meshes, meshes_count) = meshes::read_meshes(read, header.nodes_offset, material_count)?;
     assert_that!(
         "nodes offset",
         read.offset == header.nodes_offset,
         read.offset
     )?;
     debug!("Reading {} nodes at {}", header.node_count, read.offset);
-    let nodes = nodes::read_nodes(read, header.node_count)?;
+    let nodes = nodes::read_nodes(read, header.node_count, meshes_count)?;
     // `read_nodes` calls `assert_end`
 
     Ok(GameZRcData {

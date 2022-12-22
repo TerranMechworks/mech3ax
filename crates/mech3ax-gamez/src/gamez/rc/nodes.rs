@@ -9,7 +9,11 @@ use mech3ax_nodes::rc::{
 };
 use std::io::{Read, Write};
 
-pub fn read_nodes(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<NodeRc>> {
+pub fn read_nodes(
+    read: &mut CountingReader<impl Read>,
+    count: u32,
+    meshes_count: i32,
+) -> Result<Vec<NodeRc>> {
     let valid_offset = read.offset + NODE_RC_C_SIZE * count + 4 * count;
     let end_offset = read.offset + NODE_RC_C_SIZE * NODE_ARRAY_SIZE + 4 * NODE_ARRAY_SIZE;
     // last general node index, excluding the light index (count - 1)
@@ -48,9 +52,20 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, count: u32) -> Result<Ve
             NodeVariantRc::Light { data_ptr: _ } => {
                 assert_that!("node data position", index == count - 1, node_info_pos)?;
             }
-            NodeVariantRc::Lod(_) | NodeVariantRc::Object3d(_) => {
+            NodeVariantRc::Lod(_) => {
                 // exclude world, window, camera, display, or light indices
                 assert_that!("node data position", 4 <= index <= last_index, node_info_pos)?;
+            }
+            NodeVariantRc::Object3d(object3d) => {
+                // exclude world, window, camera, display, or light indices
+                assert_that!("node data position", 4 <= index <= last_index, node_info_pos)?;
+                if object3d.mesh_index >= 0 {
+                    assert_that!(
+                        "object3d mesh index",
+                        object3d.mesh_index < meshes_count,
+                        node_info_pos
+                    )?;
+                }
             }
         }
         variants.push((variant, node_data_offset));
