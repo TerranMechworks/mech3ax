@@ -1,5 +1,5 @@
 use super::write_single::write_material;
-use super::{MaterialC, MaterialInfoC};
+use super::{material_array_size, MaterialC, MaterialInfoC};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::{Color, ReprSize as _};
@@ -11,7 +11,6 @@ pub fn write_materials(
     write: &mut CountingWriter<impl Write>,
     textures: &[String],
     materials: &[Material],
-    array_size: i16,
 ) -> Result<()> {
     debug!(
         "Writing material info header ({}) at {}",
@@ -23,7 +22,7 @@ pub fn write_materials(
     let count = materials_len as i32;
 
     let info = MaterialInfoC {
-        array_size: array_size as i32,
+        array_size: material_array_size!(),
         count,
         index_max: count,
         // since count >= 0, no underflow possible
@@ -51,15 +50,11 @@ pub fn write_materials(
         write.write_i16(index2)?;
     }
 
-    write_materials_zero(write, materials_len, array_size)?;
+    write_materials_zero(write, materials_len)?;
     Ok(())
 }
 
-fn write_materials_zero(
-    write: &mut CountingWriter<impl Write>,
-    start: i16,
-    end: i16,
-) -> Result<()> {
+fn write_materials_zero(write: &mut CountingWriter<impl Write>, start: i16) -> Result<()> {
     let material = MaterialC {
         alpha: 0x00,
         flags: 0,
@@ -73,6 +68,7 @@ fn write_materials_zero(
         cycle_ptr: 0,
     };
 
+    let end = material_array_size!();
     for index in start..end {
         debug!(
             "Writing zero material {} ({}) at {}",

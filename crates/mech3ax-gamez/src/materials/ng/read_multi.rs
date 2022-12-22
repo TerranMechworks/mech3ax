@@ -1,5 +1,5 @@
 use super::read_single::{read_cycle, read_material, read_material_zero};
-use super::{assert_material_info, MaterialInfoC};
+use super::{assert_material_info, material_array_size, MaterialInfoC};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::ReprSize as _;
@@ -10,7 +10,7 @@ use std::io::Read;
 pub fn read_materials(
     read: &mut CountingReader<impl Read>,
     textures: &[String],
-) -> Result<(Vec<Material>, i16, u32)> {
+) -> Result<(Vec<Material>, u32)> {
     debug!(
         "Reading material info header ({}) at {}",
         MaterialInfoC::SIZE,
@@ -19,16 +19,16 @@ pub fn read_materials(
     let info: MaterialInfoC = read.read_struct()?;
     trace!("{:#?}", info);
 
-    let (array_size, count, material_count) = assert_material_info(info, read.prev)?;
+    let (valid, material_count) = assert_material_info(info, material_array_size!(), read.prev)?;
 
     // read materials without cycle data
-    let materials = (0..count)
+    let materials = (0..valid)
         .map(|index| {
-            // Cast safety: index is >= 0, and count is i16
+            // Cast safety: index is >= 0, and valid is i16
             let material = read_material(read, index as u32)?;
 
             let mut expected_index1 = index + 1;
-            if expected_index1 >= count {
+            if expected_index1 >= valid {
                 expected_index1 = -1;
             }
             let actual_index1 = read.read_i16()?;
@@ -45,7 +45,7 @@ pub fn read_materials(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    read_materials_zero(read, count, array_size)?;
+    read_materials_zero(read, valid)?;
 
     // now read cycle data
     let materials = materials
@@ -54,14 +54,11 @@ pub fn read_materials(
         .map(|(index, material)| read_cycle(read, material, textures, index))
         .collect::<Result<Vec<_>>>()?;
 
-    Ok((materials, array_size, material_count))
+    Ok((materials, material_count))
 }
 
-pub fn read_materials_zero(
-    read: &mut CountingReader<impl Read>,
-    start: i16,
-    end: i16,
-) -> Result<()> {
+pub fn read_materials_zero(read: &mut CountingReader<impl Read>, start: i16) -> Result<()> {
+    let end = material_array_size!();
     for index in start..end {
         read_material_zero(read, index)?;
 

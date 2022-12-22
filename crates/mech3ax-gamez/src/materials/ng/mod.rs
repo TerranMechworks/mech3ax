@@ -45,9 +45,16 @@ bitflags::bitflags! {
     }
 }
 
-pub fn size_materials(array_size: i16, materials: &[Material]) -> u32 {
+macro_rules! material_array_size {
+    () => {
+        1000
+    };
+}
+pub(crate) use material_array_size;
+
+pub fn size_materials(materials: &[Material]) -> u32 {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
-    let mut size = MaterialInfoC::SIZE + (MaterialC::SIZE + 2 + 2) * array_size as u32;
+    let mut size = MaterialInfoC::SIZE + (MaterialC::SIZE + 2 + 2) * material_array_size!();
     for material in materials {
         if let Material::Textured(mat) = material {
             if let Some(cycle) = &mat.cycle {

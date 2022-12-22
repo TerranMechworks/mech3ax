@@ -13,7 +13,6 @@ use mesh::{MeshMw, MeshNg, MeshRc};
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct GameZMwMetadata {
-    pub material_array_size: i16,
     pub meshes_array_size: i32,
     pub node_array_size: u32,
     pub node_data_count: u32,
@@ -31,7 +30,6 @@ pub struct GameZMwData {
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct GameZPmMetadata {
     pub gamez_header_unk08: u32,
-    pub material_array_size: i16,
     pub meshes_array_size: i32,
     pub node_data_count: u32,
     pub texture_ptrs: Vec<Option<u32>>,
@@ -49,7 +47,6 @@ pub struct GameZPmData {
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct GameZCsMetadata {
     pub gamez_header_unk08: u32,
-    pub material_array_size: i16,
     pub node_data_count: u32,
     pub texture_ptrs: Vec<Option<u32>>,
 }
@@ -65,7 +62,6 @@ pub struct GameZCsData {
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct GameZRcMetadata {
-    pub material_array_size: i16,
     pub meshes_array_size: i32,
     pub node_data_count: u32,
 }

@@ -1,5 +1,7 @@
 use super::write_single::{write_cycle, write_material};
-use super::{find_texture_index_by_name, MaterialC, MaterialFlags, MaterialInfoC};
+use super::{
+    find_texture_index_by_name, material_array_size, MaterialC, MaterialFlags, MaterialInfoC,
+};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::{Color, ReprSize as _};
@@ -11,7 +13,6 @@ pub fn write_materials(
     write: &mut CountingWriter<impl Write>,
     textures: &[String],
     materials: &[Material],
-    array_size: i16,
 ) -> Result<()> {
     debug!(
         "Writing material info header ({}) at {}",
@@ -23,7 +24,7 @@ pub fn write_materials(
     let count = materials_len as i32;
 
     let info = MaterialInfoC {
-        array_size: array_size as i32,
+        array_size: material_array_size!(),
         count,
         index_max: count,
         index_last: count - 1,
@@ -64,7 +65,7 @@ pub fn write_materials(
         write.write_i16(index2)?;
     }
 
-    write_materials_zero(write, materials_len, array_size)?;
+    write_materials_zero(write, materials_len)?;
 
     for (index, material) in materials.iter().enumerate() {
         write_cycle(write, textures, material, index)?;
@@ -72,11 +73,7 @@ pub fn write_materials(
     Ok(())
 }
 
-pub fn write_materials_zero(
-    write: &mut CountingWriter<impl Write>,
-    start: i16,
-    end: i16,
-) -> Result<()> {
+pub fn write_materials_zero(write: &mut CountingWriter<impl Write>, start: i16) -> Result<()> {
     let material = MaterialC {
         alpha: 0,
         flags: MaterialFlags::FREE.bits(),
@@ -90,6 +87,7 @@ pub fn write_materials_zero(
         cycle_ptr: 0,
     };
 
+    let end = material_array_size!();
     for index in start..end {
         debug!(
             "Writing zero material {} ({}) at {}",

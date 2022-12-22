@@ -75,8 +75,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         read.offset == header.materials_offset,
         read.offset
     )?;
-    let (materials, material_array_size, material_count) =
-        materials::read_materials(read, &textures)?;
+    let (materials, material_count) = materials::read_materials(read, &textures)?;
     assert_that!(
         "meshes offset",
         read.offset == header.meshes_offset,
@@ -98,7 +97,6 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
 
     let metadata = GameZCsMetadata {
         gamez_header_unk08: header.unk08,
-        material_array_size,
         node_data_count: header.node_count,
         texture_ptrs,
     };
@@ -113,13 +111,11 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
 
 pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) -> Result<()> {
     let texture_count = assert_len!(u32, gamez.textures.len(), "GameZ textures")?;
-    let material_array_size = gamez.metadata.material_array_size;
     let node_array_size = assert_len!(u32, gamez.nodes.len(), "GameZ nodes")?;
 
     let textures_offset = HeaderCsC::SIZE;
     let materials_offset = textures_offset + textures::size_texture_infos(texture_count);
-    let meshes_offset =
-        materials_offset + materials::size_materials(material_array_size, &gamez.materials);
+    let meshes_offset = materials_offset + materials::size_materials(&gamez.materials);
     let (nodes_offset, meshes) = meshes::size_meshes(meshes_offset, &gamez.meshes);
 
     debug!(
@@ -144,12 +140,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) 
     write.write_struct(&header)?;
 
     textures::write_texture_infos(write, &gamez.textures, &gamez.metadata.texture_ptrs)?;
-    materials::write_materials(
-        write,
-        &gamez.textures,
-        &gamez.materials,
-        material_array_size,
-    )?;
+    materials::write_materials(write, &gamez.textures, &gamez.materials)?;
     meshes::write_meshes(write, meshes, fixup)?;
     nodes::write_nodes(write, &gamez.nodes)?;
     Ok(())

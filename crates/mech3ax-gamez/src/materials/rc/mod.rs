@@ -12,9 +12,16 @@ bitflags::bitflags! {
     }
 }
 
-pub fn size_materials(array_size: i16) -> u32 {
+macro_rules! material_array_size {
+    () => {
+        5000
+    };
+}
+pub(crate) use material_array_size;
+
+pub fn size_materials() -> u32 {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
-    MaterialInfoC::SIZE + (MaterialC::SIZE + 2 + 2) * array_size as u32
+    MaterialInfoC::SIZE + (MaterialC::SIZE + 2 + 2) * material_array_size!()
 }
 
 pub use read_multi::read_materials;

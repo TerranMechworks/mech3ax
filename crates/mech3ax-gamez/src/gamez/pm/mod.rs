@@ -72,8 +72,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZPmData> {
         read.offset == header.materials_offset,
         read.offset
     )?;
-    let (materials, material_array_size, material_count) =
-        materials::read_materials(read, &textures)?;
+    let (materials, material_count) = materials::read_materials(read, &textures)?;
     assert_that!(
         "meshes offset",
         read.offset == header.meshes_offset,
@@ -94,7 +93,6 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZPmData> {
 
     let metadata = GameZPmMetadata {
         gamez_header_unk08: header.unk08,
-        material_array_size,
         meshes_array_size: mesh_array_size,
         node_data_count: header.node_count,
         texture_ptrs,
@@ -110,13 +108,11 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZPmData> {
 
 pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZPmData) -> Result<()> {
     let texture_count = gamez.textures.len() as u32;
-    let material_array_size = gamez.metadata.material_array_size;
     let meshes_array_size = gamez.metadata.meshes_array_size;
 
     let textures_offset = HeaderPmC::SIZE;
     let materials_offset = textures_offset + textures::size_texture_infos(texture_count);
-    let meshes_offset =
-        materials_offset + materials::size_materials(material_array_size, &gamez.materials);
+    let meshes_offset = materials_offset + materials::size_materials(&gamez.materials);
     let (nodes_offset, mesh_offsets) =
         meshes::size_meshes(meshes_offset, meshes_array_size, &gamez.meshes);
 
@@ -143,12 +139,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZPmData) 
     write.write_struct(&header)?;
 
     textures::write_texture_infos(write, &gamez.textures, &gamez.metadata.texture_ptrs)?;
-    materials::write_materials(
-        write,
-        &gamez.textures,
-        &gamez.materials,
-        material_array_size,
-    )?;
+    materials::write_materials(write, &gamez.textures, &gamez.materials)?;
     meshes::write_meshes(write, &gamez.meshes, &mesh_offsets, meshes_array_size)?;
     debug!(
         "Writing {}/{} nodes at {}",
