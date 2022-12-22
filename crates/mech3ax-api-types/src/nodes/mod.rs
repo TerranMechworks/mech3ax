@@ -85,13 +85,31 @@ pub struct Transformation {
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct Partition {
+pub struct PartitionPg {
     pub x: i32,
     pub y: i32,
     pub z_min: f32,
     pub z_max: f32,
-    pub z_mid: f32,
     pub nodes: Vec<u32>,
+    pub ptr: u32,
+}
+
+#[derive(Debug, Serialize, Deserialize, RefStruct, Clone, PartialEq)]
+#[repr(C)]
+pub struct PartitionValue {
+    pub index: u32,
+    pub z_min: f32,
+    pub z_max: f32,
+}
+static_assert_size!(PartitionValue, 12);
+
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
+pub struct PartitionNg {
+    pub x: i32,
+    pub y: i32,
+    pub z_min: f32,
+    pub z_max: f32,
+    pub nodes: Vec<PartitionValue>,
     pub ptr: u32,
 }
 

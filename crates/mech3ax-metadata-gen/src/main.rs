@@ -65,7 +65,7 @@ fn main() {
     resolver.push::<api::nodes::Area>();
     resolver.push::<api::nodes::BoundingBox>();
     resolver.push::<api::nodes::Transformation>();
-    resolver.push::<api::nodes::Partition>();
+    resolver.push::<api::nodes::PartitionPg>();
     resolver.push::<api::nodes::NodeFlags>();
 
     resolver.push::<api::nodes::Camera>();

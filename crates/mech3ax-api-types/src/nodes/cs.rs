@@ -1,28 +1,8 @@
 use super::pm::AreaPartitionPm;
-use super::{Area, BoundingBox, Display, Transformation};
-use crate::static_assert_size;
+use super::{Area, BoundingBox, Display, PartitionNg, Transformation};
 use crate::types::Range;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, Union};
-
-#[derive(Debug, Serialize, Deserialize, RefStruct, Clone, PartialEq)]
-#[repr(C)]
-pub struct PartitionValueCs {
-    pub index: u32,
-    pub z_min: f32,
-    pub z_max: f32,
-}
-static_assert_size!(PartitionValueCs, 12);
-
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct PartitionCs {
-    pub x: i32,
-    pub y: i32,
-    pub z_min: f32,
-    pub z_max: f32,
-    pub nodes: Vec<PartitionValueCs>,
-    pub ptr: u32,
-}
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct Camera {
@@ -98,7 +78,7 @@ pub struct Window {
 pub struct World {
     pub name: String,
     pub area: Area,
-    pub partitions: Vec<Vec<PartitionCs>>,
+    pub partitions: Vec<Vec<PartitionNg>>,
     pub flags: bool,
     pub area_partition_count: u32,
     pub area_partition_ptr: u32,

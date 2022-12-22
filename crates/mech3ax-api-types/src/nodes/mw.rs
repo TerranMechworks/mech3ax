@@ -1,5 +1,6 @@
 use super::{
-    Area, AreaPartition, BoundingBox, Camera, Display, NodeFlags, Partition, Transformation, Window,
+    Area, AreaPartition, BoundingBox, Camera, Display, NodeFlags, PartitionPg, Transformation,
+    Window,
 };
 use crate::types::{Color, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
@@ -74,7 +75,7 @@ pub struct Object3d {
 pub struct World {
     pub name: String,
     pub area: Area,
-    pub partitions: Vec<Vec<Partition>>,
+    pub partitions: Vec<Vec<PartitionPg>>,
     pub area_partition_x_count: u32,
     pub area_partition_y_count: u32,
     pub fudge_count: bool,

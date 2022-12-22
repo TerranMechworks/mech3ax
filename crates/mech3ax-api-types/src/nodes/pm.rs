@@ -1,4 +1,4 @@
-use super::{Area, BoundingBox, Camera, Display, NodeFlags, Transformation, Window};
+use super::{Area, BoundingBox, Camera, Display, NodeFlags, PartitionNg, Transformation, Window};
 use crate::static_assert_size;
 use crate::types::Range;
 use ::serde::{Deserialize, Serialize};
@@ -27,25 +27,6 @@ impl AreaPartitionPm {
         virtual_x: 0,
         virtual_y: 0,
     };
-}
-
-#[derive(Debug, Serialize, Deserialize, RefStruct, Clone, PartialEq)]
-#[repr(C)]
-pub struct PartitionValuePm {
-    pub index: u32,
-    pub z_min: f32,
-    pub z_max: f32,
-}
-static_assert_size!(PartitionValuePm, 12);
-
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct PartitionPm {
-    pub x: i32,
-    pub y: i32,
-    pub z_min: f32,
-    pub z_max: f32,
-    pub nodes: Vec<PartitionValuePm>,
-    pub ptr: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
@@ -104,7 +85,7 @@ pub struct Object3d {
 pub struct World {
     pub name: String,
     pub area: Area,
-    pub partitions: Vec<Vec<PartitionPm>>,
+    pub partitions: Vec<Vec<PartitionNg>>,
     pub virtual_partition: bool,
     pub area_partition_count: u32,
     pub area_partition_ptr: u32,

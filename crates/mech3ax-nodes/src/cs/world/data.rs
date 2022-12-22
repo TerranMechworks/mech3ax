@@ -2,8 +2,8 @@ use super::info::WORLD_NAME;
 use crate::math::partition_diag;
 use crate::range::RangeI32;
 use log::{debug, trace};
-use mech3ax_api_types::nodes::cs::{PartitionCs, PartitionValueCs, World};
-use mech3ax_api_types::nodes::Area;
+use mech3ax_api_types::nodes::cs::World;
+use mech3ax_api_types::nodes::{Area, PartitionNg, PartitionValue};
 use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, bool_c, Result};
@@ -93,7 +93,7 @@ static_assert_size!(PartitionCsC, 88);
 
 const FOG_STATE_LINEAR: u32 = 1;
 
-fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Result<PartitionCs> {
+fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Result<PartitionNg> {
     debug!(
         "Reading world partition data x: {}, y: {} (cs, {}) at {}",
         x,
@@ -119,7 +119,7 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
     assert_that!("partition y", partition.part_y == yf, read.prev + 12)?;
 
     assert_that!("partition x min", partition.x_min == xf, read.prev + 16)?;
-    // z min
+    // nothing to compare z_min against
     assert_that!(
         "partition y min",
         partition.y_min == yf - 1024.0,
@@ -130,14 +130,13 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
         partition.x_max == xf + 1024.0,
         read.prev + 28
     )?;
-    // z max
+    // nothing to compare z_max against
     assert_that!("partition y max", partition.y_max == yf, read.prev + 36)?;
     assert_that!(
         "partition x mid",
         partition.x_mid == xf + 512.0,
         read.prev + 40
     )?;
-    // z mid
     let z_mid = (partition.z_max + partition.z_min) * 0.5;
     assert_that!("partition z_mid", partition.z_mid == z_mid, read.prev + 44)?;
 
@@ -182,10 +181,10 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
                 trace!("{:#?}", value);
                 Ok(value)
             })
-            .collect::<std::io::Result<Vec<PartitionValueCs>>>()?
+            .collect::<std::io::Result<Vec<PartitionValue>>>()?
     };
 
-    Ok(PartitionCs {
+    Ok(PartitionNg {
         x,
         y,
         z_min: partition.z_min,
@@ -199,7 +198,7 @@ fn read_partitions(
     read: &mut CountingReader<impl Read>,
     area_x: RangeI32,
     area_y: RangeI32,
-) -> Result<Vec<Vec<PartitionCs>>> {
+) -> Result<Vec<Vec<PartitionNg>>> {
     area_y
         .map(|y| {
             area_x
@@ -470,7 +469,7 @@ pub fn read(
     })
 }
 
-fn write_partition(write: &mut CountingWriter<impl Write>, partition: &PartitionCs) -> Result<()> {
+fn write_partition(write: &mut CountingWriter<impl Write>, partition: &PartitionNg) -> Result<()> {
     debug!(
         "Writing world partition data x: {}, y: {} (cs, {}) at {}",
         partition.x,
@@ -530,7 +529,7 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
 
 fn write_partitions(
     write: &mut CountingWriter<impl Write>,
-    partitions: &[Vec<PartitionCs>],
+    partitions: &[Vec<PartitionNg>],
 ) -> Result<()> {
     for sub_partitions in partitions {
         for partition in sub_partitions {

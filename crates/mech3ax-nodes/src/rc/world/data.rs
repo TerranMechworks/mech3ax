@@ -3,7 +3,7 @@ use crate::math::partition_diag;
 use crate::range::RangeI32;
 use log::{debug, trace};
 use mech3ax_api_types::nodes::rc::World;
-use mech3ax_api_types::nodes::{Area, Partition};
+use mech3ax_api_types::nodes::{Area, PartitionPg};
 use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
@@ -79,7 +79,7 @@ static_assert_size!(PartitionRcC, 64);
 
 const FOG_STATE_LINEAR: u32 = 1;
 
-fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Result<Partition> {
+fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Result<PartitionPg> {
     debug!(
         "Reading world partition data x: {}, y: {} (rc, {}) at {}",
         x,
@@ -105,7 +105,7 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
     assert_that!("partition y", partition.part_y == yf, read.prev + 12)?;
 
     assert_that!("partition x min", partition.x_min == xf, read.prev + 16)?;
-    // z min
+    // nothing to compare z_min against
     assert_that!(
         "partition y min",
         partition.y_min == yf - 256.0,
@@ -116,19 +116,15 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
         partition.x_max == xf + 256.0,
         read.prev + 28
     )?;
-    // z max
+    // nothing to compare z_max against
     assert_that!("partition y max", partition.y_max == yf, read.prev + 36)?;
     assert_that!(
         "partition x mid",
         partition.x_mid == xf + 128.0,
         read.prev + 40
     )?;
-    // z mid:
-    // this should be (z_max + z_min) * 0.5, but for a small number of partitions,
-    // maybe due to floating point errors in the original calculation, this doesn't
-    // work (lower mantissa bits don't match in 0.9% of the cases).
-    // let z_mid = (partition.z_max + partition.z_min) * 0.5;
-    // assert_that!("partition z_mid", partition.z_mid == z_mid, read.prev + 44)?;
+    let z_mid = (partition.z_max + partition.z_min) * 0.5;
+    assert_that!("partition z_mid", partition.z_mid == z_mid, read.prev + 44)?;
     assert_that!(
         "partition y mid",
         partition.y_mid == yf - 128.0,
@@ -155,12 +151,11 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
             .collect::<std::io::Result<Vec<_>>>()?
     };
 
-    Ok(Partition {
+    Ok(PartitionPg {
         x,
         y,
         z_min: partition.z_min,
         z_max: partition.z_max,
-        z_mid: partition.z_mid,
         nodes,
         ptr: partition.ptr,
     })
@@ -170,7 +165,7 @@ fn read_partitions(
     read: &mut CountingReader<impl Read>,
     area_x: RangeI32,
     area_y: RangeI32,
-) -> Result<Vec<Vec<Partition>>> {
+) -> Result<Vec<Vec<PartitionPg>>> {
     area_y
         .map(|y| {
             area_x
@@ -397,7 +392,7 @@ pub fn read(
     })
 }
 
-fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition) -> Result<()> {
+fn write_partition(write: &mut CountingWriter<impl Write>, partition: &PartitionPg) -> Result<()> {
     debug!(
         "Writing world partition data x: {}, y: {} (rc, {}) at {}",
         partition.x,
@@ -410,6 +405,7 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
     let y = partition.y as f32;
     let diagonal = partition_diag(partition.z_min, partition.z_max, 128.0);
     let count = assert_len!(u16, partition.nodes.len(), "partition nodes")?;
+    let z_mid = (partition.z_max + partition.z_min) * 0.5;
 
     let partition_c = PartitionRcC {
         flags: 0x100,
@@ -423,7 +419,7 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
         z_max: partition.z_max,
         y_max: y,
         x_mid: x + 128.0,
-        z_mid: partition.z_mid,
+        z_mid,
         y_mid: y - 128.0,
         diagonal,
         zero56: 0,
@@ -442,7 +438,7 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
 
 fn write_partitions(
     write: &mut CountingWriter<impl Write>,
-    partitions: &[Vec<Partition>],
+    partitions: &[Vec<PartitionPg>],
 ) -> Result<()> {
     for sub_partitions in partitions {
         for partition in sub_partitions {

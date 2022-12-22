@@ -54,9 +54,11 @@ Legend:
 
 ### MechWarrior 3
 
-Various versions of the MechWarror 3 base game have been tested (including US versions 1.0/1.1/1.2/Gold Edition, German version 1.0, each with and without the 1.2 patch). If you are in possession of any other versions, especially the French versions, please get in touch! The expansion, Pirate's Moon, has limited support (see below).
+Various versions of the MechWarror 3 base game have been tested (including US versions 1.0/1.1/1.2/Gold Edition, German version 1.0, each with and without the 1.2 patch). If you are in possession of any other versions, especially the French versions, please get in touch!
 
-The conversions are binary-accurate, so converting from a `*.zbd` file and then back to a `*.zbd` file produces the same file.
+However, for simplicity, the only version guaranteed to work is v1.2.
+
+The conversions are binary-accurate. So converting from a `*.zbd` file and then back to a `*.zbd` file produces the same file.
 
 - Sound archives (`sounds*.zbd`) containing sound effects to ZIP archives of WAV files - note the background music is streamed from the CD and never installed
 - Interpreter scripts (`interp.zbd`) to a JSON file - these small, interpreted scripts drive which files the engine loads

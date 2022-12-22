@@ -1,4 +1,4 @@
-use super::{Area, AreaPartition, BoundingBox, Camera, Display, NodeFlags, Partition, Window};
+use super::{Area, AreaPartition, BoundingBox, Camera, Display, NodeFlags, PartitionPg, Window};
 use crate::types::{Color, Matrix, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, Union};
@@ -93,7 +93,7 @@ pub struct World {
     pub fog_color: Color,
     pub fog_range: Range,
     pub fog_altitude: Range,
-    pub partitions: Vec<Vec<Partition>>,
+    pub partitions: Vec<Vec<PartitionPg>>,
     pub area_partition_unk: u32,
     pub virt_partition_x_count: u32,
     pub virt_partition_y_count: u32,
