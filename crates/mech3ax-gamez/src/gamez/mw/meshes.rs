@@ -14,7 +14,7 @@ pub fn read_meshes(
     read: &mut CountingReader<impl Read>,
     end_offset: u32,
     material_count: u32,
-) -> Result<(Vec<MeshMw>, i32)> {
+) -> Result<(Vec<MeshMw>, i32, i32)> {
     let mesh_indices = read_meshes_info_sequential(read)?;
 
     let mut prev_offset = read.offset;
@@ -44,7 +44,7 @@ pub fn read_meshes(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    Ok((meshes, mesh_indices.array_size()))
+    Ok((meshes, mesh_indices.count, mesh_indices.array_size))
 }
 
 pub fn write_meshes(

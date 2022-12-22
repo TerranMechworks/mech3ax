@@ -7,7 +7,11 @@ use mech3ax_nodes::mw::{
 };
 use std::io::{Read, Write};
 
-pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Result<Vec<NodeMw>> {
+pub fn read_nodes(
+    read: &mut CountingReader<impl Read>,
+    array_size: u32,
+    meshes_count: i32,
+) -> Result<Vec<NodeMw>> {
     let end_offset = read.offset + NODE_MW_C_SIZE * array_size + 4 * array_size;
 
     let mut variants = Vec::new();
@@ -82,8 +86,18 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
                         }
                         light_node = true;
                     }
-                    _ => {
+                    NodeVariantMw::Lod(_) => {
                         assert_that!("node data position", index > 3, node_info_pos)?;
+                    }
+                    NodeVariantMw::Object3d(object3d) => {
+                        assert_that!("node data position", index > 3, node_info_pos)?;
+                        if object3d.mesh_index >= 0 {
+                            assert_that!(
+                                "object3d mesh index",
+                                object3d.mesh_index < meshes_count,
+                                node_info_pos
+                            )?;
+                        }
                     }
                 }
                 variants.push((variant, node_data_offset));
