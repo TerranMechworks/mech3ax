@@ -88,7 +88,13 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         header.node_array_size, read.offset
     );
     let is_gamez = fixup != Fixup::Planes;
-    let nodes = nodes::read_nodes(read, header.node_array_size, header.light_index, is_gamez)?;
+    let nodes = nodes::read_nodes(
+        read,
+        header.node_array_size,
+        header.light_index,
+        &meshes,
+        is_gamez,
+    )?;
     // `read_nodes` calls `assert_end`
 
     let metadata = GameZCsMetadata {

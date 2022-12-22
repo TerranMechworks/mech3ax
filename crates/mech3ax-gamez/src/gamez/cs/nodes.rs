@@ -1,4 +1,5 @@
 use log::trace;
+use mech3ax_api_types::gamez::mesh::MeshNg;
 use mech3ax_api_types::nodes::cs::*;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
@@ -11,6 +12,7 @@ pub fn read_nodes(
     read: &mut CountingReader<impl Read>,
     array_size: u32,
     light_index: u32,
+    meshes: &[Option<MeshNg>],
     is_gamez: bool,
 ) -> Result<Vec<NodeCs>> {
     let end_offset = read.offset + NODE_CS_C_SIZE * array_size + 4 * array_size;
@@ -89,10 +91,21 @@ pub fn read_nodes(
                     assert_that!("node data position", index > 5, node_info_pos)?;
                 }
             }
-            NodeVariantCs::Object3d(_) => {
+            NodeVariantCs::Object3d(object3d) => {
                 if is_gamez {
                     // can't do this for planes.zbd
                     assert_that!("node data position", index > 5, node_info_pos)?;
+                }
+                if object3d.mesh_index >= 0 {
+                    // Cast safety: >=0, usize::MAX > i32::MAX
+                    let mesh_index = object3d.mesh_index as usize;
+                    assert_that!(
+                        "object3d mesh index",
+                        mesh_index < meshes.len(),
+                        node_info_pos
+                    )?;
+                    let mesh_exists = meshes[mesh_index].is_some();
+                    assert_that!("object3d mesh index", mesh_exists == true, node_info_pos)?;
                 }
             }
         }
