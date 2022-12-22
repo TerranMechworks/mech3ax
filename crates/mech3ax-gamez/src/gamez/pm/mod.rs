@@ -78,7 +78,8 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZPmData> {
         read.offset == header.meshes_offset,
         read.offset
     )?;
-    let (meshes, mesh_array_size) = meshes::read_meshes(read, header.nodes_offset, material_count)?;
+    let (meshes, meshes_count, mesh_array_size) =
+        meshes::read_meshes(read, header.nodes_offset, material_count)?;
     assert_that!(
         "nodes offset",
         read.offset == header.nodes_offset,
@@ -88,7 +89,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZPmData> {
         "Reading {} nodes at {}",
         header.node_array_size, read.offset
     );
-    let nodes = nodes::read_nodes(read, header.node_array_size)?;
+    let nodes = nodes::read_nodes(read, header.node_array_size, meshes_count)?;
     // `read_nodes` calls `assert_end`
 
     let metadata = GameZPmMetadata {

@@ -8,7 +8,11 @@ use mech3ax_nodes::pm::{
 };
 use std::io::{Read, Write};
 
-pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Result<Vec<NodePm>> {
+pub fn read_nodes(
+    read: &mut CountingReader<impl Read>,
+    array_size: u32,
+    meshes_count: i32,
+) -> Result<Vec<NodePm>> {
     let end_offset = read.offset + NODE_PM_C_SIZE * array_size + 4 * array_size;
 
     let mut variants = Vec::new();
@@ -58,8 +62,15 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, array_size: u32) -> Resu
             NodeVariantPm::Lod(_) => {
                 assert_that!("node data position", index > 3, node_info_pos)?;
             }
-            NodeVariantPm::Object3d(_) => {
+            NodeVariantPm::Object3d(object3d) => {
                 assert_that!("node data position", index > 3, node_info_pos)?;
+                if object3d.mesh_index >= 0 {
+                    assert_that!(
+                        "object3d mesh index",
+                        object3d.mesh_index < meshes_count,
+                        node_info_pos
+                    )?;
+                }
             }
         }
         variants.push((variant, node_index));

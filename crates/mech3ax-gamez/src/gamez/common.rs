@@ -54,10 +54,6 @@ impl MeshIndices {
     pub fn zeros(&self) -> MeshIndexIter {
         MeshIndexIter(self.count..self.array_size)
     }
-
-    pub fn array_size(self) -> i32 {
-        self.array_size
-    }
 }
 
 pub fn read_meshes_info_sequential(read: &mut CountingReader<impl Read>) -> Result<MeshIndices> {
