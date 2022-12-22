@@ -47,7 +47,6 @@ pub struct GameZPmData {
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct GameZCsMetadata {
     pub gamez_header_unk08: u32,
-    pub node_data_count: u32,
     pub texture_ptrs: Vec<Option<u32>>,
 }
 

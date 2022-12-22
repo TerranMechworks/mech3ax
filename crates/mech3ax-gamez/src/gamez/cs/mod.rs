@@ -8,9 +8,10 @@ use crate::materials::ng as materials;
 use crate::textures::ng as textures;
 use log::{debug, trace};
 use mech3ax_api_types::gamez::{GameZCsData, GameZCsMetadata};
+use mech3ax_api_types::nodes::cs::NodeCs;
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_len, assert_that, Result};
+use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
 use std::io::{Read, Write};
 
 #[derive(Debug, PartialEq)]
@@ -24,7 +25,7 @@ struct HeaderCsC {
     materials_offset: u32, // 20
     meshes_offset: u32,    // 24
     node_array_size: u32,  // 28
-    node_count: u32,       // 32
+    light_index: u32,      // 32
     nodes_offset: u32,     // 36
 }
 static_assert_size!(HeaderCsC, 40);
@@ -59,11 +60,6 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         header.meshes_offset < header.nodes_offset,
         read.prev + 24
     )?;
-    // assert_that!(
-    //     "node count",
-    //     header.node_count <= header.node_array_size,
-    //     read.prev + 28
-    // )?;
     assert_that!(
         "textures offset",
         read.offset == header.textures_offset,
@@ -88,16 +84,15 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZCsData> {
         read.offset
     )?;
     debug!(
-        "Reading {}/{} nodes at {}",
-        header.node_count, header.node_array_size, read.offset
+        "Reading {} nodes at {}",
+        header.node_array_size, read.offset
     );
     let is_gamez = fixup != Fixup::Planes;
-    let nodes = nodes::read_nodes(read, header.node_array_size, header.node_count, is_gamez)?;
+    let nodes = nodes::read_nodes(read, header.node_array_size, header.light_index, is_gamez)?;
     // `read_nodes` calls `assert_end`
 
     let metadata = GameZCsMetadata {
         gamez_header_unk08: header.unk08,
-        node_data_count: header.node_count,
         texture_ptrs,
     };
     Ok(GameZCsData {
@@ -118,6 +113,20 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) 
     let meshes_offset = materials_offset + materials::size_materials(&gamez.materials);
     let (nodes_offset, meshes) = meshes::size_meshes(meshes_offset, &gamez.meshes);
 
+    let is_gamez = gamez.metadata.gamez_header_unk08 != 967277477;
+    let light_index = if is_gamez {
+        gamez
+            .nodes
+            .iter()
+            .find_map(|node| match node {
+                NodeCs::Light(light) => Some(light.node_index),
+                _ => None,
+            })
+            .ok_or_else(|| assert_with_msg!("Expected a light node, but none was found"))?
+    } else {
+        2338
+    };
+
     debug!(
         "Writing gamez header (cs, {}) at {}",
         HeaderCsC::SIZE,
@@ -132,7 +141,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZCsData) 
         materials_offset,
         meshes_offset,
         node_array_size,
-        node_count: gamez.metadata.node_data_count,
+        light_index,
         nodes_offset,
     };
     let fixup = fixup::Fixup::write(&header);

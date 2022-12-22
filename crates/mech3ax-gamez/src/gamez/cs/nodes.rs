@@ -16,7 +16,7 @@ pub fn read_nodes(
     let end_offset = read.offset + NODE_CS_C_SIZE * array_size + 4 * array_size;
 
     let mut variants = Vec::new();
-    let mut light_node = false;
+    let mut light_node = None;
     for index in 0..array_size {
         let node_info_pos = read.offset;
         let variant = read_node_info(read, index)?;
@@ -69,16 +69,19 @@ pub fn read_nodes(
                 assert_that!("node index", node_index == 6, read.prev)?;
             }
             NodeVariantCs::Light { data_ptr: _ } => {
+                // we still have to assert that there was a light node, since
+                // the node index might not be unique or even present.
                 assert_that!("node index", node_index == light_index, read.prev)?;
                 assert_that!("node data position", index > 5, node_info_pos)?;
-                if light_node {
+                if let Some(i) = light_node {
                     return Err(assert_with_msg!(
-                        "Unexpected light node in position {} (at {})",
+                        "Unexpected light node in position {}, already found in {} (at {})",
                         index,
-                        node_info_pos
+                        i,
+                        node_info_pos,
                     ));
                 }
-                light_node = true;
+                light_node = Some(index);
             }
             NodeVariantCs::Lod(_) => {
                 if is_gamez {
@@ -94,6 +97,11 @@ pub fn read_nodes(
             }
         }
         variants.push((variant, node_index));
+    }
+
+    if is_gamez {
+        // can't do this for planes.zbd
+        assert_that!("has light node", light_node != None, read.offset)?;
     }
 
     assert_that!("node info end", end_offset == read.offset, read.offset)?;

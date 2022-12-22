@@ -128,7 +128,7 @@ const HEADER_C4: HeaderCsC = HeaderCsC {
     materials_offset: 28816,
     meshes_offset: 72964,
     node_array_size: 8289,
-    node_count: 8437,
+    light_index: 8437,
     nodes_offset: 5107144,
 };
 
@@ -141,7 +141,7 @@ const HEADER_PLANES: HeaderCsC = HeaderCsC {
     materials_offset: 13152,
     meshes_offset: 103388,
     node_array_size: 3317,
-    node_count: 2338,
+    light_index: 2338,
     nodes_offset: 4881228,
 };
 
