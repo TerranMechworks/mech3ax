@@ -91,7 +91,6 @@ fn main() {
     resolver.push::<api::gamez::GameZPmData>();
     resolver.push::<api::gamez::GameZCsMetadata>();
     resolver.push::<api::gamez::GameZCsData>();
-    resolver.push::<api::gamez::GameZRcMetadata>();
     resolver.push::<api::gamez::GameZRcData>();
 
     resolver.push::<api::anim::events::AtNode>();

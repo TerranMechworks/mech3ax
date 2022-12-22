@@ -60,16 +60,9 @@ pub struct GameZCsData {
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct GameZRcMetadata {
-    pub meshes_array_size: i32,
-    pub node_data_count: u32,
-}
-
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
 pub struct GameZRcData {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
     pub meshes: Vec<MeshRc>,
     pub nodes: Vec<NodeRc>,
-    pub metadata: GameZRcMetadata,
 }

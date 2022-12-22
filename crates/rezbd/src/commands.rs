@@ -8,7 +8,7 @@ use mech3ax_api_types::gamez::mechlib::{ModelMw, ModelPm};
 use mech3ax_api_types::gamez::mesh::{MeshMw, MeshNg, MeshRc};
 use mech3ax_api_types::gamez::{
     GameZCsData, GameZCsMetadata, GameZMwData, GameZMwMetadata, GameZPmData, GameZPmMetadata,
-    GameZRcData, GameZRcMetadata,
+    GameZRcData,
 };
 use mech3ax_api_types::image::TextureManifest;
 use mech3ax_api_types::interp::Script;
@@ -312,7 +312,6 @@ fn gamez_rc(opts: ZipOpts) -> Result<()> {
     let input = buf_reader(&opts.input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
 
-    let metadata: GameZRcMetadata = zip_json(&mut zip, "metadata.json")?;
     let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
     let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
     let meshes: Vec<MeshRc> = zip_json(&mut zip, "meshes.json")?;
@@ -321,7 +320,6 @@ fn gamez_rc(opts: ZipOpts) -> Result<()> {
     drop(zip);
 
     let gamez = GameZRcData {
-        metadata,
         textures,
         materials,
         meshes,

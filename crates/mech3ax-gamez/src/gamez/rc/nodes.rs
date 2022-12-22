@@ -12,6 +12,7 @@ use std::io::{Read, Write};
 pub fn read_nodes(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<NodeRc>> {
     let valid_offset = read.offset + NODE_RC_C_SIZE * count + 4 * count;
     let end_offset = read.offset + NODE_RC_C_SIZE * NODE_ARRAY_SIZE + 4 * NODE_ARRAY_SIZE;
+    // last general node index, excluding the light index (count - 1)
     let last_index = count - 2;
 
     let mut variants = Vec::new();
@@ -39,6 +40,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, count: u32) -> Result<Ve
                 assert_that!("node data position", index == 3, node_info_pos)?;
             }
             NodeVariantRc::Empty(_) => {
+                // exclude world, window, camera, display, or light indices
                 assert_that!("node data position", 4 <= index <= last_index, node_info_pos)?;
                 // cannot be parented to world, window, camera, display, or light
                 assert_that!("empty ref index", 4 <= node_data_offset <= last_index, read.prev)?;
@@ -47,6 +49,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, count: u32) -> Result<Ve
                 assert_that!("node data position", index == count - 1, node_info_pos)?;
             }
             NodeVariantRc::Lod(_) | NodeVariantRc::Object3d(_) => {
+                // exclude world, window, camera, display, or light indices
                 assert_that!("node data position", 4 <= index <= last_index, node_info_pos)?;
             }
         }

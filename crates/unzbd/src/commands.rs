@@ -315,7 +315,6 @@ fn gamez_rc(opts: ZipOpts) -> Result<()> {
     let mut zip = ZipWriter::new(output);
     let options = deflate_opts();
 
-    zip_json(&mut zip, options, "metadata.json", &gamez.metadata)?;
     zip_json(&mut zip, options, "textures.json", &gamez.textures)?;
     zip_json(&mut zip, options, "materials.json", &gamez.materials)?;
     zip_json(&mut zip, options, "meshes.json", &gamez.meshes)?;

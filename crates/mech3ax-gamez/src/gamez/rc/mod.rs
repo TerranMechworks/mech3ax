@@ -5,10 +5,10 @@ use super::common::{SIGNATURE, VERSION_RC};
 use crate::materials::rc as materials;
 use crate::textures::rc as textures;
 use log::{debug, trace};
-use mech3ax_api_types::gamez::{GameZRcData, GameZRcMetadata};
+use mech3ax_api_types::gamez::GameZRcData;
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};
 
 #[derive(Debug)]
@@ -60,6 +60,8 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZRcData> {
         header.node_array_size == NODE_ARRAY_SIZE,
         read.prev + 24
     )?;
+    // need at least world, window, camera, display, and light
+    assert_that!("node count", header.node_count > 5, read.prev + 28)?;
     assert_that!(
         "node count",
         header.node_count < header.node_array_size,
@@ -83,25 +85,17 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZRcData> {
         read.offset == header.meshes_offset,
         read.offset
     )?;
-    let (meshes, mesh_array_size) = meshes::read_meshes(read, header.nodes_offset, material_count)?;
+    let meshes = meshes::read_meshes(read, header.nodes_offset, material_count)?;
     assert_that!(
         "nodes offset",
         read.offset == header.nodes_offset,
         read.offset
     )?;
-    debug!(
-        "Reading {}/{} nodes at {}",
-        header.node_count, header.node_array_size, read.offset
-    );
+    debug!("Reading {} nodes at {}", header.node_count, read.offset);
     let nodes = nodes::read_nodes(read, header.node_count)?;
     // `read_nodes` calls `assert_end`
 
-    let metadata = GameZRcMetadata {
-        meshes_array_size: mesh_array_size,
-        node_data_count: header.node_count,
-    };
     Ok(GameZRcData {
-        metadata,
         textures,
         materials,
         meshes,
@@ -110,14 +104,13 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZRcData> {
 }
 
 pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZRcData) -> Result<()> {
-    let texture_count = gamez.textures.len() as u32;
-    let meshes_array_size = gamez.metadata.meshes_array_size;
+    let texture_count = assert_len!(u32, gamez.textures.len(), "GameZ textures")?;
+    let node_count = assert_len!(u32, gamez.nodes.len(), "GameZ nodes")?;
 
     let textures_offset = HeaderRcC::SIZE;
     let materials_offset = textures_offset + textures::size_texture_infos(texture_count);
     let meshes_offset = materials_offset + materials::size_materials();
-    let (nodes_offset, mesh_offsets) =
-        meshes::size_meshes(meshes_offset, meshes_array_size, &gamez.meshes);
+    let (nodes_offset, mesh_offsets) = meshes::size_meshes(meshes_offset, &gamez.meshes);
 
     debug!(
         "Writing gamez header (rc, {}) at {}",
@@ -132,7 +125,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZRcData) 
         materials_offset,
         meshes_offset,
         node_array_size: NODE_ARRAY_SIZE,
-        node_count: gamez.metadata.node_data_count,
+        node_count,
         nodes_offset,
     };
     trace!("{:#?}", header);
@@ -140,7 +133,8 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZRcData) 
 
     textures::write_texture_infos(write, &gamez.textures)?;
     materials::write_materials(write, &gamez.textures, &gamez.materials)?;
-    meshes::write_meshes(write, &gamez.meshes, &mesh_offsets, meshes_array_size)?;
+    meshes::write_meshes(write, &gamez.meshes, &mesh_offsets)?;
+    debug!("Writing {} nodes at {}", node_count, write.offset);
     nodes::write_nodes(write, &gamez.nodes, nodes_offset)?;
     Ok(())
 }

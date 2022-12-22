@@ -10,12 +10,19 @@ use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};
 
+const MESH_ARRAY_SIZE: i32 = 6000;
+
 pub fn read_meshes(
     read: &mut CountingReader<impl Read>,
     end_offset: u32,
     material_count: u32,
-) -> Result<(Vec<MeshRc>, i32)> {
+) -> Result<Vec<MeshRc>> {
     let mesh_indices = read_meshes_info_sequential(read)?;
+    assert_that!(
+        "meshes array size",
+        mesh_indices.array_size == MESH_ARRAY_SIZE,
+        read.offset
+    )?;
 
     let mut prev_offset = read.offset;
     let meshes = mesh_indices
@@ -44,17 +51,16 @@ pub fn read_meshes(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    Ok((meshes, mesh_indices.array_size()))
+    Ok(meshes)
 }
 
 pub fn write_meshes(
     write: &mut CountingWriter<impl Write>,
     meshes: &[MeshRc],
     offsets: &[u32],
-    array_size: i32,
 ) -> Result<()> {
     let count = assert_len!(i32, meshes.len(), "GameZ meshes")?;
-    let mesh_indices_zero = write_meshes_info_sequential(write, array_size, count)?;
+    let mesh_indices_zero = write_meshes_info_sequential(write, MESH_ARRAY_SIZE, count)?;
 
     for (mesh_index, (mesh, offset)) in meshes.iter().zip(offsets.iter().copied()).enumerate() {
         write_mesh_info(write, mesh, mesh_index)?;
@@ -75,9 +81,9 @@ pub fn write_meshes(
 
 const U32_SIZE: u32 = std::mem::size_of::<u32>() as _;
 
-pub fn size_meshes(offset: u32, array_size: i32, meshes: &[MeshRc]) -> (u32, Vec<u32>) {
+pub fn size_meshes(offset: u32, meshes: &[MeshRc]) -> (u32, Vec<u32>) {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
-    let array_size = array_size as u32;
+    let array_size = MESH_ARRAY_SIZE as u32;
     let mut offset = offset + MESHES_INFO_C_SIZE + (MESH_C_SIZE + U32_SIZE) * array_size;
     let mesh_offsets = meshes
         .iter()
