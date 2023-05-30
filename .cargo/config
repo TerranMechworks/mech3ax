@@ -2,3 +2,6 @@
 rustflags = ["-Ctarget-feature=+crt-static"]
 [target.i686-pc-windows-msvc]
 rustflags = ["-Ctarget-feature=+crt-static"]
+
+[registries.crates-io]
+protocol = "sparse"
