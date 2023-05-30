@@ -187,7 +187,9 @@ where `--rtexture` and `--rmechtex` are optional.
 
 ## Changelog
 
-### [0.6.0-rc3] - unreleased
+### [0.6.0-rc4] - Unreleased
+
+### [0.6.0-rc3] - 2023-05-30
 
 * Serialize C# enums as enums, not classes (codegen)
 * Support Recoil GameZ nodes (`lib`/`unzbd`/`rezbd`, breaking change)

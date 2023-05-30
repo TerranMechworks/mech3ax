@@ -1,7 +1,7 @@
 use mech3ax_metadata_types::DefaultHandling;
 use syn::{AttrStyle, Attribute, Error, Lit, Meta, NestedMeta, Path, Result};
 
-fn find_attr<'a, 'b>(attrs: &'a [Attribute], ident: &'b str) -> Option<&'a Attribute> {
+fn find_attr<'a>(attrs: &'a [Attribute], ident: &str) -> Option<&'a Attribute> {
     attrs
         .iter()
         .find(|attr| attr.style == AttrStyle::Outer && attr.path.is_ident(ident))
