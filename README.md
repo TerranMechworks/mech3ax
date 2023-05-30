@@ -330,6 +330,17 @@ This project uses [pre-commit](https://pre-commit.com/) to run `cargo fmt` when 
 pre-commit install
 ```
 
+## Release procedure
+
+1. Review changelog, and add the date
+1. Bump version in `crates/mech3ax-version/src/lib.rs`
+1. Commit, push, and wait for CI
+1. Create a tag of the version (e.g. `git tag v0.6.0-rc3`)
+1. Push the tag (`git push --tags`)
+1. The build will automatically create a release as a draft
+1. Add changelog items to the release notes via the GitHub web interface
+1. Publish the release via the GitHub web interface
+
 ## License
 
 Licensed under the European Union Public Licence (EUPL) 1.2 ([LICENSE](LICENSE) or https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12).
