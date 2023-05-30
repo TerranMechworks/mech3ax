@@ -85,7 +85,7 @@ fn _zarchive<F>(
 where
     F: FnMut(&mut ZipArchive<BufReader<File>>, &str, usize) -> Result<Vec<u8>>,
 {
-    let input = buf_reader(&input)?;
+    let input = buf_reader(input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
     let entries: Vec<ArchiveEntry> = zip_json(&mut zip, "manifest.json")?;
 
@@ -208,7 +208,7 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
 }
 
 pub(crate) fn textures(input: String, output: String) -> Result<()> {
-    let input = buf_reader(&input)?;
+    let input = buf_reader(input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
     let manifest: TextureManifest = zip_json(&mut zip, "manifest.json")?;
 

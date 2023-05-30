@@ -46,9 +46,11 @@ struct LightPmC {
 }
 static_assert_size!(LightPmC, 256);
 
+#[allow(clippy::approx_constant)]
+const LIGHT_UNK_000: f32 = -0.5235988;
+
 fn assert_light(light: &LightPmC, offset: u32) -> Result<()> {
-    #[allow(clippy::approx_constant)]
-    assert_that!("light field 000", light.unk000 == -0.5235988, offset + 0)?;
+    assert_that!("light field 000", light.unk000 == LIGHT_UNK_000, offset + 0)?;
     // unk004
     assert_all_zero("light field 008", offset + 8, &light.zero008.0)?;
     assert_that!("light field 136", light.unk136 == 1.0, offset + 136)?;
@@ -171,8 +173,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, light: &Light, index: usize
     let unk_combined = light.unk156 + light.unk160;
 
     let light = LightPmC {
-        #[allow(clippy::approx_constant)]
-        unk000: -0.5235988,
+        unk000: LIGHT_UNK_000,
         unk004: light.unk004,
         zero008: Zeros::new(),
         unk136: 1.0,

@@ -205,7 +205,7 @@ impl IMAGE_SECTION_HEADER {
         }
     }
 
-    pub fn get_section_bytes<'a, 'b>(&'a self, buf: &'b [u8]) -> &'b [u8] {
+    pub fn get_section_bytes<'a>(&self, buf: &'a [u8]) -> &'a [u8] {
         let start = u32_to_usize(self.pointer_to_raw_data);
         let len = u32_to_usize(self.size_of_raw_data);
         &buf[start..][..len]
