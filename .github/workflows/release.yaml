@@ -94,18 +94,18 @@ jobs:
 
     strategy:
       matrix:
-        build: [linux-gnu, macos, win-msvc]
+        build: [linux-gnu, macos-x64, win-msvc]
         include:
           - build: linux-gnu
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
 
-          - build: macos
+          - build: macos-x64
             os: macos-latest
             target: x86_64-apple-darwin
 
           - build: win-msvc
-            os: windows-2019
+            os: windows-latest
             target: x86_64-pc-windows-msvc
 
     steps:
@@ -135,7 +135,7 @@ jobs:
           cp {README.md,LICENSE,mechlib2blend.py,gamez2blend.py} "$staging/"
           # copy build artifacts and compress
           target_dir='target/${{ matrix.target }}/release'
-          if [ '${{ matrix.os }}' = 'windows-2019' ]; then
+          if [ '${{ matrix.os }}' = 'windows-latest' ]; then
             cp "$target_dir/unzbd.exe" "$target_dir/rezbd.exe" "$staging/"
             cp "$target_dir/mech3ax.dll" "$staging/$staging.dll"
             ls -1 "$staging"
@@ -156,10 +156,19 @@ jobs:
           echo "asset=$archive" >> $GITHUB_OUTPUT
         shell: bash
 
+      - name: Store release artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ steps.build.outputs.asset }}
+          path: ${{ steps.build.outputs.asset }}
+
       - name: Upload release archive
+        # use `--http1.1` to work around Windows-only issue
+        # https://github.com/actions/runner-images/issues/7329
         run: |
           curl \
             --fail \
+            --http1.1 \
             --request 'POST' \
             --url '${{ needs.create_release.outputs.upload_url }}?name=${{ steps.build.outputs.asset }}' \
             --header 'Accept: application/vnd.github+json' \
