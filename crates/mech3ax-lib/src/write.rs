@@ -10,6 +10,7 @@ use mech3ax_api_types::gamez::{GameZDataCs, GameZDataMw, GameZDataPm, GameZDataR
 use mech3ax_api_types::image::TextureManifest;
 use mech3ax_api_types::interp::Script;
 use mech3ax_api_types::motion::Motion;
+use mech3ax_api_types::zmap::MapRc;
 use mech3ax_archive::{Mode, Version};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::GameType;
@@ -117,7 +118,7 @@ pub extern "C" fn write_sounds(
     })
 }
 
-fn write_reader_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
+fn write_reader_json_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
     let value: Value = serde_json::from_slice(&data)
         .with_context(|| format!("Reader data for `{}` is invalid", name))?;
 
@@ -128,7 +129,7 @@ fn write_reader_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
 }
 
 #[no_mangle]
-pub extern "C" fn write_reader(
+pub extern "C" fn write_reader_json(
     filename: *const c_char,
     game_type_id: i32,
     entries_ptr: *const u8,
@@ -147,7 +148,7 @@ pub extern "C" fn write_reader(
             entries_ptr,
             entries_len,
             callback,
-            write_reader_transform,
+            write_reader_json_transform,
         )
     })
 }
@@ -410,5 +411,32 @@ pub extern "C" fn write_anim(
             Ok(anim_def)
         })
         .context("Failed to write Anim data")
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn write_zmap(
+    filename: *const c_char,
+    game_type_id: i32,
+    data: *const u8,
+    len: usize,
+) -> i32 {
+    err_to_c(|| {
+        let game = i32_to_game(game_type_id)?;
+        match game {
+            GameType::RC => {}
+            GameType::MW => bail!("MechWarrior 3 does not have zmap"),
+            GameType::PM => bail!("Pirate's Moon does not have zmap"),
+            GameType::CS => bail!("Crimson Skies does not have zmap"),
+        }
+
+        if data.is_null() {
+            bail!("data is null");
+        }
+        let buf = unsafe { std::slice::from_raw_parts(data, len) };
+        let map: MapRc = mech3ax_exchange::from_slice(buf).context("Failed to parse zmap data")?;
+
+        let mut write = buf_writer(filename)?;
+        mech3ax_zmap::write_map(&mut write, &map).context("Failed to write zmap data")
     })
 }

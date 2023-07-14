@@ -106,7 +106,7 @@ pub extern "C" fn read_sounds(
     })
 }
 
-fn read_reader_transform(name: &str, data: Vec<u8>, offset: u32) -> Result<Vec<u8>> {
+fn read_reader_json_transform(name: &str, data: Vec<u8>, offset: u32) -> Result<Vec<u8>> {
     let mut read = CountingReader::new(Cursor::new(data));
     // translate to absolute offset
     read.offset = offset;
@@ -117,7 +117,7 @@ fn read_reader_transform(name: &str, data: Vec<u8>, offset: u32) -> Result<Vec<u
 
 // filename returned by data callback will be .zrd!
 #[no_mangle]
-pub extern "C" fn read_reader(
+pub extern "C" fn read_reader_json(
     filename: *const c_char,
     game_type_id: i32,
     callback: NameDataCb,
@@ -128,7 +128,7 @@ pub extern "C" fn read_reader(
             GameType::MW | GameType::RC | GameType::CS => Version::One,
             GameType::PM => Version::Two(Mode::Reader),
         };
-        read_archive(version, filename, callback, read_reader_transform)
+        read_archive(version, filename, callback, read_reader_json_transform)
     })
 }
 
@@ -409,6 +409,26 @@ pub extern "C" fn read_sound_as_wav(filename: *const c_char, callback: WaveFileC
         if ret != 0 {
             bail!("callback returned {}", ret);
         }
+        Ok(())
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn read_zmap(filename: *const c_char, game_type_id: i32, callback: DataCb) -> i32 {
+    err_to_c(|| {
+        let game = i32_to_game(game_type_id)?;
+        match game {
+            GameType::RC => {}
+            GameType::MW => bail!("MechWarrior 3 does not have zmap"),
+            GameType::PM => bail!("Pirate's Moon does not have zmap"),
+            GameType::CS => bail!("Crimson Skies does not have zmap"),
+        }
+
+        let input = buf_reader(filename)?;
+        let mut read = CountingReader::new(input);
+        let map = mech3ax_zmap::read_map(&mut read).context("Failed to read zmap data")?;
+        let data = mech3ax_exchange::to_vec(&map)?;
+        callback(data.as_ptr(), data.len());
         Ok(())
     })
 }
