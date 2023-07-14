@@ -7,11 +7,12 @@ use crate::gamez::cs::fixup::Fixup;
 use crate::materials::ng as materials;
 use crate::textures::ng as textures;
 use log::{debug, trace};
-use mech3ax_api_types::gamez::{GameZDataCs, GameZMetadataCs};
+use mech3ax_api_types::gamez::{GameZDataCs, GameZMetadataCs, TextureName};
 use mech3ax_api_types::nodes::cs::NodeCs;
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
+use std::collections::HashSet;
 use std::io::{Read, Write};
 
 #[derive(Debug, PartialEq)]
@@ -29,6 +30,51 @@ struct HeaderCsC {
     nodes_offset: u32,     // 36
 }
 static_assert_size!(HeaderCsC, 40);
+
+fn rename(seen: &mut HashSet<String>, original: &str) -> String {
+    for index in 1usize.. {
+        // texture names have the `.tif` suffix
+        let (prefix, suffix) = original.rsplit_once('.').unwrap_or((original, ""));
+        let name = format!("{}{}.{}", prefix, index, suffix);
+        if seen.insert(name.clone()) {
+            return name;
+        }
+    }
+    panic!("ran out of renames");
+}
+
+fn dedupe_texture_names(original_textures: Vec<String>) -> (Vec<String>, Vec<TextureName>) {
+    let mut seen = HashSet::with_capacity(original_textures.len());
+    let mut renamed_textures = Vec::with_capacity(original_textures.len());
+    let mut textures = Vec::with_capacity(original_textures.len());
+    for original in original_textures {
+        let renamed = if seen.insert(original.clone()) {
+            renamed_textures.push(original.clone());
+            None
+        } else {
+            let renamed = rename(&mut seen, &original);
+            debug!("Renaming texture from `{}` to `{}`", original, renamed);
+            renamed_textures.push(renamed.clone());
+            Some(renamed)
+        };
+        textures.push(TextureName { original, renamed });
+    }
+    (renamed_textures, textures)
+}
+
+fn redupe_texture_names(textures: &[TextureName]) -> (Vec<String>, Vec<String>) {
+    let mut original_textures = Vec::with_capacity(textures.len());
+    let mut renamed_textures = Vec::with_capacity(textures.len());
+    for texture in textures {
+        let renamed = match &texture.renamed {
+            Some(renamed) => renamed.clone(),
+            None => texture.original.clone(),
+        };
+        original_textures.push(texture.original.clone());
+        renamed_textures.push(renamed);
+    }
+    (original_textures, renamed_textures)
+}
 
 pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataCs> {
     debug!(
@@ -65,13 +111,16 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataCs> {
         read.offset == header.textures_offset,
         read.offset
     )?;
-    let (textures, texture_ptrs) = textures::read_texture_infos(read, header.texture_count)?;
+    let (original_textures, texture_ptrs) =
+        textures::read_texture_infos(read, header.texture_count)?;
+    let (renamed_textures, textures) = dedupe_texture_names(original_textures);
+
     assert_that!(
         "materials offset",
         read.offset == header.materials_offset,
         read.offset
     )?;
-    let (materials, material_count) = materials::read_materials(read, &textures)?;
+    let (materials, material_count) = materials::read_materials(read, &renamed_textures)?;
     assert_that!(
         "meshes offset",
         read.offset == header.meshes_offset,
@@ -154,8 +203,10 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataCs) 
     trace!("{:#?}", header);
     write.write_struct(&header)?;
 
-    textures::write_texture_infos(write, &gamez.textures, &gamez.metadata.texture_ptrs)?;
-    materials::write_materials(write, &gamez.textures, &gamez.materials)?;
+    let (original_textures, renamed_textures) = redupe_texture_names(&gamez.textures);
+
+    textures::write_texture_infos(write, &original_textures, &gamez.metadata.texture_ptrs)?;
+    materials::write_materials(write, &renamed_textures, &gamez.materials)?;
     meshes::write_meshes(write, meshes, fixup)?;
     debug!("Writing {} nodes at {}", node_array_size, write.offset);
     nodes::write_nodes(write, &gamez.nodes)?;

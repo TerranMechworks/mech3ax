@@ -8,7 +8,7 @@ use mech3ax_api_types::gamez::mechlib::{ModelMw, ModelPm};
 use mech3ax_api_types::gamez::mesh::{MeshMw, MeshNg, MeshRc};
 use mech3ax_api_types::gamez::{
     GameZDataCs, GameZDataMw, GameZDataPm, GameZDataRc, GameZMetadataCs, GameZMetadataMw,
-    GameZMetadataPm,
+    GameZMetadataPm, TextureName,
 };
 use mech3ax_api_types::image::TextureManifest;
 use mech3ax_api_types::interp::Script;
@@ -289,7 +289,7 @@ fn gamez_cs(opts: ZipOpts) -> Result<()> {
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
 
     let metadata: GameZMetadataCs = zip_json(&mut zip, "metadata.json")?;
-    let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
+    let textures: Vec<TextureName> = zip_json(&mut zip, "textures.json")?;
     let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
     let meshes: Vec<Option<MeshNg>> = zip_json(&mut zip, "meshes.json")?;
     let nodes: Vec<NodeCs> = zip_json(&mut zip, "nodes.json")?;

@@ -53,9 +53,15 @@ pub struct GameZMetadataCs {
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
+pub struct TextureName {
+    pub original: String,
+    pub renamed: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, RefStruct)]
 #[partial]
 pub struct GameZDataCs {
-    pub textures: Vec<String>,
+    pub textures: Vec<TextureName>,
     pub materials: Vec<Material>,
     pub meshes: Vec<Option<MeshNg>>,
     pub nodes: Vec<NodeCs>,

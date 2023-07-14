@@ -138,6 +138,7 @@ fn main() {
     resolver.push::<api::gamez::GameZMetadataPm>();
     resolver.push::<api::gamez::GameZDataPm>();
     resolver.push::<api::gamez::GameZMetadataCs>();
+    resolver.push::<api::gamez::TextureName>();
     resolver.push::<api::gamez::GameZDataCs>();
     resolver.push::<api::gamez::GameZDataRc>();
 
