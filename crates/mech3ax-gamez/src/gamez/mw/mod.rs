@@ -5,7 +5,7 @@ use super::common::{SIGNATURE, VERSION_MW};
 use crate::materials::ng as materials;
 use crate::textures::mw as textures;
 use log::{debug, trace};
-use mech3ax_api_types::gamez::{GameZMwData, GameZMwMetadata};
+use mech3ax_api_types::gamez::{GameZDataMw, GameZMetadataMw};
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
@@ -26,7 +26,7 @@ struct HeaderMwC {
 }
 static_assert_size!(HeaderMwC, 36);
 
-pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZMwData> {
+pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataMw> {
     debug!(
         "Reading gamez header (mw, {}) at {}",
         HeaderMwC::SIZE,
@@ -88,12 +88,12 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZMwData> {
     let nodes = nodes::read_nodes(read, header.node_array_size, meshes_count)?;
     // `read_nodes` calls `assert_end`
 
-    let metadata = GameZMwMetadata {
+    let metadata = GameZMetadataMw {
         meshes_array_size: mesh_array_size,
         node_array_size: header.node_array_size,
         node_data_count: header.node_count,
     };
-    Ok(GameZMwData {
+    Ok(GameZDataMw {
         metadata,
         textures,
         materials,
@@ -102,7 +102,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZMwData> {
     })
 }
 
-pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZMwData) -> Result<()> {
+pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataMw) -> Result<()> {
     let texture_count = assert_len!(u32, gamez.textures.len(), "GameZ textures")?;
 
     let node_array_size = gamez.metadata.node_array_size;

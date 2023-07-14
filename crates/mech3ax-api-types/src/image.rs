@@ -1,3 +1,4 @@
+//! Image/texture data structures.
 use crate::serde::bytes;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{Enum, RefStruct, Union};

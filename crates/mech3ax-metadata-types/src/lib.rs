@@ -104,6 +104,7 @@ pub struct TypeInfoStruct {
     pub generics: Option<&'static [(&'static TypeInfo, &'static str)]>,
     pub fields: &'static [TypeInfoStructField],
     pub module_path: &'static str,
+    pub partial: bool,
 }
 
 /// A type.

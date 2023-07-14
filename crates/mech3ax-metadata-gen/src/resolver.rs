@@ -1,5 +1,6 @@
 use crate::csharp_type::CSharpType;
 use crate::enums::Enum;
+use crate::module_path::path_mod_root;
 use crate::structs::Struct;
 use crate::unions::Union;
 use mech3ax_metadata_types::{
@@ -7,6 +8,7 @@ use mech3ax_metadata_types::{
     TypeInfoVec,
 };
 use std::collections::{HashMap, HashSet};
+use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
 pub struct TypeResolver {
@@ -14,6 +16,7 @@ pub struct TypeResolver {
     enums: HashMap<(&'static str, &'static str), Enum>,
     structs: HashMap<(&'static str, &'static str), Struct>,
     unions: HashMap<(&'static str, &'static str), Union>,
+    directories: HashSet<PathBuf>,
 }
 
 #[derive(Debug)]
@@ -60,11 +63,14 @@ type ResolveResult = ::std::result::Result<CSharpType, ResolveError>;
 
 impl TypeResolver {
     pub fn new() -> Self {
+        let mut directories = HashSet::new();
+        directories.insert(path_mod_root());
         Self {
             names: HashSet::new(),
             enums: HashMap::new(),
             structs: HashMap::new(),
             unions: HashMap::new(),
+            directories,
         }
     }
 
@@ -104,6 +110,10 @@ impl TypeResolver {
             panic!("Duplicate type name `{}`", u.full_name);
         }
         self.unions.insert((ui.module_path, ui.name), u);
+    }
+
+    pub fn add_directory(&mut self, path: &Path) {
+        self.directories.insert(path.to_path_buf());
     }
 
     pub fn resolve(&self, ti: &TypeInfo, name: &'static str) -> CSharpType {
@@ -169,11 +179,19 @@ impl TypeResolver {
             .ok_or_else(|| ResolveError::new(ui.module_path, ui.name))
     }
 
-    pub fn into_values(self) -> (Vec<Enum>, Vec<Struct>, Vec<Union>) {
+    pub fn into_values(self) -> (Vec<Enum>, Vec<Struct>, Vec<Union>, Vec<PathBuf>) {
+        let Self {
+            names: _,
+            enums,
+            structs,
+            unions,
+            directories,
+        } = self;
         (
-            self.enums.into_values().collect(),
-            self.structs.into_values().collect(),
-            self.unions.into_values().collect(),
+            enums.into_values().collect(),
+            structs.into_values().collect(),
+            unions.into_values().collect(),
+            directories.into_iter().collect(),
         )
     }
 }

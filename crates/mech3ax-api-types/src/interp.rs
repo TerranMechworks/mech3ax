@@ -1,3 +1,4 @@
+//! Interpreter (`interp.zbd`) data structures.
 use crate::serde::rfc3339;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::RefStruct;

@@ -1,9 +1,10 @@
 use crate::csharp_type::{CSharpType, SerializeType, TypeKind};
-use crate::module_path::convert_mod_path;
+use crate::module_path::{rust_mod_path_to_dotnet, rust_mod_path_to_path};
 use crate::resolver::TypeResolver;
 use mech3ax_metadata_types::TypeInfoEnum;
 use serde::Serialize;
 use std::borrow::Cow;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Variant {
@@ -23,6 +24,8 @@ pub struct Enum {
     pub full_name: String,
     /// The enum's C# variant names.
     pub variants: Vec<Variant>,
+    /// The enum's path on the filesystem.
+    pub path: PathBuf,
 }
 
 impl Enum {
@@ -36,11 +39,12 @@ impl Enum {
         }
     }
 
-    pub fn new(_resolver: &mut TypeResolver, ei: &TypeInfoEnum) -> Self {
+    pub fn new(resolver: &mut TypeResolver, ei: &TypeInfoEnum) -> Self {
         // luckily, Rust's casing for enum and variant names matches C#.
         let name = ei.name;
-        let namespace = convert_mod_path(ei.module_path);
+        let namespace = rust_mod_path_to_dotnet(ei.module_path);
         let full_name = format!("{}.{}", namespace, ei.name);
+
         let variants = ei
             .variants
             .iter()
@@ -48,11 +52,17 @@ impl Enum {
             .zip(0u32..)
             .map(|(name, index)| Variant { name, index })
             .collect();
+
+        let mut path = rust_mod_path_to_path(ei.module_path);
+        resolver.add_directory(&path);
+        path.push(format!("{}.cs", name));
+
         Self {
             name,
             namespace,
             full_name,
             variants,
+            path,
         }
     }
 

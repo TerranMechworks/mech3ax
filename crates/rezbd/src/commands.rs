@@ -7,8 +7,8 @@ use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::gamez::mechlib::{ModelMw, ModelPm};
 use mech3ax_api_types::gamez::mesh::{MeshMw, MeshNg, MeshRc};
 use mech3ax_api_types::gamez::{
-    GameZCsData, GameZCsMetadata, GameZMwData, GameZMwMetadata, GameZPmData, GameZPmMetadata,
-    GameZRcData,
+    GameZDataCs, GameZDataMw, GameZDataPm, GameZDataRc, GameZMetadataCs, GameZMetadataMw,
+    GameZMetadataPm,
 };
 use mech3ax_api_types::image::TextureManifest;
 use mech3ax_api_types::interp::Script;
@@ -240,7 +240,7 @@ fn gamez_mw(opts: ZipOpts) -> Result<()> {
     let input = buf_reader(&opts.input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
 
-    let metadata: GameZMwMetadata = zip_json(&mut zip, "metadata.json")?;
+    let metadata: GameZMetadataMw = zip_json(&mut zip, "metadata.json")?;
     let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
     let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
     let meshes: Vec<MeshMw> = zip_json(&mut zip, "meshes.json")?;
@@ -248,7 +248,7 @@ fn gamez_mw(opts: ZipOpts) -> Result<()> {
 
     drop(zip);
 
-    let gamez = GameZMwData {
+    let gamez = GameZDataMw {
         metadata,
         textures,
         materials,
@@ -264,7 +264,7 @@ fn gamez_pm(opts: ZipOpts) -> Result<()> {
     let input = buf_reader(&opts.input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
 
-    let metadata: GameZPmMetadata = zip_json(&mut zip, "metadata.json")?;
+    let metadata: GameZMetadataPm = zip_json(&mut zip, "metadata.json")?;
     let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
     let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
     let meshes: Vec<MeshNg> = zip_json(&mut zip, "meshes.json")?;
@@ -272,7 +272,7 @@ fn gamez_pm(opts: ZipOpts) -> Result<()> {
 
     drop(zip);
 
-    let gamez = GameZPmData {
+    let gamez = GameZDataPm {
         metadata,
         textures,
         materials,
@@ -288,7 +288,7 @@ fn gamez_cs(opts: ZipOpts) -> Result<()> {
     let input = buf_reader(&opts.input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
 
-    let metadata: GameZCsMetadata = zip_json(&mut zip, "metadata.json")?;
+    let metadata: GameZMetadataCs = zip_json(&mut zip, "metadata.json")?;
     let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
     let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
     let meshes: Vec<Option<MeshNg>> = zip_json(&mut zip, "meshes.json")?;
@@ -296,7 +296,7 @@ fn gamez_cs(opts: ZipOpts) -> Result<()> {
 
     drop(zip);
 
-    let gamez = GameZCsData {
+    let gamez = GameZDataCs {
         metadata,
         textures,
         materials,
@@ -319,7 +319,7 @@ fn gamez_rc(opts: ZipOpts) -> Result<()> {
 
     drop(zip);
 
-    let gamez = GameZRcData {
+    let gamez = GameZDataRc {
         textures,
         materials,
         meshes,

@@ -1,11 +1,12 @@
 use crate::csharp_type::{CSharpType, SerializeType, TypeKind};
 use crate::fields::{sort_generics, Field};
-use crate::module_path::convert_mod_path;
+use crate::module_path::{rust_mod_path_to_dotnet, rust_mod_path_to_path};
 use crate::resolver::TypeResolver;
 use mech3ax_metadata_types::{TypeInfoStruct, TypeSemantic};
 use serde::Serialize;
 use std::borrow::Cow;
 use std::collections::HashSet;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Struct {
@@ -32,6 +33,10 @@ pub struct Struct {
     #[serde(skip)]
     pub generics: Option<HashSet<&'static str>>,
     pub generics_sorted: Vec<&'static str>,
+    /// Whether the struct is a partial struct.
+    pub partial: bool,
+    /// The structs's path on the filesystem.
+    pub path: PathBuf,
 }
 
 impl Struct {
@@ -58,7 +63,7 @@ impl Struct {
     pub fn new(resolver: &mut TypeResolver, si: &TypeInfoStruct) -> Self {
         // luckily, Rust's casing for structs matches C#.
         let name = si.name;
-        let namespace = convert_mod_path(si.module_path);
+        let namespace = rust_mod_path_to_dotnet(si.module_path);
 
         let semantic = si.semantic;
         // field generics must be declared on this struct specifically.
@@ -98,6 +103,10 @@ impl Struct {
 
         let full_name = format!("{}.{}", namespace, type_name);
 
+        let mut path = rust_mod_path_to_path(si.module_path);
+        resolver.add_directory(&path);
+        path.push(format!("{}.cs", name));
+
         Self {
             name,
             type_name,
@@ -108,6 +117,8 @@ impl Struct {
             semantic,
             generics,
             generics_sorted,
+            partial: si.partial,
+            path,
         }
     }
 
@@ -127,7 +138,7 @@ using Mech3DotNet.Exchange;
 
 namespace {{ struct.namespace }}
 {
-    public sealed class {{ struct.type_name }}
+    public {% if struct.partial %}partial{% else %}sealed{% endif %} class {{ struct.type_name }}
 {%- for generic in struct.generics_sorted %}
         where {{ generic }} : notnull
 {%- endfor %}

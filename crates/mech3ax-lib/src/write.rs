@@ -6,7 +6,7 @@ use mech3ax_api_types::anim::{AnimDef, AnimMetadata};
 use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::gamez::mechlib::{ModelMw, ModelPm};
-use mech3ax_api_types::gamez::{GameZCsData, GameZMwData, GameZPmData, GameZRcData};
+use mech3ax_api_types::gamez::{GameZDataCs, GameZDataMw, GameZDataPm, GameZDataRc};
 use mech3ax_api_types::image::TextureManifest;
 use mech3ax_api_types::interp::Script;
 use mech3ax_api_types::motion::Motion;
@@ -349,25 +349,25 @@ pub extern "C" fn write_gamez(
         let mut write = buf_writer(filename)?;
         match game {
             GameType::MW => {
-                let gamez: GameZMwData =
+                let gamez: GameZDataMw =
                     mech3ax_exchange::from_slice(buf).context("Failed to parse GameZ data")?;
                 mech3ax_gamez::gamez::mw::write_gamez(&mut write, &gamez)
                     .context("Failed to write GameZ data")
             }
             GameType::PM => {
-                let gamez: GameZPmData =
+                let gamez: GameZDataPm =
                     mech3ax_exchange::from_slice(buf).context("Failed to parse GameZ data")?;
                 mech3ax_gamez::gamez::pm::write_gamez(&mut write, &gamez)
                     .context("Failed to write GameZ data")
             }
             GameType::RC => {
-                let gamez: GameZRcData =
+                let gamez: GameZDataRc =
                     mech3ax_exchange::from_slice(buf).context("Failed to parse GameZ data")?;
                 mech3ax_gamez::gamez::rc::write_gamez(&mut write, &gamez)
                     .context("Failed to write GameZ data")
             }
             GameType::CS => {
-                let gamez: GameZCsData =
+                let gamez: GameZDataCs =
                     mech3ax_exchange::from_slice(buf).context("Failed to parse GameZ data")?;
                 mech3ax_gamez::gamez::cs::write_gamez(&mut write, &gamez)
                     .context("Failed to write GameZ data")

@@ -1,3 +1,4 @@
+//! Recoil `m*.zmap` data structures.
 use crate::static_assert_size;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, ValStruct};
@@ -28,6 +29,7 @@ pub struct MapFeature {
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[partial]
 pub struct MapRc {
     pub unk04: u32,
     pub max_x: f32,

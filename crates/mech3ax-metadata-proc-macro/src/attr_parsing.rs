@@ -89,3 +89,15 @@ pub fn parse_generic_attr(attrs: &[Attribute]) -> Result<Option<Vec<(Path, Strin
         other => Err(Error::new_spanned(other, "Expected #[generic(...)]")),
     }
 }
+
+pub fn parse_partial_attr(attrs: &[Attribute]) -> Result<bool> {
+    let attr = match find_attr(attrs, "partial") {
+        Some(attr) => attr,
+        None => return Ok(false),
+    };
+
+    match attr.parse_meta()? {
+        Meta::Path(path) if path.is_ident("partial") => Ok(true),
+        other => Err(Error::new_spanned(other, "Expected #[partial]")),
+    }
+}

@@ -12,23 +12,24 @@ use mech3ax_metadata_proc_macro::RefStruct;
 use mesh::{MeshMw, MeshNg, MeshRc};
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct GameZMwMetadata {
+pub struct GameZMetadataMw {
     pub meshes_array_size: i32,
     pub node_array_size: u32,
     pub node_data_count: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct GameZMwData {
+#[partial]
+pub struct GameZDataMw {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
     pub meshes: Vec<MeshMw>,
     pub nodes: Vec<NodeMw>,
-    pub metadata: GameZMwMetadata,
+    pub metadata: GameZMetadataMw,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct GameZPmMetadata {
+pub struct GameZMetadataPm {
     pub gamez_header_unk08: u32,
     pub meshes_array_size: i32,
     pub node_data_count: u32,
@@ -36,31 +37,34 @@ pub struct GameZPmMetadata {
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct GameZPmData {
+#[partial]
+pub struct GameZDataPm {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
     pub meshes: Vec<MeshNg>,
     pub nodes: Vec<NodePm>,
-    pub metadata: GameZPmMetadata,
+    pub metadata: GameZMetadataPm,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct GameZCsMetadata {
+pub struct GameZMetadataCs {
     pub gamez_header_unk08: u32,
     pub texture_ptrs: Vec<Option<u32>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct GameZCsData {
+#[partial]
+pub struct GameZDataCs {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
     pub meshes: Vec<Option<MeshNg>>,
     pub nodes: Vec<NodeCs>,
-    pub metadata: GameZCsMetadata,
+    pub metadata: GameZMetadataCs,
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
-pub struct GameZRcData {
+#[partial]
+pub struct GameZDataRc {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
     pub meshes: Vec<MeshRc>,

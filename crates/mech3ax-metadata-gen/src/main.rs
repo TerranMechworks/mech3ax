@@ -13,14 +13,35 @@ use resolver::TypeResolver;
 fn main() {
     let mut resolver = TypeResolver::new();
 
+    // --- types.rs
     resolver.push::<api::Range>();
     resolver.push::<api::Vec3>();
     resolver.push::<api::Color>();
     resolver.push::<api::Quaternion>();
     resolver.push::<api::Matrix>();
 
+    // --- zmap.rs
+    resolver.push::<api::zmap::MapColor>();
+    resolver.push::<api::zmap::MapVertex>();
+    resolver.push::<api::zmap::MapFeature>();
+    resolver.push::<api::zmap::MapRc>();
+
+    // --- motion.rs
+    resolver.push::<api::motion::MotionFrame>();
+    resolver.push::<api::motion::MotionPart>();
+    resolver.push::<api::motion::Motion>();
+
+    // --- messages.rs
+    resolver.push::<api::messages::MessageEntry>();
+    resolver.push::<api::messages::Messages>();
+
+    // --- interp.rs
+    resolver.push::<api::interp::Script>();
+
+    // --- archive.rs
     resolver.push::<api::archive::ArchiveEntry>();
 
+    // --- image.rs
     resolver.push::<api::image::TextureAlpha>();
     resolver.push::<api::image::TextureStretch>();
     resolver.push::<api::image::PaletteData>();
@@ -29,48 +50,49 @@ fn main() {
     resolver.push::<api::image::TextureInfo>();
     resolver.push::<api::image::TextureManifest>();
 
-    resolver.push::<api::interp::Script>();
+    // --- GameZ
 
-    resolver.push::<api::messages::MessageEntry>();
-    resolver.push::<api::messages::Messages>();
-
-    resolver.push::<api::motion::MotionFrame>();
-    resolver.push::<api::motion::MotionPart>();
-    resolver.push::<api::motion::Motion>();
-
-    resolver.push::<api::zmap::MapColor>();
-    resolver.push::<api::zmap::MapVertex>();
-    resolver.push::<api::zmap::MapFeature>();
-    resolver.push::<api::zmap::MapRc>();
-
+    // --- gamez/materials.rs
     resolver.push::<api::gamez::materials::ColoredMaterial>();
     resolver.push::<api::gamez::materials::CycleData>();
     resolver.push::<api::gamez::materials::TexturedMaterial>();
     resolver.push::<api::gamez::materials::Material>();
 
-    // gamez mesh
+    // --- gamez/mesh/mod.rs
     resolver.push::<api::gamez::mesh::UvCoord>();
     resolver.push::<api::gamez::mesh::MeshLight>();
+
+    // --- gamez/mesh/mw.rs
     resolver.push::<api::gamez::mesh::PolygonMw>();
     resolver.push::<api::gamez::mesh::MeshMw>();
+
+    // --- gamez/mesh/ng.rs
     resolver.push::<api::gamez::mesh::PolygonFlags>();
     resolver.push::<api::gamez::mesh::MeshMaterialInfo>();
     resolver.push::<api::gamez::mesh::PolygonMaterialNg>();
     resolver.push::<api::gamez::mesh::PolygonNg>();
     resolver.push::<api::gamez::mesh::MeshNg>();
+
+    // --- gamez/mesh/rc.rs
     resolver.push::<api::gamez::mesh::PolygonRc>();
     resolver.push::<api::gamez::mesh::MeshRc>();
 
+    // --- Nodes (required for GameZ mechlib)
+
+    // --- nodes/mod.rs
+    resolver.push::<api::nodes::Camera>();
+    resolver.push::<api::nodes::Display>();
+    resolver.push::<api::nodes::Window>();
     resolver.push::<api::nodes::AreaPartition>();
     resolver.push::<api::nodes::Area>();
     resolver.push::<api::nodes::BoundingBox>();
     resolver.push::<api::nodes::Transformation>();
     resolver.push::<api::nodes::PartitionPg>();
+    resolver.push::<api::nodes::PartitionValue>();
+    resolver.push::<api::nodes::PartitionNg>();
     resolver.push::<api::nodes::NodeFlags>();
 
-    resolver.push::<api::nodes::Camera>();
-    resolver.push::<api::nodes::Display>();
-    resolver.push::<api::nodes::Window>();
+    // --- nodes/mw.rs
     resolver.push::<api::nodes::mw::Empty>();
     resolver.push::<api::nodes::mw::Light>();
     resolver.push::<api::nodes::mw::Lod>();
@@ -78,21 +100,50 @@ fn main() {
     resolver.push::<api::nodes::mw::World>();
     resolver.push::<api::nodes::mw::NodeMw>();
 
+    // --- nodes/pm.rs
+    resolver.push::<api::nodes::pm::AreaPartitionPm>();
+    resolver.push::<api::nodes::pm::Light>();
     resolver.push::<api::nodes::pm::Lod>();
     resolver.push::<api::nodes::pm::Object3d>();
+    resolver.push::<api::nodes::pm::World>();
     resolver.push::<api::nodes::pm::NodePm>();
 
+    // --- nodes/cs.rs (requires AreaPartitionPm?)
+    resolver.push::<api::nodes::cs::Camera>();
+    resolver.push::<api::nodes::cs::Light>();
+    resolver.push::<api::nodes::cs::Lod>();
+    resolver.push::<api::nodes::cs::Object3d>();
+    resolver.push::<api::nodes::cs::Window>();
+    resolver.push::<api::nodes::cs::World>();
+    resolver.push::<api::nodes::cs::NodeCs>();
+
+    // --- nodes/rc.rs
+    resolver.push::<api::nodes::rc::RotationTranslation>();
+    resolver.push::<api::nodes::rc::TranslationOnly>();
+    resolver.push::<api::nodes::rc::Transformation>();
+    resolver.push::<api::nodes::rc::Empty>();
+    resolver.push::<api::nodes::rc::Light>();
+    resolver.push::<api::nodes::rc::Lod>();
+    resolver.push::<api::nodes::rc::Object3d>();
+    resolver.push::<api::nodes::rc::World>();
+    resolver.push::<api::nodes::rc::NodeRc>();
+
+    // --- gamez/mechlib.rs
     resolver.push::<api::gamez::mechlib::ModelMw>();
     resolver.push::<api::gamez::mechlib::ModelPm>();
 
-    resolver.push::<api::gamez::GameZMwMetadata>();
-    resolver.push::<api::gamez::GameZMwData>();
-    resolver.push::<api::gamez::GameZPmMetadata>();
-    resolver.push::<api::gamez::GameZPmData>();
-    resolver.push::<api::gamez::GameZCsMetadata>();
-    resolver.push::<api::gamez::GameZCsData>();
-    resolver.push::<api::gamez::GameZRcData>();
+    // --- gamez/mod.rs
+    resolver.push::<api::gamez::GameZMetadataMw>();
+    resolver.push::<api::gamez::GameZDataMw>();
+    resolver.push::<api::gamez::GameZMetadataPm>();
+    resolver.push::<api::gamez::GameZDataPm>();
+    resolver.push::<api::gamez::GameZMetadataCs>();
+    resolver.push::<api::gamez::GameZDataCs>();
+    resolver.push::<api::gamez::GameZDataRc>();
 
+    // --- Anim
+
+    // --- anim/events.rs
     resolver.push::<api::anim::events::AtNode>();
     resolver.push::<api::anim::events::StopAnimation>();
     resolver.push::<api::anim::events::ResetAnimation>();
@@ -164,6 +215,7 @@ fn main() {
     resolver.push::<api::anim::events::EventStart>();
     resolver.push::<api::anim::events::Event>();
 
+    // --- anim/mod.rs
     resolver.push::<api::anim::AnimName>();
     resolver.push::<api::anim::AnimPtr>();
     resolver.push::<api::anim::AnimMetadata>();
@@ -182,23 +234,29 @@ fn main() {
     resolver.push::<api::anim::AnimDef>();
 
     let tera = templates::make_tera();
-    let (enums, structs, unions) = resolver.into_values();
+    let (enums, structs, unions, mut directories) = resolver.into_values();
+    directories.sort();
+
+    for path in directories {
+        std::fs::create_dir(&path)
+            .unwrap_or_else(|e| panic!("failed to create `{}`: {:?}", path.display(), e));
+    }
 
     for item in enums {
         let contents = item.render_impl(&tera).unwrap();
-        let path = format!("output/{}.cs", item.name);
-        std::fs::write(path, contents).unwrap();
+        std::fs::write(&item.path, contents)
+            .unwrap_or_else(|e| panic!("failed to write `{}`: {:?}", item.path.display(), e));
     }
 
     for item in structs {
         let contents = item.render_impl(&tera).unwrap();
-        let path = format!("output/{}.cs", item.name);
-        std::fs::write(path, contents).unwrap();
+        std::fs::write(&item.path, contents)
+            .unwrap_or_else(|e| panic!("failed to write `{}`: {:?}", item.path.display(), e));
     }
 
     for item in unions {
         let contents = item.render_impl(&tera).unwrap();
-        let path = format!("output/{}.cs", item.name);
-        std::fs::write(path, contents).unwrap();
+        std::fs::write(&item.path, contents)
+            .unwrap_or_else(|e| panic!("failed to write `{}`: {:?}", item.path.display(), e));
     }
 }

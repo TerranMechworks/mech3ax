@@ -1,10 +1,10 @@
-use crate::attr_parsing::{parse_generic_attr, parse_serde_attr};
+use crate::attr_parsing::{parse_generic_attr, parse_partial_attr, parse_serde_attr};
 use mech3ax_metadata_types::{DefaultHandling, TypeSemantic};
 use proc_macro2::TokenStream;
 use quote::ToTokens as _;
 use syn::{
     parse_quote, Attribute, Data, DataStruct, DeriveInput, Error, Expr, ExprStruct, Field, Fields,
-    FieldsNamed, Generics, Ident, ImplItemConst, ItemImpl, Path, Result, Type,
+    FieldsNamed, Generics, Ident, ImplItemConst, ItemImpl, LitBool, Path, Result, Type,
 };
 
 macro_rules! cannot_derive {
@@ -30,6 +30,7 @@ struct StructInfo {
     pub semantic: TypeSemantic,
     pub generics: Option<Vec<(Path, String)>>,
     pub fields: Vec<FieldInfoOwned>,
+    pub partial: bool,
 }
 
 fn parse_struct_generics(attrs: &[Attribute]) -> Result<Option<Vec<(Path, String)>>> {
@@ -76,6 +77,7 @@ fn parse_struct_named(
 ) -> Result<StructInfo> {
     let name = ident.to_string();
     let generics = parse_struct_generics(attrs)?;
+    let partial = parse_partial_attr(attrs)?;
     let fields = parse_struct_fields(fields)?;
 
     Ok(StructInfo {
@@ -84,6 +86,7 @@ fn parse_struct_named(
         semantic,
         generics,
         fields,
+        partial,
     })
 }
 
@@ -163,10 +166,16 @@ fn generate_struct_type(
     semantic: TypeSemantic,
     generics: Option<Vec<(Path, String)>>,
     fields: Vec<FieldInfoOwned>,
+    partial: bool,
 ) -> ImplItemConst {
     let semantic = generate_struct_semantic(semantic);
     let generics = generate_struct_generics(generics);
     let fields: Vec<_> = fields.into_iter().map(generate_struct_field).collect();
+    let partial: LitBool = if partial {
+        parse_quote!(true)
+    } else {
+        parse_quote!(false)
+    };
 
     parse_quote! {
         const TYPE_INFO: &'static ::mech3ax_metadata_types::TypeInfo =
@@ -178,6 +187,7 @@ fn generate_struct_type(
                     #( #fields, )*
                 ],
                 module_path: ::std::module_path!(),
+                partial: #partial,
             });
     }
 }
@@ -189,8 +199,9 @@ fn generate_struct(info: StructInfo, struct_generics: Generics) -> ItemImpl {
         semantic,
         generics,
         fields,
+        partial,
     } = info;
-    let type_type = generate_struct_type(name, semantic, generics, fields);
+    let type_type = generate_struct_type(name, semantic, generics, fields, partial);
     parse_quote! {
         impl #struct_generics ::mech3ax_metadata_types::DerivedMetadata for #ident #struct_generics {
             #type_type

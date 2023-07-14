@@ -22,7 +22,7 @@ pub fn derive_struct_val(input: proc_macro::TokenStream) -> proc_macro::TokenStr
         .into()
 }
 
-#[proc_macro_derive(RefStruct, attributes(generic, serde))]
+#[proc_macro_derive(RefStruct, attributes(generic, serde, partial))]
 pub fn derive_struct_ref(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);
     structs::derive(input, TypeSemantic::Ref)

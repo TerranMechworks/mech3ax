@@ -1,3 +1,4 @@
+//! Widely used common types.
 use crate::static_assert_size;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::ValStruct;

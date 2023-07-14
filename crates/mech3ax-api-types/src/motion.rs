@@ -1,3 +1,4 @@
+//! MW3 `motion.zbd` data structures.
 use crate::types::{Quaternion, Vec3};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::RefStruct;

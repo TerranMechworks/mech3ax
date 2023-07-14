@@ -1,3 +1,4 @@
+//! Localisation data structures.
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::RefStruct;
 
@@ -9,6 +10,7 @@ pub struct MessageEntry {
 }
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[partial]
 pub struct Messages {
     pub language_id: u32,
     pub entries: Vec<MessageEntry>,

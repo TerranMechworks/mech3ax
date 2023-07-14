@@ -1,9 +1,10 @@
 use crate::csharp_type::{CSharpType, SerializeType, TypeKind};
-use crate::module_path::convert_mod_path;
+use crate::module_path::{rust_mod_path_to_dotnet, rust_mod_path_to_path};
 use crate::resolver::TypeResolver;
 use mech3ax_metadata_types::{TypeInfo, TypeInfoUnion};
 use serde::Serialize;
 use std::borrow::Cow;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct VarantSerde {
@@ -33,6 +34,8 @@ pub struct Union {
     pub full_name: String,
     /// The union variant types.
     pub variants: Vec<Variant>,
+    /// The union's path on the filesystem.
+    pub path: PathBuf,
 }
 
 fn resolve_variant(
@@ -77,10 +80,10 @@ impl Union {
         }
     }
 
-    pub fn new(resolver: &TypeResolver, ui: &TypeInfoUnion) -> Self {
+    pub fn new(resolver: &mut TypeResolver, ui: &TypeInfoUnion) -> Self {
         // luckily, Rust's casing for enum names matches C# classes.
         let name = ui.name;
-        let namespace = convert_mod_path(ui.module_path);
+        let namespace = rust_mod_path_to_dotnet(ui.module_path);
         let full_name = format!("{}.{}", namespace, ui.name);
 
         let variants = ui
@@ -93,11 +96,16 @@ impl Union {
             })
             .collect();
 
+        let mut path = rust_mod_path_to_path(ui.module_path);
+        resolver.add_directory(&path);
+        path.push(format!("{}.cs", name));
+
         Self {
             name,
             namespace,
             full_name,
             variants,
+            path,
         }
     }
 
