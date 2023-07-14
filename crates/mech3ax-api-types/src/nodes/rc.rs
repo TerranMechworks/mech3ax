@@ -1,5 +1,5 @@
 use super::{Area, AreaPartition, BoundingBox, Camera, Display, NodeFlags, PartitionPg, Window};
-use crate::types::{Color, Matrix, Range, Vec3};
+use crate::{Color, Matrix, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, Union};
 

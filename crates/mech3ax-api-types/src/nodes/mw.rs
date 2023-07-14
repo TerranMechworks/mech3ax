@@ -2,7 +2,7 @@ use super::{
     Area, AreaPartition, BoundingBox, Camera, Display, NodeFlags, PartitionPg, Transformation,
     Window,
 };
-use crate::types::{Color, Range, Vec3};
+use crate::{Color, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, Union};
 

@@ -1,6 +1,6 @@
 use super::{Area, BoundingBox, Camera, Display, NodeFlags, PartitionNg, Transformation, Window};
 use crate::static_assert_size;
-use crate::types::Range;
+use crate::Range;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, Union};
 

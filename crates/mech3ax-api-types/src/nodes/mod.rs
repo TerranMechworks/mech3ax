@@ -5,7 +5,7 @@ pub mod rc;
 
 use crate::serde::{bool_false, bool_true};
 use crate::static_assert_size;
-use crate::types::{Color, Matrix, Range, Vec3};
+use crate::{Color, Matrix, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, ValStruct};
 

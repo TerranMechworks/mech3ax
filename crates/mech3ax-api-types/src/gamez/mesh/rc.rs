@@ -1,5 +1,5 @@
 use super::{MeshLight, UvCoord};
-use crate::types::Vec3;
+use crate::Vec3;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::RefStruct;
 

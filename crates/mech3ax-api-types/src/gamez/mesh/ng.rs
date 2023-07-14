@@ -1,7 +1,7 @@
 use super::{MeshLight, UvCoord};
 use crate::serde::bool_false;
 use crate::static_assert_size;
-use crate::types::{Color, Vec3};
+use crate::{Color, Vec3};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::RefStruct;
 

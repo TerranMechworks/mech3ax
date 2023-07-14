@@ -1,6 +1,6 @@
 use super::pm::AreaPartitionPm;
 use super::{Area, BoundingBox, Display, PartitionNg, Transformation};
-use crate::types::Range;
+use crate::Range;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, Union};
 

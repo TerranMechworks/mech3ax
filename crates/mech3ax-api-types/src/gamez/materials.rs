@@ -1,5 +1,5 @@
 use crate::serde::pointer_zero;
-use crate::types::Color;
+use crate::Color;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{RefStruct, Union};
 

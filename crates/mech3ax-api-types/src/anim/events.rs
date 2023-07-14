@@ -1,5 +1,5 @@
 use crate::serde::{bool_false, bytes};
-use crate::types::{Color, Quaternion, Range, Vec3};
+use crate::{Color, Quaternion, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{Enum, RefStruct, Union, ValStruct};
 use num_derive::FromPrimitive;
