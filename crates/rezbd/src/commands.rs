@@ -18,7 +18,7 @@ use mech3ax_api_types::nodes::mw::NodeMw;
 use mech3ax_api_types::nodes::pm::NodePm;
 use mech3ax_api_types::nodes::rc::NodeRc;
 use mech3ax_api_types::saves::AnimActivation;
-use mech3ax_api_types::zmap::MapRc;
+use mech3ax_api_types::zmap::Zmap;
 use mech3ax_archive::{write_archive, Mode, Version};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::GameType;
@@ -388,7 +388,7 @@ pub(crate) fn zmap(opts: ZMapOpts) -> Result<()> {
     }
 
     let buf = std::fs::read(opts.input).context("Failed to open input")?;
-    let map: MapRc = serde_json::from_slice(&buf).context("Failed to parse input")?;
+    let map: Zmap = serde_json::from_slice(&buf).context("Failed to parse input")?;
 
     let mut write = buf_writer(opts.output)?;
     mech3ax_zmap::write_map(&mut write, &map).context("Failed to write interpreter data")

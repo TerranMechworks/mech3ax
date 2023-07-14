@@ -30,7 +30,7 @@ pub struct MapFeature {
 
 #[derive(Debug, Serialize, Deserialize, RefStruct)]
 #[partial]
-pub struct MapRc {
+pub struct Zmap {
     pub unk04: u32,
     pub max_x: f32,
     pub max_y: f32,

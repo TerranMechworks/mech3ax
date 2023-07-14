@@ -1,6 +1,6 @@
 use super::{MapHeaderC, MAP_VERSION};
 use log::{debug, trace};
-use mech3ax_api_types::zmap::{MapColor, MapFeature, MapRc, MapVertex};
+use mech3ax_api_types::zmap::{MapColor, MapFeature, MapVertex, Zmap};
 use mech3ax_api_types::ReprSize as _;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Result};
@@ -38,7 +38,7 @@ fn read_map_feature(
     })
 }
 
-pub fn read_map(read: &mut CountingReader<impl Read>) -> Result<MapRc> {
+pub fn read_map(read: &mut CountingReader<impl Read>) -> Result<Zmap> {
     debug!(
         "Reading map header ({}) at {}",
         MapHeaderC::SIZE,
@@ -76,7 +76,7 @@ pub fn read_map(read: &mut CountingReader<impl Read>) -> Result<MapRc> {
     //     .collect::<Result<Vec<_>>>()?;
     // read.assert_end()?;
 
-    Ok(MapRc {
+    Ok(Zmap {
         unk04: header.unk04,
         max_x: header.max_x,
         max_y: header.max_y,

@@ -1,6 +1,6 @@
 use super::{MapHeaderC, MAP_VERSION};
 use log::{debug, trace};
-use mech3ax_api_types::zmap::{MapFeature, MapRc};
+use mech3ax_api_types::zmap::{MapFeature, Zmap};
 use mech3ax_api_types::ReprSize as _;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, Result};
@@ -26,7 +26,7 @@ fn write_map_feature(
     Ok(())
 }
 
-pub fn write_map(write: &mut CountingWriter<impl Write>, map: &MapRc) -> Result<()> {
+pub fn write_map(write: &mut CountingWriter<impl Write>, map: &Zmap) -> Result<()> {
     debug!(
         "Writing map header ({}) at {}",
         MapHeaderC::SIZE,

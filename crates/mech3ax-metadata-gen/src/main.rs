@@ -24,7 +24,7 @@ fn main() {
     resolver.push::<api::zmap::MapColor>();
     resolver.push::<api::zmap::MapVertex>();
     resolver.push::<api::zmap::MapFeature>();
-    resolver.push::<api::zmap::MapRc>();
+    resolver.push::<api::zmap::Zmap>();
 
     // --- motion.rs
     resolver.push::<api::motion::MotionFrame>();
