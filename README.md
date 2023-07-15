@@ -322,13 +322,7 @@ Detailed changes:
 
 ## Development
 
-[Rust](https://www.rust-lang.org/) is required, this project uses the `stable` toolchain.
-
-This project uses [pre-commit](https://pre-commit.com/) to run `cargo fmt` when you commit (and only on the committed code, not unstaged code). If this sounds useful to you, install `pre-commit`, and put the hooks in place:
-
-```bash
-pre-commit install
-```
+[Rust](https://www.rust-lang.org/) is required.
 
 ## Release procedure
 
