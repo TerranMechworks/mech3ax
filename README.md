@@ -191,7 +191,16 @@ where `--rtexture` and `--rmechtex` are optional.
 
 ## Changelog
 
-### [0.6.0-rc4] - Unreleased
+### [0.6.0-rc4] - 2023-07-15
+
+* API type updates (codegen)
+* C# partial classes support (codegen)
+* Map Rust module/C# namespace structure to directories (codegen)
+* Deduplicate GameZ texture names for Crimson Skies, because `planes.zbd` has some duplicates
+* Add zmap reading and writing functions (`lib`)
+* Rename reader JSON reading and writing functions (`lib`, breaking change)
+* Split C# struct information from Rust type information (codegen)
+* Update to Rust 1.71.0
 
 ### [0.6.0-rc3] - 2023-05-30
 
