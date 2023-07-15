@@ -4,10 +4,10 @@ use crate::serde::bytes;
 use crate::Range;
 use ::serde::{Deserialize, Serialize};
 use events::Event;
-use mech3ax_metadata_proc_macro::{Enum, RefStruct, Union, ValStruct};
+use mech3ax_metadata_proc_macro::{Enum, Struct, Union};
 use num_derive::FromPrimitive;
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct AnimName {
     pub name: String,
     #[serde(with = "bytes")]
@@ -15,7 +15,7 @@ pub struct AnimName {
     pub unknown: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct AnimPtr {
     pub file_name: String,
 
@@ -33,7 +33,7 @@ pub struct AnimPtr {
     pub seq_defs_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct AnimMetadata {
     pub base_ptr: u32,
     pub world_ptr: u32,
@@ -58,20 +58,23 @@ pub enum Execution {
     None,
 }
 
-#[derive(Debug, Serialize, Deserialize, ValStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
+#[dotnet(val_struct)]
 pub struct NamePad {
     pub name: String,
     #[serde(with = "bytes")]
     pub pad: Vec<u8>,
 }
 
-#[derive(Debug, Serialize, Deserialize, ValStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
+#[dotnet(val_struct)]
 pub struct NamePtr {
     pub name: String,
     pub pointer: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, ValStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
+#[dotnet(val_struct)]
 pub struct NamePtrFlags {
     pub name: String,
     pub pointer: u32,
@@ -85,12 +88,14 @@ pub enum SeqActivation {
     OnCall = 3,
 }
 
-#[derive(Debug, Serialize, Deserialize, ValStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
+#[dotnet(val_struct)]
 pub struct PrereqAnimation {
     pub name: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, ValStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
+#[dotnet(val_struct)]
 pub struct PrereqObject {
     pub name: String,
     pub required: bool,
@@ -98,7 +103,8 @@ pub struct PrereqObject {
     pub pointer: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, ValStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
+#[dotnet(val_struct)]
 pub struct PrereqParent {
     pub name: String,
     pub required: bool,
@@ -113,13 +119,13 @@ pub enum ActivationPrereq {
     Object(PrereqObject),
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct ResetState {
     pub events: Vec<Event>,
     pub pointer: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct SeqDef {
     pub name: String,
     pub activation: SeqActivation,
@@ -127,7 +133,7 @@ pub struct SeqDef {
     pub pointer: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct AnimDef {
     pub name: String,
     pub anim_name: NamePad,

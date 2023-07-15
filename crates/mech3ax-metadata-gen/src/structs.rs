@@ -1,6 +1,6 @@
 use crate::csharp_type::{CSharpType, SerializeType, TypeKind};
 use crate::fields::{sort_generics, Field};
-use crate::module_path::{rust_mod_path_to_dotnet, rust_mod_path_to_path};
+use crate::module_path::{dotnet_namespace_to_path, rust_mod_path_to_dotnet};
 use crate::resolver::TypeResolver;
 use mech3ax_metadata_types::{TypeInfoStruct, TypeSemantic};
 use serde::Serialize;
@@ -63,14 +63,18 @@ impl Struct {
     pub fn new(resolver: &mut TypeResolver, si: &TypeInfoStruct) -> Self {
         // luckily, Rust's casing for structs matches C#.
         let name = si.name;
-        let namespace = rust_mod_path_to_dotnet(si.module_path);
+        let namespace = match si.dotnet.namespace {
+            Some(namespace) => namespace.to_string(),
+            None => rust_mod_path_to_dotnet(si.module_path),
+        };
+        let semantic = si.dotnet.semantic;
+        let partial = si.dotnet.partial;
 
-        let semantic = si.semantic;
         // field generics must be declared on this struct specifically.
         let fields: Vec<_> = si
             .fields
             .iter()
-            .map(|field_info| Field::new(si.name, si.generics, field_info, resolver))
+            .map(|field_info| Field::new(si.name, si.dotnet.generics, field_info, resolver))
             .collect();
 
         // since the struct's generics should've be used in fields, we can
@@ -103,7 +107,7 @@ impl Struct {
 
         let full_name = format!("{}.{}", namespace, type_name);
 
-        let mut path = rust_mod_path_to_path(si.module_path);
+        let mut path = dotnet_namespace_to_path(&namespace);
         resolver.add_directory(&path);
         path.push(format!("{}.cs", name));
 
@@ -117,7 +121,7 @@ impl Struct {
             semantic,
             generics,
             generics_sorted,
-            partial: si.partial,
+            partial,
             path,
         }
     }

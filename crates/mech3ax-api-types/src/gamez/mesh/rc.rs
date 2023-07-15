@@ -1,9 +1,9 @@
 use super::{MeshLight, UvCoord};
 use crate::Vec3;
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::RefStruct;
+use mech3ax_metadata_proc_macro::Struct;
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct PolygonRc {
     pub vertex_indices: Vec<u32>,
     pub normal_indices: Option<Vec<u32>>,
@@ -19,7 +19,7 @@ pub struct PolygonRc {
     pub uvs_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct MeshRc {
     pub vertices: Vec<Vec3>,
     pub normals: Vec<Vec3>,

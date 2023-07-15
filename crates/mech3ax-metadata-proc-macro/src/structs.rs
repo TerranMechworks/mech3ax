@@ -1,4 +1,4 @@
-use crate::attr_parsing::{parse_generic_attr, parse_partial_attr, parse_serde_attr};
+use crate::attr_parsing::{parse_dotnet_attr, parse_serde_attr, DotNetInfoOwned};
 use mech3ax_metadata_types::{DefaultHandling, TypeSemantic};
 use proc_macro2::TokenStream;
 use quote::ToTokens as _;
@@ -27,14 +27,8 @@ pub struct FieldInfoOwned {
 struct StructInfo {
     pub ident: Ident,
     pub name: String,
-    pub semantic: TypeSemantic,
-    pub generics: Option<Vec<(Path, String)>>,
     pub fields: Vec<FieldInfoOwned>,
-    pub partial: bool,
-}
-
-fn parse_struct_generics(attrs: &[Attribute]) -> Result<Option<Vec<(Path, String)>>> {
-    parse_generic_attr(attrs)
+    pub dotnet: DotNetInfoOwned,
 }
 
 fn parse_struct_field(ident: Ident, attrs: &[Attribute], ty: &Type) -> Result<FieldInfoOwned> {
@@ -73,45 +67,29 @@ fn parse_struct_named(
     ident: Ident,
     fields: FieldsNamed,
     attrs: &[Attribute],
-    semantic: TypeSemantic,
 ) -> Result<StructInfo> {
     let name = ident.to_string();
-    let generics = parse_struct_generics(attrs)?;
-    let partial = parse_partial_attr(attrs)?;
+    let dotnet = parse_dotnet_attr(attrs)?;
     let fields = parse_struct_fields(fields)?;
 
     Ok(StructInfo {
         ident,
         name,
-        semantic,
-        generics,
         fields,
-        partial,
+        dotnet,
     })
 }
 
-fn parse_struct(
-    ident: Ident,
-    data: DataStruct,
-    attrs: &[Attribute],
-    semantic: TypeSemantic,
-) -> Result<StructInfo> {
+fn parse_struct(ident: Ident, data: DataStruct, attrs: &[Attribute]) -> Result<StructInfo> {
     let DataStruct {
         struct_token: _,
         fields,
         semi_token: _,
     } = data;
     match fields {
-        Fields::Named(fields) => parse_struct_named(ident, fields, attrs, semantic),
+        Fields::Named(fields) => parse_struct_named(ident, fields, attrs),
         Fields::Unnamed(_) => cannot_derive!(&ident, "a tuple struct"),
         Fields::Unit => cannot_derive!(&ident, "a unit struct"),
-    }
-}
-
-fn generate_struct_semantic(semantic: TypeSemantic) -> Path {
-    match semantic {
-        TypeSemantic::Ref => parse_quote! { ::mech3ax_metadata_types::TypeSemantic::Ref },
-        TypeSemantic::Val => parse_quote! { ::mech3ax_metadata_types::TypeSemantic::Val },
     }
 }
 
@@ -161,34 +139,37 @@ fn generate_struct_field(field: FieldInfoOwned) -> ExprStruct {
     }
 }
 
-fn generate_struct_type(
-    name: String,
-    semantic: TypeSemantic,
-    generics: Option<Vec<(Path, String)>>,
-    fields: Vec<FieldInfoOwned>,
-    partial: bool,
-) -> ImplItemConst {
-    let semantic = generate_struct_semantic(semantic);
+fn generate_struct_dotnet(dotnet: DotNetInfoOwned) -> ExprStruct {
+    let DotNetInfoOwned {
+        semantic,
+        generics,
+        partial,
+        namespace,
+    } = dotnet;
+
+    let semantic: Path = match semantic {
+        TypeSemantic::Ref => parse_quote! { ::mech3ax_metadata_types::TypeSemantic::Ref },
+        TypeSemantic::Val => parse_quote! { ::mech3ax_metadata_types::TypeSemantic::Val },
+    };
     let generics = generate_struct_generics(generics);
-    let fields: Vec<_> = fields.into_iter().map(generate_struct_field).collect();
     let partial: LitBool = if partial {
         parse_quote!(true)
     } else {
         parse_quote!(false)
     };
 
+    let namespace: Expr = match namespace {
+        Some(namespace) => parse_quote!(Some(#namespace)),
+        None => parse_quote!(None),
+    };
+
     parse_quote! {
-        const TYPE_INFO: &'static ::mech3ax_metadata_types::TypeInfo =
-            &::mech3ax_metadata_types::TypeInfo::Struct(::mech3ax_metadata_types::TypeInfoStruct {
-                name: #name,
-                semantic: #semantic,
-                generics: #generics,
-                fields: &[
-                    #( #fields, )*
-                ],
-                module_path: ::std::module_path!(),
-                partial: #partial,
-            });
+        ::mech3ax_metadata_types::TypeInfoStructDotNet {
+            semantic: #semantic,
+            generics: #generics,
+            partial: #partial,
+            namespace: #namespace,
+        }
     }
 }
 
@@ -196,12 +177,25 @@ fn generate_struct(info: StructInfo, struct_generics: Generics) -> ItemImpl {
     let StructInfo {
         ident,
         name,
-        semantic,
-        generics,
         fields,
-        partial,
+        dotnet,
     } = info;
-    let type_type = generate_struct_type(name, semantic, generics, fields, partial);
+
+    let fields: Vec<_> = fields.into_iter().map(generate_struct_field).collect();
+    let dotnet = generate_struct_dotnet(dotnet);
+
+    let type_type: ImplItemConst = parse_quote! {
+        const TYPE_INFO: &'static ::mech3ax_metadata_types::TypeInfo =
+            &::mech3ax_metadata_types::TypeInfo::Struct(::mech3ax_metadata_types::TypeInfoStruct {
+                name: #name,
+                fields: &[
+                    #( #fields, )*
+                ],
+                module_path: ::std::module_path!(),
+                dotnet: #dotnet,
+            });
+    };
+
     parse_quote! {
         impl #struct_generics ::mech3ax_metadata_types::DerivedMetadata for #ident #struct_generics {
             #type_type
@@ -209,7 +203,7 @@ fn generate_struct(info: StructInfo, struct_generics: Generics) -> ItemImpl {
     }
 }
 
-pub fn derive(input: DeriveInput, semantic: TypeSemantic) -> Result<TokenStream> {
+pub fn derive(input: DeriveInput) -> Result<TokenStream> {
     let DeriveInput {
         attrs,
         vis: _,
@@ -219,7 +213,7 @@ pub fn derive(input: DeriveInput, semantic: TypeSemantic) -> Result<TokenStream>
     } = input;
     match data {
         Data::Struct(data) => {
-            let info = parse_struct(ident, data, &attrs, semantic)?;
+            let info = parse_struct(ident, data, &attrs)?;
             Ok(generate_struct(info, generics).into_token_stream())
         }
         Data::Enum(_) => cannot_derive!(&ident, "an enum"),

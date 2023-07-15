@@ -7,9 +7,9 @@ use crate::serde::{bool_false, bool_true};
 use crate::static_assert_size;
 use crate::{Color, Matrix, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::{RefStruct, ValStruct};
+use mech3ax_metadata_proc_macro::Struct;
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Camera {
     pub clip: Range,
     pub fov: Range,
@@ -17,7 +17,7 @@ pub struct Camera {
     pub data_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Display {
     pub resolution_x: u32,
     pub resolution_y: u32,
@@ -25,14 +25,15 @@ pub struct Display {
     pub data_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Window {
     pub resolution_x: u32,
     pub resolution_y: u32,
     pub data_ptr: u32,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, ValStruct)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Struct)]
+#[dotnet(val_struct)]
 #[repr(C)]
 pub struct AreaPartition {
     pub x: i32,
@@ -45,7 +46,8 @@ impl AreaPartition {
     pub const ZERO: Self = Self { x: 0, y: 0 };
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, ValStruct)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Struct)]
+#[dotnet(val_struct)]
 pub struct Area {
     pub left: i32,
     pub top: i32,
@@ -63,7 +65,7 @@ impl Area {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, RefStruct)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Struct)]
 #[repr(C)]
 pub struct BoundingBox {
     pub a: Vec3,
@@ -77,14 +79,14 @@ impl BoundingBox {
     };
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Transformation {
     pub rotation: Vec3,
     pub translation: Vec3,
     pub matrix: Option<Matrix>,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct PartitionPg {
     pub x: i32,
     pub y: i32,
@@ -94,7 +96,7 @@ pub struct PartitionPg {
     pub ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Struct, Clone, PartialEq)]
 #[repr(C)]
 pub struct PartitionValue {
     pub index: u32,
@@ -103,7 +105,7 @@ pub struct PartitionValue {
 }
 static_assert_size!(PartitionValue, 12);
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct PartitionNg {
     pub x: i32,
     pub y: i32,
@@ -118,7 +120,7 @@ fn _true() -> bool {
     true
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct NodeFlags {
     #[serde(skip_serializing_if = "bool_true", default = "_true")]
     pub active: bool,

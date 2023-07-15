@@ -58,16 +58,6 @@ pub struct TypeInfoUnion {
     pub module_path: &'static str,
 }
 
-/// A janky way of specifying whether the struct should be a reference type
-/// (C# `class`) or a value type (C# `struct`).
-///
-/// In other words, a leaky abstraction.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TypeSemantic {
-    Val,
-    Ref,
-}
-
 /// A limit set of known default value handling behaviours.
 ///
 /// * `Normal` indicates values must be present.
@@ -96,15 +86,36 @@ pub struct TypeInfoStructField {
     pub default: DefaultHandling,
 }
 
+/// Whether the struct should be a reference type (C# `class`) or a
+/// value type (C# `struct`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TypeSemantic {
+    Val,
+    Ref,
+}
+
+impl Default for TypeSemantic {
+    fn default() -> Self {
+        Self::Ref
+    }
+}
+
+/// DotNet/C#-specific information for (Rust) struct types.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TypeInfoStructDotNet {
+    pub semantic: TypeSemantic,
+    pub generics: Option<&'static [(&'static TypeInfo, &'static str)]>,
+    pub partial: bool,
+    pub namespace: Option<&'static str>,
+}
+
 /// A (Rust) struct type.
 #[derive(Debug, Clone, PartialEq)]
 pub struct TypeInfoStruct {
     pub name: &'static str,
-    pub semantic: TypeSemantic,
-    pub generics: Option<&'static [(&'static TypeInfo, &'static str)]>,
     pub fields: &'static [TypeInfoStructField],
     pub module_path: &'static str,
-    pub partial: bool,
+    pub dotnet: TypeInfoStructDotNet,
 }
 
 /// A type.

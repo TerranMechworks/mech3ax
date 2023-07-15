@@ -1,5 +1,5 @@
 use crate::csharp_type::{CSharpType, SerializeType, TypeKind};
-use crate::module_path::{rust_mod_path_to_dotnet, rust_mod_path_to_path};
+use crate::module_path::{dotnet_namespace_to_path, rust_mod_path_to_dotnet};
 use crate::resolver::TypeResolver;
 use mech3ax_metadata_types::{TypeInfo, TypeInfoUnion};
 use serde::Serialize;
@@ -96,7 +96,7 @@ impl Union {
             })
             .collect();
 
-        let mut path = rust_mod_path_to_path(ui.module_path);
+        let mut path = dotnet_namespace_to_path(&namespace);
         resolver.add_directory(&path);
         path.push(format!("{}.cs", name));
 

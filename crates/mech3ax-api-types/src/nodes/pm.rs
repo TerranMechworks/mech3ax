@@ -2,9 +2,9 @@ use super::{Area, BoundingBox, Camera, Display, NodeFlags, PartitionNg, Transfor
 use crate::static_assert_size;
 use crate::Range;
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::{RefStruct, Union};
+use mech3ax_metadata_proc_macro::{Struct, Union};
 
-#[derive(Debug, Serialize, Deserialize, RefStruct, Clone, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Struct, Clone, PartialEq, Eq)]
 #[repr(C)]
 pub struct AreaPartitionPm {
     pub x: i16,
@@ -29,7 +29,7 @@ impl AreaPartitionPm {
     };
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Light {
     pub name: String,
     pub unk004: f32,
@@ -41,7 +41,7 @@ pub struct Light {
     pub node_index: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Lod {
     pub name: String,
     pub level: bool,
@@ -58,7 +58,7 @@ pub struct Lod {
     pub node_index: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Object3d {
     pub name: String,
     pub transformation: Option<Transformation>,
@@ -81,7 +81,7 @@ pub struct Object3d {
     pub node_index: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct World {
     pub name: String,
     pub area: Area,

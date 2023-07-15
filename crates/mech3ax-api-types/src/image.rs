@@ -1,7 +1,7 @@
 //! Image/texture data structures.
 use crate::serde::bytes;
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::{Enum, RefStruct, Union};
+use mech3ax_metadata_proc_macro::{Enum, Struct, Union};
 use num_derive::FromPrimitive;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Enum)]
@@ -26,13 +26,13 @@ pub enum TextureStretch {
     Unk8 = 8,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct PaletteData {
     #[serde(with = "bytes")]
     pub data: Vec<u8>,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct GlobalPalette {
     pub index: i32,
     pub count: u16,
@@ -46,7 +46,7 @@ pub enum TexturePalette {
     Global(GlobalPalette),
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct TextureInfo {
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -61,7 +61,7 @@ pub struct TextureInfo {
     pub palette: TexturePalette,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct TextureManifest {
     pub texture_infos: Vec<TextureInfo>,
     pub global_palettes: Vec<PaletteData>,

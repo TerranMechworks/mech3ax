@@ -1,15 +1,15 @@
 use super::{Area, AreaPartition, BoundingBox, Camera, Display, NodeFlags, PartitionPg, Window};
 use crate::{Color, Matrix, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::{RefStruct, Union};
+use mech3ax_metadata_proc_macro::{Struct, Union};
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct RotationTranslation {
     pub rotation: Vec3,
     pub translation: Vec3,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct TranslationOnly {
     pub translation: Vec3,
     pub matrix: Option<Matrix>,
@@ -23,7 +23,7 @@ pub enum Transformation {
     TranslationOnly(TranslationOnly),
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Empty {
     pub name: String,
     pub flags: NodeFlags,
@@ -35,7 +35,7 @@ pub struct Empty {
     pub parent: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Light {
     pub name: String,
     pub unk008: f32,
@@ -49,7 +49,7 @@ pub struct Light {
     pub data_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Lod {
     pub name: String,
     pub level: bool,
@@ -66,7 +66,7 @@ pub struct Lod {
     pub unk116: BoundingBox,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Object3d {
     pub name: String,
     pub transformation: Transformation,
@@ -86,7 +86,7 @@ pub struct Object3d {
     pub unk164: BoundingBox,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct World {
     pub name: String,
     pub area: Area,

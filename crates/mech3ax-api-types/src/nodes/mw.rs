@@ -4,9 +4,9 @@ use super::{
 };
 use crate::{Color, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::{RefStruct, Union};
+use mech3ax_metadata_proc_macro::{Struct, Union};
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Empty {
     pub name: String,
     pub flags: NodeFlags,
@@ -18,7 +18,7 @@ pub struct Empty {
     pub parent: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Light {
     pub name: String,
     pub direction: Vec3,
@@ -30,7 +30,7 @@ pub struct Light {
     pub data_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Lod {
     pub name: String,
 
@@ -50,7 +50,7 @@ pub struct Lod {
     pub unk116: BoundingBox,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Object3d {
     pub name: String,
     pub transformation: Option<Transformation>,
@@ -71,7 +71,7 @@ pub struct Object3d {
     pub unk164: BoundingBox,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct World {
     pub name: String,
     pub area: Area,

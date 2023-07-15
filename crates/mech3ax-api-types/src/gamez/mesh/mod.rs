@@ -5,9 +5,10 @@ mod rc;
 use crate::static_assert_size;
 use crate::{Color, Vec3};
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::{RefStruct, ValStruct};
+use mech3ax_metadata_proc_macro::Struct;
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy, ValStruct)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy, Struct)]
+#[dotnet(val_struct)]
 #[repr(C)]
 pub struct UvCoord {
     pub u: f32,
@@ -15,7 +16,7 @@ pub struct UvCoord {
 }
 static_assert_size!(UvCoord, 8);
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct MeshLight {
     pub unk00: u32,
     pub unk04: u32,

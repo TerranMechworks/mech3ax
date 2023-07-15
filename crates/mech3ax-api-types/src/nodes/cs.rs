@@ -2,16 +2,16 @@ use super::pm::AreaPartitionPm;
 use super::{Area, BoundingBox, Display, PartitionNg, Transformation};
 use crate::Range;
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::{RefStruct, Union};
+use mech3ax_metadata_proc_macro::{Struct, Union};
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Camera {
     pub name: String,
     pub focus_node_xy: i32,
     pub data_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Light {
     pub name: String,
     pub range: Range,
@@ -20,7 +20,7 @@ pub struct Light {
     pub node_index: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Lod {
     pub name: String,
     pub level: bool,
@@ -41,7 +41,7 @@ pub struct Lod {
     pub node_index: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Object3d {
     pub name: String,
     pub transformation: Option<Transformation>,
@@ -66,7 +66,7 @@ pub struct Object3d {
     pub node_index: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Window {
     pub name: String,
     pub resolution_x: u32,
@@ -74,7 +74,7 @@ pub struct Window {
     pub data_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct World {
     pub name: String,
     pub area: Area,

@@ -3,9 +3,9 @@ use crate::serde::bool_false;
 use crate::static_assert_size;
 use crate::{Color, Vec3};
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::RefStruct;
+use mech3ax_metadata_proc_macro::Struct;
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct PolygonFlags {
     #[serde(skip_serializing_if = "bool_false", default)]
     pub unk2: bool,
@@ -17,7 +17,7 @@ pub struct PolygonFlags {
     pub unk6: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 #[repr(C)]
 pub struct MeshMaterialInfo {
     pub material_index: u32,      // 00
@@ -26,13 +26,13 @@ pub struct MeshMaterialInfo {
 }
 static_assert_size!(MeshMaterialInfo, 12);
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct PolygonMaterialNg {
     pub material_index: u32,
     pub uv_coords: Vec<UvCoord>,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct PolygonNg {
     pub flags: PolygonFlags,
     pub vertex_indices: Vec<u32>,
@@ -50,7 +50,7 @@ pub struct PolygonNg {
     pub unk36: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, RefStruct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct MeshNg {
     pub vertices: Vec<Vec3>,
     pub normals: Vec<Vec3>,
