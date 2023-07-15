@@ -324,6 +324,19 @@ Detailed changes:
 
 [Rust](https://www.rust-lang.org/) is required.
 
+## DotNet/C# codegen
+
+To run the C# codegen and copy it to Mech3DotNet, perform something like the following steps:
+
+```bash
+MECH3DOTNET_AUTOGEN_PATH="../Mech3DotNet/Mech3DotNet/AutoGen/"
+rm -r "output/" || true
+rm -r "$MECH3DOTNET_AUTOGEN_PATH" || true
+mkdir -p "output/Mech3DotNet"
+env RUST_BACKTRACE=1 cargo run --bin mech3ax-metadata-gen
+cp -r "output/Mech3DotNet/AutoGen/" "$MECH3DOTNET_AUTOGEN_PATH"
+```
+
 ## Release procedure
 
 1. Review changelog, and add the date
