@@ -10,7 +10,7 @@ pub struct MessageEntry {
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
-#[dotnet(partial)]
+#[dotnet(partial, namespace = "Mech3DotNet.Zbd")]
 pub struct Messages {
     pub language_id: u32,
     pub entries: Vec<MessageEntry>,
