@@ -25,15 +25,24 @@ There are three ways to use `mech3ax`:
 
 Roughly speaking, the output of from ZBD conversions will be one or more JSON documents, or PNG images. In the case of multiple documents/images, `unzbd` will write everything into a single ZIP file, along with metadata.
 
+The conversions are binary-accurate. So converting from a `*.zbd` file and then back to a `*.zbd` file produces exactly the same file, byte-for-byte.
+
 ## Currently supported
 
 ### Support matrix
+
+Legend:
+
+* ✅ works
+* ✔️ largely works, with some caveats
+* ❌ not implemented
+* ⬛ not applicable
 
 | Type                                                   | RC | MW | PM | CS |
 | ------------------------------------------------------ | -- | -- | -- | -- |
 | `sounds*.zbd`                                          | ✅ | ✅ | ✅ | ✅ |
 | `interp.zbd`                                           | ✅ | ✅ | ✅ | ✅ |
-| `messages.dll`/`Mech3Msg.dll`/`strings.dll`            | ✅ | ✅ | ✅ | ✅ |
+| `messages.dll`/`Mech3Msg.dll`/`strings.dll` *          | ✅ | ✅ | ✅ | ✅ |
 | `zrdr.zbd`/`reader*.zbd`                               | ✅ | ✅ | ✅ | ✅ |
 | Image/texture ZBDs                                     | ✅ | ✅ | ✅ | ✅ |
 | `mechlib.zbd`                                          | ⬛ | ✅ | ✅ | ⬛ |
@@ -43,22 +52,15 @@ Roughly speaking, the output of from ZBD conversions will be one or more JSON do
 | `m*.zmap`                                              | ✅ | ⬛ | ⬛ | ⬛ |
 | `planes.zbd` *                                         | ⬛ | ⬛ | ⬛ | ✅ |
 
+\* Messages/localisation DLLs cannot easily be reconstructed, and so there is no support for this in `rezbd`.
+
 \* For `planes.zbd`, please use the `gamez` mode.
-
-Legend:
-
-* ✅ works
-* ✔️ largely works, with some caveats
-* ❌ not implemented
-* ⬛ not applicable
 
 ### MechWarrior 3
 
-Various versions of the MechWarror 3 base game have been tested (including US versions 1.0/1.1/1.2/Gold Edition, German version 1.0, each with and without the 1.2 patch). If you are in possession of any other versions, especially the French versions, please get in touch!
+Various versions of the MechWarror 3 base game have been tested (including US versions 1.0/1.1/1.2/Gold Edition, German version 1.0, each with and without the 1.2 patch). If you are in possession of any other versions, please get in touch!
 
 However, for simplicity, the only version guaranteed to work is v1.2.
-
-The conversions are binary-accurate. So converting from a `*.zbd` file and then back to a `*.zbd` file produces the same file.
 
 - Sound archives (`sounds*.zbd`) containing sound effects to ZIP archives of WAV files - note the background music is streamed from the CD and never installed
 - Interpreter scripts (`interp.zbd`) to a JSON file - these small, interpreted scripts drive which files the engine loads
@@ -139,6 +141,8 @@ Provided subcommands:
 * `zmap` (produces a `*.json` file, `rc` only)
 
 ## Blender scripts
+
+> **WARNING**: The Blender scripts are proof-of-concept, and generally unsupported. If they are broken, they need fixing by you.
 
 Blender 3.2.2 or higher is recommended. Blender's APIs do change, so you may need to use a version closely matching that one. It will definitely *not* work with versions below 2.80, but if you have success running it with newer versions, let me know so I can update this README.
 
