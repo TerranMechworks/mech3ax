@@ -1,6 +1,5 @@
 bitflags::bitflags! {
     pub struct LightFlags: u32 {
-        const INACTIVE = 0;
         // This flag never occurs in animation definitions, but does in GameZ
         const TRANSLATION_ABS = 1 << 0;
         const TRANSLATION = 1 << 1;

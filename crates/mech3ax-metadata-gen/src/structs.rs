@@ -137,7 +137,7 @@ impl Struct {
     }
 }
 
-pub const CLASS_IMPL: &str = r###"using System;
+pub const CLASS_IMPL: &str = r#"using System;
 using Mech3DotNet.Exchange;
 
 namespace {{ struct.namespace }}
@@ -205,9 +205,9 @@ namespace {{ struct.namespace }}
         }
     }
 }
-"###;
+"#;
 
-pub const STRUCT_IMPL: &str = r###"using System;
+pub const STRUCT_IMPL: &str = r#"using System;
 using Mech3DotNet.Exchange;
 
 namespace {{ struct.namespace }}
@@ -275,4 +275,4 @@ namespace {{ struct.namespace }}
         }
     }
 }
-"###;
+"#;

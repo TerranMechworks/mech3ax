@@ -116,7 +116,7 @@ impl Union {
     }
 }
 
-pub const UNION_IMPL: &str = r###"using System;
+pub const UNION_IMPL: &str = r#"using System;
 using Mech3DotNet.Exchange;
 
 namespace {{ union.namespace }}
@@ -200,4 +200,4 @@ namespace {{ union.namespace }}
         }
     }
 }
-"###;
+"#;

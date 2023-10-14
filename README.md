@@ -193,6 +193,9 @@ where `--rtexture` and `--rmechtex` are optional.
 
 ### [0.6.0-rc5] - Unreleased
 
+* Allow Recoil light nodes in other positions (`gamez`)
+* Update to Rust 1.73.0
+
 ### [0.6.0-rc4] - 2023-07-15
 
 * API type updates (codegen)

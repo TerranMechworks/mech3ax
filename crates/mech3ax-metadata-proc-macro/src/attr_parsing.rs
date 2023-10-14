@@ -92,7 +92,10 @@ fn parse_dotnet_inner(inner: impl Iterator<Item = NestedMeta>) -> Result<DotNetI
     let mut dotnet = DotNetInfoOwned::default();
     for nested in inner {
         let NestedMeta::Meta(attr) = nested else {
-            return Err(Error::new_spanned(nested, "Expected #[dotnet(...)], but found literal"))
+            return Err(Error::new_spanned(
+                nested,
+                "Expected #[dotnet(...)], but found literal",
+            ));
         };
         match attr {
             Meta::Path(path) if path.is_ident("partial") => dotnet.partial = true,
@@ -130,7 +133,9 @@ fn parse_dotnet_inner(inner: impl Iterator<Item = NestedMeta>) -> Result<DotNetI
 }
 
 pub fn parse_dotnet_attr(attrs: &[Attribute]) -> Result<DotNetInfoOwned> {
-    let Some(dotnet) = find_attr(attrs, "dotnet") else { return Ok(DotNetInfoOwned::default() )};
+    let Some(dotnet) = find_attr(attrs, "dotnet") else {
+        return Ok(DotNetInfoOwned::default());
+    };
     match dotnet.parse_meta()? {
         Meta::List(list) => parse_dotnet_inner(list.nested.into_iter()),
         other => Err(Error::new_spanned(other, "Expected #[dotnet(...)]")),

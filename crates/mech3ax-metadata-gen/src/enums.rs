@@ -73,7 +73,7 @@ impl Enum {
     }
 }
 
-pub const ENUM_IMPL: &str = r###"using Mech3DotNet.Exchange;
+pub const ENUM_IMPL: &str = r#"using Mech3DotNet.Exchange;
 
 namespace {{ enum.namespace }}
 {
@@ -113,4 +113,4 @@ namespace {{ enum.namespace }}
         }
     }
 }
-"###;
+"#;

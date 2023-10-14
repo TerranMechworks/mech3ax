@@ -31,7 +31,6 @@ static_assert_size!(CallAnimationC, 68);
 
 bitflags::bitflags! {
     struct CallAnimationFlags: u16 {
-        const NONE = 0;
         // Call with AT_NODE (OPERAND_NODE can't be used)
         const AT_NODE = 1 << 0;
         // AT_NODE/WITH_NODE has translation coordinates

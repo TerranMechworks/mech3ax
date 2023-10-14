@@ -56,7 +56,6 @@ static_assert_size!(PufferStateC, 580);
 
 bitflags::bitflags! {
     struct PufferStateFlags: u32 {
-        const INACTIVE = 0;
         const TRANSLATE = 1 << 0;
         // this might not be right?
         const GROWTH_FACTOR = 1 << 1;
