@@ -17,7 +17,7 @@ pub fn read_nodes(
     let end_offset = read.offset + NODE_PM_C_SIZE * array_size + 4 * array_size;
 
     let mut variants = Vec::new();
-    let mut light_node = false;
+    let mut light_node: Option<u32> = None;
     for index in 0..array_size {
         let node_info_pos = read.offset;
         let variant = read_node_info_gamez(read, index)?;
@@ -29,42 +29,42 @@ pub fn read_nodes(
         trace!("Node {} index: {}", index, node_index);
 
         match &variant {
-            NodeVariantPm::World {
-                data_ptr: _,
-                children_count: _,
-                children_array_ptr: _,
-            } => {
-                assert_that!("node data position", index == 0, node_info_pos)?;
-                assert_that!("node index", node_index == 1, read.prev)?;
+            NodeVariantPm::World { .. } => {
+                assert_that!("node position (world)", index == 0, node_info_pos)?;
+                assert_that!("node index (world)", node_index == 1, read.prev)?;
             }
-            NodeVariantPm::Window { data_ptr: _ } => {
-                assert_that!("node data position", index == 1, node_info_pos)?;
-                assert_that!("node index", node_index == 2, read.prev)?;
+            NodeVariantPm::Window { .. } => {
+                assert_that!("node position (window)", index == 1, node_info_pos)?;
+                assert_that!("node index (window)", node_index == 2, read.prev)?;
             }
-            NodeVariantPm::Camera { data_ptr: _ } => {
-                assert_that!("node data position", index == 2, node_info_pos)?;
-                assert_that!("node index", node_index == 3, read.prev)?;
+            NodeVariantPm::Camera { .. } => {
+                assert_that!("node position (camera)", index == 2, node_info_pos)?;
+                assert_that!("node index (camera)", node_index == 3, read.prev)?;
             }
-            NodeVariantPm::Display { data_ptr: _ } => {
-                assert_that!("node data position", index == 3, node_info_pos)?;
-                assert_that!("node index", node_index == 4, read.prev)?;
+            NodeVariantPm::Display { .. } => {
+                assert_that!("node position (display)", index == 3, node_info_pos)?;
+                assert_that!("node index (display)", node_index == 4, read.prev)?;
             }
-            NodeVariantPm::Light { data_ptr: _ } => {
-                assert_that!("node data position", index > 3, node_info_pos)?;
-                if light_node {
+            NodeVariantPm::Light { .. } => {
+                // exclude world, window, camera, or display indices
+                assert_that!("node position (light)", index > 3, node_info_pos)?;
+                if let Some(i) = light_node {
                     return Err(assert_with_msg!(
-                        "Unexpected light node in position {} (at {})",
+                        "Unexpected light node in position {}, already found in {} (at {})",
                         index,
-                        node_info_pos
+                        i,
+                        node_info_pos,
                     ));
                 }
-                light_node = true;
+                light_node = Some(index);
             }
             NodeVariantPm::Lod(_) => {
-                assert_that!("node data position", index > 3, node_info_pos)?;
+                // exclude world, window, camera, or display indices
+                assert_that!("node position (lod)", index > 3, node_info_pos)?;
             }
             NodeVariantPm::Object3d(object3d) => {
-                assert_that!("node data position", index > 3, node_info_pos)?;
+                // exclude world, window, camera, or display indices
+                assert_that!("node position (object3d)", index > 3, node_info_pos)?;
                 if object3d.mesh_index >= 0 {
                     assert_that!(
                         "object3d mesh index",
@@ -77,8 +77,9 @@ pub fn read_nodes(
         variants.push((variant, node_index));
     }
 
-    assert_that!("has light node", light_node == true, read.offset)?;
     assert_that!("node info end", end_offset == read.offset, read.offset)?;
+    let _light_node_index = light_node
+        .ok_or_else(|| assert_with_msg!("GameZ contains no light node (at {})", read.offset))?;
 
     let nodes = variants
         .into_iter()

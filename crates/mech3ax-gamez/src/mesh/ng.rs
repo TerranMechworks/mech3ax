@@ -207,7 +207,7 @@ fn assert_mesh_info(mesh: MeshNgC, offset: u32) -> Result<WrappedMeshNg> {
     let file_ptr = assert_that!("file ptr", bool mesh.file_ptr, offset + 0)?;
     assert_that!("field 04", mesh.unk04 in [0, 1, 2], offset + 4)?;
     // unk08
-    assert_that!("parent count", mesh.parent_count > 0, offset + 12)?;
+    assert_that!("parent count (mesh)", mesh.parent_count > 0, offset + 12)?;
     assert_that!("field 36", mesh.zero36 == 0, offset + 36)?;
     // assert_that!("field 44", mesh.zero44 == 0, offset + 44)?;
     assert_that!("field 48", mesh.zero48 == 0, offset + 48)?;

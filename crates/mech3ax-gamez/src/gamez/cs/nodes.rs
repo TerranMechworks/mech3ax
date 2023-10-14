@@ -31,51 +31,40 @@ pub fn read_nodes(
         trace!("Node {} index: {}", index, node_index);
 
         match &variant {
-            NodeVariantCs::World {
-                data_ptr: _,
-                children_count: _,
-                children_array_ptr: _,
-            } => {
-                assert_that!("node data position", index == 0, node_info_pos)?;
-                assert_that!("node index", node_index == 1, read.prev)?;
+            NodeVariantCs::World { .. } => {
+                assert_that!("node position (world)", index == 0, node_info_pos)?;
+                assert_that!("node index (world)", node_index == 1, read.prev)?;
             }
-            NodeVariantCs::Display { data_ptr: _ } => {
-                assert_that!("node data position", index == 1, node_info_pos)?;
-                assert_that!("node index", node_index == 2, read.prev)?;
+            NodeVariantCs::Display { .. } => {
+                assert_that!("node position (display)", index == 1, node_info_pos)?;
+                assert_that!("node index (display)", node_index == 2, read.prev)?;
             }
             NodeVariantCs::Window {
-                data_ptr: _,
-                spyglass: false,
+                spyglass: false, ..
             } => {
-                assert_that!("node data position", index == 2, node_info_pos)?;
-                assert_that!("node index", node_index == 3, read.prev)?;
+                assert_that!("node position (window normal)", index == 2, node_info_pos)?;
+                assert_that!("node index (window normal)", node_index == 3, read.prev)?;
             }
             NodeVariantCs::Camera {
-                data_ptr: _,
-                spyglass: false,
+                spyglass: false, ..
             } => {
-                assert_that!("node data position", index == 3, node_info_pos)?;
-                assert_that!("node index", node_index == 4, read.prev)?;
+                assert_that!("node position (camera normal)", index == 3, node_info_pos)?;
+                assert_that!("node index (camera normal)", node_index == 4, read.prev)?;
             }
-            NodeVariantCs::Window {
-                data_ptr: _,
-                spyglass: true,
-            } => {
-                assert_that!("node data position", index == 4, node_info_pos)?;
-                assert_that!("node index", node_index == 5, read.prev)?;
+            NodeVariantCs::Window { spyglass: true, .. } => {
+                assert_that!("node position (window spyglass)", index == 4, node_info_pos)?;
+                assert_that!("node index (window spyglass)", node_index == 5, read.prev)?;
             }
-            NodeVariantCs::Camera {
-                data_ptr: _,
-                spyglass: true,
-            } => {
-                assert_that!("node data position", index == 5, node_info_pos)?;
-                assert_that!("node index", node_index == 6, read.prev)?;
+            NodeVariantCs::Camera { spyglass: true, .. } => {
+                assert_that!("node position (camera spyglass)", index == 5, node_info_pos)?;
+                assert_that!("node index (camera spyglass)", node_index == 6, read.prev)?;
             }
-            NodeVariantCs::Light { data_ptr: _ } => {
+            NodeVariantCs::Light { .. } => {
+                // exclude world, window, camera, or display indices
+                assert_that!("node position (light)", index > 5, node_info_pos)?;
                 // we still have to assert that there was a light node, since
                 // the node index might not be unique or even present.
-                assert_that!("node index", node_index == light_index, read.prev)?;
-                assert_that!("node data position", index > 5, node_info_pos)?;
+                assert_that!("node index (light)", node_index == light_index, read.prev)?;
                 if let Some(i) = light_node {
                     return Err(assert_with_msg!(
                         "Unexpected light node in position {}, already found in {} (at {})",
@@ -87,15 +76,17 @@ pub fn read_nodes(
                 light_node = Some(index);
             }
             NodeVariantCs::Lod(_) => {
+                // can't do this for planes.zbd
                 if is_gamez {
-                    // can't do this for planes.zbd
-                    assert_that!("node data position", index > 5, node_info_pos)?;
+                    // exclude world, window, camera, or display indices
+                    assert_that!("node position (lod)", index > 5, node_info_pos)?;
                 }
             }
             NodeVariantCs::Object3d(object3d) => {
+                // can't do this for planes.zbd
                 if is_gamez {
-                    // can't do this for planes.zbd
-                    assert_that!("node data position", index > 5, node_info_pos)?;
+                    // exclude world, window, camera, or display indices
+                    assert_that!("node position (object3d)", index > 5, node_info_pos)?;
                 }
                 if object3d.mesh_index >= 0 {
                     // Cast safety: >=0, usize::MAX > i32::MAX
@@ -113,12 +104,12 @@ pub fn read_nodes(
         variants.push((variant, node_index));
     }
 
+    assert_that!("node info end", end_offset == read.offset, read.offset)?;
+
+    // can't do this for planes.zbd
     if is_gamez {
-        // can't do this for planes.zbd
         assert_that!("has light node", light_node != None, read.offset)?;
     }
-
-    assert_that!("node info end", end_offset == read.offset, read.offset)?;
 
     let nodes = variants
         .into_iter()

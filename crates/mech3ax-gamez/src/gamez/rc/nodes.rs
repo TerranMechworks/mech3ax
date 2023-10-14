@@ -16,10 +16,9 @@ pub fn read_nodes(
 ) -> Result<Vec<NodeRc>> {
     let valid_offset = read.offset + NODE_RC_C_SIZE * count + 4 * count;
     let end_offset = read.offset + NODE_RC_C_SIZE * NODE_ARRAY_SIZE + 4 * NODE_ARRAY_SIZE;
-    // last general node index, excluding the light index (count - 1)
-    let last_index = count - 2;
 
     let mut variants = Vec::new();
+    let mut light_node: Option<u32> = None;
     for index in 0..count {
         let node_info_pos = read.offset;
         let variant = read_node_info(read, index)?;
@@ -27,38 +26,45 @@ pub fn read_nodes(
         let node_data_offset = read.read_u32()?;
         trace!("Node {} data offset: {}", index, node_data_offset);
         match &variant {
-            NodeVariantRc::World {
-                data_ptr: _,
-                children_count: _,
-                children_array_ptr: _,
-            } => {
-                assert_that!("node data position", index == 0, node_info_pos)?;
+            NodeVariantRc::World { .. } => {
+                assert_that!("node position (world)", index == 0, node_info_pos)?;
             }
-            NodeVariantRc::Window { data_ptr: _ } => {
-                assert_that!("node data position", index == 1, node_info_pos)?;
+            NodeVariantRc::Window { .. } => {
+                assert_that!("node position (window)", index == 1, node_info_pos)?;
             }
-            NodeVariantRc::Camera { data_ptr: _ } => {
-                assert_that!("node data position", index == 2, node_info_pos)?;
+            NodeVariantRc::Camera { .. } => {
+                assert_that!("node position (camera)", index == 2, node_info_pos)?;
             }
-            NodeVariantRc::Display { data_ptr: _ } => {
-                assert_that!("node data position", index == 3, node_info_pos)?;
+            NodeVariantRc::Display { .. } => {
+                assert_that!("node position (display)", index == 3, node_info_pos)?;
             }
             NodeVariantRc::Empty(_) => {
-                // exclude world, window, camera, display, or light indices
-                assert_that!("node data position", 4 <= index <= last_index, node_info_pos)?;
+                // exclude world, window, camera, or display indices
+                assert_that!("node position (empty)", index > 3, node_info_pos)?;
                 // cannot be parented to world, window, camera, display, or light
-                assert_that!("empty ref index", 4 <= node_data_offset <= last_index, read.prev)?;
+                // check for light parent later
+                assert_that!("empty parent index", node_data_offset > 3, read.prev)?;
             }
-            NodeVariantRc::Light { data_ptr: _ } => {
-                assert_that!("node data position", index == count - 1, node_info_pos)?;
+            NodeVariantRc::Light { .. } => {
+                // exclude world, window, camera, or display indices
+                assert_that!("node position (light)", index > 3, node_info_pos)?;
+                if let Some(i) = light_node {
+                    return Err(assert_with_msg!(
+                        "Unexpected light node in position {}, already found in {} (at {})",
+                        index,
+                        i,
+                        node_info_pos,
+                    ));
+                }
+                light_node = Some(index);
             }
             NodeVariantRc::Lod(_) => {
-                // exclude world, window, camera, display, or light indices
-                assert_that!("node data position", 4 <= index <= last_index, node_info_pos)?;
+                // exclude world, window, camera, or display indices
+                assert_that!("node position (lod)", index > 3, node_info_pos)?;
             }
             NodeVariantRc::Object3d(object3d) => {
-                // exclude world, window, camera, display, or light indices
-                assert_that!("node data position", 4 <= index <= last_index, node_info_pos)?;
+                // exclude world, window, camera, or display indices
+                assert_that!("node position (object3d)", index > 3, node_info_pos)?;
                 if object3d.mesh_index >= 0 {
                     assert_that!(
                         "object3d mesh index",
@@ -72,6 +78,8 @@ pub fn read_nodes(
     }
 
     assert_that!("node info valid", valid_offset == read.offset, read.offset)?;
+    let light_node_index = light_node
+        .ok_or_else(|| assert_with_msg!("GameZ contains no light node (at {})", read.offset))?;
 
     for index in count..NODE_ARRAY_SIZE {
         read_node_info_zero(read, index)?;
@@ -92,6 +100,11 @@ pub fn read_nodes(
         .map(|(index, (mut variant, node_data_offset))| {
             match &mut variant {
                 NodeVariantRc::Empty(empty) => {
+                    assert_that!(
+                        "empty parent index",
+                        node_data_offset != light_node_index,
+                        read.prev
+                    )?;
                     // in the case of an empty node, the offset is used as the parent
                     // index, and not the offset (there is no node data)
                     empty.parent = node_data_offset;
