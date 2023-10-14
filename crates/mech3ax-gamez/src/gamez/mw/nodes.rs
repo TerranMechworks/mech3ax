@@ -1,3 +1,4 @@
+use super::NODE_INDEX_INVALID;
 use mech3ax_api_types::nodes::mw::NodeMw;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
@@ -29,8 +30,7 @@ pub fn read_nodes(
             None => {
                 let mut expected_index = index + 1;
                 if expected_index == array_size {
-                    // we'll never know why???
-                    expected_index = 0xFFFFFF
+                    expected_index = NODE_INDEX_INVALID;
                 }
                 assert_that!(
                     "node zero index",
@@ -111,8 +111,7 @@ pub fn read_nodes(
 
         let mut expected_index = index + 1;
         if expected_index == array_size {
-            // we'll never know why???
-            expected_index = 0xFFFFFF;
+            expected_index = NODE_INDEX_INVALID;
         }
         assert_that!("node zero index", actual_index == expected_index, read.prev)?;
     }
@@ -229,7 +228,7 @@ pub fn write_nodes(
         write_node_info_zero(write, index)?;
         let mut index = index + 1;
         if index == array_size {
-            index = 0xFFFFFF;
+            index = NODE_INDEX_INVALID;
         }
         write.write_u32(index)?;
     }

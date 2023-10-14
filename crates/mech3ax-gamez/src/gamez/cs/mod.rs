@@ -2,7 +2,9 @@ mod fixup;
 mod meshes;
 mod nodes;
 
-use super::common::{SIGNATURE, VERSION_CS};
+use super::common::{
+    NODE_INDEX_BOT_MASK, NODE_INDEX_TOP, NODE_INDEX_TOP_MASK, SIGNATURE, VERSION_CS,
+};
 use crate::gamez::cs::fixup::Fixup;
 use crate::materials::ng as materials;
 use crate::textures::ng as textures;

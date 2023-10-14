@@ -1,4 +1,4 @@
-use super::NODE_ARRAY_SIZE;
+use super::{NODE_ARRAY_SIZE, NODE_INDEX_INVALID};
 use log::trace;
 use mech3ax_api_types::nodes::rc::*;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -79,8 +79,7 @@ pub fn read_nodes(
 
         let mut expected_index = index + 1;
         if expected_index == NODE_ARRAY_SIZE {
-            // we'll never know why???
-            expected_index = 0xFFFFFF;
+            expected_index = NODE_INDEX_INVALID;
         }
         assert_that!("node zero index", actual_index == expected_index, read.prev)?;
     }
@@ -162,7 +161,7 @@ pub fn write_nodes(
         write_node_info_zero(write, index)?;
         let mut index = index + 1;
         if index == NODE_ARRAY_SIZE {
-            index = 0xFFFFFF;
+            index = NODE_INDEX_INVALID;
         }
         write.write_u32(index)?;
     }

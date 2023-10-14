@@ -1,7 +1,7 @@
 mod meshes;
 mod nodes;
 
-use super::common::{SIGNATURE, VERSION_RC};
+use super::common::{NODE_INDEX_INVALID, SIGNATURE, VERSION_RC};
 use crate::materials::rc as materials;
 use crate::textures::rc as textures;
 use log::{debug, trace};

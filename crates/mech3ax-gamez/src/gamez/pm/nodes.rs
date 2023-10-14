@@ -1,3 +1,4 @@
+use super::{NODE_INDEX_BOT_MASK, NODE_INDEX_TOP, NODE_INDEX_TOP_MASK};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::pm::*;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -22,9 +23,9 @@ pub fn read_nodes(
         let variant = read_node_info_gamez(read, index)?;
 
         let node_index = read.read_u32()?;
-        let top = node_index & 0xFF000000;
-        assert_that!("node index top", top == 0x02000000, read.prev)?;
-        let node_index = node_index & 0x00FFFFFF;
+        let top = node_index & NODE_INDEX_TOP_MASK;
+        assert_that!("node index top", top == NODE_INDEX_TOP, read.prev)?;
+        let node_index = node_index & NODE_INDEX_BOT_MASK;
         trace!("Node {} index: {}", index, node_index);
 
         match &variant {
@@ -186,7 +187,7 @@ pub fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NodePm]) -> 
             NodePm::Object3d(object3d) => object3d.node_index,
         };
         trace!("Node {} index: {}", index, node_index);
-        let node_index = node_index | 0x02000000;
+        let node_index = node_index | NODE_INDEX_TOP;
         write.write_u32(node_index)?;
     }
 

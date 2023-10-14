@@ -12,6 +12,12 @@ pub const VERSION_MW: u32 = 27;
 pub const VERSION_PM: u32 = 41;
 pub const VERSION_CS: u32 = 42;
 
+// we'll never know why???
+pub const NODE_INDEX_INVALID: u32 = 0x00FFFFFF;
+pub const NODE_INDEX_TOP_MASK: u32 = 0xFF000000;
+pub const NODE_INDEX_BOT_MASK: u32 = 0x00FFFFFF;
+pub const NODE_INDEX_TOP: u32 = 0x02000000;
+
 #[derive(Debug)]
 #[repr(C)]
 pub struct MeshesInfoC {
