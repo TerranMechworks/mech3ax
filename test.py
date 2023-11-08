@@ -346,9 +346,6 @@ class Tester:
             for input_zbd in sorted(zbd_dir.rglob("gamez.zbd")):
                 base_name, parents = campaign_mission(input_zbd, zbd_dir)
 
-                if game == GAME_RC and (parents == ["m6"] or parents == ["m9"]):
-                    continue
-
                 zip_path = output_dir / f"{base_name}.zip"
                 output_zbd = output_dir / f"{base_name}.zbd"
                 read_log = output_dir / f"{base_name}-read.log"

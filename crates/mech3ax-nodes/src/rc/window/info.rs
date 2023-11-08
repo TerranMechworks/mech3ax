@@ -27,7 +27,7 @@ pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantR
         node.area_partition == None,
         offset + 76
     )?;
-    assert_that!("window has parent", node.has_parent == false, offset + 84)?;
+    assert_that!("window parent count", node.parent_count == 0, offset + 84)?;
     // parent_array_ptr (88) already asserted
     assert_that!(
         "window children count",
@@ -69,7 +69,7 @@ pub fn make_variants(window: &Window) -> NodeVariantsRc {
         data_ptr: window.data_ptr,
         mesh_index: -1,
         area_partition: None,
-        has_parent: false,
+        parent_count: 0,
         parent_array_ptr: 0,
         children_count: 0,
         children_array_ptr: 0,

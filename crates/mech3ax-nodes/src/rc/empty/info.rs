@@ -11,7 +11,7 @@ const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     | NodeBitFlags::INTERSECT_SURFACE.bits()
     // | NodeBitFlags::INTERSECT_BBOX.bits()
     // | NodeBitFlags::LANDMARK.bits()
-    | NodeBitFlags::UNK08.bits()
+    // | NodeBitFlags::UNK08.bits()
     // | NodeBitFlags::HAS_MESH.bits()
     // | NodeBitFlags::UNK10.bits()
     // | NodeBitFlags::TERRAIN.bits()
@@ -30,7 +30,7 @@ const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     // | NodeBitFlags::INTERSECT_SURFACE.bits()
     | NodeBitFlags::INTERSECT_BBOX.bits()
     // | NodeBitFlags::LANDMARK.bits()
-    // | NodeBitFlags::UNK08.bits()
+    | NodeBitFlags::UNK08.bits()
     // | NodeBitFlags::HAS_MESH.bits()
     | NodeBitFlags::UNK10.bits()
     // | NodeBitFlags::TERRAIN.bits()
@@ -61,7 +61,7 @@ pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantR
         node.area_partition == None,
         offset + 76
     )?;
-    assert_that!("empty has parent", node.has_parent == false, offset + 84)?;
+    assert_that!("empty parent count", node.parent_count == 0, offset + 84)?;
     // parent_array_ptr (88) already asserted
     assert_that!(
         "empty children count",
@@ -98,7 +98,7 @@ pub fn make_variants(empty: &Empty) -> NodeVariantsRc {
         data_ptr: 0,
         mesh_index: -1,
         area_partition: None,
-        has_parent: false,
+        parent_count: 0,
         parent_array_ptr: 0,
         children_count: 0,
         children_array_ptr: 0,

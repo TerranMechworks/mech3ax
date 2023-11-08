@@ -1,3 +1,4 @@
+mod fixup;
 mod meshes;
 mod nodes;
 
@@ -11,7 +12,7 @@ use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 #[repr(C)]
 struct HeaderRcC {
     signature: u32,        // 00
@@ -34,8 +35,10 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataRc> {
         HeaderRcC::SIZE,
         read.offset
     );
-    let header: HeaderRcC = read.read_struct()?;
+    let mut header: HeaderRcC = read.read_struct()?;
     trace!("{:#?}", header);
+
+    fixup::read(&mut header);
 
     assert_that!("signature", header.signature == SIGNATURE, read.prev + 0)?;
     assert_that!("version", header.version == VERSION_RC, read.prev + 4)?;
@@ -117,7 +120,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataRc) 
         HeaderRcC::SIZE,
         write.offset
     );
-    let header = HeaderRcC {
+    let mut header = HeaderRcC {
         signature: SIGNATURE,
         version: VERSION_RC,
         texture_count,
@@ -128,6 +131,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataRc) 
         node_count,
         nodes_offset,
     };
+    fixup::write(&mut header);
     trace!("{:#?}", header);
     write.write_struct(&header)?;
 

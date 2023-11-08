@@ -28,7 +28,7 @@ fn assert_lod(lod: &LodRcC, offset: u32) -> Result<(bool, Range, f32, Option<u32
     let level = assert_that!("lod level", bool lod.level, offset + 0)?;
     assert_that!("lod range near sq", 0.0 <= lod.range_near_sq <= 1000.0 * 1000.0, offset + 4)?;
     let range_near = lod.range_near_sq.sqrt();
-    assert_that!("lod range far", lod.range_far > 0.0, offset + 8)?;
+    assert_that!("lod range far", lod.range_far >= 0.0, offset + 8)?;
     let expected = lod.range_far * lod.range_far;
     assert_that!(
         "lod range far sq",

@@ -15,7 +15,7 @@ use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
-use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_debug::{Ascii, Hex, Ptr};
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
@@ -29,7 +29,7 @@ pub struct NodeVariantsRc {
     pub data_ptr: u32,
     pub mesh_index: i32,
     pub area_partition: Option<AreaPartition>,
-    pub has_parent: bool,
+    pub parent_count: u32,
     pub parent_array_ptr: u32,
     pub children_count: u32,
     pub children_array_ptr: u32,
@@ -166,21 +166,21 @@ fn assert_node(node: NodeRcC, offset: u32) -> Result<(NodeType, NodeVariantsRc)>
         Some(node.area_partition)
     };
 
-    // can only have one parent
-    let has_parent = assert_that!("parent count", bool node.parent_count, offset + 84)?;
-    if has_parent {
-        assert_that!(
-            "parent array ptr",
-            node.parent_array_ptr != Ptr::NULL,
-            offset + 88
-        )?;
-    } else {
+    // upper bound is arbitrary
+    assert_that!("parent count", 0 <= node.parent_count <= 80, offset + 84)?;
+    if node.parent_count == 0 {
         assert_that!(
             "parent array ptr",
             node.parent_array_ptr == Ptr::NULL,
             offset + 88
         )?;
-    };
+    } else {
+        assert_that!(
+            "parent array ptr",
+            node.parent_array_ptr != Ptr::NULL,
+            offset + 88
+        )?;
+    }
 
     // upper bound is arbitrary
     assert_that!("children count", 0 <= node.children_count <= 80, offset + 92)?;
@@ -196,7 +196,7 @@ fn assert_node(node: NodeRcC, offset: u32) -> Result<(NodeType, NodeVariantsRc)>
             node.children_array_ptr != Ptr::NULL,
             offset + 96
         )?;
-    };
+    }
 
     let variants = NodeVariantsRc {
         name,
@@ -206,7 +206,7 @@ fn assert_node(node: NodeRcC, offset: u32) -> Result<(NodeType, NodeVariantsRc)>
         data_ptr: node.data_ptr.0,
         mesh_index: node.mesh_index,
         area_partition,
-        has_parent,
+        parent_count: node.parent_count,
         parent_array_ptr: node.parent_array_ptr.0,
         children_count: node.children_count,
         children_array_ptr: node.children_array_ptr.0,
@@ -333,7 +333,7 @@ fn write_variant(
         action_priority: 1,
         action_callback: 0,
         area_partition,
-        parent_count: bool_c!(variant.has_parent),
+        parent_count: variant.parent_count,
         parent_array_ptr: Ptr(variant.parent_array_ptr),
         children_count: variant.children_count,
         children_array_ptr: Ptr(variant.children_array_ptr),

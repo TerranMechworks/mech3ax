@@ -47,7 +47,7 @@ Legend:
 | Image/texture ZBDs                                     | ✅ | ✅ | ✅ | ✅ |
 | `mechlib.zbd`                                          | ⬛ | ✅ | ✅ | ⬛ |
 | `motion.zbd`                                           | ⬛ | ✅ | ✅ | ⬛ |
-| `gamez.zbd`                                            | ✔️ | ✅ | ✅ | ✅ |
+| `gamez.zbd`                                            | ✅ | ✅ | ✅ | ✅ |
 | `anim.zbd`/`cam_anim.zbd`/`mis_anim.zbd`               | ❌ | ✅ | ❌ | ❌ |
 | `m*.zmap`                                              | ✅ | ⬛ | ⬛ | ⬛ |
 | `planes.zbd` *                                         | ⬛ | ⬛ | ⬛ | ✅ |
@@ -85,7 +85,6 @@ Not supported (yet?):
 
 ### Recoil
 
-* `gamez.zbd` files are supported, but M6 and M9 are not supported yet
 * `anim.zbd` files are not supported yet
 
 ### Crimson Skies
@@ -193,6 +192,7 @@ where `--rtexture` and `--rmechtex` are optional.
 
 ### [0.6.0-rc5] - Unreleased
 
+* Horribly dirty hacks for Recoil M6 and M9 (`gamez`)
 * Allow Recoil light nodes in other positions (`gamez`)
 * Update to Rust 1.73.0
 

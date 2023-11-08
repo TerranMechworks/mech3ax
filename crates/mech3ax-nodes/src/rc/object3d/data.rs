@@ -1,3 +1,4 @@
+use super::has_borked_parents;
 use crate::math::{apply_matrix_signs, euler_to_matrix, extract_matrix_signs, scale_to_matrix, PI};
 use crate::rc::node::NodeVariantsRc;
 use log::{debug, trace};
@@ -7,7 +8,7 @@ use mech3ax_api_types::nodes::rc::{
 use mech3ax_api_types::{static_assert_size, Matrix, ReprSize as _, Vec3};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_debug::Zeros;
 use std::io::{Read, Write};
 
@@ -151,6 +152,8 @@ pub fn read(
     node: NodeVariantsRc,
     index: usize,
 ) -> Result<Object3d> {
+    let is_borked = has_borked_parents(node.data_ptr, node.parent_array_ptr);
+
     debug!(
         "Reading object3d node data {} (rc, {}) at {}",
         index,
@@ -163,14 +166,26 @@ pub fn read(
     let matrix_signs = extract_matrix_signs(&object3d.matrix);
     let transformation = assert_object3d(object3d, read.prev)?;
 
-    let parent = if node.has_parent {
-        Some(read.read_u32()?)
+    let (parent, parents) = if is_borked && node.parent_count > 1 {
+        debug!(
+            "Reading object3d {} x parents {} (rc) at {}",
+            node.parent_count, index, read.offset
+        );
+        let parents = (0..node.parent_count)
+            .map(|_| read.read_u32())
+            .collect::<std::io::Result<Vec<_>>>()?;
+        (None, Some(parents))
     } else {
-        None
+        let parent = if node.parent_count != 0 {
+            Some(read.read_u32()?)
+        } else {
+            None
+        };
+        (parent, None)
     };
 
     debug!(
-        "Reading object3 {} x children {} (rc) at {}",
+        "Reading object3d {} x children {} (rc) at {}",
         node.children_count, index, read.offset
     );
     let children = (0..node.children_count)
@@ -186,6 +201,7 @@ pub fn read(
         transformation,
         matrix_signs,
         parent,
+        parents,
         children,
         data_ptr: node.data_ptr,
         parent_array_ptr: node.parent_array_ptr,
@@ -201,6 +217,8 @@ pub fn write(
     object3d: &Object3d,
     index: usize,
 ) -> Result<()> {
+    let is_borked = has_borked_parents(object3d.data_ptr, object3d.parent_array_ptr);
+
     debug!(
         "Writing object3d node data {} (rc, {}) at {}",
         index,
@@ -251,6 +269,27 @@ pub fn write(
     trace!("{:#?}", object3dc);
     write.write_struct(&object3dc)?;
 
+    if is_borked {
+        match (object3d.parent, &object3d.parents) {
+            (None, Some(parents)) => {
+                debug!(
+                    "Writing object3d {} x parents {} (rc) at {}",
+                    parents.len(),
+                    index,
+                    write.offset
+                );
+                for parent in parents.iter().copied() {
+                    write.write_u32(parent)?;
+                }
+            }
+            _ => return Err(assert_with_msg!("Parents dirty hack error")),
+        }
+    } else if object3d.parents.is_some() {
+        return Err(assert_with_msg!(
+            "Nodes must not have parents set (dirty hack)"
+        ));
+    }
+
     if let Some(parent) = object3d.parent {
         write.write_u32(parent)?;
     }
@@ -271,6 +310,12 @@ pub fn write(
 pub fn size(object3d: &Object3d) -> u32 {
     let parent_size = if object3d.parent.is_some() { 4 } else { 0 };
     // Cast safety: truncation simply leads to incorrect size (TODO?)
+    let parents_length = object3d
+        .parents
+        .as_ref()
+        .map(|parents| parents.len() as u32)
+        .unwrap_or(0);
+    // Cast safety: truncation simply leads to incorrect size (TODO?)
     let children_length = object3d.children.len() as u32;
-    Object3dRcC::SIZE + parent_size + 4 * children_length
+    Object3dRcC::SIZE + parent_size + 4 * parents_length + 4 * children_length
 }

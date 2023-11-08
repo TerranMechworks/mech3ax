@@ -40,7 +40,7 @@ pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantR
         node.area_partition == None,
         offset + 76
     )?;
-    assert_that!("world has parent", node.has_parent == false, offset + 84)?;
+    assert_that!("world parent count", node.parent_count == 0, offset + 84)?;
     // parent_array_ptr (88) already asserted
     assert_that!("world children count", 1 <= node.children_count <= 80, offset + 92)?;
     // children_array_ptr (96) already asserted
@@ -87,7 +87,7 @@ pub fn make_variants(world: &World) -> Result<NodeVariantsRc> {
         data_ptr: world.data_ptr,
         mesh_index: -1,
         area_partition: None,
-        has_parent: false,
+        parent_count: 0,
         parent_array_ptr: 0,
         children_count,
         children_array_ptr: world.children_array_ptr,

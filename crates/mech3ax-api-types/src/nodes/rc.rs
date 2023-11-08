@@ -76,6 +76,8 @@ pub struct Object3d {
     pub area_partition: Option<AreaPartition>,
     pub mesh_index: i32,
     pub parent: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub parents: Option<Vec<u32>>,
     pub children: Vec<u32>,
 
     pub data_ptr: u32,

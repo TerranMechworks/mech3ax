@@ -1,8 +1,9 @@
+use super::has_borked_parents;
 use crate::flags::NodeBitFlags;
 use crate::rc::node::{NodeVariantRc, NodeVariantsRc};
 use crate::types::ZONE_DEFAULT;
 use mech3ax_api_types::nodes::rc::Object3d;
-use mech3ax_common::{assert_len, assert_that, Result};
+use mech3ax_common::{assert_len, assert_that, assert_with_msg, bool_c, Result};
 
 const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     0
@@ -17,7 +18,7 @@ const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     // | NodeBitFlags::TERRAIN.bits()
     // | NodeBitFlags::CAN_MODIFY.bits()
     // | NodeBitFlags::CLIP_TO.bits()
-    | NodeBitFlags::TREE_VALID.bits()
+    // | NodeBitFlags::TREE_VALID.bits()
     // | NodeBitFlags::ID_ZONE_CHECK.bits()
     | NodeBitFlags::UNK25.bits()
     // | NodeBitFlags::UNK28.bits()
@@ -36,7 +37,7 @@ const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     // | NodeBitFlags::TERRAIN.bits()
     | NodeBitFlags::CAN_MODIFY.bits()
     | NodeBitFlags::CLIP_TO.bits()
-    // | NodeBitFlags::TREE_VALID.bits()
+    | NodeBitFlags::TREE_VALID.bits()
     | NodeBitFlags::ID_ZONE_CHECK.bits()
     // | NodeBitFlags::UNK25.bits()
     // | NodeBitFlags::UNK28.bits()
@@ -44,6 +45,8 @@ const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
 );
 
 pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantRc> {
+    let is_borked = has_borked_parents(node.data_ptr, node.parent_array_ptr);
+
     // cannot assert name
     let const_flags = node.flags & !VARIABLE_FLAGS;
     assert_that!("object3d flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
@@ -63,7 +66,12 @@ pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantR
     // action_priority (68) already asserted
     // action_callback (72) already asserted
     // area_partition (76) is variable
-    // has_parent (84) is variable
+    // parent_count (84) is variable
+    if is_borked {
+        assert_that!("object3d has parent", node.parent_count in [0, 8], offset + 84)?;
+    } else {
+        assert_that!("object3d has parent", bool node.parent_count, offset + 84)?;
+    }
     // parent_array_ptr (88) already asserted
     // children_count (92) is variable
     // children_array_ptr (96) already asserted
@@ -79,6 +87,22 @@ pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantR
 }
 
 pub fn make_variants(object3d: &Object3d) -> Result<NodeVariantsRc> {
+    let is_borked = has_borked_parents(object3d.data_ptr, object3d.parent_array_ptr);
+
+    let parent_count = if is_borked {
+        match (object3d.parent, &object3d.parents) {
+            (None, Some(parents)) => assert_len!(u32, parents.len(), "object 3d parents")?,
+            _ => return Err(assert_with_msg!("Parents dirty hack error")),
+        }
+    } else {
+        if object3d.parents.is_some() {
+            return Err(assert_with_msg!(
+                "Nodes must not have parents set (dirty hack)"
+            ));
+        }
+        bool_c!(object3d.parent.is_some())
+    };
+
     let children_count = assert_len!(u32, object3d.children.len(), "object 3d children")?;
     Ok(NodeVariantsRc {
         name: object3d.name.clone(),
@@ -88,7 +112,7 @@ pub fn make_variants(object3d: &Object3d) -> Result<NodeVariantsRc> {
         data_ptr: object3d.data_ptr,
         mesh_index: object3d.mesh_index,
         area_partition: object3d.area_partition,
-        has_parent: object3d.parent.is_some(),
+        parent_count,
         parent_array_ptr: object3d.parent_array_ptr,
         children_count,
         children_array_ptr: object3d.children_array_ptr,
