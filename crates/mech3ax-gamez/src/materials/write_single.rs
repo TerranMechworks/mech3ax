@@ -1,16 +1,28 @@
-use super::{find_texture_index_by_name, CycleInfoC, MaterialC, MaterialFlags};
+use super::{CycleInfoC, MatType, MaterialC, MaterialFlags};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::{Color, ReprSize as _};
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, bool_c, Result};
+use mech3ax_common::{assert_len, assert_with_msg, bool_c, Result};
 use std::io::Write;
 
-pub fn write_material(
+pub(super) fn find_texture_index_by_name(textures: &[String], texture_name: &str) -> Result<u32> {
+    let texture_index = textures
+        .iter()
+        .position(|name| name == texture_name)
+        .ok_or_else(|| assert_with_msg!("Texture `{}` not found in textures list", texture_name))?;
+    // Cast safety: truncation only results in the wrong texture
+    // index being written. Additionally writing the textures
+    // should've already failed.
+    Ok(texture_index as u32)
+}
+
+pub(crate) fn write_material(
     write: &mut CountingWriter<impl Write>,
     material: &Material,
     pointer: Option<u32>,
     index: usize,
+    ty: MatType,
 ) -> Result<()> {
     debug!(
         "Writing material {} ({}) at {}",
@@ -20,7 +32,10 @@ pub fn write_material(
     );
     let mat_c = match material {
         Material::Textured(material) => {
-            let mut bitflags = MaterialFlags::ALWAYS | MaterialFlags::TEXTURED;
+            let mut bitflags = match ty {
+                MatType::Ng => MaterialFlags::ALWAYS | MaterialFlags::TEXTURED,
+                MatType::Rc => MaterialFlags::TEXTURED,
+            };
             if material.flag {
                 bitflags |= MaterialFlags::UNKNOWN;
             }
@@ -46,7 +61,10 @@ pub fn write_material(
             }
         }
         Material::Colored(material) => {
-            let bitflags = MaterialFlags::ALWAYS;
+            let bitflags = match ty {
+                MatType::Ng => MaterialFlags::ALWAYS,
+                MatType::Rc => MaterialFlags::empty(),
+            };
             MaterialC {
                 alpha: material.alpha,
                 flags: bitflags.bits(),
@@ -66,7 +84,7 @@ pub fn write_material(
     Ok(())
 }
 
-pub fn write_cycle(
+pub(super) fn write_cycle(
     write: &mut CountingWriter<impl Write>,
     textures: &[String],
     material: &Material,

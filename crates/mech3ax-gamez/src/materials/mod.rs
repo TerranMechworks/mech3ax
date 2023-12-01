@@ -1,8 +1,47 @@
-pub mod ng;
-pub mod rc;
+//! GameZ and mechlib material support.
+mod read_multi;
+mod read_single;
+mod write_multi;
+mod write_single;
 
-use mech3ax_api_types::{static_assert_size, Color};
-use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_api_types::gamez::materials::{ColoredMaterial, Material};
+use mech3ax_api_types::{static_assert_size, Color, ReprSize as _};
+
+pub(crate) use read_multi::read_materials;
+pub(crate) use read_single::read_material;
+pub(crate) use write_multi::write_materials;
+pub(crate) use write_single::write_material;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum MatType {
+    /// Recoil
+    Rc,
+    /// MechWarrior3, Pirate's Moon, Crimson Skies
+    Ng,
+}
+
+impl MatType {
+    pub(crate) fn size_i16(&self) -> i16 {
+        match self {
+            Self::Rc => 5000,
+            Self::Ng => 1000,
+        }
+    }
+
+    pub(crate) fn size_i32(&self) -> i32 {
+        match self {
+            Self::Rc => 5000,
+            Self::Ng => 1000,
+        }
+    }
+
+    pub(crate) fn size_u32(&self) -> u32 {
+        match self {
+            Self::Rc => 5000,
+            Self::Ng => 1000,
+        }
+    }
+}
 
 #[derive(Debug)]
 #[repr(C)]
@@ -30,33 +69,52 @@ struct MaterialC {
 }
 static_assert_size!(MaterialC, 40);
 
-fn assert_material_info(
-    info: MaterialInfoC,
-    material_array_size: i32,
-    offset: u32,
-) -> Result<(i16, u32)> {
-    assert_that!("mat array size", 0 <= info.array_size <= material_array_size, offset + 0)?;
-    assert_that!("mat count", 0 <= info.count <= info.array_size, offset + 4)?;
-    assert_that!("mat index max", info.index_max == info.count, offset + 8)?;
-    assert_that!(
-        "mat index last",
-        info.index_last == info.count - 1,
-        offset + 12
-    )?;
+#[derive(Debug)]
+#[repr(C)]
+struct CycleInfoC {
+    unk00: u32,
+    unk04: u32,
+    zero08: u32,
+    unk12: f32,
+    count1: u32,
+    count2: u32,
+    data_ptr: u32,
+}
+static_assert_size!(CycleInfoC, 28);
 
-    // Cast safety: see asserts above
-    let valid = info.count as i16;
-    let material_count = info.count as u32;
-    Ok((valid, material_count))
+#[derive(Debug)]
+pub struct RawTexturedMaterial {
+    pub pointer: u32,
+    pub cycle_ptr: Option<u32>,
+    pub specular: f32,
+    pub flag: bool,
 }
 
-fn find_texture_index_by_name(textures: &[String], texture_name: &str) -> Result<u32> {
-    let texture_index = textures
-        .iter()
-        .position(|name| name == texture_name)
-        .ok_or_else(|| assert_with_msg!("Texture `{}` not found in textures list", texture_name))?;
-    // Cast safety: truncation only results in the wrong texture
-    // index being written. Additionally writing the textures
-    // should've already failed.
-    Ok(texture_index as u32)
+#[derive(Debug)]
+pub enum RawMaterial {
+    Textured(RawTexturedMaterial),
+    Colored(ColoredMaterial),
+}
+
+bitflags::bitflags! {
+    struct MaterialFlags: u8 {
+        const TEXTURED = 1 << 0;
+        const UNKNOWN = 1 << 1;
+        const CYCLED = 1 << 2;
+        const ALWAYS = 1 << 4;
+        const FREE = 1 << 5;
+    }
+}
+
+pub(crate) fn size_materials(materials: &[Material], ty: MatType) -> u32 {
+    // Cast safety: truncation simply leads to incorrect size (TODO?)
+    let mut size = MaterialInfoC::SIZE + (MaterialC::SIZE + 2 + 2) * ty.size_u32();
+    for material in materials {
+        if let Material::Textured(mat) = material {
+            if let Some(cycle) = &mat.cycle {
+                size += CycleInfoC::SIZE + (cycle.textures.len() as u32) * 4;
+            }
+        }
+    }
+    size
 }

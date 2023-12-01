@@ -1,5 +1,5 @@
-use super::read_single::{read_material, read_material_zero};
-use super::{assert_material_info, material_array_size, MaterialInfoC};
+use super::read_single::{read_cycle, read_material, read_material_zero};
+use super::{MatType, MaterialInfoC};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::ReprSize as _;
@@ -7,9 +7,10 @@ use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Result};
 use std::io::Read;
 
-pub fn read_materials(
+pub(crate) fn read_materials(
     read: &mut CountingReader<impl Read>,
     textures: &[String],
+    ty: MatType,
 ) -> Result<(Vec<Material>, u32)> {
     debug!(
         "Reading material info header ({}) at {}",
@@ -19,12 +20,13 @@ pub fn read_materials(
     let info: MaterialInfoC = read.read_struct()?;
     trace!("{:#?}", info);
 
-    let (valid, material_count) = assert_material_info(info, material_array_size!(), read.prev)?;
+    let (valid, material_count) = assert_material_info(info, ty, read.prev)?;
 
-    // Recoil does not have cycle data, so can be read at the same time
+    // read materials without cycle data
     let materials = (0..valid)
         .map(|index| {
-            let material = read_material(read, textures, index)?;
+            // Cast safety: index is >= 0, and valid is i16
+            let material = read_material(read, index as u32, ty)?;
 
             let mut expected_index1 = index + 1;
             if expected_index1 >= valid {
@@ -44,15 +46,42 @@ pub fn read_materials(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    read_materials_zero(read, valid)?;
+    read_materials_zero(read, valid, ty)?;
+
+    // now read cycle data
+    let materials = materials
+        .into_iter()
+        .enumerate()
+        .map(|(index, material)| read_cycle(read, material, textures, index))
+        .collect::<Result<Vec<_>>>()?;
 
     Ok((materials, material_count))
 }
 
-fn read_materials_zero(read: &mut CountingReader<impl Read>, start: i16) -> Result<()> {
-    let end = material_array_size!();
+fn assert_material_info(info: MaterialInfoC, ty: MatType, offset: u32) -> Result<(i16, u32)> {
+    assert_that!("mat array size", 0 <= info.array_size <= ty.size_i32(), offset + 0)?;
+    assert_that!("mat count", 0 <= info.count <= info.array_size, offset + 4)?;
+    assert_that!("mat index max", info.index_max == info.count, offset + 8)?;
+    assert_that!(
+        "mat index last",
+        info.index_last == info.count - 1,
+        offset + 12
+    )?;
+
+    // Cast safety: see asserts above
+    let valid = info.count as i16;
+    let material_count = info.count as u32;
+    Ok((valid, material_count))
+}
+
+fn read_materials_zero(
+    read: &mut CountingReader<impl Read>,
+    start: i16,
+    ty: MatType,
+) -> Result<()> {
+    let end = ty.size_i16();
     for index in start..end {
-        read_material_zero(read, index)?;
+        read_material_zero(read, index, ty)?;
 
         let mut expected_index1 = index - 1;
         if expected_index1 < start {

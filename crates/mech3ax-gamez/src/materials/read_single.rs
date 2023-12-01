@@ -1,4 +1,4 @@
-use super::{CycleInfoC, MaterialC, MaterialFlags, RawMaterial, RawTexturedMaterial};
+use super::{CycleInfoC, MatType, MaterialC, MaterialFlags, RawMaterial, RawTexturedMaterial};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::materials::{ColoredMaterial, CycleData, Material, TexturedMaterial};
 use mech3ax_api_types::{u32_to_usize, Color, ReprSize as _};
@@ -6,7 +6,11 @@ use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use std::io::Read;
 
-pub fn read_material(read: &mut CountingReader<impl Read>, index: u32) -> Result<RawMaterial> {
+pub(crate) fn read_material(
+    read: &mut CountingReader<impl Read>,
+    index: u32,
+    ty: MatType,
+) -> Result<RawMaterial> {
     debug!(
         "Reading material {} ({}) at {}",
         index,
@@ -29,7 +33,11 @@ pub fn read_material(read: &mut CountingReader<impl Read>, index: u32) -> Result
     let flag_always = bitflags.contains(MaterialFlags::ALWAYS);
     let flag_free = bitflags.contains(MaterialFlags::FREE);
 
-    assert_that!("flag always", flag_always == true, read.prev + 1)?;
+    if ty == MatType::Ng {
+        assert_that!("flag always (ng)", flag_always == true, read.prev + 1)?;
+    } else {
+        assert_that!("flag always (rc)", flag_always == false, read.prev + 1)?;
+    }
     assert_that!("flag free", flag_free == false, read.prev + 1)?;
 
     assert_that!("field 20", material.zero20 == 0.0, read.prev + 20)?;
@@ -71,7 +79,11 @@ pub fn read_material(read: &mut CountingReader<impl Read>, index: u32) -> Result
     Ok(material)
 }
 
-pub fn read_material_zero(read: &mut CountingReader<impl Read>, index: i16) -> Result<()> {
+pub(super) fn read_material_zero(
+    read: &mut CountingReader<impl Read>,
+    index: i16,
+    ty: MatType,
+) -> Result<()> {
     debug!(
         "Reading zero material {} ({}) at {}",
         index,
@@ -81,11 +93,14 @@ pub fn read_material_zero(read: &mut CountingReader<impl Read>, index: i16) -> R
     let material: MaterialC = read.read_struct()?;
 
     assert_that!("field 00", material.alpha == 0x00, read.prev + 0)?;
-    assert_that!(
-        "flag",
-        material.flags == MaterialFlags::FREE.bits(),
-        read.prev + 1
-    )?;
+    match ty {
+        MatType::Ng => assert_that!(
+            "flag",
+            material.flags == MaterialFlags::FREE.bits(),
+            read.prev + 1
+        )?,
+        MatType::Rc => assert_that!("flag", material.flags == 0, read.prev + 1)?,
+    }
     assert_that!("rgb", material.rgb == 0x0000, read.prev + 2)?;
     assert_that!("color", material.color == Color::BLACK, read.prev + 4)?;
     assert_that!("index", material.index == 0, read.prev + 16)?;
@@ -98,7 +113,7 @@ pub fn read_material_zero(read: &mut CountingReader<impl Read>, index: i16) -> R
     Ok(())
 }
 
-pub fn read_cycle(
+pub(super) fn read_cycle(
     read: &mut CountingReader<impl Read>,
     material: RawMaterial,
     textures: &[String],

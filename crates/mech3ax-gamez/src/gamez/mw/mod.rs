@@ -2,7 +2,7 @@ mod meshes;
 mod nodes;
 
 use super::common::{NODE_INDEX_INVALID, SIGNATURE, VERSION_MW};
-use crate::materials::ng as materials;
+use crate::materials;
 use crate::textures::mw as textures;
 use log::{debug, trace};
 use mech3ax_api_types::gamez::{GameZDataMw, GameZMetadataMw};
@@ -72,7 +72,8 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataMw> {
         read.offset == header.materials_offset,
         read.offset
     )?;
-    let (materials, material_count) = materials::read_materials(read, &textures)?;
+    let (materials, material_count) =
+        materials::read_materials(read, &textures, materials::MatType::Ng)?;
     assert_that!(
         "meshes offset",
         read.offset == header.meshes_offset,
@@ -110,7 +111,8 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataMw) 
 
     let textures_offset = HeaderMwC::SIZE;
     let materials_offset = textures_offset + textures::size_texture_infos(texture_count);
-    let meshes_offset = materials_offset + materials::size_materials(&gamez.materials);
+    let meshes_offset =
+        materials_offset + materials::size_materials(&gamez.materials, materials::MatType::Ng);
     let (nodes_offset, mesh_offsets) =
         meshes::size_meshes(meshes_offset, meshes_array_size, &gamez.meshes);
 
@@ -134,7 +136,12 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataMw) 
     write.write_struct(&header)?;
 
     textures::write_texture_infos(write, &gamez.textures)?;
-    materials::write_materials(write, &gamez.textures, &gamez.materials)?;
+    materials::write_materials(
+        write,
+        &gamez.textures,
+        &gamez.materials,
+        materials::MatType::Ng,
+    )?;
     meshes::write_meshes(write, &gamez.meshes, &mesh_offsets, meshes_array_size)?;
     nodes::write_nodes(write, &gamez.nodes, node_array_size, nodes_offset)?;
     Ok(())
