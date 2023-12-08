@@ -112,10 +112,11 @@ fn read_table(
     Ok((entries, checksum))
 }
 
-fn rename(seen: &HashSet<String>, original: &str) -> String {
+fn rename(seen: &mut HashSet<String>, original: &str) -> String {
+    let (stem, suffix) = original.rsplit_once('.').unwrap_or((original, ""));
     for index in 1usize.. {
-        let name = format!("{}-{}", original, index);
-        if !seen.contains(&name) {
+        let name = format!("{}-{}.{}", stem, index, suffix);
+        if seen.insert(name.clone()) {
             return name;
         }
     }
@@ -155,7 +156,7 @@ where
                 save_file(&name, buffer, read.prev)?;
                 None
             } else {
-                let renamed = rename(&seen, &name);
+                let renamed = rename(&mut seen, &name);
                 debug!("Renamed entry from `{}` to `{}`", name, renamed);
                 save_file(&renamed, buffer, read.prev)?;
                 Some(renamed)
