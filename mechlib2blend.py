@@ -94,20 +94,20 @@ class MaterialFactory:
         self.default_image.pack()
         return self.default_image
 
-    def __call__(self, texture_index: int) -> bpy.types.Material:
+    def __call__(self, material_index: int) -> bpy.types.Material:
         # cache hit
         try:
-            return self.cache[texture_index]
+            return self.cache[material_index]
         except KeyError:
             pass
 
-        material_info = self.materials[texture_index]
+        material_info = self.materials[material_index]
 
         try:
             texture_info = material_info["Textured"]
         except KeyError:
             # untextured material
-            mat, bsdf = self._create_material(f"material_{texture_index}")
+            mat, bsdf = self._create_material(f"material_{material_index}")
             color_info = material_info["Colored"]
 
             color = color_info["color"]
@@ -144,7 +144,7 @@ class MaterialFactory:
             tex.image = image
             mat.node_tree.links.new(bsdf.inputs["Base Color"], tex.outputs["Color"])
 
-        self.cache[texture_index] = mat
+        self.cache[material_index] = mat
         return mat
 
 
@@ -173,16 +173,19 @@ def _process_mesh(
     # normals = mesh_data["normals"]
     polygons = mesh_data["polygons"]
 
-    textures = set()
-    for poly in polygons:
-        textures.add(poly["texture_index"])
+    try:
+        material_infos = mesh_data["material_infos"]
+    except KeyError:
+        materials = sorted(set(poly["material_index"] for poly in polygons))
+    else:
+        materials = sorted(set(mi["material_index"] for mi in material_infos))
 
     # faces have to be assigned a material index, not a material name
-    tex_index_to_mat_index = {}
-    for material_index, texture_index in enumerate(textures):
-        mat = material_factory(texture_index)
+    global_mat_to_local_mat = {}
+    for mat_index, material_index in enumerate(materials):
+        mat = material_factory(material_index)
         obj.data.materials.append(mat)
-        tex_index_to_mat_index[texture_index] = material_index
+        global_mat_to_local_mat[material_index] = mat_index
 
     bm = bmesh.new(use_operators=True)
     for vert in vertices:
@@ -199,13 +202,18 @@ def _process_mesh(
         colors = poly["vertex_colors"]
         # skipped: normal_indices
         # normal_indices = poly["normal_indices"]
-        uvs = poly["uv_coords"]
-        texture_index = poly["texture_index"]
 
-        if poly.get("triangle_strip", False):
+        try:
+            flags = poly["flags"]
+            triangle_strip = flags["triangle_strip"]
+        except KeyError:
+            triangle_strip = False
+
+        if triangle_strip:
             print("Triangle strip")
             for i in range(len(vertex_indices) - 3 + 1):
                 vertex_window = vertex_indices[i : i + 3]
+                print("face", [bm.verts[i] for i in vertex_window])
                 try:
                     face = bm.faces.new(bm.verts[i] for i in vertex_window)
                 except ValueError as e:
@@ -221,7 +229,6 @@ def _process_mesh(
                     )
                     continue
                 face.smooth = True
-                face.material_index = tex_index_to_mat_index[texture_index]
 
                 if colors:
                     colors_window = colors[i : i + 3]
@@ -237,15 +244,21 @@ def _process_mesh(
                             1.0,
                         )
 
-                if uvs:
-                    uvs_window = uvs[i : i + 3]
-                    # because all our faces are created as loops, this should work
-                    for index_in_mesh, loop, uv in zip(
-                        vertex_window, face.loops, uvs_window
-                    ):
-                        assert loop.vert.index == index_in_mesh
-                        loop[uv_layer].uv = (uv["u"], 1.0 - uv["v"])
+                materials = poly["materials"]
+                # TODO: support multiple materials?
+                material = materials[0]
 
+                material_index = material["material_index"]
+                face.material_index = global_mat_to_local_mat[material_index]
+
+                uvs = material["uv_coords"]
+                uvs_window = uvs[i : i + 3]
+                # because all our faces are created as loops, this should work
+                for index_in_mesh, loop, uv in zip(
+                    vertex_window, face.loops, uvs_window
+                ):
+                    assert loop.vert.index == index_in_mesh
+                    loop[uv_layer].uv = (uv["u"], 1.0 - uv["v"])
         else:
             try:
                 face = bm.faces.new(bm.verts[i] for i in vertex_indices)
@@ -254,9 +267,7 @@ def _process_mesh(
                 # skipping them seems harmless
                 print("Mesh", mesh_name, "error:", str(e), "ptr:", poly["vertices_ptr"])
                 continue
-
             face.smooth = True
-            face.material_index = tex_index_to_mat_index[texture_index]
 
             if colors:
                 # because all our faces are created as loops, this should work
@@ -271,11 +282,27 @@ def _process_mesh(
                         1.0,
                     )
 
+            try:
+                materials = poly["materials"]
+            except KeyError:
+                # mw
+                material_index = poly["material_index"]
+                face.material_index = global_mat_to_local_mat[material_index]
+                uvs = poly["uv_coords"]
+            else:
+                # pm
+                # TODO: support multiple materials?
+                material = materials[0]
+
+                material_index = material["material_index"]
+                face.material_index = global_mat_to_local_mat[material_index]
+                uvs = material["uv_coords"]
+
             if uvs:
                 # because all our faces are created as loops, this should work
                 for index_in_mesh, loop, uv in zip(vertex_indices, face.loops, uvs):
                     assert loop.vert.index == index_in_mesh
-                    loop[uv_layer].uv = (uv["u"], uv["v"])
+                    loop[uv_layer].uv = (uv["u"], 1.0 - uv["v"])
 
     # since normals can't be loaded, and we've set smooth shading, calculate them
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
