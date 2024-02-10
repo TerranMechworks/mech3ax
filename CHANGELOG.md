@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.6.0] - Unreleased
+## [0.6.0] - 2023-02-10
 
 * Horribly dirty hacks for Recoil M6 and M9 (`gamez`)
 * Allow Recoil light nodes in other positions (`gamez`)
