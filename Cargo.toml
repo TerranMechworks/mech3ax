@@ -41,7 +41,7 @@ heck = "0.4"
 tera = "1.19"
 # cli only
 clap = { version = "4.5", default-features = false, features = ["std", "derive", "color", "help", "usage", "error-context"] }
-env_logger = { version = "0.9", default-features = false, features = ["atty", "humantime"] }
+env_logger = { version = "0.11", default-features = false, features = ["auto-color", "humantime"] }
 zip = { version = "0.6", default-features = false, features = ["deflate"] }
 # proc macro only
 syn = { version = "1.0", features = ["full", "extra-traits"] }
