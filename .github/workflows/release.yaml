@@ -10,169 +10,251 @@ on:
     - 'v[0-9]+.[0-9]+.[0-9]+-alpha'
     - 'v[0-9]+.[0-9]+.[0-9]+-beta'
 
+env:
+  # Emit backtraces on panics.
+  RUST_BACKTRACE: full
+  # Enable colors in cargo output.
+  CARGO_TERM_COLOR: always
+  # Use sparse index if supported
+  # (probably no longer required, but cargo-culted)
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+
 jobs:
-  create_release:
-    name: create_release
+  check_release:
+    name: check_release
     runs-on: ubuntu-latest
-    steps:
-      - name: Get release information
-        id: info
-        run: |
-          ref_name='${{ github.ref_name }}'
-          echo "ref_name: $ref_name"
-
-          # is this a test release, or a real release?
-          if [[ "$ref_name" == 'workflow_release' ]]; then
-            version='v0.0.0-test'
-            target_commitish='${{ github.sha }}'
-          else
-            version="$ref_name"
-            target_commitish=''
-          fi
-          echo "version: $version"
-          echo "target_commitish: $target_commitish"
-
-          # is this a pre-release (-rc*, -alpha, -beta, -test)?
-          if [[ "$version" == *"-"* ]]; then
-            prerelease='true'
-          else
-            prerelease='false'
-          fi
-          echo "prerelease: $prerelease"
-
-          date=$(env TZ=':America/Los_Angeles' date +'%Y-%m-%d')
-          echo "date: $date"
-
-          echo "version=$version" >> $GITHUB_OUTPUT
-          echo "target_commitish=$target_commitish" >> $GITHUB_OUTPUT
-          echo "date=$date" >> $GITHUB_OUTPUT
-          echo "prerelease=$prerelease" >> $GITHUB_OUTPUT
-        shell: bash
-
-      - name: Create GitHub release
-        id: release
-        run: |
-          curl \
-            --fail \
-            --request 'POST' \
-            --url '${{ github.api_url }}/repos/${{ github.repository }}/releases' \
-            --header 'Accept: application/vnd.github+json' \
-            --header 'Authorization: Bearer ${{ github.token }}' \
-            --header 'Content-type: application/json' \
-            --data '{
-              "tag_name": "${{ steps.info.outputs.version }}",
-              "target_commitish": "${{ steps.info.outputs.target_commitish }}",
-              "name": "${{ steps.info.outputs.version }} (${{ steps.info.outputs.date }})",
-              "prerelease": ${{ steps.info.outputs.prerelease }},
-              "draft": true
-              }' \
-            --output 'release.json'
-          cat release.json
-
-          upload_url=$(jq -r '.upload_url' release.json)
-          upload_url="${upload_url%%'{?name,label}'}"
-          echo "upload_url: $upload_url"
-          echo "upload_url=$upload_url" >> $GITHUB_OUTPUT
-        shell: bash
-
-    outputs:
-      version: ${{ steps.info.outputs.version }}
-      upload_url: ${{ steps.release.outputs.upload_url }}
-
-  build_release:
-    name: build_release
-    needs: ['create_release']
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
-    env:
-      # Emit backtraces on panics.
-      RUST_BACKTRACE: 1
-      # Disable incremental compilation.
-      CARGO_INCREMENTAL: 0
-      # Enable colors in cargo output.
-      CARGO_TERM_COLOR: always
-
-    strategy:
-      matrix:
-        build: [linux-gnu, macos-x64, win-msvc]
-        include:
-          - build: linux-gnu
-            os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-
-          - build: macos-x64
-            os: macos-latest
-            target: x86_64-apple-darwin
-
-          - build: win-msvc
-            os: windows-latest
-            target: x86_64-pc-windows-msvc
+    timeout-minutes: 5
 
     steps:
-      - name: Dump release info
-        run: |
-          echo 'version: ${{ needs.create_release.outputs.version }}'
-          echo 'upload_url: ${{ needs.create_release.outputs.upload_url }}'
-        shell: bash
-
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install toolchain
         run: rustup show
         shell: bash
 
-      - name: Build release binary
-        run: cargo build --verbose --release --target '${{ matrix.target }}'
+      - name: Run cargo fmt
+        run: cargo fmt --all -- --check
+        shell: bash
+
+      - name: Run cargo check
+        run: RUSTFLAGS="-D warnings" cargo check --workspace --locked --all-targets
+        shell: bash
+
+      - name: Run cargo test
+        run: cargo test --workspace --locked --all-targets --no-fail-fast
+        shell: bash
+
+      - name: Run cargo clippy
+        run: cargo clippy --workspace --locked --all-targets -- -Dwarnings
+        shell: bash
+
+      - name: Gather release info
+        id: info
+        run: |
+          ref_name='${{ github.ref_name }}'
+          echo "ref_name: $ref_name"
+          # is this a test release, or a real release?
+          if [[ "$ref_name" == 'workflow_release' ]]; then
+            version='v0.0.0-test'
+          else
+            version="$ref_name"
+          fi
+          echo "version: $version"
+          echo "version=$version" >> $GITHUB_OUTPUT
+        shell: bash
+
+    outputs:
+      version: ${{ steps.info.outputs.version }}
+
+
+  build_release:
+    name: build_release
+    needs: ['check_release']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+
+    env:
+      # Disable incremental compilation.
+      CARGO_INCREMENTAL: 0
+      MECH3AX_VERSION: ${{ needs.check_release.outputs.version }}
+      TARGET_DIR: target/${{ matrix.target }}/release
+      STAGING_DIR: mech3ax-${{ needs.check_release.outputs.version }}-${{ matrix.target }}
+
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-pc-windows-msvc
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+          - target: x86_64-apple-darwin
+            os: macos-13
+          - target: aarch64-apple-darwin
+            os: macos-14
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          set -x
+          rustup show
+          rustup target add '${{ matrix.target }}'
+        shell: bash
+
+      - name: Create staging
+        run: |
+          set -x
+
+          echo "MECH3AX_VERSION: $MECH3AX_VERSION"
+          echo "TARGET_DIR: $TARGET_DIR"
+          echo "STAGING_DIR: $STAGING_DIR"
+
+          # create archive staging directory
+          mkdir "$STAGING_DIR"
+
+          # copy supporting files
+          cp README.md LICENSE "$STAGING_DIR/"
+        shell: bash
+
+      - name: Build release binary (Linux)
+        if: ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
+        run: |
+          cargo build --release --target='${{ matrix.target }}'
+
+          set -x
+          check_version=$("$TARGET_DIR/unzbd" --version | cut -d' ' -f2)
+          if [[ "$MECH3AX_VERSION" != "$check_version" ]]; then
+            echo "version mismatch: >$MECH3AX_VERSION< != >$check_version<"
+            exit 1
+          fi
+
+          cp "$TARGET_DIR/unzbd" "$TARGET_DIR/rezbd" "$STAGING_DIR/"
+          cp "$TARGET_DIR/libmech3ax.so" "$STAGING_DIR/libmech3ax-$MECH3AX_VERSION.so"
+        shell: bash
+
+      - name: Build release binary (Windows)
+        if: ${{ matrix.target == 'x86_64-pc-windows-msvc' }}
+        run: |
+          cargo build --release --target='${{ matrix.target }}'
+
+          set -x
+          check_version=$("$TARGET_DIR/unzbd.exe" --version | cut -d' ' -f2)
+          if [[ "$MECH3AX_VERSION" != "$check_version" ]]; then
+            echo "version mismatch: >$MECH3AX_VERSION< != >$check_version<"
+            exit 1
+          fi
+
+          cp "$TARGET_DIR/unzbd.exe" "$TARGET_DIR/rezbd.exe" "$STAGING_DIR/"
+          cp "$TARGET_DIR/mech3ax.dll" "$STAGING_DIR/mech3ax-$MECH3AX_VERSION.dll"
+        shell: bash
+
+      - name: Build release binary (macOS)
+        if: ${{ matrix.target == 'aarch64-apple-darwin' || matrix.target == 'x86_64-apple-darwin' }}
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "12.0"
+        run: |
+          set -x
+          echo "MACOSX_DEPLOYMENT_TARGET: $MACOSX_DEPLOYMENT_TARGET"
+          xcodebuild -showsdks
+
+          set +x
+          cargo build --release --target='${{ matrix.target }}'
+
+          set -x
+          file "$TARGET_DIR/unzbd"
+          file "$TARGET_DIR/rezbd"
+          file "$TARGET_DIR/libmech3ax.dylib"
+
+          check_version=$("$TARGET_DIR/unzbd" --version | cut -d' ' -f2)
+          if [[ "$MECH3AX_VERSION" != "$check_version" ]]; then
+            echo "version mismatch: >$MECH3AX_VERSION< != >$check_version<"
+            exit 1
+          fi
+
+          cp "$TARGET_DIR/unzbd" "$TARGET_DIR/rezbd" "$STAGING_DIR/"
+          cp "$TARGET_DIR/libmech3ax.dylib" "$STAGING_DIR/libmech3ax-$MECH3AX_VERSION.dylib"
         shell: bash
 
       - name: Build archive
         id: build
         run: |
-          staging='mech3ax-${{ needs.create_release.outputs.version }}'
-          mkdir "$staging"
-          # copy supporting files
-          cp {README.md,LICENSE,mechlib2blend.py,gamez2blend.py} "$staging/"
-          # copy build artifacts and compress
-          target_dir='target/${{ matrix.target }}/release'
-          if [ '${{ matrix.os }}' = 'windows-latest' ]; then
-            cp "$target_dir/unzbd.exe" "$target_dir/rezbd.exe" "$staging/"
-            cp "$target_dir/mech3ax.dll" "$staging/$staging.dll"
-            ls -1 "$staging"
-            archive="$staging-${{ matrix.target }}.zip"
-            7z a "$archive" "$staging"
-          else
-            if [ '${{ matrix.os }}' = 'macos-latest' ]; then
-              ext='dylib'
-            else
-              ext='so'
-            fi
-            cp "$target_dir/unzbd" "$target_dir/rezbd" "$staging/"
-            cp "$target_dir/libmech3ax.$ext" "$staging/lib$staging.$ext"
-            ls -1 "$staging"
-            archive="$staging-${{ matrix.target }}.tar.gz"
-            tar czvf "$archive" "$staging"
-          fi
-          echo "asset=$archive" >> $GITHUB_OUTPUT
+          set -x
+          ls -1 "$STAGING_DIR/"
+          7z -mx=9 a "$STAGING_DIR.zip" "$STAGING_DIR"
         shell: bash
 
-      - name: Store release artifacts
-        uses: actions/upload-artifact@v3
+      - name: Upload the release assets
+        uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.build.outputs.asset }}
-          path: ${{ steps.build.outputs.asset }}
+          name: mech3ax-${{ needs.check_release.outputs.version }}-${{ matrix.target }}
+          path: mech3ax-${{ needs.check_release.outputs.version }}-${{ matrix.target }}.zip
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0
+          overwrite: false
 
-      - name: Upload release archive
-        # use `--http1.1` to work around Windows-only issue
-        # https://github.com/actions/runner-images/issues/7329
+  create_release:
+    name: create_release
+    needs: ['check_release', 'build_release']
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      # IMPORTANT: mandatory for making GitHub Releases
+      # https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs#overview
+      contents: write
+
+    steps:
+      - name: Download the release assets
+        uses: actions/download-artifact@v4
+        with:
+          pattern: mech3ax-*
+          merge-multiple: true
+          path: assets/
+
+      - name: List the release assets
+        run: ls -1R assets/*
+        shell: bash
+
+      - name: Create GitHub release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          curl \
-            --fail \
-            --http1.1 \
-            --request 'POST' \
-            --url '${{ needs.create_release.outputs.upload_url }}?name=${{ steps.build.outputs.asset }}' \
-            --header 'Accept: application/vnd.github+json' \
-            --header 'Authorization: Bearer ${{ github.token }}' \
-            --header 'Content-type: application/octet-stream' \
-            --data-binary '@${{ steps.build.outputs.asset }}'
+          version='${{ needs.check_release.outputs.version }}'
+          echo "version: $version"
+
+          # empty arguments
+          set --
+
+          # is this a test release, or a real release?
+          if [[ "$version" == 'v0.0.0-test' ]]; then
+            set -- "$@" --target '${{ github.sha }}'
+          fi
+
+          # is this a pre-release (-rc*, -alpha, -beta, -test)?
+          if [[ "$version" == *"-"* ]]; then
+            set -- "$@" --prerelease
+          fi
+
+          date=$(env TZ=':America/Los_Angeles' date +'%Y-%m-%d')
+          echo "date: $date"
+
+          echo "args: $@"
+
+          set -x
+          gh release create \
+            "$version" \
+            assets/* \
+            --title "$version ($date)" \
+            --draft \
+            --repo '${{ github.repository }}' \
+            "$@"
         shell: bash

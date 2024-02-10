@@ -310,11 +310,11 @@ cp -r "output/Mech3DotNet/AutoGen/" "$MECH3DOTNET_AUTOGEN_PATH"
 ## Release procedure
 
 1. Review changelog, and add the date
-1. Bump version in `crates/mech3ax-version/src/lib.rs`
 1. Commit, push, and wait for CI
-1. Create a tag of the version (e.g. `git tag v0.6.0-rc3`)
-1. Push the tag (`git push --tags`)
+1. Create a tag of the version (e.g. `git tag -a v0.1.0 -m "2024-02-09"`)
+1. Push the tag (`git push origin v0.1.0`)
 1. The build will automatically create a release as a draft
+1. The CLI version is automatically set from the tag and the current date
 1. Add changelog items to the release notes via the GitHub web interface
 1. Publish the release via the GitHub web interface
 

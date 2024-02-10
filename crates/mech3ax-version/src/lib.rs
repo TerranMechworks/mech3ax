@@ -1,1 +1,6 @@
-pub const VERSION: &str = concat!("0.6.0-rc4 (", env!("MECH3AX_BUILD_DATE"), ")");
+pub const VERSION: &str = concat!(
+    env!("MECH3AX_VERSION"),
+    " (",
+    env!("MECH3AX_BUILD_DATE"),
+    ")",
+);
