@@ -2,6 +2,7 @@ use crate::csharp_type::{CSharpType, SerializeType, TypeKind};
 use crate::module_path::{dotnet_namespace_to_path, rust_mod_path_to_dotnet};
 use crate::resolver::TypeResolver;
 use mech3ax_metadata_types::{TypeInfo, TypeInfoUnion};
+use minijinja::{context, Environment};
 use serde::Serialize;
 use std::borrow::Cow;
 use std::path::PathBuf;
@@ -109,10 +110,9 @@ impl Union {
         }
     }
 
-    pub fn render_impl(&self, tera: &tera::Tera) -> tera::Result<String> {
-        let mut context = tera::Context::new();
-        context.insert("union", self);
-        tera.render("union_impl.cs", &context)
+    pub fn render_impl(&self, env: &Environment<'_>) -> Result<String, minijinja::Error> {
+        let template = env.get_template("union_impl.cs")?;
+        template.render(context! { union => self })
     }
 }
 

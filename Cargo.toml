@@ -38,7 +38,7 @@ base64 = "0.21"
 thiserror = "1.0"
 # metadata gen only
 heck = "0.4"
-tera = "1.19"
+minijinja = "1.0"
 # cli only
 clap = { version = "4.5", default-features = false, features = ["std", "derive", "color", "help", "usage", "error-context"] }
 env_logger = { version = "0.11", default-features = false, features = ["auto-color", "humantime"] }

@@ -234,7 +234,7 @@ fn main() {
     resolver.push::<api::anim::SeqDef>();
     resolver.push::<api::anim::AnimDef>();
 
-    let tera = templates::make_tera();
+    let env = templates::make_env();
     let (enums, structs, unions, mut directories) = resolver.into_values();
     directories.sort();
 
@@ -244,19 +244,19 @@ fn main() {
     }
 
     for item in enums {
-        let contents = item.render_impl(&tera).unwrap();
+        let contents = item.render_impl(&env).unwrap();
         std::fs::write(&item.path, contents)
             .unwrap_or_else(|e| panic!("failed to write `{}`: {:?}", item.path.display(), e));
     }
 
     for item in structs {
-        let contents = item.render_impl(&tera).unwrap();
+        let contents = item.render_impl(&env).unwrap();
         std::fs::write(&item.path, contents)
             .unwrap_or_else(|e| panic!("failed to write `{}`: {:?}", item.path.display(), e));
     }
 
     for item in unions {
-        let contents = item.render_impl(&tera).unwrap();
+        let contents = item.render_impl(&env).unwrap();
         std::fs::write(&item.path, contents)
             .unwrap_or_else(|e| panic!("failed to write `{}`: {:?}", item.path.display(), e));
     }

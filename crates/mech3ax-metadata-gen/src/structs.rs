@@ -3,6 +3,7 @@ use crate::fields::{sort_generics, Field};
 use crate::module_path::{dotnet_namespace_to_path, rust_mod_path_to_dotnet};
 use crate::resolver::TypeResolver;
 use mech3ax_metadata_types::{TypeInfoStruct, TypeSemantic};
+use minijinja::{context, Environment};
 use serde::Serialize;
 use std::borrow::Cow;
 use std::collections::HashSet;
@@ -126,14 +127,13 @@ impl Struct {
         }
     }
 
-    pub fn render_impl(&self, tera: &tera::Tera) -> tera::Result<String> {
-        let mut context = tera::Context::new();
-        context.insert("struct", self);
+    pub fn render_impl(&self, env: &Environment<'_>) -> Result<String, minijinja::Error> {
         let template_name = match self.semantic {
             TypeSemantic::Ref => "class_impl.cs",
             TypeSemantic::Val => "struct_impl.cs",
         };
-        tera.render(template_name, &context)
+        let template = env.get_template(template_name)?;
+        template.render(context! { struct => self })
     }
 }
 

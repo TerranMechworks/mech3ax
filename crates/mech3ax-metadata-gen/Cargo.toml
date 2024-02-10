@@ -11,7 +11,7 @@ autobenches = false
 [dependencies]
 heck.workspace = true
 serde.workspace = true
-tera.workspace = true
+minijinja.workspace = true
 
 mech3ax-api-types = { path = "../mech3ax-api-types" }
 mech3ax-metadata-proc-macro = { path = "../mech3ax-metadata-proc-macro" }
