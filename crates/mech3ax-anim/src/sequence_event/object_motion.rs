@@ -70,6 +70,7 @@ struct ObjectMotionC {
 static_assert_size!(ObjectMotionC, 320);
 
 bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     struct ObjectMotionFlags: u32 {
         const GRAVITY = 1 << 0; // 1
         const IMPACT_FORCE = 1 << 1; // 2

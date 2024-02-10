@@ -89,6 +89,7 @@ struct PolygonNgC {
 static_assert_size!(PolygonNgC, 40);
 
 bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct PolygonBitFlags: u32 {
         const UNK2 = 1 << 2;
         const UNK3 = 1 << 3; // not in mechlib

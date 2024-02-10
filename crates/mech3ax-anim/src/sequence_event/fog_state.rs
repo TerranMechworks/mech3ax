@@ -12,15 +12,16 @@ use std::io::{Read, Write};
 const DEFAULT_FOG_NAME: &str = "default_fog_name";
 
 bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct FogStateFlags: u32 {
         // const STATE = 1 << 0;
         const COLOR = 1 << 1;
         const ALTITUDE = 1 << 2;
         const RANGE = 1 << 3;
 
-        const DEFAULT = Self::COLOR.bits
-        | Self::ALTITUDE.bits
-        | Self::RANGE.bits;
+        const DEFAULT = Self::COLOR.bits()
+        | Self::ALTITUDE.bits()
+        | Self::RANGE.bits();
     }
 }
 
@@ -49,7 +50,7 @@ impl ScriptObject for FogState {
 
         assert_that!(
             "fog state flags",
-            fog_state.flags == FogStateFlags::DEFAULT.bits,
+            fog_state.flags == FogStateFlags::DEFAULT.bits(),
             read.prev + 32
         )?;
         assert_that!(
@@ -79,7 +80,7 @@ impl ScriptObject for FogState {
         };
         write.write_struct(&FogStateC {
             name,
-            flags: FogStateFlags::DEFAULT.bits,
+            flags: FogStateFlags::DEFAULT.bits(),
             fog_type,
             color: self.color,
             altitude: self.altitude,

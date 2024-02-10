@@ -97,6 +97,7 @@ pub enum RawMaterial {
 }
 
 bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     struct MaterialFlags: u8 {
         const TEXTURED = 1 << 0;
         const UNKNOWN = 1 << 1;

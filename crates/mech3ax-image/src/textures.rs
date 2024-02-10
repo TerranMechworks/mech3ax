@@ -51,6 +51,7 @@ struct TextureInfoC {
 static_assert_size!(TextureInfoC, 16);
 
 bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     struct TexFlags: u32 {
         // if set, 2 bytes per pixel, else 1 byte per pixel
         const BYTES_PER_PIXEL2 = 1 << 0;

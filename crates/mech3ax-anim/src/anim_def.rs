@@ -18,6 +18,7 @@ use num_traits::FromPrimitive as _;
 use std::io::{Read, Write};
 
 bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct AnimDefFlags: u32 {
         const EXECUTION_BY_RANGE = 1 << 1;
         const EXECUTION_BY_ZONE = 1 << 3;

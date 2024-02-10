@@ -55,6 +55,7 @@ struct PufferStateC {
 static_assert_size!(PufferStateC, 580);
 
 bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     struct PufferStateFlags: u32 {
         const TRANSLATE = 1 << 0;
         // this might not be right?

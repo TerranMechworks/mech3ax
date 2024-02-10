@@ -84,6 +84,7 @@ pub struct WrappedMeshRc {
 }
 
 bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct PolygonBitFlags: u32 {
         const UNK0 = 1 << 0;
         const NORMALS = 1 << 1;

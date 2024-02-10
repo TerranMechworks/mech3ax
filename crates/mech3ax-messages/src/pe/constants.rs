@@ -1,4 +1,5 @@
 bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct ImageFileFlags: u16 {
         const RELOCS_STRIPPED = 0x0001;
         const EXECUTABLE_IMAGE = 0x0002;

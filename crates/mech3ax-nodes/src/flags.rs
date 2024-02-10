@@ -1,6 +1,7 @@
 use mech3ax_api_types::nodes::NodeFlags;
 
 bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct NodeBitFlags: u32 {
         // const UNK00 = 1 << 0;
         // const UNK01 = 1 << 1;
@@ -35,8 +36,8 @@ bitflags::bitflags! {
         // const UNK30 = 1 << 30;
         // const UNK31 = 1 << 31;
 
-        const BASE = Self::ACTIVE.bits | Self::TREE_VALID.bits | Self::ID_ZONE_CHECK.bits;
-        const DEFAULT = Self::BASE.bits | Self::ALTITUDE_SURFACE.bits | Self::INTERSECT_SURFACE.bits;
+        const BASE = Self::ACTIVE.bits() | Self::TREE_VALID.bits() | Self::ID_ZONE_CHECK.bits();
+        const DEFAULT = Self::BASE.bits() | Self::ALTITUDE_SURFACE.bits() | Self::INTERSECT_SURFACE.bits();
     }
 }
 
@@ -115,6 +116,7 @@ impl From<&NodeFlags> for NodeBitFlags {
 }
 
 bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct NodeBitFlagsCs: u32 {
         const UNK02 = 1 << 2;
         const UNK03 = 1 << 3;

@@ -8,6 +8,7 @@ use mech3ax_common::{assert_that, assert_with_msg, Result};
 use std::io::{Read, Write};
 
 bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     struct ObjectMotionFromToFlags: u32 {
         const TRANSLATE = 1 << 0;
         const ROTATE = 1 << 1;

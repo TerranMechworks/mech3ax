@@ -30,6 +30,7 @@ struct CallAnimationC {
 static_assert_size!(CallAnimationC, 68);
 
 bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     struct CallAnimationFlags: u16 {
         // Call with AT_NODE (OPERAND_NODE can't be used)
         const AT_NODE = 1 << 0;

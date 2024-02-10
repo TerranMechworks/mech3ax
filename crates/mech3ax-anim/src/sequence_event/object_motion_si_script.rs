@@ -52,6 +52,7 @@ struct ScaleDataC {
 static_assert_size!(ScaleDataC, 76);
 
 bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct FrameFlags: u32 {
         const TRANSLATE = 1 << 0;
         const ROTATE = 1 << 1;

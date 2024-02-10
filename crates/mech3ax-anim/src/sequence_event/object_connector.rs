@@ -31,6 +31,7 @@ struct ObjectConnectorC {
 static_assert_size!(ObjectConnectorC, 76);
 
 bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     struct ObjectConnectorFlags: u32 {
         const FROM_NODE = 1 << 0;
         const FROM_INPUT_NODE = 1 << 1;
