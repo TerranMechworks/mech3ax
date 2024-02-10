@@ -1,8 +1,8 @@
 use proc_macro2::TokenStream;
 use quote::ToTokens as _;
 use syn::{
-    parse_quote, Data, DataEnum, DeriveInput, Error, ExprTuple, Field, Fields, FieldsUnnamed,
-    Ident, ImplItemConst, ItemImpl, Path, Result, Type, TypePath, Variant,
+    parse_quote, Data, DataEnum, DeriveInput, Error, ExprTuple, Field, FieldMutability, Fields,
+    FieldsUnnamed, Ident, ImplItemConst, ItemImpl, Path, Result, Type, TypePath, Variant,
 };
 
 macro_rules! cannot_derive {
@@ -53,7 +53,14 @@ fn parse_variant(variant: Variant) -> Result<VariantInfo> {
                         ident: field_ident,
                         colon_token: _,
                         ty,
+                        mutability,
                     } = field;
+                    if !matches!(mutability, FieldMutability::None) {
+                        return Err(Error::new_spanned(
+                            ty,
+                            "Expected field to have no mutability",
+                        ));
+                    }
                     if let Some(field_ident) = field_ident {
                         return Err(Error::new_spanned(
                             field_ident,

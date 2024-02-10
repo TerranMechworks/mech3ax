@@ -1,28 +1,40 @@
 use mech3ax_metadata_types::{DefaultHandling, TypeSemantic};
-use syn::{AttrStyle, Attribute, Error, Lit, Meta, NestedMeta, Path, Result};
+use syn::parse::{Parse, ParseStream};
+use syn::punctuated::Punctuated;
+use syn::{AttrStyle, Attribute, Error, Expr, Lit, LitStr, Meta, MetaList, Path, Result, Token};
 
 fn find_attr<'a>(attrs: &'a [Attribute], ident: &str) -> Option<&'a Attribute> {
     attrs
         .iter()
-        .find(|attr| attr.style == AttrStyle::Outer && attr.path.is_ident(ident))
+        .find(|attr| attr.style == AttrStyle::Outer && attr.path().is_ident(ident))
 }
 
-fn parse_serde_skip_serializing_if(lit: Lit) -> Result<DefaultHandling> {
-    match lit {
-        Lit::Str(lit_str) => {
-            let value = lit_str.value();
-            match value.as_str() {
-                "Option::is_none" => Ok(DefaultHandling::OptionIsNone),
-                "bool_false" => Ok(DefaultHandling::BoolFalse),
-                "bool_true" => Ok(DefaultHandling::BoolTrue),
-                "pointer_zero" => Ok(DefaultHandling::PointerZero),
-                _ => Err(Error::new_spanned(
-                    lit_str,
-                    format!("Unknown skip `{}`", value),
-                )),
+fn parse_serde_skip_serializing_if(lit: LitStr) -> Result<DefaultHandling> {
+    let value = lit.value();
+    match value.as_str() {
+        "Option::is_none" => Ok(DefaultHandling::OptionIsNone),
+        "bool_false" => Ok(DefaultHandling::BoolFalse),
+        "bool_true" => Ok(DefaultHandling::BoolTrue),
+        "pointer_zero" => Ok(DefaultHandling::PointerZero),
+        _ => Err(Error::new_spanned(lit, format!("unknown skip `{}`", value))),
+    }
+}
+
+fn parse_expr_to_str_lit(expr: Expr) -> Result<LitStr> {
+    match expr {
+        Expr::Lit(expr_lit) => {
+            if !expr_lit.attrs.is_empty() {
+                return Err(Error::new_spanned(
+                    expr_lit,
+                    "expected string literal with no attributes",
+                ));
+            }
+            match expr_lit.lit {
+                Lit::Str(lit) => Ok(lit),
+                other => Err(Error::new_spanned(other, "expected string literal")),
             }
         }
-        other => Err(Error::new_spanned(other, "Expected string literal")),
+        other => Err(Error::new_spanned(other, "expected literal")),
     }
 }
 
@@ -32,55 +44,24 @@ pub fn parse_serde_attr(attrs: &[Attribute]) -> Result<DefaultHandling> {
         None => return Ok(DefaultHandling::Normal),
     };
 
-    match attr.parse_meta()? {
-        Meta::List(meta) => {
-            for nested in meta.nested.into_iter() {
-                match nested {
-                    // Parse `#[serde(skip_serializing_if = "foo")]`
-                    NestedMeta::Meta(Meta::NameValue(m))
-                        if m.path.is_ident("skip_serializing_if") =>
-                    {
-                        return parse_serde_skip_serializing_if(m.lit);
-                    }
-                    _ => {}
-                }
+    let meta_list = attr.meta.require_list()?;
+    let punctuated: Punctuated<Meta, Token![,]> =
+        meta_list.parse_args_with(Punctuated::parse_separated_nonempty)?;
+
+    let mut handling = DefaultHandling::Normal;
+    for meta in punctuated {
+        match meta {
+            Meta::NameValue(nv) if nv.path.is_ident("skip_serializing_if") => {
+                let lit = parse_expr_to_str_lit(nv.value)?;
+                handling = parse_serde_skip_serializing_if(lit)?
             }
+            _ => {}
         }
-        other => return Err(Error::new_spanned(other, "Expected #[serde(...)]")),
     }
-
-    Ok(DefaultHandling::Normal)
+    Ok(handling)
 }
 
-fn parse_generic_param(nested: NestedMeta) -> Result<(Path, String)> {
-    match nested {
-        // Parse `#[generic(foo = "foo"...)]`
-        NestedMeta::Meta(Meta::NameValue(nv)) => {
-            let value = match nv.lit {
-                Lit::Str(litstr) => Ok(litstr.value()),
-                other => Err(Error::new_spanned(
-                    other,
-                    "Expected #[generic(foo = \"foo\"...)]",
-                )),
-            }?;
-            let path = nv.path;
-            Ok((path, value))
-        }
-        other => Err(Error::new_spanned(
-            other,
-            "Expected #[generic(foo = \"foo\"...)]",
-        )),
-    }
-}
-
-fn parse_namespace_param(lit: Lit) -> Result<String> {
-    match lit {
-        Lit::Str(lit_str) => Ok(lit_str.value()),
-        other => Err(Error::new_spanned(other, "Expected string literal")),
-    }
-}
-
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct DotNetInfoOwned {
     pub semantic: TypeSemantic,
     pub generics: Option<Vec<(Path, String)>>,
@@ -88,16 +69,66 @@ pub struct DotNetInfoOwned {
     pub namespace: Option<String>,
 }
 
-fn parse_dotnet_inner(inner: impl Iterator<Item = NestedMeta>) -> Result<DotNetInfoOwned> {
-    let mut dotnet = DotNetInfoOwned::default();
-    for nested in inner {
-        let NestedMeta::Meta(attr) = nested else {
-            return Err(Error::new_spanned(
-                nested,
-                "Expected #[dotnet(...)], but found literal",
-            ));
-        };
-        match attr {
+impl Default for DotNetInfoOwned {
+    fn default() -> Self {
+        Self {
+            semantic: TypeSemantic::Ref,
+            generics: None,
+            partial: false,
+            namespace: None,
+        }
+    }
+}
+
+#[derive(Debug)]
+struct GenericParam {
+    path: Path,
+    value: String,
+}
+
+impl GenericParam {
+    fn into_pair(self) -> (Path, String) {
+        let Self { path, value } = self;
+        (path, value)
+    }
+}
+
+impl Parse for GenericParam {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
+        let path: Path = input.parse()?;
+        let _eq_token: Token![=] = input.parse()?;
+        let lit: LitStr = input.parse()?;
+        let value = lit.value();
+        Ok(Self { path, value })
+    }
+}
+
+fn parse_meta_list_to_generics(meta_list: MetaList) -> Result<Vec<(Path, String)>> {
+    let punctuated: Punctuated<GenericParam, Token![,]> =
+        meta_list.parse_args_with(Punctuated::parse_separated_nonempty)?;
+    Ok(punctuated
+        .into_iter()
+        .map(GenericParam::into_pair)
+        .collect())
+}
+
+pub fn parse_dotnet_attr(attrs: &[Attribute]) -> Result<DotNetInfoOwned> {
+    let Some(attr) = find_attr(attrs, "dotnet") else {
+        return Ok(DotNetInfoOwned::default());
+    };
+
+    let meta_list = attr.meta.require_list()?;
+    let punctuated: Punctuated<Meta, Token![,]> =
+        meta_list.parse_args_with(Punctuated::parse_separated_nonempty)?;
+
+    let mut dotnet = DotNetInfoOwned {
+        semantic: TypeSemantic::Ref,
+        generics: None,
+        partial: false,
+        namespace: None,
+    };
+    for meta in punctuated {
+        match meta {
             Meta::Path(path) if path.is_ident("partial") => dotnet.partial = true,
             Meta::Path(path) if path.is_ident("val_struct") => dotnet.semantic = TypeSemantic::Val,
             Meta::Path(path) => {
@@ -107,18 +138,15 @@ fn parse_dotnet_inner(inner: impl Iterator<Item = NestedMeta>) -> Result<DotNetI
                 ));
             }
             Meta::List(list) if list.path.is_ident("generic") => {
-                let generic = list
-                    .nested
-                    .into_iter()
-                    .map(parse_generic_param)
-                    .collect::<Result<_>>()?;
-                dotnet.generics = Some(generic);
+                let generics = parse_meta_list_to_generics(list)?;
+                dotnet.generics = Some(generics);
             }
             Meta::List(list) => {
                 return Err(Error::new_spanned(list, "Expected #[dotnet(generic(...))]"));
             }
             Meta::NameValue(nv) if nv.path.is_ident("namespace") => {
-                let namespace = parse_namespace_param(nv.lit)?;
+                let lit = parse_expr_to_str_lit(nv.value)?;
+                let namespace = lit.value();
                 dotnet.namespace = Some(namespace);
             }
             Meta::NameValue(nv) => {
@@ -130,14 +158,4 @@ fn parse_dotnet_inner(inner: impl Iterator<Item = NestedMeta>) -> Result<DotNetI
         }
     }
     Ok(dotnet)
-}
-
-pub fn parse_dotnet_attr(attrs: &[Attribute]) -> Result<DotNetInfoOwned> {
-    let Some(dotnet) = find_attr(attrs, "dotnet") else {
-        return Ok(DotNetInfoOwned::default());
-    };
-    match dotnet.parse_meta()? {
-        Meta::List(list) => parse_dotnet_inner(list.nested.into_iter()),
-        other => Err(Error::new_spanned(other, "Expected #[dotnet(...)]")),
-    }
 }

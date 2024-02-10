@@ -94,12 +94,6 @@ pub enum TypeSemantic {
     Ref,
 }
 
-impl Default for TypeSemantic {
-    fn default() -> Self {
-        Self::Ref
-    }
-}
-
 /// DotNet/C#-specific information for (Rust) struct types.
 #[derive(Debug, Clone, PartialEq)]
 pub struct TypeInfoStructDotNet {

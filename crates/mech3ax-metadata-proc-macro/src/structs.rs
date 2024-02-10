@@ -3,8 +3,9 @@ use mech3ax_metadata_types::{DefaultHandling, TypeSemantic};
 use proc_macro2::TokenStream;
 use quote::ToTokens as _;
 use syn::{
-    parse_quote, Attribute, Data, DataStruct, DeriveInput, Error, Expr, ExprStruct, Field, Fields,
-    FieldsNamed, Generics, Ident, ImplItemConst, ItemImpl, LitBool, Path, Result, Type,
+    parse_quote, Attribute, Data, DataStruct, DeriveInput, Error, Expr, ExprStruct, Field,
+    FieldMutability, Fields, FieldsNamed, Generics, Ident, ImplItemConst, ItemImpl, LitBool, Path,
+    Result, Type, Visibility,
 };
 
 macro_rules! cannot_derive {
@@ -51,11 +52,21 @@ fn parse_struct_fields(fields: FieldsNamed) -> Result<Vec<FieldInfoOwned>> {
         .map(|field| {
             let Field {
                 attrs,
-                vis: _,
+                vis,
                 ident,
                 colon_token: _,
                 ty,
+                mutability,
             } = field;
+            if !matches!(vis, Visibility::Public(_)) {
+                return Err(Error::new_spanned(&ty, "Expected field to be public"));
+            }
+            if !matches!(mutability, FieldMutability::None) {
+                return Err(Error::new_spanned(
+                    &ty,
+                    "Expected field to have no mutability",
+                ));
+            }
             let ident = ident
                 .ok_or_else(|| Error::new_spanned(&ty, "Expected field to have an identifier"))?;
             parse_struct_field(ident, &attrs, &ty)
