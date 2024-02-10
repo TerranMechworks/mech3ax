@@ -139,61 +139,13 @@ Provided subcommands:
 * `anim` (produces a `*.zip` file, `mw` only)
 * `zmap` (produces a `*.json` file, `rc` only)
 
-## Blender scripts
-
-> **WARNING**: The Blender scripts are proof-of-concept, and generally unsupported. If they are broken, they need fixing by you.
-
-Blender 3.2.2 or higher is recommended. Blender's APIs do change, so you may need to use a version closely matching that one. It will definitely *not* work with versions below 2.80, but if you have success running it with newer versions, let me know so I can update this README.
-
-This is a bit tricky to get running, because of the dependencies. Your install location may vary. Naturally, you can specify the absolute path. It's easier if the Blender executable can be found. For macOS and Linux, this can be achieved by an alias in your shell's profile, e.g. `.bashrc`:
-
-```bash
-alias blender="/Applications/Blender.app/Contents/MacOS/Blender"
-```
-
-For Windows/PowerShell, you can add an alias to either the current session (or the appropriate `profile.ps1`):
-
-```powershell
-New-Alias blender "C:\Program Files\Blender Foundation\Blender 2.90\blender.exe"
-```
-
-Assuming the above, and you have extracted the mechlib files and mech textures to the same directory, you can run:
-
-```bash
-blender \
-    --background \
-    --factory-startup \
-    --python "mechlib2blend.py" \
-    -- \
-    "mechlib.zip" \
-    --mechtex "rmechtex.zip" \
-    --motion "motion.zip" \
-    "supernova"
-```
-
-where `--mechtex` and `--motion` are optional. If `--mechtex` is specified, textures are extracted, applied, and packed into the `.blend` file. If `--motion` is specified, mech motions/animations are loaded and applied to the model.
-
-Assuming the above, and you have extracted the gamez files, game textures, and mech textures to the same directory, you can run:
-
-```bash
-blender \
-    --background \
-    --factory-startup \
-    --python "gamez2blend.py" \
-    -- \
-    "gamez.zip" \
-    --rtexture "c1-rtexture.zip" \
-    --rmechtex "rmechtex.zip"
-```
-
-where `--rtexture` and `--rmechtex` are optional.
-
 ## Changelog
 
 ### [0.6.0-rc5] - Unreleased
 
 * Horribly dirty hacks for Recoil M6 and M9 (`gamez`)
 * Allow Recoil light nodes in other positions (`gamez`)
+* Blender scripts removed
 * Update to Rust 1.73.0
 
 ### [0.6.0-rc4] - 2023-07-15
