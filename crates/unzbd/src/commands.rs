@@ -226,12 +226,12 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
     let mut input = CountingReader::new(buf_reader(input)?);
     let manifest = read_textures::<_, _, anyhow::Error>(&mut input, |original, image| {
         let name = format!("{}.png", original);
-        let mut data = Vec::new();
+        let mut data = Cursor::new(Vec::new());
         image
             .write_to(&mut data, ImageOutputFormat::Png)
             .with_context(|| format!("Failed to write image data for `{}`", original))?;
 
-        zip_write(&mut zip, options, &name, &data)
+        zip_write(&mut zip, options, &name, data.get_ref())
     })
     .context("Failed to read texture data")?;
 

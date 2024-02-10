@@ -23,7 +23,7 @@ version = "0.0.0"
 [workspace.dependencies]
 anyhow = "1.0"
 bitflags = "2.4"
-image = { version = "0.23", default-features = false, features = ["png"] }
+image = { version = "0.24", default-features = false, features = ["png"] }
 log = "0.4"
 num-derive = "0.4"
 num-traits = "0.2"

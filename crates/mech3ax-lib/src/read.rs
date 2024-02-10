@@ -270,12 +270,12 @@ pub extern "C" fn read_textures(
         let input = buf_reader(filename)?;
         let mut read = CountingReader::new(input);
         let manifest = mech3ax_image::read_textures(&mut read, |name, image| {
-            let mut data = Vec::new();
+            let mut data = Cursor::new(Vec::new());
             image
                 .write_to(&mut data, ImageOutputFormat::Png)
                 .with_context(|| format!("Failed to write image `{}`", name))?;
 
-            buffer_callback(callback, name, &data)
+            buffer_callback(callback, name, data.get_ref())
         })?;
 
         let data = mech3ax_exchange::to_vec(&manifest)?;
