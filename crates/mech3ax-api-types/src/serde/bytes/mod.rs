@@ -1,3 +1,4 @@
+use base64::prelude::{Engine as _, BASE64_STANDARD};
 use std::fmt;
 
 struct Base64Visitor;
@@ -15,7 +16,7 @@ impl<'de> serde::de::Visitor<'de> for Base64Visitor {
     where
         E: serde::de::Error,
     {
-        ::base64::decode(value).map_err(E::custom)
+        BASE64_STANDARD.decode(value).map_err(E::custom)
     }
 }
 
@@ -45,7 +46,7 @@ pub fn serialize<S: serde::ser::Serializer>(
     serializer: S,
 ) -> Result<S::Ok, S::Error> {
     if serializer.is_human_readable() {
-        let encoded = ::base64::encode(value);
+        let encoded = BASE64_STANDARD.encode(value);
         serializer.serialize_str(&encoded)
     } else {
         serializer.serialize_bytes(value)

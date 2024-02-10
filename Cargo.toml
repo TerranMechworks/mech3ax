@@ -33,7 +33,7 @@ serde_test = "1.0"
 time = "0.3"
 
 # api types only
-base64 = "0.13"
+base64 = "0.21"
 # common only
 thiserror = "1.0"
 # metadata gen only
