@@ -11,7 +11,7 @@ fn main() {
 /// a normal/standard CRC-32 with the polynomial 0x04C11DB7.
 fn crc32() {
     let path = Path::new(&env::var("OUT_DIR").unwrap()).join("crc32.rs");
-    let mut file = BufWriter::new(File::create(&path).unwrap());
+    let mut file = BufWriter::new(File::create(path).unwrap());
 
     writeln!(&mut file, "static CRC32_TABLE: [u32; 256] = [").unwrap();
     for i in 0..256u32 {

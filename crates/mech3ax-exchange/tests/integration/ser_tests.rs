@@ -84,7 +84,7 @@ fn bytes_tests() {
         where
             S: serde::ser::Serializer,
         {
-            serializer.serialize_bytes(&self.0)
+            serializer.serialize_bytes(self.0)
         }
     }
 }

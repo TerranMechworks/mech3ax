@@ -6,7 +6,7 @@ use std::path::Path;
 fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
     let path = Path::new(&out_dir).join("index-windows-1252.rs");
-    let mut file = BufWriter::new(File::create(&path).unwrap());
+    let mut file = BufWriter::new(File::create(path).unwrap());
 
     writeln!(&mut file, "static WINDOWS1252: [char; 256] = [").unwrap();
     for i in 0u8..128 {

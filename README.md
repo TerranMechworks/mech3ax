@@ -146,7 +146,7 @@ Provided subcommands:
 * Horribly dirty hacks for Recoil M6 and M9 (`gamez`)
 * Allow Recoil light nodes in other positions (`gamez`)
 * Blender scripts removed
-* Update to Rust 1.73.0
+* Update to Rust 1.76.0
 
 ### [0.6.0-rc4] - 2023-07-15
 

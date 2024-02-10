@@ -10,7 +10,7 @@ fn main() {
 #[allow(clippy::identity_op)]
 fn lerp() {
     let path = Path::new(&env::var("OUT_DIR").unwrap()).join("lerp.rs");
-    let mut file = BufWriter::new(File::create(&path).unwrap());
+    let mut file = BufWriter::new(File::create(path).unwrap());
 
     writeln!(&mut file, "const LERP5: [u8; 256] = [").unwrap();
     for i in 0..256 {
