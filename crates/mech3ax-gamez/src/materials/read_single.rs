@@ -4,6 +4,7 @@ use mech3ax_api_types::gamez::materials::{ColoredMaterial, CycleData, Material, 
 use mech3ax_api_types::{u32_to_usize, Color, ReprSize as _};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
+use num_traits::FromPrimitive;
 use std::io::Read;
 
 pub(crate) fn read_material(
@@ -44,6 +45,14 @@ pub(crate) fn read_material(
     assert_that!("field 24", material.half24 == 0.5, read.prev + 24)?;
     assert_that!("field 28", material.half28 == 0.5, read.prev + 28)?;
 
+    let soil = FromPrimitive::from_u32(material.soil).ok_or_else(|| {
+        assert_with_msg!(
+            "Expected valid soil type (0..13), but was {} (at {})",
+            material.soil,
+            read.prev + 32,
+        )
+    })?;
+
     let material = if bitflags.contains(MaterialFlags::TEXTURED) {
         // all color information comes from the texture
         assert_that!("alpha", material.alpha == 0xFF, read.prev + 0)?;
@@ -60,7 +69,7 @@ pub(crate) fn read_material(
         RawMaterial::Textured(RawTexturedMaterial {
             pointer: material.index,
             cycle_ptr,
-            specular: material.specular,
+            soil,
             flag: flag_unknown,
         })
     } else {
@@ -68,12 +77,13 @@ pub(crate) fn read_material(
         assert_that!("flag cycled", flag_cycled == false, read.prev + 1)?;
         assert_that!("rgb", material.rgb == 0x0000, read.prev + 2)?;
         assert_that!("index", material.index == 0, read.prev + 16)?;
+
         assert_that!("cycle ptr", material.cycle_ptr == 0, read.prev + 36)?;
 
         RawMaterial::Colored(ColoredMaterial {
             color: material.color,
             alpha: material.alpha,
-            specular: material.specular,
+            soil,
         })
     };
     Ok(material)
@@ -107,7 +117,7 @@ pub(super) fn read_material_zero(
     assert_that!("field 20", material.zero20 == 0.0, read.prev + 20)?;
     assert_that!("field 24", material.half24 == 0.0, read.prev + 24)?;
     assert_that!("field 28", material.half28 == 0.0, read.prev + 28)?;
-    assert_that!("specular", material.specular == 0.0, read.prev + 32)?;
+    assert_that!("soil", material.soil == 0, read.prev + 32)?;
     assert_that!("cycle ptr", material.cycle_ptr == 0, read.prev + 36)?;
 
     Ok(())
@@ -181,7 +191,7 @@ pub(super) fn read_cycle(
                 // since this stores the index of the texture name, zero it out
                 pointer: 0,
                 cycle,
-                specular: mat.specular,
+                soil: mat.soil,
                 flag: mat.flag,
             })
         }

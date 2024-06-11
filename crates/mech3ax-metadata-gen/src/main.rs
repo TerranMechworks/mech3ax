@@ -53,6 +53,7 @@ fn main() {
     // --- GameZ
 
     // --- gamez/materials.rs
+    resolver.push::<api::gamez::materials::Soil>();
     resolver.push::<api::gamez::materials::ColoredMaterial>();
     resolver.push::<api::gamez::materials::CycleData>();
     resolver.push::<api::gamez::materials::TexturedMaterial>();

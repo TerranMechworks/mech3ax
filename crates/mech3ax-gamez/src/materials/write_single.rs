@@ -56,7 +56,7 @@ pub(crate) fn write_material(
                 zero20: 0.0,
                 half24: 0.5,
                 half28: 0.5,
-                specular: material.specular,
+                soil: material.soil as u32,
                 cycle_ptr,
             }
         }
@@ -74,7 +74,7 @@ pub(crate) fn write_material(
                 zero20: 0.0,
                 half24: 0.5,
                 half28: 0.5,
-                specular: material.specular,
+                soil: material.soil as u32,
                 cycle_ptr: 0,
             }
         }

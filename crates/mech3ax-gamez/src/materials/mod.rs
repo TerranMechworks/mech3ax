@@ -4,7 +4,7 @@ mod read_single;
 mod write_multi;
 mod write_single;
 
-use mech3ax_api_types::gamez::materials::{ColoredMaterial, Material};
+use mech3ax_api_types::gamez::materials::{ColoredMaterial, Material, Soil};
 use mech3ax_api_types::{static_assert_size, Color, ReprSize as _};
 
 pub(crate) use read_multi::read_materials;
@@ -64,7 +64,7 @@ struct MaterialC {
     zero20: f32,    // 20
     half24: f32,    // 24
     half28: f32,    // 28
-    specular: f32,  // 32
+    soil: u32,      // 32
     cycle_ptr: u32, // 36
 }
 static_assert_size!(MaterialC, 40);
@@ -86,7 +86,7 @@ static_assert_size!(CycleInfoC, 28);
 pub struct RawTexturedMaterial {
     pub pointer: u32,
     pub cycle_ptr: Option<u32>,
-    pub specular: f32,
+    pub soil: Soil,
     pub flag: bool,
 }
 

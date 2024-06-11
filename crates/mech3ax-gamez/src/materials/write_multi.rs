@@ -90,7 +90,7 @@ fn write_materials_zero(
         zero20: 0.0,
         half24: 0.0,
         half28: 0.0,
-        specular: 0.0,
+        soil: 0,
         cycle_ptr: 0,
     };
 

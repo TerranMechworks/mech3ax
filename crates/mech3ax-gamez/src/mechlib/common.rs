@@ -57,7 +57,7 @@ pub fn read_materials(read: &mut CountingReader<impl Read>) -> Result<Vec<Materi
                         texture,
                         pointer: mat.pointer,
                         cycle: None,
-                        specular: mat.specular,
+                        soil: mat.soil,
                         flag: mat.flag,
                     })
                 }

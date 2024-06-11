@@ -1,7 +1,8 @@
 use crate::serde::pointer_zero;
 use crate::Color;
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::{Struct, Union};
+use mech3ax_metadata_proc_macro::{Enum, Struct, Union};
+use num_derive::FromPrimitive;
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct CycleData {
@@ -13,6 +14,37 @@ pub struct CycleData {
     pub data_ptr: u32,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, FromPrimitive, Enum)]
+#[repr(u32)]
+pub enum Soil {
+    Default = 0,
+    Water = 1,
+    Seafloor = 2,
+    Quicksand = 3,
+    Lava = 4,
+    Fire = 5,
+    Dirt = 6,
+    Mud = 7,
+    Grass = 8,
+    Concrete = 9,
+    Snow = 10,
+    Mech = 11,
+    Silt = 12,
+    NoSlip = 13,
+}
+
+impl Soil {
+    pub const fn is_default(&self) -> bool {
+        matches!(self, Self::Default)
+    }
+}
+
+impl Default for Soil {
+    fn default() -> Self {
+        Self::Default
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct TexturedMaterial {
     pub texture: String,
@@ -22,7 +54,8 @@ pub struct TexturedMaterial {
     // the Mechlib data doesn't have cycled textures
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub cycle: Option<CycleData>,
-    pub specular: f32,
+    #[serde(skip_serializing_if = "Soil::is_default", default)]
+    pub soil: Soil,
     pub flag: bool,
 }
 
@@ -30,7 +63,8 @@ pub struct TexturedMaterial {
 pub struct ColoredMaterial {
     pub color: Color,
     pub alpha: u8,
-    pub specular: f32,
+    #[serde(skip_serializing_if = "Soil::is_default", default)]
+    pub soil: Soil,
 }
 
 #[derive(Debug, Serialize, Deserialize, Union)]
