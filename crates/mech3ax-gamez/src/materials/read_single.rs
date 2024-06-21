@@ -76,6 +76,9 @@ pub(crate) fn read_material(
         assert_that!("flag unknown", flag_unknown == false, read.prev + 1)?;
         assert_that!("flag cycled", flag_cycled == false, read.prev + 1)?;
         assert_that!("rgb", material.rgb == 0x0000, read.prev + 2)?;
+        assert_that!("color r", 0.0 <= material.color.r <= 255.0, read.prev + 4)?;
+        assert_that!("color g", 0.0 <= material.color.g <= 255.0, read.prev + 8)?;
+        assert_that!("color b", 0.0 <= material.color.b <= 255.0, read.prev + 12)?;
         assert_that!("index", material.index == 0, read.prev + 16)?;
 
         assert_that!("cycle ptr", material.cycle_ptr == 0, read.prev + 36)?;
