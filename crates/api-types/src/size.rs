@@ -1,17 +1,43 @@
-pub trait ReprSize {
+use bytemuck::{AnyBitPattern, NoUninit};
+
+/// A trait that ensures a structure has a known size (in bytes), and can be
+/// read from and written to disk (as bytes).
+///
+/// This is rather involved.
+pub trait ReprSize: NoUninit + AnyBitPattern + Sized + 'static {
+    /// The size of the structure in bytes.
     const SIZE: u32;
-    fn _static_assert_size();
+
+    /// A compile-time assertion that the size of the structure is correct.
+    const _ASSERT_SIZE: ();
+
+    /// Borrow the structure's memory as bytes.
+    fn as_bytes(&self) -> &[u8];
+
+    /// Borrow the structure's memory as bytes.
+    fn as_bytes_mut(&mut self) -> &mut [u8];
 }
 
 #[macro_export]
 macro_rules! static_assert_size {
-    ($type:ty, $size:expr) => {
-        #[allow(dead_code)]
+    ($type:ty, $size:literal) => {
         impl $crate::ReprSize for $type {
+            #[allow(dead_code)]
             const SIZE: u32 = $size;
 
-            fn _static_assert_size() {
-                const _: [(); $size as usize] = [(); ::std::mem::size_of::<$type>()];
+            #[allow(dead_code)]
+            const _ASSERT_SIZE: () = {
+                const _: [(); $size] = [(); ::std::mem::size_of::<$type>()];
+            };
+
+            fn as_bytes(&self) -> &[u8] {
+                let b: &[u8; $size] = ::bytemuck::must_cast_ref(self);
+                b
+            }
+
+            fn as_bytes_mut(&mut self) -> &mut [u8] {
+                let b: &mut [u8; $size] = ::bytemuck::must_cast_mut(self);
+                b
             }
         }
     };

@@ -1,7 +1,6 @@
 use crate::assert::assert_utf8;
 use crate::assert_with_msg;
 use crate::string::str_from_c_sized;
-use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::ReprSize;
 use std::io::{Read, Result, Seek, SeekFrom, Write};
 
@@ -80,10 +79,9 @@ impl<R: Read> CountingReader<R> {
         Ok(u8::from_le_bytes(buf))
     }
 
-    #[allow(clippy::uninit_assumed_init)]
-    pub fn read_struct<S: NoUninit + AnyBitPattern + ReprSize>(&mut self) -> Result<S> {
+    pub fn read_struct<S: ReprSize>(&mut self) -> Result<S> {
         let mut s = S::zeroed();
-        let buf = bytemuck::bytes_of_mut(&mut s);
+        let buf = s.as_bytes_mut();
         self.read_exact(buf)?;
         Ok(s)
     }
@@ -206,8 +204,8 @@ impl<W: Write> CountingWriter<W> {
     }
 
     #[inline]
-    pub fn write_struct<S: NoUninit + ReprSize>(&mut self, value: &S) -> Result<()> {
-        let buf = bytemuck::bytes_of(value);
+    pub fn write_struct<S: ReprSize>(&mut self, value: &S) -> Result<()> {
+        let buf = value.as_bytes();
         self.write_all(buf)
     }
 
