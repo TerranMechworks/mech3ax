@@ -1,4 +1,5 @@
 #![warn(clippy::all, clippy::cargo)]
+#![allow(clippy::multiple_crate_versions)] // image crate uses outdated bitflags
 #![allow(clippy::identity_op)]
 mod textures;
 
