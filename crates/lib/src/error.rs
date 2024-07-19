@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Error, Result};
+use eyre::{eyre, Error, Result};
 use std::cell::RefCell;
 use std::panic::{catch_unwind, UnwindSafe};
 
@@ -33,7 +33,7 @@ where
     match result {
         Ok(ret) => ret,
         Err(_) => {
-            crate::error::set_last_error(Some(anyhow!("Panicked!")));
+            crate::error::set_last_error(Some(eyre!("Panicked!")));
             -2
         }
     }

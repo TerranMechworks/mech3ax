@@ -1,6 +1,6 @@
 use crate::commands::buf_writer;
 use crate::ZrdOpts;
-use anyhow::{Context, Result};
+use eyre::{Context as _, OptionExt as _, Result};
 use image::{ColorType, DynamicImage, GenericImageView, ImageFormat};
 use mech3ax_api_types::image::{TextureAlpha, TextureManifest};
 use mech3ax_common::assert_with_msg;
@@ -29,7 +29,9 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
     let buf = std::fs::read(path).context("Failed to read input (manifest)")?;
     let mut manifest: TextureManifest =
         serde_json::from_slice(&buf).context("Failed to parse input (manifest)")?;
-    let parent = path.parent().context("Failed to get input parent path")?;
+    let parent = path
+        .parent()
+        .ok_or_eyre("Failed to get input parent path")?;
 
     let mut images: HashMap<String, DynamicImage> = manifest
         .texture_infos
@@ -63,7 +65,7 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
             0,
         );
 
-        write_textures::<_, _, anyhow::Error>(&mut output, &manifest, |name| {
+        write_textures::<_, _, eyre::Report>(&mut output, &manifest, |name| {
             images
                 .remove(name)
                 .ok_or_else(|| std::io::Error::new(ErrorKind::NotFound, name.to_string()).into())

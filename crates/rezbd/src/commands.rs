@@ -1,5 +1,5 @@
 use crate::{InterpOpts, ZMapOpts, ZipOpts};
-use anyhow::{bail, Context, Result};
+use eyre::{bail, Context as _, Result};
 use mech3ax_anim::write_anim;
 use mech3ax_api_types::anim::AnimMetadata;
 use mech3ax_api_types::archive::ArchiveEntry;
@@ -213,7 +213,7 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
     let manifest: TextureManifest = zip_json(&mut zip, "manifest.json")?;
 
     let mut write = buf_writer(output)?;
-    write_textures::<_, _, anyhow::Error>(&mut write, &manifest, |original| {
+    write_textures::<_, _, eyre::Report>(&mut write, &manifest, |original| {
         let name = format!("{}.png", original);
         let buf = zip_read(&mut zip, &name)?;
 

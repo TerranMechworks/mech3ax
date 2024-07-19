@@ -1,5 +1,5 @@
 use crate::{InterpOpts, MsgOpts, ReaderOpts, ZMapOpts, ZipOpts};
-use anyhow::{bail, Context, Result};
+use eyre::{bail, Context as _, Result};
 use image::ImageFormat;
 use mech3ax_anim::read_anim;
 use mech3ax_archive::{read_archive, Mode, Version};
@@ -212,7 +212,7 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
     let mut zip = ZipWriter::new(output);
 
     let mut input = CountingReader::new(buf_reader(input)?);
-    let manifest = read_textures::<_, _, anyhow::Error>(&mut input, |original, image| {
+    let manifest = read_textures::<_, _, eyre::Report>(&mut input, |original, image| {
         let name = format!("{}.png", original);
         let mut data = Cursor::new(Vec::new());
         image

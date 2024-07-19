@@ -7,7 +7,7 @@ mod read;
 mod wave;
 mod write;
 
-use anyhow::{bail, Result};
+use eyre::{bail, Result};
 use mech3ax_common::GameType;
 use std::ffi::CStr;
 use std::os::raw::c_char;

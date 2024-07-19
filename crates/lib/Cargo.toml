@@ -21,7 +21,7 @@ name = "mech3ax"
 crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
-anyhow.workspace = true
+eyre.workspace = true
 image.workspace = true
 serde.workspace = true
 serde_json.workspace = true

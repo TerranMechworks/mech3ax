@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use eyre::{bail, Result};
 use mech3ax_common::assert_that;
 use mech3ax_common::io_ext::CountingReader;
 use std::io::{Read, Seek, SeekFrom};

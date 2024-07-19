@@ -1,7 +1,7 @@
 use crate::buffer::CallbackBuffer;
 use crate::error::err_to_c;
 use crate::{filename_to_string, i32_to_game};
-use anyhow::{anyhow, bail, Context, Result};
+use eyre::{bail, eyre, Context as _, Result};
 use mech3ax_api_types::anim::{AnimDef, AnimMetadata};
 use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_api_types::gamez::materials::Material;
@@ -34,7 +34,7 @@ fn buffer_callback(callback: NameBufferCb, name: &str) -> Result<Vec<u8>> {
     }
     buffer
         .inner()
-        .ok_or_else(|| anyhow!("callback didn't set any data on `{}`", name))
+        .ok_or_else(|| eyre!("callback didn't set any data on `{}`", name))
 }
 
 type NameBufferCb = extern "C" fn(*const u8, usize, *mut CallbackBuffer) -> i32;

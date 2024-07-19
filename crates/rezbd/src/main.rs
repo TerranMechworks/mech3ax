@@ -1,9 +1,9 @@
 mod commands;
 mod modding;
 
-use anyhow::Result;
 use clap::Parser as _;
 use env_logger::Env;
+use eyre::Result;
 use mech3ax_archive::{Mode, Version};
 use mech3ax_common::GameType;
 use mech3ax_version::VERSION;
@@ -142,7 +142,7 @@ struct ZMapOpts {
 
 #[derive(clap::Subcommand)]
 enum SubCommand {
-    #[clap(about = "Prints license information")]
+    #[clap(about = "Print license information")]
     License,
     #[clap(about = "Reconstruct 'sounds*.zbd' archives from ZIP")]
     Sounds(ZipArgs),
@@ -171,10 +171,14 @@ enum SubCommand {
 }
 
 fn main() -> Result<()> {
+    color_eyre::install()?;
+
     let env = Env::default().default_filter_or("warn");
     env_logger::Builder::from_env(env).init();
+
     let cli: Cli = Cli::parse();
     let game: GameType = cli.game.into();
+
     match cli.subcmd {
         SubCommand::Sounds(args) => commands::sounds(args.opts(game)?),
         SubCommand::Interp(opts) => commands::interp(opts),

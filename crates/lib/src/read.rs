@@ -1,7 +1,7 @@
 use crate::error::err_to_c;
 use crate::wave::WaveFile;
 use crate::{filename_to_string, i32_to_game};
-use anyhow::{bail, Context, Result};
+use eyre::{bail, Context as _, Result};
 use image::ImageFormat;
 use mech3ax_archive::{Mode, Version};
 use mech3ax_common::io_ext::CountingReader;
