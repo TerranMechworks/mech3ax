@@ -1,22 +1,9 @@
 use crate::flags::NodeBitFlags;
 use crate::rc::node::{NodeVariantRc, NodeVariantsRc};
 use crate::types::ZONE_DEFAULT;
-use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_api_types::nodes::Display;
-use mech3ax_api_types::{static_assert_size, Color};
 use mech3ax_common::{assert_that, Result};
-
-#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
-#[repr(C)]
-struct DisplayRcC {
-    origin_x: u32,
-    origin_y: u32,
-    resolution_x: u32,
-    resolution_y: u32,
-    clear_color: Color,
-}
-static_assert_size!(DisplayRcC, 28);
 
 const DISPLAY_NAME: &str = "display";
 
