@@ -2,7 +2,7 @@ use crate::error::err_to_c;
 use crate::wave::WaveFile;
 use crate::{filename_to_string, i32_to_game};
 use anyhow::{bail, Context, Result};
-use image::ImageOutputFormat;
+use image::ImageFormat;
 use mech3ax_archive::{Mode, Version};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::GameType;
@@ -272,7 +272,7 @@ pub extern "C" fn read_textures(
         let manifest = mech3ax_image::read_textures(&mut read, |name, image| {
             let mut data = Cursor::new(Vec::new());
             image
-                .write_to(&mut data, ImageOutputFormat::Png)
+                .write_to(&mut data, ImageFormat::Png)
                 .with_context(|| format!("Failed to write image `{}`", name))?;
 
             buffer_callback(callback, name, data.get_ref())

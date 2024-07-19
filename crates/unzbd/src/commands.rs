@@ -1,6 +1,6 @@
 use crate::{InterpOpts, MsgOpts, ReaderOpts, ZMapOpts, ZipOpts};
 use anyhow::{bail, Context, Result};
-use image::ImageOutputFormat;
+use image::ImageFormat;
 use mech3ax_anim::read_anim;
 use mech3ax_archive::{read_archive, Mode, Version};
 use mech3ax_common::io_ext::CountingReader;
@@ -228,7 +228,7 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
         let name = format!("{}.png", original);
         let mut data = Cursor::new(Vec::new());
         image
-            .write_to(&mut data, ImageOutputFormat::Png)
+            .write_to(&mut data, ImageFormat::Png)
             .with_context(|| format!("Failed to write image data for `{}`", original))?;
 
         zip_write(&mut zip, options, &name, data.get_ref())
