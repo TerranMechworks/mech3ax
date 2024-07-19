@@ -15,7 +15,6 @@ doctest = false
 bitflags.workspace = true
 bytemuck.workspace = true
 num-traits.workspace = true
-thiserror.workspace = true
 
 mech3ax-api-types = { path = "../api-types" }
 mech3ax-debug = { path = "../debug" }

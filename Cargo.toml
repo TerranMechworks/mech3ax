@@ -35,8 +35,6 @@ time = "0.3"
 
 # api types only
 base64 = "0.22"
-# common only
-thiserror = "1.0"
 # metadata gen only
 heck = "0.5"
 minijinja = "2.0"

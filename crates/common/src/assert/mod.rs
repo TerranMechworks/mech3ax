@@ -2,22 +2,23 @@ use crate::string::ConversionError;
 use num_traits::AsPrimitive;
 use std::cmp::{PartialEq, PartialOrd};
 use std::fmt::{self, Debug, Display};
-use thiserror::Error;
 
-#[derive(Error)]
+#[derive(Clone)]
 pub struct AssertionError(pub String);
 
-impl Debug for AssertionError {
+impl fmt::Debug for AssertionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
-impl Display for AssertionError {
+impl fmt::Display for AssertionError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
+impl std::error::Error for AssertionError {}
 
 type Result<T> = ::std::result::Result<T, AssertionError>;
 

@@ -387,7 +387,6 @@ dependencies = [
  "mech3ax-api-types",
  "mech3ax-debug",
  "num-traits",
- "thiserror",
 ]
 
 [[package]]
