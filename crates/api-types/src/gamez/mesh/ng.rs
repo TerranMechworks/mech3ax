@@ -1,6 +1,6 @@
 use super::{MeshLight, UvCoord};
+use crate::impl_as_bytes;
 use crate::serde::bool_false;
-use crate::static_assert_size;
 use crate::{Color, Vec3};
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
@@ -25,7 +25,7 @@ pub struct MeshMaterialInfo {
     pub polygon_usage_count: u32, // 04
     pub unk_ptr: u32,             // 08
 }
-static_assert_size!(MeshMaterialInfo, 12);
+impl_as_bytes!(MeshMaterialInfo, 12);
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct PolygonMaterialNg {

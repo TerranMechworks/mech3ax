@@ -6,7 +6,7 @@ use log::{debug, trace};
 use mech3ax_api_types::nodes::rc::{
     Object3d, RotationTranslation, Transformation, TranslationOnly,
 };
-use mech3ax_api_types::{static_assert_size, Matrix, ReprSize as _, Vec3};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Matrix, Vec3};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
@@ -28,7 +28,7 @@ struct Object3dRcC {
     translation: Vec3,  // 084
     zero096: Zeros<48>, // 096
 }
-static_assert_size!(Object3dRcC, 144);
+impl_as_bytes!(Object3dRcC, 144);
 
 const SCALE_ONE: Vec3 = Vec3 {
     x: 1.0,

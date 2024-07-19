@@ -2,7 +2,7 @@ use super::{Mode, Version};
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::archive::ArchiveEntry;
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{bytes_to_c, str_from_c_padded, str_to_c_padded};
@@ -23,7 +23,7 @@ struct EntryC {
     name: Ascii<64>,
     garbage: Bytes<76>,
 }
-static_assert_size!(EntryC, 148);
+impl_as_bytes!(EntryC, 148);
 
 #[allow(clippy::type_complexity)]
 fn read_table(

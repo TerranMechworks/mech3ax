@@ -13,7 +13,7 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::mw::{Empty, NodeMw};
 use mech3ax_api_types::nodes::{AreaPartition, BoundingBox};
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
@@ -107,7 +107,7 @@ struct NodeMwC {
     zero200: u32,                  // 200
     zero204: u32,                  // 204
 }
-static_assert_size!(NodeMwC, 208);
+impl_as_bytes!(NodeMwC, 208);
 
 pub const NODE_MW_C_SIZE: u32 = NodeMwC::SIZE;
 

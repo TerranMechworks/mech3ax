@@ -3,7 +3,7 @@ use crate::types::AnimDefLookup as _;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{AtNode, DetonateWeapon};
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Vec3};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
@@ -18,7 +18,7 @@ struct DetonateWeaponC {
     node_index: u16,
     translation: Vec3,
 }
-static_assert_size!(DetonateWeaponC, 24);
+impl_as_bytes!(DetonateWeaponC, 24);
 
 impl ScriptObject for DetonateWeapon {
     const INDEX: u8 = 41;

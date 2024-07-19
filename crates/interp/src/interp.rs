@@ -1,7 +1,7 @@
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::interp::Script;
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_from_c_sized, str_to_c_padded};
@@ -20,7 +20,7 @@ struct InterpHeaderC {
     version: u32,
     count: u32,
 }
-static_assert_size!(InterpHeaderC, 12);
+impl_as_bytes!(InterpHeaderC, 12);
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -29,7 +29,7 @@ struct InterpEntryC {
     last_modified: u32,
     start: u32,
 }
-static_assert_size!(InterpEntryC, 128);
+impl_as_bytes!(InterpEntryC, 128);
 
 fn read_line(read: &mut CountingReader<impl Read>, size: usize) -> Result<String> {
     let arg_count = read.read_u32()?;

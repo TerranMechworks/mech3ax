@@ -12,7 +12,7 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::{GameZDataCs, GameZMetadataCs, TextureName};
 use mech3ax_api_types::nodes::cs::NodeCs;
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
 use std::collections::HashSet;
@@ -32,7 +32,7 @@ struct HeaderCsC {
     light_index: u32,      // 32
     nodes_offset: u32,     // 36
 }
-static_assert_size!(HeaderCsC, 40);
+impl_as_bytes!(HeaderCsC, 40);
 
 fn rename(seen: &mut HashSet<String>, original: &str) -> String {
     for index in 1usize.. {

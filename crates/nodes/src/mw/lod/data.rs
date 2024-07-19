@@ -3,7 +3,7 @@ use crate::mw::wrappers::WrapperMw;
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::mw::Lod;
-use mech3ax_api_types::{static_assert_size, Range, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Range};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, bool_c, Result};
@@ -24,7 +24,7 @@ struct LodMwC {
     unk72: u32,         // 72
     unk76: u32,         // 76
 }
-static_assert_size!(LodMwC, 80);
+impl_as_bytes!(LodMwC, 80);
 
 fn assert_lod(lod: LodMwC, offset: u32) -> Result<(bool, Range, f32, Option<u32>)> {
     let level = assert_that!("lod level", bool lod.level, offset + 0)?;

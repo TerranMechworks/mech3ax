@@ -2,7 +2,7 @@ use super::info::LIGHT_NAME;
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::rc::Light;
-use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Color, Range};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
@@ -36,7 +36,7 @@ struct LightRcC {
     parent_count: u32,   // 220
     parent_ptr: u32,     // 224
 }
-static_assert_size!(LightRcC, 228);
+impl_as_bytes!(LightRcC, 228);
 
 fn assert_light(light: &LightRcC, offset: u32) -> Result<()> {
     assert_that!("light field 000", light.unk000 == 1, offset + 0)?;

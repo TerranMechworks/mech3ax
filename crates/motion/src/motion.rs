@@ -1,7 +1,7 @@
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::motion::{Motion, MotionFrame, MotionPart};
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
 use std::io::{Read, Write};
@@ -23,7 +23,7 @@ struct MotionHeader {
     unk16: f32,       // 16
     unk20: f32,       // 20
 }
-static_assert_size!(MotionHeader, 24);
+impl_as_bytes!(MotionHeader, 24);
 
 pub fn read_motion(read: &mut CountingReader<impl Read>) -> Result<Motion> {
     debug!(

@@ -1,27 +1,34 @@
 use bytemuck::{AnyBitPattern, NoUninit};
 
 /// A trait that ensures a structure has a known size (in bytes), and can be
-/// read from and written to disk (as bytes).
+/// read as bytes.
 ///
-/// This is rather involved.
-pub trait ReprSize: NoUninit + AnyBitPattern + Sized + 'static {
+/// Do not implement this manually, instead use [`impl_as_bytes!`].
+pub trait AsBytes: NoUninit + AnyBitPattern {
     /// The size of the structure in bytes.
     const SIZE: u32;
 
     /// A compile-time assertion that the size of the structure is correct.
+    ///
+    /// Although the bytemuck functions also validate the size, in my
+    /// experience this check catches errors quicker and more obviously.
     const _ASSERT_SIZE: ();
 
     /// Borrow the structure's memory as bytes.
+    ///
+    /// Must not/does not panic at runtime.
     fn as_bytes(&self) -> &[u8];
 
     /// Borrow the structure's memory as bytes.
+    ///
+    /// Must not/does not panic at runtime.
     fn as_bytes_mut(&mut self) -> &mut [u8];
 }
 
 #[macro_export]
-macro_rules! static_assert_size {
+macro_rules! impl_as_bytes {
     ($type:ty, $size:literal) => {
-        impl $crate::ReprSize for $type {
+        impl $crate::AsBytes for $type {
             #[allow(dead_code)]
             const SIZE: u32 = $size;
 

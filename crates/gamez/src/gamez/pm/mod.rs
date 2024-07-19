@@ -9,7 +9,7 @@ use crate::textures::ng as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::{GameZDataPm, GameZMetadataPm};
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};
@@ -28,7 +28,7 @@ struct HeaderPmC {
     node_count: u32,       // 32
     nodes_offset: u32,     // 36
 }
-static_assert_size!(HeaderPmC, 40);
+impl_as_bytes!(HeaderPmC, 40);
 
 pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataPm> {
     debug!(

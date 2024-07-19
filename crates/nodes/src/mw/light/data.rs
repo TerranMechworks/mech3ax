@@ -2,7 +2,7 @@ use super::info::LIGHT_NAME;
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::mw::Light;
-use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _, Vec3};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Color, Range, Vec3};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlags;
@@ -32,7 +32,7 @@ struct LightMwC {
     parent_count: u32,   // 200
     parent_ptr: u32,     // 204
 }
-static_assert_size!(LightMwC, 208);
+impl_as_bytes!(LightMwC, 208);
 
 fn assert_light(light: &LightMwC, offset: u32) -> Result<()> {
     assert_that!(

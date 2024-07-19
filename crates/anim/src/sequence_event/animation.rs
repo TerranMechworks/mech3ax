@@ -2,7 +2,7 @@ use super::ScriptObject;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{InvalidateAnimation, ResetAnimation, StopAnimation};
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
@@ -16,7 +16,7 @@ struct AnimationC {
     name: Ascii<32>,
     zero32: u32,
 }
-static_assert_size!(AnimationC, 36);
+impl_as_bytes!(AnimationC, 36);
 
 fn read_animation(read: &mut CountingReader<impl Read>) -> Result<String> {
     let animation: AnimationC = read.read_struct()?;

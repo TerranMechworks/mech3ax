@@ -4,7 +4,7 @@ use log::{debug, trace};
 use mech3ax_api_types::image::{
     GlobalPalette, PaletteData, TextureAlpha, TextureInfo, TextureManifest, TexturePalette,
 };
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
@@ -28,7 +28,7 @@ struct TexturesHeaderC {
     zero16: u32,               // 16
     zero20: u32,               // 20
 }
-static_assert_size!(TexturesHeaderC, 24);
+impl_as_bytes!(TexturesHeaderC, 24);
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -37,7 +37,7 @@ struct TextureEntryC {
     start_offset: u32,  // 32
     palette_index: i32, // 36
 }
-static_assert_size!(TextureEntryC, 40);
+impl_as_bytes!(TextureEntryC, 40);
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -49,7 +49,7 @@ struct TextureInfoC {
     palette_count: u16, // 12
     stretch: u16,       // 14
 }
-static_assert_size!(TextureInfoC, 16);
+impl_as_bytes!(TextureInfoC, 16);
 
 bitflags::bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -3,7 +3,7 @@ use crate::types::AnimDefLookup as _;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::LightAnimation;
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Color, Range};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
@@ -30,7 +30,7 @@ struct LightAnimationC {
     zero92: f32,
     runtime: f32,
 }
-static_assert_size!(LightAnimationC, 100);
+impl_as_bytes!(LightAnimationC, 100);
 
 impl ScriptObject for LightAnimation {
     const INDEX: u8 = 5;

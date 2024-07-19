@@ -6,7 +6,7 @@ mod write_single;
 
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::materials::{ColoredMaterial, Material, Soil};
-use mech3ax_api_types::{static_assert_size, Color, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Color};
 
 pub(crate) use read_multi::read_materials;
 pub(crate) use read_single::read_material;
@@ -52,7 +52,7 @@ struct MaterialInfoC {
     index_max: i32,
     index_last: i32,
 }
-static_assert_size!(MaterialInfoC, 16);
+impl_as_bytes!(MaterialInfoC, 16);
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -68,7 +68,7 @@ struct MaterialC {
     soil: u32,      // 32
     cycle_ptr: u32, // 36
 }
-static_assert_size!(MaterialC, 40);
+impl_as_bytes!(MaterialC, 40);
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -81,7 +81,7 @@ struct CycleInfoC {
     count2: u32,
     data_ptr: u32,
 }
-static_assert_size!(CycleInfoC, 28);
+impl_as_bytes!(CycleInfoC, 28);
 
 #[derive(Debug)]
 pub struct RawTexturedMaterial {

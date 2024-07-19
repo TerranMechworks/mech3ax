@@ -5,7 +5,7 @@ use mech3ax_api_types::anim::events::{
     AtNode, Interval, IntervalType, PufferState, PufferStateCycleTextures,
 };
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::{static_assert_size, Range, ReprSize as _, Vec3};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Range, Vec3};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
@@ -54,7 +54,7 @@ struct PufferStateC {
     growth_factor: f32,        // 544
     zero548: Zeros<32>,        // 548
 }
-static_assert_size!(PufferStateC, 580);
+impl_as_bytes!(PufferStateC, 580);
 
 bitflags::bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -5,7 +5,7 @@ use crate::types::AnimDefLookup as _;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{AtNode, LightState};
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _, Vec3};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Color, Range, Vec3};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlags;
@@ -36,7 +36,7 @@ struct LightStateC {
     ambient: f32,      // 112
     diffuse: f32,      // 116
 }
-static_assert_size!(LightStateC, 120);
+impl_as_bytes!(LightStateC, 120);
 
 impl ScriptObject for LightState {
     const INDEX: u8 = 4;

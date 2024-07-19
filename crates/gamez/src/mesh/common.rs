@@ -1,7 +1,7 @@
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::trace;
 use mech3ax_api_types::gamez::mesh::{MeshLight, UvCoord};
-use mech3ax_api_types::{static_assert_size, Color, ReprSize as _, Vec3};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Color, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlags;
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
@@ -104,7 +104,7 @@ pub struct LightC {
     pub unk68: f32,       // 68
     pub unk72: f32,       // 72
 }
-static_assert_size!(LightC, 76);
+impl_as_bytes!(LightC, 76);
 
 fn assert_light(light: &LightC, offset: u32) -> Result<LightFlags> {
     // RC: 0/3224, 1/48

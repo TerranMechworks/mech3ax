@@ -1,7 +1,7 @@
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::debug;
 use mech3ax_api_types::saves::{ActivationStatus, ActivationType, AnimActivation};
-use mech3ax_api_types::{static_assert_size, Bytes};
+use mech3ax_api_types::{impl_as_bytes, Bytes};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
@@ -28,7 +28,7 @@ struct AnimActivationC {
     pub unk86: u8,                 // 86
     pub unk87: u8,                 // 87
 }
-static_assert_size!(AnimActivationC, 88);
+impl_as_bytes!(AnimActivationC, 88);
 
 pub fn read_activation(read: &mut CountingReader<impl Read>) -> Result<AnimActivation> {
     let activation: AnimActivationC = read.read_struct()?;

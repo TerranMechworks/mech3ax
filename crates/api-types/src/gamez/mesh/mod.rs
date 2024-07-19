@@ -2,7 +2,7 @@ mod mw;
 mod ng;
 mod rc;
 
-use crate::static_assert_size;
+use crate::impl_as_bytes;
 use crate::{Color, Vec3};
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
@@ -26,7 +26,7 @@ pub struct UvCoord {
     pub u: f32,
     pub v: f32,
 }
-static_assert_size!(UvCoord, 8);
+impl_as_bytes!(UvCoord, 8);
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct MeshLight {

@@ -3,7 +3,7 @@ use super::ScriptObject;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{FogState, FogType};
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Color, Range};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::str_to_c_padded;
 use mech3ax_common::{assert_that, Result};
@@ -36,7 +36,7 @@ struct FogStateC {
     altitude: Range, // 52
     range: Range,    // 60
 }
-static_assert_size!(FogStateC, 68);
+impl_as_bytes!(FogStateC, 68);
 
 impl ScriptObject for FogState {
     const INDEX: u8 = 28;

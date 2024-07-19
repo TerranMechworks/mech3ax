@@ -2,7 +2,7 @@ use super::common::*;
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::mesh::{MeshMw, PolygonMw, UvCoord};
-use mech3ax_api_types::{static_assert_size, Color, ReprSize as _, Vec3};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Color, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, bool_c, Result};
 use mech3ax_debug::{Hex, Ptr};
@@ -35,7 +35,7 @@ struct MeshMwC {
     unk84: f32,         // 84
     zero88: u32,        // 88
 }
-static_assert_size!(MeshMwC, 92);
+impl_as_bytes!(MeshMwC, 92);
 pub const MESH_C_SIZE: u32 = MeshMwC::SIZE;
 
 impl MeshMwC {
@@ -79,7 +79,7 @@ struct PolygonMwC {
     material_index: u32,   // 28
     texture_info: u32,     // 32
 }
-static_assert_size!(PolygonMwC, 36);
+impl_as_bytes!(PolygonMwC, 36);
 
 pub struct WrappedMeshMw {
     pub mesh: MeshMw,

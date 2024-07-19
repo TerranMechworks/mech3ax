@@ -3,7 +3,7 @@ use super::ScriptObject;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{FrameBufferEffectColor, Rgba};
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -25,7 +25,7 @@ struct FbFxColorFromToC {
     delta_alpha: f32,
     runtime: f32,
 }
-static_assert_size!(FbFxColorFromToC, 52);
+impl_as_bytes!(FbFxColorFromToC, 52);
 
 impl ScriptObject for FrameBufferEffectColor {
     const INDEX: u8 = 36;

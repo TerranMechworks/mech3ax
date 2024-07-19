@@ -1,7 +1,7 @@
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::trace;
 use mech3ax_api_types::anim::{NamePad, NamePtr, NamePtrFlags};
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{
@@ -19,7 +19,7 @@ struct ObjectC {
     zero32: u32,     // 32
     unk: Bytes<60>,  // 36
 }
-static_assert_size!(ObjectC, 96);
+impl_as_bytes!(ObjectC, 96);
 
 pub fn read_objects(read: &mut CountingReader<impl Read>, count: u8) -> Result<Vec<NamePad>> {
     trace!("Reading anim def object 0 at {}", read.offset);
@@ -77,7 +77,7 @@ struct NodeInfoC {
     zero32: u32,     // 32
     pointer: u32,    // 36
 }
-static_assert_size!(NodeInfoC, 40);
+impl_as_bytes!(NodeInfoC, 40);
 
 pub fn read_nodes(read: &mut CountingReader<impl Read>, count: u8) -> Result<Vec<NamePtr>> {
     trace!("Reading anim def node 0 at {}", read.offset);
@@ -143,7 +143,7 @@ struct ReaderLookupC {
     pointer: u32,    // 36
     in_world: u32,   // 40
 }
-static_assert_size!(ReaderLookupC, 44);
+impl_as_bytes!(ReaderLookupC, 44);
 
 pub fn read_lights(read: &mut CountingReader<impl Read>, count: u8) -> Result<Vec<NamePtr>> {
     trace!("Reading anim def light 0 at {}", read.offset);
@@ -213,7 +213,7 @@ struct PufferRefC {
     pointer: u32,    // 36
     zero40: u32,     // 40
 }
-static_assert_size!(PufferRefC, 44);
+impl_as_bytes!(PufferRefC, 44);
 
 pub fn read_puffers(read: &mut CountingReader<impl Read>, count: u8) -> Result<Vec<NamePtrFlags>> {
     trace!("Reading anim def puffer 0 at {}", read.offset);
@@ -359,7 +359,7 @@ struct StaticSoundC {
     name: Ascii<32>, // 00
     zero32: u32,     // 32
 }
-static_assert_size!(StaticSoundC, 36);
+impl_as_bytes!(StaticSoundC, 36);
 
 pub fn read_static_sounds(read: &mut CountingReader<impl Read>, count: u8) -> Result<Vec<NamePad>> {
     trace!("Reading anim def static sound 0 at {}", read.offset);
@@ -413,7 +413,7 @@ struct AnimRefC {
     zero64: u32,     // 64
     pointer: u32,    // 68
 }
-static_assert_size!(AnimRefC, 72);
+impl_as_bytes!(AnimRefC, 72);
 
 pub fn read_anim_refs(read: &mut CountingReader<impl Read>, count: u8) -> Result<Vec<NamePad>> {
     // the first entry... is not zero! as this is not a node list

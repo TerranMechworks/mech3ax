@@ -2,7 +2,7 @@ use super::ScriptObject;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{Callback, Else, ElseIf, EndIf, If, Loop};
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
 use num_derive::FromPrimitive;
@@ -15,7 +15,7 @@ struct LoopC {
     start: i32,
     loop_count: i32,
 }
-static_assert_size!(LoopC, 8);
+impl_as_bytes!(LoopC, 8);
 
 impl ScriptObject for Loop {
     const INDEX: u8 = 30;
@@ -47,7 +47,7 @@ struct IfC {
     zero4: u32,
     value: [u8; 4],
 }
-static_assert_size!(IfC, 12);
+impl_as_bytes!(IfC, 12);
 
 #[derive(Debug, FromPrimitive)]
 #[repr(u32)]

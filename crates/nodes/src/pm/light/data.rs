@@ -2,7 +2,7 @@ use super::info::LIGHT_NAME;
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::pm::Light;
-use mech3ax_api_types::{static_assert_size, Range, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Range};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
@@ -45,7 +45,7 @@ struct LightPmC {
     parent_count: u32,   // 248
     parent_ptr: u32,     // 252
 }
-static_assert_size!(LightPmC, 256);
+impl_as_bytes!(LightPmC, 256);
 
 #[allow(clippy::approx_constant)]
 const LIGHT_UNK_000: f32 = -0.5235988;

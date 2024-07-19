@@ -3,7 +3,7 @@ use crate::types::AnimDefLookup as _;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{FloatFromTo, ObjectMotionFromTo, Vec3FromTo};
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use std::io::{Read, Write};
@@ -37,7 +37,7 @@ struct ObjectMotionFromToC {
     scale_delta: Vec3,     // 116
     run_time: f32,         // 128
 }
-static_assert_size!(ObjectMotionFromToC, 132);
+impl_as_bytes!(ObjectMotionFromToC, 132);
 
 impl ScriptObject for ObjectMotionFromTo {
     const INDEX: u8 = 11;

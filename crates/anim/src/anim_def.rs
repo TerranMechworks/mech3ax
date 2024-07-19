@@ -7,7 +7,7 @@ use mech3ax_api_types::anim::events::EventData;
 use mech3ax_api_types::anim::{
     AnimActivation, AnimDef, AnimPtr, Execution, NamePad, ResetState, SeqActivation, SeqDef,
 };
-use mech3ax_api_types::{static_assert_size, Range, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Range};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{
@@ -83,7 +83,7 @@ struct AnimDefC {
     anim_refs_ptr: u32,              // 308
     zero312: u32,                    // 312
 }
-static_assert_size!(AnimDefC, 316);
+impl_as_bytes!(AnimDefC, 316);
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -94,7 +94,7 @@ struct SeqDefInfoC {
     pointer: u32,      // 56
     size: u32,         // 60
 }
-static_assert_size!(SeqDefInfoC, 64);
+impl_as_bytes!(SeqDefInfoC, 64);
 const RESET_SEQUENCE: Ascii<32> = Ascii::new(b"RESET_SEQUENCE\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
 
 pub fn read_anim_def_zero(read: &mut CountingReader<impl Read>) -> Result<()> {

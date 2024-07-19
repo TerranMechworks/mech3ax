@@ -2,7 +2,7 @@ use super::write_single::{find_texture_index_by_name, write_cycle, write_materia
 use super::{MatType, MaterialC, MaterialFlags, MaterialInfoC};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::materials::Material;
-use mech3ax_api_types::{Color, ReprSize as _};
+use mech3ax_api_types::{AsBytes as _, Color};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, Result};
 use std::io::Write;

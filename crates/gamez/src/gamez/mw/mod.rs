@@ -7,7 +7,7 @@ use crate::textures::mw as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::{GameZDataMw, GameZMetadataMw};
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};
@@ -25,7 +25,7 @@ struct HeaderMwC {
     node_count: u32,       // 28
     nodes_offset: u32,     // 32
 }
-static_assert_size!(HeaderMwC, 36);
+impl_as_bytes!(HeaderMwC, 36);
 
 pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataMw> {
     debug!(

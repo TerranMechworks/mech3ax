@@ -2,7 +2,7 @@ use crate::math::cotangent;
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::Camera;
-use mech3ax_api_types::{static_assert_size, Matrix, Range, ReprSize as _, Vec3};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Matrix, Range, Vec3};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
@@ -50,7 +50,7 @@ pub struct CameraC {
     pub zone_set: i32,          // 480
     pub unk484: i32,            // 484
 }
-static_assert_size!(CameraC, 488);
+impl_as_bytes!(CameraC, 488);
 
 fn assert_camera(camera: &CameraC, offset: u32) -> Result<()> {
     assert_that!("camera world index", camera.world_index == 0, offset + 0)?;

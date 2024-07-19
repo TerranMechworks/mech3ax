@@ -12,7 +12,7 @@ use log::{debug, trace};
 use mech3ax_api_types::nodes::cs::NodeCs;
 use mech3ax_api_types::nodes::pm::AreaPartitionPm;
 use mech3ax_api_types::nodes::BoundingBox;
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
@@ -115,7 +115,7 @@ struct NodeCsC {
     zero200: u32,                    // 200
     zero204: u32,                    // 204
 }
-static_assert_size!(NodeCsC, 208);
+impl_as_bytes!(NodeCsC, 208);
 
 pub const NODE_CS_C_SIZE: u32 = NodeCsC::SIZE;
 

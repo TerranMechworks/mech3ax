@@ -2,7 +2,7 @@ use super::info::{SPYGLASS_NAME, WINDOW_NAME};
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::cs::Window;
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
@@ -23,7 +23,7 @@ struct WindowCsC {
     zero240: u32,        // 240
     zero244: u32,        // 244
 }
-static_assert_size!(WindowCsC, 248);
+impl_as_bytes!(WindowCsC, 248);
 
 pub fn read(
     read: &mut CountingReader<impl Read>,

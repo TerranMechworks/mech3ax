@@ -1,10 +1,10 @@
 use bytemuck::{AnyBitPattern, NoUninit};
 
 /// A trait that ensures a structure has a known size (in bytes), and can be
-/// read memory.
+/// read from bytes.
 ///
-/// This is rather involved.
-pub trait ConstSize: NoUninit + AnyBitPattern + Sized + 'static {
+/// Do not implement this manually, instead use [`impl_from_bytes!`].
+pub trait FromBytes: NoUninit + AnyBitPattern {
     /// The size of the structure in bytes.
     const SIZE: usize;
 
@@ -13,9 +13,9 @@ pub trait ConstSize: NoUninit + AnyBitPattern + Sized + 'static {
 }
 
 // annoyingly, the one in mech3ax_common is u32, not usize
-macro_rules! static_assert_size {
+macro_rules! impl_from_bytes {
     ($type:ty, $size:expr) => {
-        impl $crate::size::ConstSize for $type {
+        impl $crate::size::FromBytes for $type {
             #[allow(dead_code)]
             const SIZE: usize = $size;
 
@@ -26,6 +26,6 @@ macro_rules! static_assert_size {
         }
     };
 }
-pub(crate) use static_assert_size;
+pub(crate) use impl_from_bytes;
 
 pub use mech3ax_api_types::{u16_to_usize, u32_to_usize};

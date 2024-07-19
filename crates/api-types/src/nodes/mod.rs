@@ -3,8 +3,8 @@ pub mod mw;
 pub mod pm;
 pub mod rc;
 
+use crate::impl_as_bytes;
 use crate::serde::{bool_false, bool_true};
-use crate::static_assert_size;
 use crate::{Color, Matrix, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
@@ -42,7 +42,7 @@ pub struct AreaPartition {
     pub x: i32,
     pub y: i32,
 }
-static_assert_size!(AreaPartition, 8);
+impl_as_bytes!(AreaPartition, 8);
 
 impl AreaPartition {
     pub const DEFAULT: Self = Self { x: -1, y: -1 };
@@ -110,7 +110,7 @@ pub struct PartitionValue {
     pub z_min: f32,
     pub z_max: f32,
 }
-static_assert_size!(PartitionValue, 12);
+impl_as_bytes!(PartitionValue, 12);
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct PartitionNg {

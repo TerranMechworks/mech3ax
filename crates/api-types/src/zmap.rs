@@ -1,5 +1,5 @@
 //! Recoil `m*.zmap` data structures.
-use crate::static_assert_size;
+use crate::impl_as_bytes;
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_metadata_proc_macro::Struct;
@@ -14,7 +14,7 @@ pub struct MapColor {
     pub g: u8,
     pub b: u8,
 }
-static_assert_size!(MapColor, 3);
+impl_as_bytes!(MapColor, 3);
 
 #[derive(
     Debug, Clone, Copy, PartialEq, Serialize, Deserialize, NoUninit, AnyBitPattern, Struct,
@@ -26,7 +26,7 @@ pub struct MapVertex {
     pub z: f32,
     pub y: f32,
 }
-static_assert_size!(MapVertex, 12);
+impl_as_bytes!(MapVertex, 12);
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct MapFeature {

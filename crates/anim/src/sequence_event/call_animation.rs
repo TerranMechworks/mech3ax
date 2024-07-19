@@ -7,7 +7,7 @@ use mech3ax_api_types::anim::events::{
     CallAnimationWithNode,
 };
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Vec3};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
@@ -29,7 +29,7 @@ struct CallAnimationC {
     translation: Vec3,        // 44
     rotation: Vec3,           // 56
 }
-static_assert_size!(CallAnimationC, 68);
+impl_as_bytes!(CallAnimationC, 68);
 
 bitflags::bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -2,7 +2,7 @@ use super::info::{CAMERA_NAME, SPYGLASS_NAME};
 use crate::node_data::camera::CameraC;
 use log::{debug, trace};
 use mech3ax_api_types::nodes::cs::Camera;
-use mech3ax_api_types::{Matrix, Range, ReprSize as _, Vec3};
+use mech3ax_api_types::{AsBytes as _, Matrix, Range, Vec3};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};

@@ -5,7 +5,7 @@ use log::{debug, trace};
 use mech3ax_api_types::gamez::mesh::{
     MeshMaterialInfo, MeshNg, PolygonFlags, PolygonMaterialNg, PolygonNg, UvCoord,
 };
-use mech3ax_api_types::{static_assert_size, Color, ReprSize as _, Vec3};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Color, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, bool_c, Result};
 use mech3ax_debug::{Hex, Ptr};
@@ -40,7 +40,7 @@ struct MeshNgC {
     material_count: u32, // 92
     materials_ptr: Ptr,  // 96
 }
-static_assert_size!(MeshNgC, 100);
+impl_as_bytes!(MeshNgC, 100);
 pub const MESH_C_SIZE: u32 = MeshNgC::SIZE;
 
 impl MeshNgC {
@@ -87,7 +87,7 @@ struct PolygonNgC {
     unk32: Ptr,            // 32
     unk36: Hex<u32>,       // 36
 }
-static_assert_size!(PolygonNgC, 40);
+impl_as_bytes!(PolygonNgC, 40);
 
 bitflags::bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]

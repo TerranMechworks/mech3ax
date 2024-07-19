@@ -2,7 +2,7 @@ use crate::cs::node::NodeVariantLodCs;
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::cs::Lod;
-use mech3ax_api_types::{static_assert_size, Range, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Range};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, bool_c, Result};
@@ -25,7 +25,7 @@ struct LodCsC {
     unk84: u32,         // 84
     unk88: u32,         // 88
 }
-static_assert_size!(LodCsC, 92);
+impl_as_bytes!(LodCsC, 92);
 
 fn assert_lod(lod: &LodCsC, offset: u32) -> Result<(bool, Range)> {
     trace!("{:#?}", lod);

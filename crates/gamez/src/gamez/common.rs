@@ -1,6 +1,6 @@
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -26,7 +26,7 @@ pub struct MeshesInfoC {
     pub count: i32,      // 04
     pub last_index: i32, // 08
 }
-static_assert_size!(MeshesInfoC, 12);
+impl_as_bytes!(MeshesInfoC, 12);
 pub const MESHES_INFO_C_SIZE: u32 = MeshesInfoC::SIZE;
 
 #[derive(Debug)]

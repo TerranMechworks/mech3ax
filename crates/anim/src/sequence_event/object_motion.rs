@@ -6,7 +6,7 @@ use mech3ax_api_types::anim::events::{
     Gravity, GravityMode, ObjectMotion, ObjectMotionScale, ObjectMotionTranslation, XyzRotation,
 };
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::{static_assert_size, Quaternion, ReprSize as _, Vec3};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Quaternion, Vec3};
 use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
@@ -69,7 +69,7 @@ struct ObjectMotionC {
     // RUNTIME
     runtime: f32, // 316
 }
-static_assert_size!(ObjectMotionC, 320);
+impl_as_bytes!(ObjectMotionC, 320);
 
 bitflags::bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]

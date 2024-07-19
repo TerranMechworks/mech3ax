@@ -1,5 +1,5 @@
 #![allow(non_camel_case_types)]
-use crate::size::{static_assert_size, u32_to_usize};
+use crate::size::{impl_from_bytes, u32_to_usize};
 use bytemuck::{AnyBitPattern, NoUninit};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -12,7 +12,7 @@ pub struct IMAGE_RESOURCE_DIRECTORY {
     pub number_of_named_entries: u16,
     pub number_of_id_entries: u16,
 }
-static_assert_size!(IMAGE_RESOURCE_DIRECTORY, 16);
+impl_from_bytes!(IMAGE_RESOURCE_DIRECTORY, 16);
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -20,7 +20,7 @@ pub struct IMAGE_RESOURCE_DIRECTORY_ENTRY {
     pub name: u32,
     pub offset: u32,
 }
-static_assert_size!(IMAGE_RESOURCE_DIRECTORY_ENTRY, 8);
+impl_from_bytes!(IMAGE_RESOURCE_DIRECTORY_ENTRY, 8);
 
 const IMAGE_RESOURCE_NAME_IS_STRING: u32 = 0x80000000;
 const IMAGE_RESOURCE_DATA_IS_DIRECTORY: u32 = 0x80000000;
@@ -50,4 +50,4 @@ pub struct IMAGE_RESOURCE_DATA_ENTRY {
     pub code_page: u32,
     pub reserved: u32,
 }
-static_assert_size!(IMAGE_RESOURCE_DATA_ENTRY, 16);
+impl_from_bytes!(IMAGE_RESOURCE_DATA_ENTRY, 16);

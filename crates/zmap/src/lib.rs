@@ -4,7 +4,7 @@ mod read;
 mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::static_assert_size;
+use mech3ax_api_types::impl_as_bytes;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -18,7 +18,7 @@ struct MapHeaderC {
     zero24: u32,  // 24
     max_y: f32,   // 28
 }
-static_assert_size!(MapHeaderC, 32);
+impl_as_bytes!(MapHeaderC, 32);
 const MAP_VERSION: u32 = 5;
 
 pub use read::read_map;

@@ -1,7 +1,7 @@
 use super::{CycleInfoC, MatType, MaterialC, MaterialFlags, RawMaterial, RawTexturedMaterial};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::materials::{ColoredMaterial, CycleData, Material, TexturedMaterial};
-use mech3ax_api_types::{u32_to_usize, Color, ReprSize as _};
+use mech3ax_api_types::{u32_to_usize, AsBytes as _, Color};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use num_traits::FromPrimitive;

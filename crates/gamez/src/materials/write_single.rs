@@ -1,7 +1,7 @@
 use super::{CycleInfoC, MatType, MaterialC, MaterialFlags};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::materials::Material;
-use mech3ax_api_types::{Color, ReprSize as _};
+use mech3ax_api_types::{AsBytes as _, Color};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, bool_c, Result};
 use std::io::Write;

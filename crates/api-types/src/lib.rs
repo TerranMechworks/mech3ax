@@ -13,7 +13,7 @@ mod size;
 pub mod zmap;
 
 pub use crate::serde::bytes::Bytes;
-pub use size::{u16_to_usize, u32_to_usize, ReprSize};
+pub use size::{u16_to_usize, u32_to_usize, AsBytes};
 
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
@@ -37,7 +37,7 @@ pub struct Range {
     pub min: f32,
     pub max: f32,
 }
-static_assert_size!(Range, 8);
+impl_as_bytes!(Range, 8);
 
 impl Range {
     pub const DEFAULT: Self = Self { min: 0.0, max: 0.0 };
@@ -62,7 +62,7 @@ pub struct Vec3 {
     pub y: f32,
     pub z: f32,
 }
-static_assert_size!(Vec3, 12);
+impl_as_bytes!(Vec3, 12);
 
 impl Vec3 {
     pub const DEFAULT: Self = Self {
@@ -91,7 +91,7 @@ pub struct Color {
     pub g: f32,
     pub b: f32,
 }
-static_assert_size!(Color, 12);
+impl_as_bytes!(Color, 12);
 
 impl Color {
     pub const BLACK: Self = Self {
@@ -131,7 +131,7 @@ pub struct Quaternion {
     pub z: f32,
     pub w: f32,
 }
-static_assert_size!(Quaternion, 16);
+impl_as_bytes!(Quaternion, 16);
 
 impl Quaternion {
     pub const DEFAULT: Self = Self {
@@ -167,7 +167,7 @@ pub struct Matrix {
     pub h: f32,
     pub i: f32,
 }
-static_assert_size!(Matrix, 36);
+impl_as_bytes!(Matrix, 36);
 
 impl Matrix {
     pub const EMPTY: Self = Self {

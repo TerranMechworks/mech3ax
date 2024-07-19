@@ -6,7 +6,7 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::mw::World;
 use mech3ax_api_types::nodes::{Area, PartitionPg};
-use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Color, Range};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};
@@ -58,7 +58,7 @@ struct WorldMwC {
     zero180: u32,                         // 180
     zero184: u32,                         // 184
 }
-static_assert_size!(WorldMwC, 188);
+impl_as_bytes!(WorldMwC, 188);
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -83,7 +83,7 @@ struct PartitionMwC {
     zero64: u32,   // 64
     zero68: u32,   // 68
 }
-static_assert_size!(PartitionMwC, 72);
+impl_as_bytes!(PartitionMwC, 72);
 
 const FOG_STATE_LINEAR: u32 = 1;
 

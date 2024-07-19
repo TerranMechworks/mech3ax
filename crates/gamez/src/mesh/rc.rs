@@ -2,7 +2,7 @@ use super::common::*;
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::mesh::{MeshRc, PolygonRc, UvCoord};
-use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, bool_c, Result};
 use mech3ax_debug::{Hex, Ptr};
@@ -33,7 +33,7 @@ struct MeshRcC {
     unk76: f32,         // 76
     unk80: f32,         // 80
 }
-static_assert_size!(MeshRcC, 84);
+impl_as_bytes!(MeshRcC, 84);
 pub const MESH_C_SIZE: u32 = MeshRcC::SIZE;
 
 impl MeshRcC {
@@ -73,7 +73,7 @@ struct PolygonRcC {
     material_index: u32,   // 28
     unk24: Hex<u32>,       // 24
 }
-static_assert_size!(PolygonRcC, 28);
+impl_as_bytes!(PolygonRcC, 28);
 
 pub struct WrappedMeshRc {
     pub mesh: MeshRc,

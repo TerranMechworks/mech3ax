@@ -1,7 +1,7 @@
 use crate::assert::assert_utf8;
 use crate::assert_with_msg;
 use crate::string::str_from_c_sized;
-use mech3ax_api_types::ReprSize;
+use mech3ax_api_types::AsBytes;
 use std::io::{Read, Result, Seek, SeekFrom, Write};
 
 pub struct CountingReader<R: Read> {
@@ -79,7 +79,7 @@ impl<R: Read> CountingReader<R> {
         Ok(u8::from_le_bytes(buf))
     }
 
-    pub fn read_struct<S: ReprSize>(&mut self) -> Result<S> {
+    pub fn read_struct<S: AsBytes>(&mut self) -> Result<S> {
         let mut s = S::zeroed();
         let buf = s.as_bytes_mut();
         self.read_exact(buf)?;
@@ -204,7 +204,7 @@ impl<W: Write> CountingWriter<W> {
     }
 
     #[inline]
-    pub fn write_struct<S: ReprSize>(&mut self, value: &S) -> Result<()> {
+    pub fn write_struct<S: AsBytes>(&mut self, value: &S) -> Result<()> {
         let buf = value.as_bytes();
         self.write_all(buf)
     }

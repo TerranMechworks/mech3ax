@@ -1,5 +1,5 @@
 use super::{Area, BoundingBox, Camera, Display, NodeFlags, PartitionNg, Transformation, Window};
-use crate::static_assert_size;
+use crate::impl_as_bytes;
 use crate::Range;
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
@@ -15,7 +15,7 @@ pub struct AreaPartitionPm {
     pub virtual_x: i16,
     pub virtual_y: i16,
 }
-static_assert_size!(AreaPartitionPm, 8);
+impl_as_bytes!(AreaPartitionPm, 8);
 
 impl AreaPartitionPm {
     pub const ZERO: AreaPartitionPm = AreaPartitionPm {

@@ -1,6 +1,6 @@
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::{ActivationPrereq, PrereqAnimation, PrereqObject, PrereqParent};
-use mech3ax_api_types::static_assert_size;
+use mech3ax_api_types::impl_as_bytes;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
@@ -25,7 +25,7 @@ struct ActivPrereqAnimC {
     zero32: u32,     // 32
     zero36: u32,     // 36
 }
-static_assert_size!(ActivPrereqAnimC, 40);
+impl_as_bytes!(ActivPrereqAnimC, 40);
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -34,7 +34,7 @@ struct ActivPrereqObjC {
     name: Ascii<32>, // 32
     pointer: u32,    // 36
 }
-static_assert_size!(ActivPrereqObjC, 40);
+impl_as_bytes!(ActivPrereqObjC, 40);
 
 fn read_activ_prereq_anim(read: &mut CountingReader<impl Read>) -> Result<ActivationPrereq> {
     let prereq: ActivPrereqAnimC = read.read_struct()?;

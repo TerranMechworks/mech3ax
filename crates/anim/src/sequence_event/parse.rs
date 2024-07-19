@@ -11,7 +11,7 @@ use mech3ax_api_types::anim::events::{
     StopAnimation, StopSequence,
 };
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use num_traits::FromPrimitive;
@@ -26,7 +26,7 @@ struct EventHeaderC {
     size: u32,
     start_time: f32,
 }
-static_assert_size!(EventHeaderC, 12);
+impl_as_bytes!(EventHeaderC, 12);
 
 pub fn read_events(
     read: &mut CountingReader<impl Read>,

@@ -5,7 +5,7 @@ use mech3ax_api_types::anim::events::{
     ObjectMotionSiFrame, ObjectMotionSiScript, RotateData, ScaleData, TranslateData,
 };
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::{static_assert_size, Quaternion, ReprSize as _, Vec3};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Quaternion, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::bytes_to_c;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
@@ -22,7 +22,7 @@ struct ScriptHeaderC {
     zero16: u32,     // 16
     zero20: u32,     // 20
 }
-static_assert_size!(ScriptHeaderC, 24);
+impl_as_bytes!(ScriptHeaderC, 24);
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -31,7 +31,7 @@ struct FrameC {
     start_time: f32,
     end_time: f32,
 }
-static_assert_size!(FrameC, 12);
+impl_as_bytes!(FrameC, 12);
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -39,7 +39,7 @@ struct TranslateDataC {
     value: Vec3,
     unk: Bytes<64>,
 }
-static_assert_size!(TranslateDataC, 76);
+impl_as_bytes!(TranslateDataC, 76);
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -47,7 +47,7 @@ struct RotateDataC {
     value: Quaternion,
     unk: Bytes<60>,
 }
-static_assert_size!(RotateDataC, 76);
+impl_as_bytes!(RotateDataC, 76);
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -55,7 +55,7 @@ struct ScaleDataC {
     value: Vec3,
     unk: Bytes<64>,
 }
-static_assert_size!(ScaleDataC, 76);
+impl_as_bytes!(ScaleDataC, 76);
 
 bitflags::bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]

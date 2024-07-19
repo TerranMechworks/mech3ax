@@ -89,7 +89,7 @@ struct TestStruct {
     name: Ascii<32>,
     int: u32,
 }
-mech3ax_api_types::static_assert_size!(TestStruct, 36);
+mech3ax_api_types::impl_as_bytes!(TestStruct, 36);
 
 #[test]
 fn struct_roundtrip() {

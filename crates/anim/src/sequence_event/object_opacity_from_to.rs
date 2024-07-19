@@ -4,7 +4,7 @@ use crate::types::AnimDefLookup as _;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{ObjectOpacity, ObjectOpacityFromTo};
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::{static_assert_size, ReprSize as _};
+use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
@@ -20,7 +20,7 @@ struct ObjectOpacityFromToC {
     delta_value: f32,
     runtime: f32,
 }
-static_assert_size!(ObjectOpacityFromToC, 24);
+impl_as_bytes!(ObjectOpacityFromToC, 24);
 
 impl ScriptObject for ObjectOpacityFromTo {
     const INDEX: u8 = 14;

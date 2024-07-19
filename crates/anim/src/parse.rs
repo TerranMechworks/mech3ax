@@ -2,7 +2,7 @@ use super::anim_def::{read_anim_def, read_anim_def_zero, write_anim_def, write_a
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::trace;
 use mech3ax_api_types::anim::{AnimDef, AnimMetadata, AnimName, AnimPtr};
-use mech3ax_api_types::static_assert_size;
+use mech3ax_api_types::impl_as_bytes;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_partition, str_to_c_partition};
@@ -28,7 +28,7 @@ struct AnimNameC {
     name: Ascii<80>,
     unknown: u32,
 }
-static_assert_size!(AnimNameC, 84);
+impl_as_bytes!(AnimNameC, 84);
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -52,7 +52,7 @@ struct AnimInfoC {
     one60: u32,
     zero64: u32,
 }
-static_assert_size!(AnimInfoC, 68);
+impl_as_bytes!(AnimInfoC, 68);
 
 fn read_anim_header(read: &mut CountingReader<impl Read>) -> Result<Vec<AnimName>> {
     trace!("Reading anim header at {}", read.offset);

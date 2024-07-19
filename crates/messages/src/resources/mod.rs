@@ -1,7 +1,7 @@
 mod structures;
 
 use super::bin::StructAt as _;
-use super::size::ConstSize as _;
+use super::size::FromBytes as _;
 use log::trace;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use structures::*;
