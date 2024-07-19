@@ -1,3 +1,4 @@
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::motion::{Motion, MotionFrame, MotionPart};
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
@@ -12,7 +13,7 @@ const FLAG_ROTATION: u32 = 1 << 2;
 const FLAG_SCALING: u32 = 1 << 1; // never in motion.zbd
 const FLAGS: u32 = FLAG_TRANSLATION | FLAG_ROTATION;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct MotionHeader {
     version: u32,     // 00

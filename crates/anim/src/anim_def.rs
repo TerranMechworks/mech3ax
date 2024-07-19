@@ -1,6 +1,7 @@
 use super::activation_prereq::{read_activ_prereqs, write_activ_prereqs};
 use super::support::*;
 use crate::sequence_event::{read_events, size_events, write_events};
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::trace;
 use mech3ax_api_types::anim::events::EventData;
 use mech3ax_api_types::anim::{
@@ -33,6 +34,7 @@ bitflags::bitflags! {
     }
 }
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct AnimDefC {
     anim_name: Ascii<32>,            // 000
@@ -83,6 +85,7 @@ struct AnimDefC {
 }
 static_assert_size!(AnimDefC, 316);
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct SeqDefInfoC {
     name: Ascii<32>,   // 00

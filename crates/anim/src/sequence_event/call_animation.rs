@@ -1,6 +1,7 @@
 use super::types::INPUT_NODE;
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{
     CallAnimation, CallAnimationAtNode, CallAnimationParameters, CallAnimationTargetNode,
     CallAnimationWithNode,
@@ -16,6 +17,7 @@ use std::io::{Read, Write};
 
 const INPUT_NODE_INDEX: u32 = 65336;
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct CallAnimationC {
     name: Ascii<32>,          // 00

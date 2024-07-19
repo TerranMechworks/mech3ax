@@ -88,9 +88,23 @@ checksum = "ed570934406eb16438a4e976b1b4500774099c13b8cb96eec99f620f05090ddf"
 
 [[package]]
 name = "bytemuck"
-version = "1.14.3"
+version = "1.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2ef034f05691a48569bd920a96c81b9d91bbad1ab5ac7c4616c1f6ef36cb79f"
+checksum = "b236fc92302c97ed75b38da1f4917b5cdda4984745740f153a5d3059e48d725e"
+dependencies = [
+ "bytemuck_derive",
+]
+
+[[package]]
+name = "bytemuck_derive"
+version = "1.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ee891b04274a59bd38b412188e24b849617b2e45a0fd8d057deb63e7403761b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "byteorder"
@@ -262,6 +276,7 @@ name = "mech3ax-anim"
 version = "0.0.0"
 dependencies = [
  "bitflags 2.4.2",
+ "bytemuck",
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
@@ -275,6 +290,7 @@ name = "mech3ax-api-types"
 version = "0.0.0"
 dependencies = [
  "base64",
+ "bytemuck",
  "mech3ax-metadata-proc-macro",
  "mech3ax-metadata-types",
  "num-derive",
@@ -289,6 +305,7 @@ dependencies = [
 name = "mech3ax-archive"
 version = "0.0.0"
 dependencies = [
+ "bytemuck",
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
@@ -301,6 +318,7 @@ name = "mech3ax-common"
 version = "0.0.0"
 dependencies = [
  "bitflags 2.4.2",
+ "bytemuck",
  "mech3ax-api-types",
  "mech3ax-debug",
  "num-traits",
@@ -314,6 +332,9 @@ version = "0.0.0"
 [[package]]
 name = "mech3ax-debug"
 version = "0.0.0"
+dependencies = [
+ "bytemuck",
+]
 
 [[package]]
 name = "mech3ax-encoding"
@@ -331,6 +352,7 @@ name = "mech3ax-gamez"
 version = "0.0.0"
 dependencies = [
  "bitflags 2.4.2",
+ "bytemuck",
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
@@ -345,6 +367,7 @@ name = "mech3ax-image"
 version = "0.0.0"
 dependencies = [
  "bitflags 2.4.2",
+ "bytemuck",
  "image",
  "log",
  "mech3ax-api-types",
@@ -358,6 +381,7 @@ dependencies = [
 name = "mech3ax-interp"
 version = "0.0.0"
 dependencies = [
+ "bytemuck",
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
@@ -431,6 +455,7 @@ dependencies = [
 name = "mech3ax-motion"
 version = "0.0.0"
 dependencies = [
+ "bytemuck",
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
@@ -441,6 +466,7 @@ name = "mech3ax-nodes"
 version = "0.0.0"
 dependencies = [
  "bitflags 2.4.2",
+ "bytemuck",
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
@@ -465,6 +491,7 @@ dependencies = [
 name = "mech3ax-saves"
 version = "0.0.0"
 dependencies = [
+ "bytemuck",
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
@@ -483,6 +510,7 @@ dependencies = [
 name = "mech3ax-zmap"
 version = "0.0.0"
 dependencies = [
+ "bytemuck",
  "log",
  "mech3ax-api-types",
  "mech3ax-common",

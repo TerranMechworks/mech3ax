@@ -1,6 +1,7 @@
 use super::has_borked_parents;
 use crate::math::{apply_matrix_signs, euler_to_matrix, extract_matrix_signs, scale_to_matrix, PI};
 use crate::rc::node::NodeVariantsRc;
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::rc::{
     Object3d, RotationTranslation, Transformation, TranslationOnly,
@@ -12,7 +13,7 @@ use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_debug::Zeros;
 use std::io::{Read, Write};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct Object3dRcC {
     flags: u32,         // 000
@@ -245,7 +246,7 @@ pub fn write(
             32
         }
         Transformation::TranslationOnly(tr) => {
-            matrix = tr.matrix.as_ref().unwrap_or(&Matrix::IDENTITY).clone();
+            matrix = tr.matrix.unwrap_or(Matrix::IDENTITY);
             translation = tr.translation;
             48
         }

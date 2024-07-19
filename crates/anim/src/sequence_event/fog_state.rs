@@ -1,5 +1,6 @@
 use super::utils::assert_color;
 use super::ScriptObject;
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{FogState, FogType};
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{static_assert_size, Color, Range, ReprSize as _};
@@ -25,6 +26,7 @@ bitflags::bitflags! {
     }
 }
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct FogStateC {
     name: Ascii<32>, // 00

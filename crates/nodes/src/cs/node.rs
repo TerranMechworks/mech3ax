@@ -7,6 +7,7 @@ use super::window;
 use super::world;
 use crate::flags::NodeBitFlagsCs;
 use crate::types::{NodeType, ZONE_DEFAULT};
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::cs::NodeCs;
 use mech3ax_api_types::nodes::pm::AreaPartitionPm;
@@ -81,7 +82,7 @@ pub enum NodeVariantCs {
     Object3d(NodeVariantsCs),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct NodeCsC {
     name: Ascii<36>,                 // 000

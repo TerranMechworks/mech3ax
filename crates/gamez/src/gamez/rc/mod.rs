@@ -5,6 +5,7 @@ mod nodes;
 use super::common::{NODE_INDEX_INVALID, SIGNATURE, VERSION_RC};
 use crate::materials;
 use crate::textures::rc as textures;
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::GameZDataRc;
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
@@ -12,7 +13,7 @@ use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct HeaderRcC {
     signature: u32,        // 00

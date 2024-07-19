@@ -16,9 +16,21 @@ pub use crate::serde::bytes::Bytes;
 pub use size::{u16_to_usize, u32_to_usize, ReprSize};
 
 use ::serde::{Deserialize, Serialize};
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_metadata_proc_macro::Struct;
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy, Struct)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    NoUninit,
+    AnyBitPattern,
+    Struct,
+)]
 #[dotnet(val_struct)]
 #[repr(C)]
 pub struct Range {
@@ -31,7 +43,18 @@ impl Range {
     pub const DEFAULT: Self = Self { min: 0.0, max: 0.0 };
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy, Struct)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    NoUninit,
+    AnyBitPattern,
+    Struct,
+)]
 #[dotnet(val_struct)]
 #[repr(C)]
 pub struct Vec3 {
@@ -49,7 +72,18 @@ impl Vec3 {
     };
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy, Struct)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    NoUninit,
+    AnyBitPattern,
+    Struct,
+)]
 #[dotnet(val_struct)]
 #[repr(C)]
 pub struct Color {
@@ -77,7 +111,18 @@ impl Color {
     };
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy, Struct)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    NoUninit,
+    AnyBitPattern,
+    Struct,
+)]
 #[dotnet(val_struct)]
 #[repr(C)]
 pub struct Quaternion {
@@ -97,7 +142,18 @@ impl Quaternion {
     };
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Struct)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    NoUninit,
+    AnyBitPattern,
+    Struct,
+)]
 #[dotnet(val_struct)]
 #[repr(C)]
 pub struct Matrix {

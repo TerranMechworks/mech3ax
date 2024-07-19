@@ -1,3 +1,4 @@
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::{ActivationPrereq, PrereqAnimation, PrereqObject, PrereqParent};
 use mech3ax_api_types::static_assert_size;
 use mech3ax_common::assert::assert_utf8;
@@ -17,6 +18,7 @@ enum ActivPrereqType {
     Parent = 3,
 }
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct ActivPrereqAnimC {
     name: Ascii<32>, // 00
@@ -25,6 +27,7 @@ struct ActivPrereqAnimC {
 }
 static_assert_size!(ActivPrereqAnimC, 40);
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct ActivPrereqObjC {
     active: u32,     // 00

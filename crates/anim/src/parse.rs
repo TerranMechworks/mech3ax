@@ -1,4 +1,5 @@
 use super::anim_def::{read_anim_def, read_anim_def_zero, write_anim_def, write_anim_def_zero};
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::trace;
 use mech3ax_api_types::anim::{AnimDef, AnimMetadata, AnimName, AnimPtr};
 use mech3ax_api_types::static_assert_size;
@@ -21,6 +22,7 @@ const VERSION_PM: u32 = 50;
 #[allow(clippy::excessive_precision)]
 const GRAVITY: f32 = -9.800000190734863;
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct AnimNameC {
     name: Ascii<80>,
@@ -28,6 +30,7 @@ struct AnimNameC {
 }
 static_assert_size!(AnimNameC, 84);
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct AnimInfoC {
     zero00: u32,

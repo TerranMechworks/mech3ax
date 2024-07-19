@@ -8,6 +8,7 @@ use super::window;
 use super::world;
 use crate::flags::NodeBitFlags;
 use crate::types::NodeType;
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::rc::{Empty, NodeRc};
 use mech3ax_api_types::nodes::{AreaPartition, BoundingBox};
@@ -75,7 +76,7 @@ pub enum NodeVariantRc {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct NodeRcC {
     name: Ascii<36>,               // 000

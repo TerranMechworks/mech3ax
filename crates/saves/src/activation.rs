@@ -1,3 +1,4 @@
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::debug;
 use mech3ax_api_types::saves::{ActivationStatus, ActivationType, AnimActivation};
 use mech3ax_api_types::{static_assert_size, Bytes};
@@ -13,7 +14,7 @@ use std::num::NonZeroU32;
 
 const VALUES_SIZE: usize = 9 * 4;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct AnimActivationC {
     pub type_: i32,                // 00

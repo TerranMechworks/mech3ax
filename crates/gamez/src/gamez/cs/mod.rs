@@ -8,6 +8,7 @@ use super::common::{
 use crate::gamez::cs::fixup::Fixup;
 use crate::materials;
 use crate::textures::ng as textures;
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::{GameZDataCs, GameZMetadataCs, TextureName};
 use mech3ax_api_types::nodes::cs::NodeCs;
@@ -17,7 +18,7 @@ use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
 use std::collections::HashSet;
 use std::io::{Read, Write};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct HeaderCsC {
     signature: u32,        // 00

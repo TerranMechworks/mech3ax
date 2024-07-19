@@ -6,6 +6,7 @@ use super::common::{
 };
 use crate::materials;
 use crate::textures::ng as textures;
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::{GameZDataPm, GameZMetadataPm};
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
@@ -13,7 +14,7 @@ use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct HeaderPmC {
     signature: u32,        // 00

@@ -4,6 +4,7 @@ mod read_single;
 mod write_multi;
 mod write_single;
 
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::materials::{ColoredMaterial, Material, Soil};
 use mech3ax_api_types::{static_assert_size, Color, ReprSize as _};
 
@@ -43,7 +44,7 @@ impl MatType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct MaterialInfoC {
     array_size: i32,
@@ -53,7 +54,7 @@ struct MaterialInfoC {
 }
 static_assert_size!(MaterialInfoC, 16);
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct MaterialC {
     alpha: u8,      // 00
@@ -69,7 +70,7 @@ struct MaterialC {
 }
 static_assert_size!(MaterialC, 40);
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct CycleInfoC {
     unk00: u32,

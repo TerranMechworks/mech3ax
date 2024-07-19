@@ -1,5 +1,6 @@
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{
     AtNode, Interval, IntervalType, PufferState, PufferStateCycleTextures,
 };
@@ -12,6 +13,7 @@ use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_debug::{Ascii, Zeros};
 use std::io::{Read, Write};
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct PufferStateC {
     name: Ascii<32>,           // 000

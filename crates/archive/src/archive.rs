@@ -1,4 +1,5 @@
 use super::{Mode, Version};
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
@@ -14,7 +15,7 @@ use std::io::{Read, Seek, SeekFrom, Write};
 const VERSION_ONE: u32 = 1;
 const VERSION_TWO: u32 = 2;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct EntryC {
     start: u32,

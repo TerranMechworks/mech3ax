@@ -1,5 +1,6 @@
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{
     BounceSequence, BounceSound, ForwardRotation, ForwardRotationDistance, ForwardRotationTime,
     Gravity, GravityMode, ObjectMotion, ObjectMotionScale, ObjectMotionTranslation, XyzRotation,
@@ -13,6 +14,7 @@ use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_debug::Ascii;
 use std::io::{Read, Write};
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct ObjectMotionC {
     flags: u32,      // 000

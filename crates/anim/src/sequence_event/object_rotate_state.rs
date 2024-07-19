@@ -1,5 +1,6 @@
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{ObjectRotateState, RotateState};
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
@@ -10,6 +11,7 @@ use std::io::{Read, Write};
 const PI: f32 = std::f32::consts::PI;
 const INPUT_NODE_INDEX: u16 = -200i16 as u16;
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct ObjectRotateStateC {
     flags: u32,         // 00

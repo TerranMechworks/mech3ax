@@ -1,4 +1,5 @@
 use super::ScriptObject;
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{Callback, Else, ElseIf, EndIf, If, Loop};
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
@@ -8,6 +9,7 @@ use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct LoopC {
     start: i32,
@@ -38,7 +40,7 @@ impl ScriptObject for Loop {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct IfC {
     condition: u32,

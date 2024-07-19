@@ -1,3 +1,4 @@
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::trace;
 use mech3ax_api_types::anim::{NamePad, NamePtr, NamePtrFlags};
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
@@ -11,6 +12,7 @@ use mech3ax_common::{assert_that, Result};
 use mech3ax_debug::{Ascii, Bytes};
 use std::io::{Read, Write};
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct ObjectC {
     name: Ascii<32>, // 00
@@ -68,6 +70,7 @@ pub fn write_objects(write: &mut CountingWriter<impl Write>, objects: &[NamePad]
     Ok(())
 }
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct NodeInfoC {
     name: Ascii<32>, // 00
@@ -132,6 +135,7 @@ pub fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NamePtr]) ->
     Ok(())
 }
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct ReaderLookupC {
     name: Ascii<32>, // 00
@@ -201,6 +205,7 @@ pub fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[NamePtr]) 
     Ok(())
 }
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct PufferRefC {
     name: Ascii<32>, // 00
@@ -348,6 +353,7 @@ pub fn write_dynamic_sounds(
     Ok(())
 }
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct StaticSoundC {
     name: Ascii<32>, // 00
@@ -400,6 +406,7 @@ pub fn write_static_sounds(
     Ok(())
 }
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct AnimRefC {
     name: Ascii<64>, // 00

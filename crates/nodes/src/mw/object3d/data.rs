@@ -1,6 +1,7 @@
 use crate::math::{apply_matrix_signs, euler_to_matrix, extract_matrix_signs, PI};
 use crate::mw::node::NodeVariantsMw;
 use crate::mw::wrappers::WrapperMw;
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::mw::Object3d;
 use mech3ax_api_types::nodes::Transformation;
@@ -11,7 +12,7 @@ use mech3ax_common::{assert_that, Result};
 use mech3ax_debug::Zeros;
 use std::io::{Read, Write};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct Object3dMwC {
     flags: u32,         // 000

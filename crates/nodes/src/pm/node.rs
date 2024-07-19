@@ -8,6 +8,7 @@ use super::world;
 use super::wrappers::WrappedNodePm;
 use crate::flags::NodeBitFlags;
 use crate::types::NodeType;
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::pm::{AreaPartitionPm, NodePm};
 use mech3ax_api_types::nodes::BoundingBox;
@@ -75,7 +76,7 @@ pub enum NodeVariantPm {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct NodePmC {
     name: Ascii<36>,                 // 000

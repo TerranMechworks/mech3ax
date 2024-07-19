@@ -1,4 +1,5 @@
 use super::*;
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::trace;
 use mech3ax_api_types::anim::events::{
     CallAnimation, CallObjectConnector, CallSequence, Callback, DetonateWeapon, Else, ElseIf,
@@ -16,6 +17,7 @@ use mech3ax_common::{assert_that, assert_with_msg, Result};
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct EventHeaderC {
     event_type: u8,

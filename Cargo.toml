@@ -23,6 +23,7 @@ version = "0.0.0"
 [workspace.dependencies]
 anyhow = "1.0"
 bitflags = "2.4"
+bytemuck = { version = "1.16", features = ["derive", "min_const_generics", "must_cast"] }
 image = { version = "0.24", default-features = false, features = ["png"] }
 log = "0.4"
 num-derive = "0.4"

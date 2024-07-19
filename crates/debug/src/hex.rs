@@ -1,6 +1,8 @@
+#![allow(clippy::multiple_bound_locations)]
+use bytemuck::{AnyBitPattern, NoUninit, TransparentWrapper};
 use std::fmt;
 
-pub trait HexDebug {
+pub trait HexDebug: NoUninit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result;
 }
 
@@ -28,9 +30,12 @@ impl HexDebug for u32 {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, AnyBitPattern, TransparentWrapper)]
 #[repr(transparent)]
 pub struct Hex<T: HexDebug>(pub T);
+
+// SAFETY: `#[repr(transparent)]`, also only implemented for u8, u16, and u32.
+unsafe impl<T: HexDebug> NoUninit for Hex<T> {}
 
 impl<T: HexDebug> fmt::Debug for Hex<T> {
     #[inline]

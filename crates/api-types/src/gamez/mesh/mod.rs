@@ -5,9 +5,21 @@ mod rc;
 use crate::static_assert_size;
 use crate::{Color, Vec3};
 use ::serde::{Deserialize, Serialize};
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_metadata_proc_macro::Struct;
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy, Struct)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    NoUninit,
+    AnyBitPattern,
+    Struct,
+)]
 #[dotnet(val_struct)]
 #[repr(C)]
 pub struct UvCoord {

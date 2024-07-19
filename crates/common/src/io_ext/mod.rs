@@ -1,9 +1,9 @@
 use crate::assert::assert_utf8;
 use crate::assert_with_msg;
 use crate::string::str_from_c_sized;
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::ReprSize;
 use std::io::{Read, Result, Seek, SeekFrom, Write};
-use std::mem::MaybeUninit;
 
 pub struct CountingReader<R: Read> {
     inner: R,
@@ -81,18 +81,11 @@ impl<R: Read> CountingReader<R> {
     }
 
     #[allow(clippy::uninit_assumed_init)]
-    pub fn read_struct<S: ReprSize>(&mut self) -> Result<S> {
-        let size = std::mem::size_of::<S>();
-        let mut mem = MaybeUninit::uninit();
-        let buf = unsafe { std::slice::from_raw_parts_mut(mem.as_mut_ptr() as *mut u8, size) };
-        match self.read_exact(buf) {
-            Ok(()) => Ok(unsafe { mem.assume_init() }),
-            Err(e) => {
-                #[allow(clippy::forget_non_drop)]
-                std::mem::forget(mem);
-                Err(e)
-            }
-        }
+    pub fn read_struct<S: NoUninit + AnyBitPattern + ReprSize>(&mut self) -> Result<S> {
+        let mut s = S::zeroed();
+        let buf = bytemuck::bytes_of_mut(&mut s);
+        self.read_exact(buf)?;
+        Ok(s)
     }
 
     pub fn read_string(&mut self) -> crate::Result<String> {
@@ -213,9 +206,8 @@ impl<W: Write> CountingWriter<W> {
     }
 
     #[inline]
-    pub fn write_struct<S: ReprSize>(&mut self, value: &S) -> Result<()> {
-        let size = std::mem::size_of::<S>();
-        let buf = unsafe { std::slice::from_raw_parts(value as *const S as *const u8, size) };
+    pub fn write_struct<S: NoUninit + ReprSize>(&mut self, value: &S) -> Result<()> {
+        let buf = bytemuck::bytes_of(value);
         self.write_all(buf)
     }
 

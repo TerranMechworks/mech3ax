@@ -3,6 +3,7 @@ use crate::serde::bool_false;
 use crate::static_assert_size;
 use crate::{Color, Vec3};
 use ::serde::{Deserialize, Serialize};
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_metadata_proc_macro::Struct;
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
@@ -17,7 +18,7 @@ pub struct PolygonFlags {
     pub unk6: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, NoUninit, AnyBitPattern, Struct)]
 #[repr(C)]
 pub struct MeshMaterialInfo {
     pub material_index: u32,      // 00

@@ -1,3 +1,4 @@
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::interp::Script;
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
@@ -12,7 +13,7 @@ use time::OffsetDateTime;
 const SIGNATURE: u32 = 0x08971119;
 const VERSION: u32 = 7;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct InterpHeaderC {
     signature: u32,
@@ -21,7 +22,7 @@ struct InterpHeaderC {
 }
 static_assert_size!(InterpHeaderC, 12);
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct InterpEntryC {
     name: Ascii<120>,

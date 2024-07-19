@@ -1,3 +1,4 @@
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::trace;
 use mech3ax_api_types::gamez::mesh::{MeshLight, UvCoord};
 use mech3ax_api_types::{static_assert_size, Color, ReprSize as _, Vec3};
@@ -81,7 +82,7 @@ pub(crate) fn write_uvs(
     Ok(())
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 pub struct LightC {
     pub unk00: u32,       // 00

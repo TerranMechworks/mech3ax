@@ -1,4 +1,5 @@
 use super::common::*;
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::mesh::{MeshMw, PolygonMw, UvCoord};
 use mech3ax_api_types::{static_assert_size, Color, ReprSize as _, Vec3};
@@ -7,7 +8,7 @@ use mech3ax_common::{assert_len, assert_that, bool_c, Result};
 use mech3ax_debug::{Hex, Ptr};
 use std::io::{Read, Write};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct MeshMwC {
     file_ptr: u32,      // 00
@@ -65,7 +66,7 @@ impl MeshMwC {
     };
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct PolygonMwC {
     vertex_info: Hex<u32>, // 00

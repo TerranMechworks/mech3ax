@@ -1,5 +1,6 @@
 //! GameZ and mechlib mesh support for PM, CS
 use super::common::*;
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::mesh::{
     MeshMaterialInfo, MeshNg, PolygonFlags, PolygonMaterialNg, PolygonNg, UvCoord,
@@ -10,7 +11,7 @@ use mech3ax_common::{assert_len, assert_that, assert_with_msg, bool_c, Result};
 use mech3ax_debug::{Hex, Ptr};
 use std::io::{Read, Write};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct MeshNgC {
     file_ptr: u32,       // 00
@@ -72,7 +73,7 @@ impl MeshNgC {
     };
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct PolygonNgC {
     vertex_info: Hex<u32>, // 00

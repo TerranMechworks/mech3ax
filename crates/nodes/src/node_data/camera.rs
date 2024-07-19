@@ -1,4 +1,5 @@
 use crate::math::cotangent;
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::Camera;
 use mech3ax_api_types::{static_assert_size, Matrix, Range, ReprSize as _, Vec3};
@@ -8,7 +9,7 @@ use mech3ax_common::{assert_that, Result};
 use mech3ax_debug::Zeros;
 use std::io::{Read, Write};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 pub struct CameraC {
     pub world_index: i32,       // 000

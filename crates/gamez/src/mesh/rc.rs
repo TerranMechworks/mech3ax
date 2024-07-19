@@ -1,4 +1,5 @@
 use super::common::*;
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::mesh::{MeshRc, PolygonRc, UvCoord};
 use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
@@ -7,7 +8,7 @@ use mech3ax_common::{assert_len, assert_that, assert_with_msg, bool_c, Result};
 use mech3ax_debug::{Hex, Ptr};
 use std::io::{Read, Write};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct MeshRcC {
     file_ptr: u32,      // 00
@@ -61,7 +62,7 @@ impl MeshRcC {
     };
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct PolygonRcC {
     vertex_info: Hex<u32>, // 00

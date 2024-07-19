@@ -3,6 +3,7 @@ use crate::math::{
     apply_matrix_signs, apply_vec3_signs, euler_to_matrix, extract_matrix_signs,
     extract_vec3_signs, PI,
 };
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::cs::Object3d;
 use mech3ax_api_types::nodes::Transformation;
@@ -13,7 +14,7 @@ use mech3ax_common::{assert_that, Result};
 use mech3ax_debug::Zeros;
 use std::io::{Read, Write};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct Object3dCsC {
     flags: u32,         // 000

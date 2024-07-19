@@ -2,9 +2,12 @@ use super::{Area, BoundingBox, Camera, Display, NodeFlags, PartitionNg, Transfor
 use crate::static_assert_size;
 use crate::Range;
 use ::serde::{Deserialize, Serialize};
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_metadata_proc_macro::{Struct, Union};
 
-#[derive(Debug, Serialize, Deserialize, Struct, Clone, PartialEq, Eq)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, NoUninit, AnyBitPattern, Struct,
+)]
 #[repr(C)]
 pub struct AreaPartitionPm {
     pub x: i16,

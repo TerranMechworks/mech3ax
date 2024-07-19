@@ -1,3 +1,4 @@
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -18,7 +19,7 @@ pub const NODE_INDEX_TOP_MASK: u32 = 0xFF000000;
 pub const NODE_INDEX_BOT_MASK: u32 = 0x00FFFFFF;
 pub const NODE_INDEX_TOP: u32 = 0x02000000;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 pub struct MeshesInfoC {
     pub array_size: i32, // 00

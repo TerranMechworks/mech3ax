@@ -1,6 +1,7 @@
 use super::info::WORLD_NAME;
 use crate::math::partition_diag;
 use crate::range::RangeI32;
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::rc::World;
 use mech3ax_api_types::nodes::{Area, PartitionPg};
@@ -9,7 +10,7 @@ use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use std::io::{Read, Write};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct WorldRcC {
     flags: u32,                           // 000
@@ -54,7 +55,7 @@ struct WorldRcC {
 }
 static_assert_size!(WorldRcC, 172);
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct PartitionRcC {
     flags: u32,    // 00

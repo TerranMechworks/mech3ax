@@ -1,6 +1,7 @@
 use super::types::INPUT_NODE;
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::ObjectTranslateState;
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
@@ -10,6 +11,7 @@ use std::io::{Read, Write};
 
 const INPUT_NODE_INDEX: u16 = -200i16 as u16;
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct ObjectTranslateStateC {
     zero00: u32,        // 00

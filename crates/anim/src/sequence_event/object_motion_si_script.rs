@@ -1,5 +1,6 @@
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{
     ObjectMotionSiFrame, ObjectMotionSiScript, RotateData, ScaleData, TranslateData,
 };
@@ -11,6 +12,7 @@ use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_debug::Bytes;
 use std::io::{Read, Write};
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct ScriptHeaderC {
     node_index: u32, // 00
@@ -22,6 +24,7 @@ struct ScriptHeaderC {
 }
 static_assert_size!(ScriptHeaderC, 24);
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct FrameC {
     flags: u32,
@@ -30,6 +33,7 @@ struct FrameC {
 }
 static_assert_size!(FrameC, 12);
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct TranslateDataC {
     value: Vec3,
@@ -37,6 +41,7 @@ struct TranslateDataC {
 }
 static_assert_size!(TranslateDataC, 76);
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct RotateDataC {
     value: Quaternion,
@@ -44,6 +49,7 @@ struct RotateDataC {
 }
 static_assert_size!(RotateDataC, 76);
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct ScaleDataC {
     value: Vec3,

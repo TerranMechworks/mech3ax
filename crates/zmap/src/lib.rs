@@ -3,9 +3,10 @@
 mod read;
 mod write;
 
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::static_assert_size;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct MapHeaderC {
     version: u32, // 00

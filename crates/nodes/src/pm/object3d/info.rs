@@ -104,7 +104,7 @@ pub fn make_variants(object3d: &Object3d) -> Result<NodeVariantsPm> {
         zone_id: object3d.zone_id,
         data_ptr: object3d.data_ptr,
         mesh_index: object3d.mesh_index,
-        area_partition: object3d.area_partition.clone(),
+        area_partition: object3d.area_partition,
         has_parent: object3d.parent.is_some(),
         parent_array_ptr: object3d.parent_array_ptr,
         children_count,

@@ -12,6 +12,7 @@ autobenches = false
 doctest = false
 
 [dependencies]
+bytemuck.workspace = true
 log.workspace = true
 time.workspace = true
 

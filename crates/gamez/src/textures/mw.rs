@@ -1,4 +1,5 @@
 use super::STATE_USED;
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
 use mech3ax_common::assert::assert_utf8;
@@ -8,7 +9,7 @@ use mech3ax_common::{assert_that, Result};
 use mech3ax_debug::Ascii;
 use std::io::{Read, Write};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct TextureInfoMwC {
     zero00: u32,        // 00

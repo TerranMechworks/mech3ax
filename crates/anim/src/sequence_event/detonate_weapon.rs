@@ -1,5 +1,6 @@
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{AtNode, DetonateWeapon};
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{static_assert_size, ReprSize as _, Vec3};
@@ -10,6 +11,7 @@ use mech3ax_common::{assert_that, Result};
 use mech3ax_debug::Ascii;
 use std::io::{Read, Write};
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct DetonateWeaponC {
     name: Ascii<10>,

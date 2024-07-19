@@ -1,5 +1,6 @@
 use super::delta::{dec_f32, delta};
 use super::ScriptObject;
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{FrameBufferEffectColor, Rgba};
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{static_assert_size, ReprSize as _};
@@ -7,6 +8,7 @@ use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct FbFxColorFromToC {
     from_red: f32,

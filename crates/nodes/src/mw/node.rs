@@ -9,6 +9,7 @@ use super::world;
 use super::wrappers::WrappedNodeMw;
 use crate::flags::NodeBitFlags;
 use crate::types::NodeType;
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::mw::{Empty, NodeMw};
 use mech3ax_api_types::nodes::{AreaPartition, BoundingBox};
@@ -74,7 +75,7 @@ pub enum NodeVariantMw {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct NodeMwC {
     name: Ascii<36>,               // 000

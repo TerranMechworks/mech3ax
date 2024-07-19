@@ -82,7 +82,7 @@ fn i16_roundtrip() {
     assert_eq!(expected, cursor.read_all());
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct TestStruct {
     name: Ascii<32>,

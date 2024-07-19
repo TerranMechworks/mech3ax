@@ -7,6 +7,7 @@ use crate::serde::{bool_false, bool_true};
 use crate::static_assert_size;
 use crate::{Color, Matrix, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_metadata_proc_macro::Struct;
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
@@ -32,7 +33,9 @@ pub struct Window {
     pub data_ptr: u32,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Struct)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, NoUninit, AnyBitPattern, Struct,
+)]
 #[dotnet(val_struct)]
 #[repr(C)]
 pub struct AreaPartition {
@@ -46,7 +49,7 @@ impl AreaPartition {
     pub const ZERO: Self = Self { x: 0, y: 0 };
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Struct)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Struct)]
 #[dotnet(val_struct)]
 pub struct Area {
     pub left: i32,
@@ -65,7 +68,9 @@ impl Area {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Struct)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Serialize, Deserialize, NoUninit, AnyBitPattern, Struct,
+)]
 #[repr(C)]
 pub struct BoundingBox {
     pub a: Vec3,
@@ -96,7 +101,9 @@ pub struct PartitionPg {
     pub ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct, Clone, PartialEq)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Serialize, Deserialize, NoUninit, AnyBitPattern, Struct,
+)]
 #[repr(C)]
 pub struct PartitionValue {
     pub index: u32,

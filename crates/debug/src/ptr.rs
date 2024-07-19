@@ -1,6 +1,7 @@
+use bytemuck::{AnyBitPattern, NoUninit, TransparentWrapper};
 use std::fmt;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, NoUninit, AnyBitPattern, TransparentWrapper)]
 #[repr(transparent)]
 pub struct Ptr(pub u32);
 

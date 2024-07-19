@@ -1,3 +1,4 @@
+use bytemuck::{AnyBitPattern, NoUninit};
 use image::{DynamicImage, RgbImage, RgbaImage};
 use log::{debug, trace};
 use mech3ax_api_types::image::{
@@ -17,7 +18,7 @@ use num_traits::FromPrimitive;
 use std::collections::HashSet;
 use std::io::{Read, Write};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct TexturesHeaderC {
     zero00: u32,               // 00
@@ -29,7 +30,7 @@ struct TexturesHeaderC {
 }
 static_assert_size!(TexturesHeaderC, 24);
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct TextureEntryC {
     name: Ascii<32>,    // 00
@@ -38,7 +39,7 @@ struct TextureEntryC {
 }
 static_assert_size!(TextureEntryC, 40);
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct TextureInfoC {
     flags: u32,         // 00

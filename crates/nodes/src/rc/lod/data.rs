@@ -1,4 +1,5 @@
 use crate::rc::node::NodeVariantLodRc;
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::rc::Lod;
 use mech3ax_api_types::{static_assert_size, Range, ReprSize as _};
@@ -8,7 +9,7 @@ use mech3ax_common::{assert_that, bool_c, Result};
 use mech3ax_debug::Zeros;
 use std::io::{Read, Write};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct LodRcC {
     level: u32,         // 00

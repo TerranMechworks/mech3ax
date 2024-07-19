@@ -1,6 +1,7 @@
 use crate::math::{apply_matrix_signs, euler_to_matrix, extract_matrix_signs, PI};
 use crate::pm::node::NodeVariantsPm;
 use crate::pm::wrappers::WrapperPm;
+use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::pm::Object3d;
 use mech3ax_api_types::nodes::Transformation;
@@ -11,7 +12,7 @@ use mech3ax_common::{assert_that, Result};
 use mech3ax_debug::Zeros;
 use std::io::{Read, Write};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct Object3dPmC {
     flags: u32,         // 000
