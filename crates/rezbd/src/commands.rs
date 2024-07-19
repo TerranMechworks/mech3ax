@@ -405,7 +405,7 @@ of Sony Computer Entertainment America LLC. This project is not
 endorsed by or affiliated with any previous or current
 rightsholders.
 
-Copyright (C) 2015-2022  Toby Fleming
+Copyright (C) 2015-2024  Toby Fleming
 
 Licensed under the European Union Public Licence (EUPL) 1.2.
 "#
