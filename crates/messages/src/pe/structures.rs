@@ -1,10 +1,11 @@
-use crate::bin::FromU8;
+#![allow(non_camel_case_types)]
 use crate::size::{static_assert_size, u32_to_usize};
+use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_common::PeError as Error;
 
 type Result<T> = ::std::result::Result<T, Error>;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 pub struct IMAGE_DOS_HEADER {
     pub e_magic: u16,
@@ -27,14 +28,13 @@ pub struct IMAGE_DOS_HEADER {
     pub e_res2: [u16; 10],
     pub e_lfanew: i32,
 }
-unsafe impl FromU8 for IMAGE_DOS_HEADER {}
 static_assert_size!(IMAGE_DOS_HEADER, 64);
 
 impl IMAGE_DOS_HEADER {
     pub const SIGNATURE: u16 = u16::from_le_bytes([b'M', b'Z']);
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 pub struct IMAGE_FILE_HEADER {
     pub machine: u16,
@@ -45,25 +45,26 @@ pub struct IMAGE_FILE_HEADER {
     pub size_of_optional_header: u16,
     pub characteristics: u16,
 }
-unsafe impl FromU8 for IMAGE_FILE_HEADER {}
 static_assert_size!(IMAGE_FILE_HEADER, 20);
+
 impl IMAGE_FILE_HEADER {
     pub const MACHINE_I386: u16 = 0x014c;
 }
 
-#[derive(Debug, Clone, Copy)]
+// note: due to the way bytemuck derives `NoUninit` for arrays, this must be
+// `Pod`.
+#[derive(Debug, Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
 pub struct IMAGE_DATA_DIRECTORY {
     pub virtual_address: u32,
     pub size: u32,
 }
-unsafe impl FromU8 for IMAGE_DATA_DIRECTORY {}
 static_assert_size!(IMAGE_DATA_DIRECTORY, 8);
 
 pub const IMAGE_NUMBEROF_DIRECTORY_ENTRIES: usize = 16;
 pub type ImageDataDirectories = [IMAGE_DATA_DIRECTORY; IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 pub struct IMAGE_OPTIONAL_HEADER32 {
     pub magic: u16,
@@ -98,7 +99,6 @@ pub struct IMAGE_OPTIONAL_HEADER32 {
     pub number_of_rva_and_sizes: u32,
     pub data_directory: ImageDataDirectories,
 }
-unsafe impl FromU8 for IMAGE_OPTIONAL_HEADER32 {}
 static_assert_size!(IMAGE_OPTIONAL_HEADER32, 224);
 
 impl IMAGE_OPTIONAL_HEADER32 {
@@ -106,14 +106,13 @@ impl IMAGE_OPTIONAL_HEADER32 {
     pub const SUBSYSTEM_WINDOWS_GUI: u16 = 2;
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 pub struct IMAGE_NT_HEADERS {
     pub signature: u32,
     pub file_header: IMAGE_FILE_HEADER,
     pub optional_header: IMAGE_OPTIONAL_HEADER32,
 }
-unsafe impl FromU8 for IMAGE_NT_HEADERS {}
 static_assert_size!(
     IMAGE_NT_HEADERS,
     4 + IMAGE_FILE_HEADER::SIZE + IMAGE_OPTIONAL_HEADER32::SIZE
@@ -125,7 +124,7 @@ impl IMAGE_NT_HEADERS {
 
 const IMAGE_SIZEOF_SHORT_NAME: usize = 8;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 pub struct IMAGE_SECTION_HEADER {
     pub name: [u8; IMAGE_SIZEOF_SHORT_NAME],
@@ -139,7 +138,6 @@ pub struct IMAGE_SECTION_HEADER {
     pub number_of_linenumbers: u16,
     pub characteristics: u32,
 }
-unsafe impl FromU8 for IMAGE_SECTION_HEADER {}
 static_assert_size!(IMAGE_SECTION_HEADER, 40);
 
 impl IMAGE_SECTION_HEADER {

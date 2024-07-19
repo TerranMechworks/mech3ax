@@ -481,6 +481,7 @@ name = "mech3ax-messages"
 version = "0.0.0"
 dependencies = [
  "bitflags 2.6.0",
+ "bytemuck",
  "log",
  "mech3ax-api-types",
  "mech3ax-common",

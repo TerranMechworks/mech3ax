@@ -109,7 +109,6 @@ where
 }
 
 #[inline]
-#[allow(dead_code)]
 pub fn is_greater_than_or_equal_to<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
 where
     S: Display,
