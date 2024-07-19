@@ -16,7 +16,8 @@ use mech3ax_saves::{read_activation, read_save_header};
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Cursor, Seek, Write};
 use std::path::Path;
-use zip::write::{FileOptions, ZipWriter};
+use zip::write::{SimpleFileOptions, ZipWriter};
+use zip::CompressionMethod;
 
 fn buf_reader<P: AsRef<Path>>(path: P) -> Result<BufReader<File>> {
     Ok(BufReader::new(
@@ -30,20 +31,13 @@ fn buf_writer<P: AsRef<Path>>(path: P) -> Result<BufWriter<File>> {
     ))
 }
 
-fn deflate_opts() -> FileOptions {
-    FileOptions::default().compression_method(zip::CompressionMethod::Deflated)
-}
-
-fn store_opts() -> FileOptions {
-    FileOptions::default().compression_method(zip::CompressionMethod::Stored)
-}
-
 fn zip_write(
     zip: &mut ZipWriter<impl Write + Seek>,
-    options: FileOptions,
+    method: CompressionMethod,
     name: &str,
     data: &[u8],
 ) -> Result<()> {
+    let options = SimpleFileOptions::default().compression_method(method);
     zip.start_file(name, options)
         .with_context(|| format!("Failed to write `{}` to Zip", name))?;
     zip.write_all(data)
@@ -56,8 +50,7 @@ where
     T: serde::ser::Serialize,
 {
     let data = serde_json::to_vec_pretty(value)?;
-    let options = deflate_opts();
-    zip_write(zip, options, name, &data)
+    zip_write(zip, CompressionMethod::Deflated, name, &data)
 }
 
 pub(crate) fn interp(opts: InterpOpts) -> Result<()> {
@@ -105,14 +98,13 @@ where
 
 pub(crate) fn sounds(opts: ZipOpts) -> Result<()> {
     let version = opts.version(Mode::Sounds);
-    let options = store_opts();
 
     _zarchive(
         opts.input,
         opts.output,
         version,
         "Failed to read sounds data",
-        |zip, name, data, _offset| zip_write(zip, options, name, &data),
+        |zip, name, data, _offset| zip_write(zip, CompressionMethod::Stored, name, &data),
     )
 }
 
@@ -216,8 +208,6 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
 }
 
 pub(crate) fn textures(input: String, output: String) -> Result<()> {
-    let options = store_opts();
-
     let output = buf_writer(output)?;
     let mut zip = ZipWriter::new(output);
 
@@ -229,7 +219,7 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
             .write_to(&mut data, ImageFormat::Png)
             .with_context(|| format!("Failed to write image data for `{}`", original))?;
 
-        zip_write(&mut zip, options, &name, data.get_ref())
+        zip_write(&mut zip, CompressionMethod::Stored, &name, data.get_ref())
     })
     .context("Failed to read texture data")?;
 
