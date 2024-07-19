@@ -50,12 +50,13 @@ fn zip_write(
         .with_context(|| format!("Failed to write `{}` to Zip", name))
 }
 
-fn zip_json<W, T>(zip: &mut ZipWriter<W>, options: FileOptions, name: &str, value: &T) -> Result<()>
+fn zip_json<W, T>(zip: &mut ZipWriter<W>, name: &str, value: &T) -> Result<()>
 where
     W: Write + Seek,
     T: serde::ser::Serialize,
 {
     let data = serde_json::to_vec_pretty(value)?;
+    let options = deflate_opts();
     zip_write(zip, options, name, &data)
 }
 
@@ -97,7 +98,7 @@ where
     )
     .context(context)?;
 
-    zip_json(&mut zip, store_opts(), "manifest.json", &manifest)?;
+    zip_json(&mut zip, "manifest.json", &manifest)?;
     zip.finish()?;
     Ok(())
 }
@@ -117,7 +118,6 @@ pub(crate) fn sounds(opts: ZipOpts) -> Result<()> {
 
 pub(crate) fn reader(opts: ReaderOpts) -> Result<()> {
     let version = opts.version();
-    let options = deflate_opts();
 
     _zarchive(
         opts.input,
@@ -132,7 +132,7 @@ pub(crate) fn reader(opts: ReaderOpts) -> Result<()> {
             let root = read_reader(&mut read)
                 .with_context(|| format!("Failed to read reader data for `{}`", name))?;
 
-            zip_json(zip, options, &name, &root)
+            zip_json(zip, &name, &root)
         },
     )
 }
@@ -144,7 +144,6 @@ pub(crate) fn motion(opts: ZipOpts) -> Result<()> {
         GameType::CS => bail!("Crimson Skies does not have motion"),
     }
     let version = opts.version(Mode::Motion);
-    let options = deflate_opts();
 
     _zarchive(
         opts.input,
@@ -159,7 +158,7 @@ pub(crate) fn motion(opts: ZipOpts) -> Result<()> {
             let root = read_motion(&mut read)
                 .with_context(|| format!("Failed to read motion data for `{}`", original))?;
 
-            zip_json(zip, options, &name, &root)
+            zip_json(zip, &name, &root)
         },
     )
 }
@@ -172,7 +171,6 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
         GameType::CS => bail!("Crimson Skies does not have mechlib"),
     };
     let version = opts.version(Mode::Sounds);
-    let options = deflate_opts();
 
     _zarchive(
         opts.input,
@@ -191,7 +189,7 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                 "materials" => {
                     let materials =
                         read_materials(&mut read).context("Failed to read mechlib materials")?;
-                    zip_json(zip, options, "materials.json", &materials)
+                    zip_json(zip, "materials.json", &materials)
                 }
                 original => {
                     let name = original.replace(".flt", ".json");
@@ -200,13 +198,13 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                             let root = mechlib::mw::read_model(&mut read).with_context(|| {
                                 format!("Failed to read mechlib model for `{}`", original)
                             })?;
-                            zip_json(zip, options, &name, &root)
+                            zip_json(zip, &name, &root)
                         }
                         GameType::PM => {
                             let root = mechlib::pm::read_model(&mut read).with_context(|| {
                                 format!("Failed to read mechlib model for `{}`", original)
                             })?;
-                            zip_json(zip, options, &name, &root)
+                            zip_json(zip, &name, &root)
                         }
                         GameType::RC => unreachable!("Recoil does not have mechlib"),
                         GameType::CS => unreachable!("Crimson Skies does not have mechlib"),
@@ -235,7 +233,7 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
     })
     .context("Failed to read texture data")?;
 
-    zip_json(&mut zip, deflate_opts(), "manifest.json", &manifest)?;
+    zip_json(&mut zip, "manifest.json", &manifest)?;
     zip.finish()?;
     Ok(())
 }
@@ -256,13 +254,12 @@ fn gamez_mw(opts: ZipOpts) -> Result<()> {
 
     let output = buf_writer(opts.output)?;
     let mut zip = ZipWriter::new(output);
-    let options = deflate_opts();
 
-    zip_json(&mut zip, options, "metadata.json", &gamez.metadata)?;
-    zip_json(&mut zip, options, "textures.json", &gamez.textures)?;
-    zip_json(&mut zip, options, "materials.json", &gamez.materials)?;
-    zip_json(&mut zip, options, "meshes.json", &gamez.meshes)?;
-    zip_json(&mut zip, options, "nodes.json", &gamez.nodes)?;
+    zip_json(&mut zip, "metadata.json", &gamez.metadata)?;
+    zip_json(&mut zip, "textures.json", &gamez.textures)?;
+    zip_json(&mut zip, "materials.json", &gamez.materials)?;
+    zip_json(&mut zip, "meshes.json", &gamez.meshes)?;
+    zip_json(&mut zip, "nodes.json", &gamez.nodes)?;
 
     zip.finish()?;
     Ok(())
@@ -275,13 +272,12 @@ fn gamez_pm(opts: ZipOpts) -> Result<()> {
 
     let output = buf_writer(opts.output)?;
     let mut zip = ZipWriter::new(output);
-    let options = deflate_opts();
 
-    zip_json(&mut zip, options, "metadata.json", &gamez.metadata)?;
-    zip_json(&mut zip, options, "textures.json", &gamez.textures)?;
-    zip_json(&mut zip, options, "materials.json", &gamez.materials)?;
-    zip_json(&mut zip, options, "meshes.json", &gamez.meshes)?;
-    zip_json(&mut zip, options, "nodes.json", &gamez.nodes)?;
+    zip_json(&mut zip, "metadata.json", &gamez.metadata)?;
+    zip_json(&mut zip, "textures.json", &gamez.textures)?;
+    zip_json(&mut zip, "materials.json", &gamez.materials)?;
+    zip_json(&mut zip, "meshes.json", &gamez.meshes)?;
+    zip_json(&mut zip, "nodes.json", &gamez.nodes)?;
 
     zip.finish()?;
     Ok(())
@@ -294,13 +290,12 @@ fn gamez_cs(opts: ZipOpts) -> Result<()> {
 
     let output = buf_writer(opts.output)?;
     let mut zip = ZipWriter::new(output);
-    let options = deflate_opts();
 
-    zip_json(&mut zip, options, "metadata.json", &gamez.metadata)?;
-    zip_json(&mut zip, options, "textures.json", &gamez.textures)?;
-    zip_json(&mut zip, options, "materials.json", &gamez.materials)?;
-    zip_json(&mut zip, options, "meshes.json", &gamez.meshes)?;
-    zip_json(&mut zip, options, "nodes.json", &gamez.nodes)?;
+    zip_json(&mut zip, "metadata.json", &gamez.metadata)?;
+    zip_json(&mut zip, "textures.json", &gamez.textures)?;
+    zip_json(&mut zip, "materials.json", &gamez.materials)?;
+    zip_json(&mut zip, "meshes.json", &gamez.meshes)?;
+    zip_json(&mut zip, "nodes.json", &gamez.nodes)?;
 
     zip.finish()?;
     Ok(())
@@ -313,12 +308,11 @@ fn gamez_rc(opts: ZipOpts) -> Result<()> {
 
     let output = buf_writer(opts.output)?;
     let mut zip = ZipWriter::new(output);
-    let options = deflate_opts();
 
-    zip_json(&mut zip, options, "textures.json", &gamez.textures)?;
-    zip_json(&mut zip, options, "materials.json", &gamez.materials)?;
-    zip_json(&mut zip, options, "meshes.json", &gamez.meshes)?;
-    zip_json(&mut zip, options, "nodes.json", &gamez.nodes)?;
+    zip_json(&mut zip, "textures.json", &gamez.textures)?;
+    zip_json(&mut zip, "materials.json", &gamez.materials)?;
+    zip_json(&mut zip, "meshes.json", &gamez.meshes)?;
+    zip_json(&mut zip, "nodes.json", &gamez.nodes)?;
 
     zip.finish()?;
     Ok(())
@@ -331,7 +325,6 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
         GameType::RC => bail!("Recoil support for Anim isn't implemented yet"),
         GameType::CS => bail!("Crimson Skies support for Anim isn't implemented yet"),
     }
-    let options = deflate_opts();
 
     let mut input = CountingReader::new(buf_reader(opts.input)?);
 
@@ -339,11 +332,11 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
     let mut zip = ZipWriter::new(output);
 
     let metadata = read_anim(&mut input, |name, anim_def| {
-        zip_json(&mut zip, options, name, anim_def)
+        zip_json(&mut zip, name, anim_def)
     })
     .context("Failed to read anim data")?;
 
-    zip_json(&mut zip, options, "metadata.json", &metadata)?;
+    zip_json(&mut zip, "metadata.json", &metadata)?;
     zip.finish()?;
     Ok(())
 }
@@ -355,7 +348,6 @@ pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
         GameType::RC => bail!("Recoil support for Savegames isn't implemented yet"),
         GameType::CS => bail!("Crimson Skies support for Savegames isn't implemented yet"),
     };
-    let options = deflate_opts();
 
     _zarchive(
         opts.input,
@@ -375,7 +367,7 @@ pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
                     let value = read_activation(&mut read).with_context(|| {
                         format!("Failed to read anim activation `{}`", original)
                     })?;
-                    zip_json(zip, options, &name, &value)
+                    zip_json(zip, &name, &value)
                 }
             }
         },
