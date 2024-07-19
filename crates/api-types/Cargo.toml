@@ -18,8 +18,8 @@ num-traits.workspace = true
 serde.workspace = true
 time = { workspace = true, features = ["formatting", "parsing"] }
 
-mech3ax-metadata-proc-macro = { path = "../mech3ax-metadata-proc-macro" }
-mech3ax-metadata-types = { path = "../mech3ax-metadata-types" }
+mech3ax-metadata-proc-macro = { path = "../metadata-proc-macro" }
+mech3ax-metadata-types = { path = "../metadata-types" }
 
 [dev-dependencies]
 serde_json.workspace = true

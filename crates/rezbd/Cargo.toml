@@ -18,15 +18,15 @@ serde_json.workspace = true
 serde.workspace = true
 zip.workspace = true
 
-mech3ax-anim = { path = "../mech3ax-anim" }
-mech3ax-api-types = { path = "../mech3ax-api-types" }
-mech3ax-archive = { path = "../mech3ax-archive" }
-mech3ax-common = { path = "../mech3ax-common" }
-mech3ax-gamez = { path = "../mech3ax-gamez" }
-mech3ax-image = { path = "../mech3ax-image" }
-mech3ax-interp = { path = "../mech3ax-interp" }
-mech3ax-motion = { path = "../mech3ax-motion" }
-mech3ax-reader = { path = "../mech3ax-reader" }
-mech3ax-saves = { path = "../mech3ax-saves" }
-mech3ax-version = { path = "../mech3ax-version" }
-mech3ax-zmap = { path = "../mech3ax-zmap" }
+mech3ax-anim = { path = "../anim" }
+mech3ax-api-types = { path = "../api-types" }
+mech3ax-archive = { path = "../archive" }
+mech3ax-common = { path = "../common" }
+mech3ax-gamez = { path = "../gamez" }
+mech3ax-image = { path = "../image" }
+mech3ax-interp = { path = "../interp" }
+mech3ax-motion = { path = "../motion" }
+mech3ax-reader = { path = "../reader" }
+mech3ax-saves = { path = "../saves" }
+mech3ax-version = { path = "../version" }
+mech3ax-zmap = { path = "../zmap" }

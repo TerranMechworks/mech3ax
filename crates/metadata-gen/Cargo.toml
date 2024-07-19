@@ -13,6 +13,6 @@ heck.workspace = true
 serde.workspace = true
 minijinja.workspace = true
 
-mech3ax-api-types = { path = "../mech3ax-api-types" }
-mech3ax-metadata-proc-macro = { path = "../mech3ax-metadata-proc-macro" }
-mech3ax-metadata-types = { path = "../mech3ax-metadata-types" }
+mech3ax-api-types = { path = "../api-types" }
+mech3ax-metadata-proc-macro = { path = "../metadata-proc-macro" }
+mech3ax-metadata-types = { path = "../metadata-types" }

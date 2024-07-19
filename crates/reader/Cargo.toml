@@ -15,4 +15,4 @@ test = false
 [dependencies]
 serde_json.workspace = true
 
-mech3ax-common = { path = "../mech3ax-common" }
+mech3ax-common = { path = "../common" }

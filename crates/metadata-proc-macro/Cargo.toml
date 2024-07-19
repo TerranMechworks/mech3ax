@@ -17,4 +17,4 @@ syn.workspace = true
 quote.workspace = true
 proc-macro2.workspace = true
 
-mech3ax-metadata-types = { path = "../mech3ax-metadata-types" }
+mech3ax-metadata-types = { path = "../metadata-types" }

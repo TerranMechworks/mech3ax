@@ -14,5 +14,5 @@ doctest = false
 [dependencies]
 log.workspace = true
 
-mech3ax-api-types = { path = "../mech3ax-api-types" }
-mech3ax-common = { path = "../mech3ax-common" }
+mech3ax-api-types = { path = "../api-types" }
+mech3ax-common = { path = "../common" }
