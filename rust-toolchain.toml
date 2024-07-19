@@ -1,4 +1,5 @@
 [toolchain]
-channel = "1.76.0"
-profile = "minimal"
-components = ["rustfmt", "clippy"]
+channel = "1.79.0"
+# minimal: rustc, rust-std, cargo
+# default: rust-docs, rustfmt, clippy
+profile = "default"

@@ -5,7 +5,7 @@ use std::panic::{catch_unwind, UnwindSafe};
 pub const INVALID: i32 = -1;
 
 thread_local! {
-    static LAST_ERROR: RefCell<Option<Box<Error>>> = RefCell::new(None);
+    static LAST_ERROR: RefCell<Option<Box<Error>>> = const { RefCell::new(None) };
 }
 
 pub fn set_last_error(err: Option<Error>) {

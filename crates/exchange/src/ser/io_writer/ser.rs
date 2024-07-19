@@ -296,10 +296,10 @@ impl<'a, W: Write> ser::SerializeMap for &'a mut IoWriter<W> {
     }
 
     #[inline]
-    fn serialize_entry<K: ?Sized, V: ?Sized>(&mut self, _key: &K, _value: &V) -> Result<()>
+    fn serialize_entry<K, V>(&mut self, _key: &K, _value: &V) -> Result<()>
     where
-        K: Serialize,
-        V: Serialize,
+        K: ?Sized + Serialize,
+        V: ?Sized + Serialize,
     {
         err_unsupported!()
     }

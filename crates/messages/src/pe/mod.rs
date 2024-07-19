@@ -13,6 +13,7 @@ pub type ImageSection = IMAGE_SECTION_HEADER;
 
 pub struct SectionsAndDirectories {
     pub image_base: u32,
+    #[allow(dead_code)]
     pub file_alignment: u32,
     data_directory: ImageDataDirectories,
     sections: Vec<IMAGE_SECTION_HEADER>,

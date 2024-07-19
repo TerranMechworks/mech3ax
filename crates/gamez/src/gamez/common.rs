@@ -49,6 +49,7 @@ impl Iterator for MeshIndexIter {
 pub struct MeshIndices {
     pub count: i32,
     pub array_size: i32,
+    #[allow(dead_code)]
     pub last_index: i32,
 }
 
