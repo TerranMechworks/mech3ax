@@ -138,7 +138,12 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
     // assert fails. this maybe due to floating point errors in the original
     // calculation (lower mantissa bits don't match).
     let z_mid = (partition.z_max + partition.z_min) * 0.5;
-    assert_that!("partition z_mid", partition.z_mid == z_mid, read.prev + 44)?;
+    // assert_that!("partition z_mid", partition.z_mid == z_mid, read.prev + 44)?;
+    let z_mid = if partition.z_mid != z_mid {
+        Some(partition.z_mid)
+    } else {
+        None
+    };
     assert_that!(
         "partition y mid",
         partition.y_mid == yf - 128.0,
@@ -170,6 +175,7 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
         y,
         z_min: partition.z_min,
         z_max: partition.z_max,
+        z_mid,
         nodes,
         ptr: partition.ptr,
     })
@@ -451,7 +457,9 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
     let y = partition.y as f32;
     let diagonal = partition_diag(partition.z_min, partition.z_max, 128.0);
     let count = assert_len!(u16, partition.nodes.len(), "partition nodes")?;
-    let z_mid = (partition.z_max + partition.z_min) * 0.5;
+    let z_mid = partition
+        .z_mid
+        .unwrap_or((partition.z_max + partition.z_min) * 0.5);
 
     let partition_c = PartitionMwC {
         flags: 0x100,

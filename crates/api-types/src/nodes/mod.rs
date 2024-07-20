@@ -97,6 +97,8 @@ pub struct PartitionPg {
     pub y: i32,
     pub z_min: f32,
     pub z_max: f32,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub z_mid: Option<f32>,
     pub nodes: Vec<u32>,
     pub ptr: u32,
 }
