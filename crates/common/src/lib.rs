@@ -14,6 +14,18 @@ pub enum GameType {
     CS,
 }
 
+impl fmt::Display for GameType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Self::MW => "MW",
+            Self::PM => "PM",
+            Self::RC => "RC",
+            Self::CS => "CS",
+        };
+        f.write_str(s)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum PeError {
     Underflow {

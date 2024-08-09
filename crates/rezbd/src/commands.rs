@@ -68,16 +68,19 @@ where
 }
 
 pub(crate) fn interp(opts: InterpOpts) -> Result<()> {
+    log::info!("INTERP: Reading `{}`", opts.input);
     let buf = std::fs::read(opts.input).context("Failed to open input")?;
     let scripts: Vec<Script> = serde_json::from_slice(&buf).context("Failed to parse input")?;
 
-    let mut write = buf_writer(opts.output)?;
-    write_interp(&mut write, &scripts).context("Failed to write interpreter data")
+    let mut write = buf_writer(&opts.output)?;
+    write_interp(&mut write, &scripts).context("Failed to write interpreter data")?;
+    log::info!("INTERP: Wrote `{}`", opts.output);
+    Ok(())
 }
 
 fn _zarchive<F>(
-    input: String,
-    output: String,
+    input: &str,
+    output: &str,
     version: Version,
     context: &'static str,
     mut load_file: F,
@@ -102,21 +105,25 @@ where
 pub(crate) fn sounds(opts: ZipOpts) -> Result<()> {
     let version = opts.version(Mode::Sounds);
 
+    log::info!("SOUNDS: Reading `{}` ({})", opts.input, opts.game);
     _zarchive(
-        opts.input,
-        opts.output,
+        &opts.input,
+        &opts.output,
         version,
         "Failed to write sounds data",
         |zip, name, _offset| zip_read(zip, name),
-    )
+    )?;
+    log::info!("SOUNDS: Wrote `{}`", opts.output);
+    Ok(())
 }
 
 pub(crate) fn reader(opts: ZipOpts) -> Result<()> {
     let version = opts.version(Mode::Reader);
 
+    log::info!("READER: Reading `{}` ({})", opts.input, opts.game);
     _zarchive(
-        opts.input,
-        opts.output,
+        &opts.input,
+        &opts.output,
         version,
         "Failed to write reader data",
         |zip, original, offset| {
@@ -128,15 +135,18 @@ pub(crate) fn reader(opts: ZipOpts) -> Result<()> {
                 .with_context(|| format!("Failed to write reader data for `{}`", original))?;
             Ok(buf.into_inner())
         },
-    )
+    )?;
+    log::info!("READER: Wrote `{}`", opts.output);
+    Ok(())
 }
 
 pub(crate) fn motion(opts: ZipOpts) -> Result<()> {
     let version = opts.version(Mode::Motion);
 
+    log::info!("MOTION: Reading `{}` ({})", opts.input, opts.game);
     _zarchive(
-        opts.input,
-        opts.output,
+        &opts.input,
+        &opts.output,
         version,
         "Failed to write motion data",
         |zip, original, offset| {
@@ -148,7 +158,9 @@ pub(crate) fn motion(opts: ZipOpts) -> Result<()> {
                 .with_context(|| format!("Failed to write motion data for `{}`", original))?;
             Ok(buf.into_inner())
         },
-    )
+    )?;
+    log::info!("MOTION: Wrote `{}`", opts.output);
+    Ok(())
 }
 
 pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
@@ -160,9 +172,10 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
     };
     let version = opts.version(Mode::Sounds);
 
+    log::info!("MECHLIB: Reading `{}` ({})", opts.input, opts.game);
     _zarchive(
-        opts.input,
-        opts.output,
+        &opts.input,
+        &opts.output,
         version,
         "Failed to write mechlib data",
         |zip, name, offset| {
@@ -204,15 +217,18 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                 }
             }
         },
-    )
+    )?;
+    log::info!("MECHLIB: Wrote `{}`", opts.output);
+    Ok(())
 }
 
 pub(crate) fn textures(input: String, output: String) -> Result<()> {
+    log::info!("TEXTURES: Reading `{}`", input);
     let input = buf_reader(input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
     let manifest: TextureManifest = zip_json(&mut zip, "manifest.json")?;
 
-    let mut write = buf_writer(output)?;
+    let mut write = buf_writer(&output)?;
     write_textures::<_, _, eyre::Report>(&mut write, &manifest, |original| {
         let name = format!("{}.png", original);
         let buf = zip_read(&mut zip, &name)?;
@@ -224,19 +240,24 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
             .with_context(|| format!("Failed to load image data for `{}`", original))?;
         Ok(image)
     })
-    .context("Failed to write texture data")
+    .context("Failed to write texture data")?;
+    log::info!("TEXTURES: Wrote `{}`", output);
+    Ok(())
 }
 
 pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
+    log::info!("GAMEZ: Reading `{}` ({})", opts.input, opts.game);
     match opts.game {
-        GameType::RC => gamez_rc(opts),
-        GameType::MW => gamez_mw(opts),
-        GameType::PM => gamez_pm(opts),
-        GameType::CS => gamez_cs(opts),
+        GameType::RC => gamez_rc(&opts)?,
+        GameType::MW => gamez_mw(&opts)?,
+        GameType::PM => gamez_pm(&opts)?,
+        GameType::CS => gamez_cs(&opts)?,
     }
+    log::info!("GAMEZ: Wrote `{}`", opts.output);
+    Ok(())
 }
 
-fn gamez_mw(opts: ZipOpts) -> Result<()> {
+fn gamez_mw(opts: &ZipOpts) -> Result<()> {
     let input = buf_reader(&opts.input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
 
@@ -256,11 +277,11 @@ fn gamez_mw(opts: ZipOpts) -> Result<()> {
         nodes,
     };
 
-    let mut write = buf_writer(opts.output)?;
+    let mut write = buf_writer(&opts.output)?;
     gamez::mw::write_gamez(&mut write, &gamez).context("Failed to write gamez data")
 }
 
-fn gamez_pm(opts: ZipOpts) -> Result<()> {
+fn gamez_pm(opts: &ZipOpts) -> Result<()> {
     let input = buf_reader(&opts.input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
 
@@ -280,11 +301,11 @@ fn gamez_pm(opts: ZipOpts) -> Result<()> {
         nodes,
     };
 
-    let mut write = buf_writer(opts.output)?;
+    let mut write = buf_writer(&opts.output)?;
     gamez::pm::write_gamez(&mut write, &gamez).context("Failed to write gamez data")
 }
 
-fn gamez_cs(opts: ZipOpts) -> Result<()> {
+fn gamez_cs(opts: &ZipOpts) -> Result<()> {
     let input = buf_reader(&opts.input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
 
@@ -304,11 +325,11 @@ fn gamez_cs(opts: ZipOpts) -> Result<()> {
         nodes,
     };
 
-    let mut write = buf_writer(opts.output)?;
+    let mut write = buf_writer(&opts.output)?;
     gamez::cs::write_gamez(&mut write, &gamez).context("Failed to write gamez data")
 }
 
-fn gamez_rc(opts: ZipOpts) -> Result<()> {
+fn gamez_rc(opts: &ZipOpts) -> Result<()> {
     let input = buf_reader(&opts.input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
 
@@ -326,7 +347,7 @@ fn gamez_rc(opts: ZipOpts) -> Result<()> {
         nodes,
     };
 
-    let mut write = buf_writer(opts.output)?;
+    let mut write = buf_writer(&opts.output)?;
     gamez::rc::write_gamez(&mut write, &gamez).context("Failed to write gamez data")
 }
 
@@ -338,13 +359,16 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
         GameType::CS => bail!("Crimson Skies support for Anim isn't implemented yet"),
     }
 
+    log::info!("ANIM: Reading `{}` ({})", opts.input, opts.game);
     let input = buf_reader(&opts.input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
     let metadata: AnimMetadata = zip_json(&mut zip, "metadata.json")?;
 
-    let mut write = buf_writer(opts.output)?;
+    let mut write = buf_writer(&opts.output)?;
     write_anim(&mut write, &metadata, |name| zip_json(&mut zip, name))
-        .context("Failed to write anim data")
+        .context("Failed to write anim data")?;
+    log::info!("ANIM: Wrote `{}`", opts.output);
+    Ok(())
 }
 
 pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
@@ -355,9 +379,10 @@ pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
         GameType::CS => bail!("Crimson Skies support for Savegames isn't implemented yet"),
     };
 
+    log::info!("SAVEGAME: Reading `{}` ({})", opts.input, opts.game);
     _zarchive(
-        opts.input,
-        opts.output,
+        &opts.input,
+        &opts.output,
         version,
         "Failed to write savegame data",
         |zip, name, offset| match name {
@@ -376,7 +401,9 @@ pub(crate) fn savegame(opts: ZipOpts) -> Result<()> {
                 Ok(buf.into_inner())
             }
         },
-    )
+    )?;
+    log::info!("SAVEGAME: Wrote `{}`", opts.output);
+    Ok(())
 }
 
 pub(crate) fn zmap(opts: ZMapOpts) -> Result<()> {
@@ -387,11 +414,14 @@ pub(crate) fn zmap(opts: ZMapOpts) -> Result<()> {
         GameType::CS => bail!("Crimson Skies does not have zmap"),
     }
 
+    log::info!("ZMAP: Reading `{}`", opts.input);
     let buf = std::fs::read(opts.input).context("Failed to open input")?;
     let map: Zmap = serde_json::from_slice(&buf).context("Failed to parse input")?;
 
-    let mut write = buf_writer(opts.output)?;
-    mech3ax_zmap::write_map(&mut write, &map).context("Failed to write interpreter data")
+    let mut write = buf_writer(&opts.output)?;
+    mech3ax_zmap::write_map(&mut write, &map).context("Failed to write interpreter data")?;
+    log::info!("ZMAP: Wrote `{}`", opts.output);
+    Ok(())
 }
 
 pub(crate) fn license() -> Result<()> {
