@@ -380,8 +380,7 @@ pub(crate) fn zmap(opts: ZMapOpts) -> Result<()> {
 
 pub(crate) fn license() -> Result<()> {
     print!(
-        r#"\
-mech3ax extracts assets from certain games developed by Zipper
+        "mech3ax extracts assets from certain games developed by Zipper
 Interactive (tm).
 
 Zipper Interactive (tm) was trademark or registered trademark
@@ -392,7 +391,7 @@ rightsholders.
 Copyright (C) 2015-2024  Toby Fleming
 
 Licensed under the European Union Public Licence (EUPL) 1.2.
-"#
+"
     );
     Ok(())
 }
