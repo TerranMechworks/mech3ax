@@ -4,6 +4,9 @@ use crate::string::str_from_c_sized;
 use mech3ax_api_types::AsBytes;
 use std::io::{Read, Result, Seek, SeekFrom, Write};
 
+#[cfg(not(target_endian = "little"))]
+compile_error!("only little-endian architectures are supported");
+
 pub struct CountingReader<R: Read> {
     inner: R,
     pub offset: u32,

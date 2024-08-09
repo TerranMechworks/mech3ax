@@ -1,5 +1,8 @@
 use bytemuck::{AnyBitPattern, NoUninit};
 
+#[cfg(not(target_endian = "little"))]
+compile_error!("only little-endian architectures are supported");
+
 /// A trait that ensures a structure has a known size (in bytes), and can be
 /// read as bytes.
 ///

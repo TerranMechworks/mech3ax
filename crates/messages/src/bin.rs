@@ -1,6 +1,9 @@
 use crate::size::FromBytes;
 use mech3ax_common::PeError as Error;
 
+#[cfg(not(target_endian = "little"))]
+compile_error!("only little-endian architectures are supported");
+
 type Result<T> = ::std::result::Result<T, Error>;
 
 pub trait StructAt {
