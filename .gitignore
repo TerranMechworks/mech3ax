@@ -3,6 +3,9 @@ target/
 
 *.zbd
 *.zip
+*.hdr
+*.cab
+*.hinspect
 *.tar.gz
 *.json
 *.log
