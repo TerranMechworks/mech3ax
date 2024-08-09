@@ -602,7 +602,6 @@ pub fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<(AnimDef, A
         static_sounds_ptr: anim_def.static_sounds_ptr,
         activ_prereqs_ptr: anim_def.activ_prereqs_ptr,
         anim_refs_ptr: anim_def.anim_refs_ptr,
-        reset_state_ptr: anim_def.reset_state.pointer,
         seq_defs_ptr: anim_def.seq_defs_ptr,
     };
     Ok((result, anim_ptr))
@@ -744,7 +743,12 @@ pub fn write_anim_def(
         .unwrap_or(0) as u8;
     let anim_ref_count = anim_def.anim_refs.as_ref().map(|v| v.len()).unwrap_or(0) as u8;
 
-    let reset_state_events_size = anim_def
+    let reset_state_pointer = anim_def
+        .reset_state
+        .as_ref()
+        .map(|state| state.pointer)
+        .unwrap_or(0);
+    let reset_state_size = anim_def
         .reset_state
         .as_ref()
         .map(|state| size_events(&state.events))
@@ -754,8 +758,8 @@ pub fn write_anim_def(
         name: RESET_SEQUENCE,
         flags: 0,
         zero36: Zeros::new(),
-        pointer: anim_ptr.reset_state_ptr,
-        size: reset_state_events_size,
+        pointer: reset_state_pointer,
+        size: reset_state_size,
     };
 
     write.write_struct(&AnimDefC {
@@ -830,7 +834,7 @@ pub fn write_anim_def(
     if let Some(anim_refs) = &anim_def.anim_refs {
         write_anim_refs(write, anim_refs)?;
     }
-    write_reset_state(write, anim_def, reset_state_events_size)?;
+    write_reset_state(write, anim_def, reset_state_size)?;
     write_sequence_defs(write, anim_def)?;
 
     Ok(())

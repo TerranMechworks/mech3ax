@@ -29,7 +29,6 @@ pub struct AnimPtr {
     pub static_sounds_ptr: u32,
     pub activ_prereqs_ptr: u32,
     pub anim_refs_ptr: u32,
-    pub reset_state_ptr: u32,
     pub seq_defs_ptr: u32,
 }
 

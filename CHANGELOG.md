@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Remove duplicate reset state ptr (`anim`)
+
 ## [0.6.0] - 2023-02-10
 
 * Horribly dirty hacks for Recoil M6 and M9 (`gamez`)
