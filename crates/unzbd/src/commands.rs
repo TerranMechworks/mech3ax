@@ -1,7 +1,6 @@
 use crate::{InterpOpts, MsgOpts, ReaderOpts, ZMapOpts, ZipOpts};
 use eyre::{bail, Context as _, Result};
 use image::ImageFormat;
-use mech3ax_anim::read_anim;
 use mech3ax_archive::{read_archive, Mode, Version};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::GameType;
@@ -344,7 +343,7 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
     let output = buf_writer(&opts.output)?;
     let mut zip = ZipWriter::new(output);
 
-    let metadata = read_anim(&mut input, |name, anim_def| {
+    let metadata = mech3ax_anim::mw::read_anim(&mut input, |name, anim_def| {
         zip_json(&mut zip, name, anim_def)
     })
     .context("Failed to read anim data")?;

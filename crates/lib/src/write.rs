@@ -403,7 +403,7 @@ pub extern "C" fn write_anim(
         }
         let metadata = parse_metadata(metadata_ptr, metadata_len)?;
         let mut write = buf_writer(filename)?;
-        mech3ax_anim::write_anim(&mut write, &metadata, |name| -> Result<AnimDef> {
+        mech3ax_anim::mw::write_anim(&mut write, &metadata, |name| -> Result<AnimDef> {
             let data = buffer_callback(callback, name)?;
 
             let anim_def: AnimDef = mech3ax_exchange::from_slice(&data)

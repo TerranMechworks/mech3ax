@@ -342,7 +342,7 @@ pub extern "C" fn read_anim(
         }
         let input = buf_reader(filename)?;
         let mut read = CountingReader::new(input);
-        let metadata = mech3ax_anim::read_anim(&mut read, |name, anim_def| {
+        let metadata = mech3ax_anim::mw::read_anim(&mut read, |name, anim_def| {
             let data = mech3ax_exchange::to_vec(&anim_def)?;
 
             buffer_callback(callback, name, &data)

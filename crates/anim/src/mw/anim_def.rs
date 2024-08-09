@@ -1,6 +1,6 @@
 use super::activation_prereq::{read_activ_prereqs, write_activ_prereqs};
+use super::sequence_event::{read_events, size_events, write_events};
 use super::support::*;
-use crate::sequence_event::{read_events, size_events, write_events};
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::trace;
 use mech3ax_api_types::anim::events::EventData;

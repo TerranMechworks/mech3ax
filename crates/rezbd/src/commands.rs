@@ -1,6 +1,5 @@
 use crate::{InterpOpts, ZMapOpts, ZipOpts};
 use eyre::{bail, Context as _, Result};
-use mech3ax_anim::write_anim;
 use mech3ax_api_types::anim::AnimMetadata;
 use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_api_types::gamez::materials::Material;
@@ -365,7 +364,7 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
     let metadata: AnimMetadata = zip_json(&mut zip, "metadata.json")?;
 
     let mut write = buf_writer(&opts.output)?;
-    write_anim(&mut write, &metadata, |name| zip_json(&mut zip, name))
+    mech3ax_anim::mw::write_anim(&mut write, &metadata, |name| zip_json(&mut zip, name))
         .context("Failed to write anim data")?;
     log::info!("ANIM: Wrote `{}`", opts.output);
     Ok(())
