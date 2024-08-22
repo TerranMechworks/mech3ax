@@ -1,7 +1,5 @@
 mod conv;
 
-use crate::byte_repr::AsciiByte;
-use crate::debug_list::DebugList;
 use bytemuck::{AnyBitPattern, NoUninit, TransparentWrapper, Zeroable};
 pub use conv::{str_from_ascii, str_to_ascii, string_from_ascii};
 use std::fmt;
@@ -73,8 +71,7 @@ impl<const N: usize> Default for Ascii<N> {
 impl<const N: usize> fmt::Debug for Ascii<N> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let entries = self.0.iter().copied().map(AsciiByte);
-        DebugList::new(f).entries(entries).finish()
+        write!(f, "b\"{}\"", self.0.escape_ascii())
     }
 }
 

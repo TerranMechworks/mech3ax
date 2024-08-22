@@ -17,21 +17,21 @@ macro_rules! ok {
 fn ascii_debug_all_ascii() {
     let a = ascii!(b"hello!");
     let f = format!("{:?}", a);
-    assert_eq!(f, "[h, e, l, l, o, !]");
+    assert_eq!(f, "b\"hello!\"");
 }
 
 #[test]
 fn ascii_debug_non_ascii() {
     let a = Ascii([0x00, 0xFF]);
     let f = format!("{:?}", a);
-    assert_eq!(f, r"[\x00, \xff]");
+    assert_eq!(f, r#"b"\x00\xff""#);
 }
 
 #[test]
 fn ascii_debug_always_has_no_newlines() {
     let a = ascii!(b"hello!");
     let f = format!("{:#?}", a);
-    assert_eq!(f, "[h, e, l, l, o, !]");
+    assert_eq!(f, "b\"hello!\"");
 }
 
 #[test]
