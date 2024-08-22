@@ -1,9 +1,8 @@
 use super::{MapHeaderC, MAP_VERSION};
-use log::debug;
+use log::trace;
 use mech3ax_api_types::zmap::{MapFeature, Zmap};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, Result};
-use mech3ax_types::AsBytes as _;
 use std::io::Write;
 
 fn write_map_feature(
@@ -11,27 +10,20 @@ fn write_map_feature(
     feature: &MapFeature,
     index: usize,
 ) -> Result<()> {
-    debug!("Writing map feature {} at {}", index, write.offset);
+    trace!("Writing map feature {}", index);
     write.write_struct(&feature.color)?;
     let count = assert_len!(u32, feature.vertices.len(), "map feature vertices")?;
     write.write_u32(count)?;
-    debug!(
-        "Writing {} x map feature vertices at {}",
-        count, write.offset
-    );
+    trace!("Writing {} map feature vertices", count);
     for vertex in &feature.vertices {
         write.write_struct(vertex)?;
     }
+    trace!("Map feature objective: {}", feature.objective);
     write.write_i32(feature.objective)?;
     Ok(())
 }
 
 pub fn write_map(write: &mut CountingWriter<impl Write>, map: &Zmap) -> Result<()> {
-    debug!(
-        "Writing map header ({}) at {}",
-        MapHeaderC::SIZE,
-        write.offset
-    );
     let header = MapHeaderC {
         version: MAP_VERSION,
         unk04: map.unk04,

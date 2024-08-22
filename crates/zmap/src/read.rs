@@ -1,9 +1,8 @@
 use super::{MapHeaderC, MAP_VERSION};
-use log::debug;
+use log::trace;
 use mech3ax_api_types::zmap::{MapColor, MapFeature, MapVertex, Zmap};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Result};
-use mech3ax_types::AsBytes as _;
 use std::io::Read;
 
 fn read_map_feature(
@@ -15,10 +14,7 @@ fn read_map_feature(
 ) -> Result<MapFeature> {
     let count = read.read_u32()?;
 
-    debug!(
-        "Reading {} x map feature vertices at {}",
-        count, read.offset
-    );
+    trace!("Reading {} map feature vertices", count);
     let vertices = (0..count)
         .map(|_| {
             let v: MapVertex = read.read_struct()?;
@@ -29,21 +25,17 @@ fn read_map_feature(
         })
         .collect::<Result<Vec<MapVertex>>>()?;
 
-    let tail = read.read_i32()?;
+    let objective = read.read_i32()?;
+    trace!("Map feature objective: {}", objective);
 
     Ok(MapFeature {
         color,
         vertices,
-        objective: tail,
+        objective,
     })
 }
 
 pub fn read_map(read: &mut CountingReader<impl Read>) -> Result<Zmap> {
-    debug!(
-        "Reading map header ({}) at {}",
-        MapHeaderC::SIZE,
-        read.offset
-    );
     let header: MapHeaderC = read.read_struct()?;
 
     assert_that!(
@@ -60,20 +52,19 @@ pub fn read_map(read: &mut CountingReader<impl Read>) -> Result<Zmap> {
     // it's currently not know how the number of features is encoded
     let mut features = Vec::new();
     for index in 0.. {
-        debug!("Reading map feature {} at {}", index, read.offset);
+        trace!("Reading map feature {}", index);
         match read.read_struct::<MapColor>() {
             Ok(color) => {
                 let feature = read_map_feature(read, header.max_x, header.max_y, color, index)?;
                 features.push(feature);
             }
-            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
+            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => {
+                trace!("End of file");
+                break;
+            }
             Err(e) => return Err(e.into()),
         }
     }
-    // let features = (0..7)
-    //     .map(|index| read_map_feature(read, header.max_x, header.max_y, index))
-    //     .collect::<Result<Vec<_>>>()?;
-    // read.assert_end()?;
 
     Ok(Zmap {
         unk04: header.unk04,
