@@ -74,12 +74,21 @@ impl<R: Read> CountingReader<R> {
         Ok(i16::from_le_bytes(buf))
     }
 
+    #[inline]
     pub fn read_struct<S: AsBytes>(&mut self) -> Result<S> {
         let mut s = S::zeroed();
         let buf = s.as_bytes_mut();
         let len = buf.len();
         self.read_exact(buf)?;
         trace!("{:#?} (len: {}, at {})", s, len, self.prev);
+        Ok(s)
+    }
+
+    #[inline]
+    pub fn read_struct_no_log<S: AsBytes>(&mut self) -> Result<S> {
+        let mut s = S::zeroed();
+        let buf = s.as_bytes_mut();
+        self.read_exact(buf)?;
         Ok(s)
     }
 
@@ -190,6 +199,12 @@ impl<W: Write> CountingWriter<W> {
     pub fn write_struct<S: AsBytes>(&mut self, value: &S) -> Result<()> {
         let buf = value.as_bytes();
         trace!("{:#?} (len: {}, at {})", value, buf.len(), self.offset);
+        self.write_all(buf)
+    }
+
+    #[inline]
+    pub fn write_struct_no_log<S: AsBytes>(&mut self, value: &S) -> Result<()> {
+        let buf = value.as_bytes();
         self.write_all(buf)
     }
 
