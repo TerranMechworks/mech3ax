@@ -63,7 +63,7 @@ pub fn read_pe_headers(buf: &[u8]) -> Result<SectionsAndDirectories> {
         file_header.machine == IMAGE_FILE_HEADER::MACHINE_I386,
         file_header_offset
     )?;
-    let characteristics = ImageFileFlags::from_bits(file_header.characteristics).unwrap();
+    let characteristics = assert_that!("File header characteristics", flags file_header.characteristics, nt_header_offset)?;
     let image_is_exe = characteristics.contains(ImageFileFlags::EXECUTABLE_IMAGE);
     let image_is_dll = characteristics.contains(ImageFileFlags::DLL);
     let image_is_32_bit = characteristics.contains(ImageFileFlags::MACHINE_32BIT);

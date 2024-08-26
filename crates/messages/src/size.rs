@@ -4,7 +4,7 @@ use bytemuck::{AnyBitPattern, NoUninit};
 /// read from bytes.
 ///
 /// Do not implement this manually, instead use [`impl_from_bytes!`].
-pub trait FromBytes: NoUninit + AnyBitPattern {
+pub trait FromBytes: NoUninit + AnyBitPattern + std::fmt::Debug {
     /// The size of the structure in bytes.
     const SIZE: usize;
 

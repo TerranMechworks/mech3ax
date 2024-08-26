@@ -1,4 +1,5 @@
 use crate::size::FromBytes;
+use log::trace;
 use mech3ax_common::PeError as Error;
 
 #[cfg(not(target_endian = "little"))]
@@ -17,6 +18,8 @@ impl StructAt for &[u8] {
             .checked_add(size)
             .ok_or(Error::ReadOutOfBounds(offset))?;
         let bytes = self.get(offset..end).ok_or(Error::ReadOutOfBounds(end))?;
-        Ok(bytemuck::pod_read_unaligned(bytes))
+        let s = bytemuck::pod_read_unaligned(bytes);
+        trace!("{:#?} (length: {}, at {})", s, size, offset);
+        Ok(s)
     }
 }

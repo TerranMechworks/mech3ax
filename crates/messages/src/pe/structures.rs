@@ -1,7 +1,9 @@
 #![allow(non_camel_case_types)]
+use super::constants::Flags;
 use crate::size::{impl_from_bytes, u32_to_usize};
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_common::PeError as Error;
+use mech3ax_types::{Ascii, Hex};
 
 type Result<T> = ::std::result::Result<T, Error>;
 
@@ -43,7 +45,7 @@ pub struct IMAGE_FILE_HEADER {
     pub pointer_to_symbol_table: u32,
     pub number_of_symbols: u32,
     pub size_of_optional_header: u16,
-    pub characteristics: u16,
+    pub characteristics: Flags,
 }
 impl_from_bytes!(IMAGE_FILE_HEADER, 20);
 
@@ -67,7 +69,7 @@ pub type ImageDataDirectories = [IMAGE_DATA_DIRECTORY; IMAGE_NUMBEROF_DIRECTORY_
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 pub struct IMAGE_OPTIONAL_HEADER32 {
-    pub magic: u16,
+    pub magic: Hex<u16>,
     pub major_linker_version: u8,
     pub minor_linker_version: u8,
     pub size_of_code: u32,
@@ -102,14 +104,14 @@ pub struct IMAGE_OPTIONAL_HEADER32 {
 impl_from_bytes!(IMAGE_OPTIONAL_HEADER32, 224);
 
 impl IMAGE_OPTIONAL_HEADER32 {
-    pub const MAGIC: u16 = 0x010b;
+    pub const MAGIC: Hex<u16> = Hex(0x010b);
     pub const SUBSYSTEM_WINDOWS_GUI: u16 = 2;
 }
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 pub struct IMAGE_NT_HEADERS {
-    pub signature: u32,
+    pub signature: Ascii<4>,
     pub file_header: IMAGE_FILE_HEADER,
     pub optional_header: IMAGE_OPTIONAL_HEADER32,
 }
@@ -119,7 +121,7 @@ impl_from_bytes!(
 );
 
 impl IMAGE_NT_HEADERS {
-    pub const SIGNATURE: u32 = u32::from_le_bytes([b'P', b'E', 0, 0]);
+    pub const SIGNATURE: Ascii<4> = Ascii::new(b"PE\0\0");
 }
 
 const IMAGE_SIZEOF_SHORT_NAME: usize = 8;
@@ -127,7 +129,7 @@ const IMAGE_SIZEOF_SHORT_NAME: usize = 8;
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 pub struct IMAGE_SECTION_HEADER {
-    pub name: [u8; IMAGE_SIZEOF_SHORT_NAME],
+    pub name: Ascii<IMAGE_SIZEOF_SHORT_NAME>,
     pub virtual_size: u32, // also PhysicalAddress for some
     pub virtual_address: u32,
     pub size_of_raw_data: u32,

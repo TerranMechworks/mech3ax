@@ -1,7 +1,7 @@
-use mech3ax_types::bitflags;
+use mech3ax_types::{bitflags, Maybe};
 
 bitflags! {
-    pub struct ImageFileFlags: u16 {
+    pub(crate) struct ImageFileFlags: u16 {
         const RELOCS_STRIPPED = 1 << 0; // 0x0001
         const EXECUTABLE_IMAGE = 1 << 1; // 0x0002
         const LINE_NUMS_STRIPPED = 1 << 2; // 0x0004
@@ -21,4 +21,6 @@ bitflags! {
     }
 }
 
-pub const IMAGE_DIRECTORY_ENTRY_RESOURCE: usize = 2;
+pub(crate) type Flags = Maybe<u16, ImageFileFlags>;
+
+pub(crate) const IMAGE_DIRECTORY_ENTRY_RESOURCE: usize = 2;
