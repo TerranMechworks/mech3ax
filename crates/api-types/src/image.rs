@@ -34,7 +34,7 @@ pub struct PaletteData {
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct GlobalPalette {
-    pub index: i32,
+    pub index: u32,
     pub count: u16,
 }
 

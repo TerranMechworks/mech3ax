@@ -68,7 +68,7 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
             0,
         );
 
-        write_textures::<_, _, eyre::Report>(&mut output, &manifest, |name| {
+        write_textures::<_, eyre::Report>(&mut output, &manifest, |name| {
             images
                 .remove(name)
                 .ok_or_else(|| std::io::Error::new(ErrorKind::NotFound, name.to_string()).into())

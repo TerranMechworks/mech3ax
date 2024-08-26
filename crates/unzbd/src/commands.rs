@@ -229,7 +229,7 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
     let mut input = CountingReader::new(buf_reader(input)?);
 
     let mut zip = ZipWriter::new(buf_writer(&output)?);
-    let manifest = read_textures::<_, _, eyre::Report>(&mut input, |original, image| {
+    let manifest = read_textures::<_, eyre::Report>(&mut input, |original, image| {
         let name = format!("{}.png", original);
         let mut data = Cursor::new(Vec::new());
         image
