@@ -52,9 +52,9 @@ fn map(out_dir: &str, name: &str, names: &[(&[u8; 32], &str)]) {
     let (index, table): (Vec<_>, Vec<_>) = sorted
         .into_iter()
         .map(|(hash, bytes, string)| {
-            let hash = syn::LitInt::new(&format!("0x{:08X}", hash), span.clone());
-            let bytes = syn::LitByteStr::new(bytes, span.clone());
-            let string = syn::LitStr::new(string, span.clone());
+            let hash = syn::LitInt::new(&format!("0x{:08X}", hash), span);
+            let bytes = syn::LitByteStr::new(bytes, span);
+            let string = syn::LitStr::new(string, span);
             let tuple: syn::ExprTuple = syn::parse_quote! {
                 (#bytes, #string)
             };
@@ -63,13 +63,14 @@ fn map(out_dir: &str, name: &str, names: &[(&[u8; 32], &str)]) {
         .unzip();
 
     let index: syn::ItemConst = syn::parse_quote! {
-        pub(crate) const INDEX: &'static [u32] = &[
+        pub(crate) const INDEX: &[u32] = &[
             #(#index,)*
         ];
     };
 
     let table: syn::ItemConst = syn::parse_quote! {
-        pub(crate) const TABLE: &'static [(&'static [u8; 32], &'static str)] = &[
+        #[allow(clippy::octal_escapes)]
+        pub(crate) const TABLE: &[(&[u8; 32], &str)] = &[
             #(#table,)*
         ];
     };
@@ -86,9 +87,9 @@ fn map(out_dir: &str, name: &str, names: &[(&[u8; 32], &str)]) {
     let all: Vec<syn::ExprTuple> = data
         .into_iter()
         .map(|(hash, bytes, string)| {
-            let hash = syn::LitInt::new(&format!("0x{:08X}", hash), span.clone());
-            let bytes = syn::LitByteStr::new(bytes, span.clone());
-            let string = syn::LitStr::new(string, span.clone());
+            let hash = syn::LitInt::new(&format!("0x{:08X}", hash), span);
+            let bytes = syn::LitByteStr::new(bytes, span);
+            let string = syn::LitStr::new(string, span);
             syn::parse_quote! {
                 (#hash, #bytes, #string)
             }

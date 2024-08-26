@@ -127,7 +127,7 @@ fn format_discriminants_more(first: usize, middle: &[usize], last: usize) -> Str
 }
 
 fn format_discriminants(nums: &[usize]) -> String {
-    match &nums[..] {
+    match nums {
         [] => panic!("no discriminants"),
         [one] => format!("{}", one),
         [one, two] => format!("{} or {}", one, two),

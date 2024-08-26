@@ -59,7 +59,7 @@ impl<const N: usize> Ascii<N> {
     fn copy_with_zero_space(&mut self, b: &[u8]) -> usize {
         let len = b.len();
         let len = if len < N { len } else { N - 1 };
-        (&mut self.0[..len]).copy_from_slice(&b[..len]);
+        self.0[..len].copy_from_slice(&b[..len]);
         len
     }
 
@@ -70,7 +70,7 @@ impl<const N: usize> Ascii<N> {
     fn copy_without_zero_space(&mut self, b: &[u8]) -> usize {
         let len = b.len();
         let len = if len < N { len } else { N };
-        (&mut self.0[..len]).copy_from_slice(&b[..len]);
+        self.0[..len].copy_from_slice(&b[..len]);
         len
     }
 
@@ -161,7 +161,7 @@ impl<const N: usize> Ascii<N> {
 
         let mut s = Self::zero();
         let len = s.copy_without_zero_space(b);
-        match (&mut s.0[..len]).iter_mut().rev().find(|c| **c == b'.') {
+        match s.0[..len].iter_mut().rev().find(|c| **c == b'.') {
             Some(c) => *c = 0,
             None => {
                 if len < N {
@@ -238,7 +238,7 @@ impl<const N: usize> Ascii<N> {
         let len = g.len();
         if len < N {
             let start = N - len;
-            (&mut s.0[start..]).copy_from_slice(&g);
+            s.0[start..].copy_from_slice(g);
         } else {
             s.0.copy_from_slice(&g[..N]);
         }

@@ -6,7 +6,7 @@ use std::fmt;
 use std::marker::PhantomData;
 use std::ops::{BitAnd, BitOr, BitOrAssign, Not};
 
-const FLAGS_RAW: &'static [&'static str; 32] = &[
+const FLAGS_RAW: &[&str; 32] = &[
     "1 << 0", "1 << 1", "1 << 2", "1 << 3", "1 << 4", "1 << 5", "1 << 6", "1 << 7", "1 << 8",
     "1 << 9", "1 << 10", "1 << 11", "1 << 12", "1 << 13", "1 << 14", "1 << 15", "1 << 16",
     "1 << 17", "1 << 18", "1 << 19", "1 << 20", "1 << 21", "1 << 22", "1 << 23", "1 << 24",
@@ -121,6 +121,7 @@ macro_rules! bitflags {
 
             #[inline]
             pub const fn from_bits(v: $ty) -> ::core::option::Option<Self> {
+                #[allow(clippy::bad_bit_mask)]
                 if v & Self::INVALID == 0 {
                     Some(Self(v))
                 } else {

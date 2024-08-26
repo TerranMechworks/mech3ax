@@ -1,4 +1,5 @@
-const PM_ANIM_NAMES: &'static [(&'static [u8; 32], &'static str)] = &[
+#[allow(clippy::octal_escapes)]
+const PM_ANIM_NAMES: &[(&[u8; 32], &str)] = &[
     (
         b"aclbsmall_impact\0.flt\0\0\0\0\0\0\0\0\0\0\0",
         "aclbsmall_impact",

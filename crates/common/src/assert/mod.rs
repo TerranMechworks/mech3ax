@@ -344,7 +344,7 @@ macro_rules! assert_len {
         let value: usize = $value;
         <$ty>::try_from(value).map_err(|_e| {
             $crate::Error::Assert($crate::assert::AssertionError(format!(
-                "Too big: `{}` must be <= {max}, but was {value}",
+                "`{}` must be <= {max}, but was {value}",
                 $name,
                 max = <$ty>::MAX,
                 value = value,
@@ -355,7 +355,7 @@ macro_rules! assert_len {
         let value: usize = $value;
         <$ty>::try_from(value).map_err(|_e| {
             $crate::Error::Assert($crate::assert::AssertionError(format!(
-                concat!("Too big: `", $name, "` must be <= {max}, but was {value}"),
+                concat!("`", $name, "` must be <= {max}, but was {value}"),
                 $name,
                 $($arg,)+
                 max = <$ty>::MAX,

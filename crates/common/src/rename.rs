@@ -8,13 +8,14 @@ pub struct Rename {
 
 impl Rename {
     #[inline]
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {
             seen: HashSet::new(),
         }
     }
 
-    pub fn insert<'a>(&mut self, name: &'a str) -> Option<String> {
+    pub fn insert(&mut self, name: &str) -> Option<String> {
         if self.seen.insert(name.to_string()) {
             return None;
         }

@@ -1,4 +1,5 @@
-const PM_ANIM_ROOT_NAMES: &'static [(&'static [u8; 32], &'static str)] = &[
+#[allow(clippy::octal_escapes)]
+const PM_ANIM_ROOT_NAMES: &[(&[u8; 32], &str)] = &[
     (
         b"acshell\0flt\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
         "acshell",

@@ -292,7 +292,7 @@ fn write_variant(
     );
 
     let name = if variant.name == ABORT_TEST_NAME {
-        ABORT_TEST_NODE_NAME.clone()
+        ABORT_TEST_NODE_NAME
     } else {
         Ascii::from_str_node_name(&variant.name)
     };

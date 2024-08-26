@@ -51,7 +51,7 @@ impl<const N: usize> Bytes<N> {
         if len > N {
             s.0.copy_from_slice(&slice[..N]);
         } else {
-            (&mut s.0[..len]).copy_from_slice(&slice);
+            s.0[..len].copy_from_slice(slice);
         }
         s
     }

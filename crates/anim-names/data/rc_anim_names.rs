@@ -1,4 +1,5 @@
-const RC_ANIM_NAMES: &'static [(&'static [u8; 32], &'static str)] = &[
+#[allow(clippy::octal_escapes)]
+const RC_ANIM_NAMES: &[(&[u8; 32], &str)] = &[
     (
         b"bft_exhaust\0l\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
         "bft_exhaust",
