@@ -11,11 +11,11 @@ impl CallbackBuffer {
 }
 
 #[no_mangle]
-pub extern "C" fn buffer_set_data(buffer: *mut CallbackBuffer, pointer: *const u8, length: usize) {
-    if buffer.is_null() || pointer.is_null() {
+pub extern "C" fn buffer_set_data(buffer: *mut CallbackBuffer, ptr: *const u8, len: usize) {
+    if buffer.is_null() || ptr.is_null() {
         return;
     }
-    let data = unsafe { std::slice::from_raw_parts(pointer, length) };
+    let data = unsafe { std::slice::from_raw_parts(ptr, len) };
     let buffer = unsafe { buffer.as_mut().unwrap() };
     // importantly, to_vec copies the values into a new vec
     buffer.0 = Some(data.to_vec());

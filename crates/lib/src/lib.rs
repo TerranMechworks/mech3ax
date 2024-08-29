@@ -1,6 +1,7 @@
 #![warn(clippy::all, clippy::cargo)]
 #![allow(clippy::identity_op, clippy::cargo_common_metadata)]
 mod buffer;
+mod callbacks;
 mod error;
 mod panic;
 mod read;

@@ -1,3 +1,4 @@
+use crate::callbacks::{DataCb, NameDataCb, WaveArchiveCb, WaveFileCb};
 use crate::error::err_to_c;
 use crate::wave::WaveFile;
 use crate::{filename_to_string, i32_to_game};
@@ -24,11 +25,6 @@ fn buffer_callback(callback: NameDataCb, name: &str, data: &[u8]) -> Result<()> 
     }
     Ok(())
 }
-
-type DataCb = extern "C" fn(*const u8, usize);
-type NameDataCb = extern "C" fn(*const u8, usize, *const u8, usize) -> i32;
-type WaveArchiveCb = extern "C" fn(*const u8, usize, i32, i32, *const f32, usize) -> i32;
-type WaveFileCb = extern "C" fn(i32, i32, *const f32, usize) -> i32;
 
 #[no_mangle]
 pub extern "C" fn read_interp(

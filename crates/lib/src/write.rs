@@ -1,4 +1,5 @@
 use crate::buffer::CallbackBuffer;
+use crate::callbacks::NameBufferCb;
 use crate::error::err_to_c;
 use crate::{filename_to_string, i32_to_game};
 use eyre::{bail, eyre, Context as _, Result};
@@ -36,8 +37,6 @@ fn buffer_callback(callback: NameBufferCb, name: &str) -> Result<Vec<u8>> {
         .inner()
         .ok_or_else(|| eyre!("callback didn't set any data on `{}`", name))
 }
-
-type NameBufferCb = extern "C" fn(*const u8, usize, *mut CallbackBuffer) -> i32;
 
 #[no_mangle]
 pub extern "C" fn write_interp(
