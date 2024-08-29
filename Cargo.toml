@@ -52,6 +52,9 @@ fxhash = "0.2.1"
 opt-level = 1
 panic = "unwind"
 
+[profile.dev.package.mech3ax-pixel-ops]
+opt-level = 3
+
 [profile.release]
 opt-level = 3
 panic = "unwind"
