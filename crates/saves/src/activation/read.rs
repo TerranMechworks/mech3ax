@@ -1,32 +1,12 @@
-use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
+use super::{AnimActivationC, VALUES_SIZE};
+use log::trace;
 use mech3ax_api_types::saves::{ActivationStatus, ActivationType, AnimActivation};
 use mech3ax_api_types::Bytes;
 use mech3ax_common::assert::assert_utf8;
-use mech3ax_common::io_ext::{CountingReader, CountingWriter};
+use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, Ascii};
-use std::convert::TryInto;
-use std::io::{Cursor, Read, Write};
+use std::io::{Cursor, Read};
 use std::num::NonZeroU32;
-
-const VALUES_SIZE: usize = 9 * 4;
-
-#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
-#[repr(C)]
-struct AnimActivationC {
-    pub type_: i32,                // 00
-    pub unk04: i32,                // 04
-    pub name: Ascii<32>,           // 08
-    pub node_index: i32,           // 40
-    pub values: [u8; VALUES_SIZE], // 44
-    pub unk80: u32,                // 80
-    pub status: u8,                // 84
-    pub count: u8,                 // 85
-    pub unk86: u8,                 // 86
-    pub unk87: u8,                 // 87
-}
-impl_as_bytes!(AnimActivationC, 88);
 
 pub fn read_activation(read: &mut CountingReader<impl Read>) -> Result<AnimActivation> {
     let activation: AnimActivationC = read.read_struct()?;
@@ -145,7 +125,7 @@ pub fn read_activation(read: &mut CountingReader<impl Read>) -> Result<AnimActiv
 
     let node_states = (0..activation.count)
         .map(|i| {
-            debug!("Reading node state {} ({}) at {}", i, 68, read.offset);
+            trace!("Reading node state {} ({}) at {}", i, 68, read.offset);
             let mut buf = vec![0u8; 68];
             read.read_exact(&mut buf)?;
             Ok(buf)
@@ -160,75 +140,4 @@ pub fn read_activation(read: &mut CountingReader<impl Read>) -> Result<AnimActiv
         node_states,
         ptr,
     })
-}
-
-pub fn write_activation(
-    write: &mut CountingWriter<impl Write>,
-    activation: &AnimActivation,
-) -> Result<()> {
-    let type_ = match activation.type_ {
-        ActivationType::One => 1,
-        ActivationType::Two(_) => 2,
-        ActivationType::Five(_) => 5,
-    };
-    let node_index = activation.node_index.unwrap_or(-1);
-    let status = activation.status.into();
-    let (unk80, unk86) = match activation.ptr {
-        Some(ptr) => (ptr.into(), 25),
-        None => (0, 0),
-    };
-    let count = activation.node_states.len().try_into().map_err(|_| {
-        assert_with_msg!(
-            "Expected activation to have {} node states or fewer, but was {}",
-            u8::MAX,
-            activation.node_states.len()
-        )
-    })?;
-    let name = Ascii::from_str_padded(&activation.name);
-
-    let mut activ = AnimActivationC {
-        type_,
-        unk04: 0,
-        name,
-        node_index,
-        values: [0u8; VALUES_SIZE],
-        unk80,
-        status,
-        count,
-        unk86,
-        unk87: 0,
-    };
-
-    match activation.type_ {
-        ActivationType::One | ActivationType::Two(None) | ActivationType::Five(None) => {
-            // nothing to do, values is already zero
-        }
-        ActivationType::Two(Some(ref values)) => {
-            let src: &[u8; 6 * 4] = &values.0[..].try_into().map_err(|_| {
-                assert_with_msg!(
-                    "Expected activation type to have exactly {} bytes, but was {}",
-                    6 * 4,
-                    values.0.len()
-                )
-            })?;
-            let (_one, two) = activ.values.split_at_mut(3 * 4);
-            two.copy_from_slice(src);
-        }
-        ActivationType::Five(Some(ref values)) => {
-            let src: &[u8; VALUES_SIZE] = &values.0[..].try_into().map_err(|_| {
-                assert_with_msg!(
-                    "Expected activation type to have exactly {} bytes, but was {}",
-                    VALUES_SIZE,
-                    values.0.len()
-                )
-            })?;
-            activ.values.copy_from_slice(src);
-        }
-    }
-
-    write.write_struct(&activ)?;
-    for node_state in &activation.node_states {
-        write.write_all(node_state)?;
-    }
-    Ok(())
 }

@@ -2,8 +2,8 @@ use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use std::io::{Read, Write};
 
-pub const VERSION_MW: u32 = 8;
-pub const FORMAT: u32 = 2;
+const VERSION_MW: u32 = 8;
+const FORMAT: u32 = 2;
 
 pub fn read_save_header(read: &mut CountingReader<impl Read>) -> Result<()> {
     let version = read.read_u32()?;
