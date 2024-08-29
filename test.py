@@ -215,9 +215,11 @@ class Tester:
 
             input_dll = zbd_dir.parent / f"{msg_name}.dll"
             output_json = output_dir / f"{msg_name}.json"
+            log = output_dir / "read.log"
 
             print(game, name, f"{msg_name}")
 
+            env = {"RUST_LOG": "trace"}
             cmd = [
                 str(self.unzbd_exe),
                 game,
@@ -225,7 +227,8 @@ class Tester:
                 str(input_dll),
                 str(output_json),
             ]
-            subprocess.run(cmd, check=True)
+            with log.open("wb") as f:
+                subprocess.run(cmd, check=True, env=env, stderr=f)
             # can't convert back to a DLL
             with output_json.open("r") as f:
                 data = json.load(f)
@@ -253,7 +256,7 @@ class Tester:
 
                 zip_path = output_dir / f"{base_name}.zip"
                 output_zbd = output_dir / f"{base_name}.zbd"
-                read_log = output_dir / f"{base_name}-log.log"
+                read_log = output_dir / f"{base_name}-read.log"
                 write_log = output_dir / f"{base_name}-write.log"
 
                 print(game, name, *parents, input_zbd.name)
@@ -280,7 +283,7 @@ class Tester:
 
                 zip_path = output_dir / f"{base_name}.zip"
                 output_zbd = output_dir / f"{base_name}.zbd"
-                read_log = output_dir / f"{base_name}-log.log"
+                read_log = output_dir / f"{base_name}-read.log"
                 write_log = output_dir / f"{base_name}-write.log"
 
                 print(game, name, *parents, input_zbd.name)
