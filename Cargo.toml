@@ -52,6 +52,9 @@ proc-macro2 = "1.0"
 opt-level = 1
 panic = "unwind"
 
+[profile.dev.package.mech3ax-pixel-ops]
+opt-level = 3
+
 [profile.release]
 opt-level = 3
 panic = "unwind"
