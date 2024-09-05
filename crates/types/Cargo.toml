@@ -14,5 +14,3 @@ test = true
 
 [dependencies]
 bytemuck.workspace = true
-
-mech3ax-types-proc-macro = { path = "../types-proc-macro" }
