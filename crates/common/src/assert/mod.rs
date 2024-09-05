@@ -187,12 +187,10 @@ where
     E: PrimitiveEnum,
 {
     E::from_primitive(v).ok_or_else(|| {
+        let discriminants = mech3ax_types::primitive_enum::format_discriminants(E::DISCRIMINANTS);
         let msg = format!(
             "Expected `{}` to be {}, but was {} (at {})",
-            name,
-            E::DISCRIMINANTS,
-            v,
-            pos
+            name, discriminants, v, pos
         );
         AssertionError(msg)
     })

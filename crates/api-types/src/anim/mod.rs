@@ -5,7 +5,7 @@ use crate::Range;
 use ::serde::{Deserialize, Serialize};
 use events::Event;
 use mech3ax_metadata_proc_macro::{Enum, Struct, Union};
-use mech3ax_types::PrimitiveEnum;
+use mech3ax_types::primitive_enum;
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct AnimName {
@@ -40,14 +40,15 @@ pub struct AnimMetadata {
     pub anim_ptrs: Vec<AnimPtr>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PrimitiveEnum, PartialEq, Eq, Clone, Copy, Enum)]
-#[repr(u8)]
-pub enum AnimActivation {
-    WeaponHit = 0,
-    CollideHit = 1,
-    WeaponOrCollideHit = 2,
-    OnCall = 3,
-    OnStartup = 4,
+primitive_enum! {
+    #[derive(Serialize, Deserialize, Enum)]
+    pub enum AnimActivation: u8 {
+        WeaponHit = 0,
+        CollideHit = 1,
+        WeaponOrCollideHit = 2,
+        OnCall = 3,
+        OnStartup = 4,
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Union)]
@@ -80,11 +81,12 @@ pub struct NamePtrFlags {
     pub flags: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PrimitiveEnum, Enum)]
-#[repr(u32)]
-pub enum SeqActivation {
-    Initial = 0,
-    OnCall = 3,
+primitive_enum! {
+    #[derive(Serialize, Deserialize, Enum)]
+    pub enum SeqActivation: u32 {
+        Initial = 0,
+        OnCall = 3,
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]

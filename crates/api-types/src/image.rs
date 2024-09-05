@@ -2,7 +2,7 @@
 use crate::serde::bytes;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{Enum, Struct, Union};
-use mech3ax_types::PrimitiveEnum;
+use mech3ax_types::primitive_enum;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Enum)]
 pub enum TextureAlpha {
@@ -11,19 +11,20 @@ pub enum TextureAlpha {
     Full,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PrimitiveEnum, Enum)]
-#[repr(u16)]
-pub enum TextureStretch {
-    None = 0,
-    Vertical = 1,
-    Horizontal = 2,
-    Both = 3,
-    /// Crimson Skies only
-    Unk4 = 4,
-    /// Crimson Skies only
-    Unk7 = 7,
-    /// Crimson Skies only
-    Unk8 = 8,
+primitive_enum! {
+    #[derive(Serialize, Deserialize, Enum)]
+    pub enum TextureStretch: u16 {
+        None = 0,
+        Vertical = 1,
+        Horizontal = 2,
+        Both = 3,
+        /// Crimson Skies only
+        Unk4 = 4,
+        /// Crimson Skies only
+        Unk7 = 7,
+        /// Crimson Skies only
+        Unk8 = 8,
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]

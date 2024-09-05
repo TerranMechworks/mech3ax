@@ -3,8 +3,8 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{Callback, Else, ElseIf, EndIf, If, Loop};
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, PrimitiveEnum};
+use mech3ax_common::{assert_that, bool_c, Result};
+use mech3ax_types::{impl_as_bytes, primitive_enum, AsBytes as _};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -47,14 +47,14 @@ struct IfC {
 }
 impl_as_bytes!(IfC, 12);
 
-#[derive(Debug, PrimitiveEnum)]
-#[repr(u32)]
-enum Condition {
-    RandomWeight = 1,
-    PlayerRange = 2,
-    AnimationLod = 4,
-    HwRender = 32,
-    PlayerFirstPerson = 64,
+primitive_enum! {
+    enum Condition: u32 {
+        RandomWeight = 1,
+        PlayerRange = 2,
+        AnimationLod = 4,
+        HwRender = 32,
+        PlayerFirstPerson = 64,
+    }
 }
 
 impl ScriptObject for If {
@@ -64,32 +64,24 @@ impl ScriptObject for If {
     fn read(read: &mut CountingReader<impl Read>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("if size", size == Self::SIZE, read.offset)?;
         let if_: IfC = read.read_struct()?;
+
+        let condition = assert_that!("if cond", enum Condition => if_.condition, read.prev + 0)?;
         assert_that!("if field 4", if_.zero4 == 0, read.prev + 4)?;
-        match Condition::from_primitive(if_.condition) {
-            Some(Condition::RandomWeight) => {
-                Ok(If::RandomWeight(f32::from_le_bytes(if_.value).into()))
-            }
-            Some(Condition::PlayerRange) => {
-                Ok(If::PlayerRange(f32::from_le_bytes(if_.value).into()))
-            }
-            Some(Condition::AnimationLod) => {
-                Ok(If::AnimationLod(u32::from_le_bytes(if_.value).into()))
-            }
-            Some(Condition::HwRender) => {
+
+        match condition {
+            Condition::RandomWeight => Ok(If::RandomWeight(f32::from_le_bytes(if_.value).into())),
+            Condition::PlayerRange => Ok(If::PlayerRange(f32::from_le_bytes(if_.value).into())),
+            Condition::AnimationLod => Ok(If::AnimationLod(u32::from_le_bytes(if_.value).into())),
+            Condition::HwRender => {
                 let value = u32::from_le_bytes(if_.value);
                 let value = assert_that!("if value", bool value, read.prev + 8)?;
                 Ok(If::HwRender(value.into()))
             }
-            Some(Condition::PlayerFirstPerson) => {
+            Condition::PlayerFirstPerson => {
                 let value = u32::from_le_bytes(if_.value);
                 let value = assert_that!("if value", bool value, read.prev + 8)?;
                 Ok(If::PlayerFirstPerson(value.into()))
             }
-            None => Err(assert_with_msg!(
-                "Expected valid condition, but was {} (at {})",
-                if_.condition,
-                read.prev + 0
-            )),
         }
     }
 
@@ -123,32 +115,29 @@ impl ScriptObject for ElseIf {
     fn read(read: &mut CountingReader<impl Read>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("else if size", size == Self::SIZE, read.offset)?;
         let if_: IfC = read.read_struct()?;
+
+        let condition =
+            assert_that!("else if cond", enum Condition => if_.condition, read.prev + 0)?;
         assert_that!("else if field 4", if_.zero4 == 0, read.prev + 4)?;
-        match Condition::from_primitive(if_.condition) {
-            Some(Condition::RandomWeight) => {
+
+        match condition {
+            Condition::RandomWeight => {
                 Ok(ElseIf::RandomWeight(f32::from_le_bytes(if_.value).into()))
             }
-            Some(Condition::PlayerRange) => {
-                Ok(ElseIf::PlayerRange(f32::from_le_bytes(if_.value).into()))
-            }
-            Some(Condition::AnimationLod) => {
+            Condition::PlayerRange => Ok(ElseIf::PlayerRange(f32::from_le_bytes(if_.value).into())),
+            Condition::AnimationLod => {
                 Ok(ElseIf::AnimationLod(u32::from_le_bytes(if_.value).into()))
             }
-            Some(Condition::HwRender) => {
+            Condition::HwRender => {
                 let value = u32::from_le_bytes(if_.value);
                 let value = assert_that!("else if value", bool value, read.prev + 8)?;
                 Ok(ElseIf::HwRender(value.into()))
             }
-            Some(Condition::PlayerFirstPerson) => {
+            Condition::PlayerFirstPerson => {
                 let value = u32::from_le_bytes(if_.value);
                 let value = assert_that!("else if value", bool value, read.prev + 8)?;
                 Ok(ElseIf::PlayerFirstPerson(value.into()))
             }
-            None => Err(assert_with_msg!(
-                "Expected valid condition, but was {} (at {})",
-                if_.condition,
-                read.prev + 0
-            )),
         }
     }
 

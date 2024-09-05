@@ -151,35 +151,3 @@ pub fn derive(input: BitflagsInput) -> Result<TokenStream> {
 
     Ok(struct_impl.into_token_stream())
 }
-
-/*
-    let getters: Vec<syn::ImplItemFn> = flags
-        .iter()
-        .map(|flag| {
-            let name = format_ident!("{}", flag.snake_case);
-            let index = &flag.value.token;
-            parse_quote! {
-                pub fn #name(&self) -> bool {
-                    self.0 & (1 << #index) != 0
-                }
-            }
-        })
-        .collect();
-
-    let setters: Vec<syn::ImplItemFn> = flags
-        .iter()
-        .map(|flag| {
-            let name = format_ident!("set_{}", flag.snake_case);
-            let index = &flag.value.token;
-            parse_quote! {
-                pub fn #name(&mut self) -> &mut Self {
-                    self.0 |= (1 << #index);
-                    self
-                }
-            }
-        })
-        .collect();
-
-    #(#getters)*
-    #(#setters)*
-*/

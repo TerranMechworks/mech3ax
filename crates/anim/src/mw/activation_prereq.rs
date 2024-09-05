@@ -3,15 +3,15 @@ use mech3ax_api_types::anim::{ActivationPrereq, PrereqAnimation, PrereqObject, P
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, Ascii, PrimitiveEnum};
+use mech3ax_types::{impl_as_bytes, primitive_enum, Ascii};
 use std::io::{Read, Write};
 
-#[derive(Debug, PrimitiveEnum, PartialEq)]
-#[repr(u32)]
-enum ActivPrereqType {
-    Animation = 1,
-    Object = 2,
-    Parent = 3,
+primitive_enum! {
+    enum ActivPrereqType: u32 {
+        Animation = 1,
+        Object = 2,
+        Parent = 3,
+    }
 }
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
