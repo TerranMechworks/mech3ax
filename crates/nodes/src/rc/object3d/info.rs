@@ -3,7 +3,7 @@ use crate::flags::NodeBitFlags;
 use crate::rc::node::{NodeVariantRc, NodeVariantsRc};
 use crate::types::ZONE_DEFAULT;
 use mech3ax_api_types::nodes::rc::Object3d;
-use mech3ax_common::{assert_len, assert_that, assert_with_msg, bool_c, Result};
+use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
 
 const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     0
@@ -70,7 +70,7 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
     if is_borked {
         assert_that!("object3d has parent", node.parent_count in [0, 8], offset + 84)?;
     } else {
-        assert_that!("object3d has parent", bool node.parent_count, offset + 84)?;
+        assert_that!("object3d has parent", node.parent_count in [0, 1], offset + 84)?;
     }
     // parent_array_ptr (88) already asserted
     // children_count (92) is variable
@@ -100,7 +100,11 @@ pub(crate) fn make_variants(object3d: &Object3d) -> Result<NodeVariantsRc> {
                 "Nodes must not have parents set (dirty hack)"
             ));
         }
-        bool_c!(object3d.parent.is_some())
+        if object3d.parent.is_some() {
+            1
+        } else {
+            0
+        }
     };
 
     let children_count = assert_len!(u32, object3d.children.len(), "object 3d children")?;

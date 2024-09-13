@@ -262,7 +262,7 @@ fn convert_info_to_c(info: &TextureInfo, index: usize) -> Result<TextureInfoC> {
         height: info.height,
         zero08: 0,
         palette_count,
-        stretch: info.stretch.into(),
+        stretch: info.stretch.maybe(),
     })
 }
 

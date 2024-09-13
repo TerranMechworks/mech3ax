@@ -31,7 +31,7 @@ pub(crate) fn read_material(
     assert_that!("field 24", material.half24 == 0.5, read.prev + 24)?;
     assert_that!("field 28", material.half28 == 0.5, read.prev + 28)?;
 
-    let soil = assert_that!("soil type", enum Soil => material.soil, read.prev + 32)?;
+    let soil = assert_that!("soil type", enum material.soil, read.prev + 32)?;
 
     let material = if bitflags.contains(MaterialFlags::TEXTURED) {
         // all color information comes from the texture
@@ -91,7 +91,7 @@ pub(super) fn assert_material_zero(material: &MaterialC, ty: MatType, offset: us
     assert_that!("field 20", material.zero20 == 0.0, offset + 20)?;
     assert_that!("field 24", material.half24 == 0.0, offset + 24)?;
     assert_that!("field 28", material.half28 == 0.0, offset + 28)?;
-    assert_that!("soil", material.soil == 0, offset + 32)?;
+    assert_that!("soil", material.soil == Soil::Default.maybe(), offset + 32)?;
     assert_that!("cycle ptr", material.cycle_ptr == 0, offset + 36)?;
 
     Ok(())

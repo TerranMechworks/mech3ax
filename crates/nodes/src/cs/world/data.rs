@@ -8,14 +8,14 @@ use mech3ax_api_types::nodes::cs::World;
 use mech3ax_api_types::nodes::{Area, PartitionNg, PartitionValue};
 use mech3ax_api_types::{Color, Range};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_len, assert_that, bool_c, Result};
-use mech3ax_types::impl_as_bytes;
+use mech3ax_common::{assert_len, assert_that, Result};
+use mech3ax_types::{impl_as_bytes, Bool32};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct WorldCsC {
-    flags: u32,                           // 000
+    flags: Bool32,                        // 000
     area_partition_used: u32,             // 004
     area_partition_count: u32,            // 008
     area_partition_ptr: u32,              // 012
@@ -567,7 +567,7 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Re
     let virt_partition_y_max = virt_partition_y_count - world.virt_partition_y_min;
 
     let world_c = WorldCsC {
-        flags: bool_c!(world.flags),
+        flags: world.flags.into(),
         area_partition_used: 0,
         area_partition_count: world.area_partition_count,
         area_partition_ptr: world.area_partition_ptr,

@@ -3,7 +3,6 @@ use image::{DynamicImage, RgbImage, RgbaImage};
 use log::debug;
 use mech3ax_api_types::image::{
     GlobalPalette, PaletteData, TextureAlpha, TextureInfo, TextureManifest, TexturePalette,
-    TextureStretch,
 };
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
@@ -197,8 +196,7 @@ fn convert_info_from_c(
     }
     let palette_count = info_c.palette_count;
 
-    let stretch =
-        assert_that!("texture stretch", enum TextureStretch => info_c.stretch, offset + 14)?;
+    let stretch = assert_that!("texture stretch", enum info_c.stretch, offset + 14)?;
 
     let info = TextureInfo {
         name,

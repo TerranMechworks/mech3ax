@@ -3,7 +3,7 @@ use log::trace;
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::Color;
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, assert_with_msg, bool_c, Result};
+use mech3ax_common::{assert_len, assert_with_msg, Result};
 use std::io::Write;
 
 pub(super) fn find_texture_index_by_name(textures: &[String], texture_name: &str) -> Result<u32> {
@@ -49,7 +49,7 @@ pub(crate) fn write_material(
                 zero20: 0.0,
                 half24: 0.5,
                 half28: 0.5,
-                soil: material.soil.into(),
+                soil: material.soil.maybe(),
                 cycle_ptr,
             }
         }
@@ -67,7 +67,7 @@ pub(crate) fn write_material(
                 zero20: 0.0,
                 half24: 0.5,
                 half28: 0.5,
-                soil: material.soil.into(),
+                soil: material.soil.maybe(),
                 cycle_ptr: 0,
             }
         }
@@ -86,10 +86,9 @@ pub(super) fn write_cycle(
         if let Some(cycle) = &mat.cycle {
             trace!("Writing cycle info {}", index);
 
-            let unk00 = bool_c!(cycle.unk00);
             let count = assert_len!(u32, cycle.textures.len(), "cycle textures")?;
             let info = CycleInfoC {
-                unk00,
+                unk00: cycle.unk00.into(),
                 unk04: cycle.unk04,
                 zero08: 0,
                 unk12: cycle.unk12,

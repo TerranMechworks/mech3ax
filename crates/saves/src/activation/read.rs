@@ -1,6 +1,6 @@
 use super::{AnimActivationC, VALUES_SIZE};
 use log::trace;
-use mech3ax_api_types::saves::{ActivationStatus, ActivationType, AnimActivation};
+use mech3ax_api_types::saves::{ActivationType, AnimActivation};
 use mech3ax_api_types::Bytes;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
@@ -38,7 +38,7 @@ pub fn read_activation(read: &mut CountingReader<impl Read>) -> Result<AnimActiv
         Some(activation.node_index)
     };
 
-    let status = assert_that!("anim activation status", enum ActivationStatus => activation.status, read.prev + 0)?;
+    let status = assert_that!("anim activation status", enum activation.status, read.prev + 0)?;
 
     let ptr = match activation.unk86 {
         0 => {

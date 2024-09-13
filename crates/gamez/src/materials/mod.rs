@@ -7,7 +7,7 @@ mod write_single;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::materials::{ColoredMaterial, Material, Soil};
 use mech3ax_api_types::Color;
-use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Maybe};
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Bool32, Maybe};
 pub(crate) use read_multi::read_materials;
 pub(crate) use read_single::read_material;
 pub(crate) use write_multi::write_materials;
@@ -65,6 +65,7 @@ bitflags! {
 }
 
 type Flags = Maybe<u8, MaterialFlags>;
+type MSoil = Maybe<u32, Soil>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -77,7 +78,7 @@ struct MaterialC {
     zero20: f32,    // 20
     half24: f32,    // 24
     half28: f32,    // 28
-    soil: u32,      // 32
+    soil: MSoil,    // 32
     cycle_ptr: u32, // 36
 }
 impl_as_bytes!(MaterialC, 40);
@@ -85,7 +86,7 @@ impl_as_bytes!(MaterialC, 40);
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct CycleInfoC {
-    unk00: u32,
+    unk00: Bool32,
     unk04: u32,
     zero08: u32,
     unk12: f32,

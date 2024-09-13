@@ -8,8 +8,8 @@ use mech3ax_api_types::nodes::pm::World;
 use mech3ax_api_types::nodes::{Area, PartitionNg, PartitionValue};
 use mech3ax_api_types::{Color, Range};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_len, assert_that, bool_c, Result};
-use mech3ax_types::impl_as_bytes;
+use mech3ax_common::{assert_len, assert_that, Result};
+use mech3ax_types::{impl_as_bytes, Bool32};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -35,7 +35,7 @@ struct WorldPmC {
     area_right2: f32,                     // 084
     area_top2: f32,                       // 088
     partition_max_dec_feature_count: u32, // 092
-    virtual_partition: u32,               // 096
+    virtual_partition: Bool32,            // 096
     virt_partition_x_min: u32,            // 100
     virt_partition_y_min: u32,            // 104
     virt_partition_x_max: u32,            // 108
@@ -554,7 +554,7 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Re
         area_right2: area_right + 3.0,
         area_top2: area_top - 3.0,
         partition_max_dec_feature_count: 16,
-        virtual_partition: bool_c!(world.virtual_partition),
+        virtual_partition: world.virtual_partition.into(),
         virt_partition_x_min: 1,
         virt_partition_y_min: 1,
         virt_partition_x_max,

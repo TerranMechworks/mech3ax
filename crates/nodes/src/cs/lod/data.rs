@@ -4,14 +4,14 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::nodes::cs::Lod;
 use mech3ax_api_types::Range;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, Zeros};
+use mech3ax_common::{assert_that, Result};
+use mech3ax_types::{impl_as_bytes, Bool32, Zeros};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct LodCsC {
-    level: u32,         // 00
+    level: Bool32,      // 00
     range_near_sq: f32, // 04
     range_far: f32,     // 08
     range_far_sq: f32,  // 12
@@ -92,7 +92,7 @@ pub(crate) fn read(
 
 pub(crate) fn write(write: &mut CountingWriter<impl Write>, lod: &Lod) -> Result<()> {
     let lodc = LodCsC {
-        level: bool_c!(lod.level),
+        level: lod.level.into(),
         range_near_sq: lod.range.min * lod.range.min,
         range_far: lod.range.max,
         range_far_sq: lod.range.max * lod.range.max,

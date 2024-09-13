@@ -1,46 +1,17 @@
+mod disp;
 mod display_set;
-mod flags;
 
-use bytemuck::{AnyBitPattern, NoUninit, Zeroable};
-pub use flags::{
+use crate::maybe::{PrimitiveRepr, SupportsMaybe};
+pub use disp::{
     format_flags_u16, format_flags_u32, format_flags_u8, gather_flags_u16, gather_flags_u32,
     gather_flags_u8,
 };
 use std::fmt;
-use std::marker::PhantomData;
-use std::ops::{BitAnd, BitOr, BitOrAssign, Not};
-
-pub trait BitflagsRepr
-where
-    Self: Clone
-        + Copy
-        + PartialEq
-        + Eq
-        + fmt::Debug
-        + fmt::Display
-        + fmt::LowerHex
-        + fmt::UpperHex
-        + fmt::Binary
-        + BitAnd<Output = Self>
-        + BitOr<Output = Self>
-        + Not<Output = Self>
-        + NoUninit
-        + AnyBitPattern
-        + Zeroable
-        + Sized
-        + Sync
-        + Send
-        + 'static,
-{
-}
-
-impl BitflagsRepr for u8 {}
-impl BitflagsRepr for u16 {}
-impl BitflagsRepr for u32 {}
+use std::ops::{BitOr, BitOrAssign};
 
 pub trait Bitflags<R>
 where
-    R: BitflagsRepr,
+    R: PrimitiveRepr,
     Self: Clone
         + Copy
         + PartialEq
@@ -55,19 +26,20 @@ where
         + Sized
         + Sync
         + Send
-        + 'static,
+        + 'static
+        + SupportsMaybe<R>,
 {
-    const VALID: R;
-
-    fn from_bits(v: R) -> Option<Self>;
-    fn fmt_value(v: R, f: &mut fmt::Formatter<'_>) -> fmt::Result;
 }
 
 #[macro_export]
 macro_rules! bitflags {
-    ($vis:vis struct $name:ident : $ty:tt {
-        $(const $flag:ident = 1 << $val:literal;)+
+    ($(#[$outer:meta])* $vis:vis struct $name:ident : $ty:tt {
+        $(
+            $(#[$inner:meta])*
+            const $flag:ident = 1 << $val:literal;
+        )+
     }) => {
+        $(#[$outer])*
         #[derive(Clone, Copy, PartialEq, Eq)]
         #[repr(transparent)]
         $vis struct $name($ty);
@@ -81,7 +53,10 @@ macro_rules! bitflags {
             const VALID: $ty = 0 $(| (1 << $val))+;
             const INVALID: $ty = !Self::VALID;
 
-            $(pub const $flag: Self = Self(1 << $val);)+
+            $(
+                $(#[$inner])*
+                pub const $flag: Self = Self(1 << $val);
+            )+
 
             #[inline]
             pub const fn empty() -> Self {
@@ -97,9 +72,9 @@ macro_rules! bitflags {
             pub const fn from_bits(v: $ty) -> ::core::option::Option<Self> {
                 #[allow(clippy::bad_bit_mask)]
                 if v & Self::INVALID == 0 {
-                    Some(Self(v))
+                    ::core::option::Option::Some(Self(v))
                 } else {
-                    None
+                    ::core::option::Option::None
                 }
             }
 
@@ -114,8 +89,8 @@ macro_rules! bitflags {
             }
 
             #[inline]
-            pub const fn maybe(self) -> $crate::bitflags::Maybe<$ty, Self> {
-                $crate::bitflags::Maybe::new(self.0)
+            pub const fn maybe(self) -> $crate::maybe::Maybe<$ty, Self> {
+                $crate::maybe::Maybe::new(self.0)
             }
         }
 
@@ -170,9 +145,7 @@ macro_rules! bitflags {
             }
         }
 
-        impl $crate::bitflags::Bitflags<$ty> for $name {
-            const VALID: $ty = Self::VALID;
-
+        impl $crate::maybe::SupportsMaybe<$ty> for $name {
             #[inline]
             fn from_bits(v: $ty) -> ::core::option::Option<Self> {
                 Self::from_bits(v)
@@ -183,6 +156,8 @@ macro_rules! bitflags {
                 bitflags!(@fmt $ty)(v, f, Self::FLAGS)
             }
         }
+
+        impl $crate::bitflags::Bitflags<$ty> for $name {}
     };
     (@fmt u8) => {
         $crate::bitflags::format_flags_u8
@@ -203,121 +178,6 @@ macro_rules! bitflags {
         const FLAGS: &'static [::core::option::Option<&'static str>; 32] = &$crate::bitflags::gather_flags_u32(Self::VARIANTS);
     };
 }
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-#[repr(transparent)]
-pub struct Maybe<R, F: Bitflags<R>>
-where
-    R: BitflagsRepr,
-{
-    pub value: R,
-    pub marker: PhantomData<F>,
-}
-
-impl<R, F: Bitflags<R>> Maybe<R, F>
-where
-    R: BitflagsRepr,
-{
-    #[inline]
-    pub const fn new(value: R) -> Self {
-        Self {
-            value,
-            marker: PhantomData,
-        }
-    }
-
-    #[inline]
-    pub fn validate(self) -> Option<F> {
-        F::from_bits(self.value)
-    }
-}
-
-impl<R: BitflagsRepr, F: Bitflags<R>> fmt::Display for Maybe<R, F> {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        F::fmt_value(self.value, f)
-    }
-}
-
-impl<R: BitflagsRepr, F: Bitflags<R>> fmt::Debug for Maybe<R, F> {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        F::fmt_value(self.value, f)
-    }
-}
-
-impl<R: BitflagsRepr, F: Bitflags<R>> fmt::LowerHex for Maybe<R, F> {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::LowerHex::fmt(&self.value, f)
-    }
-}
-
-impl<R: BitflagsRepr, F: Bitflags<R>> fmt::UpperHex for Maybe<R, F> {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::UpperHex::fmt(&self.value, f)
-    }
-}
-
-impl<R: BitflagsRepr, F: Bitflags<R>> fmt::Binary for Maybe<R, F> {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Binary::fmt(&self.value, f)
-    }
-}
-
-macro_rules! impl_maybe {
-    ($ty:ty) => {
-        impl<F: Bitflags<$ty>> Maybe<$ty, F> {
-            #[inline]
-            pub const fn empty() -> Self {
-                Self {
-                    value: 0,
-                    marker: PhantomData,
-                }
-            }
-        }
-
-        impl<F: Bitflags<$ty>> Default for Maybe<$ty, F> {
-            #[inline]
-            fn default() -> Self {
-                Self {
-                    value: 0,
-                    marker: PhantomData,
-                }
-            }
-        }
-
-        impl<F: Bitflags<$ty>> From<Maybe<$ty, F>> for $ty {
-            #[inline]
-            fn from(value: Maybe<$ty, F>) -> Self {
-                value.value
-            }
-        }
-
-        // SAFETY: u8/u16/u32 are obviously zero-able.
-        unsafe impl<F: Bitflags<$ty>> Zeroable for Maybe<$ty, F> {
-            #[inline]
-            fn zeroed() -> Self {
-                Self {
-                    value: 0,
-                    marker: PhantomData,
-                }
-            }
-        }
-
-        // SAFETY: u8/u16/u32 are valid for any combination of bits.
-        unsafe impl<F: Bitflags<$ty>> AnyBitPattern for Maybe<$ty, F> {}
-
-        // SAFETY: u8/u16/u32 have no padding.
-        unsafe impl<F: Bitflags<$ty>> NoUninit for Maybe<$ty, F> {}
-    };
-}
-
-impl_maybe!(u8);
-impl_maybe!(u16);
-impl_maybe!(u32);
 
 #[cfg(test)]
 mod tests;

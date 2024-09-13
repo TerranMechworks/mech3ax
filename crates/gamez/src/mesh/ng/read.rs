@@ -4,7 +4,7 @@ use log::trace;
 use mech3ax_api_types::gamez::mesh::{MeshMaterialInfo, MeshNg, PolygonMaterialNg, PolygonNg};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::Ptr;
+use mech3ax_types::{Bool32, Ptr};
 use std::io::Read;
 
 pub(crate) fn read_mesh_info(read: &mut CountingReader<impl Read>) -> Result<WrappedMeshNg> {
@@ -317,7 +317,7 @@ fn read_mesh_material_infos(
 }
 
 pub(crate) fn assert_mesh_info_zero(mesh: &MeshNgC, offset: usize) -> Result<()> {
-    assert_that!("file_ptr", mesh.file_ptr == 0, offset + 0)?;
+    assert_that!("file_ptr", mesh.file_ptr == Bool32::FALSE, offset + 0)?;
     assert_that!("unk04", mesh.unk04 == 0, offset + 4)?;
     assert_that!("unk08", mesh.unk08 == 0, offset + 8)?;
     assert_that!("parent_count", mesh.parent_count == 0, offset + 12)?;

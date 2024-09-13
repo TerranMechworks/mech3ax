@@ -27,6 +27,7 @@ macro_rules! global_palette_len {
     };
 }
 pub(crate) use global_palette_len;
+use mech3ax_api_types::image::TextureStretch;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -54,6 +55,7 @@ bitflags! {
 }
 
 type Flags = Maybe<u32, TexFlags>;
+type Stretch = Maybe<u16, TextureStretch>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -63,6 +65,6 @@ struct TextureInfoC {
     height: u16,        // 06
     zero08: u32,        // 08
     palette_count: u16, // 12
-    stretch: u16,       // 14
+    stretch: Stretch,   // 14
 }
 impl_as_bytes!(TextureInfoC, 16);

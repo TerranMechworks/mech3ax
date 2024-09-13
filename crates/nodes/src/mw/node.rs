@@ -8,8 +8,8 @@ use mech3ax_api_types::nodes::mw::{Empty, NodeMw};
 use mech3ax_api_types::nodes::{AreaPartition, BoundingBox};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii, Maybe, Ptr};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii, Bool32, Maybe, Ptr};
 use std::io::{Read, Seek, SeekFrom, Write};
 
 #[derive(Debug)]
@@ -69,6 +69,7 @@ pub enum NodeVariantMw {
 }
 
 type Flags = Maybe<u32, NodeBitFlags>;
+type NType = Maybe<u32, NodeType>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
@@ -78,14 +79,14 @@ pub struct NodeMwC {
     zero040: u32,                  // 040
     unk044: u32,                   // 044
     zone_id: u32,                  // 048
-    node_type: u32,                // 052
+    node_type: NType,              // 052
     data_ptr: Ptr,                 // 056
     mesh_index: i32,               // 060
     environment_data: u32,         // 064
     action_priority: u32,          // 068
     action_callback: u32,          // 072
     area_partition: AreaPartition, // 076
-    parent_count: u32,             // 084
+    parent_count: Bool32,          // 084
     parent_array_ptr: Ptr,         // 088
     children_count: u32,           // 092
     children_array_ptr: Ptr,       // 096
@@ -117,7 +118,7 @@ impl NodeMwC {
 fn assert_node(node: NodeMwC, offset: usize) -> Result<(NodeType, NodeVariantsMw)> {
     // invariants for every node type
 
-    let node_type = assert_that!("node type", enum NodeType => node.node_type, offset + 52)?;
+    let node_type = assert_that!("node type", enum node.node_type, offset + 52)?;
 
     let name = assert_utf8("node name", offset + 0, || node.name.to_str_node_name())?;
     let flags = assert_that!("node flags", flags node.flags, offset + 36)?;
@@ -285,14 +286,14 @@ fn write_variant(
         zero040: 0,
         unk044: variant.unk044,
         zone_id: variant.zone_id,
-        node_type: node_type as u32,
+        node_type: node_type.maybe(),
         data_ptr: Ptr(variant.data_ptr),
         mesh_index: variant.mesh_index,
         environment_data: 0,
         action_priority: 1,
         action_callback: 0,
         area_partition,
-        parent_count: bool_c!(variant.has_parent),
+        parent_count: variant.has_parent.into(),
         parent_array_ptr: Ptr(variant.parent_array_ptr),
         children_count: variant.children_count,
         children_array_ptr: Ptr(variant.children_array_ptr),
@@ -379,7 +380,11 @@ pub fn size_node(node: &NodeMw) -> u32 {
 pub fn assert_node_info_zero(node: &NodeMwC, offset: usize) -> Result<()> {
     assert_that!("name", zero node.name, offset + 0)?;
     assert_that!("flags", node.flags == Flags::empty(), offset + 36)?;
-    assert_that!("node type", node.node_type == 0, offset + 52)?;
+    assert_that!(
+        "node type",
+        node.node_type == NodeType::Empty.maybe(),
+        offset + 52
+    )?;
 
     assert_that!("field 040", node.zero040 == 0, offset + 40)?;
     assert_that!("field 044", node.unk044 == 0, offset + 44)?;
@@ -395,7 +400,11 @@ pub fn assert_node_info_zero(node: &NodeMwC, offset: usize) -> Result<()> {
         node.area_partition == AreaPartition::ZERO,
         offset + 76
     )?;
-    assert_that!("parent count", node.parent_count == 0, offset + 84)?;
+    assert_that!(
+        "parent count",
+        node.parent_count == Bool32::FALSE,
+        offset + 84
+    )?;
     assert_that!(
         "parent array ptr",
         node.parent_array_ptr == Ptr::NULL,

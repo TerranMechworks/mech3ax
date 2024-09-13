@@ -3,7 +3,7 @@ use crate::rc::node::{NodeVariantLodRc, NodeVariantRc, NodeVariantsRc};
 use crate::types::ZONE_DEFAULT;
 use mech3ax_api_types::nodes::rc::Lod;
 use mech3ax_api_types::nodes::BoundingBox;
-use mech3ax_common::{assert_len, assert_that, bool_c, Result};
+use mech3ax_common::{assert_len, assert_that, Result};
 
 const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     0
@@ -79,7 +79,8 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
     )?;
     // parent_count (84) is variable
     // can only have one parent
-    let has_parent = assert_that!("parent count", bool node.parent_count, offset + 84)?;
+    assert_that!("parent count", node.parent_count in [0, 1], offset + 84)?;
+    let has_parent = node.parent_count > 0;
     // parent_array_ptr (88) already asserted
     // children_count (92) is variable
     // children_array_ptr (96) already asserted
@@ -122,7 +123,7 @@ pub(crate) fn make_variants(lod: &Lod) -> Result<NodeVariantsRc> {
         data_ptr: lod.data_ptr,
         mesh_index: -1,
         area_partition: None,
-        parent_count: bool_c!(lod.parent.is_some()),
+        parent_count: if lod.parent.is_some() { 1 } else { 0 },
         parent_array_ptr: lod.parent_array_ptr,
         children_count,
         children_array_ptr: lod.children_array_ptr,

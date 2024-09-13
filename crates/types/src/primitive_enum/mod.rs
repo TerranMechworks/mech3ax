@@ -1,3 +1,6 @@
+use crate::maybe::{PrimitiveRepr, SupportsMaybe};
+use std::fmt;
+
 /// A trait for enums that can be converted from/to a primitive type (e.g. u32).
 /// This trait should not be implemented manually; instead it is intended to be
 /// derived by the corresponding macro!
@@ -7,13 +10,21 @@
 ///   trying to convert a primitive type to the enum.
 /// * `From<Self> for <primitive>` for converting the enum to a primitive type
 ///   (`into()`).
-/// * `const fn as_(self) -> <primitive>` for converting the enum to a
-///   primitive type (`const`).
-pub trait PrimitiveEnum: Sized + Sync + Send + 'static + Into<Self::Primitive> {
-    type Primitive: Copy + std::fmt::Display + Into<u32>;
-    const DISCRIMINANTS: &'static [Self::Primitive];
-
-    fn from_primitive(v: Self::Primitive) -> Option<Self>;
+pub trait PrimitiveEnum<R>
+where
+    R: PrimitiveRepr,
+    Self: Clone
+        + Copy
+        + PartialEq
+        + Eq
+        + fmt::Debug
+        + Sized
+        + Sync
+        + Send
+        + 'static
+        + SupportsMaybe<R>,
+{
+    const DISCRIMINANTS: &'static [u32];
 }
 
 #[macro_export]
@@ -36,30 +47,38 @@ macro_rules! primitive_enum {
 
         impl $name {
             #[inline]
-            pub const fn as_(self) -> $ty {
-                self as _
-            }
-        }
-
-        impl From<$name> for $ty {
-            #[inline]
-            fn from(value: $name) -> Self {
-                value as _
-            }
-        }
-
-        impl $crate::primitive_enum::PrimitiveEnum for $name {
-            type Primitive = $ty;
-            const DISCRIMINANTS: &'static [Self::Primitive] = &[
-                $($val,)+
-            ];
-
-            fn from_primitive(v: Self::Primitive) -> Option<Self> {
+            pub const fn from_bits(v: $ty) -> ::core::option::Option<Self> {
                 match v {
-                    $($val => Some(Self::$variant),)+
-                    _ => None,
+                    $($val => ::core::option::Option::Some(Self::$variant),)+
+                    _ => ::core::option::Option::None,
                 }
             }
+
+            #[inline]
+            pub const fn maybe(self) -> $crate::maybe::Maybe<$ty, Self> {
+                $crate::maybe::Maybe::new(self as _)
+            }
+        }
+
+        impl $crate::maybe::SupportsMaybe<$ty> for $name {
+            #[inline]
+            fn from_bits(v: $ty) -> ::core::option::Option<Self> {
+                Self::from_bits(v)
+            }
+
+            #[inline]
+            fn fmt_value(v: $ty, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                match Self::from_bits(v) {
+                    ::core::option::Option::Some(e) => ::core::write!(f, "{:?} ({})", e, v),
+                    ::core::option::Option::None => ::core::write!(f, "<unknown> ({})", v),
+                }
+            }
+        }
+
+        impl $crate::primitive_enum::PrimitiveEnum<$ty> for $name {
+            const DISCRIMINANTS: &'static [u32] = &[
+                $($val,)+
+            ];
         }
     };
 }
@@ -99,3 +118,6 @@ pub fn format_discriminants(discriminants: &[impl Into<u32> + Copy]) -> String {
         [first, middle @ .., last] => format_discriminants_more(*first, middle, *last),
     }
 }
+
+#[cfg(test)]
+mod tests;

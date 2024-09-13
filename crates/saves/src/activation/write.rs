@@ -16,7 +16,7 @@ pub fn write_activation(
         ActivationType::Five(_) => 5,
     };
     let node_index = activation.node_index.unwrap_or(-1);
-    let status = activation.status.into();
+    let status = activation.status.maybe();
     let (unk80, unk86) = match activation.ptr {
         Some(ptr) => (ptr.into(), 25),
         None => (0, 0),

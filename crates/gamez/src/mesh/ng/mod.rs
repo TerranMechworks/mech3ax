@@ -4,14 +4,14 @@ mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::mesh::{MeshNg, PolygonFlags};
-use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Hex, Ptr};
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Bool32, Hex, Ptr};
 pub(crate) use read::{assert_mesh_info, assert_mesh_info_zero, read_mesh_data, read_mesh_info};
 pub(crate) use write::{size_mesh, write_mesh_data, write_mesh_info};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
 pub(crate) struct MeshNgC {
-    file_ptr: u32,                // 00
+    file_ptr: Bool32,             // 00
     unk04: u32,                   // 04
     unk08: u32,                   // 08
     pub(crate) parent_count: u32, // 12

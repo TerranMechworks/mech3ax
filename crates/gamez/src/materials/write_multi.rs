@@ -1,7 +1,7 @@
 use super::write_single::{find_texture_index_by_name, write_cycle, write_material};
 use super::{MatType, MaterialC, MaterialFlags, MaterialInfoC};
 use log::trace;
-use mech3ax_api_types::gamez::materials::Material;
+use mech3ax_api_types::gamez::materials::{Material, Soil};
 use mech3ax_api_types::Color;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, Result};
@@ -81,7 +81,7 @@ fn write_materials_zero(
         zero20: 0.0,
         half24: 0.0,
         half28: 0.0,
-        soil: 0,
+        soil: Soil::Default.maybe(),
         cycle_ptr: 0,
     };
 

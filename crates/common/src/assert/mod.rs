@@ -1,4 +1,5 @@
-use mech3ax_types::{Bitflags, BitflagsRepr, ConversionError, Maybe, PrimitiveEnum};
+use mech3ax_types::maybe::SupportsMaybe;
+use mech3ax_types::{Bitflags, Bool, ConversionError, Maybe, PrimitiveEnum, PrimitiveRepr};
 use std::cmp::{PartialEq, PartialOrd};
 use std::fmt;
 
@@ -169,34 +170,6 @@ where
 }
 
 #[inline]
-pub fn is_bool(name: &str, actual: u32, pos: usize) -> Result<bool> {
-    if actual > 1 {
-        let msg = format!(
-            "Expected `{}` to be 0 or 1, but was {} (at {})",
-            name, actual, pos
-        );
-        Err(AssertionError(msg))
-    } else {
-        Ok(actual == 1)
-    }
-}
-
-#[inline]
-pub fn is_enum<E>(name: &str, v: E::Primitive, pos: usize) -> Result<E>
-where
-    E: PrimitiveEnum,
-{
-    E::from_primitive(v).ok_or_else(|| {
-        let discriminants = mech3ax_types::primitive_enum::format_discriminants(E::DISCRIMINANTS);
-        let msg = format!(
-            "Expected `{}` to be {}, but was {} (at {})",
-            name, discriminants, v, pos
-        );
-        AssertionError(msg)
-    })
-}
-
-#[inline]
 pub fn format_conversion_err(name: &str, pos: usize, e: ConversionError) -> AssertionError {
     let msg = match e {
         ConversionError::PaddingError(padding) => format!(
@@ -244,15 +217,46 @@ pub fn is_all_zero(name: &str, buf: &[u8], pos: usize) -> Result<()> {
 }
 
 #[inline]
+pub fn is_bool<R>(name: &str, v: Bool<R>, pos: usize) -> Result<bool>
+where
+    R: PrimitiveRepr,
+    bool: SupportsMaybe<R>,
+{
+    v.validate().ok_or_else(|| {
+        let msg = format!(
+            "Expected `{}` to be 0 or 1, but was {} (at {})",
+            name, v, pos
+        );
+        AssertionError(msg)
+    })
+}
+
+#[inline]
 pub fn is_bitflags<R, F>(name: &str, v: Maybe<R, F>, pos: usize) -> Result<F>
 where
-    R: BitflagsRepr,
+    R: PrimitiveRepr,
     F: Bitflags<R>,
 {
     v.validate().ok_or_else(|| {
         let msg = format!(
             "Expected `{}` to have valid flags, but was {} (at {})",
             name, v, pos
+        );
+        AssertionError(msg)
+    })
+}
+
+#[inline]
+pub fn is_enum<R, E>(name: &str, v: Maybe<R, E>, pos: usize) -> Result<E>
+where
+    R: PrimitiveRepr,
+    E: PrimitiveEnum<R>,
+{
+    v.validate().ok_or_else(|| {
+        let discriminants = mech3ax_types::primitive_enum::format_discriminants(E::DISCRIMINANTS);
+        let msg = format!(
+            "Expected `{}` to be {}, but was {} (at {})",
+            name, discriminants, v, pos
         );
         AssertionError(msg)
     })
@@ -299,8 +303,8 @@ macro_rules! assert_that {
     ($name:expr, bool $actual:expr, $pos:expr) => {
         $crate::assert::is_bool($name, $actual, $pos)
     };
-    ($name:expr, enum $ty:ty => $actual:expr, $pos:expr) => {
-        $crate::assert::is_enum::<$ty>($name, $actual, $pos)
+    ($name:expr, enum $actual:expr, $pos:expr) => {
+        $crate::assert::is_enum($name, $actual, $pos)
     };
     ($name:expr, zero $actual:expr, $pos:expr) => {
         $crate::assert::is_all_zero($name, &$actual, $pos)
@@ -322,17 +326,6 @@ macro_rules! assert_with_msg {
     };
     ($($arg:tt)*) => {
         $crate::assert_with_msg!(format!($($arg)*))
-    };
-}
-
-#[macro_export]
-macro_rules! bool_c {
-    ($value:expr) => {
-        if $value {
-            1
-        } else {
-            0
-        }
     };
 }
 

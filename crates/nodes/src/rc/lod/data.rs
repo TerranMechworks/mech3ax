@@ -4,14 +4,14 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::nodes::rc::Lod;
 use mech3ax_api_types::Range;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Zeros};
+use mech3ax_common::{assert_that, Result};
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Bool32, Zeros};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct LodRcC {
-    level: u32,         // 00
+    level: Bool32,      // 00
     range_near_sq: f32, // 04
     range_far: f32,     // 08
     range_far_sq: f32,  // 12
@@ -19,7 +19,7 @@ struct LodRcC {
     unk60: f32,         // 60
     unk64: f32,         // 64
     one68: u32,         // 68
-    unk72: u32,         // 72
+    unk72: Bool32,      // 72
     unk76: u32,         // 76
 }
 impl_as_bytes!(LodRcC, 80);
@@ -93,7 +93,7 @@ pub(crate) fn read(read: &mut CountingReader<impl Read>, node: NodeVariantLodRc)
 
 pub(crate) fn write(write: &mut CountingWriter<impl Write>, lod: &Lod) -> Result<()> {
     let lodc = LodRcC {
-        level: bool_c!(lod.level),
+        level: lod.level.into(),
         range_near_sq: lod.range.min * lod.range.min,
         range_far: lod.range.max,
         range_far_sq: lod.range.max * lod.range.max,
@@ -101,7 +101,7 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, lod: &Lod) -> Result
         unk60: lod.unk60,
         unk64: lod.unk60 * lod.unk60,
         one68: 1,
-        unk72: bool_c!(lod.unk76.is_some()),
+        unk72: lod.unk76.is_some().into(),
         unk76: lod.unk76.unwrap_or(0),
     };
     write.write_struct(&lodc)?;

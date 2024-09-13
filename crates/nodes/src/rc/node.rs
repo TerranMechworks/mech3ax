@@ -67,6 +67,7 @@ pub enum NodeVariantRc {
 }
 
 type Flags = Maybe<u32, NodeBitFlags>;
+type NType = Maybe<u32, NodeType>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
@@ -76,7 +77,7 @@ pub struct NodeRcC {
     zero040: u32,                  // 040
     unk044: u32,                   // 044
     zone_id: u32,                  // 048
-    node_type: u32,                // 052
+    node_type: NType,              // 052
     data_ptr: Ptr,                 // 056
     mesh_index: i32,               // 060
     environment_data: u32,         // 064
@@ -115,7 +116,7 @@ const ABORT_TEST_NAME: &str = "abort_test";
 fn assert_node(node: NodeRcC, offset: usize) -> Result<(NodeType, NodeVariantsRc)> {
     // invariants for every node type
 
-    let node_type = assert_that!("node type", enum NodeType => node.node_type, offset + 52)?;
+    let node_type = assert_that!("node type", enum node.node_type, offset + 52)?;
 
     let name = if node.name == ABORT_TEST_NODE_NAME {
         debug!("node name `abort_test` fixup");
@@ -271,7 +272,7 @@ fn write_variant(
         zero040: 0,
         unk044: variant.unk044,
         zone_id: variant.zone_id,
-        node_type: node_type as u32,
+        node_type: node_type.maybe(),
         data_ptr: Ptr(variant.data_ptr),
         mesh_index: variant.mesh_index,
         environment_data: 0,
@@ -361,7 +362,11 @@ pub fn size_node(node: &NodeRc) -> u32 {
 pub fn assert_node_info_zero(node: &NodeRcC, offset: usize) -> Result<()> {
     assert_that!("name", zero node.name, offset + 0)?;
     assert_that!("flags", node.flags == Flags::empty(), offset + 36)?;
-    assert_that!("node type", node.node_type == 0, offset + 52)?;
+    assert_that!(
+        "node type",
+        node.node_type == NodeType::Empty.maybe(),
+        offset + 52
+    )?;
 
     assert_that!("field 040", node.zero040 == 0, offset + 40)?;
     assert_that!("field 044", node.unk044 == 0, offset + 44)?;

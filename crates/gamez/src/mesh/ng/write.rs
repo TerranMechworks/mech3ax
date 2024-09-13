@@ -4,7 +4,7 @@ use log::trace;
 use mech3ax_api_types::gamez::mesh::{MeshMaterialInfo, MeshNg, PolygonNg, UvCoord};
 use mech3ax_api_types::{Color, Vec3};
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, bool_c, Result};
+use mech3ax_common::{assert_len, Result};
 use mech3ax_types::{AsBytes as _, Hex, Ptr};
 use std::io::Write;
 
@@ -17,7 +17,7 @@ pub(crate) fn write_mesh_info(write: &mut CountingWriter<impl Write>, mesh: &Mes
     let material_count = assert_len!(u32, mesh.material_infos.len(), "mesh materials")?;
 
     let mesh = MeshNgC {
-        file_ptr: bool_c!(mesh.file_ptr),
+        file_ptr: mesh.file_ptr.into(),
         unk04: mesh.unk04,
         unk08: mesh.unk08,
         parent_count: mesh.parent_count,

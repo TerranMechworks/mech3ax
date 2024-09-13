@@ -7,8 +7,8 @@ use mech3ax_api_types::nodes::pm::{AreaPartitionPm, NodePm};
 use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, Ascii, Maybe, Ptr};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_types::{impl_as_bytes, Ascii, Bool16, Maybe, Ptr};
 use std::io::{Read, Write};
 
 #[derive(Debug)]
@@ -67,6 +67,7 @@ pub enum NodeVariantPm {
 }
 
 type Flags = Maybe<u32, NodeBitFlags>;
+type NType = Maybe<u32, NodeType>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -76,14 +77,14 @@ struct NodePmC {
     zero040: u32,                    // 040
     unk044: u32,                     // 044
     zone_id: u32,                    // 048
-    node_type: u32,                  // 052
+    node_type: NType,                // 052
     data_ptr: Ptr,                   // 056
     mesh_index: i32,                 // 060
     environment_data: u32,           // 064
     action_priority: u32,            // 068
     action_callback: u32,            // 072
     area_partition: AreaPartitionPm, // 076
-    parent_count: u16,               // 084
+    parent_count: Bool16,            // 084
     children_count: u16,             // 086
     parent_array_ptr: Ptr,           // 088
     children_array_ptr: Ptr,         // 092
@@ -106,7 +107,7 @@ impl_as_bytes!(NodePmC, 208);
 fn assert_node(node: NodePmC, offset: usize) -> Result<(NodeType, NodeVariantsPm)> {
     // invariants for every node type
 
-    let node_type = assert_that!("node type", enum NodeType => node.node_type, offset + 52)?;
+    let node_type = assert_that!("node type", enum node.node_type, offset + 52)?;
     if node_type == NodeType::Empty {
         return Err(assert_with_msg!(
             "Expected valid node type, but was {} (at {})",
@@ -169,7 +170,7 @@ fn assert_node(node: NodePmC, offset: usize) -> Result<(NodeType, NodeVariantsPm
     };
 
     // can only have one parent
-    let has_parent = assert_that!("parent count", bool node.parent_count as _, offset + 84)?;
+    let has_parent = assert_that!("parent count", bool node.parent_count, offset + 84)?;
     if has_parent {
         assert_that!(
             "parent array ptr",
@@ -294,14 +295,14 @@ fn write_variant(
         zero040: 0,
         unk044: variant.unk044,
         zone_id: variant.zone_id,
-        node_type: node_type as u32,
+        node_type: node_type.maybe(),
         data_ptr: Ptr(variant.data_ptr),
         mesh_index: variant.mesh_index,
         environment_data: 0,
         action_priority: 1,
         action_callback: 0,
         area_partition,
-        parent_count: bool_c!(variant.has_parent),
+        parent_count: variant.has_parent.into(),
         children_count: variant.children_count,
         parent_array_ptr: Ptr(variant.parent_array_ptr),
         children_array_ptr: Ptr(variant.children_array_ptr),
