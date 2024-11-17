@@ -14,6 +14,7 @@ use mech3ax_api_types::gamez::{GameZDataCs, GameZMetadataCs, TextureName};
 use mech3ax_api_types::nodes::cs::NodeCs;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Rename, Result};
+use mech3ax_timestamp::unix::{from_timestamp, to_timestamp};
 use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _};
 use std::io::{Read, Write};
 
@@ -22,7 +23,7 @@ use std::io::{Read, Write};
 struct HeaderCsC {
     signature: u32,        // 00
     version: u32,          // 04
-    unk08: u32,            // 08
+    timestamp: u32,        // 08
     texture_count: u32,    // 12
     textures_offset: u32,  // 16
     materials_offset: u32, // 20
@@ -76,7 +77,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataCs> {
     assert_that!("version", header.version == VERSION_CS, read.prev + 4)?;
 
     let fixup = fixup::Fixup::read(&header);
-    // unk08
+    let datetime = from_timestamp(header.timestamp);
     assert_that!("texture count", header.texture_count < 4096, read.prev + 12)?;
     assert_that!(
         "texture offset",
@@ -129,7 +130,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataCs> {
     // `read_nodes` calls `assert_end`
 
     let metadata = GameZMetadataCs {
-        gamez_header_unk08: header.unk08,
+        datetime,
         texture_ptrs,
     };
     Ok(GameZDataCs {
@@ -151,7 +152,9 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataCs) 
         materials_offset + materials::size_materials(&gamez.materials, materials::MatType::Ng);
     let (nodes_offset, meshes) = meshes::size_meshes(meshes_offset, &gamez.meshes);
 
-    let is_gamez = gamez.metadata.gamez_header_unk08 != 967277477;
+    let timestamp = to_timestamp(&gamez.metadata.datetime);
+
+    let is_gamez = timestamp != 967277477;
     let light_index = if is_gamez {
         gamez
             .nodes
@@ -168,7 +171,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataCs) 
     let header = HeaderCsC {
         signature: SIGNATURE,
         version: VERSION_CS,
-        unk08: gamez.metadata.gamez_header_unk08,
+        timestamp,
         texture_count,
         textures_offset,
         materials_offset,

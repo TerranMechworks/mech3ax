@@ -1,5 +1,4 @@
 pub mod bytes;
-pub mod rfc3339;
 
 #[inline]
 pub fn bool_false(value: &bool) -> bool {

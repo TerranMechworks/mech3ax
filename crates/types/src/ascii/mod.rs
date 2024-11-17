@@ -6,7 +6,7 @@ use std::fmt;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
-pub struct Ascii<const N: usize>([u8; N]);
+pub struct Ascii<const N: usize>(pub(crate) [u8; N]);
 
 // SAFETY: `#[repr(transparent)]`.
 unsafe impl<const N: usize> TransparentWrapper<[u8; N]> for Ascii<N> {}
@@ -58,6 +58,16 @@ impl<const N: usize> Ascii<N> {
     #[inline]
     pub fn escape_ascii(&self) -> core::slice::EscapeAscii<'_> {
         self.0.escape_ascii()
+    }
+
+    #[inline]
+    pub const fn into_inner(self) -> [u8; N] {
+        self.0
+    }
+
+    #[inline]
+    pub const fn into_bytes(self) -> crate::bytes::Bytes<N> {
+        crate::bytes::Bytes::new(self.0)
     }
 }
 

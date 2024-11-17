@@ -10,6 +10,7 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::{GameZDataPm, GameZMetadataPm};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
+use mech3ax_timestamp::unix::{from_timestamp, to_timestamp};
 use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _};
 use std::io::{Read, Write};
 
@@ -18,7 +19,7 @@ use std::io::{Read, Write};
 struct HeaderPmC {
     signature: u32,        // 00
     version: u32,          // 04
-    unk08: u32,            // 08
+    timestamp: u32,        // 08
     texture_count: u32,    // 12
     textures_offset: u32,  // 16
     materials_offset: u32, // 20
@@ -34,7 +35,8 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataPm> {
 
     assert_that!("signature", header.signature == SIGNATURE, read.prev + 0)?;
     assert_that!("version", header.version == VERSION_PM, read.prev + 4)?;
-    // unk08
+    let datetime = from_timestamp(header.timestamp);
+    // hardcoded limit in engine
     assert_that!("texture count", header.texture_count < 4096, read.prev + 12)?;
     assert_that!(
         "texture offset",
@@ -86,7 +88,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataPm> {
     // `read_nodes` calls `assert_end`
 
     let metadata = GameZMetadataPm {
-        gamez_header_unk08: header.unk08,
+        datetime,
         meshes_array_size: mesh_array_size,
         node_data_count: header.node_count,
         texture_ptrs,
@@ -113,10 +115,12 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataPm) 
     let (nodes_offset, mesh_offsets) =
         meshes::size_meshes(meshes_offset, meshes_array_size, &gamez.meshes);
 
+    let timestamp = to_timestamp(&gamez.metadata.datetime);
+
     let header = HeaderPmC {
         signature: SIGNATURE,
         version: VERSION_PM,
-        unk08: gamez.metadata.gamez_header_unk08,
+        timestamp,
         texture_count,
         textures_offset,
         materials_offset,

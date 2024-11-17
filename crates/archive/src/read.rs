@@ -1,10 +1,13 @@
 use super::{HeaderOneC, HeaderTwoC, Mode, TableEntryC, Version, VERSION_ONE, VERSION_TWO};
 use log::{debug, trace};
-use mech3ax_api_types::archive::ArchiveEntry;
+use mech3ax_api_types::archive::{
+    ArchiveEntry, ArchiveEntryInfo, ArchiveEntryInfoInvalid, ArchiveEntryInfoValid,
+};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Error, Rename, Result};
 use mech3ax_crc32::{crc32_update, CRC32_INIT};
+use mech3ax_timestamp::nt::from_filetime;
 use mech3ax_types::{u32_to_i64, u32_to_usize, AsBytes};
 use std::io::{Read, Seek, SeekFrom};
 
@@ -17,7 +20,8 @@ struct TableEntry {
     name: String,
     start: u32,
     len: u32,
-    garbage: Vec<u8>,
+    flags: u32,
+    info: ArchiveEntryInfo,
 }
 
 pub fn read_archive<R, F, E>(
@@ -45,7 +49,8 @@ where
                 name,
                 start,
                 len,
-                garbage,
+                flags,
+                info,
             } = entry;
             let start = u32_to_usize(start);
             let len = u32_to_usize(len);
@@ -75,7 +80,8 @@ where
             Ok(ArchiveEntry {
                 name,
                 rename,
-                garbage,
+                flags,
+                info,
             })
         })
         .collect::<std::result::Result<Vec<_>, E>>()?;
@@ -147,11 +153,34 @@ fn read_table(
             let entry_name =
                 assert_utf8("entry name", read.prev + 8, || entry.name.to_str_padded())?;
 
+            // lack of memset/initialising memory strikes again...
+            // bit 1 (0x2) of the flags should indicate whether the comment and
+            // the file time is set, but it is too unreliable
+
+            let comment = assert_utf8("entry comment", read.prev + 76, || {
+                entry.comment.to_str_padded()
+            })
+            .ok();
+
+            let filetime = entry.filetime.as_u64();
+            let datetime = from_filetime(filetime);
+
+            let info = match (comment, datetime) {
+                (Some(comment), Some(datetime)) => {
+                    ArchiveEntryInfo::Valid(ArchiveEntryInfoValid { comment, datetime })
+                }
+                _ => ArchiveEntryInfo::Invalid(ArchiveEntryInfoInvalid {
+                    comment: entry.comment.to_vec(),
+                    filetime,
+                }),
+            };
+
             Ok(TableEntry {
                 name: entry_name,
                 start: entry_start,
                 len: entry_len,
-                garbage: entry.garbage.to_vec(),
+                flags: entry.flags,
+                info,
             })
         })
         .collect::<Result<Vec<_>>>()?;

@@ -17,4 +17,4 @@ test = false
 [dependencies]
 
 [build-dependencies]
-time.workspace = true
+time = { workspace = true, features = ["std"] }

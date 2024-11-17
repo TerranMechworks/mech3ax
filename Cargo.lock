@@ -443,11 +443,11 @@ dependencies = [
  "bytemuck",
  "mech3ax-metadata-proc-macro",
  "mech3ax-metadata-types",
+ "mech3ax-timestamp",
  "mech3ax-types",
  "serde",
  "serde_json",
  "serde_test",
- "time",
 ]
 
 [[package]]
@@ -459,6 +459,7 @@ dependencies = [
  "mech3ax-api-types",
  "mech3ax-common",
  "mech3ax-crc32",
+ "mech3ax-timestamp",
  "mech3ax-types",
 ]
 
@@ -496,6 +497,7 @@ dependencies = [
  "mech3ax-api-types",
  "mech3ax-common",
  "mech3ax-nodes",
+ "mech3ax-timestamp",
  "mech3ax-types",
 ]
 
@@ -520,8 +522,8 @@ dependencies = [
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
+ "mech3ax-timestamp",
  "mech3ax-types",
- "time",
 ]
 
 [[package]]
@@ -584,7 +586,7 @@ dependencies = [
 name = "mech3ax-metadata-types"
 version = "0.0.0"
 dependencies = [
- "time",
+ "mech3ax-timestamp",
 ]
 
 [[package]]
@@ -630,6 +632,16 @@ dependencies = [
  "mech3ax-api-types",
  "mech3ax-common",
  "mech3ax-types",
+]
+
+[[package]]
+name = "mech3ax-timestamp"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "serde_test",
+ "time",
 ]
 
 [[package]]

@@ -39,6 +39,9 @@ fn main() {
     resolver.push::<api::interp::Script>();
 
     // --- archive.rs
+    resolver.push::<api::archive::ArchiveEntryInfoValid>();
+    resolver.push::<api::archive::ArchiveEntryInfoInvalid>();
+    resolver.push::<api::archive::ArchiveEntryInfo>();
     resolver.push::<api::archive::ArchiveEntry>();
 
     // --- image.rs

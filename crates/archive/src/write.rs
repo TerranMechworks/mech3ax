@@ -1,9 +1,13 @@
 use super::{HeaderOneC, HeaderTwoC, Mode, TableEntryC, Version, VERSION_ONE, VERSION_TWO};
+use crate::FiletimeC;
 use log::{debug, trace};
-use mech3ax_api_types::archive::ArchiveEntry;
+use mech3ax_api_types::archive::{
+    ArchiveEntry, ArchiveEntryInfo, ArchiveEntryInfoInvalid, ArchiveEntryInfoValid,
+};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, Error, Result};
 use mech3ax_crc32::{crc32_update, CRC32_INIT};
+use mech3ax_timestamp::nt::to_filetime;
 use mech3ax_types::{Ascii, Bytes, Hex};
 use std::io::Write;
 
@@ -54,13 +58,28 @@ where
             };
 
             let name = Ascii::from_str_padded(&entry.name);
-            let garbage = Bytes::from_slice(&entry.garbage);
+
+            let (comment, filetime) = match &entry.info {
+                ArchiveEntryInfo::Valid(ArchiveEntryInfoValid { comment, datetime }) => {
+                    let comment = Ascii::from_str_padded(comment);
+                    let filetime = to_filetime(datetime);
+                    (comment, filetime)
+                }
+                ArchiveEntryInfo::Invalid(ArchiveEntryInfoInvalid { comment, filetime }) => {
+                    let comment = Bytes::from_slice(comment).into_ascii();
+                    (comment, *filetime)
+                }
+            };
+
+            let filetime = FiletimeC::from_u64(filetime);
 
             let entry_c = TableEntryC {
                 start: offset,
                 length,
                 name,
-                garbage,
+                flags: entry.flags,
+                comment,
+                filetime,
             };
 
             offset = offset.checked_add(len).ok_or_else(|| {
@@ -106,7 +125,7 @@ fn write_table(
             };
             write.write_struct(&header)?;
         }
-        Version::Two(_) => {
+        Version::Two(Mode::Motion) | Version::Two(Mode::Sounds) => {
             let header = HeaderTwoC {
                 version: VERSION_TWO,
                 count,

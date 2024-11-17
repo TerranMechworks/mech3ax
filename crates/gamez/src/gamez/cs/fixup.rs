@@ -6,7 +6,7 @@ C1A
 HeaderCsC {
     signature: 43455010,
     version: 42,
-    unk08: 967277730,
+    timestamp: 967277730,
     texture_count: 565,
     textures_offset: 40,
     materials_offset: 24900,
@@ -19,7 +19,7 @@ C1B
 HeaderCsC {
     signature: 43455010,
     version: 42,
-    unk08: 967278018,
+    timestamp: 967278018,
     texture_count: 359,
     textures_offset: 40,
     materials_offset: 15836,
@@ -32,7 +32,7 @@ C1C
 HeaderCsC {
     signature: 43455010,
     version: 42,
-    unk08: 967278208,
+    timestamp: 967278208,
     texture_count: 279,
     textures_offset: 40,
     materials_offset: 12316,
@@ -45,7 +45,7 @@ C2A
 HeaderCsC {
     signature: 43455010,
     version: 42,
-    unk08: 967278462,
+    timestamp: 967278462,
     texture_count: 498,
     textures_offset: 40,
     materials_offset: 21952,
@@ -58,7 +58,7 @@ C2B
 HeaderCsC {
     signature: 43455010,
     version: 42,
-    unk08: 967278721,
+    timestamp: 967278721,
     texture_count: 285,
     textures_offset: 40,
     materials_offset: 12580,
@@ -71,7 +71,7 @@ C3
 HeaderCsC {
     signature: 43455010,
     version: 42,
-    unk08: 967278943,
+    timestamp: 967278943,
     texture_count: 465,
     textures_offset: 40,
     materials_offset: 20500,
@@ -84,7 +84,7 @@ C5
 HeaderCsC {
     signature: 43455010,
     version: 42,
-    unk08: 967279700,
+    timestamp: 967279700,
     texture_count: 582,
     textures_offset: 40,
     materials_offset: 25648,
@@ -97,7 +97,7 @@ C4
 HeaderCsC {
     signature: 43455010,
     version: 42,
-    unk08: 967279328,
+    timestamp: 967279328,
     texture_count: 654,
     textures_offset: 40,
     materials_offset: 28816,
@@ -108,7 +108,7 @@ HeaderCsC {
 }
 Planes
 HeaderCsC {
-    unk08: 967277477,
+    timestamp: 967277477,
     texture_count: 298,
     textures_offset: 40,
     materials_offset: 13152,
@@ -122,7 +122,7 @@ HeaderCsC {
 const HEADER_C4: HeaderCsC = HeaderCsC {
     signature: SIGNATURE,
     version: VERSION_CS,
-    unk08: 967279328,
+    timestamp: 967279328,
     texture_count: 654,
     textures_offset: 40,
     materials_offset: 28816,
@@ -135,7 +135,7 @@ const HEADER_C4: HeaderCsC = HeaderCsC {
 const HEADER_PLANES: HeaderCsC = HeaderCsC {
     signature: SIGNATURE,
     version: VERSION_CS,
-    unk08: 967277477,
+    timestamp: 967277477,
     texture_count: 298,
     textures_offset: 40,
     materials_offset: 13152,

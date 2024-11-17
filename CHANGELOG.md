@@ -2,7 +2,13 @@
 
 ## Unreleased
 
-* Remove duplicate reset state ptr (`anim`)
+* Change/unify date-time stuff
+* Support `u64` in exchange protocol
+* ZArchive field `garbage` is sometimes a comment and timestamp (zarchive, breaking change)
+* PM/CS GameZ field `unk08` is a timestamp (`gamez`, breaking change)
+* Remove duplicate reset state ptr (`anim`, breaking change)
+* Fix `z_mid` issue for MW3 US v1.0/v1.1
+* Materials field 32/`specular` is actually soil (`gamez`, breaking change)
 
 ## [0.6.0] - 2023-02-10
 

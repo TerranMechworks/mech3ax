@@ -3,7 +3,7 @@
 //! All public API types must have metadata, so that type definitions and JSON
 //! serialization/deserialization code can be automatically generated. For now,
 //! this is specifically C#.
-use time::OffsetDateTime;
+use mech3ax_timestamp::DateTime;
 
 /// Base types that can always be used, without special declaration.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -16,6 +16,8 @@ pub enum TypeInfoBase {
     U16,
     /// Rust: u32, C#: uint
     U32,
+    /// Rust: u32, C#: ulong
+    U64,
     /// Rust: i8, C#: sbyte
     I8,
     /// Rust: i16, C#: short
@@ -26,7 +28,7 @@ pub enum TypeInfoBase {
     F32,
     /// Rust: String, C#: string
     String,
-    /// Rust: OffsetDateTime, C#: DateTime
+    /// Rust: DateTime, C#: DateTime
     DateTime,
 }
 
@@ -146,12 +148,13 @@ base_type!(bool, TypeInfoBase::Bool);
 base_type!(u8, TypeInfoBase::U8);
 base_type!(u16, TypeInfoBase::U16);
 base_type!(u32, TypeInfoBase::U32);
+base_type!(u64, TypeInfoBase::U64);
 base_type!(i8, TypeInfoBase::I8);
 base_type!(i16, TypeInfoBase::I16);
 base_type!(i32, TypeInfoBase::I32);
 base_type!(f32, TypeInfoBase::F32);
 base_type!(String, TypeInfoBase::String);
-base_type!(OffsetDateTime, TypeInfoBase::DateTime);
+base_type!(DateTime, TypeInfoBase::DateTime);
 
 impl<Inner: DerivedMetadata> DerivedMetadata for Vec<Inner> {
     const TYPE_INFO: &'static TypeInfo = &TypeInfo::Vec(TypeInfoVec {

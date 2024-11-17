@@ -14,7 +14,7 @@ unsafe impl<const N: usize> TransparentWrapper<[u8; N]> for Bytes<N> {}
 unsafe impl<const N: usize> Zeroable for Bytes<N> {
     #[inline]
     fn zeroed() -> Self {
-        Self::new()
+        Self::zero()
     }
 }
 
@@ -35,8 +35,13 @@ unsafe impl<const N: usize> NoUninit for Bytes<N> {}
 
 impl<const N: usize> Bytes<N> {
     #[inline]
-    pub const fn new() -> Self {
+    pub const fn zero() -> Self {
         Self([0u8; N])
+    }
+
+    #[inline]
+    pub const fn new(inner: [u8; N]) -> Self {
+        Self(inner)
     }
 
     #[inline]
@@ -46,7 +51,7 @@ impl<const N: usize> Bytes<N> {
 
     #[inline]
     pub fn from_slice(slice: &[u8]) -> Self {
-        let mut s = Self::new();
+        let mut s = Self::zero();
         let len = slice.len();
         if len > N {
             s.0.copy_from_slice(&slice[..N]);
@@ -55,12 +60,34 @@ impl<const N: usize> Bytes<N> {
         }
         s
     }
+
+    #[inline]
+    pub const fn into_inner(self) -> [u8; N] {
+        self.0
+    }
+
+    #[inline]
+    pub const fn into_ascii(self) -> crate::ascii::Ascii<N> {
+        crate::ascii::Ascii(self.0)
+    }
+}
+
+impl Bytes<4> {
+    #[inline]
+    pub const fn split(self) -> ([u8; 2], [u8; 2]) {
+        ([self.0[0], self.0[1]], [self.0[2], self.0[3]])
+    }
+
+    #[inline]
+    pub const fn join(hi: [u8; 2], lo: [u8; 2]) -> Self {
+        Self([hi[0], hi[1], lo[0], lo[1]])
+    }
 }
 
 impl<const N: usize> Default for Bytes<N> {
     #[inline]
     fn default() -> Self {
-        Self::new()
+        Self::zero()
     }
 }
 
@@ -76,6 +103,13 @@ impl<const N: usize> From<[u8; N]> for Bytes<N> {
     #[inline]
     fn from(inner: [u8; N]) -> Self {
         Self(inner)
+    }
+}
+
+impl<const N: usize> From<Bytes<N>> for [u8; N] {
+    #[inline]
+    fn from(outer: Bytes<N>) -> Self {
+        outer.0
     }
 }
 

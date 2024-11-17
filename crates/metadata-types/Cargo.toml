@@ -9,4 +9,4 @@ publish.workspace = true
 doctest = false
 
 [dependencies]
-time.workspace = true
+mech3ax-timestamp = { path = "../timestamp" }

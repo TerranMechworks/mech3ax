@@ -9,6 +9,7 @@ use crate::nodes::rc::NodeRc;
 use ::serde::{Deserialize, Serialize};
 use materials::Material;
 use mech3ax_metadata_proc_macro::Struct;
+use mech3ax_timestamp::DateTime;
 use mesh::{MeshMw, MeshNg, MeshRc};
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
@@ -30,7 +31,7 @@ pub struct GameZDataMw {
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct GameZMetadataPm {
-    pub gamez_header_unk08: u32,
+    pub datetime: DateTime,
     pub meshes_array_size: i32,
     pub node_data_count: u32,
     pub texture_ptrs: Vec<Option<u32>>,
@@ -48,7 +49,7 @@ pub struct GameZDataPm {
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct GameZMetadataCs {
-    pub gamez_header_unk08: u32,
+    pub datetime: DateTime,
     pub texture_ptrs: Vec<Option<u32>>,
 }
 

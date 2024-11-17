@@ -1,11 +1,16 @@
-use ::serde::{Deserialize, Serialize};
+use super::DateTime;
+use serde::{Deserialize, Serialize};
 use serde_test::{assert_tokens, Configure as _, Token};
-use time::OffsetDateTime;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
-pub struct Time {
-    #[serde(with = "super")]
-    pub time: OffsetDateTime,
+struct Time {
+    time: DateTime,
+}
+
+impl Time {
+    const UNIX_EPOCH: Self = Self {
+        time: DateTime::UNIX_EPOCH,
+    };
 }
 
 const T_RFC: &str = "1970-01-01T00:00:00Z";
@@ -14,18 +19,15 @@ const T_RFC: &str = "1970-01-01T00:00:00Z";
 fn time_json() {
     let expected = format!(r#"{{"time":"{}"}}"#, T_RFC);
     let t: Time = serde_json::from_str(&expected).unwrap();
-    assert_eq!(t.time, OffsetDateTime::UNIX_EPOCH);
+    assert_eq!(t, Time::UNIX_EPOCH);
     let actual = serde_json::to_string(&t).unwrap();
     assert_eq!(actual, expected);
 }
 
 #[test]
 fn time_compact() {
-    let t: Time = Time {
-        time: OffsetDateTime::UNIX_EPOCH,
-    };
     assert_tokens(
-        &t.compact(),
+        &Time::UNIX_EPOCH.compact(),
         &[
             Token::Struct {
                 name: "Time",
@@ -40,11 +42,8 @@ fn time_compact() {
 
 #[test]
 fn time_readable() {
-    let t: Time = Time {
-        time: OffsetDateTime::UNIX_EPOCH,
-    };
     assert_tokens(
-        &t.readable(),
+        &Time::UNIX_EPOCH.readable(),
         &[
             Token::Struct {
                 name: "Time",

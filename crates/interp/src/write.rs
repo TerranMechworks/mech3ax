@@ -1,8 +1,9 @@
-use super::{to_timestamp, InterpEntryC, InterpHeaderC, SIGNATURE, VERSION};
+use super::{InterpEntryC, InterpHeaderC, SIGNATURE, VERSION};
 use log::trace;
 use mech3ax_api_types::interp::Script;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, Result};
+use mech3ax_timestamp::unix::to_timestamp;
 use mech3ax_types::{AsBytes as _, Ascii};
 use std::io::Write;
 
@@ -20,7 +21,7 @@ pub fn write_interp(write: &mut CountingWriter<impl Write>, scripts: &[Script]) 
         trace!("Writing interp entry {}", index);
         let name = Ascii::from_str_padded(&script.name);
         // Cast safety: truncation simply leads to incorrect timestamp
-        let last_modified = to_timestamp(script.last_modified);
+        let last_modified = to_timestamp(&script.last_modified);
         let entry = InterpEntryC {
             name,
             last_modified,

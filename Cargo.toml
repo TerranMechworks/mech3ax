@@ -29,7 +29,7 @@ log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_test = "1.0"
-time = "0.3"
+time = { version = "0.3", default-features = false }
 
 # api types only
 base64 = "0.22"
