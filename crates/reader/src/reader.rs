@@ -1,9 +1,8 @@
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_with_msg, Result};
+use serde_json::{Number, Value};
 use std::convert::TryInto;
 use std::io::{Read, Write};
-
-use serde_json::{Number, Value};
 
 const INT: u32 = 1;
 const FLOAT: u32 = 2;
