@@ -14,7 +14,7 @@ use mech3ax_common::string::{
     str_from_c_padded, str_from_c_partition, str_to_c_padded, str_to_c_partition,
 };
 use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_debug::{Ascii, Zeros};
+use mech3ax_types::{Ascii, Zeros};
 use num_traits::FromPrimitive as _;
 use std::io::{Read, Write};
 

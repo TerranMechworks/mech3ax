@@ -1,7 +1,7 @@
 use super::*;
 use crate::string::str_to_c_padded;
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_debug::Ascii;
+use mech3ax_types::Ascii;
 use std::io::Cursor;
 
 trait ReadAll {

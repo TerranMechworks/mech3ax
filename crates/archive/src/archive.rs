@@ -8,7 +8,7 @@ use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{bytes_to_c, str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_len, assert_that, Error, Result};
 use mech3ax_crc32::{crc32_update, CRC32_INIT};
-use mech3ax_debug::{Ascii, Bytes};
+use mech3ax_types::{Ascii, Bytes};
 use std::collections::HashSet;
 use std::io::{Read, Seek, SeekFrom, Write};
 

@@ -413,7 +413,7 @@ dependencies = [
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
- "mech3ax-debug",
+ "mech3ax-types",
  "num-derive",
  "num-traits",
 ]
@@ -443,7 +443,7 @@ dependencies = [
  "mech3ax-api-types",
  "mech3ax-common",
  "mech3ax-crc32",
- "mech3ax-debug",
+ "mech3ax-types",
 ]
 
 [[package]]
@@ -453,20 +453,13 @@ dependencies = [
  "bitflags 2.6.0",
  "bytemuck",
  "mech3ax-api-types",
- "mech3ax-debug",
+ "mech3ax-types",
  "num-traits",
 ]
 
 [[package]]
 name = "mech3ax-crc32"
 version = "0.0.0"
-
-[[package]]
-name = "mech3ax-debug"
-version = "0.0.0"
-dependencies = [
- "bytemuck",
-]
 
 [[package]]
 name = "mech3ax-encoding"
@@ -488,8 +481,8 @@ dependencies = [
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
- "mech3ax-debug",
  "mech3ax-nodes",
+ "mech3ax-types",
  "num-derive",
  "num-traits",
 ]
@@ -504,8 +497,8 @@ dependencies = [
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
- "mech3ax-debug",
  "mech3ax-pixel-ops",
+ "mech3ax-types",
  "num-traits",
 ]
 
@@ -517,7 +510,7 @@ dependencies = [
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
- "mech3ax-debug",
+ "mech3ax-types",
  "time",
 ]
 
@@ -603,7 +596,7 @@ dependencies = [
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
- "mech3ax-debug",
+ "mech3ax-types",
  "num-derive",
  "num-traits",
 ]
@@ -628,8 +621,15 @@ dependencies = [
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
- "mech3ax-debug",
+ "mech3ax-types",
  "num-traits",
+]
+
+[[package]]
+name = "mech3ax-types"
+version = "0.0.0"
+dependencies = [
+ "bytemuck",
 ]
 
 [[package]]

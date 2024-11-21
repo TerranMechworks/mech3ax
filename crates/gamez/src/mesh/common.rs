@@ -5,7 +5,7 @@ use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Color, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlags;
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
-use mech3ax_debug::{Bits, Ptr};
+use mech3ax_types::{Bits, Ptr};
 use std::io::{Read, Write};
 
 #[inline(always)]

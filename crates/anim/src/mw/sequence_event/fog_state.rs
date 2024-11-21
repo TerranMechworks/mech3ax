@@ -7,7 +7,7 @@ use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Color, Range};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::str_to_c_padded;
 use mech3ax_common::{assert_that, Result};
-use mech3ax_debug::Ascii;
+use mech3ax_types::Ascii;
 use std::io::{Read, Write};
 
 const DEFAULT_FOG_NAME: &str = "default_fog_name";

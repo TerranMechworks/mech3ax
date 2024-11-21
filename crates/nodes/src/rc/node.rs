@@ -17,7 +17,7 @@ use mech3ax_common::assert::{assert_all_zero, assert_utf8};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_debug::{Ascii, Hex, Ptr};
+use mech3ax_types::{Ascii, Hex, Ptr};
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
 

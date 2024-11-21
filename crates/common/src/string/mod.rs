@@ -1,4 +1,4 @@
-use mech3ax_debug::{Ascii, Bytes};
+use mech3ax_types::{Ascii, Bytes};
 
 #[derive(Debug)]
 pub enum ConversionError {

@@ -11,7 +11,7 @@ use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlags;
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
-use mech3ax_debug::Ascii;
+use mech3ax_types::Ascii;
 use std::io::{Read, Write};
 
 const INPUT_NODE_INDEX: u32 = -200i32 as u32;

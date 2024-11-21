@@ -9,7 +9,7 @@ use mech3ax_common::string::{
     str_to_c_padded, str_to_c_partition,
 };
 use mech3ax_common::{assert_that, Result};
-use mech3ax_debug::{Ascii, Bytes};
+use mech3ax_types::{Ascii, Bytes};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]

@@ -9,11 +9,11 @@ use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Error, Result};
-use mech3ax_debug::Ascii;
 use mech3ax_pixel_ops::{
     pal8to888, pal8to888a, rgb565to888, rgb565to888a, rgb888ato565, rgb888atopal8, rgb888to565,
     rgb888topal8, simple_alpha,
 };
+use mech3ax_types::Ascii;
 use num_traits::FromPrimitive;
 use std::collections::HashSet;
 use std::io::{Read, Write};

@@ -1,5 +1,5 @@
 [package]
-name = "mech3ax-debug"
+name = "mech3ax-types"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
