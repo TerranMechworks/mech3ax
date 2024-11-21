@@ -14,7 +14,7 @@ unsafe impl<const N: usize> TransparentWrapper<[u8; N]> for Bytes<N> {}
 unsafe impl<const N: usize> Zeroable for Bytes<N> {
     #[inline]
     fn zeroed() -> Self {
-        Self([0u8; N])
+        Self::new()
     }
 }
 
@@ -43,6 +43,18 @@ impl<const N: usize> Bytes<N> {
     pub fn to_vec(&self) -> Vec<u8> {
         Vec::from(self.0)
     }
+
+    #[inline]
+    pub fn from_slice(slice: &[u8]) -> Self {
+        let mut s = Self::new();
+        let len = slice.len();
+        if len > N {
+            s.0.copy_from_slice(&slice[..N]);
+        } else {
+            (&mut s.0[..len]).copy_from_slice(&slice);
+        }
+        s
+    }
 }
 
 impl<const N: usize> Default for Bytes<N> {
@@ -67,28 +79,63 @@ impl<const N: usize> From<[u8; N]> for Bytes<N> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::Bytes;
-
-    #[test]
-    fn bytes_all_zero() {
-        let z = Bytes([0x00, 0x00, 0x00]);
-        let f = format!("{:?}", z);
-        assert_eq!(f, "[00, 00, 00]");
-    }
-
-    #[test]
-    fn bytes_non_zero() {
-        let z = Bytes([0xfa, 0x11, 0xed]);
-        let f = format!("{:?}", z);
-        assert_eq!(f, "[fa, 11, ed]");
-    }
-
-    #[test]
-    fn bytes_always_has_no_newlines() {
-        let z = Bytes([0xfa, 0x11, 0xed]);
-        let f = format!("{:#?}", z);
-        assert_eq!(f, "[fa, 11, ed]");
+impl<const N: usize> AsRef<[u8]> for Bytes<N> {
+    #[inline]
+    fn as_ref(&self) -> &[u8] {
+        &self.0
     }
 }
+
+impl<const N: usize> AsRef<[u8; N]> for Bytes<N> {
+    #[inline]
+    fn as_ref(&self) -> &[u8; N] {
+        &self.0
+    }
+}
+
+impl<const N: usize> std::ops::Deref for Bytes<N> {
+    type Target = [u8];
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<const N: usize> PartialEq<&Bytes<N>> for Bytes<N> {
+    #[inline]
+    fn eq(&self, other: &&Bytes<N>) -> bool {
+        self.eq(*other)
+    }
+}
+
+impl<const N: usize> PartialEq<[u8]> for Bytes<N> {
+    #[inline]
+    fn eq(&self, other: &[u8]) -> bool {
+        self.0.eq(other)
+    }
+}
+
+impl<const N: usize> PartialEq<&[u8]> for Bytes<N> {
+    #[inline]
+    fn eq(&self, other: &&[u8]) -> bool {
+        self.0.eq(*other)
+    }
+}
+
+impl<const N: usize> PartialEq<[u8; N]> for Bytes<N> {
+    #[inline]
+    fn eq(&self, other: &[u8; N]) -> bool {
+        self.0.eq(other)
+    }
+}
+
+impl<const N: usize> PartialEq<&[u8; N]> for Bytes<N> {
+    #[inline]
+    fn eq(&self, other: &&[u8; N]) -> bool {
+        self.0.eq(*other)
+    }
+}
+
+#[cfg(test)]
+mod tests;
