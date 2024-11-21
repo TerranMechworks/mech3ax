@@ -11,7 +11,7 @@ pub fn windows1252_decode(bytes: &[u8]) -> Cow<str> {
         Cow::Owned(
             bytes
                 .iter()
-                .map(|&byte| WINDOWS1252[byte as usize])
+                .map(|&byte| WINDOWS1252[usize::from(byte)])
                 .collect(),
         )
     }
