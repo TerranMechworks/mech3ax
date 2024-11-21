@@ -40,17 +40,20 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
             let mut path = parent.to_path_buf();
             path.push(info.name.clone());
             path.set_extension("png");
-            let mut reader = image::io::Reader::new(BufReader::new(
-                File::open(&path)
-                    .with_context(|| format!("Failed to open image \"{:?}\"", &path))?,
-            ));
+
+            let inner = File::open(&path)
+                .with_context(|| format!("Failed to open image \"{:?}\"", &path))?;
+            let mut reader = image::ImageReader::new(BufReader::new(inner));
             reader.set_format(ImageFormat::Png);
+
             let mut image = reader
                 .decode()
                 .with_context(|| format!("Failed to read image \"{:?}\"", &path))?;
+
             let (width, height) = image.dimensions();
             info.width = convert_dim(width, "image width")?;
             info.height = convert_dim(height, "image height")?;
+
             if info.alpha == TextureAlpha::None && image.color() == ColorType::Rgba8 {
                 println!("WARNING: removing alpha from `{}`", info.name);
                 image = DynamicImage::ImageRgb8(image.to_rgb8());

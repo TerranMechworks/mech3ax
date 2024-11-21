@@ -322,7 +322,7 @@ pub extern "C" fn write_textures(
             |name| -> Result<image::DynamicImage> {
                 let data = buffer_callback(callback, name)?;
 
-                let mut reader = image::io::Reader::new(Cursor::new(data));
+                let mut reader = image::ImageReader::new(Cursor::new(data));
                 reader.set_format(image::ImageFormat::Png);
                 let image = reader
                     .decode()

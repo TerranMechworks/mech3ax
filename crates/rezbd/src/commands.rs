@@ -232,7 +232,7 @@ pub(crate) fn textures(input: String, output: String) -> Result<()> {
         let name = format!("{}.png", original);
         let buf = zip_read(&mut zip, &name)?;
 
-        let mut reader = image::io::Reader::new(Cursor::new(buf));
+        let mut reader = image::ImageReader::new(Cursor::new(buf));
         reader.set_format(image::ImageFormat::Png);
         let image = reader
             .decode()
