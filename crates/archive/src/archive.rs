@@ -5,11 +5,10 @@ use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{bytes_to_c, str_from_c_padded, str_to_c_padded};
-use mech3ax_common::{assert_len, assert_that, Error, Result};
+use mech3ax_common::{assert_len, assert_that, Error, Rename, Result};
 use mech3ax_crc32::{crc32_update, CRC32_INIT};
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_types::{u32_to_usize, Ascii, Bytes};
-use std::collections::HashSet;
 use std::io::{Read, Seek, SeekFrom, Write};
 
 const VERSION_ONE: u32 = 1;
@@ -113,17 +112,6 @@ fn read_table(
     Ok((entries, checksum))
 }
 
-fn rename(seen: &mut HashSet<String>, original: &str) -> String {
-    let (stem, suffix) = original.rsplit_once('.').unwrap_or((original, ""));
-    for index in 1usize.. {
-        let name = format!("{}-{}.{}", stem, index, suffix);
-        if seen.insert(name.clone()) {
-            return name;
-        }
-    }
-    panic!("ran out of renames");
-}
-
 pub fn read_archive<R, F, E>(
     read: &mut CountingReader<R>,
     mut save_file: F,
@@ -136,7 +124,7 @@ where
 {
     let (entries, checksum) = read_table(read, version)?;
     let mut crc = CRC32_INIT;
-    let mut seen: HashSet<String> = HashSet::new();
+    let mut seen = Rename::new();
     let entries = entries
         .into_iter()
         .map(|(name, start, length, garbage)| {
@@ -152,15 +140,12 @@ where
             read.read_exact(&mut buffer)?;
             crc = crc32_update(crc, &buffer);
 
-            let rename = if seen.insert(name.clone()) {
-                save_file(&name, buffer, read.prev)?;
-                None
-            } else {
-                let renamed = rename(&mut seen, &name);
-                debug!("Renamed entry from `{}` to `{}`", name, renamed);
-                save_file(&renamed, buffer, read.prev)?;
-                Some(renamed)
-            };
+            let rename = seen.insert(&name);
+            let filename = rename
+                .as_deref()
+                .inspect(|rename| debug!("Renaming entry from `{}` to `{}`", name, rename))
+                .unwrap_or(&name);
+            save_file(filename, buffer, read.prev)?;
 
             Ok(ArchiveEntry {
                 name,
@@ -208,13 +193,12 @@ where
     let transformed = entries
         .iter()
         .map(|entry| {
-            let data = match &entry.rename {
-                Some(rename) => {
-                    debug!("Renamed entry from `{}` to `{}`", entry.name, rename);
-                    load_file(rename, write.offset)
-                }
-                None => load_file(&entry.name, write.offset),
-            }?;
+            let filename = entry
+                .rename
+                .as_deref()
+                .inspect(|rename| debug!("Renaming entry from `{}` to `{}`", entry.name, rename))
+                .unwrap_or(&entry.name);
+            let data = load_file(filename, write.offset)?;
 
             trace!(
                 "Writing entry `{}` data with length {} at {}",

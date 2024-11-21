@@ -7,7 +7,7 @@ use mech3ax_api_types::image::{
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
-use mech3ax_common::{assert_len, assert_that, assert_with_msg, Error, Result};
+use mech3ax_common::{assert_len, assert_that, assert_with_msg, Error, Rename, Result};
 use mech3ax_pixel_ops::{
     pal8to888, pal8to888a, rgb565to888, rgb565to888a, rgb888ato565, rgb888atopal8, rgb888to565,
     rgb888topal8, simple_alpha,
@@ -15,7 +15,6 @@ use mech3ax_pixel_ops::{
 use mech3ax_types::Ascii;
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
 use num_traits::FromPrimitive;
-use std::collections::HashSet;
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -66,16 +65,6 @@ bitflags::bitflags! {
         const ALPHA_LOADED = 1 << 6;
         const PALETTE_LOADED = 1 << 7;
     }
-}
-
-fn rename(seen: &HashSet<String>, original: &str) -> String {
-    for index in 1usize.. {
-        let name = format!("{}-{}", original, index);
-        if !seen.contains(&name) {
-            return name;
-        }
-    }
-    panic!("ran out of renames");
 }
 
 fn convert_info_from_c(
@@ -300,7 +289,8 @@ where
         })
         .collect::<std::result::Result<Vec<_>, E>>()?;
 
-    let mut seen: HashSet<String> = HashSet::new();
+    // rename only required for rc...
+    let mut seen = Rename::new();
     let texture_infos = tex_table
         .into_iter()
         .map(|(name, start_offset, palette_index)| {
@@ -313,14 +303,14 @@ where
                 None
             };
             let (mut info, image) = read_texture(read, name.clone(), global_palette)?;
-            if seen.insert(name) {
-                save_texture(&info.name, image)?;
-            } else {
-                let renamed = rename(&seen, &info.name);
-                debug!("Renaming texture from `{}` to `{}`", info.name, renamed);
-                save_texture(&renamed, image)?;
-                info.rename = Some(renamed);
-            }
+            info.rename = seen.insert(&name);
+
+            let filename = info
+                .rename
+                .as_deref()
+                .inspect(|renamed| debug!("Renaming texture from `{}` to `{}`", info.name, renamed))
+                .unwrap_or(&info.name);
+            save_texture(filename, image)?;
             Ok(info)
         })
         .collect::<std::result::Result<Vec<_>, E>>()?;
@@ -654,13 +644,13 @@ where
     }
 
     for info in &manifest.texture_infos {
-        let image = match &info.rename {
-            Some(renamed) => {
-                debug!("Renaming texture from `{}` to `{}`", info.name, renamed);
-                load_texture(renamed)?
-            }
-            None => load_texture(&info.name)?,
-        };
+        let filename = info
+            .rename
+            .as_deref()
+            .inspect(|renamed| debug!("Renaming texture from `{}` to `{}`", info.name, renamed))
+            .unwrap_or(&info.name);
+        let image = load_texture(filename)?;
+
         debug!("Writing texture `{}` at {}", info.name, write.offset);
         write_texture(write, info, image, &manifest.global_palettes)?;
     }

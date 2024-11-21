@@ -13,9 +13,8 @@ use log::{debug, trace};
 use mech3ax_api_types::gamez::{GameZDataCs, GameZMetadataCs, TextureName};
 use mech3ax_api_types::nodes::cs::NodeCs;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
+use mech3ax_common::{assert_len, assert_that, assert_with_msg, Rename, Result};
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
-use std::collections::HashSet;
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern)]
@@ -34,49 +33,40 @@ struct HeaderCsC {
 }
 impl_as_bytes!(HeaderCsC, 40);
 
-fn rename(seen: &mut HashSet<String>, original: &str) -> String {
-    for index in 1usize.. {
-        // texture names have the `.tif` suffix
-        let (prefix, suffix) = original.rsplit_once('.').unwrap_or((original, ""));
-        let name = format!("{}{}.{}", prefix, index, suffix);
-        if seen.insert(name.clone()) {
-            return name;
-        }
-    }
-    panic!("ran out of renames");
-}
-
 fn dedupe_texture_names(original_textures: Vec<String>) -> (Vec<String>, Vec<TextureName>) {
-    let mut seen = HashSet::with_capacity(original_textures.len());
-    let mut renamed_textures = Vec::with_capacity(original_textures.len());
-    let mut textures = Vec::with_capacity(original_textures.len());
-    for original in original_textures {
-        let renamed = if seen.insert(original.clone()) {
-            renamed_textures.push(original.clone());
-            None
-        } else {
-            let renamed = rename(&mut seen, &original);
-            debug!("Renaming texture from `{}` to `{}`", original, renamed);
-            renamed_textures.push(renamed.clone());
-            Some(renamed)
-        };
-        textures.push(TextureName { original, renamed });
-    }
-    (renamed_textures, textures)
+    let mut seen = Rename::new();
+    original_textures
+        .into_iter()
+        .map(|original| {
+            let renamed = seen.insert(&original);
+            let name = renamed
+                .as_ref()
+                .inspect(|renamed| {
+                    debug!("Renaming texture from `{}` to `{}`", original, renamed);
+                })
+                .unwrap_or(&original)
+                .clone();
+            (name, TextureName { original, renamed })
+        })
+        .unzip()
 }
 
 fn redupe_texture_names(textures: &[TextureName]) -> (Vec<String>, Vec<String>) {
-    let mut original_textures = Vec::with_capacity(textures.len());
-    let mut renamed_textures = Vec::with_capacity(textures.len());
-    for texture in textures {
-        let renamed = match &texture.renamed {
-            Some(renamed) => renamed.clone(),
-            None => texture.original.clone(),
-        };
-        original_textures.push(texture.original.clone());
-        renamed_textures.push(renamed);
-    }
-    (original_textures, renamed_textures)
+    textures
+        .iter()
+        .map(|texture| {
+            let original = texture.original.clone();
+            let name = texture
+                .renamed
+                .as_ref()
+                .inspect(|renamed| {
+                    debug!("Renaming texture from `{}` to `{}`", original, renamed);
+                })
+                .unwrap_or(&original)
+                .clone();
+            (original, name)
+        })
+        .unzip()
 }
 
 pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataCs> {
