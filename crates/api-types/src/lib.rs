@@ -9,12 +9,10 @@ pub mod motion;
 pub mod nodes;
 pub mod saves;
 mod serde;
-mod size;
 pub mod zmap;
 
 pub use crate::serde::bytes::Bytes;
-pub use mech3ax_types::{impl_as_bytes, AsBytes};
-pub use size::{u16_to_usize, u32_to_usize};
+pub use mech3ax_types::{impl_as_bytes, u16_to_usize, u32_to_usize, AsBytes};
 
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
