@@ -75,13 +75,6 @@ impl<R: Read> CountingReader<R> {
         Ok(i16::from_le_bytes(buf))
     }
 
-    #[inline]
-    pub fn read_u8(&mut self) -> Result<u8> {
-        let mut buf = [0; 1];
-        self.read_exact(&mut buf)?;
-        Ok(u8::from_le_bytes(buf))
-    }
-
     pub fn read_struct<S: AsBytes>(&mut self) -> Result<S> {
         let mut s = S::zeroed();
         let buf = s.as_bytes_mut();
@@ -118,15 +111,6 @@ impl<R: Read> CountingReader<R> {
             )),
         }
     }
-
-    #[inline]
-    pub fn read_to_end(&mut self) -> Result<Vec<u8>> {
-        let mut buf = Vec::new();
-        self.inner.read_to_end(&mut buf)?;
-        self.prev = self.offset;
-        self.offset += buf.len() as u32;
-        Ok(buf)
-    }
 }
 
 impl<R: Read + Seek> CountingReader<R> {
@@ -153,11 +137,6 @@ impl<W: Write> CountingWriter<W> {
             inner: write,
             offset,
         }
-    }
-
-    #[inline]
-    pub fn get_mut(&mut self) -> &mut W {
-        &mut self.inner
     }
 
     #[inline]
@@ -202,11 +181,6 @@ impl<W: Write> CountingWriter<W> {
     }
 
     #[inline]
-    pub fn write_u8(&mut self, value: u8) -> Result<()> {
-        self.write_all(&[value])
-    }
-
-    #[inline]
     pub fn write_struct<S: AsBytes>(&mut self, value: &S) -> Result<()> {
         let buf = value.as_bytes();
         self.write_all(buf)
@@ -227,15 +201,6 @@ impl<W: Write> CountingWriter<W> {
     pub fn write_zeros(&mut self, count: u32) -> Result<()> {
         let buf = vec![0; count as usize];
         self.write_all(&buf)
-    }
-}
-
-impl<W: Write + Seek> Seek for CountingWriter<W> {
-    #[inline]
-    fn seek(&mut self, pos: SeekFrom) -> Result<u64> {
-        let offset = self.inner.seek(pos)?;
-        self.offset = offset as usize;
-        Ok(offset)
     }
 }
 

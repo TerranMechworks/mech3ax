@@ -104,7 +104,7 @@ fn struct_roundtrip() {
     cursor.write_struct(&expected).unwrap();
     assert_eq!(
         std::mem::size_of::<TestStruct>() as u64,
-        cursor.get_mut().position()
+        cursor.inner.position()
     );
 
     let mut cursor = cursor.into_inner();
