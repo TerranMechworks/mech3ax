@@ -8,9 +8,16 @@ mod hex;
 mod ptr;
 mod zeros;
 
-pub use ascii::Ascii;
+pub use ascii::{str_from_ascii, str_to_ascii, string_from_ascii, Ascii};
 pub use bits::Bits;
 pub use bytes::Bytes;
 pub use hex::{Hex, HexDebug};
 pub use ptr::Ptr;
 pub use zeros::Zeros;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConversionError {
+    NonAscii(usize),
+    PaddingError(&'static str),
+    Unterminated,
+}
