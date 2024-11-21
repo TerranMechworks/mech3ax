@@ -230,7 +230,13 @@ fn main() -> Result<()> {
     color_eyre::install()?;
 
     let env = Env::default().default_filter_or("warn");
-    env_logger::Builder::from_env(env).init();
+    env_logger::Builder::from_env(env)
+        .format_indent(None)
+        .format_level(false)
+        .format_module_path(false)
+        .format_target(false)
+        .format_timestamp(None)
+        .init();
 
     let cli: Cli = Cli::parse();
     let game: GameType = cli.game.into();
