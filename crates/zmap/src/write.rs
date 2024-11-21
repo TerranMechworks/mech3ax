@@ -1,9 +1,9 @@
 use super::{MapHeaderC, MAP_VERSION};
 use log::{debug, trace};
 use mech3ax_api_types::zmap::{MapFeature, Zmap};
-use mech3ax_api_types::AsBytes as _;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, Result};
+use mech3ax_types::AsBytes as _;
 use std::io::Write;
 
 fn write_map_feature(

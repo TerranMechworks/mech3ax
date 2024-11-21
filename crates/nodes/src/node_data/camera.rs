@@ -2,11 +2,12 @@ use crate::math::cotangent;
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::Camera;
-use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Matrix, Range, Vec3};
+use mech3ax_api_types::{Matrix, Range, Vec3};
 use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use mech3ax_types::Zeros;
+use mech3ax_types::{impl_as_bytes, AsBytes as _};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]

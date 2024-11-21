@@ -7,12 +7,13 @@ use mech3ax_api_types::anim::events::{
     CallAnimationWithNode,
 };
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Vec3};
+use mech3ax_api_types::Vec3;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_types::Ascii;
+use mech3ax_types::{impl_as_bytes, AsBytes as _};
 use std::io::{Read, Write};
 
 const INPUT_NODE_INDEX: u32 = 65336;

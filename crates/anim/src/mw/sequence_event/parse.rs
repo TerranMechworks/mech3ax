@@ -11,9 +11,9 @@ use mech3ax_api_types::anim::events::{
     StopAnimation, StopSequence,
 };
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_types::{impl_as_bytes, AsBytes as _};
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
 

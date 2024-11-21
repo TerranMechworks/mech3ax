@@ -5,9 +5,10 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::rc::World;
 use mech3ax_api_types::nodes::{Area, PartitionPg};
-use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Color, Range};
+use mech3ax_api_types::{Color, Range};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
+use mech3ax_types::{impl_as_bytes, AsBytes as _};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]

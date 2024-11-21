@@ -1,9 +1,10 @@
 use super::{CycleInfoC, MatType, MaterialC, MaterialFlags};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::materials::Material;
-use mech3ax_api_types::{AsBytes as _, Color};
+use mech3ax_api_types::Color;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, bool_c, Result};
+use mech3ax_types::AsBytes as _;
 use std::io::Write;
 
 pub(super) fn find_texture_index_by_name(textures: &[String], texture_name: &str) -> Result<u32> {

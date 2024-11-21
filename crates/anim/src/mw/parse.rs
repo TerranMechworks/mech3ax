@@ -2,11 +2,11 @@ use super::anim_def::{read_anim_def, read_anim_def_zero, write_anim_def, write_a
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::trace;
 use mech3ax_api_types::anim::{AnimDef, AnimMetadata, AnimName, AnimPtr};
-use mech3ax_api_types::impl_as_bytes;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_partition, str_to_c_partition};
 use mech3ax_common::{assert_that, Error, Result};
+use mech3ax_types::impl_as_bytes;
 use mech3ax_types::Ascii;
 use std::convert::From;
 use std::io::{Read, Write};

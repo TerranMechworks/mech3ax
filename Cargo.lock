@@ -612,6 +612,7 @@ dependencies = [
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
+ "mech3ax-types",
 ]
 
 [[package]]
@@ -684,6 +685,7 @@ dependencies = [
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
+ "mech3ax-types",
 ]
 
 [[package]]

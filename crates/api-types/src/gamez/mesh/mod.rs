@@ -2,11 +2,11 @@ mod mw;
 mod ng;
 mod rc;
 
-use crate::impl_as_bytes;
 use crate::{Color, Vec3};
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_metadata_proc_macro::Struct;
+use mech3ax_types::impl_as_bytes;
 
 #[derive(
     Debug,

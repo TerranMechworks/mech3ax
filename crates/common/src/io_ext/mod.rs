@@ -1,7 +1,7 @@
 use crate::assert::assert_utf8;
 use crate::assert_with_msg;
 use crate::string::str_from_c_sized;
-use mech3ax_api_types::AsBytes;
+use mech3ax_types::AsBytes;
 use std::io::{Read, Result, Seek, SeekFrom, Write};
 
 #[cfg(not(target_endian = "little"))]

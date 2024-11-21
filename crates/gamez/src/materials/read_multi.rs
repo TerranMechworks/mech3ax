@@ -2,9 +2,9 @@ use super::read_single::{read_cycle, read_material, read_material_zero};
 use super::{MatType, MaterialInfoC};
 use log::{debug, trace};
 use mech3ax_api_types::gamez::materials::Material;
-use mech3ax_api_types::AsBytes as _;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Result};
+use mech3ax_types::AsBytes as _;
 use std::io::Read;
 
 pub(crate) fn read_materials(

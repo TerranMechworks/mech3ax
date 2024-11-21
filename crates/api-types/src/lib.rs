@@ -12,11 +12,12 @@ mod serde;
 pub mod zmap;
 
 pub use crate::serde::bytes::Bytes;
-pub use mech3ax_types::{impl_as_bytes, u16_to_usize, u32_to_usize, AsBytes};
+pub use mech3ax_types::{u16_to_usize, u32_to_usize};
 
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_metadata_proc_macro::Struct;
+use mech3ax_types::impl_as_bytes;
 
 #[derive(
     Debug,

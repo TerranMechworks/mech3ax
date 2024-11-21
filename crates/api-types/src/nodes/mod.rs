@@ -3,12 +3,12 @@ pub mod mw;
 pub mod pm;
 pub mod rc;
 
-use crate::impl_as_bytes;
 use crate::serde::{bool_false, bool_true};
 use crate::{Color, Matrix, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_metadata_proc_macro::Struct;
+use mech3ax_types::impl_as_bytes;
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Camera {

@@ -5,11 +5,12 @@ use mech3ax_api_types::anim::events::{
     ObjectMotionSiFrame, ObjectMotionSiScript, RotateData, ScaleData, TranslateData,
 };
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Quaternion, Vec3};
+use mech3ax_api_types::{Quaternion, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::bytes_to_c;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_types::Bytes;
+use mech3ax_types::{impl_as_bytes, AsBytes as _};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]

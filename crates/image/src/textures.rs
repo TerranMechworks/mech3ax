@@ -4,7 +4,6 @@ use log::{debug, trace};
 use mech3ax_api_types::image::{
     GlobalPalette, PaletteData, TextureAlpha, TextureInfo, TextureManifest, TexturePalette,
 };
-use mech3ax_api_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
@@ -14,6 +13,7 @@ use mech3ax_pixel_ops::{
     rgb888topal8, simple_alpha,
 };
 use mech3ax_types::Ascii;
+use mech3ax_types::{impl_as_bytes, AsBytes as _};
 use num_traits::FromPrimitive;
 use std::collections::HashSet;
 use std::io::{Read, Write};

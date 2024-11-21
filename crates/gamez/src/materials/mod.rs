@@ -6,7 +6,8 @@ mod write_single;
 
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::materials::{ColoredMaterial, Material, Soil};
-use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Color};
+use mech3ax_api_types::Color;
+use mech3ax_types::{impl_as_bytes, AsBytes as _};
 
 pub(crate) use read_multi::read_materials;
 pub(crate) use read_single::read_material;

@@ -3,11 +3,12 @@ use super::ScriptObject;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{FogState, FogType};
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Color, Range};
+use mech3ax_api_types::{Color, Range};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::str_to_c_padded;
 use mech3ax_common::{assert_that, Result};
 use mech3ax_types::Ascii;
+use mech3ax_types::{impl_as_bytes, AsBytes as _};
 use std::io::{Read, Write};
 
 const DEFAULT_FOG_NAME: &str = "default_fog_name";

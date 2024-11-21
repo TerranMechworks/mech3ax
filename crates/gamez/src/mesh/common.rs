@@ -1,10 +1,11 @@
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::trace;
 use mech3ax_api_types::gamez::mesh::{MeshLight, UvCoord};
-use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Color, Vec3};
+use mech3ax_api_types::{Color, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlags;
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
+use mech3ax_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_types::{Hex, Ptr};
 use std::io::{Read, Write};
 
