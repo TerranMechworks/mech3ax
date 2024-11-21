@@ -3,7 +3,7 @@ use std::fmt;
 /// A debug list implementation that always prints entries without newlines,
 /// regardless of the alternate/pretty formatter settings.
 #[must_use = "must eventually call `finish()`"]
-pub struct DebugList<'a, 'b: 'a> {
+pub(crate) struct DebugList<'a, 'b: 'a> {
     fmt: &'a mut fmt::Formatter<'b>,
     result: fmt::Result,
     has_fields: bool,

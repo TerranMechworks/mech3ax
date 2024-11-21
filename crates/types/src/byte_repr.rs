@@ -2,7 +2,7 @@ use std::fmt;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
-pub struct HexByte(pub u8);
+pub(crate) struct HexByte(pub u8);
 
 impl fmt::Debug for HexByte {
     #[inline]
@@ -14,7 +14,7 @@ impl fmt::Debug for HexByte {
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
-pub struct AsciiByte(pub u8);
+pub(crate) struct AsciiByte(pub u8);
 
 impl fmt::Debug for AsciiByte {
     #[inline]
