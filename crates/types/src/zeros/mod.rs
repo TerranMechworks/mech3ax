@@ -66,28 +66,63 @@ impl<const N: usize> From<[u8; N]> for Zeros<N> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::Zeros;
-
-    #[test]
-    fn zeros_all_zero() {
-        let z: Zeros<8> = Zeros::new();
-        let f = format!("{:?}", z);
-        assert_eq!(f, "[0 x 8]");
-    }
-
-    #[test]
-    fn zeros_non_zero() {
-        let z = Zeros([0xfa, 0x11, 0xed]);
-        let f = format!("{:?}", z);
-        assert_eq!(f, "[fa, 11, ed]");
-    }
-
-    #[test]
-    fn zeros_always_has_no_newlines() {
-        let z = Zeros([0xfa, 0x11, 0xed]);
-        let f = format!("{:#?}", z);
-        assert_eq!(f, "[fa, 11, ed]");
+impl<const N: usize> AsRef<[u8]> for Zeros<N> {
+    #[inline]
+    fn as_ref(&self) -> &[u8] {
+        &self.0
     }
 }
+
+impl<const N: usize> AsRef<[u8; N]> for Zeros<N> {
+    #[inline]
+    fn as_ref(&self) -> &[u8; N] {
+        &self.0
+    }
+}
+
+impl<const N: usize> std::ops::Deref for Zeros<N> {
+    type Target = [u8];
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<const N: usize> PartialEq<&Zeros<N>> for Zeros<N> {
+    #[inline]
+    fn eq(&self, other: &&Zeros<N>) -> bool {
+        self.eq(*other)
+    }
+}
+
+impl<const N: usize> PartialEq<[u8]> for Zeros<N> {
+    #[inline]
+    fn eq(&self, other: &[u8]) -> bool {
+        self.0.eq(other)
+    }
+}
+
+impl<const N: usize> PartialEq<&[u8]> for Zeros<N> {
+    #[inline]
+    fn eq(&self, other: &&[u8]) -> bool {
+        self.0.eq(*other)
+    }
+}
+
+impl<const N: usize> PartialEq<[u8; N]> for Zeros<N> {
+    #[inline]
+    fn eq(&self, other: &[u8; N]) -> bool {
+        self.0.eq(other)
+    }
+}
+
+impl<const N: usize> PartialEq<&[u8; N]> for Zeros<N> {
+    #[inline]
+    fn eq(&self, other: &&[u8; N]) -> bool {
+        self.0.eq(*other)
+    }
+}
+
+#[cfg(test)]
+mod tests;
