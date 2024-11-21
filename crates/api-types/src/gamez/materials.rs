@@ -34,12 +34,14 @@ pub enum Soil {
 }
 
 impl Soil {
+    #[inline]
     pub const fn is_default(&self) -> bool {
         matches!(self, Self::Default)
     }
 }
 
 impl Default for Soil {
+    #[inline]
     fn default() -> Self {
         Self::Default
     }
