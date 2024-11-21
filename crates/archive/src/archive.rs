@@ -8,7 +8,7 @@ use mech3ax_common::string::{bytes_to_c, str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_len, assert_that, Error, Result};
 use mech3ax_crc32::{crc32_update, CRC32_INIT};
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
-use mech3ax_types::{Ascii, Bytes};
+use mech3ax_types::{u32_to_usize, Ascii, Bytes};
 use std::collections::HashSet;
 use std::io::{Read, Seek, SeekFrom, Write};
 
@@ -146,10 +146,9 @@ where
                 length,
                 start
             );
-            // Cast safety: u64 > u32
-            read.seek(SeekFrom::Start(start as u64))?;
+            read.seek(SeekFrom::Start(start.into()))?;
 
-            let mut buffer = vec![0; length as usize];
+            let mut buffer = vec![0; u32_to_usize(length)];
             read.read_exact(&mut buffer)?;
             crc = crc32_update(crc, &buffer);
 
@@ -223,11 +222,11 @@ where
                 data.len(),
                 write.offset
             );
+            let len = assert_len!(u32, data.len(), "archive entry size")?;
             write.write_all(&data)?;
             crc = crc32_update(crc, &data);
 
             // construct entry
-            let len = data.len() as u32;
             let length = match version {
                 Version::Two(Mode::Motion) => 1,
                 _ => len,
