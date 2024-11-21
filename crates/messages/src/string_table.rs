@@ -32,7 +32,13 @@ pub fn read_string_block(
         if len == 0 {
             continue;
         }
-        let bytes = data.read_u16_vec(len)?;
+        let mut buf = [0; 2];
+        let bytes = (0..len)
+            .map(|_| {
+                data.read_exact(&mut buf)?;
+                Ok(u16::from_le_bytes(buf))
+            })
+            .collect::<Result<Vec<u16>>>()?;
         let chars = utf16_decode(bytes)?;
         trace!("Message {} ({}): {}", string_id, len, chars);
         if messages.insert(string_id, chars).is_some() {

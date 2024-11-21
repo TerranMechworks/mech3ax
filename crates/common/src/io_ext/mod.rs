@@ -90,17 +90,6 @@ impl<R: Read> CountingReader<R> {
         Ok(value)
     }
 
-    #[inline]
-    pub fn read_u16_vec(&mut self, len: usize) -> Result<Vec<u16>> {
-        let mut buf = [0; 2];
-        (0..len)
-            .map(|_| {
-                self.read_exact(&mut buf)?;
-                Ok(u16::from_le_bytes(buf))
-            })
-            .collect()
-    }
-
     pub fn assert_end(&mut self) -> crate::Result<()> {
         let mut buf = [0; 1];
         match self.inner.read(&mut buf)? {
