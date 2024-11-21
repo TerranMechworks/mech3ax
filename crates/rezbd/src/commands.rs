@@ -51,10 +51,10 @@ fn zip_read(zip: &mut ZipArchive<impl Read + Seek>, name: &str) -> Result<Vec<u8
     let mut file = zip
         .by_name(name)
         .with_context(|| format!("Failed to find `{}` in Zip", name))?;
-    let mut buf = CountingWriter::new(Vec::new(), 0);
-    file.read_to_end(buf.get_mut())
+    let mut buf = Vec::new();
+    file.read_to_end(&mut buf)
         .with_context(|| format!("Failed to read `{}` from Zip", name))?;
-    Ok(buf.into_inner())
+    Ok(buf)
 }
 
 fn zip_json<R, T>(zip: &mut ZipArchive<R>, name: &str) -> Result<T>
