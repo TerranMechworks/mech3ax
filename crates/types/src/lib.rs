@@ -15,7 +15,7 @@ mod zeros;
 pub use as_bytes::AsBytes;
 pub use ascii::{str_from_ascii, str_to_ascii, string_from_ascii, Ascii};
 pub use bitflags::{Bitflags, BitflagsRepr, Maybe};
-pub use bits::Bits;
+// pub use bits::Bits;
 pub use bytes::Bytes;
 pub use cast::{u16_to_usize, u32_to_usize, AsUsize};
 pub use enumerate::EnumerateEx;

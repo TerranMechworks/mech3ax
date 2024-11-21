@@ -5,7 +5,7 @@ use mech3ax_api_types::{impl_as_bytes, AsBytes as _, Color, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlags;
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
-use mech3ax_types::{Bits, Ptr};
+use mech3ax_types::{Hex, Ptr};
 use std::io::{Read, Write};
 
 #[inline(always)]
@@ -94,7 +94,7 @@ pub struct LightC {
     pub unk24: Ptr,       // 24
     pub color: Color,     // 28
     pub pad40: u16,       // 40
-    pub flags: Bits<u16>, // 42
+    pub flags: Hex<u16>,  // 42
     pub ptr: Ptr,         // 44
     pub unk48: f32,       // 48
     pub unk52: f32,       // 52
@@ -260,7 +260,7 @@ pub fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[MeshLight]
             unk24: Ptr(light.unk24),
             color: light.color,
             pad40: 0,
-            flags: Bits(light.flags),
+            flags: Hex(light.flags),
             ptr: Ptr(light.ptr),
             unk48: light.unk48,
             unk52: light.unk52,
