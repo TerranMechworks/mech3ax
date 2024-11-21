@@ -37,16 +37,19 @@ time = "0.3"
 # api types only
 base64 = "0.22"
 # metadata gen only
-heck = "0.5"
 minijinja = "2.0"
+heck = "0.5"
 # cli only
 clap = { version = "4.5", default-features = false, features = ["std", "derive", "color", "help", "usage", "error-context"] }
 env_logger = { version = "0.11", default-features = false, features = ["auto-color", "humantime"] }
 zip = { version = "2.1", default-features = false, features = ["deflate"] }
-# proc macro only
+# proc macro/build script only
 syn = { version = "2.0", features = ["full", "extra-traits"] }
 quote = "1.0"
 proc-macro2 = "1.0"
+prettyplease = "0.2.20"
+# anim-names only
+fxhash = "0.2.1"
 
 [profile.dev]
 opt-level = 1

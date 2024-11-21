@@ -1,0 +1,16 @@
+[package]
+name = "mech3ax-anim-names"
+authors.workspace = true
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]
+fxhash.workspace = true
+
+[build-dependencies]
+syn.workspace = true
+quote.workspace = true
+proc-macro2.workspace = true
+prettyplease.workspace = true
+fxhash.workspace = true
