@@ -58,7 +58,9 @@ pub unsafe extern "C" fn last_error_message(pointer: *mut u8, length: i32) -> i3
         None => return INVALID,
     };
 
-    let buffer = std::slice::from_raw_parts_mut(pointer, length as usize);
+    // Cast safety: check above for >= 1, i32::MAX < usize::MAX
+    let len = length as usize;
+    let buffer = std::slice::from_raw_parts_mut(pointer, len);
     let count = message.len();
 
     if count >= buffer.len() {
@@ -68,5 +70,6 @@ pub unsafe extern "C" fn last_error_message(pointer: *mut u8, length: i32) -> i3
     std::ptr::copy_nonoverlapping(message.as_ptr(), buffer.as_mut_ptr(), count);
 
     buffer[count] = 0;
+    // TODO: this is probably a bad idea
     count as i32
 }

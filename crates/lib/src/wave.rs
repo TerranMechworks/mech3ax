@@ -54,8 +54,7 @@ fn read_fmt_chunk(read: &mut CountingReader<impl Read>, chunk_size: u32) -> Resu
     // PCM: Channels * (bitsPerSample / 8)
     let _block_align = read.read_u16()?;
     // aka. sample size
-    // Cast safety: u32 > u16
-    let bits_per_sample = read.read_u16()? as u32;
+    let bits_per_sample = read.read_u16()?.into();
     if chunk_size != 16 {
         let _extra_param_size = read.read_u16()?;
     }
