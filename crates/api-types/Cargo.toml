@@ -21,6 +21,7 @@ time = { workspace = true, features = ["formatting", "parsing"] }
 
 mech3ax-metadata-proc-macro = { path = "../metadata-proc-macro" }
 mech3ax-metadata-types = { path = "../metadata-types" }
+mech3ax-types = { path = "../types" }
 
 [dev-dependencies]
 serde_json.workspace = true

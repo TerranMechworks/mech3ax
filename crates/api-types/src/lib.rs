@@ -13,7 +13,8 @@ mod size;
 pub mod zmap;
 
 pub use crate::serde::bytes::Bytes;
-pub use size::{u16_to_usize, u32_to_usize, AsBytes};
+pub use mech3ax_types::{impl_as_bytes, AsBytes};
+pub use size::{u16_to_usize, u32_to_usize};
 
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};

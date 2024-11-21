@@ -452,6 +452,7 @@ dependencies = [
  "bytemuck",
  "mech3ax-metadata-proc-macro",
  "mech3ax-metadata-types",
+ "mech3ax-types",
  "num-derive",
  "num-traits",
  "serde",
