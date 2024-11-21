@@ -28,4 +28,4 @@ macro_rules! impl_from_bytes {
 }
 pub(crate) use impl_from_bytes;
 
-pub use mech3ax_api_types::{u16_to_usize, u32_to_usize};
+pub use mech3ax_types::{u16_to_usize, u32_to_usize};

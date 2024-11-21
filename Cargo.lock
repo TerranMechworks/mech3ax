@@ -573,6 +573,7 @@ dependencies = [
  "mech3ax-api-types",
  "mech3ax-common",
  "mech3ax-encoding",
+ "mech3ax-types",
 ]
 
 [[package]]
