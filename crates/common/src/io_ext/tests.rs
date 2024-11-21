@@ -1,7 +1,6 @@
 use super::*;
-use crate::string::str_to_c_padded;
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_types::{impl_as_bytes, Ascii};
+use mech3ax_types::Ascii;
 use std::io::Cursor;
 
 trait ReadAll {
@@ -89,14 +88,12 @@ struct TestStruct {
     name: Ascii<32>,
     int: u32,
 }
-impl_as_bytes!(TestStruct, 36);
+mech3ax_types::impl_as_bytes!(TestStruct, 36);
 
 #[test]
 fn struct_roundtrip() {
-    let mut name: Ascii<32> = Ascii::zero();
-    str_to_c_padded("Hello World", &mut name);
     let expected = TestStruct {
-        name,
+        name: Ascii::from_str_padded("Hello World"),
         int: 3735928559,
     };
 

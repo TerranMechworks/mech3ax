@@ -1,7 +1,5 @@
-use crate::assert::assert_utf8;
 use crate::assert_with_msg;
-use crate::string::str_from_c_sized;
-use mech3ax_types::AsBytes;
+use mech3ax_types::{u32_to_usize, AsBytes};
 use std::io::{Read, Result, Seek, SeekFrom, Write};
 
 #[cfg(not(target_endian = "little"))]
@@ -83,11 +81,25 @@ impl<R: Read> CountingReader<R> {
     }
 
     pub fn read_string(&mut self) -> crate::Result<String> {
-        let count = self.read_u32()? as usize;
+        let count = u32_to_usize(self.read_u32()?);
         let mut buf = vec![0u8; count];
         self.read_exact(&mut buf)?;
-        let value = assert_utf8("value", self.prev, || str_from_c_sized(&buf))?;
-        Ok(value)
+        if !buf.is_ascii() {
+            // is_ascii is optimised, only try and find the invalid character after it
+            for (index, b) in (self.prev..).zip(buf.iter()) {
+                if b & 0x80 != 0 {
+                    return Err(assert_with_msg!("Expected data to be ASCII (at {})", index));
+                }
+            }
+            // technically this should be unreachable
+            Err(assert_with_msg!(
+                "Expected data to be ASCII (at {})",
+                self.offset
+            ))
+        } else {
+            // SAFETY: v is ASCII, and therefore UTF8
+            Ok(unsafe { String::from_utf8_unchecked(buf) })
+        }
     }
 
     pub fn assert_end(&mut self) -> crate::Result<()> {
@@ -180,7 +192,10 @@ impl<W: Write> CountingWriter<W> {
             return Err(assert_with_msg!("Expected ASCII string"));
         }
         let buf = value.as_bytes();
-        let count = buf.len() as u32;
+        let count: u32 = buf
+            .len()
+            .try_into()
+            .map_err(|_e| assert_with_msg!("String too long"))?;
         self.write_u32(count)?;
         self.inner.write_all(buf)?;
         Ok(())
