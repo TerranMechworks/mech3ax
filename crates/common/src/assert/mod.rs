@@ -169,9 +169,7 @@ where
 }
 
 #[inline]
-pub fn is_bool(name: &str, actual: u32, pos: usize) -> Result<bool>
-where
-{
+pub fn is_bool(name: &str, actual: u32, pos: usize) -> Result<bool> {
     if actual > 1 {
         let msg = format!(
             "Expected `{}` to be 0 or 1, but was {} (at {})",
@@ -300,15 +298,26 @@ macro_rules! bool_c {
 macro_rules! assert_len {
     ($ty:ty, $value:expr, $name:literal) => {{
         let value: usize = $value;
-        let r: $crate::Result<$ty> = value.try_into().map_err(|_e| {
-            $crate::assert_with_msg!(
-                "Too big: `{}` must be <= {}, but was {}",
+        <$ty>::try_from(value).map_err(|_e| {
+            $crate::Error::Assert($crate::assert::AssertionError(format!(
+                "Too big: `{}` must be <= {max}, but was {value}",
                 $name,
-                <$ty>::MAX,
-                value,
-            )
-        });
-        r
+                max = <$ty>::MAX,
+                value = value,
+            )))
+        })
+    }};
+    ($ty:ty, $value:expr, $name:literal, $(arg:expr),+ $(,)?) => {{
+        let value: usize = $value;
+        <$ty>::try_from(value).map_err(|_e| {
+            $crate::Error::Assert($crate::assert::AssertionError(format!(
+                concat!("Too big: `", $name, "` must be <= {max}, but was {value}"),
+                $name,
+                $($arg,)+
+                max = <$ty>::MAX,
+                value = value,
+            )))
+        })
     }};
 }
 
