@@ -12,7 +12,9 @@ use mech3ax_pixel_ops::{
     pal8to888, pal8to888a, rgb565to888, rgb565to888a, rgb888ato565, rgb888atopal8, rgb888to565,
     rgb888topal8, simple_alpha,
 };
-use mech3ax_types::{bitflags, impl_as_bytes, u32_to_usize, AsBytes as _, Ascii, Maybe};
+use mech3ax_types::{
+    bitflags, impl_as_bytes, u16_to_usize, u32_to_usize, AsBytes as _, Ascii, Maybe,
+};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -133,10 +135,9 @@ fn read_texture(
     let palette_count = tex_info.palette_count;
     let mut info = convert_info_from_c(name, tex_info, global_palette, read.prev + 0)?;
 
-    let width = info.width as u32;
-    let height = info.height as u32;
-    let size32 = width * height;
-    let size = size32 as usize;
+    let width: u32 = info.width.into();
+    let height: u32 = info.height.into();
+    let size = u32_to_usize(width) * u32_to_usize(height);
 
     let image = if palette_count == 0 {
         debug!("Reading full color data ({}) at {}", size * 2, read.offset);
@@ -195,9 +196,9 @@ fn read_texture(
                 count: palette_count,
             };
             info.palette = TexturePalette::Global(global);
-            convert_image(&palette.data[0..(palette_count as usize) * 3])
+            convert_image(&palette.data[0..(u16_to_usize(palette_count) * 3)])
         } else {
-            let palette_len = palette_count as usize * 2;
+            let palette_len = u16_to_usize(palette_count) * 2;
             debug!("Reading palette data ({}) at {}", palette_len, read.offset);
             let mut palette_data = vec![0u8; palette_len];
             read.read_exact(&mut palette_data)?;
