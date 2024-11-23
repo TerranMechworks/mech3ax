@@ -1,6 +1,6 @@
 use crate::string::ConversionError;
 use std::cmp::{PartialEq, PartialOrd};
-use std::fmt::{self, Debug, Display};
+use std::fmt::{self, Debug};
 
 #[derive(Clone)]
 pub struct AssertionError(pub String);
@@ -22,9 +22,8 @@ impl std::error::Error for AssertionError {}
 type Result<T> = ::std::result::Result<T, AssertionError>;
 
 #[inline]
-pub fn is_equal_to<S, T>(name: S, expected: T, actual: T, pos: usize) -> Result<()>
+pub fn is_equal_to<T>(name: &str, expected: T, actual: T, pos: usize) -> Result<()>
 where
-    S: Display,
     T: PartialEq + Debug,
 {
     if actual == expected {
@@ -39,9 +38,8 @@ where
 }
 
 #[inline]
-pub fn is_not_equal_to<S, T>(name: S, expected: T, actual: T, pos: usize) -> Result<()>
+pub fn is_not_equal_to<T>(name: &str, expected: T, actual: T, pos: usize) -> Result<()>
 where
-    S: Display,
     T: PartialEq + Debug,
 {
     if actual != expected {
@@ -53,9 +51,8 @@ where
 }
 
 #[inline]
-pub fn is_less_than<S, T>(name: S, expected: T, actual: T, pos: usize) -> Result<()>
+pub fn is_less_than<T>(name: &str, expected: T, actual: T, pos: usize) -> Result<()>
 where
-    S: Display,
     T: PartialOrd + Debug,
 {
     if actual < expected {
@@ -70,9 +67,8 @@ where
 }
 
 #[inline]
-pub fn is_less_than_or_equal_to<S, T>(name: S, expected: T, actual: T, pos: usize) -> Result<()>
+pub fn is_less_than_or_equal_to<T>(name: &str, expected: T, actual: T, pos: usize) -> Result<()>
 where
-    S: Display,
     T: PartialOrd + Debug,
 {
     if actual <= expected {
@@ -87,9 +83,8 @@ where
 }
 
 #[inline]
-pub fn is_greater_than<S, T>(name: S, expected: T, actual: T, pos: usize) -> Result<()>
+pub fn is_greater_than<T>(name: &str, expected: T, actual: T, pos: usize) -> Result<()>
 where
-    S: Display,
     T: PartialOrd + Debug,
 {
     if actual > expected {
@@ -104,9 +99,8 @@ where
 }
 
 #[inline]
-pub fn is_greater_than_or_equal_to<S, T>(name: S, expected: T, actual: T, pos: usize) -> Result<()>
+pub fn is_greater_than_or_equal_to<T>(name: &str, expected: T, actual: T, pos: usize) -> Result<()>
 where
-    S: Display,
     T: PartialOrd + Debug,
 {
     if actual >= expected {
@@ -121,15 +115,14 @@ where
 }
 
 #[inline]
-pub fn is_between<S, T>(
-    name: S,
+pub fn is_between<T>(
+    name: &str,
     expected_min: T,
     expected_max: T,
     actual: T,
     pos: usize,
 ) -> Result<()>
 where
-    S: Display,
     T: PartialOrd + Debug,
 {
     if expected_min <= actual && actual <= expected_max {
@@ -144,9 +137,8 @@ where
 }
 
 #[inline]
-pub fn is_in<S, T>(name: S, haystack: &[T], needle: &T, pos: usize) -> Result<()>
+pub fn is_in<T>(name: &str, haystack: &[T], needle: &T, pos: usize) -> Result<()>
 where
-    S: Display,
     T: PartialEq + Debug,
 {
     if haystack.contains(needle) {
@@ -161,9 +153,8 @@ where
 }
 
 #[inline]
-pub fn is_bool<S>(name: S, actual: u32, pos: usize) -> Result<bool>
+pub fn is_bool(name: &str, actual: u32, pos: usize) -> Result<bool>
 where
-    S: Display,
 {
     if actual > 1 {
         let msg = format!(
@@ -177,9 +168,8 @@ where
 }
 
 #[inline]
-pub fn assert_utf8<S, F, T>(name: S, pos: usize, func: F) -> Result<T>
+pub fn assert_utf8<F, T>(name: &str, pos: usize, func: F) -> Result<T>
 where
-    S: Display,
     F: FnOnce() -> ::std::result::Result<T, ConversionError>,
 {
     func().map_err(|err| {
@@ -204,9 +194,8 @@ where
 }
 
 #[inline]
-pub fn assert_all_zero<S>(name: S, pos: usize, buf: &[u8]) -> Result<()>
+pub fn assert_all_zero(name: &str, pos: usize, buf: &[u8]) -> Result<()>
 where
-    S: Display,
 {
     let mut iter = buf.iter().enumerate();
 

@@ -62,7 +62,7 @@ impl ScriptObject for FogState {
             read.prev + 36
         )?;
 
-        assert_color("fog state", &fog_state.color, read.prev + 40)?;
+        assert_color!("fog state", &fog_state.color, read.prev + 40)?;
 
         Ok(Self {
             name: DEFAULT_FOG_NAME.to_owned(),

@@ -108,11 +108,8 @@ pub fn read_activation(read: &mut CountingReader<impl Read>) -> Result<AnimActiv
         1 => {
             for i in 0..9 {
                 let value = values.read_f32()?;
-                assert_that!(
-                    format!("anim activation type 1 value {0}", i),
-                    value == 0.0,
-                    values.prev
-                )?;
+                let name = format!("anim activation type 1 value {0}", i);
+                assert_that!(&name, value == 0.0, values.prev)?;
             }
             values.assert_end()?;
             ActivationType::One

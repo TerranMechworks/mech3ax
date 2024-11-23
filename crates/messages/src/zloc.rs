@@ -68,7 +68,8 @@ pub fn read_zlocids(
                 relative_end += 1;
             }
 
-            let message_name = assert_utf8(format!("message {}", entry_id), pos, || {
+            let name = format!("message {}", entry_id);
+            let message_name = assert_utf8(&name, pos, || {
                 str_from_c_sized(&data[relative_start..relative_end])
             })?;
 

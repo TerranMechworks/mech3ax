@@ -198,7 +198,7 @@ impl ScriptObject for LightState {
         };
 
         let color = if flags.contains(LightFlags::COLOR) {
-            assert_color("light state", &light_state.color, read.prev + 100)?;
+            assert_color!("light state", &light_state.color, read.prev + 100)?;
             Some(light_state.color)
         } else {
             assert_that!(
