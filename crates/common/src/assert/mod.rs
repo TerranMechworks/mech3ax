@@ -137,7 +137,7 @@ where
 }
 
 #[inline]
-pub fn is_in<T>(name: &str, haystack: &[T], needle: &T, pos: usize) -> Result<()>
+pub fn is_in_slice<T>(name: &str, haystack: &[T], needle: &T, pos: usize) -> Result<()>
 where
     T: PartialEq + fmt::Debug,
 {
@@ -147,6 +147,22 @@ where
         let msg = format!(
             "Expected `{}` to be in {:#?}, but was {:#?} (at {})",
             name, haystack, needle, pos
+        );
+        Err(AssertionError(msg))
+    }
+}
+
+#[inline]
+pub fn is_in_range<T>(name: &str, start: T, end: T, needle: T, pos: usize) -> Result<()>
+where
+    T: Copy + PartialOrd + fmt::Display,
+{
+    if needle >= start && needle <= end {
+        Ok(())
+    } else {
+        let msg = format!(
+            "Expected `{}` to be in {}..{}, but was {} (at {})",
+            name, start, end, needle, pos
         );
         Err(AssertionError(msg))
     }
@@ -243,8 +259,11 @@ macro_rules! assert_that {
     ($name:expr, $($actual:tt).+ >= $expected:expr, $pos:expr) => {
         $crate::assert::is_greater_than_or_equal_to($name, &$expected, &$($actual).+, $pos)
     };
+    ($name:expr, $($actual:tt).+ in ($start:literal..$end:literal), $pos:expr) => {
+        $crate::assert::is_in_range($name, $start, $end, $($actual).+, $pos)
+    };
     ($name:expr, $($actual:tt).+ in $haystack:expr, $pos:expr) => {
-        $crate::assert::is_in($name, &$haystack, &$($actual).+, $pos)
+        $crate::assert::is_in_slice($name, &$haystack, &$($actual).+, $pos)
     };
     ($name:expr, bool $actual:expr, $pos:expr) => {
         $crate::assert::is_bool($name, $actual, $pos)
