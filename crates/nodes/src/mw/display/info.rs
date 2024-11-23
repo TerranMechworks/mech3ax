@@ -1,8 +1,7 @@
 use crate::flags::NodeBitFlags;
 use crate::mw::node::{NodeVariantMw, NodeVariantsMw};
 use crate::types::ZONE_DEFAULT;
-use mech3ax_api_types::nodes::BoundingBox;
-use mech3ax_api_types::nodes::Display;
+use mech3ax_api_types::nodes::{BoundingBox, Display};
 use mech3ax_common::{assert_that, Result};
 
 const DISPLAY_NAME: &str = "display";

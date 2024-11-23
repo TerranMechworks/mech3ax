@@ -6,8 +6,7 @@ use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Error, Rename, Result};
 use mech3ax_crc32::{crc32_update, CRC32_INIT};
-use mech3ax_types::{impl_as_bytes, AsBytes as _};
-use mech3ax_types::{u32_to_usize, Ascii, Bytes};
+use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _, Ascii, Bytes};
 use std::io::{Read, Seek, SeekFrom, Write};
 
 const VERSION_ONE: u32 = 1;

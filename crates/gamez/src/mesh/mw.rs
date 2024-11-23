@@ -5,8 +5,7 @@ use mech3ax_api_types::gamez::mesh::{MeshMw, PolygonMw, UvCoord};
 use mech3ax_api_types::{Color, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _};
-use mech3ax_types::{Hex, Ptr};
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Hex, Ptr};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]

@@ -12,7 +12,6 @@ mod serde;
 pub mod zmap;
 
 pub use crate::serde::bytes::Bytes;
-
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_metadata_proc_macro::Struct;

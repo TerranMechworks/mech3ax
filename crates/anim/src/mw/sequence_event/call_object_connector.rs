@@ -8,8 +8,7 @@ use mech3ax_api_types::Vec3;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
-use mech3ax_types::Ascii;
-use mech3ax_types::{impl_as_bytes, AsBytes as _};
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii};
 use std::io::{Read, Write};
 
 // this flag isn't the same as OBJECT_CONNECTOR, and unfortunately,

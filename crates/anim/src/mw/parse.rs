@@ -5,8 +5,7 @@ use mech3ax_api_types::anim::{AnimDef, AnimMetadata, AnimName, AnimPtr};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Error, Result};
-use mech3ax_types::impl_as_bytes;
-use mech3ax_types::Ascii;
+use mech3ax_types::{impl_as_bytes, Ascii};
 use std::convert::From;
 use std::io::{Read, Write};
 

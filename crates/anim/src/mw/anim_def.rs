@@ -11,8 +11,7 @@ use mech3ax_api_types::Range;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _};
-use mech3ax_types::{Ascii, Zeros};
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii, Zeros};
 use num_traits::FromPrimitive as _;
 use std::io::{Read, Write};
 

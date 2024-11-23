@@ -4,8 +4,7 @@ use mech3ax_api_types::anim::{NamePad, NamePtr, NamePtrFlags};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _};
-use mech3ax_types::{Ascii, Bytes};
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii, Bytes};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
