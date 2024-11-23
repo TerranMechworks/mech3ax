@@ -21,5 +21,5 @@ num-traits.workspace = true
 
 mech3ax-api-types = { path = "../api-types" }
 mech3ax-common = { path = "../common" }
-mech3ax-types = { path = "../types" }
 mech3ax-pixel-ops = { path = "../pixel-ops" }
+mech3ax-types = { path = "../types" }

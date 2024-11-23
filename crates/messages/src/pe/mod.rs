@@ -34,7 +34,7 @@ pub fn read_pe_headers(buf: &[u8]) -> Result<SectionsAndDirectories> {
     assert_that!(
         "DOS header signature",
         dos_header.e_magic == IMAGE_DOS_HEADER::SIGNATURE,
-        0
+        0usize
     )?;
     // skip the real-mode stub
     let nt_header_offset = dos_header

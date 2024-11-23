@@ -67,16 +67,16 @@ fn get_resource_section(sections: &pe::SectionsAndDirectories) -> Result<&pe::Im
     // is in. It would be odd for the resource directory not to be in the
     // resource section.
     let resource_dir = sections.resource_dir();
-    assert_that!("Resource dir size", resource_dir.size > 0, 0)?;
+    assert_that!("Resource dir size", resource_dir.size > 0, 0usize)?;
     assert_that!(
         "Resource dir virtual address",
         resource_dir.virtual_address == resource_section.virtual_address,
-        0
+        0usize
     )?;
     assert_that!(
         "Resource dir size",
         resource_dir.size <= resource_section.virtual_size,
-        0
+        0usize
     )?;
     Ok(resource_section)
 }
@@ -171,7 +171,7 @@ fn combine(
         .collect::<Result<Vec<_>>>()?;
 
     let remaining = messages.len();
-    assert_that!("all message table strings used", remaining == 0, 0)?;
+    assert_that!("all message table strings used", remaining == 0, 0usize)?;
     Ok(entries)
 }
 

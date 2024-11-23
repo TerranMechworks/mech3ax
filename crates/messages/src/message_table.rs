@@ -1,7 +1,8 @@
-use crate::size::{u16_to_usize, u32_to_usize};
+use crate::size::u16_to_usize;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_encoding::windows1252_decode;
+use mech3ax_types::u32_to_usize;
 use std::collections::HashMap;
 use std::io::Cursor;
 
