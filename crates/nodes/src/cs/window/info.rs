@@ -16,7 +16,7 @@ const WINDOW_FLAGS: NodeBitFlagsCs = NodeBitFlagsCs::from_bits_truncate(
         | NodeBitFlagsCs::UNK24.bits(),
 );
 
-pub fn assert_variants(node: NodeVariantsCs, offset: u32) -> Result<NodeVariantCs> {
+pub fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVariantCs> {
     let spyglass = match node.name.as_str() {
         WINDOW_NAME => Ok(false),
         SPYGLASS_NAME => Ok(true),

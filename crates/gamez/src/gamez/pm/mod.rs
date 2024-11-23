@@ -11,7 +11,7 @@ use log::{debug, trace};
 use mech3ax_api_types::gamez::{GameZDataPm, GameZMetadataPm};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _};
+use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -58,6 +58,12 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataPm> {
         header.meshes_offset < header.nodes_offset,
         read.prev + 24
     )?;
+
+    let textures_offset = u32_to_usize(header.textures_offset);
+    let materials_offset = u32_to_usize(header.materials_offset);
+    let meshes_offset = u32_to_usize(header.meshes_offset);
+    let nodes_offset = u32_to_usize(header.nodes_offset);
+
     assert_that!(
         "node count",
         header.node_count <= header.node_array_size,
@@ -66,29 +72,21 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataPm> {
 
     assert_that!(
         "textures offset",
-        read.offset == header.textures_offset,
+        read.offset == textures_offset,
         read.offset
     )?;
     let (textures, texture_ptrs) = textures::read_texture_infos(read, header.texture_count)?;
     assert_that!(
         "materials offset",
-        read.offset == header.materials_offset,
+        read.offset == materials_offset,
         read.offset
     )?;
     let (materials, material_count) =
         materials::read_materials(read, &textures, materials::MatType::Ng)?;
-    assert_that!(
-        "meshes offset",
-        read.offset == header.meshes_offset,
-        read.offset
-    )?;
+    assert_that!("meshes offset", read.offset == meshes_offset, read.offset)?;
     let (meshes, meshes_count, mesh_array_size) =
-        meshes::read_meshes(read, header.nodes_offset, material_count)?;
-    assert_that!(
-        "nodes offset",
-        read.offset == header.nodes_offset,
-        read.offset
-    )?;
+        meshes::read_meshes(read, nodes_offset, material_count)?;
+    assert_that!("nodes offset", read.offset == nodes_offset, read.offset)?;
     debug!(
         "Reading {} nodes at {}",
         header.node_array_size, read.offset

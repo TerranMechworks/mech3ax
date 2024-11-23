@@ -7,7 +7,7 @@ use mech3ax_common::{assert_that, Result};
 
 const DISPLAY_NAME: &str = "display";
 
-pub fn assert_variants(node: NodeVariantsPm, offset: u32) -> Result<NodeVariantPm> {
+pub fn assert_variants(node: NodeVariantsPm, offset: usize) -> Result<NodeVariantPm> {
     assert_that!("display name", node.name eq DISPLAY_NAME, offset + 0)?;
     assert_that!(
         "display flags",

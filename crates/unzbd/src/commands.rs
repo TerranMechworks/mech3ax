@@ -80,7 +80,7 @@ fn _zarchive<F>(
     save_file: F,
 ) -> Result<()>
 where
-    F: FnMut(&mut ZipWriter<BufWriter<File>>, &str, Vec<u8>, u32) -> Result<()>,
+    F: FnMut(&mut ZipWriter<BufWriter<File>>, &str, Vec<u8>, usize) -> Result<()>,
 {
     let mut save_file = save_file;
 

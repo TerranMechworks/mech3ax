@@ -39,7 +39,7 @@ struct LightRcC {
 }
 impl_as_bytes!(LightRcC, 228);
 
-fn assert_light(light: &LightRcC, offset: u32) -> Result<()> {
+fn assert_light(light: &LightRcC, offset: usize) -> Result<()> {
     assert_that!("light field 000", light.unk000 == 1, offset + 0)?;
     assert_that!("light field 004", light.unk004 == 1, offset + 4)?;
     // unk008

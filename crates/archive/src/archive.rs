@@ -59,7 +59,8 @@ fn read_table(
     };
 
     let offset: i64 = start + (count * EntryC::SIZE) as i64;
-    let table_start = read.seek(SeekFrom::End(-offset))?;
+    let pos = read.seek(SeekFrom::End(-offset))?;
+    let table_start = assert_len!(u32, pos, "file table offset")?;
 
     debug!("Reading archive table x{} at {}", count, read.offset);
 
@@ -119,7 +120,7 @@ pub fn read_archive<R, F, E>(
 ) -> std::result::Result<Vec<ArchiveEntry>, E>
 where
     R: Read + Seek,
-    F: FnMut(&str, Vec<u8>, u32) -> std::result::Result<(), E>,
+    F: FnMut(&str, Vec<u8>, usize) -> std::result::Result<(), E>,
     E: From<std::io::Error> + From<Error>,
 {
     let (entries, checksum) = read_table(read, version)?;

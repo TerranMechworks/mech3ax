@@ -51,7 +51,7 @@ impl_as_bytes!(LightPmC, 256);
 #[allow(clippy::approx_constant)]
 const LIGHT_UNK_000: f32 = -0.5235988;
 
-fn assert_light(light: &LightPmC, offset: u32) -> Result<()> {
+fn assert_light(light: &LightPmC, offset: usize) -> Result<()> {
     assert_that!("light field 000", light.unk000 == LIGHT_UNK_000, offset + 0)?;
     // unk004
     assert_all_zero("light field 008", offset + 8, &light.zero008.0)?;

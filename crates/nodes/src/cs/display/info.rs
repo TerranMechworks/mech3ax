@@ -15,7 +15,7 @@ const DISPLAY_FLAGS: NodeBitFlagsCs = NodeBitFlagsCs::from_bits_truncate(
         | NodeBitFlagsCs::UNK24.bits(),
 );
 
-pub fn assert_variants(node: NodeVariantsCs, offset: u32) -> Result<NodeVariantCs> {
+pub fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVariantCs> {
     assert_that!("display name", node.name eq DISPLAY_NAME, offset + 0)?;
     assert_that!("display flags", node.flags == DISPLAY_FLAGS, offset + 36)?;
     assert_that!("display field 040", node.unk040 == 0x00000000, offset + 40)?;

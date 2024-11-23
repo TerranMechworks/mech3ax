@@ -9,8 +9,7 @@ use mech3ax_api_types::{Quaternion, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::bytes_to_c;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::Bytes;
-use mech3ax_types::{impl_as_bytes, AsBytes as _};
+use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _, Bytes};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -135,7 +134,7 @@ impl ScriptObject for ObjectMotionSiScript {
     const SIZE: u32 = u32::MAX;
 
     fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
-        let end_offset = read.offset + size;
+        let end_offset = read.offset + u32_to_usize(size);
         let header: ScriptHeaderC = read.read_struct()?;
 
         let node = anim_def.node_from_index(header.node_index as usize, read.prev + 0)?;

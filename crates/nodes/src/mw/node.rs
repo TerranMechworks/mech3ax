@@ -111,7 +111,7 @@ impl_as_bytes!(NodeMwC, 208);
 
 pub const NODE_MW_C_SIZE: u32 = NodeMwC::SIZE;
 
-fn assert_node(node: NodeMwC, offset: u32) -> Result<(NodeType, NodeVariantsMw)> {
+fn assert_node(node: NodeMwC, offset: usize) -> Result<(NodeType, NodeVariantsMw)> {
     // invariants for every node type
 
     let node_type = FromPrimitive::from_u32(node.node_type).ok_or_else(|| {
@@ -440,7 +440,7 @@ pub fn size_node(node: &NodeMw) -> u32 {
     }
 }
 
-fn assert_node_info_zero(node: NodeMwC, offset: u32) -> Result<()> {
+fn assert_node_info_zero(node: NodeMwC, offset: usize) -> Result<()> {
     assert_all_zero("name", offset + 0, &node.name.0)?;
     assert_that!("flags", node.flags.0 == 0, offset + 36)?;
     assert_that!("node type", node.node_type == 0, offset + 52)?;

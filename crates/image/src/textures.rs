@@ -12,8 +12,7 @@ use mech3ax_pixel_ops::{
     pal8to888, pal8to888a, rgb565to888, rgb565to888a, rgb888ato565, rgb888atopal8, rgb888to565,
     rgb888topal8, simple_alpha,
 };
-use mech3ax_types::Ascii;
-use mech3ax_types::{impl_as_bytes, AsBytes as _};
+use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _, Ascii};
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
 
@@ -71,7 +70,7 @@ fn convert_info_from_c(
     name: String,
     tex_info: TextureInfoC,
     global_palette: Option<(i32, &PaletteData)>,
-    offset: u32,
+    offset: usize,
 ) -> Result<TextureInfo> {
     let bitflags = TexFlags::from_bits(tex_info.flags).ok_or_else(|| {
         assert_with_msg!(
@@ -274,7 +273,8 @@ where
                 read.prev + 36
             )?;
             let name = assert_utf8("name", read.prev + 0, || str_from_c_padded(&entry.name))?;
-            Ok((name, entry.start_offset, entry.palette_index))
+            let offset = u32_to_usize(entry.start_offset);
+            Ok((name, offset, entry.palette_index))
         })
         .collect::<Result<Vec<_>>>()?;
 

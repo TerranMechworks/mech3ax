@@ -53,7 +53,7 @@ pub struct CameraC {
 }
 impl_as_bytes!(CameraC, 488);
 
-fn assert_camera(camera: &CameraC, offset: u32) -> Result<()> {
+fn assert_camera(camera: &CameraC, offset: usize) -> Result<()> {
     assert_that!("camera world index", camera.world_index == 0, offset + 0)?;
     assert_that!("camera window index", camera.window_index == 1, offset + 4)?;
     // true for mw and pm

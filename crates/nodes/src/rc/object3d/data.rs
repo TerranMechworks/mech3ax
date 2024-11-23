@@ -37,7 +37,7 @@ const SCALE_ONE: Vec3 = Vec3 {
     z: 1.0,
 };
 
-fn assert_object3d(object3d: Object3dRcC, offset: u32) -> Result<Transformation> {
+fn assert_object3d(object3d: Object3dRcC, offset: usize) -> Result<Transformation> {
     assert_that!("object3d flags", object3d.flags in [32u32, 40u32, 48u32], offset + 0)?;
     assert_that!("object3d opacity", object3d.opacity == 0.0, offset + 4)?;
     assert_that!("object3d field 008", object3d.zero008 == 0.0, offset + 8)?;

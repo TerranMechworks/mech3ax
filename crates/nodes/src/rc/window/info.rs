@@ -6,7 +6,7 @@ use mech3ax_common::{assert_that, Result};
 
 const WINDOW_NAME: &str = "window1";
 
-pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantRc> {
+pub fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<NodeVariantRc> {
     assert_that!("window name", node.name eq WINDOW_NAME, offset + 0)?;
     assert_that!(
         "window flags",

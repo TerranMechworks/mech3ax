@@ -1,9 +1,9 @@
-use crate::size::u32_to_usize;
 use log::trace;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::string::str_from_c_sized;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_types::u32_to_usize;
 use std::io::Cursor;
 
 pub fn read_zlocids(
@@ -14,7 +14,7 @@ pub fn read_zlocids(
     base_offset: u32,
 ) -> Result<Vec<(u32, String)>> {
     let mut read = CountingReader::new(Cursor::new(data));
-    read.offset = base_offset;
+    read.offset = u32_to_usize(base_offset);
 
     // skip the CRT initialization section
     if let Some(pos) = skip {

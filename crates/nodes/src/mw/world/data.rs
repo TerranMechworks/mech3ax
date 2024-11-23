@@ -197,7 +197,7 @@ fn read_partitions(
         .collect::<Result<Vec<_>>>()
 }
 
-fn assert_world(world: &WorldMwC, offset: u32) -> Result<(Area, RangeI32, RangeI32, bool)> {
+fn assert_world(world: &WorldMwC, offset: usize) -> Result<(Area, RangeI32, RangeI32, bool)> {
     assert_that!("world flags", world.flags == 0, offset + 0)?;
 
     // LINEAR = 1, EXPONENTIAL = 2 (never set)

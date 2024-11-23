@@ -35,7 +35,7 @@ struct LightMwC {
 }
 impl_as_bytes!(LightMwC, 208);
 
-fn assert_light(light: &LightMwC, offset: u32) -> Result<()> {
+fn assert_light(light: &LightMwC, offset: usize) -> Result<()> {
     assert_that!(
         "light translation",
         light.translation == Vec3::DEFAULT,

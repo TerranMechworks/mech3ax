@@ -2,18 +2,18 @@ use mech3ax_api_types::anim::AnimDef;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 
 pub trait AnimDefLookup {
-    fn node_from_index(&self, index: usize, offset: u32) -> Result<String>;
+    fn node_from_index(&self, index: usize, offset: usize) -> Result<String>;
     fn node_to_index(&self, name: &str) -> Result<usize>;
-    fn sound_from_index(&self, index: usize, offset: u32) -> Result<String>;
+    fn sound_from_index(&self, index: usize, offset: usize) -> Result<String>;
     fn sound_to_index(&self, name: &str) -> Result<usize>;
-    fn light_from_index(&self, index: usize, offset: u32) -> Result<String>;
+    fn light_from_index(&self, index: usize, offset: usize) -> Result<String>;
     fn light_to_index(&self, name: &str) -> Result<usize>;
-    fn puffer_from_index(&self, index: usize, offset: u32) -> Result<String>;
+    fn puffer_from_index(&self, index: usize, offset: usize) -> Result<String>;
     fn puffer_to_index(&self, name: &str) -> Result<usize>;
 }
 
 impl AnimDefLookup for AnimDef {
-    fn node_from_index(&self, index: usize, offset: u32) -> Result<String> {
+    fn node_from_index(&self, index: usize, offset: usize) -> Result<String> {
         if let Some(nodes) = &self.nodes {
             assert_that!("node index", 1 <= index <= nodes.len(), offset)?;
             Ok(nodes[index - 1].name.clone())
@@ -41,7 +41,7 @@ impl AnimDefLookup for AnimDef {
         }
     }
 
-    fn sound_from_index(&self, index: usize, offset: u32) -> Result<String> {
+    fn sound_from_index(&self, index: usize, offset: usize) -> Result<String> {
         if let Some(sounds) = &self.static_sounds {
             assert_that!("sound index", 1 <= index <= sounds.len(), offset)?;
             Ok(sounds[index - 1].name.clone())
@@ -69,7 +69,7 @@ impl AnimDefLookup for AnimDef {
         }
     }
 
-    fn light_from_index(&self, index: usize, offset: u32) -> Result<String> {
+    fn light_from_index(&self, index: usize, offset: usize) -> Result<String> {
         if let Some(lights) = &self.lights {
             assert_that!("light index", 1 <= index <= lights.len(), offset)?;
             Ok(lights[index - 1].name.clone())
@@ -97,7 +97,7 @@ impl AnimDefLookup for AnimDef {
         }
     }
 
-    fn puffer_from_index(&self, index: usize, offset: u32) -> Result<String> {
+    fn puffer_from_index(&self, index: usize, offset: usize) -> Result<String> {
         if let Some(puffers) = &self.puffers {
             assert_that!("puffer index", 1 <= index <= puffers.len(), offset)?;
             Ok(puffers[index - 1].name.clone())

@@ -112,7 +112,7 @@ const ABORT_TEST_NODE_NAME: Ascii<36> =
     Ascii::new(b"abort_test\0ng\0ame\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
 const ABORT_TEST_NAME: &str = "abort_test";
 
-fn assert_node(node: NodeRcC, offset: u32) -> Result<(NodeType, NodeVariantsRc)> {
+fn assert_node(node: NodeRcC, offset: usize) -> Result<(NodeType, NodeVariantsRc)> {
     // invariants for every node type
 
     let node_type = FromPrimitive::from_u32(node.node_type).ok_or_else(|| {
@@ -246,7 +246,7 @@ pub fn read_node_info(read: &mut CountingReader<impl Read>, index: u32) -> Resul
     Ok(variant)
 }
 
-fn assert_node_info_zero(node: NodeRcC, offset: u32) -> Result<()> {
+fn assert_node_info_zero(node: NodeRcC, offset: usize) -> Result<()> {
     assert_all_zero("name", offset + 0, &node.name.0)?;
     assert_that!("flags", node.flags.0 == 0, offset + 36)?;
     assert_that!("node type", node.node_type == 0, offset + 52)?;

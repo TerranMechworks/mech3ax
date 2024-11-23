@@ -26,7 +26,7 @@ const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
 
 pub fn assert_variants(
     node: NodeVariantsPm,
-    offset: u32,
+    offset: usize,
     mesh_index_is_ptr: bool,
 ) -> Result<NodeVariantPm> {
     // cannot assert name

@@ -48,7 +48,7 @@ struct LightCsC {
 }
 impl_as_bytes!(LightCsC, 256);
 
-fn assert_light(light: &LightCsC, offset: u32) -> Result<()> {
+fn assert_light(light: &LightCsC, offset: usize) -> Result<()> {
     assert_that!("light field 000", light.unk000 == 0.0, offset + 0)?;
     assert_that!("light field 004", light.unk004 == 0.0, offset + 4)?;
     assert_all_zero("light field 008", offset + 8, &light.zero008.0)?;

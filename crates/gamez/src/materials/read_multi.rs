@@ -58,7 +58,7 @@ pub(crate) fn read_materials(
     Ok((materials, material_count))
 }
 
-fn assert_material_info(info: MaterialInfoC, ty: MatType, offset: u32) -> Result<(i16, u32)> {
+fn assert_material_info(info: MaterialInfoC, ty: MatType, offset: usize) -> Result<(i16, u32)> {
     assert_that!("mat array size", 0 <= info.array_size <= ty.size_i32(), offset + 0)?;
     assert_that!("mat count", 0 <= info.count <= info.array_size, offset + 4)?;
     assert_that!("mat index max", info.index_max == info.count, offset + 8)?;

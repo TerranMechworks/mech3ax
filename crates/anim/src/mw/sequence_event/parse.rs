@@ -13,7 +13,7 @@ use mech3ax_api_types::anim::events::{
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _};
+use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _};
 use num_traits::FromPrimitive;
 use std::io::{Read, Write};
 
@@ -33,7 +33,7 @@ pub fn read_events(
     length: u32,
     anim_def: &AnimDef,
 ) -> Result<Vec<Event>> {
-    let end_offset = read.offset + length;
+    let end_offset = read.offset + u32_to_usize(length);
     let mut events = Vec::new();
     while read.offset < end_offset {
         let header: EventHeaderC = read.read_struct()?;

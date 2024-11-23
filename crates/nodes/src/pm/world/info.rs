@@ -16,7 +16,7 @@ const DEFAULT_FLAGS: NodeBitFlags =
 
 pub const WORLD_NAME: &str = "world1";
 
-pub fn assert_variants(node: NodeVariantsPm, offset: u32) -> Result<NodeVariantPm> {
+pub fn assert_variants(node: NodeVariantsPm, offset: usize) -> Result<NodeVariantPm> {
     assert_that!("world name", node.name eq WORLD_NAME, offset + 0)?;
     assert_that!("world flags", node.flags == DEFAULT_FLAGS, offset + 36)?;
     // zero040 (40) already asserted

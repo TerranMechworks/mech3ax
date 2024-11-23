@@ -44,7 +44,7 @@ const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     | 0,
 );
 
-pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantRc> {
+pub fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<NodeVariantRc> {
     let is_borked = has_borked_parents(node.data_ptr, node.parent_array_ptr);
 
     // cannot assert name

@@ -7,6 +7,7 @@ use mech3ax_nodes::rc::{
     read_node_data, read_node_info, read_node_info_zero, size_node, write_node_data,
     write_node_info, write_node_info_zero, NodeVariantRc, NODE_RC_C_SIZE,
 };
+use mech3ax_types::u32_to_usize;
 use std::io::{Read, Write};
 
 pub fn read_nodes(
@@ -14,8 +15,9 @@ pub fn read_nodes(
     count: u32,
     meshes_count: i32,
 ) -> Result<Vec<NodeRc>> {
-    let valid_offset = read.offset + NODE_RC_C_SIZE * count + 4 * count;
-    let end_offset = read.offset + NODE_RC_C_SIZE * NODE_ARRAY_SIZE + 4 * NODE_ARRAY_SIZE;
+    let valid_offset = read.offset + u32_to_usize(NODE_RC_C_SIZE * count + 4 * count);
+    let end_offset =
+        read.offset + u32_to_usize(NODE_RC_C_SIZE * NODE_ARRAY_SIZE + 4 * NODE_ARRAY_SIZE);
 
     let mut variants = Vec::new();
     let mut light_node: Option<u32> = None;
@@ -110,11 +112,8 @@ pub fn read_nodes(
                     empty.parent = node_data_offset;
                 }
                 _ => {
-                    assert_that!(
-                        "node data offset",
-                        read.offset == node_data_offset,
-                        read.offset
-                    )?;
+                    let offset = u32_to_usize(node_data_offset);
+                    assert_that!("node data offset", read.offset == offset, read.offset)?;
                 }
             }
             read_node_data(read, variant, index)
@@ -127,7 +126,7 @@ pub fn read_nodes(
     Ok(nodes)
 }
 
-fn assert_area_partitions(nodes: &[NodeRc], offset: u32) -> Result<()> {
+fn assert_area_partitions(nodes: &[NodeRc], offset: usize) -> Result<()> {
     let (x_count, y_count) = match nodes.first() {
         Some(NodeRc::World(world)) => Ok((
             world.virt_partition_x_count as i32,

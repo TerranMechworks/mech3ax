@@ -18,7 +18,7 @@ const DEFAULT_FLAGS_M2: NodeBitFlags =
 
 pub const WORLD_NAME: &str = "world1";
 
-pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantRc> {
+pub fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<NodeVariantRc> {
     assert_that!("world name", node.name eq WORLD_NAME, offset + 0)?;
     // yes, this is a nasty hack, but...
     if node.data_ptr == 0x016D3D40 && node.children_array_ptr == 0x0170F360 {

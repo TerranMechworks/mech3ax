@@ -20,7 +20,7 @@ const BBOX_LIGHT: BoundingBox = BoundingBox {
 };
 pub const LIGHT_NAME: &str = "sunlight";
 
-pub fn assert_variants(node: NodeVariantsPm, offset: u32) -> Result<NodeVariantPm> {
+pub fn assert_variants(node: NodeVariantsPm, offset: usize) -> Result<NodeVariantPm> {
     assert_that!("light name", node.name eq LIGHT_NAME, offset + 0)?;
     assert_that!(
         "light flags",

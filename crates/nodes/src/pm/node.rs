@@ -113,7 +113,7 @@ impl_as_bytes!(NodePmC, 208);
 
 pub const NODE_PM_C_SIZE: u32 = NodePmC::SIZE;
 
-fn assert_node(node: NodePmC, offset: u32) -> Result<(NodeType, NodeVariantsPm)> {
+fn assert_node(node: NodePmC, offset: usize) -> Result<(NodeType, NodeVariantsPm)> {
     // invariants for every node type
 
     let node_type = FromPrimitive::from_u32(node.node_type).ok_or_else(|| {

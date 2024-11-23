@@ -206,7 +206,7 @@ pub fn read_mesh_info_maybe(
     }
 }
 
-fn assert_mesh_info(mesh: MeshNgC, offset: u32) -> Result<WrappedMeshNg> {
+fn assert_mesh_info(mesh: MeshNgC, offset: usize) -> Result<WrappedMeshNg> {
     let file_ptr = assert_that!("file ptr", bool mesh.file_ptr, offset + 0)?;
     assert_that!("field 04", mesh.unk04 in [0, 1, 2], offset + 4)?;
     // unk08
@@ -295,7 +295,7 @@ fn assert_mesh_info(mesh: MeshNgC, offset: u32) -> Result<WrappedMeshNg> {
 
 fn assert_polygon(
     poly: PolygonNgC,
-    offset: u32,
+    offset: usize,
     poly_index: u32,
 ) -> Result<(u32, u32, bool, u32, PolygonNg)> {
     let vertex_info = poly.vertex_info.0;
@@ -672,7 +672,7 @@ pub fn read_mesh_info_zero(read: &mut CountingReader<impl Read>, mesh_index: i32
     assert_mesh_info_zero(mesh, read.prev)
 }
 
-fn assert_mesh_info_zero(mesh: MeshNgC, offset: u32) -> Result<()> {
+fn assert_mesh_info_zero(mesh: MeshNgC, offset: usize) -> Result<()> {
     assert_that!("file_ptr", mesh.file_ptr == 0, offset + 0)?;
     assert_that!("unk04", mesh.unk04 == 0, offset + 4)?;
     assert_that!("unk08", mesh.unk08 == 0, offset + 8)?;

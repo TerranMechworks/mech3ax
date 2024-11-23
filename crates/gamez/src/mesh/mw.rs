@@ -107,7 +107,7 @@ pub fn read_mesh_info(
     Ok(wrapped)
 }
 
-fn assert_mesh_info(mesh: MeshMwC, offset: u32) -> Result<WrappedMeshMw> {
+fn assert_mesh_info(mesh: MeshMwC, offset: usize) -> Result<WrappedMeshMw> {
     let file_ptr = assert_that!("file ptr", bool mesh.file_ptr, offset + 0)?;
     assert_that!("field 04", mesh.unk04 in [0, 1], offset + 4)?;
     // unk08
@@ -186,7 +186,7 @@ fn assert_mesh_info(mesh: MeshMwC, offset: u32) -> Result<WrappedMeshMw> {
 
 fn assert_polygon(
     poly: PolygonMwC,
-    offset: u32,
+    offset: usize,
     material_count: u32,
     poly_index: u32,
 ) -> Result<(u32, u32, bool, bool, PolygonMw)> {

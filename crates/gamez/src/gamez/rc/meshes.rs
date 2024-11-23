@@ -8,13 +8,14 @@ use crate::mesh::rc::{
 use mech3ax_api_types::gamez::mesh::MeshRc;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
+use mech3ax_types::u32_to_usize;
 use std::io::{Read, Write};
 
 const MESH_ARRAY_SIZE: i32 = 6000;
 
 pub fn read_meshes(
     read: &mut CountingReader<impl Read>,
-    end_offset: u32,
+    end_offset: usize,
     material_count: u32,
 ) -> Result<(Vec<MeshRc>, i32)> {
     let mesh_indices = read_meshes_info_sequential(read)?;
@@ -29,7 +30,7 @@ pub fn read_meshes(
         .valid()
         .map(|mesh_index| {
             let wrapped_mesh = read_mesh_info(read, mesh_index)?;
-            let mesh_offset = read.read_u32()?;
+            let mesh_offset = u32_to_usize(read.read_u32()?);
             assert_that!("mesh offset", prev_offset <= mesh_offset <= end_offset, read.prev)?;
             prev_offset = mesh_offset;
             Ok((wrapped_mesh, mesh_offset, mesh_index))

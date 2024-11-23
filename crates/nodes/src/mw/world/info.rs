@@ -7,7 +7,7 @@ use mech3ax_common::{assert_len, assert_that, Result};
 
 pub const WORLD_NAME: &str = "world1";
 
-pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantMw> {
+pub fn assert_variants(node: NodeVariantsMw, offset: usize) -> Result<NodeVariantMw> {
     assert_that!("world name", node.name eq WORLD_NAME, offset + 0)?;
     assert_that!(
         "world flags",

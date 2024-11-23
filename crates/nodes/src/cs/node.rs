@@ -150,7 +150,7 @@ const UNK044: &[u32] = &[
     0x04000001, // gamez (3)
 ];
 
-fn assert_node(node: NodeCsC, offset: u32) -> Result<(NodeType, NodeVariantsCs)> {
+fn assert_node(node: NodeCsC, offset: usize) -> Result<(NodeType, NodeVariantsCs)> {
     // invariants for every node type
 
     let node_type = FromPrimitive::from_u32(node.node_type).ok_or_else(|| {

@@ -5,8 +5,7 @@ use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_from_c_sized, str_to_c_padded};
 use mech3ax_common::{assert_len, assert_that, Result};
-use mech3ax_types::Ascii;
-use mech3ax_types::{impl_as_bytes, AsBytes as _};
+use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _, Ascii};
 use std::io::{Read, Write};
 use time::OffsetDateTime;
 
@@ -31,7 +30,8 @@ struct InterpEntryC {
 }
 impl_as_bytes!(InterpEntryC, 128);
 
-fn read_line(read: &mut CountingReader<impl Read>, size: usize) -> Result<String> {
+fn read_line(read: &mut CountingReader<impl Read>, size: u32) -> Result<String> {
+    let size = u32_to_usize(size);
     let arg_count = read.read_u32()?;
 
     let mut buf = vec![0u8; size];
@@ -71,8 +71,7 @@ fn read_script(read: &mut CountingReader<impl Read>, script_index: usize) -> Res
         if size == 0 {
             break;
         }
-        // Cast safety: usize > u32 on x64/arm64
-        let command = read_line(read, size as usize)?;
+        let command = read_line(read, size)?;
         lines.push(command);
         line_index += 1;
     }
@@ -87,8 +86,12 @@ pub fn read_interp(read: &mut CountingReader<impl Read>) -> Result<Vec<Script>> 
     );
     let header: InterpHeaderC = read.read_struct()?;
     trace!("{:#?}", header);
-    assert_that!("interp signature", header.signature == SIGNATURE, 0)?;
-    assert_that!("interp version", header.version == VERSION, 4)?;
+    assert_that!(
+        "interp signature",
+        header.signature == SIGNATURE,
+        read.prev + 0
+    )?;
+    assert_that!("interp version", header.version == VERSION, read.prev + 4)?;
 
     let script_info = (0..header.count)
         .map(|index| {
@@ -104,7 +107,8 @@ pub fn read_interp(read: &mut CountingReader<impl Read>) -> Result<Vec<Script>> 
             // Cast safety: i64 > u32
             let last_modified =
                 OffsetDateTime::from_unix_timestamp(entry.last_modified as i64).unwrap();
-            Ok((name, last_modified, entry.start))
+            let start = u32_to_usize(entry.start);
+            Ok((name, last_modified, start))
         })
         .collect::<Result<Vec<_>>>()?;
 

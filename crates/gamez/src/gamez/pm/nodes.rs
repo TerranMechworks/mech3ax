@@ -7,6 +7,7 @@ use mech3ax_nodes::pm::{
     read_node_data, read_node_info_gamez, write_node_data, write_node_info, NodeVariantPm,
     WrappedNodePm, NODE_PM_C_SIZE,
 };
+use mech3ax_types::u32_to_usize;
 use std::io::{Read, Write};
 
 pub fn read_nodes(
@@ -14,7 +15,7 @@ pub fn read_nodes(
     array_size: u32,
     meshes_count: i32,
 ) -> Result<Vec<NodePm>> {
-    let end_offset = read.offset + NODE_PM_C_SIZE * array_size + 4 * array_size;
+    let end_offset = read.offset + u32_to_usize(NODE_PM_C_SIZE * array_size + 4 * array_size);
 
     let mut variants = Vec::new();
     let mut light_node: Option<u32> = None;
@@ -146,7 +147,7 @@ pub fn read_nodes(
     Ok(nodes)
 }
 
-fn assert_area_partitions(nodes: &[NodePm], offset: u32) -> Result<()> {
+fn assert_area_partitions(nodes: &[NodePm], offset: usize) -> Result<()> {
     let (x_count, y_count) = match nodes.first() {
         Some(NodePm::World(world)) => Ok((
             world.area.x_count(256) as i16,

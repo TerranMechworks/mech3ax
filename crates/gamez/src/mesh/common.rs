@@ -107,7 +107,7 @@ pub struct LightC {
 }
 impl_as_bytes!(LightC, 76);
 
-fn assert_light(light: &LightC, offset: u32) -> Result<LightFlags> {
+fn assert_light(light: &LightC, offset: usize) -> Result<LightFlags> {
     // RC: 0/3224, 1/48
     // MW: 0/600
     // PM: 0/817

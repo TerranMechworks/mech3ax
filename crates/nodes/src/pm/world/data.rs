@@ -211,7 +211,7 @@ fn read_partitions(
         .collect::<Result<Vec<_>>>()
 }
 
-fn assert_world(world: &WorldPmC, offset: u32) -> Result<(Area, RangeI32, RangeI32, bool)> {
+fn assert_world(world: &WorldPmC, offset: usize) -> Result<(Area, RangeI32, RangeI32, bool)> {
     assert_that!("world flags", world.flags == 0, offset + 0)?;
     assert_that!("world ap used", world.area_partition_used == 0, offset + 4)?;
     // no idea about area_partition_count

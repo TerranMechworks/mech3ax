@@ -46,7 +46,7 @@ const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
 #[allow(clippy::collapsible_else_if)]
 pub fn assert_variants(
     node: NodeVariantsMw,
-    offset: u32,
+    offset: usize,
     mesh_index_is_ptr: bool,
 ) -> Result<NodeVariantMw> {
     // cannot assert name

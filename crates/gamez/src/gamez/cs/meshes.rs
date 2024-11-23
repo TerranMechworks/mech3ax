@@ -7,11 +7,12 @@ use crate::mesh::ng::{
 use mech3ax_api_types::gamez::mesh::MeshNg;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
+use mech3ax_types::u32_to_usize;
 use std::io::{Read, Write};
 
 pub fn read_meshes(
     read: &mut CountingReader<impl Read>,
-    end_offset: u32,
+    end_offset: usize,
     material_count: u32,
     fixup: Fixup,
 ) -> Result<Vec<Option<MeshNg>>> {
@@ -27,7 +28,7 @@ pub fn read_meshes(
             Some(wrapped_mesh) => {
                 count += 1;
                 last_index = expected_index;
-                let mesh_offset = read.read_u32()?;
+                let mesh_offset = u32_to_usize(read.read_u32()?);
                 log::debug!("filled mesh info: {} at {}", expected_index, read.prev);
                 assert_that!("mesh offset", prev_offset <= mesh_offset <= end_offset, read.prev)?;
                 prev_offset = mesh_offset;

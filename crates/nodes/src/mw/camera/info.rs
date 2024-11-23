@@ -6,7 +6,7 @@ use mech3ax_common::{assert_that, Result};
 
 const CAMERA_NAME: &str = "camera1";
 
-pub fn assert_variants(node: NodeVariantsMw, offset: u32) -> Result<NodeVariantMw> {
+pub fn assert_variants(node: NodeVariantsMw, offset: usize) -> Result<NodeVariantMw> {
     assert_that!("camera name", node.name eq CAMERA_NAME, offset + 0)?;
     assert_that!(
         "camera flags",

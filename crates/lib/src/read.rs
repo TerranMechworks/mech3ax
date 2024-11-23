@@ -68,7 +68,7 @@ fn read_archive(
     version: Version,
     filename: *const c_char,
     callback: NameDataCb,
-    transform: fn(&str, Vec<u8>, u32) -> Result<Vec<u8>>,
+    transform: fn(&str, Vec<u8>, usize) -> Result<Vec<u8>>,
 ) -> Result<()> {
     let input = buf_reader(filename)?;
     let mut read = CountingReader::new(input);
@@ -86,7 +86,7 @@ fn read_archive(
     buffer_callback(callback, name, &data)
 }
 
-fn read_passthrough_transform(_name: &str, data: Vec<u8>, _offset: u32) -> Result<Vec<u8>> {
+fn read_passthrough_transform(_name: &str, data: Vec<u8>, _offset: usize) -> Result<Vec<u8>> {
     Ok(data)
 }
 
@@ -106,7 +106,7 @@ pub extern "C" fn read_sounds(
     })
 }
 
-fn read_reader_json_transform(name: &str, data: Vec<u8>, offset: u32) -> Result<Vec<u8>> {
+fn read_reader_json_transform(name: &str, data: Vec<u8>, offset: usize) -> Result<Vec<u8>> {
     let mut read = CountingReader::new(Cursor::new(data));
     // translate to absolute offset
     read.offset = offset;
@@ -149,7 +149,7 @@ pub extern "C" fn read_reader_raw(
     })
 }
 
-fn read_motion_transform(name: &str, data: Vec<u8>, offset: u32) -> Result<Vec<u8>> {
+fn read_motion_transform(name: &str, data: Vec<u8>, offset: usize) -> Result<Vec<u8>> {
     let mut read = CountingReader::new(Cursor::new(data));
     // translate to absolute offset
     read.offset = offset;
@@ -177,7 +177,7 @@ pub extern "C" fn read_motion(
     })
 }
 
-fn read_mechlib_transform_mw(name: &str, data: Vec<u8>, offset: u32) -> Result<Vec<u8>> {
+fn read_mechlib_transform_mw(name: &str, data: Vec<u8>, offset: usize) -> Result<Vec<u8>> {
     let mut read = CountingReader::new(Cursor::new(data));
     // translate to absolute offset
     read.offset = offset;
@@ -206,7 +206,7 @@ fn read_mechlib_transform_mw(name: &str, data: Vec<u8>, offset: u32) -> Result<V
     }
 }
 
-fn read_mechlib_transform_pm(name: &str, data: Vec<u8>, offset: u32) -> Result<Vec<u8>> {
+fn read_mechlib_transform_pm(name: &str, data: Vec<u8>, offset: usize) -> Result<Vec<u8>> {
     let mut read = CountingReader::new(Cursor::new(data));
     // translate to absolute offset
     read.offset = offset;

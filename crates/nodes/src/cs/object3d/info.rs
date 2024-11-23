@@ -25,7 +25,7 @@ const VARIABLE_FLAGS: NodeBitFlagsCs = NodeBitFlagsCs::from_bits_truncate(
     | 0,
 );
 
-pub fn assert_variants(node: NodeVariantsCs, offset: u32) -> Result<NodeVariantCs> {
+pub fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVariantCs> {
     // can't assert name
     // flags (36) is variable
     let const_flags = node.flags & !VARIABLE_FLAGS;

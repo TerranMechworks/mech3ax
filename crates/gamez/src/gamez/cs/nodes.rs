@@ -7,6 +7,7 @@ use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_nodes::cs::{
     read_node_data, read_node_info, write_node_data, write_node_info, NodeVariantCs, NODE_CS_C_SIZE,
 };
+use mech3ax_types::u32_to_usize;
 use std::io::{Read, Write};
 
 pub fn read_nodes(
@@ -16,7 +17,7 @@ pub fn read_nodes(
     meshes: &[Option<MeshNg>],
     is_gamez: bool,
 ) -> Result<Vec<NodeCs>> {
-    let end_offset = read.offset + NODE_CS_C_SIZE * array_size + 4 * array_size;
+    let end_offset = read.offset + u32_to_usize(NODE_CS_C_SIZE * array_size + 4 * array_size);
 
     let mut variants = Vec::new();
     let mut light_node = None;
@@ -128,7 +129,7 @@ pub fn read_nodes(
     Ok(nodes)
 }
 
-fn assert_planes_area_partitions(nodes: &[NodeCs], offset: u32) -> Result<()> {
+fn assert_planes_area_partitions(nodes: &[NodeCs], offset: usize) -> Result<()> {
     for node in nodes {
         if let NodeCs::Object3d(object3d) = node {
             assert_that!(
@@ -141,7 +142,7 @@ fn assert_planes_area_partitions(nodes: &[NodeCs], offset: u32) -> Result<()> {
     Ok(())
 }
 
-fn assert_gamez_area_partitions(nodes: &[NodeCs], offset: u32) -> Result<()> {
+fn assert_gamez_area_partitions(nodes: &[NodeCs], offset: usize) -> Result<()> {
     let (x_count, y_count) = match nodes.first() {
         Some(NodeCs::World(world)) => Ok((
             world.area.x_count(1024) as i16,

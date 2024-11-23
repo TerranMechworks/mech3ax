@@ -15,7 +15,7 @@ const CLIP: Range = Range {
     max: 5000.0,
 };
 
-fn assert_camera(camera: &CameraC, spyglass: bool, offset: u32) -> Result<()> {
+fn assert_camera(camera: &CameraC, spyglass: bool, offset: usize) -> Result<()> {
     assert_that!("camera world index", camera.world_index == 0, offset + 0)?;
     let window_index = if spyglass { 4 } else { 2 };
     assert_that!(

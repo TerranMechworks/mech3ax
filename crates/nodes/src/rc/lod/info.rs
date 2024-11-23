@@ -48,7 +48,7 @@ const BORKED_UNK044: &[u32; 6] = &[
     0x0189AF70, 0x018B16A0, 0x018C2C30, 0x018C54C0, 0x018CC320, 0x018F4930,
 ];
 
-pub fn assert_variants(node: NodeVariantsRc, offset: u32) -> Result<NodeVariantRc> {
+pub fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<NodeVariantRc> {
     // cannot assert name
     let const_flags = node.flags & !VARIABLE_FLAGS;
     assert_that!("lod flags", const_flags == ALWAYS_PRESENT, offset + 36)?;

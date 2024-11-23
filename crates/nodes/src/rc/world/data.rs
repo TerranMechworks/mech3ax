@@ -179,7 +179,7 @@ fn read_partitions(
         .collect::<Result<Vec<_>>>()
 }
 
-fn assert_world(world: &WorldRcC, offset: u32) -> Result<(Area, RangeI32, RangeI32)> {
+fn assert_world(world: &WorldRcC, offset: usize) -> Result<(Area, RangeI32, RangeI32)> {
     assert_that!("world flags", world.flags == 0, offset + 0)?;
     assert_that!("world ap used", world.area_partition_used == 0, offset + 4)?;
     // no idea about area_partition_unk

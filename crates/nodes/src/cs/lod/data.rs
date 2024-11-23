@@ -28,7 +28,7 @@ struct LodCsC {
 }
 impl_as_bytes!(LodCsC, 92);
 
-fn assert_lod(lod: &LodCsC, offset: u32) -> Result<(bool, Range)> {
+fn assert_lod(lod: &LodCsC, offset: usize) -> Result<(bool, Range)> {
     trace!("{:#?}", lod);
     let level = assert_that!("level", bool lod.level, offset + 0)?;
 

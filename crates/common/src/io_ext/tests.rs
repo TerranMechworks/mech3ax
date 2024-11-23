@@ -122,5 +122,5 @@ fn string_roundtrip() {
     let mut reader = CountingReader::new(cursor);
     let actual = reader.read_string().unwrap();
     assert_eq!(expected, actual);
-    assert_eq!(reader.offset as usize, expected.len() + 4);
+    assert_eq!(reader.offset, expected.len() + 4);
 }

@@ -14,7 +14,7 @@ use mech3ax_api_types::gamez::{GameZDataCs, GameZMetadataCs, TextureName};
 use mech3ax_api_types::nodes::cs::NodeCs;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Rename, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _};
+use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern)]
@@ -99,9 +99,15 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataCs> {
         header.meshes_offset < header.nodes_offset,
         read.prev + 24
     )?;
+
+    let textures_offset = u32_to_usize(header.textures_offset);
+    let materials_offset = u32_to_usize(header.materials_offset);
+    let meshes_offset = u32_to_usize(header.meshes_offset);
+    let nodes_offset = u32_to_usize(header.nodes_offset);
+
     assert_that!(
         "textures offset",
-        read.offset == header.textures_offset,
+        read.offset == textures_offset,
         read.offset
     )?;
     let (original_textures, texture_ptrs) =
@@ -110,22 +116,14 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataCs> {
 
     assert_that!(
         "materials offset",
-        read.offset == header.materials_offset,
+        read.offset == materials_offset,
         read.offset
     )?;
     let (materials, material_count) =
         materials::read_materials(read, &renamed_textures, materials::MatType::Ng)?;
-    assert_that!(
-        "meshes offset",
-        read.offset == header.meshes_offset,
-        read.offset
-    )?;
-    let meshes = meshes::read_meshes(read, header.nodes_offset, material_count, fixup)?;
-    assert_that!(
-        "nodes offset",
-        read.offset == header.nodes_offset,
-        read.offset
-    )?;
+    assert_that!("meshes offset", read.offset == meshes_offset, read.offset)?;
+    let meshes = meshes::read_meshes(read, nodes_offset, material_count, fixup)?;
+    assert_that!("nodes offset", read.offset == nodes_offset, read.offset)?;
     debug!(
         "Reading {} nodes at {}",
         header.node_array_size, read.offset
