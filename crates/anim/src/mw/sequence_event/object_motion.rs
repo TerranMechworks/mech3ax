@@ -7,7 +7,7 @@ use mech3ax_api_types::anim::events::{
 };
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{Quaternion, Vec3};
-use mech3ax_common::assert::{assert_all_zero, assert_utf8};
+use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
@@ -400,20 +400,20 @@ impl ScriptObject for ObjectMotion {
                 seq_name2,
             })
         } else {
-            assert_all_zero(
+            assert_that!(
                 "object motion bounce seq 0",
-                read.prev + 196,
-                &object_motion.bounce_seq0_name.0,
+                zero object_motion.bounce_seq0_name,
+                read.prev + 196
             )?;
-            assert_all_zero(
+            assert_that!(
                 "object motion bounce seq 1",
-                read.prev + 236,
-                &object_motion.bounce_seq1_name.0,
+                zero object_motion.bounce_seq1_name,
+                read.prev + 236
             )?;
-            assert_all_zero(
+            assert_that!(
                 "object motion bounce seq 2",
-                read.prev + 276,
-                &object_motion.bounce_seq2_name.0,
+                zero object_motion.bounce_seq2_name,
+                read.prev + 276
             )?;
             None
         };

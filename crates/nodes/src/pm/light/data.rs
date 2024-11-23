@@ -3,7 +3,6 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::pm::Light;
 use mech3ax_api_types::Range;
-use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use mech3ax_types::Zeros;
@@ -54,7 +53,7 @@ const LIGHT_UNK_000: f32 = -0.5235988;
 fn assert_light(light: &LightPmC, offset: usize) -> Result<()> {
     assert_that!("light field 000", light.unk000 == LIGHT_UNK_000, offset + 0)?;
     // unk004
-    assert_all_zero("light field 008", offset + 8, &light.zero008.0)?;
+    assert_that!("light field 008", zero light.zero008, offset + 8)?;
     assert_that!("light field 136", light.unk136 == 1.0, offset + 136)?;
     assert_that!("light field 140", light.zero140 == 0, offset + 140)?;
     assert_that!("light field 144", light.zero144 == 0, offset + 144)?;

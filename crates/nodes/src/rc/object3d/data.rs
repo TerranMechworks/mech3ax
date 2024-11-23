@@ -7,7 +7,6 @@ use mech3ax_api_types::nodes::rc::{
     Object3d, RotationTranslation, Transformation, TranslationOnly,
 };
 use mech3ax_api_types::{Matrix, Vec3};
-use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_types::Zeros;
@@ -44,7 +43,7 @@ fn assert_object3d(object3d: Object3dRcC, offset: usize) -> Result<Transformatio
     assert_that!("object3d field 012", object3d.zero012 == 0.0, offset + 12)?;
     assert_that!("object3d field 016", object3d.zero016 == 0.0, offset + 16)?;
     assert_that!("object3d field 020", object3d.zero020 == 0.0, offset + 20)?;
-    assert_all_zero("object3d field 096", offset + 96, &object3d.zero096.0)?;
+    assert_that!("object3d field 096", zero object3d.zero096, offset + 96)?;
 
     match object3d.flags {
         32 => {

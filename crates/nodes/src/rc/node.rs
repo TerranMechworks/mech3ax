@@ -12,7 +12,7 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::rc::{Empty, NodeRc};
 use mech3ax_api_types::nodes::{AreaPartition, BoundingBox};
-use mech3ax_common::assert::{assert_all_zero, assert_utf8};
+use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
@@ -247,7 +247,7 @@ pub fn read_node_info(read: &mut CountingReader<impl Read>, index: u32) -> Resul
 }
 
 fn assert_node_info_zero(node: NodeRcC, offset: usize) -> Result<()> {
-    assert_all_zero("name", offset + 0, &node.name.0)?;
+    assert_that!("name", zero node.name, offset + 0)?;
     assert_that!("flags", node.flags.0 == 0, offset + 36)?;
     assert_that!("node type", node.node_type == 0, offset + 52)?;
 

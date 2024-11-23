@@ -208,16 +208,16 @@ where
 }
 
 #[inline]
-pub fn assert_all_zero(name: &str, pos: usize, buf: &[u8]) -> Result<()>
-where
-{
-    let mut iter = buf.iter().enumerate();
-
-    if let Some((index, _)) = iter.find(|(_, &v)| v != 0) {
+pub fn is_all_zero(name: &str, buf: &[u8], pos: usize) -> Result<()> {
+    let mut iter = buf.iter().copied();
+    if let Some(index) = iter.position(|v| v != 0) {
         let value = buf[index];
         let msg = format!(
             "Expected `{}` to be zero, but byte {} was {:02X} (at {})",
-            name, index, value, pos
+            name,
+            index,
+            value,
+            pos + index
         );
         Err(AssertionError(msg))
     } else {
@@ -265,6 +265,9 @@ macro_rules! assert_that {
     };
     ($name:expr, bool $actual:expr, $pos:expr) => {
         $crate::assert::is_bool($name, $actual, $pos)
+    };
+    ($name:expr, zero $actual:expr, $pos:expr) => {
+        $crate::assert::is_all_zero($name, &$actual, $pos)
     };
 }
 

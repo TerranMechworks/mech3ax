@@ -3,7 +3,6 @@ use crate::node_data::camera::CameraC;
 use log::{debug, trace};
 use mech3ax_api_types::nodes::cs::Camera;
 use mech3ax_api_types::{Matrix, Range, Vec3};
-use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use mech3ax_types::AsBytes as _;
@@ -79,7 +78,7 @@ fn assert_camera(camera: &CameraC, spyglass: bool, offset: usize) -> Result<()> 
 
     assert_that!("camera clip", camera.clip == CLIP, offset + 176)?;
 
-    assert_all_zero("camera field 184", offset + 184, &camera.zero184.0)?;
+    assert_that!("camera field 184", zero camera.zero184, offset + 184)?;
 
     assert_that!("camera LOD mul", camera.lod_multiplier == 0.0, offset + 208)?;
     assert_that!("camera LOD inv sq", camera.lod_inv_sq == 0.0, offset + 212)?;
@@ -101,13 +100,13 @@ fn assert_camera(camera: &CameraC, spyglass: bool, offset: usize) -> Result<()> 
     assert_that!("camera FOV V half", camera.fov_v_half == 0.0, offset + 244)?;
 
     assert_that!("camera field 248", camera.one248 == 1, offset + 248)?;
-    assert_all_zero("camera field 252", offset + 252, &camera.zero252.0)?;
+    assert_that!("camera field 252", zero camera.zero252, offset + 252)?;
 
     assert_that!("camera field 312", camera.one312 == 1, offset + 312)?;
-    assert_all_zero("camera field 316", offset + 316, &camera.zero316.0)?;
+    assert_that!("camera field 316", zero camera.zero316, offset + 316)?;
 
     assert_that!("camera field 388", camera.one388 == 1, offset + 388)?;
-    assert_all_zero("camera field 392", offset + 392, &camera.zero392.0)?;
+    assert_that!("camera field 392", zero camera.zero392, offset + 392)?;
 
     assert_that!("camera field 464", camera.zero464 == 0, offset + 464)?;
 

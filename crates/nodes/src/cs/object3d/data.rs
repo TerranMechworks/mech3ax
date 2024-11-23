@@ -8,7 +8,6 @@ use log::{debug, trace};
 use mech3ax_api_types::nodes::cs::Object3d;
 use mech3ax_api_types::nodes::Transformation;
 use mech3ax_api_types::{Matrix, Vec3};
-use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use mech3ax_types::Zeros;
@@ -46,7 +45,7 @@ fn assert_object3d(object3d: Object3dCsC, offset: usize) -> Result<Option<Transf
     assert_that!("field 016", object3d.zero016 == 0.0, offset + 16)?;
     assert_that!("field 020", object3d.zero020 == 0.0, offset + 20)?;
     assert_that!("scale", object3d.scale == SCALE_ONE, offset + 36)?;
-    assert_all_zero("field 096", offset + 96, &object3d.zero096.0)?;
+    assert_that!("field 096", zero object3d.zero096, offset + 96)?;
 
     let transformation = if object3d.flags == 40 {
         assert_that!("rotation", object3d.rotation == Vec3::DEFAULT, offset + 24)?;

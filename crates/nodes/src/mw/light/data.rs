@@ -3,7 +3,6 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::mw::Light;
 use mech3ax_api_types::{Color, Range, Vec3};
-use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlags;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
@@ -41,7 +40,7 @@ fn assert_light(light: &LightMwC, offset: usize) -> Result<()> {
         light.translation == Vec3::DEFAULT,
         offset + 12
     )?;
-    assert_all_zero("light field 024", offset + 24, &light.zero024.0)?;
+    assert_that!("light field 024", zero light.zero024, offset + 24)?;
 
     assert_that!("light field 136", light.one136 == 1.0, offset + 136)?;
     assert_that!("light field 140", light.zero140 == 0.0, offset + 140)?;

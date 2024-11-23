@@ -6,7 +6,7 @@ use mech3ax_api_types::anim::events::{
 };
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{Range, Vec3};
-use mech3ax_common::assert::{assert_all_zero, assert_utf8};
+use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
@@ -386,10 +386,10 @@ impl ScriptObject for PufferState {
                     || str_from_c_padded(&puffer_state.tex192),
                 )?)
             } else {
-                assert_all_zero(
+                assert_that!(
                     "puffer state texture 192",
-                    read.prev + 192,
-                    &puffer_state.tex192.0,
+                    zero puffer_state.tex192,
+                    read.prev + 192
                 )?;
                 None
             };
@@ -400,10 +400,10 @@ impl ScriptObject for PufferState {
                     || str_from_c_padded(&puffer_state.tex228),
                 )?)
             } else {
-                assert_all_zero(
+                assert_that!(
                     "puffer state texture 228",
-                    read.prev + 228,
-                    &puffer_state.tex228.0,
+                    zero puffer_state.tex228,
+                    read.prev + 228
                 )?;
                 None
             };
@@ -414,10 +414,10 @@ impl ScriptObject for PufferState {
                     || str_from_c_padded(&puffer_state.tex264),
                 )?)
             } else {
-                assert_all_zero(
+                assert_that!(
                     "puffer state texture 264",
-                    read.prev + 264,
-                    &puffer_state.tex264.0,
+                    zero puffer_state.tex264,
+                    read.prev + 264
                 )?;
                 None
             };
@@ -428,10 +428,10 @@ impl ScriptObject for PufferState {
                     || str_from_c_padded(&puffer_state.tex300),
                 )?)
             } else {
-                assert_all_zero(
+                assert_that!(
                     "puffer state texture 300",
-                    read.prev + 300,
-                    &puffer_state.tex300.0,
+                    zero puffer_state.tex300,
+                    read.prev + 300
                 )?;
                 None
             };
@@ -442,10 +442,10 @@ impl ScriptObject for PufferState {
                     || str_from_c_padded(&puffer_state.tex336),
                 )?)
             } else {
-                assert_all_zero(
+                assert_that!(
                     "puffer state texture 336",
-                    read.prev + 336,
-                    &puffer_state.tex336.0,
+                    zero puffer_state.tex336,
+                    read.prev + 336
                 )?;
                 None
             };
@@ -456,10 +456,10 @@ impl ScriptObject for PufferState {
                     || str_from_c_padded(&puffer_state.tex372),
                 )?)
             } else {
-                assert_all_zero(
+                assert_that!(
                     "puffer state texture 372",
-                    read.prev + 372,
-                    &puffer_state.tex372.0,
+                    zero puffer_state.tex372,
+                    read.prev + 372
                 )?;
                 None
             };
@@ -472,43 +472,43 @@ impl ScriptObject for PufferState {
                 texture6,
             })
         } else {
-            assert_all_zero(
+            assert_that!(
                 "puffer state texture 192",
-                read.prev + 192,
-                &puffer_state.tex192.0,
+                zero puffer_state.tex192,
+                read.prev + 192
             )?;
-            assert_all_zero(
+            assert_that!(
                 "puffer state texture 228",
-                read.prev + 228,
-                &puffer_state.tex228.0,
+                zero puffer_state.tex228,
+                read.prev + 228
             )?;
-            assert_all_zero(
+            assert_that!(
                 "puffer state texture 264",
-                read.prev + 264,
-                &puffer_state.tex264.0,
+                zero puffer_state.tex264,
+                read.prev + 264
             )?;
-            assert_all_zero(
+            assert_that!(
                 "puffer state texture 300",
-                read.prev + 300,
-                &puffer_state.tex300.0,
+                zero puffer_state.tex300,
+                read.prev + 300
             )?;
-            assert_all_zero(
+            assert_that!(
                 "puffer state texture 336",
-                read.prev + 336,
-                &puffer_state.tex336.0,
+                zero puffer_state.tex336,
+                read.prev + 336
             )?;
-            assert_all_zero(
+            assert_that!(
                 "puffer state texture 372",
-                read.prev + 372,
-                &puffer_state.tex372.0,
+                zero puffer_state.tex372,
+                read.prev + 372
             )?;
             None
         };
 
-        assert_all_zero(
+        assert_that!(
             "puffer state field 408",
-            read.prev + 408,
-            &puffer_state.zero408.0,
+            zero puffer_state.zero408,
+            read.prev + 408
         )?;
         assert_that!(
             "puffer state field 532",
@@ -548,10 +548,10 @@ impl ScriptObject for PufferState {
                 read.prev + 540
             )?;
         }
-        assert_all_zero(
+        assert_that!(
             "puffer state field 548",
-            read.prev + 548,
-            &puffer_state.zero548.0,
+            zero puffer_state.zero548,
+            read.prev + 548
         )?;
 
         let growth_factor = if flags.contains(PufferStateFlags::GROWTH_FACTOR) {

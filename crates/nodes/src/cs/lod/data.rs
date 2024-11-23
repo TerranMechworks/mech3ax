@@ -3,7 +3,6 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::cs::Lod;
 use mech3ax_api_types::Range;
-use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, bool_c, Result};
 use mech3ax_types::Zeros;
@@ -38,7 +37,7 @@ fn assert_lod(lod: &LodCsC, offset: usize) -> Result<(bool, Range)> {
     let expected = lod.range_far * lod.range_far;
     assert_that!("range far sq", lod.range_far_sq == expected, offset + 12)?;
 
-    assert_all_zero("field 16", offset + 16, &lod.zero16.0)?;
+    assert_that!("field 16", zero lod.zero16, offset + 16)?;
 
     assert_that!("field 64", lod.unk64 >= 0.0, offset + 64)?;
     let expected = lod.unk64 * lod.unk64;

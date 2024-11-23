@@ -2,7 +2,6 @@ use super::info::{SPYGLASS_NAME, WINDOW_NAME};
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_api_types::nodes::cs::Window;
-use mech3ax_common::assert::assert_all_zero;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use mech3ax_types::Zeros;
@@ -54,7 +53,7 @@ pub fn read(
         window.resolution_y == resolution_y,
         read.prev + 12
     )?;
-    assert_all_zero("window field 016", read.prev + 16, &window.zero016.0)?;
+    assert_that!("window field 016", zero window.zero016, read.prev + 16)?;
     assert_that!(
         "window buffer index",
         window.buffer_index == -1,

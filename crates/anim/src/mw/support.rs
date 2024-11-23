@@ -1,7 +1,7 @@
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::trace;
 use mech3ax_api_types::anim::{NamePad, NamePtr, NamePtrFlags};
-use mech3ax_common::assert::{assert_all_zero, assert_utf8};
+use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::string::{
     bytes_to_c, str_from_c_node_name, str_from_c_padded, str_from_c_partition, str_to_c_node_name,
@@ -25,13 +25,13 @@ pub fn read_objects(read: &mut CountingReader<impl Read>, count: u8) -> Result<V
     trace!("Reading anim def object 0 at {}", read.offset);
     // the first entry is always zero
     let object: ObjectC = read.read_struct()?;
-    assert_all_zero("anim def object zero name", read.prev + 0, &object.name.0)?;
+    assert_that!("anim def object zero name", zero object.name, read.prev + 0)?;
     assert_that!(
         "anim def object zero field 32",
         object.zero32 == 0,
         read.prev + 32
     )?;
-    assert_all_zero("anim def object zero unk", read.prev + 0, &object.unk.0)?;
+    assert_that!("anim def object zero unk", zero object.unk, read.prev + 0)?;
     (1..count)
         .map(|i| {
             trace!("Reading anim def object {} at {}", i, read.offset);
@@ -83,7 +83,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, count: u8) -> Result<Vec
     trace!("Reading anim def node 0 at {}", read.offset);
     // the first entry is always zero
     let node_info: NodeInfoC = read.read_struct()?;
-    assert_all_zero("anim def node zero name", read.prev + 0, &node_info.name.0)?;
+    assert_that!("anim def node zero name", zero node_info.name, read.prev + 0)?;
     assert_that!(
         "anim def node zero field 32",
         node_info.zero32 == 0,
@@ -149,7 +149,7 @@ pub fn read_lights(read: &mut CountingReader<impl Read>, count: u8) -> Result<Ve
     trace!("Reading anim def light 0 at {}", read.offset);
     // the first entry is always zero
     let light: ReaderLookupC = read.read_struct()?;
-    assert_all_zero("anim def light zero name", read.prev + 0, &light.name.0)?;
+    assert_that!("anim def light zero name", zero light.name, read.prev + 0)?;
     assert_that!(
         "anim def node light flags",
         light.flags == 0,
@@ -220,7 +220,7 @@ pub fn read_puffers(read: &mut CountingReader<impl Read>, count: u8) -> Result<V
     // the first entry is always zero
     let mut puffer = [0; PufferRefC::SIZE as usize];
     read.read_exact(&mut puffer)?;
-    assert_all_zero("anim def puffer zero", read.prev + 0, &puffer)?;
+    assert_that!("anim def puffer zero", zero puffer, read.prev + 0)?;
 
     (1..count)
         .map(|i| {
@@ -283,10 +283,10 @@ pub fn read_dynamic_sounds(
     trace!("Reading anim def dynamic sound 0 at {}", read.offset);
     // the first entry is always zero
     let dynamic_sound: ReaderLookupC = read.read_struct()?;
-    assert_all_zero(
+    assert_that!(
         "anim def dynamic sound zero name",
-        read.prev + 0,
-        &dynamic_sound.name.0,
+        zero dynamic_sound.name,
+        read.prev + 0
     )?;
     assert_that!(
         "anim def node dynamic sound flags",
@@ -365,10 +365,10 @@ pub fn read_static_sounds(read: &mut CountingReader<impl Read>, count: u8) -> Re
     trace!("Reading anim def static sound 0 at {}", read.offset);
     // the first entry is always zero
     let static_sound: StaticSoundC = read.read_struct()?;
-    assert_all_zero(
+    assert_that!(
         "anim def static sound zero name",
-        read.prev + 0,
-        &static_sound.name.0,
+        zero static_sound.name,
+        read.prev + 0
     )?;
     assert_that!(
         "anim def static sound zero field 32",
