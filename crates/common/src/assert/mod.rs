@@ -1,5 +1,4 @@
 use crate::string::ConversionError;
-use num_traits::AsPrimitive;
 use std::cmp::{PartialEq, PartialOrd};
 use std::fmt::{self, Debug, Display};
 
@@ -23,11 +22,10 @@ impl std::error::Error for AssertionError {}
 type Result<T> = ::std::result::Result<T, AssertionError>;
 
 #[inline]
-pub fn is_equal_to<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
+pub fn is_equal_to<S, T>(name: S, expected: T, actual: T, pos: usize) -> Result<()>
 where
     S: Display,
     T: PartialEq + Debug,
-    U: Display,
 {
     if actual == expected {
         Ok(())
@@ -41,11 +39,10 @@ where
 }
 
 #[inline]
-pub fn is_not_equal_to<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
+pub fn is_not_equal_to<S, T>(name: S, expected: T, actual: T, pos: usize) -> Result<()>
 where
     S: Display,
     T: PartialEq + Debug,
-    U: Display,
 {
     if actual != expected {
         Ok(())
@@ -56,11 +53,10 @@ where
 }
 
 #[inline]
-pub fn is_less_than<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
+pub fn is_less_than<S, T>(name: S, expected: T, actual: T, pos: usize) -> Result<()>
 where
     S: Display,
     T: PartialOrd + Debug,
-    U: Display,
 {
     if actual < expected {
         Ok(())
@@ -74,11 +70,10 @@ where
 }
 
 #[inline]
-pub fn is_less_than_or_equal_to<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
+pub fn is_less_than_or_equal_to<S, T>(name: S, expected: T, actual: T, pos: usize) -> Result<()>
 where
     S: Display,
     T: PartialOrd + Debug,
-    U: Display,
 {
     if actual <= expected {
         Ok(())
@@ -92,11 +87,10 @@ where
 }
 
 #[inline]
-pub fn is_greater_than<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
+pub fn is_greater_than<S, T>(name: S, expected: T, actual: T, pos: usize) -> Result<()>
 where
     S: Display,
     T: PartialOrd + Debug,
-    U: Display,
 {
     if actual > expected {
         Ok(())
@@ -110,11 +104,10 @@ where
 }
 
 #[inline]
-pub fn is_greater_than_or_equal_to<S, T, U>(name: S, expected: T, actual: T, pos: U) -> Result<()>
+pub fn is_greater_than_or_equal_to<S, T>(name: S, expected: T, actual: T, pos: usize) -> Result<()>
 where
     S: Display,
     T: PartialOrd + Debug,
-    U: Display,
 {
     if actual >= expected {
         Ok(())
@@ -128,17 +121,16 @@ where
 }
 
 #[inline]
-pub fn is_between<S, T, U>(
+pub fn is_between<S, T>(
     name: S,
     expected_min: T,
     expected_max: T,
     actual: T,
-    pos: U,
+    pos: usize,
 ) -> Result<()>
 where
     S: Display,
     T: PartialOrd + Debug,
-    U: Display,
 {
     if expected_min <= actual && actual <= expected_max {
         Ok(())
@@ -152,11 +144,10 @@ where
 }
 
 #[inline]
-pub fn is_in<S, T, U>(name: S, haystack: &[T], needle: &T, pos: U) -> Result<()>
+pub fn is_in<S, T>(name: S, haystack: &[T], needle: &T, pos: usize) -> Result<()>
 where
     S: Display,
     T: PartialEq + Debug,
-    U: Display,
 {
     if haystack.contains(needle) {
         Ok(())
@@ -170,10 +161,9 @@ where
 }
 
 #[inline]
-pub fn is_bool<S, U>(name: S, actual: u32, pos: U) -> Result<bool>
+pub fn is_bool<S>(name: S, actual: u32, pos: usize) -> Result<bool>
 where
     S: Display,
-    U: Display,
 {
     if actual > 1 {
         let msg = format!(
@@ -187,14 +177,12 @@ where
 }
 
 #[inline]
-pub fn assert_utf8<S, U, F, T>(name: S, pos: U, func: F) -> Result<T>
+pub fn assert_utf8<S, F, T>(name: S, pos: usize, func: F) -> Result<T>
 where
     S: Display,
-    U: AsPrimitive<usize>,
     F: FnOnce() -> ::std::result::Result<T, ConversionError>,
 {
     func().map_err(|err| {
-        let pos = pos.as_();
         let msg = match err {
             ConversionError::PaddingError(padding) => format!(
                 "Expected `{}` to padded with {} (at {})",
@@ -216,10 +204,9 @@ where
 }
 
 #[inline]
-pub fn assert_all_zero<S, U>(name: S, pos: U, buf: &[u8]) -> Result<()>
+pub fn assert_all_zero<S>(name: S, pos: usize, buf: &[u8]) -> Result<()>
 where
     S: Display,
-    U: Display,
 {
     let mut iter = buf.iter().enumerate();
 
