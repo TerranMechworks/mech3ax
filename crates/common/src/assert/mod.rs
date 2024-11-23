@@ -1,6 +1,6 @@
 use crate::string::ConversionError;
 use std::cmp::{PartialEq, PartialOrd};
-use std::fmt::{self, Debug};
+use std::fmt;
 
 #[derive(Clone)]
 pub struct AssertionError(pub String);
@@ -24,7 +24,7 @@ type Result<T> = ::std::result::Result<T, AssertionError>;
 #[inline]
 pub fn is_equal_to<T>(name: &str, expected: T, actual: T, pos: usize) -> Result<()>
 where
-    T: PartialEq + Debug,
+    T: PartialEq + fmt::Debug,
 {
     if actual == expected {
         Ok(())
@@ -40,7 +40,7 @@ where
 #[inline]
 pub fn is_not_equal_to<T>(name: &str, expected: T, actual: T, pos: usize) -> Result<()>
 where
-    T: PartialEq + Debug,
+    T: PartialEq + fmt::Debug,
 {
     if actual != expected {
         Ok(())
@@ -53,7 +53,7 @@ where
 #[inline]
 pub fn is_less_than<T>(name: &str, expected: T, actual: T, pos: usize) -> Result<()>
 where
-    T: PartialOrd + Debug,
+    T: PartialOrd + fmt::Debug,
 {
     if actual < expected {
         Ok(())
@@ -69,7 +69,7 @@ where
 #[inline]
 pub fn is_less_than_or_equal_to<T>(name: &str, expected: T, actual: T, pos: usize) -> Result<()>
 where
-    T: PartialOrd + Debug,
+    T: PartialOrd + fmt::Debug,
 {
     if actual <= expected {
         Ok(())
@@ -85,7 +85,7 @@ where
 #[inline]
 pub fn is_greater_than<T>(name: &str, expected: T, actual: T, pos: usize) -> Result<()>
 where
-    T: PartialOrd + Debug,
+    T: PartialOrd + fmt::Debug,
 {
     if actual > expected {
         Ok(())
@@ -101,7 +101,7 @@ where
 #[inline]
 pub fn is_greater_than_or_equal_to<T>(name: &str, expected: T, actual: T, pos: usize) -> Result<()>
 where
-    T: PartialOrd + Debug,
+    T: PartialOrd + fmt::Debug,
 {
     if actual >= expected {
         Ok(())
@@ -123,7 +123,7 @@ pub fn is_between<T>(
     pos: usize,
 ) -> Result<()>
 where
-    T: PartialOrd + Debug,
+    T: PartialOrd + fmt::Debug,
 {
     if expected_min <= actual && actual <= expected_max {
         Ok(())
@@ -139,7 +139,7 @@ where
 #[inline]
 pub fn is_in<T>(name: &str, haystack: &[T], needle: &T, pos: usize) -> Result<()>
 where
-    T: PartialEq + Debug,
+    T: PartialEq + fmt::Debug,
 {
     if haystack.contains(needle) {
         Ok(())
