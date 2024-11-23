@@ -1,9 +1,9 @@
+use crate::size::u32_to_usize;
 use log::trace;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::string::str_from_c_sized;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::u32_to_usize;
 use std::io::Cursor;
 
 pub fn read_zlocids(
@@ -11,10 +11,10 @@ pub fn read_zlocids(
     skip: Option<usize>,
     mem_start: u32,
     mem_end: u32,
-    base_offset: u32,
+    base_offset: usize,
 ) -> Result<Vec<(u32, String)>> {
     let mut read = CountingReader::new(Cursor::new(data));
-    read.offset = u32_to_usize(base_offset);
+    read.offset = base_offset;
 
     // skip the CRT initialization section
     if let Some(pos) = skip {
@@ -48,9 +48,10 @@ pub fn read_zlocids(
                 read.prev
             )
         })?;
+        let start = u32_to_usize(relative_offset);
 
         let entry_id = read.read_u32()?;
-        entry_table.push((entry_id, relative_offset));
+        entry_table.push((entry_id, start));
     }
 
     // the table of message offsets and message table IDs is written backwards, highest
@@ -60,7 +61,7 @@ pub fn read_zlocids(
         .rev()
         .map(|(entry_id, start)| {
             let pos = base_offset + start;
-            let relative_start = u32_to_usize(start);
+            let relative_start = start;
             let mut relative_end = relative_start;
 
             while data[relative_end] != 0 {

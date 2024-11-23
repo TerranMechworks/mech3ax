@@ -52,8 +52,7 @@ pub fn read_message_table(data: &[u8]) -> Result<HashMap<u32, String>> {
 
     let mut entries = HashMap::new();
     for (low_id, high_id, offset_to_entries) in table {
-        // Cast safety: u64 > u32
-        read.get_mut().set_position(offset_to_entries as u64);
+        read.get_mut().set_position(u64::from(offset_to_entries));
         for entry_id in low_id..=high_id {
             let length = read.read_u16()? - 4;
             let flags = read.read_u16()?;

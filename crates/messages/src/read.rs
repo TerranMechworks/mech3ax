@@ -1,9 +1,7 @@
-use crate::message_table;
-use crate::pe;
 use crate::resources::{read_resource_directory_mt, read_resource_directory_st};
 use crate::size::u32_to_usize;
-use crate::string_table;
 use crate::zloc::read_zlocids;
+use crate::{message_table, pe, string_table};
 use log::trace;
 use mech3ax_api_types::messages::{MessageEntry, Messages};
 use mech3ax_common::io_ext::CountingReader;
@@ -31,7 +29,7 @@ fn parse_data_section(
         data_section.virtual_size
     );
 
-    let data_section_offset = data_section.pointer_to_raw_data;
+    let data_section_offset = u32_to_usize(data_section.pointer_to_raw_data);
     let mem_start = data_section.virtual_address + sections.image_base;
     let mem_end =
         mem_start + std::cmp::min(data_section.size_of_raw_data, data_section.virtual_size);
