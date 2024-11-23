@@ -378,7 +378,7 @@ impl ScriptObject for PufferState {
         )?;
 
         let textures = if flags.contains(PufferStateFlags::CYCLE_TEXTURE) {
-            let texture1 = if puffer_state.tex192.0[0] != 0 {
+            let texture1 = if !puffer_state.tex192.first_is_zero() {
                 Some(assert_utf8(
                     "puffer state texture 192",
                     read.prev + 192,
@@ -392,7 +392,7 @@ impl ScriptObject for PufferState {
                 )?;
                 None
             };
-            let texture2 = if puffer_state.tex228.0[0] != 0 {
+            let texture2 = if !puffer_state.tex228.first_is_zero() {
                 Some(assert_utf8(
                     "puffer state texture 228",
                     read.prev + 228,
@@ -406,7 +406,7 @@ impl ScriptObject for PufferState {
                 )?;
                 None
             };
-            let texture3 = if puffer_state.tex264.0[0] != 0 {
+            let texture3 = if !puffer_state.tex264.first_is_zero() {
                 Some(assert_utf8(
                     "puffer state texture 264",
                     read.prev + 264,
@@ -420,7 +420,7 @@ impl ScriptObject for PufferState {
                 )?;
                 None
             };
-            let texture4 = if puffer_state.tex300.0[0] != 0 {
+            let texture4 = if !puffer_state.tex300.first_is_zero() {
                 Some(assert_utf8(
                     "puffer state texture 300",
                     read.prev + 300,
@@ -434,7 +434,7 @@ impl ScriptObject for PufferState {
                 )?;
                 None
             };
-            let texture5 = if puffer_state.tex336.0[0] != 0 {
+            let texture5 = if !puffer_state.tex336.first_is_zero() {
                 Some(assert_utf8(
                     "puffer state texture 336",
                     read.prev + 336,
@@ -448,7 +448,7 @@ impl ScriptObject for PufferState {
                 )?;
                 None
             };
-            let texture6 = if puffer_state.tex372.0[0] != 0 {
+            let texture6 = if !puffer_state.tex372.first_is_zero() {
                 Some(assert_utf8(
                     "puffer state texture 372",
                     read.prev + 372,

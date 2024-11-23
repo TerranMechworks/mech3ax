@@ -167,9 +167,9 @@ fn assert_node(node: NodeCsC, offset: usize) -> Result<(NodeType, NodeVariantsCs
         ));
     }
 
-    let name = if &node.name.0 == GEOMETRY_NODE_NAME {
+    let name = if node.name == GEOMETRY_NODE_NAME {
         GEOMETRY_NAME.to_string()
-    } else if &node.name.0 == COCKPIT_NODE_NAME {
+    } else if node.name == COCKPIT_NODE_NAME {
         COCKPIT_NAME.to_string()
     } else {
         assert_utf8("node name", offset + 0, || node.name.to_str_node_name())?

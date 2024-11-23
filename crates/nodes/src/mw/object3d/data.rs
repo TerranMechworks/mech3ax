@@ -166,7 +166,7 @@ pub fn write(
         scale: SCALE_ONE,
         matrix,
         translation,
-        zero096: Zeros([0u8; 48]),
+        zero096: Zeros::new(),
     };
     trace!("{:#?}", object3d);
     write.write_struct(&object3d)?;

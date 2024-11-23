@@ -265,7 +265,7 @@ pub fn write(
         scale,
         matrix,
         translation,
-        zero096: Zeros([0u8; 48]),
+        zero096: Zeros::new(),
     };
     trace!("{:#?}", object3dc);
     write.write_struct(&object3dc)?;

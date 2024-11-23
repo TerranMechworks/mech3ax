@@ -360,7 +360,7 @@ impl ScriptObject for ObjectMotion {
         )?;
 
         let bounce_sequence = if flags.contains(ObjectMotionFlags::BOUNCE_SEQ) {
-            let seq_name0 = if object_motion.bounce_seq0_name.0[0] != 0 {
+            let seq_name0 = if !object_motion.bounce_seq0_name.first_is_zero() {
                 let bounce_seq0 =
                     assert_utf8("object motion bounce seq 0 name", read.prev + 196, || {
                         object_motion.bounce_seq0_name.to_str_padded()
@@ -373,7 +373,7 @@ impl ScriptObject for ObjectMotion {
                 ));
             };
 
-            let seq_name1 = if object_motion.bounce_seq1_name.0[0] != 0 {
+            let seq_name1 = if !object_motion.bounce_seq1_name.first_is_zero() {
                 let bounce_seq1 =
                     assert_utf8("object motion bounce seq 1 name", read.prev + 236, || {
                         object_motion.bounce_seq1_name.to_str_padded()
@@ -383,7 +383,7 @@ impl ScriptObject for ObjectMotion {
                 None
             };
 
-            let seq_name2 = if object_motion.bounce_seq2_name.0[0] != 0 {
+            let seq_name2 = if !object_motion.bounce_seq2_name.first_is_zero() {
                 let bounce_seq2 =
                     assert_utf8("object motion bounce seq 2 name", read.prev + 276, || {
                         object_motion.bounce_seq2_name.to_str_padded()

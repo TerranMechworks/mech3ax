@@ -258,7 +258,7 @@ pub fn read_node_info_gamez(
     let node: NodeMwC = read.read_struct()?;
     trace!("{:#?}", node);
 
-    if node.name.0[0] == 0 {
+    if node.name.first_is_zero() {
         assert_node_info_zero(node, read.prev)?;
         Ok(None)
     } else {

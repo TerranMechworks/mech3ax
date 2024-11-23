@@ -5,7 +5,7 @@ use std::fmt;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
-pub struct Zeros<const N: usize>(pub [u8; N]);
+pub struct Zeros<const N: usize>([u8; N]);
 
 // SAFETY: `#[repr(transparent)]`.
 unsafe impl<const N: usize> TransparentWrapper<[u8; N]> for Zeros<N> {}

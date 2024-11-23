@@ -43,7 +43,7 @@ pub fn read_objects(read: &mut CountingReader<impl Read>, count: u8) -> Result<V
             // TODO: this is cheating, but i have no idea how to interpret this data.
             // sometimes it's sensible, e.g. floats. other times, it seems like random
             // garbage.
-            let pad = object.unk.0.to_vec();
+            let pad = object.unk.to_vec();
             Ok(NamePad { name, pad })
         })
         .collect()
