@@ -6,30 +6,32 @@ use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{Color, Range};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii};
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Ascii, Maybe};
 use std::io::{Read, Write};
 
 const DEFAULT_FOG_NAME: &str = "default_fog_name";
 
-bitflags::bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub struct FogStateFlags: u32 {
+bitflags! {
+    struct FogStateFlags: u32 {
         // const STATE = 1 << 0;
         const COLOR = 1 << 1;
         const ALTITUDE = 1 << 2;
         const RANGE = 1 << 3;
-
-        const DEFAULT = Self::COLOR.bits()
-        | Self::ALTITUDE.bits()
-        | Self::RANGE.bits();
     }
 }
+
+impl FogStateFlags {
+    pub const DEFAULT: Self =
+        Self::from_bits_truncate(Self::COLOR.bits() | Self::ALTITUDE.bits() | Self::RANGE.bits());
+}
+
+type Flags = Maybe<u32, FogStateFlags>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct FogStateC {
     name: Ascii<32>, // 00
-    flags: u32,      // 32
+    flags: Flags,    // 32
     fog_type: u32,   // 36
     color: Color,    // 40
     altitude: Range, // 52
@@ -50,7 +52,7 @@ impl ScriptObject for FogState {
 
         assert_that!(
             "fog state flags",
-            fog_state.flags == FogStateFlags::DEFAULT.bits(),
+            fog_state.flags == FogStateFlags::DEFAULT.maybe(),
             read.prev + 32
         )?;
         assert_that!(
@@ -79,7 +81,7 @@ impl ScriptObject for FogState {
         };
         write.write_struct(&FogStateC {
             name,
-            flags: FogStateFlags::DEFAULT.bits(),
+            flags: FogStateFlags::DEFAULT.maybe(),
             fog_type,
             color: self.color,
             altitude: self.altitude,

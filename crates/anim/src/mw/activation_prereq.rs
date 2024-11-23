@@ -2,13 +2,11 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::{ActivationPrereq, PrereqAnimation, PrereqObject, PrereqParent};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, Ascii};
-use num_derive::FromPrimitive;
-use num_traits::FromPrimitive;
+use mech3ax_common::{assert_that, bool_c, Result};
+use mech3ax_types::{impl_as_bytes, Ascii, PrimitiveEnum};
 use std::io::{Read, Write};
 
-#[derive(Debug, FromPrimitive, PartialEq)]
+#[derive(Debug, PrimitiveEnum, PartialEq)]
 #[repr(u32)]
 enum ActivPrereqType {
     Animation = 1,
@@ -104,8 +102,10 @@ fn read_activ_prereq(read: &mut CountingReader<impl Read>) -> Result<ActivationP
     let optional = read.read_u32()?;
     let required = !assert_that!("anim def activ prereq optional", bool optional, read.prev)?;
     let prereq_type_raw = read.read_u32()?;
-    match FromPrimitive::from_u32(prereq_type_raw) {
-        Some(ActivPrereqType::Animation) => {
+    let prereq_type =
+        assert_that!("activ prereq type", enum ActivPrereqType => prereq_type_raw, read.prev)?;
+    match prereq_type {
+        ActivPrereqType::Animation => {
             assert_that!(
                 "anim def activ prereq required",
                 required == true,
@@ -113,13 +113,8 @@ fn read_activ_prereq(read: &mut CountingReader<impl Read>) -> Result<ActivationP
             )?;
             read_activ_prereq_anim(read)
         }
-        Some(ActivPrereqType::Parent) => read_activ_prereq_parent(read, required),
-        Some(ActivPrereqType::Object) => read_activ_prereq_object(read, required),
-        None => Err(assert_with_msg!(
-            "Expected valid activ prereq type, but was {} (at {})",
-            prereq_type_raw,
-            read.prev
-        )),
+        ActivPrereqType::Parent => read_activ_prereq_parent(read, required),
+        ActivPrereqType::Object => read_activ_prereq_object(read, required),
     }
 }
 

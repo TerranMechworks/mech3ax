@@ -7,9 +7,8 @@ use mech3ax_api_types::nodes::rc::{Empty, NodeRc};
 use mech3ax_api_types::nodes::{AreaPartition, BoundingBox};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii, Hex, Ptr};
-use num_traits::FromPrimitive;
+use mech3ax_common::{assert_that, Result};
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii, Maybe, Ptr};
 use std::io::{Read, Write};
 
 #[derive(Debug)]
@@ -67,11 +66,13 @@ pub enum NodeVariantRc {
     },
 }
 
+type Flags = Maybe<u32, NodeBitFlags>;
+
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct NodeRcC {
     name: Ascii<36>,               // 000
-    flags: Hex<u32>,               // 036
+    flags: Flags,                  // 036
     zero040: u32,                  // 040
     unk044: u32,                   // 044
     zone_id: u32,                  // 048
@@ -106,26 +107,14 @@ const ABORT_TEST_NAME: &str = "abort_test";
 fn assert_node(node: NodeRcC, offset: usize) -> Result<(NodeType, NodeVariantsRc)> {
     // invariants for every node type
 
-    let node_type = FromPrimitive::from_u32(node.node_type).ok_or_else(|| {
-        assert_with_msg!(
-            "Expected valid node type, but was {} (at {})",
-            node.node_type,
-            offset + 52
-        )
-    })?;
+    let node_type = assert_that!("node type", enum NodeType => node.node_type, offset + 52)?;
 
     let name = if node.name == ABORT_TEST_NODE_NAME {
         ABORT_TEST_NAME.to_string()
     } else {
         assert_utf8("node name", offset + 0, || node.name.to_str_node_name())?
     };
-    let flags = NodeBitFlags::from_bits(node.flags.0).ok_or_else(|| {
-        assert_with_msg!(
-            "Expected valid node flags, but was {:?} (at {})",
-            node.flags,
-            offset + 36
-        )
-    })?;
+    let flags = assert_that!("node flags", flags node.flags, offset + 36)?;
     assert_that!("field 040", node.zero040 == 0, offset + 40)?;
     // unk044 (044) is variable
     // zone_id (048) is variable
@@ -239,7 +228,7 @@ pub fn read_node_info(read: &mut CountingReader<impl Read>, index: u32) -> Resul
 
 fn assert_node_info_zero(node: NodeRcC, offset: usize) -> Result<()> {
     assert_that!("name", zero node.name, offset + 0)?;
-    assert_that!("flags", node.flags.0 == 0, offset + 36)?;
+    assert_that!("flags", node.flags == Flags::empty(), offset + 36)?;
     assert_that!("node type", node.node_type == 0, offset + 52)?;
 
     assert_that!("field 040", node.zero040 == 0, offset + 40)?;
@@ -313,7 +302,7 @@ fn write_variant(
 
     let node = NodeRcC {
         name,
-        flags: Hex(variant.flags.bits()),
+        flags: variant.flags.maybe(),
         zero040: 0,
         unk044: variant.unk044,
         zone_id: variant.zone_id,
@@ -392,7 +381,7 @@ pub fn write_node_info_zero(write: &mut CountingWriter<impl Write>, index: u32) 
     );
     let node = NodeRcC {
         name: Ascii::zero(),
-        flags: Hex(0),
+        flags: Flags::empty(),
         zero040: 0,
         unk044: 0,
         zone_id: 0,

@@ -6,14 +6,30 @@ use mech3ax_api_types::anim::events::ObjectConnector;
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _};
+use mech3ax_common::{assert_that, Result};
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Maybe};
 use std::io::{Read, Write};
+
+bitflags! {
+    struct ObjectConnectorFlags: u32 {
+        const FROM_NODE = 1 << 0;
+        const FROM_INPUT_NODE = 1 << 1;
+        const FROM_POS = 1 << 3;
+        const FROM_INPUT_POS = 1 << 4;
+        const TO_NODE = 1 << 5; // this doesn't appear
+        const TO_INPUT_NODE = 1 << 6;
+        const TO_POS = 1 << 8;
+        const TO_INPUT_POS = 1 << 9;
+        const MAX_LENGTH = 1 << 15;
+    }
+}
+
+type Flags = Maybe<u32, ObjectConnectorFlags>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct ObjectConnectorC {
-    flags: u32,
+    flags: Flags,
     node_index: u16,
     from_index: u16,
     to_index: u16,
@@ -33,21 +49,6 @@ struct ObjectConnectorC {
 }
 impl_as_bytes!(ObjectConnectorC, 76);
 
-bitflags::bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    struct ObjectConnectorFlags: u32 {
-        const FROM_NODE = 1 << 0;
-        const FROM_INPUT_NODE = 1 << 1;
-        const FROM_POS = 1 << 3;
-        const FROM_INPUT_POS = 1 << 4;
-        const TO_NODE = 1 << 5; // this doesn't appear
-        const TO_INPUT_NODE = 1 << 6;
-        const TO_POS = 1 << 8;
-        const TO_INPUT_POS = 1 << 9;
-        const MAX_LENGTH = 1 << 15;
-    }
-}
-
 impl ScriptObject for ObjectConnector {
     const INDEX: u8 = 18;
     const SIZE: u32 = ObjectConnectorC::SIZE;
@@ -55,13 +56,8 @@ impl ScriptObject for ObjectConnector {
     fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
         assert_that!("object connector size", size == Self::SIZE, read.offset)?;
         let object_connector: ObjectConnectorC = read.read_struct()?;
-        let flags = ObjectConnectorFlags::from_bits(object_connector.flags).ok_or_else(|| {
-            assert_with_msg!(
-                "Expected valid object connector flags, but was 0x{:08X} (at {})",
-                object_connector.flags,
-                read.prev + 0
-            )
-        })?;
+        let flags =
+            assert_that!("object connector flags", flags object_connector.flags, read.prev + 0)?;
 
         assert_that!(
             "object connector field 10",
@@ -283,7 +279,7 @@ impl ScriptObject for ObjectConnector {
         }
 
         write.write_struct(&ObjectConnectorC {
-            flags: flags.bits(),
+            flags: flags.maybe(),
             node_index,
             from_index,
             to_index,

@@ -79,12 +79,12 @@ fn write_materials_zero(
     ty: MatType,
 ) -> Result<()> {
     let flags = match ty {
-        MatType::Ng => MaterialFlags::FREE.bits(),
-        MatType::Rc => 0,
+        MatType::Ng => MaterialFlags::FREE,
+        MatType::Rc => MaterialFlags::empty(),
     };
     let material = MaterialC {
         alpha: 0,
-        flags,
+        flags: flags.maybe(),
         rgb: 0x0000,
         color: Color::BLACK,
         index: 0,

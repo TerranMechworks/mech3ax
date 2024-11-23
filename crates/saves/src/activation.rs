@@ -6,7 +6,6 @@ use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_types::{impl_as_bytes, Ascii};
-use num_traits::FromPrimitive;
 use std::convert::TryInto;
 use std::io::{Cursor, Read, Write};
 use std::num::NonZeroU32;
@@ -59,13 +58,7 @@ pub fn read_activation(read: &mut CountingReader<impl Read>) -> Result<AnimActiv
         Some(activation.node_index)
     };
 
-    let status: ActivationStatus = FromPrimitive::from_u8(activation.status).ok_or_else(|| {
-        assert_with_msg!(
-            "Expected valid anim activation status, but was {} (at {})",
-            activation.status,
-            read.prev,
-        )
-    })?;
+    let status = assert_that!("anim activation status", enum ActivationStatus => activation.status, read.prev + 0)?;
 
     let ptr = match activation.unk86 {
         0 => {
@@ -179,7 +172,7 @@ pub fn write_activation(
         ActivationType::Five(_) => 5,
     };
     let node_index = activation.node_index.unwrap_or(-1);
-    let status = activation.status as u8;
+    let status = activation.status.into();
     let (unk80, unk86) = match activation.ptr {
         Some(ptr) => (ptr.into(), 25),
         None => (0, 0),

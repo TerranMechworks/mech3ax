@@ -28,7 +28,7 @@ const VARIABLE_FLAGS: NodeBitFlagsCs = NodeBitFlagsCs::from_bits_truncate(
 pub fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVariantCs> {
     // can't assert name
     // flags (36) is variable
-    let const_flags = node.flags & !VARIABLE_FLAGS;
+    let const_flags = node.flags.mask_not(VARIABLE_FLAGS);
     assert_that!("object3d flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
     // unk040 (40) is variable
     // unk044 (44) is variable

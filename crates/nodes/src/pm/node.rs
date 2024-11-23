@@ -9,8 +9,7 @@ use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii, Hex, Ptr};
-use num_traits::FromPrimitive;
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii, Maybe, Ptr};
 use std::io::{Read, Write};
 
 #[derive(Debug)]
@@ -68,11 +67,13 @@ pub enum NodeVariantPm {
     },
 }
 
+type Flags = Maybe<u32, NodeBitFlags>;
+
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct NodePmC {
     name: Ascii<36>,                 // 000
-    flags: Hex<u32>,                 // 036
+    flags: Flags,                    // 036
     zero040: u32,                    // 040
     unk044: u32,                     // 044
     zone_id: u32,                    // 048
@@ -108,13 +109,7 @@ pub const NODE_PM_C_SIZE: u32 = NodePmC::SIZE;
 fn assert_node(node: NodePmC, offset: usize) -> Result<(NodeType, NodeVariantsPm)> {
     // invariants for every node type
 
-    let node_type = FromPrimitive::from_u32(node.node_type).ok_or_else(|| {
-        assert_with_msg!(
-            "Expected valid node type, but was {} (at {})",
-            node.node_type,
-            offset + 52
-        )
-    })?;
+    let node_type = assert_that!("node type", enum NodeType => node.node_type, offset + 52)?;
     if node_type == NodeType::Empty {
         return Err(assert_with_msg!(
             "Expected valid node type, but was {} (at {})",
@@ -124,13 +119,7 @@ fn assert_node(node: NodePmC, offset: usize) -> Result<(NodeType, NodeVariantsPm
     }
 
     let name = assert_utf8("node name", offset + 0, || node.name.to_str_node_name())?;
-    let flags = NodeBitFlags::from_bits(node.flags.0).ok_or_else(|| {
-        assert_with_msg!(
-            "Expected valid node flags, but was {:?} (at {})",
-            node.flags,
-            offset + 36
-        )
-    })?;
+    let flags = assert_that!("node flags", flags node.flags, offset + 36)?;
     assert_that!("field 040", node.zero040 == 0, offset + 40)?;
     // 45697 only in mechlib
     assert_that!("field 044", node.unk044 in [0, 1, 45697], offset + 44)?;
@@ -352,7 +341,7 @@ fn write_variant(
 
     let node = NodePmC {
         name,
-        flags: Hex(variant.flags.bits()),
+        flags: variant.flags.maybe(),
         zero040: 0,
         unk044: variant.unk044,
         zone_id: variant.zone_id,

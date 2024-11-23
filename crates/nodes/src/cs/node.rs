@@ -9,8 +9,7 @@ use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii, Hex, Ptr};
-use num_traits::FromPrimitive;
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii, Maybe, Ptr};
 use std::io::{Read, Write};
 
 #[derive(Debug)]
@@ -74,11 +73,13 @@ pub enum NodeVariantCs {
     Object3d(NodeVariantsCs),
 }
 
+type Flags = Maybe<u32, NodeBitFlagsCs>;
+
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct NodeCsC {
     name: Ascii<36>,                 // 000
-    flags: Hex<u32>,                 // 036
+    flags: Flags,                    // 036
     unk040: u32,                     // 040
     unk044: u32,                     // 044
     zone_id: u32,                    // 048
@@ -145,13 +146,7 @@ const UNK044: &[u32] = &[
 fn assert_node(node: NodeCsC, offset: usize) -> Result<(NodeType, NodeVariantsCs)> {
     // invariants for every node type
 
-    let node_type = FromPrimitive::from_u32(node.node_type).ok_or_else(|| {
-        assert_with_msg!(
-            "Expected valid node type, but was {} (at {})",
-            node.node_type,
-            offset + 52
-        )
-    })?;
+    let node_type = assert_that!("node type", enum NodeType => node.node_type, offset + 52)?;
     if node_type == NodeType::Empty {
         return Err(assert_with_msg!(
             "Expected valid node type, but was {} (at {})",
@@ -168,14 +163,8 @@ fn assert_node(node: NodeCsC, offset: usize) -> Result<(NodeType, NodeVariantsCs
         assert_utf8("node name", offset + 0, || node.name.to_str_node_name())?
     };
 
-    let flags = NodeBitFlagsCs::from_bits(node.flags.0).ok_or_else(|| {
-        assert_with_msg!(
-            "Expected valid node flags, but was {:?} (at {})",
-            node.flags,
-            offset + 36
-        )
-    })?;
-    let const_flags = flags & ALWAYS_PRESENT;
+    let flags = assert_that!("node flags (cs)", flags node.flags, offset + 36)?;
+    let const_flags = flags.mask(ALWAYS_PRESENT);
     assert_that!("const flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
     assert_that!("field 040", node.unk040 in UNK040, offset + 40)?;
     assert_that!("field 044", node.unk044 in UNK044, offset + 44)?;
@@ -337,11 +326,11 @@ fn write_variant(
 
     let node = NodeCsC {
         name,
-        flags: Hex(variant.flags.bits()),
+        flags: variant.flags.maybe(),
         unk040: variant.unk040,
         unk044: variant.unk044,
         zone_id: variant.zone_id,
-        node_type: node_type as u32,
+        node_type: node_type.into(),
         data_ptr: Ptr(variant.data_ptr),
         mesh_index: variant.mesh_index,
         environment_data: 0,

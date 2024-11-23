@@ -8,7 +8,7 @@ use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{Color, Range, Vec3};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::light::LightFlags;
+use mech3ax_common::light::LightFlagsU32 as LightFlags;
 use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
 use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii};
 use std::io::{Read, Write};

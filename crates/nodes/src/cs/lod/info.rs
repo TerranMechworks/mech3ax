@@ -21,7 +21,7 @@ const VARIABLE_FLAGS: NodeBitFlagsCs = NodeBitFlagsCs::from_bits_truncate(
 
 pub fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVariantCs> {
     // can't assert name
-    let const_flags = node.flags & !VARIABLE_FLAGS;
+    let const_flags = node.flags.mask_not(VARIABLE_FLAGS);
     assert_that!("lod flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
     // unk040 (40) is variable
     assert_that!("lod field 044", node.unk044 == 0x00000001, offset + 44)?;

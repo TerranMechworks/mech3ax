@@ -7,7 +7,7 @@ mod write_single;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::materials::{ColoredMaterial, Material, Soil};
 use mech3ax_api_types::Color;
-use mech3ax_types::{impl_as_bytes, AsBytes as _};
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Maybe};
 pub(crate) use read_multi::read_materials;
 pub(crate) use read_single::read_material;
 pub(crate) use write_multi::write_materials;
@@ -54,11 +54,23 @@ struct MaterialInfoC {
 }
 impl_as_bytes!(MaterialInfoC, 16);
 
+bitflags! {
+    struct MaterialFlags: u8 {
+        const TEXTURED = 1 << 0;
+        const UNKNOWN = 1 << 1;
+        const CYCLED = 1 << 2;
+        const ALWAYS = 1 << 4;
+        const FREE = 1 << 5;
+    }
+}
+
+type Flags = Maybe<u8, MaterialFlags>;
+
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct MaterialC {
     alpha: u8,      // 00
-    flags: u8,      // 01
+    flags: Flags,   // 01
     rgb: u16,       // 02
     color: Color,   // 04
     index: u32,     // 16, ptr in mechlib, texture index in gamez
@@ -95,17 +107,6 @@ pub struct RawTexturedMaterial {
 pub enum RawMaterial {
     Textured(RawTexturedMaterial),
     Colored(ColoredMaterial),
-}
-
-bitflags::bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    struct MaterialFlags: u8 {
-        const TEXTURED = 1 << 0;
-        const UNKNOWN = 1 << 1;
-        const CYCLED = 1 << 2;
-        const ALWAYS = 1 << 4;
-        const FREE = 1 << 5;
-    }
 }
 
 pub(crate) fn size_materials(materials: &[Material], ty: MatType) -> u32 {

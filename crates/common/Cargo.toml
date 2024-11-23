@@ -12,9 +12,7 @@ autobenches = false
 doctest = false
 
 [dependencies]
-bitflags.workspace = true
 bytemuck.workspace = true
-num-traits.workspace = true
 
 mech3ax-api-types = { path = "../api-types" }
 mech3ax-types = { path = "../types" }

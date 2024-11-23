@@ -1,4 +1,4 @@
-use mech3ax_types::ConversionError;
+use mech3ax_types::{Bitflags, BitflagsRepr, ConversionError, Maybe, PrimitiveEnum};
 use std::cmp::{PartialEq, PartialOrd};
 use std::fmt;
 
@@ -182,6 +182,23 @@ pub fn is_bool(name: &str, actual: u32, pos: usize) -> Result<bool> {
 }
 
 #[inline]
+pub fn is_enum<E>(name: &str, v: E::Primitive, pos: usize) -> Result<E>
+where
+    E: PrimitiveEnum,
+{
+    E::from_primitive(v).ok_or_else(|| {
+        let msg = format!(
+            "Expected `{}` to be {}, but was {} (at {})",
+            name,
+            E::DISCRIMINANTS,
+            v,
+            pos
+        );
+        AssertionError(msg)
+    })
+}
+
+#[inline]
 pub fn format_conversion_err(name: &str, pos: usize, e: ConversionError) -> AssertionError {
     let msg = match e {
         ConversionError::PaddingError(padding) => format!(
@@ -228,6 +245,21 @@ pub fn is_all_zero(name: &str, buf: &[u8], pos: usize) -> Result<()> {
     }
 }
 
+#[inline]
+pub fn is_bitflags<R, F>(name: &str, v: Maybe<R, F>, pos: usize) -> Result<F>
+where
+    R: BitflagsRepr,
+    F: Bitflags<R>,
+{
+    v.validate().ok_or_else(|| {
+        let msg = format!(
+            "Expected `{}` to have valid flags, but was {} (at {})",
+            name, v, pos
+        );
+        AssertionError(msg)
+    })
+}
+
 #[macro_export]
 macro_rules! assert_that {
     ($name:expr, $expected_min:tt <= $($actual:tt).+ <= $expected_max:expr, $pos:expr) => {
@@ -269,8 +301,14 @@ macro_rules! assert_that {
     ($name:expr, bool $actual:expr, $pos:expr) => {
         $crate::assert::is_bool($name, $actual, $pos)
     };
+    ($name:expr, enum $ty:ty => $actual:expr, $pos:expr) => {
+        $crate::assert::is_enum::<$ty>($name, $actual, $pos)
+    };
     ($name:expr, zero $actual:expr, $pos:expr) => {
         $crate::assert::is_all_zero($name, &$actual, $pos)
+    };
+    ($name:expr, flags $actual:expr, $pos:expr) => {
+        $crate::assert::is_bitflags($name, $actual, $pos)
     };
 }
 

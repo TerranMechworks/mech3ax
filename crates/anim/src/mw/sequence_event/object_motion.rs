@@ -10,13 +10,34 @@ use mech3ax_api_types::{Quaternion, Vec3};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii};
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Ascii, Maybe};
 use std::io::{Read, Write};
+
+bitflags! {
+    struct ObjectMotionFlags: u32 {
+        const GRAVITY = 1 << 0; // 1
+        const IMPACT_FORCE = 1 << 1; // 2
+        const TRANSLATION = 1 << 2; // 4
+        const TRANSLATION_MIN = 1 << 3; // 8
+        const TRANSLATION_MAX = 1 << 4; // 16
+        const XYZ_ROTATION = 1 << 5; // 32
+        const FORWARD_ROTATION_DISTANCE = 1 << 6; // 64
+        const FORWARD_ROTATION_TIME = 1 << 7; // 128
+        const SCALE = 1 << 8; // 256
+        const RUNTIME = 1 << 10; // 512
+        const BOUNCE_SEQ = 1 << 11; // 2048
+        const BOUNCE_SOUND = 1 << 12; // 4096
+        const GRAVITY_COMPLEX = 1 << 13; // 8192
+        const GRAVITY_NO_ALTITUDE = 1 << 14; // 16384
+    }
+}
+
+type Flags = Maybe<u32, ObjectMotionFlags>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct ObjectMotionC {
-    flags: u32,      // 000
+    flags: Flags,    // 000
     node_index: u32, // 004
     // GRAVITY
     zero008: f32, // 008
@@ -70,26 +91,6 @@ struct ObjectMotionC {
 }
 impl_as_bytes!(ObjectMotionC, 320);
 
-bitflags::bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    struct ObjectMotionFlags: u32 {
-        const GRAVITY = 1 << 0; // 1
-        const IMPACT_FORCE = 1 << 1; // 2
-        const TRANSLATION = 1 << 2; // 4
-        const TRANSLATION_MIN = 1 << 3; // 8
-        const TRANSLATION_MAX = 1 << 4; // 16
-        const XYZ_ROTATION = 1 << 5; // 32
-        const FORWARD_ROTATION_DISTANCE = 1 << 6; // 64
-        const FORWARD_ROTATION_TIME = 1 << 7; // 128
-        const SCALE = 1 << 8; // 256
-        const RUNTIME = 1 << 10; // 512
-        const BOUNCE_SEQ = 1 << 11; // 2048
-        const BOUNCE_SOUND = 1 << 12; // 4096
-        const GRAVITY_COMPLEX = 1 << 13; // 8192
-        const GRAVITY_NO_ALTITUDE = 1 << 14; // 16384
-    }
-}
-
 impl ScriptObject for ObjectMotion {
     const INDEX: u8 = 10;
     const SIZE: u32 = ObjectMotionC::SIZE;
@@ -98,13 +99,7 @@ impl ScriptObject for ObjectMotion {
         assert_that!("object motion size", size == Self::SIZE, read.offset)?;
         let object_motion: ObjectMotionC = read.read_struct()?;
 
-        let flags = ObjectMotionFlags::from_bits(object_motion.flags).ok_or_else(|| {
-            assert_with_msg!(
-                "Expected valid object motion flags, but was 0x{:08X} (at {})",
-                object_motion.flags,
-                read.prev + 0
-            )
-        })?;
+        let flags = assert_that!("object motion flags", flags object_motion.flags, read.prev + 0)?;
         let node = anim_def.node_from_index(object_motion.node_index as usize, read.prev + 4)?;
 
         assert_that!(
@@ -599,7 +594,7 @@ impl ScriptObject for ObjectMotion {
         }
 
         write.write_struct(&ObjectMotionC {
-            flags: flags.bits(),
+            flags: flags.maybe(),
             node_index,
             zero008: 0.0,
             gravity,

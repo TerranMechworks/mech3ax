@@ -10,28 +10,13 @@ use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::Vec3;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii};
+use mech3ax_common::{assert_that, Result};
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Ascii, Maybe};
 use std::io::{Read, Write};
 
 const INPUT_NODE_INDEX: u32 = 65336;
 
-#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
-#[repr(C)]
-struct CallAnimationC {
-    name: Ascii<32>,          // 00
-    operand_index: u16,       // 32
-    flags: u16,               // 34
-    anim_index: u16,          // 36
-    wait_for_completion: u16, // 38
-    node_index: u32,          // 40
-    translation: Vec3,        // 44
-    rotation: Vec3,           // 56
-}
-impl_as_bytes!(CallAnimationC, 68);
-
-bitflags::bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+bitflags! {
     struct CallAnimationFlags: u16 {
         // Call with AT_NODE (OPERAND_NODE can't be used)
         const AT_NODE = 1 << 0;
@@ -46,6 +31,22 @@ bitflags::bitflags! {
     }
 }
 
+type Flags = Maybe<u16, CallAnimationFlags>;
+
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
+#[repr(C)]
+struct CallAnimationC {
+    name: Ascii<32>,          // 00
+    operand_index: u16,       // 32
+    flags: Flags,             // 34
+    anim_index: u16,          // 36
+    wait_for_completion: u16, // 38
+    node_index: u32,          // 40
+    translation: Vec3,        // 44
+    rotation: Vec3,           // 56
+}
+impl_as_bytes!(CallAnimationC, 68);
+
 impl ScriptObject for CallAnimation {
     const INDEX: u8 = 24;
     const SIZE: u32 = CallAnimationC::SIZE;
@@ -57,13 +58,8 @@ impl ScriptObject for CallAnimation {
         let name = assert_utf8("call animation name", read.prev + 0, || {
             call_animation.name.to_str_padded()
         })?;
-        let flags = CallAnimationFlags::from_bits(call_animation.flags).ok_or_else(|| {
-            assert_with_msg!(
-                "Expected valid call animation flags, but was 0x{:04X} (at {})",
-                call_animation.flags,
-                read.prev + 34
-            )
-        })?;
+        let flags =
+            assert_that!("call animation flags", flags call_animation.flags, read.prev + 34)?;
         // this is used to store the index of the animation to call once loaded
         assert_that!(
             "call animation anim index",
@@ -234,7 +230,7 @@ impl ScriptObject for CallAnimation {
         write.write_struct(&CallAnimationC {
             name,
             operand_index,
-            flags: flags.bits(),
+            flags: flags.maybe(),
             anim_index: 0,
             wait_for_completion: self.wait_for_completion.unwrap_or(u16::MAX),
             node_index,

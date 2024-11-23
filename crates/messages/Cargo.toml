@@ -12,7 +12,6 @@ autobenches = false
 doctest = false
 
 [dependencies]
-bitflags.workspace = true
 bytemuck.workspace = true
 log.workspace = true
 

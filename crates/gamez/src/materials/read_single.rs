@@ -1,11 +1,12 @@
 use super::{CycleInfoC, MatType, MaterialC, MaterialFlags, RawMaterial, RawTexturedMaterial};
 use log::{debug, trace};
-use mech3ax_api_types::gamez::materials::{ColoredMaterial, CycleData, Material, TexturedMaterial};
+use mech3ax_api_types::gamez::materials::{
+    ColoredMaterial, CycleData, Material, Soil, TexturedMaterial,
+};
 use mech3ax_api_types::Color;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_common::{assert_that, Result};
 use mech3ax_types::{u32_to_usize, AsBytes as _};
-use num_traits::FromPrimitive;
 use std::io::Read;
 
 pub(crate) fn read_material(
@@ -22,13 +23,7 @@ pub(crate) fn read_material(
     let material: MaterialC = read.read_struct()?;
     trace!("{:#?}", material);
 
-    let bitflags = MaterialFlags::from_bits(material.flags).ok_or_else(|| {
-        assert_with_msg!(
-            "Expected valid material flags, but was 0x{:02X} (at {})",
-            material.flags,
-            read.prev + 1
-        )
-    })?;
+    let bitflags = assert_that!("material flags", flags material.flags, read.prev + 1)?;
 
     let flag_unknown = bitflags.contains(MaterialFlags::UNKNOWN);
     let flag_cycled = bitflags.contains(MaterialFlags::CYCLED);
@@ -46,13 +41,7 @@ pub(crate) fn read_material(
     assert_that!("field 24", material.half24 == 0.5, read.prev + 24)?;
     assert_that!("field 28", material.half28 == 0.5, read.prev + 28)?;
 
-    let soil = FromPrimitive::from_u32(material.soil).ok_or_else(|| {
-        assert_with_msg!(
-            "Expected valid soil type (0..13), but was {} (at {})",
-            material.soil,
-            read.prev + 32,
-        )
-    })?;
+    let soil = assert_that!("soil type", enum Soil => material.soil, read.prev + 32)?;
 
     let material = if bitflags.contains(MaterialFlags::TEXTURED) {
         // all color information comes from the texture
@@ -110,10 +99,14 @@ pub(super) fn read_material_zero(
     match ty {
         MatType::Ng => assert_that!(
             "flag",
-            material.flags == MaterialFlags::FREE.bits(),
+            material.flags == MaterialFlags::FREE.maybe(),
             read.prev + 1
         )?,
-        MatType::Rc => assert_that!("flag", material.flags == 0, read.prev + 1)?,
+        MatType::Rc => assert_that!(
+            "flag",
+            material.flags == MaterialFlags::empty().maybe(),
+            read.prev + 1
+        )?,
     }
     assert_that!("rgb", material.rgb == 0x0000, read.prev + 2)?;
     assert_that!("color", material.color == Color::BLACK, read.prev + 4)?;

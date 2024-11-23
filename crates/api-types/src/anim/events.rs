@@ -2,7 +2,7 @@ use crate::serde::{bool_false, bytes};
 use crate::{Color, Quaternion, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{Enum, Struct, Union};
-use num_derive::FromPrimitive;
+use mech3ax_types::PrimitiveEnum;
 use std::ops::Deref;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Struct)]
@@ -645,7 +645,7 @@ pub enum EventData {
     PufferState(PufferState),
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, FromPrimitive, Enum)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PrimitiveEnum, Enum)]
 #[repr(u8)]
 pub enum StartOffset {
     Animation = 1,

@@ -3,16 +3,16 @@ use image::{DynamicImage, RgbImage, RgbaImage};
 use log::{debug, trace};
 use mech3ax_api_types::image::{
     GlobalPalette, PaletteData, TextureAlpha, TextureInfo, TextureManifest, TexturePalette,
+    TextureStretch,
 };
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_len, assert_that, assert_with_msg, Error, Rename, Result};
+use mech3ax_common::{assert_len, assert_that, Error, Rename, Result};
 use mech3ax_pixel_ops::{
     pal8to888, pal8to888a, rgb565to888, rgb565to888a, rgb888ato565, rgb888atopal8, rgb888to565,
     rgb888topal8, simple_alpha,
 };
-use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _, Ascii};
-use num_traits::FromPrimitive;
+use mech3ax_types::{bitflags, impl_as_bytes, u32_to_usize, AsBytes as _, Ascii, Maybe};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -36,20 +36,7 @@ struct TextureEntryC {
 }
 impl_as_bytes!(TextureEntryC, 40);
 
-#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
-#[repr(C)]
-struct TextureInfoC {
-    flags: u32,         // 00
-    width: u16,         // 04
-    height: u16,        // 06
-    zero08: u32,        // 08
-    palette_count: u16, // 12
-    stretch: u16,       // 14
-}
-impl_as_bytes!(TextureInfoC, 16);
-
-bitflags::bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+bitflags! {
     struct TexFlags: u32 {
         // if set, 2 bytes per pixel, else 1 byte per pixel
         const BYTES_PER_PIXEL2 = 1 << 0;
@@ -65,31 +52,40 @@ bitflags::bitflags! {
     }
 }
 
+type Flags = Maybe<u32, TexFlags>;
+
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
+#[repr(C)]
+struct TextureInfoC {
+    flags: Flags,       // 00
+    width: u16,         // 04
+    height: u16,        // 06
+    zero08: u32,        // 08
+    palette_count: u16, // 12
+    stretch: u16,       // 14
+}
+impl_as_bytes!(TextureInfoC, 16);
+
 fn convert_info_from_c(
     name: String,
     tex_info: TextureInfoC,
     global_palette: Option<(i32, &PaletteData)>,
     offset: usize,
 ) -> Result<TextureInfo> {
-    let bitflags = TexFlags::from_bits(tex_info.flags).ok_or_else(|| {
-        assert_with_msg!(
-            "Expected valid texture flags, but was 0x{:08X} (at {})",
-            tex_info.flags,
-            offset
-        )
-    })?;
+    let flags = assert_that!("texture flags", flags tex_info.flags, offset)?;
+
     // one byte per pixel support isn't implemented
-    let bytes_per_pixel2 = bitflags.contains(TexFlags::BYTES_PER_PIXEL2);
+    let bytes_per_pixel2 = flags.contains(TexFlags::BYTES_PER_PIXEL2);
     assert_that!("2 bytes per pixel", bytes_per_pixel2 == true, offset)?;
-    let has_gp = bitflags.contains(TexFlags::GLOBAL_PALETTE);
+    let has_gp = flags.contains(TexFlags::GLOBAL_PALETTE);
     assert_that!("global palette", has_gp == global_palette.is_some(), offset)?;
     if has_gp {
         assert_that!("palette count", tex_info.palette_count > 0, offset)?;
     }
 
-    let no_alpha = bitflags.contains(TexFlags::NO_ALPHA);
-    let has_alpha = bitflags.contains(TexFlags::HAS_ALPHA);
-    let full_alpha = bitflags.contains(TexFlags::FULL_ALPHA);
+    let no_alpha = flags.contains(TexFlags::NO_ALPHA);
+    let has_alpha = flags.contains(TexFlags::HAS_ALPHA);
+    let full_alpha = flags.contains(TexFlags::FULL_ALPHA);
     let alpha = if no_alpha {
         assert_that!("full alpha", full_alpha == false, offset)?;
         assert_that!("has alpha", has_alpha == false, offset)?;
@@ -103,13 +99,8 @@ fn convert_info_from_c(
         }
     };
 
-    let stretch = FromPrimitive::from_u16(tex_info.stretch).ok_or_else(|| {
-        assert_with_msg!(
-            "Expected valid texture stretch, but was {} (at {})",
-            tex_info.stretch,
-            offset + 16
-        )
-    })?;
+    let stretch =
+        assert_that!("texture stretch", enum TextureStretch => tex_info.stretch, offset + 16)?;
 
     Ok(TextureInfo {
         name,
@@ -118,9 +109,9 @@ fn convert_info_from_c(
         width: tex_info.width,
         height: tex_info.height,
         stretch,
-        image_loaded: bitflags.contains(TexFlags::IMAGE_LOADED),
-        alpha_loaded: bitflags.contains(TexFlags::ALPHA_LOADED),
-        palette_loaded: bitflags.contains(TexFlags::PALETTE_LOADED),
+        image_loaded: flags.contains(TexFlags::IMAGE_LOADED),
+        alpha_loaded: flags.contains(TexFlags::ALPHA_LOADED),
+        palette_loaded: flags.contains(TexFlags::PALETTE_LOADED),
         palette: TexturePalette::None, // set this later
     })
 }
@@ -352,41 +343,41 @@ fn calc_length(info: &TextureInfo) -> u32 {
 }
 
 fn convert_info_to_c(info: &TextureInfo) -> TextureInfoC {
-    let mut bitflags = TexFlags::BYTES_PER_PIXEL2;
+    let mut flags = TexFlags::BYTES_PER_PIXEL2;
     if info.image_loaded {
-        bitflags |= TexFlags::IMAGE_LOADED;
+        flags |= TexFlags::IMAGE_LOADED;
     }
     if info.alpha_loaded {
-        bitflags |= TexFlags::ALPHA_LOADED;
+        flags |= TexFlags::ALPHA_LOADED;
     }
     if info.palette_loaded {
-        bitflags |= TexFlags::PALETTE_LOADED;
+        flags |= TexFlags::PALETTE_LOADED;
     }
 
     match info.alpha {
         TextureAlpha::None => {
-            bitflags |= TexFlags::NO_ALPHA;
+            flags |= TexFlags::NO_ALPHA;
         }
         TextureAlpha::Simple => {
-            bitflags |= TexFlags::HAS_ALPHA;
+            flags |= TexFlags::HAS_ALPHA;
         }
         TextureAlpha::Full => {
-            bitflags |= TexFlags::HAS_ALPHA;
-            bitflags |= TexFlags::FULL_ALPHA;
+            flags |= TexFlags::HAS_ALPHA;
+            flags |= TexFlags::FULL_ALPHA;
         }
     }
 
     let palette_count = match &info.palette {
         TexturePalette::Local(local) => (local.data.len() / 3) as u16,
         TexturePalette::Global(global) => {
-            bitflags |= TexFlags::GLOBAL_PALETTE;
+            flags |= TexFlags::GLOBAL_PALETTE;
             global.count
         }
         TexturePalette::None => 0,
     };
 
     TextureInfoC {
-        flags: bitflags.bits(),
+        flags: flags.maybe(),
         width: info.width,
         height: info.height,
         zero08: 0,

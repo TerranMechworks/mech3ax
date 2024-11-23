@@ -14,7 +14,6 @@ use mech3ax_api_types::anim::AnimDef;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _};
-use num_traits::FromPrimitive;
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -43,14 +42,7 @@ pub fn read_events(
             read.offset
         );
         assert_that!("event header field 02", header.pad == 0, read.prev + 2)?;
-        let start_offset: StartOffset =
-            FromPrimitive::from_u8(header.start_offset).ok_or_else(|| {
-                assert_with_msg!(
-                    "Expected valid event start offset, but was {} (at {})",
-                    header.start_offset,
-                    read.prev + 1
-                )
-            })?;
+        let start_offset = assert_that!("event start offset", enum StartOffset => header.start_offset, read.prev + 1)?;
 
         let start = if start_offset == StartOffset::Animation && header.start_time == 0.0 {
             None

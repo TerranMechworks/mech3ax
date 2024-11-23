@@ -50,7 +50,7 @@ const BORKED_UNK044: &[u32; 6] = &[
 
 pub fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<NodeVariantRc> {
     // cannot assert name
-    let const_flags = node.flags & !VARIABLE_FLAGS;
+    let const_flags = node.flags.mask_not(VARIABLE_FLAGS);
     assert_that!("lod flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
     if node.flags.contains(NodeBitFlags::UNK08) {
         let has_10 = node.flags.contains(NodeBitFlags::UNK10);

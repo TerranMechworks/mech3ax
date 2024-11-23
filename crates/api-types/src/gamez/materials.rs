@@ -2,7 +2,7 @@ use crate::serde::pointer_zero;
 use crate::Color;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::{Enum, Struct, Union};
-use num_derive::FromPrimitive;
+use mech3ax_types::PrimitiveEnum;
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct CycleData {
@@ -14,7 +14,7 @@ pub struct CycleData {
     pub data_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, FromPrimitive, Enum)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PrimitiveEnum, Enum)]
 #[repr(u32)]
 pub enum Soil {
     Default = 0,

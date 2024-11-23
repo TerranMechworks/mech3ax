@@ -7,8 +7,8 @@ use mech3ax_api_types::anim::events::{
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{Quaternion, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _, Bytes};
+use mech3ax_common::{assert_that, Result};
+use mech3ax_types::{bitflags, impl_as_bytes, u32_to_usize, AsBytes as _, Bytes, Maybe};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -23,10 +23,20 @@ struct ScriptHeaderC {
 }
 impl_as_bytes!(ScriptHeaderC, 24);
 
+bitflags! {
+    struct FrameFlags: u32 {
+        const TRANSLATE = 1 << 0;
+        const ROTATE = 1 << 1;
+        const SCALE = 1 << 2;
+    }
+}
+
+type Flags = Maybe<u32, FrameFlags>;
+
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct FrameC {
-    flags: u32,
+    flags: Flags,
     start_time: f32,
     end_time: f32,
 }
@@ -56,24 +66,9 @@ struct ScaleDataC {
 }
 impl_as_bytes!(ScaleDataC, 76);
 
-bitflags::bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub struct FrameFlags: u32 {
-        const TRANSLATE = 1 << 0;
-        const ROTATE = 1 << 1;
-        const SCALE = 1 << 2;
-    }
-}
-
 fn read_frame(read: &mut CountingReader<impl Read>) -> Result<ObjectMotionSiFrame> {
     let frame: FrameC = read.read_struct()?;
-    let flags = FrameFlags::from_bits(frame.flags).ok_or_else(|| {
-        assert_with_msg!(
-            "Expected valid object motion si script flags, but was {:08X} (at {})",
-            frame.flags,
-            read.prev + 0
-        )
-    })?;
+    let flags = assert_that!("object motion frame flags", flags frame.flags, read.prev + 0)?;
     assert_that!(
         "object motion si script frame start",
         frame.start_time >= 0.0,
@@ -196,7 +191,7 @@ impl ScriptObject for ObjectMotionSiScript {
             }
 
             write.write_struct(&FrameC {
-                flags: flags.bits(),
+                flags: flags.maybe(),
                 start_time: frame.start_time,
                 end_time: frame.end_time,
             })?;

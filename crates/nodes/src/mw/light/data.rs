@@ -4,10 +4,12 @@ use log::{debug, trace};
 use mech3ax_api_types::nodes::mw::Light;
 use mech3ax_api_types::{Color, Range, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::light::LightFlags;
-use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Zeros};
+use mech3ax_common::light::LightFlagsU32 as LightFlags;
+use mech3ax_common::{assert_that, Result};
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Maybe, Zeros};
 use std::io::{Read, Write};
+
+type Flags = Maybe<u32, LightFlags>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -23,7 +25,7 @@ struct LightMwC {
     diffuse: f32,        // 156
     ambient: f32,        // 160
     color: Color,        // 164
-    flags: u32,          // 176
+    flags: Flags,        // 176
     range: Range,        // 180
     range_near_sq: f32,  // 188
     range_far_sq: f32,   // 192
@@ -56,13 +58,7 @@ fn assert_light(light: &LightMwC, offset: usize) -> Result<()> {
         offset + 164
     )?;
 
-    let flags = LightFlags::from_bits(light.flags).ok_or_else(|| {
-        assert_with_msg!(
-            "Expected valid light flags, but was 0x{:08X} (at {})",
-            light.flags,
-            offset + 176
-        )
-    })?;
+    let flags = assert_that!("light flags", flags  light.flags, offset + 176)?;
     assert_that!("light flag", flags == LightFlags::DEFAULT, offset + 176)?;
 
     assert_that!("light range near", light.range.min > 0.0, offset + 180)?;
@@ -138,7 +134,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, light: &Light, index: usize
         diffuse: light.diffuse,
         ambient: light.ambient,
         color: light.color,
-        flags: LightFlags::DEFAULT.bits(),
+        flags: LightFlags::DEFAULT.maybe(),
         range: light.range,
         range_near_sq: light.range.min * light.range.min,
         range_far_sq: light.range.max * light.range.max,

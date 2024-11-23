@@ -8,16 +8,44 @@ use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{Range, Vec3};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii, Zeros};
+use mech3ax_common::{assert_that, Result};
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Ascii, Maybe, Zeros};
 use std::io::{Read, Write};
+
+bitflags! {
+    struct PufferStateFlags: u32 {
+        const TRANSLATE = 1 << 0;
+        // this might not be right?
+        const GROWTH_FACTOR = 1 << 1;
+        // this might not be right?
+        const STATE = 1 << 2;
+        const LOCAL_VELOCITY = 1 << 3;
+        const WORLD_VELOCITY = 1 << 4;
+        const MIN_RANDOM_VELOCITY = 1 << 5;
+        const MAX_RANDOM_VELOCITY = 1 << 6;
+        const INTERVAL_TYPE = 1 << 7;
+        const INTERVAL_VALUE = 1 << 8;
+        const SIZE_RANGE = 1 << 9;
+        const LIFETIME_RANGE = 1 << 10;
+        const DEVIATION_DISTANCE = 1 << 11;
+        const FADE_RANGE = 1 << 12;
+        const ACTIVE = 1 << 13;
+        const CYCLE_TEXTURE = 1 << 14;
+        const START_AGE_RANGE = 1 << 15;
+        const WORLD_ACCELERATION = 1 << 16;
+        const FRICTION = 1 << 17;
+        // there are more possible values (that are never set in the file)
+    }
+}
+
+type Flags = Maybe<u32, PufferStateFlags>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct PufferStateC {
     name: Ascii<32>,           // 000
     puffer_index: u32,         // 032
-    flags: u32,                // 036
+    flags: Flags,              // 036
     active_state: i32,         // 040
     node_index: u32,           // 044
     translation: Vec3,         // 048
@@ -55,33 +83,6 @@ struct PufferStateC {
 }
 impl_as_bytes!(PufferStateC, 580);
 
-bitflags::bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    struct PufferStateFlags: u32 {
-        const TRANSLATE = 1 << 0;
-        // this might not be right?
-        const GROWTH_FACTOR = 1 << 1;
-        // this might not be right?
-        const STATE = 1 << 2;
-        const LOCAL_VELOCITY = 1 << 3;
-        const WORLD_VELOCITY = 1 << 4;
-        const MIN_RANDOM_VELOCITY = 1 << 5;
-        const MAX_RANDOM_VELOCITY = 1 << 6;
-        const INTERVAL_TYPE = 1 << 7;
-        const INTERVAL_VALUE = 1 << 8;
-        const SIZE_RANGE = 1 << 9;
-        const LIFETIME_RANGE = 1 << 10;
-        const DEVIATION_DISTANCE = 1 << 11;
-        const FADE_RANGE = 1 << 12;
-        const ACTIVE = 1 << 13;
-        const CYCLE_TEXTURE = 1 << 14;
-        const START_AGE_RANGE = 1 << 15;
-        const WORLD_ACCELERATION = 1 << 16;
-        const FRICTION = 1 << 17;
-        // there are more possible values (that are never set in the file)
-    }
-}
-
 impl ScriptObject for PufferState {
     const INDEX: u8 = 42;
     const SIZE: u32 = PufferStateC::SIZE;
@@ -100,13 +101,7 @@ impl ScriptObject for PufferState {
             name_ref == &expected_name,
             read.prev + 0
         )?;
-        let flags = PufferStateFlags::from_bits(puffer_state.flags).ok_or_else(|| {
-            assert_with_msg!(
-                "Expected valid puffer state flags, but was 0x{:08X} (at {})",
-                puffer_state.flags,
-                read.prev + 36
-            )
-        })?;
+        let flags = assert_that!("puffer state flags", flags puffer_state.flags, read.prev + 36)?;
 
         let state = flags.contains(PufferStateFlags::STATE);
         if !state {
@@ -114,7 +109,7 @@ impl ScriptObject for PufferState {
             // specified. this ensures all further branches check for zero values.
             assert_that!(
                 "puffer state flags",
-                puffer_state.flags == 0,
+                flags == PufferStateFlags::empty(),
                 read.prev + 36
             )?;
         }
@@ -689,7 +684,7 @@ impl ScriptObject for PufferState {
         write.write_struct(&PufferStateC {
             name,
             puffer_index,
-            flags: flags.bits(),
+            flags: flags.maybe(),
             active_state: self.active_state.unwrap_or(-1),
             node_index,
             translation,

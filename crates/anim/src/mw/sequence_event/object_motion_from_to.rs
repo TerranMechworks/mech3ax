@@ -5,12 +5,11 @@ use mech3ax_api_types::anim::events::{FloatFromTo, ObjectMotionFromTo, Vec3FromT
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _};
+use mech3ax_common::{assert_that, Result};
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Maybe};
 use std::io::{Read, Write};
 
-bitflags::bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+bitflags! {
     struct ObjectMotionFromToFlags: u32 {
         const TRANSLATE = 1 << 0;
         const ROTATE = 1 << 1;
@@ -19,10 +18,12 @@ bitflags::bitflags! {
     }
 }
 
+type Flags = Maybe<u32, ObjectMotionFromToFlags>;
+
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct ObjectMotionFromToC {
-    flags: u32,            // 000
+    flags: Flags,          // 000
     node_index: u32,       // 004
     morph_from: f32,       // 008
     morph_to: f32,         // 012
@@ -51,13 +52,7 @@ impl ScriptObject for ObjectMotionFromTo {
             read.offset
         )?;
         let motion: ObjectMotionFromToC = read.read_struct()?;
-        let flags = ObjectMotionFromToFlags::from_bits(motion.flags).ok_or_else(|| {
-            assert_with_msg!(
-                "Expected valid object motion from flags, but was {:08X} (at {})",
-                motion.flags,
-                read.prev + 0
-            )
-        })?;
+        let flags = assert_that!("object motion from to flags", flags motion.flags, read.prev + 0)?;
         let node = anim_def.node_from_index(motion.node_index as usize, read.prev + 4)?;
 
         let morph = if flags.contains(ObjectMotionFromToFlags::MORPH) {
@@ -219,7 +214,7 @@ impl ScriptObject for ObjectMotionFromTo {
         };
 
         write.write_struct(&ObjectMotionFromToC {
-            flags: flags.bits(),
+            flags: flags.maybe(),
             node_index,
             morph_from,
             morph_to,

@@ -109,12 +109,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
-name = "bitflags"
-version = "2.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
-
-[[package]]
 name = "bumpalo"
 version = "3.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -423,14 +417,11 @@ checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 name = "mech3ax-anim"
 version = "0.0.0"
 dependencies = [
- "bitflags 2.6.0",
  "bytemuck",
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
  "mech3ax-types",
- "num-derive",
- "num-traits",
 ]
 
 [[package]]
@@ -453,8 +444,6 @@ dependencies = [
  "mech3ax-metadata-proc-macro",
  "mech3ax-metadata-types",
  "mech3ax-types",
- "num-derive",
- "num-traits",
  "serde",
  "serde_json",
  "serde_test",
@@ -477,11 +466,9 @@ dependencies = [
 name = "mech3ax-common"
 version = "0.0.0"
 dependencies = [
- "bitflags 2.6.0",
  "bytemuck",
  "mech3ax-api-types",
  "mech3ax-types",
- "num-traits",
 ]
 
 [[package]]
@@ -503,22 +490,18 @@ dependencies = [
 name = "mech3ax-gamez"
 version = "0.0.0"
 dependencies = [
- "bitflags 2.6.0",
  "bytemuck",
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
  "mech3ax-nodes",
  "mech3ax-types",
- "num-derive",
- "num-traits",
 ]
 
 [[package]]
 name = "mech3ax-image"
 version = "0.0.0"
 dependencies = [
- "bitflags 2.6.0",
  "bytemuck",
  "image",
  "log",
@@ -526,7 +509,6 @@ dependencies = [
  "mech3ax-common",
  "mech3ax-pixel-ops",
  "mech3ax-types",
- "num-traits",
 ]
 
 [[package]]
@@ -567,7 +549,6 @@ dependencies = [
 name = "mech3ax-messages"
 version = "0.0.0"
 dependencies = [
- "bitflags 2.6.0",
  "bytemuck",
  "log",
  "mech3ax-api-types",
@@ -620,14 +601,11 @@ dependencies = [
 name = "mech3ax-nodes"
 version = "0.0.0"
 dependencies = [
- "bitflags 2.6.0",
  "bytemuck",
  "log",
  "mech3ax-api-types",
  "mech3ax-common",
  "mech3ax-types",
- "num-derive",
- "num-traits",
 ]
 
 [[package]]
@@ -651,7 +629,6 @@ dependencies = [
  "mech3ax-api-types",
  "mech3ax-common",
  "mech3ax-types",
- "num-traits",
 ]
 
 [[package]]
@@ -721,17 +698,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "51d515d32fb182ee37cda2ccdcb92950d6a3c2893aa280e540671c2cd0f3b1d9"
 
 [[package]]
-name = "num-derive"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed3955f1a9c7c0c15e092f9c887db08b1fc683305fdf6eb6684f22555355e202"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "num-traits"
 version = "0.2.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -767,7 +733,7 @@ version = "0.17.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06e4b0d3d1312775e782c86c91a111aa1f910cbb65e1337f9975b5f9a554b5e1"
 dependencies = [
- "bitflags 1.3.2",
+ "bitflags",
  "crc32fast",
  "fdeflate",
  "flate2",

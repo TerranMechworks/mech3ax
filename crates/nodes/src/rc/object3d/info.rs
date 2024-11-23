@@ -48,7 +48,7 @@ pub fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<NodeVarian
     let is_borked = has_borked_parents(node.data_ptr, node.parent_array_ptr);
 
     // cannot assert name
-    let const_flags = node.flags & !VARIABLE_FLAGS;
+    let const_flags = node.flags.mask_not(VARIABLE_FLAGS);
     assert_that!("object3d flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
     // zero040 (40) already asserted
     assert_that!("object3d field 044", node.unk044 == 4, offset + 44)?;

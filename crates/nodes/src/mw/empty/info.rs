@@ -27,7 +27,7 @@ const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
 
 pub fn assert_variants(node: NodeVariantsMw, offset: usize) -> Result<NodeVariantMw> {
     // cannot assert name
-    let const_flags = node.flags & !VARIABLE_FLAGS;
+    let const_flags = node.flags.mask_not(VARIABLE_FLAGS);
     assert_that!("empty flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
     // zero040 (40) already asserted
     assert_that!("empty field 044", node.unk044 in [1, 3, 5, 7], offset + 44)?;

@@ -33,22 +33,22 @@ pub(crate) fn write_material(
     );
     let mat_c = match material {
         Material::Textured(material) => {
-            let mut bitflags = match ty {
+            let mut flags = match ty {
                 MatType::Ng => MaterialFlags::ALWAYS | MaterialFlags::TEXTURED,
                 MatType::Rc => MaterialFlags::TEXTURED,
             };
             if material.flag {
-                bitflags |= MaterialFlags::UNKNOWN;
+                flags |= MaterialFlags::UNKNOWN;
             }
             let cycle_ptr = if let Some(cycle) = &material.cycle {
-                bitflags |= MaterialFlags::CYCLED;
+                flags |= MaterialFlags::CYCLED;
                 cycle.info_ptr
             } else {
                 0
             };
             MaterialC {
                 alpha: 0xFF,
-                flags: bitflags.bits(),
+                flags: flags.maybe(),
                 rgb: 0x7FFF,
                 color: Color::WHITE_FULL,
                 // this allows GameZ to override the pointer with the texture index
@@ -57,25 +57,25 @@ pub(crate) fn write_material(
                 zero20: 0.0,
                 half24: 0.5,
                 half28: 0.5,
-                soil: material.soil as u32,
+                soil: material.soil.into(),
                 cycle_ptr,
             }
         }
         Material::Colored(material) => {
-            let bitflags = match ty {
+            let flags = match ty {
                 MatType::Ng => MaterialFlags::ALWAYS,
                 MatType::Rc => MaterialFlags::empty(),
             };
             MaterialC {
                 alpha: material.alpha,
-                flags: bitflags.bits(),
+                flags: flags.maybe(),
                 rgb: 0x0000,
                 color: material.color,
                 index: 0,
                 zero20: 0.0,
                 half24: 0.5,
                 half28: 0.5,
-                soil: material.soil as u32,
+                soil: material.soil.into(),
                 cycle_ptr: 0,
             }
         }

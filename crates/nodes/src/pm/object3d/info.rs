@@ -49,7 +49,7 @@ pub fn assert_variants(
     mesh_index_is_ptr: bool,
 ) -> Result<NodeVariantPm> {
     // cannot assert name
-    let const_flags = node.flags & !VARIABLE_FLAGS;
+    let const_flags = node.flags.mask_not(VARIABLE_FLAGS);
     assert_that!("object3d flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
     // zero040 (40) already asserted
     // 45697 only in mechlib

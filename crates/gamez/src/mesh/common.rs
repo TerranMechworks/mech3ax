@@ -3,9 +3,9 @@ use log::trace;
 use mech3ax_api_types::gamez::mesh::{MeshLight, UvCoord};
 use mech3ax_api_types::{Color, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::light::LightFlags;
-use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Hex, Ptr};
+use mech3ax_common::light::LightFlagsU16 as LightFlags;
+use mech3ax_common::{assert_len, assert_that, Result};
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Maybe, Ptr};
 use std::io::{Read, Write};
 
 #[inline(always)]
@@ -82,6 +82,8 @@ pub(crate) fn write_uvs(
     Ok(())
 }
 
+type Flags = Maybe<u16, LightFlags>;
+
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 pub struct LightC {
@@ -94,7 +96,7 @@ pub struct LightC {
     pub unk24: Ptr,       // 24
     pub color: Color,     // 28
     pub pad40: u16,       // 40
-    pub flags: Hex<u16>,  // 42
+    pub flags: Flags,     // 42
     pub ptr: Ptr,         // 44
     pub unk48: f32,       // 48
     pub unk52: f32,       // 52
@@ -144,13 +146,7 @@ fn assert_light(light: &LightC, offset: usize) -> Result<LightFlags> {
     assert_that!("light color b", 0.0 <= light.color.b <= 255.0, offset + 36)?;
 
     assert_that!("light pad 40", light.pad40 == 0, offset + 40)?;
-    let flags = LightFlags::from_bits(light.flags.0.into()).ok_or_else(|| {
-        assert_with_msg!(
-            "Expected valid light state flags, but was {:?} (at {})",
-            light.flags,
-            offset + 42
-        )
-    })?;
+    let flags = assert_that!("light state flags", flags light.flags, offset + 42)?;
     // assert_that!("light flags", flags != LightFlags::INACTIVE, offset + 42)?;
 
     assert_that!("light field 44", light.ptr != Ptr::NULL, offset + 44)?;
@@ -227,7 +223,7 @@ pub fn read_lights(read: &mut CountingReader<impl Read>, count: u32) -> Result<V
                 extra,
                 unk24: light.unk24.0,
                 color: light.color,
-                flags: light.flags.0,
+                flags: light.flags.into(),
                 ptr: light.ptr.0,
                 unk48: light.unk48,
                 unk52: light.unk52,
@@ -250,6 +246,7 @@ pub fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[MeshLight]
             write.offset
         );
         let extra_count = assert_len!(u32, light.extra.len(), "light extra")?;
+        let flags = LightFlags::from_bits_truncate(light.flags);
         let light = LightC {
             unk00: light.unk00,
             unk04: light.unk04,
@@ -260,7 +257,7 @@ pub fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[MeshLight]
             unk24: Ptr(light.unk24),
             color: light.color,
             pad40: 0,
-            flags: Hex(light.flags),
+            flags: flags.maybe(),
             ptr: Ptr(light.ptr),
             unk48: light.unk48,
             unk52: light.unk52,

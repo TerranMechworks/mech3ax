@@ -11,13 +11,11 @@ use mech3ax_api_types::Range;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii, Zeros};
-use num_traits::FromPrimitive as _;
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Ascii, Zeros};
 use std::io::{Read, Write};
 
-bitflags::bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub struct AnimDefFlags: u32 {
+bitflags! {
+    pub(crate) struct AnimDefFlags: u32 {
         const EXECUTION_BY_RANGE = 1 << 1;
         const EXECUTION_BY_ZONE = 1 << 3;
         const HAS_CALLBACKS = 1 << 4;
@@ -287,13 +285,7 @@ pub fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<(AnimDef, A
     };
 
     assert_that!("anim def status", anim_def.status == 0, prev + 152)?;
-    let activation = AnimActivation::from_u8(anim_def.activation).ok_or_else(|| {
-        assert_with_msg!(
-            "Expected valid anim def activation, but was {} (at {})",
-            anim_def.activation,
-            read.prev + 153
-        )
-    })?;
+    let activation = assert_that!("anim def activation", enum AnimActivation => anim_def.activation, read.prev + 153)?;
     assert_that!(
         "anim def action priority",
         anim_def.action_prio == 4,

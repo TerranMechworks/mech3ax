@@ -8,7 +8,7 @@ use mech3ax_api_types::gamez::mesh::{
 use mech3ax_api_types::{Color, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Hex, Ptr};
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Hex, Ptr};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -73,6 +73,16 @@ impl MeshNgC {
     };
 }
 
+bitflags! {
+    struct PolygonBitFlags: u32 {
+        const UNK2 = 1 << 2;
+        const UNK3 = 1 << 3; // not in mechlib
+        const NORMALS = 1 << 4;
+        const TRI_STRIP = 1 << 5;
+        const UNK6 = 1 << 6; // not in mechlib
+    }
+}
+
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct PolygonNgC {
@@ -88,17 +98,6 @@ struct PolygonNgC {
     unk36: Hex<u32>,       // 36
 }
 impl_as_bytes!(PolygonNgC, 40);
-
-bitflags::bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub struct PolygonBitFlags: u32 {
-        const UNK2 = 1 << 2;
-        const UNK3 = 1 << 3; // not in mechlib
-        const NORMALS = 1 << 4;
-        const TRI_STRIP = 1 << 5;
-        const UNK6 = 1 << 6; // not in mechlib
-    }
-}
 
 impl From<PolygonBitFlags> for PolygonFlags {
     fn from(flags: PolygonBitFlags) -> Self {

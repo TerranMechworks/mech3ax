@@ -4,9 +4,7 @@ use mech3ax_api_types::anim::events::{Callback, Else, ElseIf, EndIf, If, Loop};
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _};
-use num_derive::FromPrimitive;
-use num_traits::FromPrimitive;
+use mech3ax_types::{impl_as_bytes, AsBytes as _, PrimitiveEnum};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -49,7 +47,7 @@ struct IfC {
 }
 impl_as_bytes!(IfC, 12);
 
-#[derive(Debug, FromPrimitive)]
+#[derive(Debug, PrimitiveEnum)]
 #[repr(u32)]
 enum Condition {
     RandomWeight = 1,
@@ -67,7 +65,7 @@ impl ScriptObject for If {
         assert_that!("if size", size == Self::SIZE, read.offset)?;
         let if_: IfC = read.read_struct()?;
         assert_that!("if field 4", if_.zero4 == 0, read.prev + 4)?;
-        match FromPrimitive::from_u32(if_.condition) {
+        match Condition::from_primitive(if_.condition) {
             Some(Condition::RandomWeight) => {
                 Ok(If::RandomWeight(f32::from_le_bytes(if_.value).into()))
             }
@@ -126,7 +124,7 @@ impl ScriptObject for ElseIf {
         assert_that!("else if size", size == Self::SIZE, read.offset)?;
         let if_: IfC = read.read_struct()?;
         assert_that!("else if field 4", if_.zero4 == 0, read.prev + 4)?;
-        match FromPrimitive::from_u32(if_.condition) {
+        match Condition::from_primitive(if_.condition) {
             Some(Condition::RandomWeight) => {
                 Ok(ElseIf::RandomWeight(f32::from_le_bytes(if_.value).into()))
             }

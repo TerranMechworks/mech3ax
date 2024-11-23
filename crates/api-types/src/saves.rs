@@ -1,9 +1,9 @@
 use crate::serde::bytes::Bytes;
 use ::serde::{Deserialize, Serialize};
-use num_derive::FromPrimitive;
+use mech3ax_types::PrimitiveEnum;
 use std::num::NonZeroU32;
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, FromPrimitive)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PrimitiveEnum)]
 #[repr(u8)]
 pub enum ActivationStatus {
     Unk1 = 1,
