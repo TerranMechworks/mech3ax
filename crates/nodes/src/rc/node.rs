@@ -125,7 +125,7 @@ fn assert_node(node: NodeRcC, offset: usize) -> Result<(NodeType, NodeVariantsRc
     let name = if node.name == ABORT_TEST_NODE_NAME {
         ABORT_TEST_NAME.to_string()
     } else {
-        assert_utf8("name", offset + 0, || node.name.to_str_node_name())?
+        assert_utf8("node name", offset + 0, || node.name.to_str_node_name())?
     };
     let flags = NodeBitFlags::from_bits(node.flags.0).ok_or_else(|| {
         assert_with_msg!(

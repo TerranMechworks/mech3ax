@@ -172,7 +172,7 @@ fn assert_node(node: NodeCsC, offset: usize) -> Result<(NodeType, NodeVariantsCs
     } else if &node.name.0 == COCKPIT_NODE_NAME {
         COCKPIT_NAME.to_string()
     } else {
-        assert_utf8("name", offset + 0, || node.name.to_str_node_name())?
+        assert_utf8("node name", offset + 0, || node.name.to_str_node_name())?
     };
 
     let flags = NodeBitFlagsCs::from_bits(node.flags.0).ok_or_else(|| {

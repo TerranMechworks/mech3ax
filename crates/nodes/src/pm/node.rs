@@ -130,7 +130,7 @@ fn assert_node(node: NodePmC, offset: usize) -> Result<(NodeType, NodeVariantsPm
         ));
     }
 
-    let name = assert_utf8("name", offset + 0, || node.name.to_str_node_name())?;
+    let name = assert_utf8("node name", offset + 0, || node.name.to_str_node_name())?;
     let flags = NodeBitFlags::from_bits(node.flags.0).ok_or_else(|| {
         assert_with_msg!(
             "Expected valid node flags, but was {:?} (at {})",
