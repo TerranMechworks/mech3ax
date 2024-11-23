@@ -1,4 +1,4 @@
-use crate::string::ConversionError;
+use mech3ax_types::ConversionError;
 use std::cmp::{PartialEq, PartialOrd};
 use std::fmt;
 
@@ -182,29 +182,32 @@ pub fn is_bool(name: &str, actual: u32, pos: usize) -> Result<bool> {
 }
 
 #[inline]
+pub fn format_conversion_err(name: &str, pos: usize, e: ConversionError) -> AssertionError {
+    let msg = match e {
+        ConversionError::PaddingError(padding) => format!(
+            "Expected `{}` to padded with {} (at {})",
+            name, padding, pos
+        ),
+        ConversionError::NonAscii(index) => {
+            format!(
+                "Expected `{}` to be a valid string (at {})",
+                name,
+                pos + index
+            )
+        }
+        ConversionError::Unterminated => {
+            format!("Expected `{}` to be zero-terminated (at {})", name, pos)
+        }
+    };
+    AssertionError(msg)
+}
+
+#[inline]
 pub fn assert_utf8<F, T>(name: &str, pos: usize, func: F) -> Result<T>
 where
     F: FnOnce() -> ::std::result::Result<T, ConversionError>,
 {
-    func().map_err(|err| {
-        let msg = match err {
-            ConversionError::PaddingError(padding) => format!(
-                "Expected `{}` to padded with {} (at {})",
-                name, padding, pos
-            ),
-            ConversionError::NonAscii(index) => {
-                format!(
-                    "Expected `{}` to be a valid string (at {})",
-                    name,
-                    pos + index
-                )
-            }
-            ConversionError::Unterminated => {
-                format!("Expected `{}` to be zero-terminated (at {})", name, pos)
-            }
-        };
-        AssertionError(msg)
-    })
+    func().map_err(|e| format_conversion_err(name, pos, e))
 }
 
 #[inline]

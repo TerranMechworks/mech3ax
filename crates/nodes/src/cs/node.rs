@@ -14,7 +14,6 @@ use mech3ax_api_types::nodes::pm::AreaPartitionPm;
 use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
 use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_types::{Ascii, Hex, Ptr};
@@ -173,7 +172,7 @@ fn assert_node(node: NodeCsC, offset: usize) -> Result<(NodeType, NodeVariantsCs
     } else if &node.name.0 == COCKPIT_NODE_NAME {
         COCKPIT_NAME.to_string()
     } else {
-        assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name))?
+        assert_utf8("name", offset + 0, || node.name.to_str_node_name())?
     };
 
     let flags = NodeBitFlagsCs::from_bits(node.flags.0).ok_or_else(|| {
@@ -333,14 +332,13 @@ fn write_variant(
         write.offset
     );
 
-    let mut name = Ascii::zero();
-    if variant.name == GEOMETRY_NAME {
-        name.copy_from(GEOMETRY_NODE_NAME);
+    let name = if variant.name == GEOMETRY_NAME {
+        Ascii::new(GEOMETRY_NODE_NAME)
     } else if variant.name == COCKPIT_NAME {
-        name.copy_from(COCKPIT_NODE_NAME);
+        Ascii::new(COCKPIT_NODE_NAME)
     } else {
-        str_to_c_node_name(variant.name, &mut name);
-    }
+        Ascii::from_str_node_name(&variant.name)
+    };
 
     let area_partition = variant.area_partition.unwrap_or(AreaPartitionPm::DEFAULT);
 

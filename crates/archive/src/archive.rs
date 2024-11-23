@@ -4,7 +4,6 @@ use log::{debug, trace};
 use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{bytes_to_c, str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_len, assert_that, Error, Rename, Result};
 use mech3ax_crc32::{crc32_update, CRC32_INIT};
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
@@ -86,11 +85,10 @@ fn read_table(
                 assert_that!("entry length", entry_len == 1, read.prev + 4)?;
             }
 
-            let entry_name = assert_utf8("entry name", read.prev + 8, || {
-                str_from_c_padded(&entry.name)
-            })?;
+            let entry_name =
+                assert_utf8("entry name", read.prev + 8, || entry.name.to_str_padded())?;
 
-            Ok((entry_name, entry_start, entry_len, entry.garbage.0.to_vec()))
+            Ok((entry_name, entry_start, entry_len, entry.garbage.to_vec()))
         })
         .collect::<Result<Vec<_>>>()?;
 
@@ -163,10 +161,8 @@ where
 }
 
 fn entry_to_c(entry: &ArchiveEntry, start: u32, length: u32) -> EntryC {
-    let mut name = Ascii::zero();
-    str_to_c_padded(&entry.name, &mut name);
-    let mut garbage = Bytes::new();
-    bytes_to_c(&entry.garbage, &mut garbage);
+    let name = Ascii::from_str_padded(&entry.name);
+    let garbage = Bytes::from_slice(&entry.garbage);
 
     EntryC {
         start,

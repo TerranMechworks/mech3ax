@@ -4,7 +4,6 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{str_from_c_suffix, str_to_c_suffix};
 use mech3ax_common::{assert_that, Result};
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_types::{Ascii, Ptr};
@@ -42,9 +41,7 @@ pub fn read_texture_infos(
             // validate field 00 later, with used
             assert_that!("field 04", info.zero04 == 0, read.prev + 4)?;
             assert_that!("field 08", info.zero08 == 0, read.prev + 8)?;
-            let name = assert_utf8("texture", read.prev + 12, || {
-                str_from_c_suffix(&info.texture)
-            })?;
+            let name = assert_utf8("texture", read.prev + 12, || info.texture.to_str_suffix())?;
             // 2 if the texture is used, 0 if the texture is unused
             // 1 or 3 if the texture is being processed (deallocated?)
             assert_that!("field 32", info.used in [1, STATE_USED], read.prev + 32)?;
@@ -82,8 +79,7 @@ pub fn write_texture_infos(
             TextureInfoNgC::SIZE,
             write.offset
         );
-        let mut texture = Ascii::zero();
-        str_to_c_suffix(name, &mut texture);
+        let texture = Ascii::from_str_suffix(name);
         let used = if ptr.is_some() { 1 } else { STATE_USED };
         let unk00 = Ptr(ptr.unwrap_or(0));
         let info = TextureInfoNgC {

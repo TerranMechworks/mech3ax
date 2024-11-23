@@ -7,7 +7,6 @@ use mech3ax_api_types::anim::events::{
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{Quaternion, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::bytes_to_c;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _, Bytes};
 use std::io::{Read, Write};
@@ -203,24 +202,21 @@ impl ScriptObject for ObjectMotionSiScript {
             })?;
 
             if let Some(translation) = &frame.translation {
-                let mut unk = Bytes::new();
-                bytes_to_c(&translation.unk, &mut unk);
+                let unk = Bytes::from_slice(&translation.unk);
                 write.write_struct(&TranslateDataC {
                     value: translation.value,
                     unk,
                 })?;
             }
             if let Some(rotation) = &frame.rotation {
-                let mut unk = Bytes::new();
-                bytes_to_c(&rotation.unk, &mut unk);
+                let unk = Bytes::from_slice(&rotation.unk);
                 write.write_struct(&RotateDataC {
                     value: rotation.value,
                     unk,
                 })?;
             }
             if let Some(scale) = &frame.scale {
-                let mut unk = Bytes::new();
-                bytes_to_c(&scale.unk, &mut unk);
+                let unk = Bytes::from_slice(&scale.unk);
                 write.write_struct(&ScaleDataC {
                     value: scale.value,
                     unk,

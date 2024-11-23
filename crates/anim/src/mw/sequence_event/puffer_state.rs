@@ -8,7 +8,6 @@ use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{Range, Vec3};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_types::{Ascii, Zeros};
@@ -92,7 +91,7 @@ impl ScriptObject for PufferState {
         assert_that!("puffer state size", size == Self::SIZE, read.offset)?;
         let puffer_state: PufferStateC = read.read_struct()?;
         let name = assert_utf8("puffer state name", read.prev + 0, || {
-            str_from_c_padded(&puffer_state.name)
+            puffer_state.name.to_str_padded()
         })?;
         let expected_name =
             anim_def.puffer_from_index(puffer_state.puffer_index as usize, read.prev + 32)?;
@@ -383,7 +382,7 @@ impl ScriptObject for PufferState {
                 Some(assert_utf8(
                     "puffer state texture 192",
                     read.prev + 192,
-                    || str_from_c_padded(&puffer_state.tex192),
+                    || puffer_state.tex192.to_str_padded(),
                 )?)
             } else {
                 assert_that!(
@@ -397,7 +396,7 @@ impl ScriptObject for PufferState {
                 Some(assert_utf8(
                     "puffer state texture 228",
                     read.prev + 228,
-                    || str_from_c_padded(&puffer_state.tex228),
+                    || puffer_state.tex228.to_str_padded(),
                 )?)
             } else {
                 assert_that!(
@@ -411,7 +410,7 @@ impl ScriptObject for PufferState {
                 Some(assert_utf8(
                     "puffer state texture 264",
                     read.prev + 264,
-                    || str_from_c_padded(&puffer_state.tex264),
+                    || puffer_state.tex264.to_str_padded(),
                 )?)
             } else {
                 assert_that!(
@@ -425,7 +424,7 @@ impl ScriptObject for PufferState {
                 Some(assert_utf8(
                     "puffer state texture 300",
                     read.prev + 300,
-                    || str_from_c_padded(&puffer_state.tex300),
+                    || puffer_state.tex300.to_str_padded(),
                 )?)
             } else {
                 assert_that!(
@@ -439,7 +438,7 @@ impl ScriptObject for PufferState {
                 Some(assert_utf8(
                     "puffer state texture 336",
                     read.prev + 336,
-                    || str_from_c_padded(&puffer_state.tex336),
+                    || puffer_state.tex336.to_str_padded(),
                 )?)
             } else {
                 assert_that!(
@@ -453,7 +452,7 @@ impl ScriptObject for PufferState {
                 Some(assert_utf8(
                     "puffer state texture 372",
                     read.prev + 372,
-                    || str_from_c_padded(&puffer_state.tex372),
+                    || puffer_state.tex372.to_str_padded(),
                 )?)
             } else {
                 assert_that!(
@@ -593,8 +592,7 @@ impl ScriptObject for PufferState {
     }
 
     fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
-        let mut name = Ascii::zero();
-        str_to_c_padded(&self.name, &mut name);
+        let name = Ascii::from_str_padded(&self.name);
         let puffer_index = anim_def.puffer_to_index(&self.name)? as u32;
         let mut flags = PufferStateFlags::empty();
         if self.active_state.is_some() {
@@ -671,22 +669,22 @@ impl ScriptObject for PufferState {
         if let Some(textures) = &self.textures {
             flags |= PufferStateFlags::CYCLE_TEXTURE;
             if let Some(tex) = &textures.texture1 {
-                str_to_c_padded(tex, &mut tex192);
+                tex192 = Ascii::from_str_padded(tex);
             }
             if let Some(tex) = &textures.texture2 {
-                str_to_c_padded(tex, &mut tex228);
+                tex228 = Ascii::from_str_padded(tex);
             }
             if let Some(tex) = &textures.texture3 {
-                str_to_c_padded(tex, &mut tex264);
+                tex264 = Ascii::from_str_padded(tex);
             }
             if let Some(tex) = &textures.texture4 {
-                str_to_c_padded(tex, &mut tex300);
+                tex300 = Ascii::from_str_padded(tex);
             }
             if let Some(tex) = &textures.texture5 {
-                str_to_c_padded(tex, &mut tex336);
+                tex336 = Ascii::from_str_padded(tex);
             }
             if let Some(tex) = &textures.texture6 {
-                str_to_c_padded(tex, &mut tex372);
+                tex372 = Ascii::from_str_padded(tex);
             }
         }
         write.write_struct(&PufferStateC {

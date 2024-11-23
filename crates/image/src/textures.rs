@@ -6,7 +6,6 @@ use mech3ax_api_types::image::{
 };
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Error, Rename, Result};
 use mech3ax_pixel_ops::{
     pal8to888, pal8to888a, rgb565to888, rgb565to888a, rgb888ato565, rgb888atopal8, rgb888to565,
@@ -272,7 +271,7 @@ where
                 -1 <= entry.palette_index <= palette_index_max,
                 read.prev + 36
             )?;
-            let name = assert_utf8("name", read.prev + 0, || str_from_c_padded(&entry.name))?;
+            let name = assert_utf8("name", read.prev + 0, || entry.name.to_str_padded())?;
             let offset = u32_to_usize(entry.start_offset);
             Ok((name, offset, entry.palette_index))
         })
@@ -616,8 +615,7 @@ where
             TextureEntryC::SIZE,
             write.offset
         );
-        let mut name = Ascii::zero();
-        str_to_c_padded(&info.name, &mut name);
+        let name = Ascii::from_str_padded(&info.name);
         let palette_index = match &info.palette {
             TexturePalette::Global(global) => global.index,
             _ => -1,

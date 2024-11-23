@@ -9,7 +9,6 @@ use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{Quaternion, Vec3};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_types::Ascii;
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
@@ -364,7 +363,7 @@ impl ScriptObject for ObjectMotion {
             let seq_name0 = if object_motion.bounce_seq0_name.0[0] != 0 {
                 let bounce_seq0 =
                     assert_utf8("object motion bounce seq 0 name", read.prev + 196, || {
-                        str_from_c_padded(&object_motion.bounce_seq0_name)
+                        object_motion.bounce_seq0_name.to_str_padded()
                     })?;
                 Some(bounce_seq0)
             } else {
@@ -377,7 +376,7 @@ impl ScriptObject for ObjectMotion {
             let seq_name1 = if object_motion.bounce_seq1_name.0[0] != 0 {
                 let bounce_seq1 =
                     assert_utf8("object motion bounce seq 1 name", read.prev + 236, || {
-                        str_from_c_padded(&object_motion.bounce_seq1_name)
+                        object_motion.bounce_seq1_name.to_str_padded()
                     })?;
                 Some(bounce_seq1)
             } else {
@@ -387,7 +386,7 @@ impl ScriptObject for ObjectMotion {
             let seq_name2 = if object_motion.bounce_seq2_name.0[0] != 0 {
                 let bounce_seq2 =
                     assert_utf8("object motion bounce seq 2 name", read.prev + 276, || {
-                        str_from_c_padded(&object_motion.bounce_seq2_name)
+                        object_motion.bounce_seq2_name.to_str_padded()
                     })?;
                 Some(bounce_seq2)
             } else {
@@ -577,13 +576,13 @@ impl ScriptObject for ObjectMotion {
             flags |= ObjectMotionFlags::BOUNCE_SEQ;
 
             if let Some(name) = bounce_seq.seq_name0.as_ref() {
-                str_to_c_padded(name, &mut bounce_seq0_name);
+                bounce_seq0_name = Ascii::from_str_padded(name);
             }
             if let Some(name) = bounce_seq.seq_name1.as_ref() {
-                str_to_c_padded(name, &mut bounce_seq1_name);
+                bounce_seq1_name = Ascii::from_str_padded(name);
             }
             if let Some(name) = bounce_seq.seq_name2.as_ref() {
-                str_to_c_padded(name, &mut bounce_seq2_name);
+                bounce_seq2_name = Ascii::from_str_padded(name);
             }
         }
 

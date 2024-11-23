@@ -4,7 +4,6 @@ use log::trace;
 use mech3ax_api_types::anim::{AnimDef, AnimMetadata, AnimName, AnimPtr};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{str_from_c_partition, str_to_c_partition};
 use mech3ax_common::{assert_that, Error, Result};
 use mech3ax_types::impl_as_bytes;
 use mech3ax_types::Ascii;
@@ -67,7 +66,7 @@ fn read_anim_header(read: &mut CountingReader<impl Read>) -> Result<Vec<AnimName
         .map(|_| {
             let anim_name: AnimNameC = read.read_struct()?;
             let (name, pad) = assert_utf8("anim header name", read.prev + 0, || {
-                str_from_c_partition(&anim_name.name)
+                anim_name.name.to_str_garbage()
             })?;
             Ok(AnimName {
                 name,
@@ -169,8 +168,7 @@ fn write_anim_header(
     write.write_u32(anim_names.len() as u32)?;
 
     for anim_name in anim_names {
-        let mut name = Ascii::zero();
-        str_to_c_partition(&anim_name.name, &anim_name.pad, &mut name);
+        let name = Ascii::from_str_garbage(&anim_name.name, &anim_name.pad);
         write.write_struct(&AnimNameC {
             name,
             unknown: anim_name.unknown,

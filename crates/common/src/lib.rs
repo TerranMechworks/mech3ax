@@ -4,7 +4,6 @@ mod errors;
 pub mod io_ext;
 pub mod light;
 mod rename;
-pub mod string;
 
 pub use errors::{Error, PeError, Result};
 pub use rename::Rename;

@@ -7,7 +7,6 @@ use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::Vec3;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
 use mech3ax_types::Ascii;
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
@@ -51,7 +50,7 @@ impl ScriptObject for CallObjectConnector {
         )?;
 
         let node = assert_utf8("call object connector node name", read.prev + 4, || {
-            str_from_c_padded(&call_obj_connector.node)
+            call_obj_connector.node.to_str_padded()
         })?;
 
         // this is always 0 and forces a node lookup from the name
@@ -90,8 +89,7 @@ impl ScriptObject for CallObjectConnector {
     }
 
     fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
-        let mut node = Ascii::zero();
-        str_to_c_padded(&self.node, &mut node);
+        let node = Ascii::from_str_padded(&self.node);
         let from_index = anim_def.node_to_index(&self.from_node)? as u16;
         write.write_struct(&CallObjectConnectorC {
             flags: FLAGS,

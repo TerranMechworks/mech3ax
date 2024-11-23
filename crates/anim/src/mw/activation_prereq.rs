@@ -2,7 +2,6 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::{ActivationPrereq, PrereqAnimation, PrereqObject, PrereqParent};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
 use mech3ax_types::impl_as_bytes;
 use mech3ax_types::Ascii;
@@ -39,7 +38,7 @@ impl_as_bytes!(ActivPrereqObjC, 40);
 fn read_activ_prereq_anim(read: &mut CountingReader<impl Read>) -> Result<ActivationPrereq> {
     let prereq: ActivPrereqAnimC = read.read_struct()?;
     let name = assert_utf8("anim def activ prereq a name", read.prev + 0, || {
-        str_from_c_padded(&prereq.name)
+        prereq.name.to_str_padded()
     })?;
     assert_that!(
         "anim def activ prereq a field 32",
@@ -65,7 +64,7 @@ fn read_activ_prereq_parent(
         read.prev + 0
     )?;
     let name = assert_utf8("anim def activ prereq p name", read.prev + 4, || {
-        str_from_c_padded(&prereq.name)
+        prereq.name.to_str_padded()
     })?;
     assert_that!(
         "anim def activ prereq p pointer",
@@ -87,7 +86,7 @@ fn read_activ_prereq_object(
     let prereq: ActivPrereqObjC = read.read_struct()?;
     let active = assert_that!("anim def activ prereq o active", bool prereq.active, read.prev + 0)?;
     let name = assert_utf8("anim def activ prereq o name", read.prev + 4, || {
-        str_from_c_padded(&prereq.name)
+        prereq.name.to_str_padded()
     })?;
     assert_that!(
         "anim def activ prereq o pointer",
@@ -133,8 +132,7 @@ pub fn read_activ_prereqs(
 }
 
 fn write_activ_prereq_anim(write: &mut CountingWriter<impl Write>, name: &str) -> Result<()> {
-    let mut fill = Ascii::zero();
-    str_to_c_padded(name, &mut fill);
+    let fill = Ascii::from_str_padded(name);
     // always required (not optional)
     write.write_u32(bool_c!(false))?;
     write.write_u32(ActivPrereqType::Animation as u32)?;
@@ -151,8 +149,7 @@ fn write_activ_prereq_object(
     object: &PrereqObject,
     prereq_type: ActivPrereqType,
 ) -> Result<()> {
-    let mut name = Ascii::zero();
-    str_to_c_padded(&object.name, &mut name);
+    let name = Ascii::from_str_padded(&object.name);
     write.write_u32(bool_c!(!object.required))?;
     write.write_u32(prereq_type as u32)?;
     write.write_struct(&ActivPrereqObjC {
@@ -168,8 +165,7 @@ fn write_activ_prereq_parent(
     parent: &PrereqParent,
     prereq_type: ActivPrereqType,
 ) -> Result<()> {
-    let mut name = Ascii::zero();
-    str_to_c_padded(&parent.name, &mut name);
+    let name = Ascii::from_str_padded(&parent.name);
     write.write_u32(bool_c!(!parent.required))?;
     write.write_u32(prereq_type as u32)?;
     write.write_struct(&ActivPrereqObjC {

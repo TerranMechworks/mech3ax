@@ -4,7 +4,6 @@ use mech3ax_api_types::anim::events::{InvalidateAnimation, ResetAnimation, StopA
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
 use mech3ax_types::Ascii;
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
@@ -21,15 +20,14 @@ impl_as_bytes!(AnimationC, 36);
 fn read_animation(read: &mut CountingReader<impl Read>) -> Result<String> {
     let animation: AnimationC = read.read_struct()?;
     let name = assert_utf8("animation name", read.prev + 0, || {
-        str_from_c_padded(&animation.name)
+        animation.name.to_str_padded()
     })?;
     assert_that!("animation field 32", animation.zero32 == 0, read.prev + 32)?;
     Ok(name)
 }
 
 fn write_animation(write: &mut CountingWriter<impl Write>, name: &str) -> Result<()> {
-    let mut fill = Ascii::zero();
-    str_to_c_padded(name, &mut fill);
+    let fill = Ascii::from_str_padded(name);
     write.write_struct(&AnimationC {
         name: fill,
         zero32: 0,

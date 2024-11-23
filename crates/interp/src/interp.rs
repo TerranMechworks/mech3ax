@@ -3,9 +3,8 @@ use log::{debug, trace};
 use mech3ax_api_types::interp::Script;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{str_from_c_padded, str_from_c_sized, str_to_c_padded};
 use mech3ax_common::{assert_len, assert_that, Result};
-use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _, Ascii};
+use mech3ax_types::{impl_as_bytes, string_from_ascii, u32_to_usize, AsBytes as _, Ascii};
 use std::io::{Read, Write};
 use time::OffsetDateTime;
 
@@ -52,7 +51,7 @@ fn read_line(read: &mut CountingReader<impl Read>, size: u32) -> Result<String> 
     let last = buf.pop();
     assert_that!("command end", last == Some(b' '), read.prev)?;
 
-    let command = assert_utf8("command", read.prev, || str_from_c_sized(&buf))?;
+    let command = assert_utf8("command", read.prev, || string_from_ascii(buf))?;
     Ok(command)
 }
 
@@ -103,7 +102,7 @@ pub fn read_interp(read: &mut CountingReader<impl Read>) -> Result<Vec<Script>> 
             );
             let entry: InterpEntryC = read.read_struct()?;
             trace!("{:#?}", entry);
-            let name = assert_utf8("name", read.prev, || str_from_c_padded(&entry.name))?;
+            let name = assert_utf8("name", read.prev, || entry.name.to_str_padded())?;
             // Cast safety: i64 > u32
             let last_modified =
                 OffsetDateTime::from_unix_timestamp(entry.last_modified as i64).unwrap();
@@ -191,8 +190,7 @@ pub fn write_interp(write: &mut CountingWriter<impl Write>, scripts: &[Script]) 
             InterpEntryC::SIZE,
             write.offset
         );
-        let mut name = Ascii::zero();
-        str_to_c_padded(&script.name, &mut name);
+        let name = Ascii::from_str_padded(&script.name);
         // Cast safety: truncation simply leads to incorrect timestamp
         let last_modified = script.last_modified.unix_timestamp() as u32;
         let entry = InterpEntryC {

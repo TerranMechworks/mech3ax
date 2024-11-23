@@ -3,10 +3,6 @@ use log::trace;
 use mech3ax_api_types::anim::{NamePad, NamePtr, NamePtrFlags};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{
-    bytes_to_c, str_from_c_node_name, str_from_c_padded, str_from_c_partition, str_to_c_node_name,
-    str_to_c_padded, str_to_c_partition,
-};
 use mech3ax_common::{assert_that, Result};
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_types::{Ascii, Bytes};
@@ -37,7 +33,7 @@ pub fn read_objects(read: &mut CountingReader<impl Read>, count: u8) -> Result<V
             trace!("Reading anim def object {} at {}", i, read.offset);
             let object: ObjectC = read.read_struct()?;
             let name = assert_utf8("anim def object name", read.prev + 0, || {
-                str_from_c_node_name(&object.name)
+                object.name.to_str_node_name()
             })?;
             assert_that!(
                 "anim def object field 32",
@@ -57,10 +53,8 @@ pub fn write_objects(write: &mut CountingWriter<impl Write>, objects: &[NamePad]
     // the first entry is always zero
     write.write_zeros(ObjectC::SIZE)?;
     for object in objects {
-        let mut name = Ascii::zero();
-        str_to_c_node_name(&object.name, &mut name);
-        let mut unk = Bytes::new();
-        bytes_to_c(&object.pad, &mut unk);
+        let name = Ascii::from_str_node_name(&object.name);
+        let unk = Bytes::from_slice(&object.pad);
         write.write_struct(&ObjectC {
             name,
             zero32: 0,
@@ -100,7 +94,7 @@ pub fn read_nodes(read: &mut CountingReader<impl Read>, count: u8) -> Result<Vec
             trace!("Reading anim def node {} at {}", i, read.offset);
             let node_info: NodeInfoC = read.read_struct()?;
             let name = assert_utf8("anim def node name", read.prev + 0, || {
-                str_from_c_node_name(&node_info.name)
+                node_info.name.to_str_node_name()
             })?;
             assert_that!(
                 "anim def node field 32",
@@ -124,8 +118,7 @@ pub fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NamePtr]) ->
     // the first entry is always zero
     write.write_zeros(NodeInfoC::SIZE)?;
     for node_info in nodes {
-        let mut name = Ascii::zero();
-        str_to_c_node_name(&node_info.name, &mut name);
+        let name = Ascii::from_str_node_name(&node_info.name);
         write.write_struct(&NodeInfoC {
             name,
             zero32: 0,
@@ -171,7 +164,7 @@ pub fn read_lights(read: &mut CountingReader<impl Read>, count: u8) -> Result<Ve
             trace!("Reading anim def light {} at {}", i, read.offset);
             let light: ReaderLookupC = read.read_struct()?;
             let name = assert_utf8("anim def light name", read.prev + 0, || {
-                str_from_c_node_name(&light.name)
+                light.name.to_str_node_name()
             })?;
             assert_that!("anim def light flags", light.flags == 0, read.prev + 32)?;
             assert_that!("anim def light pointer", light.pointer != 0, read.prev + 36)?;
@@ -193,8 +186,7 @@ pub fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[NamePtr]) 
     // the first entry is always zero
     write.write_zeros(ReaderLookupC::SIZE)?;
     for light in lights {
-        let mut name = Ascii::zero();
-        str_to_c_node_name(&light.name, &mut name);
+        let name = Ascii::from_str_node_name(&light.name);
         write.write_struct(&ReaderLookupC {
             name,
             flags: 0,
@@ -227,7 +219,7 @@ pub fn read_puffers(read: &mut CountingReader<impl Read>, count: u8) -> Result<V
             trace!("Reading anim def puffer {} at {}", i, read.offset);
             let puffer: PufferRefC = read.read_struct()?;
             let name = assert_utf8("anim def puffer name", read.prev + 0, || {
-                str_from_c_padded(&puffer.name)
+                puffer.name.to_str_padded()
             })?;
 
             // TODO: what does this flag mean?
@@ -263,8 +255,7 @@ pub fn write_puffers(
     // the first entry is always zero
     write.write_zeros(ReaderLookupC::SIZE)?;
     for puffer in puffers {
-        let mut name = Ascii::zero();
-        str_to_c_padded(&puffer.name, &mut name);
+        let name = Ascii::from_str_padded(&puffer.name);
         let flags = puffer.flags << 24;
         write.write_struct(&ReaderLookupC {
             name,
@@ -309,7 +300,7 @@ pub fn read_dynamic_sounds(
             trace!("Reading anim def dynamic sound {} at {}", i, read.offset);
             let dynamic_sound: ReaderLookupC = read.read_struct()?;
             let name = assert_utf8("anim def dynamic sound name", read.prev + 0, || {
-                str_from_c_node_name(&dynamic_sound.name)
+                dynamic_sound.name.to_str_node_name()
             })?;
             assert_that!(
                 "anim def dynamic sound flags",
@@ -341,8 +332,7 @@ pub fn write_dynamic_sounds(
     // the first entry is always zero
     write.write_zeros(ReaderLookupC::SIZE)?;
     for dynamic_sound in dynamic_sounds {
-        let mut name = Ascii::zero();
-        str_to_c_node_name(&dynamic_sound.name, &mut name);
+        let name = Ascii::from_str_node_name(&dynamic_sound.name);
         write.write_struct(&ReaderLookupC {
             name,
             flags: 0,
@@ -380,7 +370,7 @@ pub fn read_static_sounds(read: &mut CountingReader<impl Read>, count: u8) -> Re
             trace!("Reading anim def static sound {} at {}", i, read.offset);
             let static_sound: StaticSoundC = read.read_struct()?;
             let (name, pad) = assert_utf8("anim def static sound name", read.prev + 0, || {
-                str_from_c_partition(&static_sound.name)
+                static_sound.name.to_str_garbage()
             })?;
             assert_that!(
                 "anim def static sound field 32",
@@ -399,8 +389,7 @@ pub fn write_static_sounds(
     // the first entry is always zero
     write.write_zeros(StaticSoundC::SIZE)?;
     for static_sound in static_sounds {
-        let mut name = Ascii::zero();
-        str_to_c_partition(&static_sound.name, &static_sound.pad, &mut name);
+        let name = Ascii::from_str_garbage(&static_sound.name, &static_sound.pad);
         write.write_struct(&StaticSoundC { name, zero32: 0 })?;
     }
     Ok(())
@@ -426,7 +415,7 @@ pub fn read_anim_refs(read: &mut CountingReader<impl Read>, count: u8) -> Result
             // a bunch of these values are properly zero-terminated at 32 and beyond,
             // but not all... i suspect a lack of memset
             let (name, pad) = assert_utf8("anim def anim ref name", read.prev + 0, || {
-                str_from_c_partition(&anim_ref.name)
+                anim_ref.name.to_str_garbage()
             })?;
             assert_that!(
                 "anim def anim ref field 64",
@@ -449,8 +438,7 @@ pub fn write_anim_refs(
 ) -> Result<()> {
     // the first entry... is not zero! as this is not a node list
     for anim_ref in anim_refs {
-        let mut name = Ascii::zero();
-        str_to_c_partition(&anim_ref.name, &anim_ref.pad, &mut name);
+        let name = Ascii::from_str_garbage(&anim_ref.name, &anim_ref.pad);
         write.write_struct(&AnimRefC {
             name,
             zero64: 0,

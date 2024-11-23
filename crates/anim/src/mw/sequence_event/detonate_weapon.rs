@@ -6,7 +6,6 @@ use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::Vec3;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
 use mech3ax_types::Ascii;
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
@@ -29,7 +28,7 @@ impl ScriptObject for DetonateWeapon {
         assert_that!("detonate weapon size", size == Self::SIZE, read.offset)?;
         let detonate_weapon: DetonateWeaponC = read.read_struct()?;
         let name = assert_utf8("detonate weapon name", read.prev + 0, || {
-            str_from_c_padded(&detonate_weapon.name)
+            detonate_weapon.name.to_str_padded()
         })?;
         let node = anim_def.node_from_index(detonate_weapon.node_index as usize, read.prev + 10)?;
         Ok(Self {
@@ -42,8 +41,7 @@ impl ScriptObject for DetonateWeapon {
     }
 
     fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
-        let mut name = Ascii::zero();
-        str_to_c_padded(&self.name, &mut name);
+        let name = Ascii::from_str_padded(&self.name);
         write.write_struct(&DetonateWeaponC {
             name,
             node_index: anim_def.node_to_index(&self.at_node.node)? as u16,

@@ -10,9 +10,6 @@ use mech3ax_api_types::anim::{
 use mech3ax_api_types::Range;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{
-    str_from_c_padded, str_from_c_partition, str_to_c_padded, str_to_c_partition,
-};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_types::{Ascii, Zeros};
@@ -173,7 +170,7 @@ fn read_reset_state(
 fn read_sequence_def(read: &mut CountingReader<impl Read>, anim_def: &AnimDef) -> Result<SeqDef> {
     let seq_def: SeqDefInfoC = read.read_struct()?;
     let name = assert_utf8("anim def seq def name", read.prev + 0, || {
-        str_from_c_padded(&seq_def.name)
+        seq_def.name.to_str_padded()
     })?;
     let activation = if seq_def.flags == 0 {
         SeqActivation::Initial
@@ -230,17 +227,15 @@ pub fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<(AnimDef, A
 
     let anim_name = {
         let (name, pad) = assert_utf8("anim def anim name", prev + 0, || {
-            str_from_c_partition(&anim_def.anim_name)
+            anim_def.anim_name.to_str_garbage()
         })?;
         NamePad { name, pad }
     };
-    let name = assert_utf8("anim def name", prev + 32, || {
-        str_from_c_padded(&anim_def.name)
-    })?;
+    let name = assert_utf8("anim def name", prev + 32, || anim_def.name.to_str_padded())?;
     assert_that!("anim def anim ptr", anim_def.anim_ptr != 0, prev + 64)?;
     let anim_root = {
         let (name, pad) = assert_utf8("anim def anim root name", prev + 68, || {
-            str_from_c_partition(&anim_def.anim_root)
+            anim_def.anim_root.to_str_garbage()
         })?;
         NamePad { name, pad }
     };
@@ -644,8 +639,7 @@ fn write_reset_state(
 
 fn write_sequence_defs(write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
     for seq_def in &anim_def.sequences {
-        let mut name = Ascii::zero();
-        str_to_c_padded(&seq_def.name, &mut name);
+        let name = Ascii::from_str_padded(&seq_def.name);
         let flags = if seq_def.activation == SeqActivation::OnCall {
             0x0303
         } else {
@@ -669,20 +663,9 @@ pub fn write_anim_def(
     anim_def: &AnimDef,
     anim_ptr: &AnimPtr,
 ) -> Result<()> {
-    let mut anim_name = Ascii::zero();
-    str_to_c_partition(
-        &anim_def.anim_name.name,
-        &anim_def.anim_name.pad,
-        &mut anim_name,
-    );
-    let mut name = Ascii::zero();
-    str_to_c_padded(&anim_def.name, &mut name);
-    let mut anim_root = Ascii::zero();
-    str_to_c_partition(
-        &anim_def.anim_root.name,
-        &anim_def.anim_root.pad,
-        &mut anim_root,
-    );
+    let anim_name = Ascii::from_str_garbage(&anim_def.anim_name.name, &anim_def.anim_name.pad);
+    let name = Ascii::from_str_padded(&anim_def.name);
+    let anim_root = Ascii::from_str_garbage(&anim_def.anim_root.name, &anim_def.anim_root.pad);
 
     let mut flags = AnimDefFlags::empty();
     if let Some(network_log_on) = &anim_def.network_log {

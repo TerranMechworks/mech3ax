@@ -2,8 +2,8 @@ use crate::size::u32_to_usize;
 use log::trace;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::string::str_from_c_sized;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_types::str_from_ascii;
 use std::io::Cursor;
 
 pub fn read_zlocids(
@@ -70,8 +70,9 @@ pub fn read_zlocids(
 
             let name = format!("message {}", entry_id);
             let message_name = assert_utf8(&name, pos, || {
-                str_from_c_sized(&data[relative_start..relative_end])
-            })?;
+                str_from_ascii(&data[relative_start..relative_end])
+            })?
+            .to_string();
 
             Ok((entry_id, message_name))
         })

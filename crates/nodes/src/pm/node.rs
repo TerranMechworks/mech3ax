@@ -14,7 +14,6 @@ use mech3ax_api_types::nodes::pm::{AreaPartitionPm, NodePm};
 use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
 use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_types::{Ascii, Hex, Ptr};
@@ -131,7 +130,7 @@ fn assert_node(node: NodePmC, offset: usize) -> Result<(NodeType, NodeVariantsPm
         ));
     }
 
-    let name = assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name))?;
+    let name = assert_utf8("name", offset + 0, || node.name.to_str_node_name())?;
     let flags = NodeBitFlags::from_bits(node.flags.0).ok_or_else(|| {
         assert_with_msg!(
             "Expected valid node flags, but was {:?} (at {})",
@@ -354,8 +353,7 @@ fn write_variant(
         write.offset
     );
 
-    let mut name = Ascii::zero();
-    str_to_c_node_name(variant.name, &mut name);
+    let name = Ascii::from_str_node_name(&variant.name);
 
     let area_partition = variant.area_partition.unwrap_or(AreaPartitionPm::DEFAULT);
 

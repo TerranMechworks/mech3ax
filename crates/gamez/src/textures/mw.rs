@@ -3,7 +3,6 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use log::{debug, trace};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{str_from_c_suffix, str_to_c_suffix};
 use mech3ax_common::{assert_that, Result};
 use mech3ax_types::Ascii;
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
@@ -35,9 +34,7 @@ pub fn read_texture_infos(read: &mut CountingReader<impl Read>, count: u32) -> R
 
             assert_that!("field 00", info.zero00 == 0, read.prev + 0)?;
             assert_that!("field 04", info.zero04 == 0, read.prev + 4)?;
-            let texture = assert_utf8("texture", read.prev + 8, || {
-                str_from_c_suffix(&info.texture)
-            })?;
+            let texture = assert_utf8("texture", read.prev + 8, || info.texture.to_str_suffix())?;
             // 2 if the texture is used, 0 if the texture is unused
             // 1 or 3 if the texture is being processed (deallocated?)
             assert_that!("field 28", info.used == STATE_USED, read.prev + 28)?;
@@ -60,8 +57,7 @@ pub fn write_texture_infos(
             TextureInfoMwC::SIZE,
             write.offset
         );
-        let mut texture = Ascii::zero();
-        str_to_c_suffix(name, &mut texture);
+        let texture = Ascii::from_str_suffix(name);
         let info = TextureInfoMwC {
             zero00: 0,
             zero04: 0,

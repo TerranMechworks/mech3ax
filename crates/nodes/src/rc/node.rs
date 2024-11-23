@@ -14,7 +14,6 @@ use mech3ax_api_types::nodes::rc::{Empty, NodeRc};
 use mech3ax_api_types::nodes::{AreaPartition, BoundingBox};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{str_from_c_node_name, str_to_c_node_name};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
 use mech3ax_types::{Ascii, Hex, Ptr};
@@ -126,7 +125,7 @@ fn assert_node(node: NodeRcC, offset: usize) -> Result<(NodeType, NodeVariantsRc
     let name = if node.name == ABORT_TEST_NODE_NAME {
         ABORT_TEST_NAME.to_string()
     } else {
-        assert_utf8("name", offset + 0, || str_from_c_node_name(&node.name))?
+        assert_utf8("name", offset + 0, || node.name.to_str_node_name())?
     };
     let flags = NodeBitFlags::from_bits(node.flags.0).ok_or_else(|| {
         assert_with_msg!(
@@ -312,12 +311,11 @@ fn write_variant(
         write.offset
     );
 
-    let mut name = Ascii::zero();
-    if variant.name == ABORT_TEST_NAME {
-        name.copy_from(&ABORT_TEST_NODE_NAME.0);
+    let name = if variant.name == ABORT_TEST_NAME {
+        ABORT_TEST_NODE_NAME.clone()
     } else {
-        str_to_c_node_name(variant.name, &mut name);
-    }
+        Ascii::from_str_node_name(&variant.name)
+    };
 
     let area_partition = variant.area_partition.unwrap_or(AreaPartition::DEFAULT);
 

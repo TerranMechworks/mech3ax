@@ -5,7 +5,6 @@ use mech3ax_api_types::anim::events::{FogState, FogType};
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{Color, Range};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::str_to_c_padded;
 use mech3ax_common::{assert_that, Result};
 use mech3ax_types::Ascii;
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
@@ -47,8 +46,7 @@ impl ScriptObject for FogState {
         assert_that!("fog state size", size == Self::SIZE, read.offset)?;
         let fog_state: FogStateC = read.read_struct()?;
 
-        let mut name = Ascii::zero();
-        str_to_c_padded(DEFAULT_FOG_NAME, &mut name);
+        let name = Ascii::from_str_padded(DEFAULT_FOG_NAME);
         assert_that!("fog state name", fog_state.name == name, read.prev + 0)?;
 
         assert_that!(
@@ -74,8 +72,7 @@ impl ScriptObject for FogState {
     }
 
     fn write(&self, write: &mut CountingWriter<impl Write>, _anim_def: &AnimDef) -> Result<()> {
-        let mut name = Ascii::zero();
-        str_to_c_padded(DEFAULT_FOG_NAME, &mut name);
+        let name = Ascii::from_str_padded(DEFAULT_FOG_NAME);
         let fog_type = match &self.fog_type {
             FogType::Off => FogType::Off as u32,
             FogType::Linear => FogType::Linear as u32,

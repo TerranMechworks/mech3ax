@@ -4,7 +4,6 @@ use mech3ax_api_types::saves::{ActivationStatus, ActivationType, AnimActivation}
 use mech3ax_api_types::Bytes;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_types::impl_as_bytes;
 use mech3ax_types::Ascii;
@@ -42,7 +41,7 @@ pub fn read_activation(read: &mut CountingReader<impl Read>) -> Result<AnimActiv
     )?;
 
     let name = assert_utf8("anim activation name", read.prev + 8, || {
-        str_from_c_padded(&activation.name)
+        activation.name.to_str_padded()
     })?;
 
     let node_index = if activation.node_index < 0 {
@@ -193,11 +192,12 @@ pub fn write_activation(
             activation.node_states.len()
         )
     })?;
+    let name = Ascii::from_str_padded(&activation.name);
 
     let mut activ = AnimActivationC {
         type_,
         unk04: 0,
-        name: Ascii::zero(),
+        name,
         node_index,
         values: [0u8; VALUES_SIZE],
         unk80,
@@ -207,7 +207,6 @@ pub fn write_activation(
         unk87: 0,
     };
 
-    str_to_c_padded(&activation.name, &mut activ.name);
     match activation.type_ {
         ActivationType::One | ActivationType::Two(None) | ActivationType::Five(None) => {
             // nothing to do, values is already zero

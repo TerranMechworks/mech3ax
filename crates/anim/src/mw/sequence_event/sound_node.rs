@@ -6,7 +6,6 @@ use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::Vec3;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
 use mech3ax_types::Ascii;
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
@@ -32,7 +31,7 @@ impl ScriptObject for SoundNode {
         assert_that!("sound node size", size == Self::SIZE, read.offset)?;
         let sound_node: SoundNodeC = read.read_struct()?;
         let name = assert_utf8("sound node name", read.prev + 0, || {
-            str_from_c_padded(&sound_node.name)
+            sound_node.name.to_str_padded()
         })?;
         assert_that!("sound node field 32", sound_node.one32 == 1, read.prev + 32)?;
         assert_that!("sound node field 36", sound_node.inherit_translation in [0, 2], read.prev + 36)?;
@@ -66,8 +65,7 @@ impl ScriptObject for SoundNode {
     }
 
     fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
-        let mut name = Ascii::zero();
-        str_to_c_padded(&self.name, &mut name);
+        let name = Ascii::from_str_padded(&self.name);
         let active_state = u32::from(self.active_state);
 
         let (inherit_translation, node_index, translation) = if let Some(at_node) = &self.at_node {

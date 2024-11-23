@@ -6,7 +6,6 @@ use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{Color, Range};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, Result};
 use mech3ax_types::Ascii;
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
@@ -43,7 +42,7 @@ impl ScriptObject for LightAnimation {
 
         // not sure why this information is duplicated?
         let actual_name = assert_utf8("light anim name", read.prev + 0, || {
-            str_from_c_padded(&light_anim.name)
+            light_anim.name.to_str_padded()
         })?;
         let expected_name =
             anim_def.light_from_index(light_anim.light_index as usize, read.prev + 32)?;
@@ -138,8 +137,7 @@ impl ScriptObject for LightAnimation {
     }
 
     fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
-        let mut name = Ascii::zero();
-        str_to_c_padded(&self.name, &mut name);
+        let name = Ascii::from_str_padded(&self.name);
         let light_index = anim_def.light_to_index(&self.name)? as u32;
 
         write.write_struct(&LightAnimationC {

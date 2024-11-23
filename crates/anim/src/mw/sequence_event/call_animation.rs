@@ -10,7 +10,6 @@ use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::Vec3;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::string::{str_from_c_padded, str_to_c_padded};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_types::Ascii;
 use mech3ax_types::{impl_as_bytes, AsBytes as _};
@@ -57,7 +56,7 @@ impl ScriptObject for CallAnimation {
         let call_animation: CallAnimationC = read.read_struct()?;
 
         let name = assert_utf8("call animation name", read.prev + 0, || {
-            str_from_c_padded(&call_animation.name)
+            call_animation.name.to_str_padded()
         })?;
         let flags = CallAnimationFlags::from_bits(call_animation.flags).ok_or_else(|| {
             assert_with_msg!(
@@ -184,8 +183,7 @@ impl ScriptObject for CallAnimation {
     }
 
     fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
-        let mut name = Ascii::zero();
-        str_to_c_padded(&self.name, &mut name);
+        let name = Ascii::from_str_padded(&self.name);
         let mut flags = CallAnimationFlags::empty();
         if self.wait_for_completion.is_some() {
             flags |= CallAnimationFlags::WAIT_FOR;
