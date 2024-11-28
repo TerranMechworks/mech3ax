@@ -2,8 +2,8 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::{ActivationPrereq, PrereqAnimation, PrereqObject, PrereqParent};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, primitive_enum, Ascii};
+use mech3ax_common::{assert_that, Result};
+use mech3ax_types::{impl_as_bytes, primitive_enum, Ascii, Bool32, Maybe};
 use std::io::{Read, Write};
 
 primitive_enum! {
@@ -26,7 +26,7 @@ impl_as_bytes!(ActivPrereqAnimC, 40);
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct ActivPrereqObjC {
-    active: u32,     // 00
+    active: Bool32,  // 00
     name: Ascii<32>, // 32
     pointer: u32,    // 36
 }
@@ -57,7 +57,7 @@ fn read_activ_prereq_parent(
     let prereq: ActivPrereqObjC = read.read_struct()?;
     assert_that!(
         "anim def activ prereq p active",
-        prereq.active == 0,
+        prereq.active == Bool32::FALSE,
         read.prev + 0
     )?;
     let name = assert_utf8("anim def activ prereq p name", read.prev + 4, || {
@@ -99,11 +99,10 @@ fn read_activ_prereq_object(
 }
 
 fn read_activ_prereq(read: &mut CountingReader<impl Read>) -> Result<ActivationPrereq> {
-    let optional = read.read_u32()?;
+    let optional = Bool32::new(read.read_u32()?);
     let required = !assert_that!("anim def activ prereq optional", bool optional, read.prev)?;
-    let prereq_type_raw = read.read_u32()?;
-    let prereq_type =
-        assert_that!("activ prereq type", enum ActivPrereqType => prereq_type_raw, read.prev)?;
+    let prereq_type_raw = Maybe::new(read.read_u32()?);
+    let prereq_type = assert_that!("activ prereq type", enum prereq_type_raw, read.prev)?;
     match prereq_type {
         ActivPrereqType::Animation => {
             assert_that!(
@@ -128,7 +127,7 @@ pub fn read_activ_prereqs(
 fn write_activ_prereq_anim(write: &mut CountingWriter<impl Write>, name: &str) -> Result<()> {
     let fill = Ascii::from_str_padded(name);
     // always required (not optional)
-    write.write_u32(bool_c!(false))?;
+    write.write_u32(false.into())?;
     write.write_u32(ActivPrereqType::Animation as u32)?;
     write.write_struct(&ActivPrereqAnimC {
         name: fill,
@@ -144,10 +143,10 @@ fn write_activ_prereq_object(
     prereq_type: ActivPrereqType,
 ) -> Result<()> {
     let name = Ascii::from_str_padded(&object.name);
-    write.write_u32(bool_c!(!object.required))?;
+    write.write_u32((!object.required).into())?;
     write.write_u32(prereq_type as u32)?;
     write.write_struct(&ActivPrereqObjC {
-        active: bool_c!(object.active),
+        active: object.active.into(),
         name,
         pointer: object.pointer,
     })?;
@@ -160,10 +159,10 @@ fn write_activ_prereq_parent(
     prereq_type: ActivPrereqType,
 ) -> Result<()> {
     let name = Ascii::from_str_padded(&parent.name);
-    write.write_u32(bool_c!(!parent.required))?;
+    write.write_u32((!parent.required).into())?;
     write.write_u32(prereq_type as u32)?;
     write.write_struct(&ActivPrereqObjC {
-        active: bool_c!(parent.active),
+        active: parent.active.into(),
         name,
         pointer: parent.pointer,
     })?;

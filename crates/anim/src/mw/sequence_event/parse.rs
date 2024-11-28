@@ -13,14 +13,14 @@ use mech3ax_api_types::anim::events::{
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _};
+use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _, Maybe};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct EventHeaderC {
     event_type: u8,
-    start_offset: u8,
+    start_offset: Maybe<u8, StartOffset>,
     pad: u16,
     size: u32,
     start_time: f32,
@@ -42,7 +42,8 @@ pub fn read_events(
             read.offset
         );
         assert_that!("event header field 02", header.pad == 0, read.prev + 2)?;
-        let start_offset = assert_that!("event start offset", enum StartOffset => header.start_offset, read.prev + 1)?;
+        let start_offset =
+            assert_that!("event start offset", enum header.start_offset, read.prev + 1)?;
 
         let start = if start_offset == StartOffset::Animation && header.start_time == 0.0 {
             None
@@ -168,13 +169,13 @@ pub fn write_events(
     for event in events {
         let event_type = event_type(event);
         let (start_offset, start_time) = match event.start.as_ref() {
-            None => (StartOffset::Animation as u8, 0.0),
-            Some(event_start) => (event_start.offset as u8, event_start.time),
+            None => (StartOffset::Animation, 0.0),
+            Some(event_start) => (event_start.offset, event_start.time),
         };
         let size = size_event(event);
         write.write_struct(&EventHeaderC {
             event_type,
-            start_offset,
+            start_offset: start_offset.maybe(),
             pad: 0,
             size,
             start_time,

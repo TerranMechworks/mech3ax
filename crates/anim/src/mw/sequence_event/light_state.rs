@@ -9,8 +9,8 @@ use mech3ax_api_types::{Color, Range, Vec3};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlagsU32 as LightFlags;
-use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii, Bool32};
 use std::io::{Read, Write};
 
 const INPUT_NODE_INDEX: u32 = -200i32 as u32;
@@ -18,22 +18,22 @@ const INPUT_NODE_INDEX: u32 = -200i32 as u32;
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct LightStateC {
-    name: Ascii<32>,   // 00
-    light_index: u32,  // 32
-    flags: u32,        // 36
-    active_state: u32, // 40
-    point_source: u32, // 44
-    directional: u32,  // 48
-    saturated: u32,    // 52
-    subdivide: u32,    // 56
-    static_: u32,      // 60
-    node_index: u32,   // 64
-    translation: Vec3, // 68
-    rotation: Vec3,    // 80
-    range: Range,      // 92
-    color: Color,      // 100
-    ambient: f32,      // 112
-    diffuse: f32,      // 116
+    name: Ascii<32>,      // 00
+    light_index: u32,     // 32
+    flags: u32,           // 36
+    active_state: Bool32, // 40
+    point_source: u32,    // 44
+    directional: Bool32,  // 48
+    saturated: Bool32,    // 52
+    subdivide: Bool32,    // 56
+    static_: Bool32,      // 60
+    node_index: u32,      // 64
+    translation: Vec3,    // 68
+    rotation: Vec3,       // 80
+    range: Range,         // 92
+    color: Color,         // 100
+    ambient: f32,         // 112
+    diffuse: f32,         // 116
 }
 impl_as_bytes!(LightStateC, 120);
 
@@ -92,7 +92,7 @@ impl ScriptObject for LightState {
         } else {
             assert_that!(
                 "light state directional",
-                light_state.directional == 0,
+                light_state.directional == Bool32::FALSE,
                 read.prev + 48
             )?;
             None
@@ -105,7 +105,7 @@ impl ScriptObject for LightState {
         } else {
             assert_that!(
                 "light state saturated",
-                light_state.saturated == 0,
+                light_state.saturated == Bool32::FALSE,
                 read.prev + 52
             )?;
             None
@@ -118,7 +118,7 @@ impl ScriptObject for LightState {
         } else {
             assert_that!(
                 "light state subdivide",
-                light_state.subdivide == 0,
+                light_state.subdivide == Bool32::FALSE,
                 read.prev + 56
             )?;
             None
@@ -131,7 +131,7 @@ impl ScriptObject for LightState {
         } else {
             assert_that!(
                 "light state static",
-                light_state.static_ == 0,
+                light_state.static_ == Bool32::FALSE,
                 read.prev + 60
             )?;
             None
@@ -292,12 +292,12 @@ impl ScriptObject for LightState {
             name,
             light_index,
             flags: flags.bits(),
-            active_state: bool_c!(self.active_state),
+            active_state: self.active_state.into(),
             point_source: 1,
-            directional: bool_c!(self.directional.unwrap_or(false)),
-            saturated: bool_c!(self.saturated.unwrap_or(false)),
-            subdivide: bool_c!(self.subdivide.unwrap_or(false)),
-            static_: bool_c!(self.static_.unwrap_or(false)),
+            directional: self.directional.unwrap_or(false).into(),
+            saturated: self.saturated.unwrap_or(false).into(),
+            subdivide: self.subdivide.unwrap_or(false).into(),
+            static_: self.static_.unwrap_or(false).into(),
             node_index,
             translation,
             rotation: Vec3::DEFAULT,

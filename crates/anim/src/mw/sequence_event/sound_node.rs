@@ -7,7 +7,7 @@ use mech3ax_api_types::Vec3;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii};
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii, Bool32};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -16,7 +16,7 @@ struct SoundNodeC {
     name: Ascii<32>,
     one32: u32,
     inherit_translation: u32, // 36
-    active_state: u32,        // 40
+    active_state: Bool32,     // 40
     node_index: u32,          // 44
     translation: Vec3,        // 48
 }
@@ -65,7 +65,6 @@ impl ScriptObject for SoundNode {
 
     fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
         let name = Ascii::from_str_padded(&self.name);
-        let active_state = u32::from(self.active_state);
 
         let (inherit_translation, node_index, translation) = if let Some(at_node) = &self.at_node {
             let node_index = anim_def.node_to_index(&at_node.node)? as u32;
@@ -77,7 +76,7 @@ impl ScriptObject for SoundNode {
             name,
             one32: 1,
             inherit_translation,
-            active_state,
+            active_state: self.active_state.into(),
             node_index,
             translation,
         })?;

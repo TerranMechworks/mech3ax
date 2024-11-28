@@ -9,7 +9,7 @@ use mech3ax_api_types::{Range, Vec3};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Ascii, Maybe, Zeros};
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Ascii, Bool32, Maybe, Zeros};
 use std::io::{Read, Write};
 
 bitflags! {
@@ -54,7 +54,7 @@ struct PufferStateC {
     min_random_velocity: Vec3, // 084
     max_random_velocity: Vec3, // 096
     world_acceleration: Vec3,  // 108
-    interval_type: u32,        // 120
+    interval_type: Bool32,     // 120
     interval_value: f32,       // 124
     size_range: Range,         // 128
     lifetime_range: Range,     // 136
@@ -209,7 +209,7 @@ impl ScriptObject for PufferState {
         } else {
             assert_that!(
                 "puffer state interval type",
-                puffer_state.interval_type == 0,
+                puffer_state.interval_type == Bool32::FALSE,
                 read.prev + 120
             )?;
             IntervalType::Unset
@@ -620,14 +620,14 @@ impl ScriptObject for PufferState {
             flags |= PufferStateFlags::WORLD_ACCELERATION;
         }
         let interval_type = match self.interval.interval_type {
-            IntervalType::Unset => 0,
+            IntervalType::Unset => false,
             IntervalType::Distance => {
                 flags |= PufferStateFlags::INTERVAL_TYPE;
-                1
+                true
             }
             IntervalType::Time => {
                 flags |= PufferStateFlags::INTERVAL_TYPE;
-                0
+                false
             }
         };
         if self.interval.flag {
@@ -693,7 +693,7 @@ impl ScriptObject for PufferState {
             min_random_velocity: self.min_random_velocity.unwrap_or(Vec3::DEFAULT),
             max_random_velocity: self.max_random_velocity.unwrap_or(Vec3::DEFAULT),
             world_acceleration: self.world_acceleration.unwrap_or(Vec3::DEFAULT),
-            interval_type,
+            interval_type: interval_type.into(),
             interval_value: self.interval.interval_value,
             size_range: self.size_range.unwrap_or(Range::DEFAULT),
             lifetime_range: self.lifetime_range.unwrap_or(Range::DEFAULT),

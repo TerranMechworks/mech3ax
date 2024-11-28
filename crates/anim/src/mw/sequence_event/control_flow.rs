@@ -3,8 +3,8 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{Callback, Else, ElseIf, EndIf, If, Loop};
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, primitive_enum, AsBytes as _};
+use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_types::{impl_as_bytes, primitive_enum, AsBytes as _, Maybe};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -38,14 +38,30 @@ impl ScriptObject for Loop {
     }
 }
 
-#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
-#[repr(C)]
-struct IfC {
-    condition: u32,
-    zero4: u32,
-    value: [u8; 4],
+macro_rules! bool_c {
+    ($value:expr) => {
+        if $value {
+            1u32
+        } else {
+            0u32
+        }
+    };
 }
-impl_as_bytes!(IfC, 12);
+
+macro_rules! assert_bool {
+    ($name:literal, bool $v:ident, $pos:expr) => {
+        match $v {
+            0 => Ok(false),
+            1 => Ok(true),
+            _ => Err(assert_with_msg!(
+                "Expected `{}` to be 0 or 1, but was {} (at {})",
+                $name,
+                $v,
+                $pos
+            )),
+        }
+    };
+}
 
 primitive_enum! {
     enum Condition: u32 {
@@ -57,6 +73,17 @@ primitive_enum! {
     }
 }
 
+type Cond = Maybe<u32, Condition>;
+
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
+#[repr(C)]
+struct IfC {
+    condition: Cond,
+    zero4: u32,
+    value: [u8; 4],
+}
+impl_as_bytes!(IfC, 12);
+
 impl ScriptObject for If {
     const INDEX: u8 = 31;
     const SIZE: u32 = IfC::SIZE;
@@ -65,7 +92,7 @@ impl ScriptObject for If {
         assert_that!("if size", size == Self::SIZE, read.offset)?;
         let if_: IfC = read.read_struct()?;
 
-        let condition = assert_that!("if cond", enum Condition => if_.condition, read.prev + 0)?;
+        let condition = assert_that!("if cond", enum if_.condition, read.prev + 0)?;
         assert_that!("if field 4", if_.zero4 == 0, read.prev + 4)?;
 
         match condition {
@@ -74,12 +101,12 @@ impl ScriptObject for If {
             Condition::AnimationLod => Ok(If::AnimationLod(u32::from_le_bytes(if_.value).into())),
             Condition::HwRender => {
                 let value = u32::from_le_bytes(if_.value);
-                let value = assert_that!("if value", bool value, read.prev + 8)?;
+                let value = assert_bool!("if value", bool value, read.prev + 8)?;
                 Ok(If::HwRender(value.into()))
             }
             Condition::PlayerFirstPerson => {
                 let value = u32::from_le_bytes(if_.value);
-                let value = assert_that!("if value", bool value, read.prev + 8)?;
+                let value = assert_bool!("if value", bool value, read.prev + 8)?;
                 Ok(If::PlayerFirstPerson(value.into()))
             }
         }
@@ -87,20 +114,20 @@ impl ScriptObject for If {
 
     fn write(&self, write: &mut CountingWriter<impl Write>, _anim_def: &AnimDef) -> Result<()> {
         let (condition, value) = match self {
-            If::RandomWeight(value) => (Condition::RandomWeight as u32, value.to_le_bytes()),
-            If::PlayerRange(value) => (Condition::PlayerRange as u32, value.to_le_bytes()),
-            If::AnimationLod(value) => (Condition::AnimationLod as u32, value.to_le_bytes()),
+            If::RandomWeight(value) => (Condition::RandomWeight, value.to_le_bytes()),
+            If::PlayerRange(value) => (Condition::PlayerRange, value.to_le_bytes()),
+            If::AnimationLod(value) => (Condition::AnimationLod, value.to_le_bytes()),
             If::HwRender(value) => {
                 let value: u32 = bool_c!(**value);
-                (Condition::HwRender as u32, value.to_le_bytes())
+                (Condition::HwRender, value.to_le_bytes())
             }
             If::PlayerFirstPerson(value) => {
                 let value: u32 = bool_c!(**value);
-                (Condition::PlayerFirstPerson as u32, value.to_le_bytes())
+                (Condition::PlayerFirstPerson, value.to_le_bytes())
             }
         };
         write.write_struct(&IfC {
-            condition,
+            condition: condition.maybe(),
             zero4: 0,
             value,
         })?;
@@ -116,8 +143,7 @@ impl ScriptObject for ElseIf {
         assert_that!("else if size", size == Self::SIZE, read.offset)?;
         let if_: IfC = read.read_struct()?;
 
-        let condition =
-            assert_that!("else if cond", enum Condition => if_.condition, read.prev + 0)?;
+        let condition = assert_that!("else if cond", enum if_.condition, read.prev + 0)?;
         assert_that!("else if field 4", if_.zero4 == 0, read.prev + 4)?;
 
         match condition {
@@ -130,12 +156,12 @@ impl ScriptObject for ElseIf {
             }
             Condition::HwRender => {
                 let value = u32::from_le_bytes(if_.value);
-                let value = assert_that!("else if value", bool value, read.prev + 8)?;
+                let value = assert_bool!("else if value", bool value, read.prev + 8)?;
                 Ok(ElseIf::HwRender(value.into()))
             }
             Condition::PlayerFirstPerson => {
                 let value = u32::from_le_bytes(if_.value);
-                let value = assert_that!("else if value", bool value, read.prev + 8)?;
+                let value = assert_bool!("else if value", bool value, read.prev + 8)?;
                 Ok(ElseIf::PlayerFirstPerson(value.into()))
             }
         }
@@ -143,20 +169,20 @@ impl ScriptObject for ElseIf {
 
     fn write(&self, write: &mut CountingWriter<impl Write>, _anim_def: &AnimDef) -> Result<()> {
         let (condition, value) = match self {
-            ElseIf::RandomWeight(value) => (Condition::RandomWeight as u32, value.to_le_bytes()),
-            ElseIf::PlayerRange(value) => (Condition::PlayerRange as u32, value.to_le_bytes()),
-            ElseIf::AnimationLod(value) => (Condition::AnimationLod as u32, value.to_le_bytes()),
+            ElseIf::RandomWeight(value) => (Condition::RandomWeight, value.to_le_bytes()),
+            ElseIf::PlayerRange(value) => (Condition::PlayerRange, value.to_le_bytes()),
+            ElseIf::AnimationLod(value) => (Condition::AnimationLod, value.to_le_bytes()),
             ElseIf::HwRender(value) => {
                 let value: u32 = bool_c!(**value);
-                (Condition::HwRender as u32, value.to_le_bytes())
+                (Condition::HwRender, value.to_le_bytes())
             }
             ElseIf::PlayerFirstPerson(value) => {
                 let value: u32 = bool_c!(**value);
-                (Condition::PlayerFirstPerson as u32, value.to_le_bytes())
+                (Condition::PlayerFirstPerson, value.to_le_bytes())
             }
         };
         write.write_struct(&IfC {
-            condition,
+            condition: condition.maybe(),
             zero4: 0,
             value,
         })?;

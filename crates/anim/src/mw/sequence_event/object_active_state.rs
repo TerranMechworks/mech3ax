@@ -4,14 +4,14 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::ObjectActiveState;
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _};
+use mech3ax_common::{assert_that, Result};
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Bool32};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct ObjectActiveStateC {
-    state: u32,
+    state: Bool32,
     node_index: u32,
 }
 impl_as_bytes!(ObjectActiveStateC, 8);
@@ -33,7 +33,7 @@ impl ScriptObject for ObjectActiveState {
 
     fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
         write.write_struct(&ObjectActiveStateC {
-            state: bool_c!(self.state),
+            state: self.state.into(),
             node_index: anim_def.node_to_index(&self.node)? as u32,
         })?;
         Ok(())

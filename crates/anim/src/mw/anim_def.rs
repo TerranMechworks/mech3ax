@@ -11,7 +11,7 @@ use mech3ax_api_types::Range;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Ascii, Zeros};
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Ascii, Maybe, Zeros};
 use std::io::{Read, Write};
 
 bitflags! {
@@ -29,6 +29,8 @@ bitflags! {
     }
 }
 
+type Activ = Maybe<u8, AnimActivation>;
+
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct AnimDefC {
@@ -40,7 +42,7 @@ struct AnimDefC {
     zero104: Zeros<44>,              // 104
     flags: u32,                      // 148
     status: u8,                      // 152
-    activation: u8,                  // 153
+    activation: Activ,               // 153
     action_prio: u8,                 // 154
     two155: u8,                      // 155
     exec_by_range_min: f32,          // 156
@@ -285,7 +287,8 @@ pub fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<(AnimDef, A
     };
 
     assert_that!("anim def status", anim_def.status == 0, prev + 152)?;
-    let activation = assert_that!("anim def activation", enum AnimActivation => anim_def.activation, read.prev + 153)?;
+    let activation =
+        assert_that!("anim def activation", enum anim_def.activation, read.prev + 153)?;
     assert_that!(
         "anim def action priority",
         anim_def.action_prio == 4,
@@ -746,7 +749,7 @@ pub fn write_anim_def(
         zero104: Zeros::new(),
         flags: flags.bits(),
         status: 0,
-        activation: anim_def.activation as u8,
+        activation: anim_def.activation.maybe(),
         action_prio: 4,
         two155: 2,
         exec_by_range_min,
