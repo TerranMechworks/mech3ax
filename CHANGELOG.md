@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [0.6.1] - 2024-11-28
+
+* Update to Rust 1.83.0
+* Better logging
 * Change/unify date-time stuff
 * Support `u64` in exchange protocol
 * ZArchive field `garbage` is sometimes a comment and timestamp (zarchive, breaking change)
