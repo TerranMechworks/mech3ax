@@ -76,6 +76,7 @@ impl<R: Read> IoReader<R> {
     read_basic_type!(read_u8, u8, TypeMap::U8);
     read_basic_type!(read_u16, u16, TypeMap::U16);
     read_basic_type!(read_u32, u32, TypeMap::U32);
+    read_basic_type!(read_u64, u64, TypeMap::U64);
     read_basic_type!(read_f32, f32, TypeMap::F32);
 
     #[inline]

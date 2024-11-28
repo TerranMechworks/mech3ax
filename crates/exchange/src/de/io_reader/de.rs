@@ -30,7 +30,6 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
     }
 
     serde_unsupported!(deserialize_i64);
-    serde_unsupported!(deserialize_u64);
     serde_unsupported!(deserialize_f64);
     serde_unsupported!(deserialize_char);
     serde_unsupported!(deserialize_any);
@@ -81,6 +80,14 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
         V: de::Visitor<'de>,
     {
         visitor.visit_u32(self.read_u32()?)
+    }
+
+    #[inline]
+    fn deserialize_u64<V>(self, visitor: V) -> Result<V::Value>
+    where
+        V: de::Visitor<'de>,
+    {
+        visitor.visit_u64(self.read_u64()?)
     }
 
     #[inline]

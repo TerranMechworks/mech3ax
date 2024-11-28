@@ -36,7 +36,7 @@ fn unsigned_tests() {
     assert_supported!(u8, 0);
     assert_supported!(u16, 0);
     assert_supported!(u32, 0);
-    assert_unsupported!(u64, 0);
+    assert_supported!(u64, 0);
 }
 
 #[test]

@@ -56,6 +56,7 @@ impl<W: Write> IoWriter<W> {
     write_basic_type!(write_u8, u8, TypeMap::U8);
     write_basic_type!(write_u16, u16, TypeMap::U16);
     write_basic_type!(write_u32, u32, TypeMap::U32);
+    write_basic_type!(write_u64, u64, TypeMap::U64);
     write_basic_type!(write_f32, f32, TypeMap::F32);
 
     #[inline]

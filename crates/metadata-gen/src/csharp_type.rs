@@ -54,7 +54,7 @@ impl SerializeType {
             U8 => s.push_str("((Action<byte>)s.SerializeU8)"),
             U16 => s.push_str("((Action<ushort>)s.SerializeU16)"),
             U32 => s.push_str("((Action<uint>)s.SerializeU32)"),
-            U64 => s.push_str("((Action<uint>)s.SerializeU64)"),
+            U64 => s.push_str("((Action<ulong>)s.SerializeU64)"),
             I8 => s.push_str("((Action<sbyte>)s.SerializeI8)"),
             I16 => s.push_str("((Action<short>)s.SerializeI16)"),
             I32 => s.push_str("((Action<int>)s.SerializeI32)"),

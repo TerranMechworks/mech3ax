@@ -35,7 +35,6 @@ impl<'a, W: Write> ser::Serializer for &'a mut IoWriter<W> {
     }
 
     serde_unsupported!(serialize_i64, i64);
-    serde_unsupported!(serialize_u64, u64);
     serde_unsupported!(serialize_f64, f64);
     serde_unsupported!(serialize_char, char);
 
@@ -67,6 +66,11 @@ impl<'a, W: Write> ser::Serializer for &'a mut IoWriter<W> {
     #[inline]
     fn serialize_u32(self, v: u32) -> Result<()> {
         self.write_u32(v)
+    }
+
+    #[inline]
+    fn serialize_u64(self, v: u64) -> Result<()> {
+        self.write_u64(v)
     }
 
     #[inline]
