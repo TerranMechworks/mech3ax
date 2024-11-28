@@ -13,7 +13,7 @@ impl Time {
     };
 }
 
-const T_RFC: &str = "1970-01-01T00:00:00Z";
+const T_RFC: &str = "1970-01-01T00:00:00.0Z";
 
 #[test]
 fn time_json() {

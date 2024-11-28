@@ -17,7 +17,7 @@ macro_rules! serde_unsupported {
     };
 }
 
-impl<'a, W: Write> ser::Serializer for &'a mut IoWriter<W> {
+impl<W: Write> ser::Serializer for &mut IoWriter<W> {
     type Ok = ();
     type Error = Error;
 
@@ -206,7 +206,7 @@ impl<'a, W: Write> ser::Serializer for &'a mut IoWriter<W> {
     }
 }
 
-impl<'a, W: Write> ser::SerializeSeq for &'a mut IoWriter<W> {
+impl<W: Write> ser::SerializeSeq for &mut IoWriter<W> {
     type Ok = ();
     type Error = Error;
 
@@ -224,7 +224,7 @@ impl<'a, W: Write> ser::SerializeSeq for &'a mut IoWriter<W> {
     }
 }
 
-impl<'a, W: Write> ser::SerializeStruct for &'a mut IoWriter<W> {
+impl<W: Write> ser::SerializeStruct for &mut IoWriter<W> {
     type Ok = ();
     type Error = Error;
 
@@ -243,7 +243,7 @@ impl<'a, W: Write> ser::SerializeStruct for &'a mut IoWriter<W> {
     }
 }
 
-impl<'a, W: Write> ser::SerializeTuple for &'a mut IoWriter<W> {
+impl<W: Write> ser::SerializeTuple for &mut IoWriter<W> {
     type Ok = ();
     type Error = Error;
 
@@ -261,7 +261,7 @@ impl<'a, W: Write> ser::SerializeTuple for &'a mut IoWriter<W> {
     }
 }
 
-impl<'a, W: Write> ser::SerializeTupleStruct for &'a mut IoWriter<W> {
+impl<W: Write> ser::SerializeTupleStruct for &mut IoWriter<W> {
     type Ok = ();
     type Error = Error;
 
@@ -279,7 +279,7 @@ impl<'a, W: Write> ser::SerializeTupleStruct for &'a mut IoWriter<W> {
     }
 }
 
-impl<'a, W: Write> ser::SerializeMap for &'a mut IoWriter<W> {
+impl<W: Write> ser::SerializeMap for &mut IoWriter<W> {
     type Ok = ();
     type Error = Error;
 
@@ -314,7 +314,7 @@ impl<'a, W: Write> ser::SerializeMap for &'a mut IoWriter<W> {
     }
 }
 
-impl<'a, W: Write> ser::SerializeTupleVariant for &'a mut IoWriter<W> {
+impl<W: Write> ser::SerializeTupleVariant for &mut IoWriter<W> {
     type Ok = ();
     type Error = Error;
 
@@ -332,7 +332,7 @@ impl<'a, W: Write> ser::SerializeTupleVariant for &'a mut IoWriter<W> {
     }
 }
 
-impl<'a, W: Write> ser::SerializeStructVariant for &'a mut IoWriter<W> {
+impl<W: Write> ser::SerializeStructVariant for &mut IoWriter<W> {
     type Ok = ();
     type Error = Error;
 

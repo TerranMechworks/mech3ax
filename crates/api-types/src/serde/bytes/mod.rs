@@ -3,7 +3,7 @@ use std::fmt;
 
 struct Base64Visitor;
 
-impl<'de> serde::de::Visitor<'de> for Base64Visitor {
+impl serde::de::Visitor<'_> for Base64Visitor {
     type Value = Vec<u8>;
 
     #[inline]
@@ -22,7 +22,7 @@ impl<'de> serde::de::Visitor<'de> for Base64Visitor {
 
 struct BytesVisitor;
 
-impl<'de> serde::de::Visitor<'de> for BytesVisitor {
+impl serde::de::Visitor<'_> for BytesVisitor {
     type Value = Vec<u8>;
 
     #[inline]

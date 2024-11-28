@@ -2,8 +2,7 @@ use super::{from_timestamp, to_timestamp, DateTime};
 use crate::consts::{date, time};
 use time::PrimitiveDateTime;
 
-const EPOCHALYPSE: PrimitiveDateTime =
-    PrimitiveDateTime::new(date(2038, 01, 19), time(3, 14, 07, 0));
+const EPOCHALYPSE: PrimitiveDateTime = PrimitiveDateTime::new(date(2038, 1, 19), time(3, 14, 7, 0));
 
 #[test]
 fn from_timestamp_does_not_panic() {
