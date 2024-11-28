@@ -3,6 +3,7 @@ use serde::{de, ser};
 use std::borrow::Cow;
 use std::fmt;
 use std::sync::LazyLock;
+use time::format_description::well_known::Rfc3339;
 use time::format_description::{modifier, Component, FormatItem};
 use time::{PrimitiveDateTime, Time};
 const TIME_MIN: Time = Time::MIDNIGHT;
@@ -93,10 +94,14 @@ impl<'de> de::Deserialize<'de> for DateTime {
             let input: String = <_>::deserialize(deserializer)?;
             Cow::Owned(input)
         };
-        let format: &[FormatItem<'_>] = &*RFC_3339_FORMAT;
-        PrimitiveDateTime::parse(input.as_ref(), format)
+        PrimitiveDateTime::parse(input.as_ref(), &Rfc3339)
             .map(Self)
-            .map_err(de::Error::custom)
+            .map_err(|e| {
+                de::Error::custom(format!(
+                    "failed to deserialize timestamp `{}`: {}",
+                    input, e
+                ))
+            })
     }
 }
 
