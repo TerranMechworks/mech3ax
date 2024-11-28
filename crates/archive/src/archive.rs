@@ -72,7 +72,6 @@ fn read_table(
                 read.offset
             );
             let entry: EntryC = read.read_struct()?;
-            trace!("{:#?}", entry);
 
             let entry_start = entry.start;
             let entry_len = entry.length;
@@ -230,7 +229,6 @@ where
             EntryC::SIZE,
             write.offset
         );
-        trace!("{:#?}", entry);
         write.write_struct(&entry)?
     }
 

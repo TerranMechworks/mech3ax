@@ -2,7 +2,7 @@ use super::{camera, display, light, lod, object3d, window, world};
 use crate::flags::NodeBitFlagsCs;
 use crate::types::{NodeType, ZONE_DEFAULT};
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::nodes::cs::NodeCs;
 use mech3ax_api_types::nodes::pm::AreaPartitionPm;
 use mech3ax_api_types::nodes::BoundingBox;
@@ -284,7 +284,6 @@ pub fn read_node_info(read: &mut CountingReader<impl Read>, index: u32) -> Resul
         read.offset
     );
     let node: NodeCsC = read.read_struct()?;
-    trace!("{:#?}", node);
 
     let (node_type, node) = assert_node(node, read.prev)?;
     debug!("Node `{}` read", node.name);
@@ -355,7 +354,6 @@ fn write_variant(
         zero200: 0,
         zero204: 0,
     };
-    trace!("{:#?}", node);
     write.write_struct(&node)?;
     Ok(())
 }

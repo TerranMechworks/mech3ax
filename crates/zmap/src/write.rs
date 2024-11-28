@@ -1,5 +1,5 @@
 use super::{MapHeaderC, MAP_VERSION};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::zmap::{MapFeature, Zmap};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, Result};
@@ -42,7 +42,6 @@ pub fn write_map(write: &mut CountingWriter<impl Write>, map: &Zmap) -> Result<(
         zero24: 0,
         max_y: map.max_y,
     };
-    trace!("{:#?}", header);
     write.write_struct(&header)?;
 
     for (index, feature) in map.features.iter().enumerate() {

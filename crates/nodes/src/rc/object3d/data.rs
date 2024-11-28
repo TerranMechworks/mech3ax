@@ -2,7 +2,7 @@ use super::has_borked_parents;
 use crate::math::{apply_matrix_signs, euler_to_matrix, extract_matrix_signs, scale_to_matrix, PI};
 use crate::rc::node::NodeVariantsRc;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::nodes::rc::{
     Object3d, RotationTranslation, Transformation, TranslationOnly,
 };
@@ -161,7 +161,6 @@ pub fn read(
         read.offset
     );
     let object3d: Object3dRcC = read.read_struct()?;
-    trace!("{:#?}", object3d);
 
     let matrix_signs = extract_matrix_signs(&object3d.matrix);
     let transformation = assert_object3d(object3d, read.prev)?;
@@ -266,7 +265,6 @@ pub fn write(
         translation,
         zero096: Zeros::new(),
     };
-    trace!("{:#?}", object3dc);
     write.write_struct(&object3dc)?;
 
     if is_borked {

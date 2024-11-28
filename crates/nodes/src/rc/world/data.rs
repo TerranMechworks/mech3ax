@@ -2,7 +2,7 @@ use super::info::WORLD_NAME;
 use crate::math::partition_diag;
 use crate::range::RangeI32;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::nodes::rc::World;
 use mech3ax_api_types::nodes::{Area, PartitionPg};
 use mech3ax_api_types::{Color, Range};
@@ -90,7 +90,6 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
         read.offset
     );
     let partition: PartitionRcC = read.read_struct()?;
-    trace!("{:#?}", partition);
 
     let xf = x as f32;
     let yf = y as f32;
@@ -357,7 +356,6 @@ pub fn read(
         read.offset
     );
     let world: WorldRcC = read.read_struct()?;
-    trace!("{:#?}", world);
 
     let (area, area_x, area_y) = assert_world(&world, read.prev)?;
 
@@ -432,7 +430,6 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
         count,
         ptr: partition.ptr,
     };
-    trace!("{:#?}", partition_c);
     write.write_struct(&partition_c)?;
 
     for node in partition.nodes.iter().copied() {
@@ -510,7 +507,6 @@ pub fn write(write: &mut CountingWriter<impl Write>, world: &World, index: usize
         zero164: 0,
         zero168: 0,
     };
-    trace!("{:#?}", world_c);
     write.write_struct(&world_c)?;
     write.write_u32(world.world_child_value)?;
 

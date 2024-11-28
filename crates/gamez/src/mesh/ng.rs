@@ -178,7 +178,6 @@ pub fn read_mesh_info(
         read.offset
     );
     let mesh: MeshNgC = read.read_struct()?;
-    trace!("{:#?}", mesh);
     let wrapped = assert_mesh_info(mesh, read.prev)?;
     Ok(wrapped)
 }
@@ -194,7 +193,6 @@ pub fn read_mesh_info_maybe(
         read.offset
     );
     let mesh: MeshNgC = read.read_struct()?;
-    trace!("{:#?}", mesh);
     if mesh.parent_count > 0 {
         let wrapped = assert_mesh_info(mesh, read.prev)?;
         Ok(Some(wrapped))
@@ -383,7 +381,6 @@ fn read_polygons(
                 read.offset
             );
             let poly: PolygonNgC = read.read_struct()?;
-            trace!("{:#?}", poly);
 
             let result = assert_polygon(poly, read.prev, poly_index)?;
             Ok(result)
@@ -538,7 +535,6 @@ pub fn write_mesh_info(
         material_count,
         materials_ptr: Ptr(mesh.materials_ptr),
     };
-    trace!("{:#?}", mesh);
     write.write_struct(&mesh)?;
     Ok(())
 }
@@ -576,7 +572,6 @@ fn write_polygons(
             unk32: Ptr(polygon.unk32),
             unk36: Hex(polygon.unk36),
         };
-        trace!("{:#?}", poly);
         write.write_struct(&poly)?;
     }
     for polygon in polygons {

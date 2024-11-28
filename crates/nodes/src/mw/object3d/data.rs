@@ -2,7 +2,7 @@ use crate::math::{apply_matrix_signs, euler_to_matrix, extract_matrix_signs, PI}
 use crate::mw::node::NodeVariantsMw;
 use crate::mw::wrappers::WrapperMw;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::nodes::mw::Object3d;
 use mech3ax_api_types::nodes::Transformation;
 use mech3ax_api_types::{Matrix, Vec3};
@@ -97,7 +97,6 @@ pub fn read(
         read.offset
     );
     let object3d: Object3dMwC = read.read_struct()?;
-    trace!("{:#?}", object3d);
 
     let matrix_signs = extract_matrix_signs(&object3d.matrix);
     let transformation = assert_object3d(object3d, read.prev)?;
@@ -167,7 +166,6 @@ pub fn write(
         translation,
         zero096: Zeros::new(),
     };
-    trace!("{:#?}", object3d);
     write.write_struct(&object3d)?;
     Ok(())
 }

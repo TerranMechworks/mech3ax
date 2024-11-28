@@ -1,4 +1,5 @@
 use crate::assert_with_msg;
+use log::trace;
 use mech3ax_types::{u32_to_usize, AsBytes};
 use std::io::{Read, Result, Seek, SeekFrom, Write};
 
@@ -76,14 +77,18 @@ impl<R: Read> CountingReader<R> {
     pub fn read_struct<S: AsBytes>(&mut self) -> Result<S> {
         let mut s = S::zeroed();
         let buf = s.as_bytes_mut();
+        let len = buf.len();
         self.read_exact(buf)?;
+        trace!("{:#?} (len: {}, at {})", s, len, self.prev);
         Ok(s)
     }
 
     pub fn read_string(&mut self) -> crate::Result<String> {
-        let count = u32_to_usize(self.read_u32()?);
-        let mut buf = vec![0u8; count];
+        let offset = self.offset;
+        let len = u32_to_usize(self.read_u32()?);
+        let mut buf = vec![0u8; len];
         self.read_exact(&mut buf)?;
+        trace!("`{}` (len: {}, at {})", buf.escape_ascii(), len, offset);
         if !buf.is_ascii() {
             // is_ascii is optimised, only try and find the invalid character after it
             for (index, b) in (self.prev..).zip(buf.iter()) {
@@ -184,6 +189,7 @@ impl<W: Write> CountingWriter<W> {
     #[inline]
     pub fn write_struct<S: AsBytes>(&mut self, value: &S) -> Result<()> {
         let buf = value.as_bytes();
+        trace!("{:#?} (len: {}, at {})", value, buf.len(), self.offset);
         self.write_all(buf)
     }
 
@@ -192,11 +198,17 @@ impl<W: Write> CountingWriter<W> {
             return Err(assert_with_msg!("Expected ASCII string"));
         }
         let buf = value.as_bytes();
-        let count: u32 = buf
+        let len: u32 = buf
             .len()
             .try_into()
             .map_err(|_e| assert_with_msg!("String too long"))?;
-        self.write_u32(count)?;
+        trace!(
+            "`{}` (len: {}, at {})",
+            buf.escape_ascii(),
+            len,
+            self.offset
+        );
+        self.write_u32(len)?;
         self.inner.write_all(buf)?;
         Ok(())
     }

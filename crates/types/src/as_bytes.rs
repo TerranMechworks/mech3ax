@@ -7,7 +7,7 @@ compile_error!("only little-endian architectures are supported");
 /// read as bytes.
 ///
 /// Do not implement this manually, instead use [`impl_as_bytes!`].
-pub trait AsBytes: NoUninit + AnyBitPattern {
+pub trait AsBytes: NoUninit + AnyBitPattern + std::fmt::Debug {
     /// The size of the structure in bytes.
     const SIZE: u32;
 

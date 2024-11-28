@@ -32,7 +32,6 @@ pub fn read_motion(read: &mut CountingReader<impl Read>) -> Result<Motion> {
         read.offset
     );
     let header: MotionHeader = read.read_struct()?;
-    trace!("{:#?}", header);
 
     assert_that!("motion version", header.version == VERSION, read.prev)?;
     assert_that!("motion loop time", header.loop_time > 0.0, read.prev + 4)?;
@@ -149,7 +148,6 @@ pub fn write_motion(write: &mut CountingWriter<impl Write>, motion: &Motion) -> 
         unk16: -1.0,
         unk20: 1.0,
     };
-    trace!("{:#?}", header);
     write.write_struct(&header)?;
 
     for (index, part) in motion.parts.iter().enumerate() {

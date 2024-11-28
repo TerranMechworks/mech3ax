@@ -1,6 +1,6 @@
 use super::STATE_USED;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
@@ -29,7 +29,6 @@ pub fn read_texture_infos(read: &mut CountingReader<impl Read>, count: u32) -> R
                 read.offset
             );
             let info: TextureInfoMwC = read.read_struct()?;
-            trace!("{:#?}", info);
 
             assert_that!("field 00", info.zero00 == 0, read.prev + 0)?;
             assert_that!("field 04", info.zero04 == 0, read.prev + 4)?;
@@ -65,7 +64,6 @@ pub fn write_texture_infos(
             index: 0,
             unk36: -1,
         };
-        trace!("{:#?}", info);
         write.write_struct(&info)?;
     }
     Ok(())

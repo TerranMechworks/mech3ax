@@ -1,6 +1,6 @@
 use super::info::{SPYGLASS_NAME, WINDOW_NAME};
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::nodes::cs::Window;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
@@ -36,7 +36,6 @@ pub fn read(
         read.offset
     );
     let window: WindowCsC = read.read_struct()?;
-    trace!("{:#?}", window);
 
     assert_that!("window origin x", window.origin_x == 0, read.prev + 0)?;
     assert_that!("window origin y", window.origin_y == 0, read.prev + 4)?;
@@ -91,7 +90,6 @@ pub fn write(write: &mut CountingWriter<impl Write>, window: &Window, index: usi
         zero240: 0,
         zero244: 0,
     };
-    trace!("{:#?}", window);
     write.write_struct(&window)?;
     Ok(())
 }

@@ -21,7 +21,6 @@ pub(crate) fn read_material(
         read.offset
     );
     let material: MaterialC = read.read_struct()?;
-    trace!("{:#?}", material);
 
     let bitflags = assert_that!("material flags", flags material.flags, read.prev + 1)?;
 
@@ -148,7 +147,6 @@ pub(super) fn read_cycle(
                     read.offset
                 );
                 let info: CycleInfoC = read.read_struct()?;
-                trace!("{:#?}", info);
 
                 let unk00 = assert_that!("field 00", bool info.unk00, read.prev + 0)?;
                 assert_that!("field 08", info.zero08 == 0, read.prev + 8)?;

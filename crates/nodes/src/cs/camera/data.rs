@@ -1,6 +1,6 @@
 use super::info::{CAMERA_NAME, SPYGLASS_NAME};
 use crate::node_data::camera::CameraC;
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::nodes::cs::Camera;
 use mech3ax_api_types::{Matrix, Range, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -140,7 +140,6 @@ pub fn read(
         read.offset
     );
     let camera: CameraC = read.read_struct()?;
-    trace!("{:#?}", camera);
 
     assert_camera(&camera, spyglass, read.prev)?;
 
@@ -201,7 +200,6 @@ pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera, index: usi
         zone_set: 0,
         unk484: -256,
     };
-    trace!("{:#?}", camera);
     write.write_struct(&camera)?;
     Ok(())
 }

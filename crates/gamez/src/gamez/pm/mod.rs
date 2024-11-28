@@ -7,7 +7,7 @@ use super::common::{
 use crate::materials;
 use crate::textures::ng as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::gamez::{GameZDataPm, GameZMetadataPm};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
@@ -37,7 +37,6 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataPm> {
         read.offset
     );
     let header: HeaderPmC = read.read_struct()?;
-    trace!("{:#?}", header);
 
     assert_that!("signature", header.signature == SIGNATURE, read.prev + 0)?;
     assert_that!("version", header.version == VERSION_PM, read.prev + 4)?;
@@ -139,7 +138,6 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataPm) 
         node_count: gamez.metadata.node_data_count,
         nodes_offset,
     };
-    trace!("{:#?}", header);
     write.write_struct(&header)?;
 
     textures::write_texture_infos(write, &gamez.textures, &gamez.metadata.texture_ptrs)?;

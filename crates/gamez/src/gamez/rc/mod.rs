@@ -6,7 +6,7 @@ use super::common::{NODE_INDEX_INVALID, SIGNATURE, VERSION_RC};
 use crate::materials;
 use crate::textures::rc as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::gamez::GameZDataRc;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
@@ -37,7 +37,6 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataRc> {
         read.offset
     );
     let mut header: HeaderRcC = read.read_struct()?;
-    trace!("{:#?}", header);
 
     fixup::read(&mut header);
 
@@ -133,7 +132,6 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataRc) 
         nodes_offset,
     };
     fixup::write(&mut header);
-    trace!("{:#?}", header);
     write.write_struct(&header)?;
 
     textures::write_texture_infos(write, &gamez.textures)?;

@@ -1,5 +1,5 @@
 use super::{CycleInfoC, MatType, MaterialC, MaterialFlags};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::Color;
 use mech3ax_common::io_ext::CountingWriter;
@@ -80,7 +80,6 @@ pub(crate) fn write_material(
             }
         }
     };
-    trace!("{:#?}", mat_c);
     write.write_struct(&mat_c)?;
     Ok(())
 }
@@ -111,7 +110,6 @@ pub(super) fn write_cycle(
                 count2: count,
                 data_ptr: cycle.data_ptr,
             };
-            trace!("{:#?}", info);
             write.write_struct(&info)?;
 
             debug!(

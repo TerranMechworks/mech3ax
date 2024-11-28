@@ -84,7 +84,6 @@ pub fn read_interp(read: &mut CountingReader<impl Read>) -> Result<Vec<Script>> 
         read.offset
     );
     let header: InterpHeaderC = read.read_struct()?;
-    trace!("{:#?}", header);
     assert_that!(
         "interp signature",
         header.signature == SIGNATURE,
@@ -101,7 +100,6 @@ pub fn read_interp(read: &mut CountingReader<impl Read>) -> Result<Vec<Script>> 
                 read.offset
             );
             let entry: InterpEntryC = read.read_struct()?;
-            trace!("{:#?}", entry);
             let name = assert_utf8("name", read.prev, || entry.name.to_str_padded())?;
             // Cast safety: i64 > u32
             let last_modified =
@@ -179,7 +177,6 @@ pub fn write_interp(write: &mut CountingWriter<impl Write>, scripts: &[Script]) 
         version: VERSION,
         count,
     };
-    trace!("{:#?}", header);
     write.write_struct(&header)?;
 
     let mut offset = 12 + count * InterpEntryC::SIZE;
@@ -198,7 +195,6 @@ pub fn write_interp(write: &mut CountingWriter<impl Write>, scripts: &[Script]) 
             last_modified,
             start: offset,
         };
-        trace!("{:#?}", entry);
         write.write_struct(&entry)?;
         offset += size_script(&script.lines);
     }

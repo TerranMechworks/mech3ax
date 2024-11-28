@@ -1,6 +1,6 @@
 use super::info::LIGHT_NAME;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::nodes::pm::Light;
 use mech3ax_api_types::Range;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -143,7 +143,6 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -
         read.offset
     );
     let light: LightPmC = read.read_struct()?;
-    trace!("{:#?}", light);
 
     assert_light(&light, read.prev)?;
 
@@ -206,7 +205,6 @@ pub fn write(write: &mut CountingWriter<impl Write>, light: &Light, index: usize
         parent_count: 1,
         parent_ptr: light.parent_ptr,
     };
-    trace!("{:#?}", light);
     write.write_struct(&light)?;
     // written as a result of parent_count, but is always 0 (= world node index)
     write.write_u32(0)?;

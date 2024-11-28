@@ -104,7 +104,6 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
         read.offset
     );
     let partition: PartitionCsC = read.read_struct()?;
-    trace!("{:#?}", partition);
 
     let xf = x as f32;
     let yf = y as f32;
@@ -180,7 +179,6 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
                     read.offset
                 );
                 let value = read.read_struct()?;
-                trace!("{:#?}", value);
                 Ok(value)
             })
             .collect::<std::io::Result<Vec<PartitionValue>>>()?
@@ -435,7 +433,6 @@ pub fn read(
         read.offset
     );
     let world: WorldCsC = read.read_struct()?;
-    trace!("{:#?}", world);
 
     let (flags, area, area_x, area_y) = assert_world(&world, read.prev)?;
 
@@ -511,7 +508,6 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
         zero80: 0,
         zero84: 0,
     };
-    trace!("{:#?}", partition_c);
     write.write_struct(&partition_c)?;
 
     for (index, node) in partition.nodes.iter().enumerate() {
@@ -522,7 +518,6 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
             index,
             write.offset
         );
-        trace!("{:#?}", node);
         write.write_struct(node)?;
     }
 
@@ -611,7 +606,6 @@ pub fn write(write: &mut CountingWriter<impl Write>, world: &World, index: usize
         zero196: 0,
         zero200: 0,
     };
-    trace!("{:#?}", world_c);
     write.write_struct(&world_c)?;
     write.write_u32(world.world_child_value)?;
 

@@ -1,6 +1,6 @@
 use crate::cs::node::NodeVariantLodCs;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::nodes::cs::Lod;
 use mech3ax_api_types::Range;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -27,7 +27,6 @@ struct LodCsC {
 impl_as_bytes!(LodCsC, 92);
 
 fn assert_lod(lod: &LodCsC, offset: usize) -> Result<(bool, Range)> {
-    trace!("{:#?}", lod);
     let level = assert_that!("level", bool lod.level, offset + 0)?;
 
     assert_that!("range near sq", 0.0 <= lod.range_near_sq <= 3000.0 * 3000.0, offset + 4)?;
@@ -71,7 +70,6 @@ pub fn read(
         read.offset
     );
     let lod: LodCsC = read.read_struct()?;
-    trace!("{:#?}", lod);
 
     let (level, range) = assert_lod(&lod, read.prev)?;
 
@@ -126,7 +124,6 @@ pub fn write(write: &mut CountingWriter<impl Write>, lod: &Lod, index: usize) ->
         unk84: 0,
         unk88: 0,
     };
-    trace!("{:#?}", lodc);
     write.write_struct(&lodc)?;
 
     write.write_u32(lod.parent)?;

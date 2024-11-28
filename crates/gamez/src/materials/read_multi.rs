@@ -1,6 +1,6 @@
 use super::read_single::{read_cycle, read_material, read_material_zero};
 use super::{MatType, MaterialInfoC};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Result};
@@ -18,7 +18,6 @@ pub(crate) fn read_materials(
         read.offset
     );
     let info: MaterialInfoC = read.read_struct()?;
-    trace!("{:#?}", info);
 
     let (valid, material_count) = assert_material_info(info, ty, read.prev)?;
 

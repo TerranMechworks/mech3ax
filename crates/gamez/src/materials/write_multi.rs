@@ -29,7 +29,6 @@ pub(crate) fn write_materials(
         index_max: count,
         index_last: count - 1,
     };
-    trace!("{:#?}", info);
     write.write_struct(&info)?;
 
     for (index, material) in (0i16..).zip(materials.iter()) {

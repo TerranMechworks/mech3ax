@@ -101,7 +101,6 @@ pub fn read_mesh_info(
         read.offset
     );
     let mesh: MeshMwC = read.read_struct()?;
-    trace!("{:#?}", mesh);
     let wrapped = assert_mesh_info(mesh, read.prev)?;
     Ok(wrapped)
 }
@@ -249,7 +248,6 @@ fn read_polygons(
                 read.offset
             );
             let poly: PolygonMwC = read.read_struct()?;
-            trace!("{:#?}", poly);
 
             let result = assert_polygon(poly, read.prev, material_count, poly_index)?;
             Ok(result)
@@ -374,7 +372,6 @@ pub fn write_mesh_info(
         unk84: mesh.unk84,
         zero88: 0,
     };
-    trace!("{:#?}", mesh);
     write.write_struct(&mesh)?;
     Ok(())
 }
@@ -412,7 +409,6 @@ fn write_polygons(
             material_index: polygon.material_index,
             texture_info: polygon.texture_info,
         };
-        trace!("{:#?}", poly);
         write.write_struct(&poly)?;
     }
     for polygon in polygons {

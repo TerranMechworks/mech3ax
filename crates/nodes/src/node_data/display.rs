@@ -1,5 +1,5 @@
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::nodes::Display;
 use mech3ax_api_types::Color;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -26,7 +26,6 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -
         read.offset
     );
     let display: DisplayC = read.read_struct()?;
-    trace!("{:#?}", display);
 
     assert_that!("display origin x", display.origin_x == 0, read.prev + 0)?;
     assert_that!("display origin y", display.origin_y == 0, read.prev + 4)?;
@@ -71,7 +70,6 @@ pub fn write(
         resolution_y: display.resolution_y,
         clear_color: display.clear_color,
     };
-    trace!("{:#?}", display);
     write.write_struct(&display)?;
     Ok(())
 }

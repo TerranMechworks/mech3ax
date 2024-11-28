@@ -4,7 +4,7 @@ use crate::math::{
     extract_vec3_signs, PI,
 };
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::nodes::cs::Object3d;
 use mech3ax_api_types::nodes::Transformation;
 use mech3ax_api_types::{Matrix, Vec3};
@@ -101,7 +101,6 @@ pub fn read(
         read.offset
     );
     let object3d: Object3dCsC = read.read_struct()?;
-    trace!("{:#?}", object3d);
 
     let matrix_signs = extract_matrix_signs(&object3d.matrix);
     let rotation_signs = extract_vec3_signs(&object3d.rotation);
@@ -186,7 +185,6 @@ pub fn write(
         translation,
         zero096: Zeros::new(),
     };
-    trace!("{:#?}", object3dc);
     write.write_struct(&object3dc)?;
 
     if let Some(parent) = object3d.parent {

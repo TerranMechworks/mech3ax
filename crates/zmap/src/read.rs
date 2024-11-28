@@ -1,5 +1,5 @@
 use super::{MapHeaderC, MAP_VERSION};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::zmap::{MapColor, MapFeature, MapVertex, Zmap};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Result};
@@ -45,7 +45,6 @@ pub fn read_map(read: &mut CountingReader<impl Read>) -> Result<Zmap> {
         read.offset
     );
     let header: MapHeaderC = read.read_struct()?;
-    trace!("{:#?}", header);
 
     assert_that!(
         "map header version",

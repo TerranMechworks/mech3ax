@@ -3,7 +3,7 @@ use super::{camera, display, empty, light, lod, object3d, window, world};
 use crate::flags::NodeBitFlags;
 use crate::types::NodeType;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::nodes::mw::{Empty, NodeMw};
 use mech3ax_api_types::nodes::{AreaPartition, BoundingBox};
 use mech3ax_common::assert::assert_utf8;
@@ -215,7 +215,6 @@ pub fn read_node_mechlib(
         read.offset
     );
     let node: NodeMwC = read.read_struct()?;
-    trace!("{:#?}", node);
 
     let (node_type, node) = assert_node(node, read.prev)?;
     debug!("Node `{}` read", node.name);
@@ -237,7 +236,6 @@ pub fn read_node_info_gamez(
         read.offset
     );
     let node: NodeMwC = read.read_struct()?;
-    trace!("{:#?}", node);
 
     if node.name.first_is_zero() {
         assert_node_info_zero(node, read.prev)?;
@@ -343,7 +341,6 @@ fn write_variant(
         zero200: 0,
         zero204: 0,
     };
-    trace!("{:#?}", node);
     write.write_struct(&node)?;
     Ok(())
 }

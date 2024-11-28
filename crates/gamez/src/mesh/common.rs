@@ -206,7 +206,6 @@ pub fn read_lights(read: &mut CountingReader<impl Read>, count: u32) -> Result<V
                 read.offset
             );
             let light = read.read_struct()?;
-            trace!("{:#?}", light);
             let _flags = assert_light(&light, read.prev)?;
             Ok(light)
         })

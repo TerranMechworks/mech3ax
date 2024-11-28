@@ -9,7 +9,7 @@ use crate::gamez::cs::fixup::Fixup;
 use crate::materials;
 use crate::textures::ng as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::gamez::{GameZDataCs, GameZMetadataCs, TextureName};
 use mech3ax_api_types::nodes::cs::NodeCs;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -76,7 +76,6 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataCs> {
         read.offset
     );
     let header: HeaderCsC = read.read_struct()?;
-    trace!("{:#?}", header);
 
     assert_that!("signature", header.signature == SIGNATURE, read.prev + 0)?;
     assert_that!("version", header.version == VERSION_CS, read.prev + 4)?;
@@ -193,7 +192,6 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataCs) 
         nodes_offset,
     };
     let fixup = fixup::Fixup::write(&header);
-    trace!("{:#?}", header);
     write.write_struct(&header)?;
 
     let (original_textures, renamed_textures) = redupe_texture_names(&gamez.textures);

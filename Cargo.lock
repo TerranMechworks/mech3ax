@@ -467,6 +467,7 @@ name = "mech3ax-common"
 version = "0.0.0"
 dependencies = [
  "bytemuck",
+ "log",
  "mech3ax-api-types",
  "mech3ax-types",
 ]

@@ -1,6 +1,6 @@
 use bytemuck::{AnyBitPattern, NoUninit};
 use image::{DynamicImage, RgbImage, RgbaImage};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::image::{
     GlobalPalette, PaletteData, TextureAlpha, TextureInfo, TextureManifest, TexturePalette,
     TextureStretch,
@@ -130,7 +130,6 @@ fn read_texture(
         read.offset
     );
     let tex_info: TextureInfoC = read.read_struct()?;
-    trace!("{:#?}", tex_info);
     assert_that!("field 08", tex_info.zero08 == 0, read.prev + 8)?;
     let palette_count = tex_info.palette_count;
     let mut info = convert_info_from_c(name, tex_info, global_palette, read.prev + 0)?;
@@ -220,7 +219,6 @@ fn read_textures_header(read: &mut CountingReader<impl Read>) -> Result<Textures
         read.offset
     );
     let header: TexturesHeaderC = read.read_struct().map_err(Error::IO)?;
-    trace!("{:#?}", header);
 
     assert_that!("field 00", header.zero00 == 0, read.prev + 0)?;
     assert_that!("has entries", header.has_entries == 1, read.prev + 4)?;
@@ -256,7 +254,6 @@ where
                 read.offset
             );
             let entry: TextureEntryC = read.read_struct()?;
-            trace!("{:#?}", entry);
 
             assert_that!(
                 "global palette index",
@@ -413,7 +410,6 @@ fn write_texture(
         TextureInfoC::SIZE,
         write.offset
     );
-    trace!("{:#?}", tex_info);
     write.write_struct(&tex_info)?;
 
     match &info.palette {
@@ -592,7 +588,6 @@ where
         zero16: 0,
         zero20: 0,
     };
-    trace!("{:#?}", header);
     write.write_struct(&header)?;
 
     // Cast safety: global_palette_count >= 0 and u32 > i32
@@ -617,7 +612,6 @@ where
             start_offset: offset,
             palette_index,
         };
-        trace!("{:#?}", entry);
         write.write_struct(&entry)?;
         offset += calc_length(info);
     }

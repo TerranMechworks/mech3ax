@@ -13,6 +13,7 @@ doctest = false
 
 [dependencies]
 bytemuck.workspace = true
+log.workspace = true
 
 mech3ax-api-types = { path = "../api-types" }
 mech3ax-types = { path = "../types" }

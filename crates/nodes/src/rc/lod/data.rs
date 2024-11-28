@@ -1,6 +1,6 @@
 use crate::rc::node::NodeVariantLodRc;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::{debug, trace};
+use log::debug;
 use mech3ax_api_types::nodes::rc::Lod;
 use mech3ax_api_types::Range;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -74,7 +74,6 @@ pub fn read(
         read.offset
     );
     let lod: LodRcC = read.read_struct()?;
-    trace!("{:#?}", lod);
 
     let (level, range, unk60, unk76) = assert_lod(&lod, read.prev)?;
 
@@ -128,7 +127,6 @@ pub fn write(write: &mut CountingWriter<impl Write>, lod: &Lod, index: usize) ->
         unk72: bool_c!(lod.unk76.is_some()),
         unk76: lod.unk76.unwrap_or(0),
     };
-    trace!("{:#?}", lodc);
     write.write_struct(&lodc)?;
 
     if let Some(parent) = lod.parent {
