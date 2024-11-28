@@ -292,15 +292,15 @@ fn ascii_from_str_garbage_invalid() {
 fn ascii_to_str_garbage_valid() {
     let (s, p) = ascii!(b"a\0").to_str_garbage().unwrap();
     assert_eq!(s, "a");
-    assert_eq!(p, &[]);
+    assert_eq!(p, b"");
 
     let (s, p) = ascii!(b"a\0b").to_str_garbage().unwrap();
     assert_eq!(s, "a");
-    assert_eq!(p, &[b'b']);
+    assert_eq!(p, b"b");
 
     let (s, p) = ascii!(b"\0b").to_str_garbage().unwrap();
     assert_eq!(s, "");
-    assert_eq!(p, &[b'b']);
+    assert_eq!(p, b"b");
 }
 
 #[test]

@@ -79,7 +79,7 @@ fn bytes_tests() {
     #[allow(non_camel_case_types)]
     struct bytes<'a>(&'a [u8]);
 
-    impl<'a> serde::ser::Serialize for bytes<'a> {
+    impl serde::ser::Serialize for bytes<'_> {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where
             S: serde::ser::Serializer,

@@ -97,7 +97,7 @@ fn map(out_dir: &str, name: &str, names: &[(&[u8; 32], &str)]) {
         .collect();
 
     let all: syn::ItemConst = syn::parse_quote! {
-        pub(super) const ALL: &'static [(u32, &'static [u8; 32], &'static str)] = &[
+        pub(super) const ALL: &[(u32, &[u8; 32], &str)] = &[
             #(#all,)*
         ];
     };

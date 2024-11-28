@@ -1,4 +1,5 @@
 #![allow(non_upper_case_globals)]
+#![allow(clippy::unusual_byte_groupings)]
 use super::{rgb565to888, rgb565to888a, LERP888};
 
 const BLACK___8: u32 = 0x000000;
