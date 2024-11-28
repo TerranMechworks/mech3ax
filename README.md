@@ -21,7 +21,7 @@ There are three ways to use `mech3ax`:
 
 * The two command-line executables, `unzbd` and `rezbd`. If you don't know what a command-line is, this project may not be for you.
 * The `mech3ax` library, with a C-compatible interface/API. This is the lowest level.
-* An unreleased C# wrapper for the `mech3ax` library. This is recommended, as the API is strongly typed, and so it is relatively easy to upgrade to new versions.
+* [Mech3DotNet](https://github.com/TerranMechworks/Mech3DotNet), a C# wrapper for the `mech3ax` library. This is recommended, as the API is strongly typed, and so it is relatively easy to upgrade to new versions.
 
 Roughly speaking, the output of from ZBD conversions will be one or more JSON documents, or PNG images. In the case of multiple documents/images, `unzbd` will write everything into a single ZIP file, along with metadata.
 
