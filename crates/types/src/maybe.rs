@@ -9,6 +9,8 @@ where
         + Copy
         + PartialEq
         + Eq
+        + PartialOrd
+        + Ord
         + fmt::Debug
         + fmt::Display
         + fmt::LowerHex
@@ -36,6 +38,9 @@ macro_rules! impl_primitive_repr {
 impl_primitive_repr!(u8);
 impl_primitive_repr!(u16);
 impl_primitive_repr!(u32);
+impl_primitive_repr!(i8);
+impl_primitive_repr!(i16);
+impl_primitive_repr!(i32);
 
 pub trait SupportsMaybe<R>
 where
@@ -56,10 +61,21 @@ where
     pub marker: PhantomData<F>,
 }
 
-impl<R, F: SupportsMaybe<R>> Maybe<R, F>
-where
-    R: PrimitiveRepr,
-{
+impl<R: PrimitiveRepr, F: SupportsMaybe<R>> PartialEq<R> for Maybe<R, F> {
+    #[inline]
+    fn eq(&self, other: &R) -> bool {
+        self.value.eq(other)
+    }
+}
+
+impl<R: PrimitiveRepr, F: SupportsMaybe<R>> PartialOrd<R> for Maybe<R, F> {
+    #[inline]
+    fn partial_cmp(&self, other: &R) -> Option<std::cmp::Ordering> {
+        self.value.partial_cmp(other)
+    }
+}
+
+impl<R: PrimitiveRepr, F: SupportsMaybe<R>> Maybe<R, F> {
     #[inline]
     pub const fn new(value: R) -> Self {
         Self {
@@ -139,3 +155,7 @@ macro_rules! impl_maybe {
 impl_maybe!(u8);
 impl_maybe!(u16);
 impl_maybe!(u32);
+
+impl_maybe!(i8);
+impl_maybe!(i16);
+impl_maybe!(i32);
