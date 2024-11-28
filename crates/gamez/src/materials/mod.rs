@@ -56,11 +56,11 @@ impl_as_bytes!(MaterialInfoC, 16);
 
 bitflags! {
     struct MaterialFlags: u8 {
-        const TEXTURED = 1 << 0;
-        const UNKNOWN = 1 << 1;
-        const CYCLED = 1 << 2;
-        const ALWAYS = 1 << 4;
-        const FREE = 1 << 5;
+        const TEXTURED = 1 << 0;    // 0x01
+        const UNKNOWN = 1 << 1;     // 0x02
+        const CYCLED = 1 << 2;      // 0x04
+        const ALWAYS = 1 << 4;      // 0x08
+        const FREE = 1 << 5;        // 0x10
     }
 }
 
