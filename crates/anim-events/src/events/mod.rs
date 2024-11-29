@@ -22,6 +22,7 @@ mod e26_animation;
 mod e28_fog_state;
 mod e30_loop;
 mod e31_control_flow;
+mod e35_callback;
 mod e36_fbfx_color_from_to;
 mod e41_detonate_weapon;
 mod e42_puffer_state;
