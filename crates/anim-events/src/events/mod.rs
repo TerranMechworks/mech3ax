@@ -26,17 +26,15 @@ mod e35_callback;
 mod e36_fbfx_color_from_to;
 mod e41_detonate_weapon;
 mod e42_puffer_state;
-mod parse;
 mod types;
 
-use e12_object_motion_si_script::object_motion_si_script_size;
+pub(crate) use e12_object_motion_si_script::object_motion_si_script_size;
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::Result;
-pub use parse::{read_events, size_events, write_events};
 use std::io::{Read, Write};
 
-pub trait ScriptObject: Sized {
+pub(crate) trait ScriptObject: Sized {
     const INDEX: u8;
     const SIZE: u32;
     fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self>;

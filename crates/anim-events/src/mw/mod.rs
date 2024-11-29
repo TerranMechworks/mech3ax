@@ -1,4 +1,4 @@
-use super::*;
+use crate::events::{object_motion_si_script_size, ScriptObject};
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::trace;
 use mech3ax_api_types::anim::events::{
