@@ -1,7 +1,7 @@
 use super::types::INPUT_NODE;
-use super::utils::assert_color;
 use super::ScriptObject;
 use crate::types::AnimDefLookup as _;
+use crate::utils::assert_color;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{AtNode, LightState};
 use mech3ax_api_types::anim::AnimDef;

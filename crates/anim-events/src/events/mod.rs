@@ -26,7 +26,6 @@ mod sequence;
 mod sound;
 mod sound_node;
 mod types;
-mod utils;
 
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};

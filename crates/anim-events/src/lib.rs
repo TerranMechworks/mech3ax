@@ -2,5 +2,6 @@
 #![allow(clippy::identity_op)]
 pub(crate) mod events;
 mod types;
+mod utils;
 
 pub use events::{read_events, size_events, write_events};
