@@ -1,8 +1,8 @@
 use super::activation_prereq::{read_activ_prereqs, write_activ_prereqs};
-use super::sequence_event::{read_events, size_events, write_events};
 use super::support::*;
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::trace;
+use mech3ax_anim_events::{read_events, size_events, write_events};
 use mech3ax_api_types::anim::events::EventData;
 use mech3ax_api_types::anim::{
     AnimActivation, AnimDef, AnimPtr, Execution, NamePad, ResetState, SeqActivation, SeqDef,
