@@ -420,6 +420,7 @@ dependencies = [
  "bytemuck",
  "log",
  "mech3ax-anim-events",
+ "mech3ax-anim-names",
  "mech3ax-api-types",
  "mech3ax-common",
  "mech3ax-types",

@@ -227,12 +227,6 @@ impl<W: Write> CountingWriter<W> {
         self.inner.write_all(buf)?;
         Ok(())
     }
-
-    #[inline]
-    pub fn write_zeros(&mut self, count: u32) -> Result<()> {
-        let buf = vec![0; count as usize];
-        self.write_all(&buf)
-    }
 }
 
 #[cfg(test)]

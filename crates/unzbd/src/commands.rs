@@ -332,8 +332,8 @@ fn gamez_rc(opts: &ZipOpts) -> Result<()> {
 pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
     match opts.game {
         GameType::MW => {}
-        GameType::PM => bail!("Pirate's Moon support for Anim isn't implemented yet"),
-        GameType::RC => bail!("Recoil support for Anim isn't implemented yet"),
+        GameType::PM => {}
+        GameType::RC => {}
         GameType::CS => bail!("Crimson Skies support for Anim isn't implemented yet"),
     }
 
@@ -343,12 +343,34 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
     let output = buf_writer(&opts.output)?;
     let mut zip = ZipWriter::new(output);
 
-    let metadata = mech3ax_anim::mw::read_anim(&mut input, |name, anim_def| {
-        zip_json(&mut zip, name, anim_def)
-    })
-    .context("Failed to read anim data")?;
+    match opts.game {
+        GameType::MW => {
+            let metadata = mech3ax_anim::mw::read_anim(&mut input, |name, anim_def| {
+                zip_json(&mut zip, name, anim_def)
+            })
+            .context("Failed to read anim data")?;
 
-    zip_json(&mut zip, "metadata.json", &metadata)?;
+            zip_json(&mut zip, "metadata.json", &metadata)?;
+        }
+        GameType::PM => {
+            let metadata = mech3ax_anim::pm::read_anim(&mut input, |name, anim_def| {
+                zip_json(&mut zip, name, anim_def)
+            })
+            .context("Failed to read anim data")?;
+
+            zip_json(&mut zip, "metadata.json", &metadata)?;
+        }
+        GameType::RC => {
+            let metadata = mech3ax_anim::rc::read_anim(&mut input, |name, anim_def| {
+                zip_json(&mut zip, name, anim_def)
+            })
+            .context("Failed to read anim data")?;
+
+            zip_json(&mut zip, "metadata.json", &metadata)?;
+        }
+        GameType::CS => unreachable!("Crimson Skies support for Anim isn't implemented yet"),
+    }
+
     zip.finish()?;
     log::info!("ANIM: Wrote `{}`", opts.output);
     Ok(())

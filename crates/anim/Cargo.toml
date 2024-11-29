@@ -15,7 +15,8 @@ doctest = false
 bytemuck.workspace = true
 log.workspace = true
 
+mech3ax-anim-names = { path = "../anim-names" }
+mech3ax-anim-events = { path = "../anim-events" }
 mech3ax-api-types = { path = "../api-types" }
 mech3ax-common = { path = "../common" }
 mech3ax-types = { path = "../types" }
-mech3ax-anim-events = { path = "../anim-events" }

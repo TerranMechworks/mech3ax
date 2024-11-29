@@ -74,7 +74,7 @@ impl TypeResolver {
         }
     }
 
-    pub fn push<TI>(&mut self)
+    pub fn push<TI>(&mut self) -> String
     where
         TI: mech3ax_metadata_types::DerivedMetadata,
     {
@@ -88,28 +88,34 @@ impl TypeResolver {
         }
     }
 
-    fn push_enum(&mut self, ei: &TypeInfoEnum) {
+    fn push_enum(&mut self, ei: &TypeInfoEnum) -> String {
         let e = Enum::new(self, ei);
         if !self.names.insert(e.full_name.clone()) {
             panic!("Duplicate type name `{}`", e.full_name);
         }
+        let full_name = e.full_name.clone();
         self.enums.insert((ei.module_path, ei.name), e);
+        full_name
     }
 
-    fn push_struct(&mut self, si: &TypeInfoStruct) {
+    fn push_struct(&mut self, si: &TypeInfoStruct) -> String {
         let s = Struct::new(self, si);
         if !self.names.insert(s.full_name.clone()) {
             panic!("Duplicate type name `{}`", s.full_name);
         }
+        let full_name = s.full_name.clone();
         self.structs.insert((si.module_path, si.name), s);
+        full_name
     }
 
-    fn push_union(&mut self, ui: &TypeInfoUnion) {
+    fn push_union(&mut self, ui: &TypeInfoUnion) -> String {
         let u = Union::new(self, ui);
         if !self.names.insert(u.full_name.clone()) {
             panic!("Duplicate type name `{}`", u.full_name);
         }
+        let full_name = u.full_name.clone();
         self.unions.insert((ui.module_path, ui.name), u);
+        full_name
     }
 
     pub fn add_directory(&mut self, path: &Path) {
