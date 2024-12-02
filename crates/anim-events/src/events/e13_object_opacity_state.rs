@@ -1,5 +1,5 @@
-use super::ScriptObject;
-use crate::types::AnimDefLookup as _;
+use super::EventAll;
+use crate::types::{index, AnimDefLookup as _, Idx16, INPUT_NODE_NAME};
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::ObjectOpacityState;
 use mech3ax_api_types::anim::AnimDef;
@@ -11,40 +11,78 @@ use std::io::{Read, Write};
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct ObjectOpacityStateC {
-    is_set: Bool16,
-    state: Bool16,
-    opacity: f32,
-    node_index: u32,
+    is_set: Bool16,       // 00
+    active_state: Bool16, // 02
+    opacity: f32,         // 04
+    node_index: Idx16,    // 08
+    pad10: u16,           // 10
 }
 impl_as_bytes!(ObjectOpacityStateC, 12);
 
-impl ScriptObject for ObjectOpacityState {
-    const INDEX: u8 = 13;
-    const SIZE: u32 = ObjectOpacityStateC::SIZE;
+impl EventAll for ObjectOpacityState {
+    #[inline]
+    fn size(&self) -> Option<u32> {
+        Some(ObjectOpacityStateC::SIZE)
+    }
 
     fn read(read: &mut CountingReader<impl Read>, anim_def: &AnimDef, size: u32) -> Result<Self> {
-        assert_that!("object opacity state size", size == Self::SIZE, read.offset)?;
-        let object_opacity_state: ObjectOpacityStateC = read.read_struct()?;
-        let is_set = assert_that!("object opacity state is set", bool object_opacity_state.is_set, read.prev + 0)?;
-        let state = assert_that!("object opacity state state", bool object_opacity_state.state, read.prev + 2)?;
-        assert_that!("object opacity state opacity", 0.0 <= object_opacity_state.opacity <= 1.0, read.prev + 4)?;
-        let node =
-            anim_def.node_from_index(object_opacity_state.node_index as usize, read.prev + 8)?;
+        assert_that!(
+            "object opacity state size",
+            size == ObjectOpacityStateC::SIZE,
+            read.offset
+        )?;
+        let state: ObjectOpacityStateC = read.read_struct()?;
+
+        let is_set = assert_that!("object opacity state is set", bool state.is_set, read.prev + 0)?;
+        let active_state =
+            assert_that!("object opacity state state", bool state.active_state, read.prev + 2)?;
+
+        let opacity = if active_state {
+            assert_that!("object opacity state opacity", 0.0 <= state.opacity <= 1.0, read.prev + 4)?;
+            Some(state.opacity)
+        } else {
+            assert_that!(
+                "object opacity state opacity",
+                state.opacity == 0.0,
+                read.prev + 4
+            )?;
+            None
+        };
+
+        let name = if state.node_index == index!(-100) {
+            INPUT_NODE_NAME.to_string()
+        } else {
+            anim_def.node_from_index(state.node_index, read.prev + 8)?
+        };
+
+        assert_that!(
+            "object opacity state field 10",
+            state.pad10 == 0,
+            read.prev + 10
+        )?;
+
         Ok(Self {
-            node,
-            is_set,
-            state,
-            opacity: object_opacity_state.opacity,
+            name,
+            state: is_set,
+            opacity,
         })
     }
 
     fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
-        write.write_struct(&ObjectOpacityStateC {
-            is_set: self.is_set.into(),
-            state: self.state.into(),
-            opacity: self.opacity,
-            node_index: anim_def.node_to_index(&self.node)? as u32,
-        })?;
+        let node_index = if self.name == INPUT_NODE_NAME {
+            index!(-100)
+        } else {
+            anim_def.node_to_index(&self.name)?
+        };
+
+        let state = ObjectOpacityStateC {
+            is_set: self.state.into(),
+            active_state: self.opacity.is_some().into(),
+            opacity: self.opacity.unwrap_or(0.0),
+            node_index,
+            pad10: 0,
+        };
+        write.write_struct(&state)?;
         Ok(())
     }
 }

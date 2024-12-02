@@ -11,8 +11,8 @@ pub mod pm;
 pub mod rc;
 
 macro_rules! fwd {
-    ($name:ident, $index:expr, $table:expr) => {
-        pub fn $name(name: &[u8; 32]) -> Option<(u32, &'static str)> {
+    ($name:ident, $size:literal, $index:expr, $table:expr) => {
+        pub fn $name(name: &[u8; $size]) -> Option<(u32, &'static str)> {
             let hash = fxhash::hash32(name);
             $index.binary_search(&hash).ok().map(|index| {
                 let (bytes, string) = $table[index];
@@ -25,8 +25,8 @@ macro_rules! fwd {
 pub(crate) use fwd;
 
 macro_rules! rev {
-    ($name:ident, $index:expr, $table:expr) => {
-        pub fn $name(hash: u32, name: &str) -> Option<&'static [u8; 32]> {
+    ($name:ident, $size:literal, $index:expr, $table:expr) => {
+        pub fn $name(hash: u32, name: &str) -> Option<&'static [u8; $size]> {
             $index.binary_search(&hash).ok().and_then(|index| {
                 let (bytes, string) = $table[index];
                 // guard against updating the string but not the hash

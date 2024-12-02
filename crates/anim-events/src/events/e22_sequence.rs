@@ -1,4 +1,4 @@
-use super::ScriptObject;
+use super::EventAll;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{CallSequence, StopSequence};
 use mech3ax_api_types::anim::AnimDef;
@@ -12,34 +12,37 @@ use std::io::{Read, Write};
 #[repr(C)]
 struct SequenceC {
     name: Ascii<32>,
-    sentinel: i32,
+    index: i32,
 }
 impl_as_bytes!(SequenceC, 36);
 
 fn read_sequence(read: &mut CountingReader<impl Read>) -> Result<String> {
     let sequence: SequenceC = read.read_struct()?;
+
     let name = assert_utf8("sequence name", read.prev + 0, || {
         sequence.name.to_str_padded()
     })?;
-    assert_that!("sequence field 32", sequence.sentinel == -1, read.prev + 32)?;
+    // we are currently reading sequences (or a reset state), so the sequence
+    // name cannot be asserted at this point.
+    assert_that!("sequence index", sequence.index == -1, read.prev + 32)?;
     Ok(name)
 }
 
 fn write_sequence(write: &mut CountingWriter<impl Write>, name: &str) -> Result<()> {
-    let fill = Ascii::from_str_padded(name);
-    write.write_struct(&SequenceC {
-        name: fill,
-        sentinel: -1,
-    })?;
+    let name = Ascii::from_str_padded(name);
+    let sequence = SequenceC { name, index: -1 };
+    write.write_struct(&sequence)?;
     Ok(())
 }
 
-impl ScriptObject for CallSequence {
-    const INDEX: u8 = 22;
-    const SIZE: u32 = SequenceC::SIZE;
+impl EventAll for CallSequence {
+    #[inline]
+    fn size(&self) -> Option<u32> {
+        Some(SequenceC::SIZE)
+    }
 
     fn read(read: &mut CountingReader<impl Read>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
-        assert_that!("call sequence size", size == Self::SIZE, read.offset)?;
+        assert_that!("call sequence size", size == SequenceC::SIZE, read.offset)?;
         let name = read_sequence(read)?;
         Ok(Self { name })
     }
@@ -49,12 +52,14 @@ impl ScriptObject for CallSequence {
     }
 }
 
-impl ScriptObject for StopSequence {
-    const INDEX: u8 = 23;
-    const SIZE: u32 = SequenceC::SIZE;
+impl EventAll for StopSequence {
+    #[inline]
+    fn size(&self) -> Option<u32> {
+        Some(SequenceC::SIZE)
+    }
 
     fn read(read: &mut CountingReader<impl Read>, _anim_def: &AnimDef, size: u32) -> Result<Self> {
-        assert_that!("stop sequence size", size == Self::SIZE, read.offset)?;
+        assert_that!("stop sequence size", size == SequenceC::SIZE, read.offset)?;
         let name = read_sequence(read)?;
         Ok(Self { name })
     }

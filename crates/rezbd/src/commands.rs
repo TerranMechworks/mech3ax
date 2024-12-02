@@ -363,24 +363,21 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
 
     match opts.game {
         GameType::MW => {
-            let metadata: mech3ax_api_types::anim::mw::AnimMetadata =
-                zip_json(&mut zip, "metadata.json")?;
+            let metadata = zip_json(&mut zip, "metadata.json")?;
 
             let mut write = buf_writer(&opts.output)?;
             mech3ax_anim::mw::write_anim(&mut write, &metadata, |name| zip_json(&mut zip, name))
                 .context("Failed to write anim data")?;
         }
         GameType::PM => {
-            let metadata: mech3ax_api_types::anim::pm::AnimMetadata =
-                zip_json(&mut zip, "metadata.json")?;
+            let metadata = zip_json(&mut zip, "metadata.json")?;
 
             let mut write = buf_writer(&opts.output)?;
             mech3ax_anim::pm::write_anim(&mut write, &metadata, |name| zip_json(&mut zip, name))
                 .context("Failed to write anim data")?;
         }
         GameType::RC => {
-            let metadata: mech3ax_api_types::anim::mw::AnimMetadata =
-                zip_json(&mut zip, "metadata.json")?;
+            let metadata = zip_json(&mut zip, "metadata.json")?;
 
             let mut write = buf_writer(&opts.output)?;
             mech3ax_anim::rc::write_anim(&mut write, &metadata, |name| zip_json(&mut zip, name))

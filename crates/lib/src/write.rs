@@ -3,7 +3,7 @@ use crate::callbacks::NameBufferCb;
 use crate::error::err_to_c;
 use crate::{filename_to_string, i32_to_game};
 use eyre::{bail, eyre, Context as _, Result};
-use mech3ax_api_types::anim::mw::{AnimDef, AnimMetadata};
+use mech3ax_api_types::anim::{AnimDef, AnimMetadata};
 use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::gamez::mechlib::{ModelMw, ModelPm};

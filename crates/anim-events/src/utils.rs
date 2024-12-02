@@ -17,9 +17,9 @@ pub(crate) fn _assert_color(
 macro_rules! assert_color {
     ($name:literal, $color:expr, $offset:expr) => {
         crate::utils::_assert_color(
-            concat!($name, " color r"),
-            concat!($name, " color g"),
-            concat!($name, " color g"),
+            concat!($name, " r"),
+            concat!($name, " g"),
+            concat!($name, " g"),
             &$color,
             $offset,
         )

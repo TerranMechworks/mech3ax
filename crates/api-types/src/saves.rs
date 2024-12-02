@@ -1,3 +1,4 @@
+//! Work in progress.
 use crate::serde::bytes::Bytes;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_types::primitive_enum;
