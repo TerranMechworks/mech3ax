@@ -20,11 +20,10 @@ pub fn write_interp(write: &mut CountingWriter<impl Write>, scripts: &[Script]) 
     for (index, script) in scripts.iter().enumerate() {
         trace!("Writing interp entry {}", index);
         let name = Ascii::from_str_padded(&script.name);
-        // Cast safety: truncation simply leads to incorrect timestamp
-        let last_modified = to_timestamp(&script.last_modified);
+        let timestamp = to_timestamp(&script.datetime);
         let entry = InterpEntryC {
             name,
-            last_modified,
+            timestamp,
             start: offset,
         };
         write.write_struct(&entry)?;

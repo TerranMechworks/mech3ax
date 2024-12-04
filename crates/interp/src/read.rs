@@ -22,21 +22,21 @@ pub fn read_interp(read: &mut CountingReader<impl Read>) -> Result<Vec<Script>> 
             trace!("Reading interp entry {}", index);
             let entry: InterpEntryC = read.read_struct()?;
             let name = assert_utf8("name", read.prev, || entry.name.to_str_padded())?;
-            let last_modified = from_timestamp(entry.last_modified);
+            let datetime = from_timestamp(entry.timestamp);
             let start = u32_to_usize(entry.start);
-            Ok((index, name, last_modified, start))
+            Ok((index, name, datetime, start))
         })
         .collect::<Result<Vec<_>>>()?;
 
     let scripts = script_info
         .into_iter()
-        .map(|(index, name, last_modified, start)| {
+        .map(|(index, name, datetime, start)| {
             trace!("Reading interp script {}", index);
             assert_that!("entry start", start == read.offset, read.offset)?;
             let lines = read_script(read)?;
             Ok(Script {
                 name,
-                last_modified,
+                datetime,
                 lines,
             })
         })

@@ -25,7 +25,7 @@ impl_as_bytes!(InterpHeaderC, 12);
 #[repr(C)]
 struct InterpEntryC {
     name: Ascii<120>,
-    last_modified: u32,
+    timestamp: u32,
     start: u32,
 }
 impl_as_bytes!(InterpEntryC, 128);

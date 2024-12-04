@@ -6,6 +6,6 @@ use mech3ax_timestamp::DateTime;
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Script {
     pub name: String,
-    pub last_modified: DateTime,
+    pub datetime: DateTime,
     pub lines: Vec<String>,
 }
