@@ -1,12 +1,19 @@
 use crate::common::fixup::{Fwd, Rev};
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::trace;
 use mech3ax_api_types::anim::AnimDefFile;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::Result;
+use mech3ax_common::{assert_len, Result};
 use mech3ax_timestamp::unix::{from_timestamp, to_timestamp};
 use mech3ax_types::{impl_as_bytes, Ascii};
 use std::io::{Read, Write};
+
+/// An `ANIMATION_LIST` (header?).
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
+#[repr(C)]
+struct AnimListC {
+    count: u32,
+}
+impl_as_bytes!(AnimListC, 4);
 
 /// An `ANIMATION_DEFINITION_FILE` in an `ANIMATION_LIST`.
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -20,13 +27,12 @@ impl_as_bytes!(AnimDefFileC, 84);
 /// Read an `ANIMATION_LIST`.
 pub(crate) fn read_anim_list<F>(
     read: &mut CountingReader<impl Read>,
-    count: u32,
     fwd: F,
 ) -> Result<Vec<AnimDefFile>>
 where
     F: Fn(&[u8; 80]) -> Option<(u32, &'static str)>,
 {
-    trace!("Reading animation list ({})", count);
+    let AnimListC { count } = read.read_struct()?;
     let fwd = Fwd::new("anim def file name", fwd);
     (0..count)
         .map(|_| {
@@ -51,7 +57,8 @@ pub(crate) fn write_anim_list<F>(
 where
     F: Fn(u32, &str) -> Option<&'static [u8; 80]>,
 {
-    trace!("Writing animation list ({})", anim_list.len());
+    let count = assert_len!(u32, anim_list.len(), "anim list")?;
+    write.write_struct(&AnimListC { count })?;
     let rev = Rev::new("anim def file name", rev);
     for anim_def_file in anim_list {
         let name = rev.fixup(&anim_def_file.name, anim_def_file.hash);

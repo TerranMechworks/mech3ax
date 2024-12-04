@@ -4,7 +4,7 @@ use crate::mw::anim_def::{write_anim_def, write_anim_def_zero};
 use crate::{GRAVITY, SIGNATURE, VERSION_MW};
 use log::{debug, trace};
 use mech3ax_anim_names::mw::anim_list_rev;
-use mech3ax_api_types::anim::{AnimDef, AnimDefFile, AnimMetadata, AnimPtr, SiScript};
+use mech3ax_api_types::anim::{AnimDef, AnimMetadata, AnimPtr, SiScript};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, Error, Result};
 use mech3ax_types::EnumerateEx as _;
@@ -21,24 +21,20 @@ where
     F: FnMut(&str) -> std::result::Result<AnimDef, E>,
     E: From<std::io::Error> + From<Error>,
 {
-    write_anim_header(write, &metadata.anim_list)?;
+    write_anim_header(write)?;
+    write_anim_list(write, &metadata.anim_list, anim_list_rev)?;
     write_anim_info(write, metadata)?;
     write_anim_defs(write, &metadata.anim_ptrs, load_anim_def, &metadata.scripts)?;
     Ok(())
 }
 
-fn write_anim_header(
-    write: &mut CountingWriter<impl Write>,
-    anim_list: &[AnimDefFile],
-) -> Result<()> {
-    let count = assert_len!(u32, anim_list.len(), "anim list")?;
+fn write_anim_header(write: &mut CountingWriter<impl Write>) -> Result<()> {
     let header = AnimHeaderC {
         signature: SIGNATURE,
         version: VERSION_MW,
-        count,
     };
     write.write_struct(&header)?;
-    write_anim_list(write, anim_list, anim_list_rev)
+    Ok(())
 }
 
 fn write_anim_info(write: &mut CountingWriter<impl Write>, metadata: &AnimMetadata) -> Result<()> {

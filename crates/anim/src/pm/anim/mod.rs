@@ -12,9 +12,8 @@ struct AnimHeaderC {
     signature: Hex<u32>, // 00
     version: u32,        // 04
     timestamp: u32,      // 08
-    count: u32,          // 12
 }
-impl_as_bytes!(AnimHeaderC, 16);
+impl_as_bytes!(AnimHeaderC, 12);
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]

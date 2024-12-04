@@ -5,7 +5,7 @@ use crate::{GRAVITY, SIGNATURE, VERSION_PM};
 use log::{debug, trace};
 use mech3ax_anim_events::si_script::read_si_script_frames;
 use mech3ax_anim_names::pm::anim_list_fwd;
-use mech3ax_api_types::anim::{AnimDef, AnimDefFile, AnimMetadata, AnimPtr, SiScript};
+use mech3ax_api_types::anim::{AnimDef, AnimMetadata, AnimPtr, SiScript};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Error, Rename, Result};
@@ -34,7 +34,8 @@ where
     F: FnMut(&str, &AnimDef) -> std::result::Result<(), E>,
     E: From<std::io::Error> + From<Error>,
 {
-    let (anim_list, datetime) = read_anim_header(read)?;
+    let datetime = read_anim_header(read)?;
+    let anim_list = read_anim_list(read, anim_list_fwd)?;
     let anim_info = read_anim_info(read)?;
     let anim_ptrs = read_anim_defs(read, anim_info.def_count, save_anim_def)?;
     let scripts = read_anim_scripts(read, anim_info.script_count)?;
@@ -52,7 +53,7 @@ where
     })
 }
 
-fn read_anim_header(read: &mut CountingReader<impl Read>) -> Result<(Vec<AnimDefFile>, DateTime)> {
+fn read_anim_header(read: &mut CountingReader<impl Read>) -> Result<DateTime> {
     let header: AnimHeaderC = read.read_struct()?;
 
     assert_that!("signature", header.signature == SIGNATURE, read.prev)?;
@@ -60,8 +61,7 @@ fn read_anim_header(read: &mut CountingReader<impl Read>) -> Result<(Vec<AnimDef
     let datetime = from_timestamp(header.timestamp);
     trace!("anim datetime: `{:?}`", datetime);
 
-    let anim_list = read_anim_list(read, header.count, anim_list_fwd)?;
-    Ok((anim_list, datetime))
+    Ok(datetime)
 }
 
 fn read_anim_info(read: &mut CountingReader<impl Read>) -> Result<AnimInfo> {

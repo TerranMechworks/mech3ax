@@ -11,9 +11,8 @@ pub use write::write_anim;
 struct AnimHeaderC {
     signature: Hex<u32>, // 00
     version: u32,        // 04
-    count: u32,          // 08
 }
-impl_as_bytes!(AnimHeaderC, 12);
+impl_as_bytes!(AnimHeaderC, 8);
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]

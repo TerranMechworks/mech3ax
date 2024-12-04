@@ -4,7 +4,7 @@ use crate::rc::anim_def::{read_anim_def, read_anim_def_zero};
 use crate::{GRAVITY, SIGNATURE, VERSION_RC};
 use log::{debug, trace};
 use mech3ax_anim_names::rc::anim_list_fwd;
-use mech3ax_api_types::anim::{AnimDef, AnimDefFile, AnimMetadata, AnimPtr, SiScript};
+use mech3ax_api_types::anim::{AnimDef, AnimMetadata, AnimPtr, SiScript};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Error, Rename, Result};
 use std::convert::From;
@@ -19,7 +19,8 @@ where
     F: FnMut(&str, &AnimDef) -> std::result::Result<(), E>,
     E: From<std::io::Error> + From<Error>,
 {
-    let anim_list = read_anim_header(read)?;
+    read_anim_header(read)?;
+    let anim_list = read_anim_list(read, anim_list_fwd)?;
     let (count, defs_ptr, world_ptr) = read_anim_info(read)?;
     let mut scripts = Vec::new();
     let anim_ptrs = read_anim_defs(read, count, save_anim_def, &mut scripts)?;
@@ -37,13 +38,11 @@ where
     })
 }
 
-fn read_anim_header(read: &mut CountingReader<impl Read>) -> Result<Vec<AnimDefFile>> {
+fn read_anim_header(read: &mut CountingReader<impl Read>) -> Result<()> {
     let header: AnimHeaderC = read.read_struct()?;
-
     assert_that!("signature", header.signature == SIGNATURE, read.prev)?;
     assert_that!("version", header.version == VERSION_RC, read.prev)?;
-
-    read_anim_list(read, header.count, anim_list_fwd)
+    Ok(())
 }
 
 fn read_anim_info(read: &mut CountingReader<impl Read>) -> Result<(u16, u32, u32)> {

@@ -5,7 +5,7 @@ use crate::{GRAVITY, SIGNATURE, VERSION_PM};
 use log::{debug, trace};
 use mech3ax_anim_events::si_script::{size_si_script_frames, write_si_script_frames};
 use mech3ax_anim_names::pm::anim_list_rev;
-use mech3ax_api_types::anim::{AnimDef, AnimDefFile, AnimMetadata, AnimPtr, SiScript};
+use mech3ax_api_types::anim::{AnimDef, AnimMetadata, AnimPtr, SiScript};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, Error, Result};
@@ -26,7 +26,8 @@ where
     E: From<std::io::Error> + From<Error>,
 {
     let datetime = metadata.datetime.as_ref();
-    write_anim_header(write, &metadata.anim_list, datetime)?;
+    write_anim_header(write, datetime)?;
+    write_anim_list(write, &metadata.anim_list, anim_list_rev)?;
     write_anim_info(write, metadata)?;
     write_anim_defs(write, &metadata.anim_ptrs, load_anim_def)?;
     write_anim_scripts(write, &metadata.scripts)?;
@@ -35,10 +36,8 @@ where
 
 fn write_anim_header(
     write: &mut CountingWriter<impl Write>,
-    anim_list: &[AnimDefFile],
     datetime: Option<&DateTime>,
 ) -> Result<()> {
-    let count = assert_len!(u32, anim_list.len(), "anim list")?;
     if let Some(dt) = datetime {
         trace!("anim datetime: `{:?}`", dt);
     }
@@ -48,10 +47,9 @@ fn write_anim_header(
         signature: SIGNATURE,
         version: VERSION_PM,
         timestamp,
-        count,
     };
     write.write_struct(&header)?;
-    write_anim_list(write, anim_list, anim_list_rev)
+    Ok(())
 }
 
 fn write_anim_info(write: &mut CountingWriter<impl Write>, metadata: &AnimMetadata) -> Result<()> {
