@@ -22,8 +22,8 @@ struct AnimInfoC {
     zero08: u16,    // 08
     def_count: u16, // 10
     defs_ptr: u32,  // 12
-    loc_count: u32, // 16
-    locs_ptr: u32,  // 20
+    msg_count: u32, // 16
+    msgs_ptr: u32,  // 20
     world_ptr: u32, // 24
     gravity: f32,   // 28
     zero32: u32,    // 32

@@ -61,15 +61,15 @@ fn read_anim_info(read: &mut CountingReader<impl Read>) -> Result<(u16, u32, u32
         anim_info.defs_ptr != 0,
         read.prev + 12
     )?;
-    // the localisation isn't used
+    // the messages/localisation aren't used
     assert_that!(
-        "anim info loc count",
-        anim_info.loc_count == 0,
+        "anim info msg count",
+        anim_info.msg_count == 0,
         read.prev + 16
     )?;
     assert_that!(
-        "anim info locs pointer",
-        anim_info.locs_ptr == 0,
+        "anim info msgs pointer",
+        anim_info.msgs_ptr == 0,
         read.prev + 20
     )?;
     assert_that!(

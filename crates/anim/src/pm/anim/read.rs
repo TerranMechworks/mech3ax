@@ -90,14 +90,15 @@ fn read_anim_info(read: &mut CountingReader<impl Read>) -> Result<AnimInfo> {
         anim_info.scripts_ptr != 0,
         read.prev + 20
     )?;
+    // the messages/localisation aren't used
     assert_that!(
-        "anim info unk count",
-        anim_info.unk_count == 0,
+        "anim info msg count",
+        anim_info.msg_count == 0,
         read.prev + 24
     )?;
     assert_that!(
-        "anim info unk pointer",
-        anim_info.unks_ptr == 0,
+        "anim info msgs pointer",
+        anim_info.msgs_ptr == 0,
         read.prev + 28
     )?;
     assert_that!(

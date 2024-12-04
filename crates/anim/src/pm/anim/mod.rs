@@ -25,8 +25,8 @@ struct AnimInfoC {
     defs_ptr: u32,     // 012
     script_count: u32, // 016
     scripts_ptr: u32,  // 020
-    unk_count: u32,    // 024
-    unks_ptr: u32,     // 028
+    msg_count: u32,    // 024
+    msgs_ptr: u32,     // 028
     world_ptr: u32,    // 032
     gravity: f32,      // 036
     unk40: u32,        // 040
