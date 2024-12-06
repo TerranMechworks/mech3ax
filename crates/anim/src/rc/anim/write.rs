@@ -1,4 +1,4 @@
-use super::{AnimHeaderC, AnimInfoC};
+use super::{AnimHeaderC, AnimInfoC, Mission};
 use crate::common::anim_list::write_anim_list;
 use crate::rc::anim_def::{write_anim_def, write_anim_def_zero};
 use crate::{SIGNATURE, VERSION_RC};
@@ -38,6 +38,8 @@ fn write_anim_header(write: &mut CountingWriter<impl Write>) -> Result<()> {
 }
 
 fn write_anim_info(write: &mut CountingWriter<impl Write>, metadata: &AnimMetadata) -> Result<()> {
+    let m = Mission::from_api(metadata.mission);
+
     let def_count = assert_len!(u16, metadata.anim_ptrs.len() + 1, "anim defs")?;
 
     let anim_info = AnimInfoC {
@@ -45,10 +47,10 @@ fn write_anim_info(write: &mut CountingWriter<impl Write>, metadata: &AnimMetada
         zero04: 0,
         zero08: 0,
         def_count,
-        defs_ptr: metadata.defs_ptr,
+        defs_ptr: m.defs_ptr(),
         msg_count: 0,
         msgs_ptr: 0,
-        world_ptr: metadata.world_ptr,
+        world_ptr: m.world_ptr(),
         gravity: metadata.gravity,
         zero32: 0,
         zero36: 0,

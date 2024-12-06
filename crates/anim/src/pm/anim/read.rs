@@ -1,4 +1,4 @@
-use super::{AnimHeaderC, AnimInfoC, SiScriptC};
+use super::{AnimHeaderC, AnimInfoC, Mission, SiScriptC};
 use crate::common::anim_list::read_anim_list;
 use crate::pm::anim_def::{read_anim_def, read_anim_def_zero};
 use crate::{SIGNATURE, VERSION_PM};
@@ -17,13 +17,10 @@ use std::io::Read;
 
 #[derive(Debug)]
 struct AnimInfo {
-    def_count: u16,
-    defs_ptr: u32,
-    script_count: u32,
-    scripts_ptr: u32,
-    world_ptr: u32,
+    m: Mission,
     gravity: f32,
-    unk40: u32,
+    def_count: u16,
+    script_count: u32,
 }
 
 pub fn read_anim<R, F, E>(
@@ -43,15 +40,12 @@ where
     read.assert_end()?;
 
     Ok(AnimMetadata {
-        anim_list,
-        anim_ptrs,
-        scripts,
-        datetime: Some(datetime),
+        mission: anim_info.m.to_api(),
         gravity: anim_info.gravity,
-        defs_ptr: anim_info.defs_ptr,
-        scripts_ptr: anim_info.scripts_ptr,
-        world_ptr: anim_info.world_ptr,
-        unk40: anim_info.unk40,
+        datetime: Some(datetime),
+        anim_list,
+        scripts,
+        anim_ptrs,
     })
 }
 
@@ -69,9 +63,6 @@ fn read_anim_header(read: &mut CountingReader<impl Read>) -> Result<DateTime> {
 fn read_anim_info(read: &mut CountingReader<impl Read>) -> Result<AnimInfo> {
     let anim_info: AnimInfoC = read.read_struct()?;
 
-    assert_that!("anim info field 00", anim_info.zero00 == 0, read.prev + 0)?;
-    assert_that!("anim info field 04", anim_info.zero04 == 0, read.prev + 4)?;
-    assert_that!("anim info field 08", anim_info.zero00 == 0, read.prev + 8)?;
     assert_that!(
         "anim info def count",
         anim_info.def_count > 0,
@@ -82,6 +73,8 @@ fn read_anim_info(read: &mut CountingReader<impl Read>) -> Result<AnimInfo> {
         anim_info.defs_ptr != 0,
         read.prev + 12
     )?;
+    let m = Mission::from_defs_ptr(anim_info.defs_ptr);
+
     assert_that!(
         "anim info script count",
         anim_info.script_count > 0,
@@ -103,6 +96,7 @@ fn read_anim_info(read: &mut CountingReader<impl Read>) -> Result<AnimInfo> {
         anim_info.msgs_ptr == 0,
         read.prev + 28
     )?;
+    // always 0x05320020
     assert_that!(
         "anim info world pointer",
         anim_info.world_ptr != 0,
@@ -110,21 +104,29 @@ fn read_anim_info(read: &mut CountingReader<impl Read>) -> Result<AnimInfo> {
     )?;
     // the gravity is always the same
 
-    assert_that!("anim info field 40", anim_info.unk40 in [0, 1], read.prev + 40)?;
-    assert_that!("anim info field 44", anim_info.zero44 == 0, read.prev + 44)?;
-    assert_that!("anim info field 48", anim_info.zero48 == 0, read.prev + 48)?;
-    assert_that!("anim info field 52", anim_info.zero52 == 0, read.prev + 52)?;
-    assert_that!("anim info field 56", anim_info.zero56 == 0, read.prev + 56)?;
-    assert_that!("anim info field 60", anim_info.one60 == 1, read.prev + 60)?;
-    assert_that!("anim info field 64", anim_info.zero64 == 0, read.prev + 64)?;
-    assert_that!("anim info field 68", anim_info.zero68 == 0, read.prev + 68)?;
-    assert_that!("anim info field 72", anim_info.zero72 == 0, read.prev + 72)?;
-    assert_that!("anim info field 76", anim_info.zero76 == 0, read.prev + 76)?;
-    assert_that!("anim info field 80", anim_info.zero80 == 0, read.prev + 80)?;
-    assert_that!("anim info field 84", anim_info.zero84 == 0, read.prev + 84)?;
-    assert_that!("anim info field 88", anim_info.zero88 == 0, read.prev + 88)?;
-    assert_that!("anim info field 92", anim_info.zero92 == 0, read.prev + 92)?;
-    assert_that!("anim info field 96", anim_info.zero96 == 0, read.prev + 96)?;
+    assert_that!("anim info field 000", anim_info.zero00 == 0, read.prev + 0)?;
+    assert_that!("anim info field 004", anim_info.zero04 == 0, read.prev + 4)?;
+    assert_that!("anim info field 008", anim_info.zero08 == 0, read.prev + 8)?;
+
+    assert_that!(
+        "anim info field 040",
+        anim_info.unk40 == m.unk40(),
+        read.prev + 40
+    )?;
+    assert_that!("anim info field 044", anim_info.zero44 == 0, read.prev + 44)?;
+    assert_that!("anim info field 048", anim_info.zero48 == 0, read.prev + 48)?;
+    assert_that!("anim info field 052", anim_info.zero52 == 0, read.prev + 52)?;
+    assert_that!("anim info field 056", anim_info.zero56 == 0, read.prev + 56)?;
+    assert_that!("anim info field 060", anim_info.one60 == 1, read.prev + 60)?;
+    assert_that!("anim info field 064", anim_info.zero64 == 0, read.prev + 64)?;
+    assert_that!("anim info field 068", anim_info.zero68 == 0, read.prev + 68)?;
+    assert_that!("anim info field 072", anim_info.zero72 == 0, read.prev + 72)?;
+    assert_that!("anim info field 076", anim_info.zero76 == 0, read.prev + 76)?;
+    assert_that!("anim info field 080", anim_info.zero80 == 0, read.prev + 80)?;
+    assert_that!("anim info field 084", anim_info.zero84 == 0, read.prev + 84)?;
+    assert_that!("anim info field 088", anim_info.zero88 == 0, read.prev + 88)?;
+    assert_that!("anim info field 092", anim_info.zero92 == 0, read.prev + 92)?;
+    assert_that!("anim info field 096", anim_info.zero96 == 0, read.prev + 96)?;
     assert_that!(
         "anim info field 100",
         anim_info.zero100 == 0,
@@ -137,13 +139,10 @@ fn read_anim_info(read: &mut CountingReader<impl Read>) -> Result<AnimInfo> {
     )?;
 
     Ok(AnimInfo {
-        def_count: anim_info.def_count,
-        defs_ptr: anim_info.defs_ptr,
-        script_count: anim_info.script_count,
-        scripts_ptr: anim_info.scripts_ptr,
-        world_ptr: anim_info.world_ptr,
+        m,
         gravity: anim_info.gravity,
-        unk40: anim_info.unk40,
+        def_count: anim_info.def_count,
+        script_count: anim_info.script_count,
     })
 }
 

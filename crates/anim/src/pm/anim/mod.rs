@@ -2,6 +2,7 @@ mod read;
 mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
+use mech3ax_api_types::anim::AnimMission;
 use mech3ax_types::{impl_as_bytes, Bool32, Hex};
 pub use read::read_anim;
 pub use write::write_anim;
@@ -63,3 +64,89 @@ struct SiScriptC {
     script_data_ptr: u32,  // 24
 }
 impl_as_bytes!(SiScriptC, 28);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Mission {
+    C1,
+    C2,
+    C3,
+    C4,
+    Unk,
+}
+
+impl Mission {
+    pub(crate) fn from_api(api: AnimMission) -> Self {
+        match api {
+            AnimMission::PmC1 => Self::C1,
+            AnimMission::PmC2 => Self::C2,
+            AnimMission::PmC3 => Self::C3,
+            AnimMission::PmC4 => Self::C4,
+            AnimMission::Unknown => Self::Unk,
+            _ => {
+                log::warn!("Invalid mission {:?} for PM", api);
+                Self::Unk
+            }
+        }
+    }
+
+    pub(crate) fn to_api(self) -> AnimMission {
+        match self {
+            Self::C1 => AnimMission::PmC1,
+            Self::C2 => AnimMission::PmC2,
+            Self::C3 => AnimMission::PmC3,
+            Self::C4 => AnimMission::PmC4,
+            Self::Unk => AnimMission::Unknown,
+        }
+    }
+
+    pub(crate) fn from_defs_ptr(defs_ptr: u32) -> Self {
+        match defs_ptr {
+            0x12D3AFF8 => Self::C1,
+            0x11221FF8 => Self::C2,
+            0x0C1CEF10 => Self::C3,
+            0x12245FF8 => Self::C4,
+            0xDEADBEEF => Self::Unk,
+            _ => {
+                log::warn!(
+                    "Unknown defs pointer 0x{:08X}, ZBD translation may be inaccurate",
+                    defs_ptr
+                );
+                Self::Unk
+            }
+        }
+    }
+
+    pub(crate) fn defs_ptr(self) -> u32 {
+        match self {
+            Self::C1 => 0x12D3AFF8,
+            Self::C2 => 0x11221FF8,
+            Self::C3 => 0x0C1CEF10,
+            Self::C4 => 0x12245FF8,
+            Self::Unk => 0xDEADBEEF,
+        }
+    }
+
+    pub(crate) fn scripts_ptr(self) -> u32 {
+        match self {
+            Self::C1 => 0x06A6A008,
+            Self::C2 => 0x0A5BF008,
+            Self::C3 => 0x0618C7A8,
+            Self::C4 => 0x06531008,
+            Self::Unk => 0xDEADBEEF,
+        }
+    }
+
+    pub(crate) fn world_ptr(self) -> u32 {
+        0x05320020
+    }
+
+    pub(crate) fn unk40(self) -> u32 {
+        match self {
+            Self::C1 => 1,
+            Self::C2 => 0,
+            Self::C3 => 0,
+            Self::C4 => 0,
+            Self::Unk => 0,
+        }
+    }
+}
