@@ -121,6 +121,7 @@ class Tester:
                 subprocess.run(cmd, check=True, env=env, stderr=f)
         except subprocess.CalledProcessError:
             print(" ".join(cmd))
+            print(log)
             raise
 
     def rezbd(self, command: str, game: Game, one: Path, two: Path, log: Path) -> None:
@@ -131,6 +132,7 @@ class Tester:
                 subprocess.run(cmd, check=True, env=env, stderr=f)
         except subprocess.CalledProcessError:
             print(" ".join(cmd))
+            print(log)
             raise
 
     def compare(self, one: Path, two: Path, limit: Optional[int] = None) -> None:
