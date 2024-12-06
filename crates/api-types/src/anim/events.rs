@@ -1,3 +1,4 @@
+use crate::serde::bytes;
 use crate::{Color, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
@@ -26,6 +27,7 @@ pub struct Event {
     // pub data: EventData,
     pub event_type: u8,
     pub start: Option<EventStart>,
+    #[serde(with = "bytes")]
     pub data: Vec<u8>,
 }
 
