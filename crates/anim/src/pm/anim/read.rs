@@ -1,7 +1,7 @@
 use super::{AnimHeaderC, AnimInfoC, SiScriptC};
 use crate::common::anim_list::read_anim_list;
 use crate::pm::anim_def::{read_anim_def, read_anim_def_zero};
-use crate::{GRAVITY, SIGNATURE, VERSION_PM};
+use crate::{SIGNATURE, VERSION_PM};
 use log::{debug, trace};
 use mech3ax_anim_events::si_script::read_si_script_frames;
 use mech3ax_anim_names::pm::anim_list_fwd;
@@ -22,6 +22,7 @@ struct AnimInfo {
     script_count: u32,
     scripts_ptr: u32,
     world_ptr: u32,
+    gravity: f32,
     unk40: u32,
 }
 
@@ -46,6 +47,7 @@ where
         anim_ptrs,
         scripts,
         datetime: Some(datetime),
+        gravity: anim_info.gravity,
         defs_ptr: anim_info.defs_ptr,
         scripts_ptr: anim_info.scripts_ptr,
         world_ptr: anim_info.world_ptr,
@@ -107,11 +109,7 @@ fn read_anim_info(read: &mut CountingReader<impl Read>) -> Result<AnimInfo> {
         read.prev + 32
     )?;
     // the gravity is always the same
-    assert_that!(
-        "anim info gravity",
-        anim_info.gravity == GRAVITY,
-        read.prev + 36
-    )?;
+
     assert_that!("anim info field 40", anim_info.unk40 in [0, 1], read.prev + 40)?;
     assert_that!("anim info field 44", anim_info.zero44 == 0, read.prev + 44)?;
     assert_that!("anim info field 48", anim_info.zero48 == 0, read.prev + 48)?;
@@ -144,6 +142,7 @@ fn read_anim_info(read: &mut CountingReader<impl Read>) -> Result<AnimInfo> {
         script_count: anim_info.script_count,
         scripts_ptr: anim_info.scripts_ptr,
         world_ptr: anim_info.world_ptr,
+        gravity: anim_info.gravity,
         unk40: anim_info.unk40,
     })
 }

@@ -1,7 +1,7 @@
 use super::{AnimHeaderC, AnimInfoC, SiScriptC};
 use crate::common::anim_list::write_anim_list;
 use crate::pm::anim_def::{write_anim_def, write_anim_def_zero};
-use crate::{GRAVITY, SIGNATURE, VERSION_PM};
+use crate::{SIGNATURE, VERSION_PM};
 use log::{debug, trace};
 use mech3ax_anim_events::si_script::{size_si_script_frames, write_si_script_frames};
 use mech3ax_anim_names::pm::anim_list_rev;
@@ -67,7 +67,7 @@ fn write_anim_info(write: &mut CountingWriter<impl Write>, metadata: &AnimMetada
         msg_count: 0,
         msgs_ptr: 0,
         world_ptr: metadata.world_ptr,
-        gravity: GRAVITY,
+        gravity: metadata.gravity,
         unk40: metadata.unk40,
         zero44: 0,
         zero48: 0,

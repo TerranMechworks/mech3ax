@@ -34,6 +34,7 @@ pub struct AnimMetadata {
     // PM only
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub datetime: Option<DateTime>,
+    pub gravity: f32,
     pub defs_ptr: u32,
     // PM only
     pub scripts_ptr: u32,
