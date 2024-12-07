@@ -46,6 +46,10 @@ pub fn buf_writer<P: AsRef<Path>>(path: P) -> Result<CountingWriter<BufWriter<Fi
     ))
 }
 
+fn replace_ext(original: &str, from: &str, to: &str) -> String {
+    format!("{}{}", original.strip_prefix(from).unwrap_or(original), to)
+}
+
 fn zip_read(zip: &mut ZipArchive<impl Read + Seek>, name: &str) -> Result<Vec<u8>> {
     let mut file = zip
         .by_name(name)
@@ -125,7 +129,7 @@ pub(crate) fn reader(opts: ZipOpts) -> Result<()> {
         version,
         "Failed to write reader data",
         |zip, original, offset| {
-            let name = original.replace(".zrd", ".json");
+            let name = replace_ext(original, ".zrd", ".json");
             let value: Value = zip_json(zip, &name)?;
 
             let mut buf = CountingWriter::new(Vec::new(), offset);
@@ -194,7 +198,7 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                     Ok(buf.into_inner())
                 }
                 original => {
-                    let name = original.replace(".flt", ".json");
+                    let name = replace_ext(original, ".flt", ".json");
                     match game {
                         GameType::MW => {
                             let mut model: ModelMw = zip_json(zip, &name)?;
@@ -349,6 +353,23 @@ fn gamez_rc(opts: &ZipOpts) -> Result<()> {
     gamez::rc::write_gamez(&mut write, &gamez).context("Failed to write gamez data")
 }
 
+fn make_load_item<R: Read + Seek>(
+    zip: &mut ZipArchive<R>,
+) -> impl FnMut(mech3ax_anim::LoadItemName<'_>) -> Result<mech3ax_anim::LoadItem> + use<'_, R> {
+    use mech3ax_anim::{LoadItem, LoadItemName};
+
+    |name: LoadItemName<'_>| match name {
+        LoadItemName::AnimDef(original) => {
+            let name = format!("{}.json", original);
+            zip_json(zip, &name).map(LoadItem::AnimDef)
+        }
+        LoadItemName::SiScript(original) => {
+            let name = replace_ext(original, ".zan", ".json");
+            zip_json(zip, &name).map(LoadItem::SiScript)
+        }
+    }
+}
+
 pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
     match opts.game {
         GameType::MW => {}
@@ -361,16 +382,11 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
     let input = buf_reader(&opts.input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
 
-    use mech3ax_anim::{LoadItem, LoadItemName};
     match opts.game {
         GameType::MW => {
             let metadata = zip_json(&mut zip, "metadata.json")?;
 
-            let load_item = |name: LoadItemName<'_>| match name {
-                LoadItemName::AnimDef(name) => zip_json(&mut zip, name).map(LoadItem::AnimDef),
-                LoadItemName::SiScript(name) => zip_json(&mut zip, name).map(LoadItem::SiScript),
-            };
-
+            let load_item = make_load_item(&mut zip);
             let mut write = buf_writer(&opts.output)?;
             mech3ax_anim::mw::write_anim(&mut write, &metadata, load_item)
                 .context("Failed to write anim data")?;
@@ -378,11 +394,7 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
         GameType::PM => {
             let metadata = zip_json(&mut zip, "metadata.json")?;
 
-            let load_item = |name: LoadItemName<'_>| match name {
-                LoadItemName::AnimDef(name) => zip_json(&mut zip, name).map(LoadItem::AnimDef),
-                LoadItemName::SiScript(name) => zip_json(&mut zip, name).map(LoadItem::SiScript),
-            };
-
+            let load_item = make_load_item(&mut zip);
             let mut write = buf_writer(&opts.output)?;
             mech3ax_anim::pm::write_anim(&mut write, &metadata, load_item)
                 .context("Failed to write anim data")?;
@@ -390,11 +402,7 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
         GameType::RC => {
             let metadata = zip_json(&mut zip, "metadata.json")?;
 
-            let load_item = |name: LoadItemName<'_>| match name {
-                LoadItemName::AnimDef(name) => zip_json(&mut zip, name).map(LoadItem::AnimDef),
-                LoadItemName::SiScript(name) => zip_json(&mut zip, name).map(LoadItem::SiScript),
-            };
-
+            let load_item = make_load_item(&mut zip);
             let mut write = buf_writer(&opts.output)?;
             mech3ax_anim::rc::write_anim(&mut write, &metadata, load_item)
                 .context("Failed to write anim data")?;

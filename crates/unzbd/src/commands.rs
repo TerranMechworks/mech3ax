@@ -30,6 +30,10 @@ fn buf_writer<P: AsRef<Path>>(path: P) -> Result<BufWriter<File>> {
     ))
 }
 
+fn replace_ext(original: &str, from: &str, to: &str) -> String {
+    format!("{}{}", original.strip_prefix(from).unwrap_or(original), to)
+}
+
 fn zip_write(
     zip: &mut ZipWriter<impl Write + Seek>,
     method: CompressionMethod,
@@ -125,13 +129,13 @@ pub(crate) fn reader(opts: ReaderOpts) -> Result<()> {
         &opts.output,
         version,
         "Failed to read reader data",
-        |zip, name, data, offset| {
-            let name = name.replace(".zrd", ".json");
+        |zip, original, data, offset| {
+            let name = replace_ext(original, ".zrd", ".json");
             let mut read = CountingReader::new(Cursor::new(data));
             // translate to absolute offset
             read.offset = offset;
             let root = read_reader(&mut read)
-                .with_context(|| format!("Failed to read reader data for `{}`", name))?;
+                .with_context(|| format!("Failed to read reader data for `{}`", original))?;
 
             zip_json(zip, &name, &root)
         },
@@ -199,7 +203,7 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                     zip_json(zip, "materials.json", &materials)
                 }
                 original => {
-                    let name = original.replace(".flt", ".json");
+                    let name = replace_ext(original, ".flt", ".json");
                     match game {
                         GameType::MW => {
                             let root = mechlib::mw::read_model(&mut read).with_context(|| {
@@ -344,8 +348,17 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
     let mut zip = ZipWriter::new(output);
 
     let save_item = |item: mech3ax_anim::SaveItem<'_>| match item {
-        mech3ax_anim::SaveItem::AnimDef { name, anim_def } => zip_json(&mut zip, name, anim_def),
-        mech3ax_anim::SaveItem::SiScript { name, si_script } => zip_json(&mut zip, name, si_script),
+        mech3ax_anim::SaveItem::AnimDef { name, anim_def } => {
+            let name = format!("{}.json", name);
+            zip_json(&mut zip, &name, anim_def)
+        }
+        mech3ax_anim::SaveItem::SiScript {
+            name: original,
+            si_script,
+        } => {
+            let name = replace_ext(original, ".zan", ".json");
+            zip_json(&mut zip, &name, si_script)
+        }
     };
 
     match opts.game {

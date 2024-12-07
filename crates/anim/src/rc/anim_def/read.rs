@@ -33,21 +33,21 @@ pub(crate) fn read_anim_def(
     let fwd = Fwd::new("anim def anim root name", anim_root_name_fwd);
     let (anim_root_name, anim_root_hash) = fwd.fixup(prev + 68, &anim_def.anim_root_name)?;
 
-    let base_name = name.replace(".flt", "");
+    let base_name = name.strip_suffix(".flt").unwrap_or(&name);
     let file_name = if name != anim_root_name {
         assert_that!(
             "anim def anim root ptr",
             anim_def.anim_root_ptr != anim_def.anim_ptr,
             prev + 100
         )?;
-        format!("{}-{}-{}.json", base_name, anim_name, anim_root_name)
+        format!("{}-{}-{}", base_name, anim_name, anim_root_name)
     } else {
         assert_that!(
             "anim def anim root ptr",
             anim_def.anim_root_ptr == anim_def.anim_ptr,
             prev + 100
         )?;
-        format!("{}-{}.json", base_name, anim_name)
+        format!("{}-{}", base_name, anim_name)
     };
 
     assert_that!("anim def field 104", zero anim_def.zero104, prev + 104)?;

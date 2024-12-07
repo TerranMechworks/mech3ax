@@ -39,11 +39,11 @@ pub(crate) fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<(Ani
         prev + 108
     )?;
 
-    let base_name = name.replace(".flt", "");
+    let base_name = name.strip_suffix(".flt").unwrap_or(&name);
     let file_name = if name != anim_root_name {
-        format!("{}-{}-{}.json", base_name, anim_name, anim_root_name)
+        format!("{}-{}-{}", base_name, anim_name, anim_root_name)
     } else {
-        format!("{}-{}.json", base_name, anim_name)
+        format!("{}-{}", base_name, anim_name)
     };
 
     assert_that!("anim def field 112", zero anim_def.zero112, prev + 112)?;
