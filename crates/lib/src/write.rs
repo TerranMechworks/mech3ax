@@ -3,7 +3,7 @@ use crate::callbacks::NameBufferCb;
 use crate::error::err_to_c;
 use crate::{filename_to_string, i32_to_game};
 use eyre::{bail, eyre, Context as _, Result};
-use mech3ax_api_types::anim::{AnimDef, AnimMetadata};
+use mech3ax_api_types::anim::AnimMetadata;
 use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::gamez::mechlib::{ModelMw, ModelPm};
@@ -402,14 +402,28 @@ pub extern "C" fn write_anim(
         }
         let metadata = parse_metadata(metadata_ptr, metadata_len)?;
         let mut write = buf_writer(filename)?;
-        mech3ax_anim::mw::write_anim(&mut write, &metadata, |name| -> Result<AnimDef> {
-            let data = buffer_callback(callback, name)?;
 
-            let anim_def: AnimDef = mech3ax_exchange::from_slice(&data)
-                .with_context(|| format!("Anim data for `{}` is invalid", name))?;
-            Ok(anim_def)
-        })
-        .context("Failed to write Anim data")
+        let load_item =
+            |item_name: mech3ax_anim::LoadItemName<'_>| -> Result<mech3ax_anim::LoadItem> {
+                let name = item_name.name();
+                let data = buffer_callback(callback, name)?;
+
+                match item_name {
+                    mech3ax_anim::LoadItemName::AnimDef(name) => {
+                        mech3ax_exchange::from_slice(&data)
+                            .map(mech3ax_anim::LoadItem::AnimDef)
+                            .with_context(|| format!("Anim def for `{}` is invalid", name))
+                    }
+                    mech3ax_anim::LoadItemName::SiScript(name) => {
+                        mech3ax_exchange::from_slice(&data)
+                            .map(mech3ax_anim::LoadItem::SiScript)
+                            .with_context(|| format!("SI script for `{}` is invalid", name))
+                    }
+                }
+            };
+
+        mech3ax_anim::mw::write_anim(&mut write, &metadata, load_item)
+            .context("Failed to write Anim data")
     })
 }
 

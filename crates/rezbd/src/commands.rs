@@ -361,26 +361,42 @@ pub(crate) fn anim(opts: ZipOpts) -> Result<()> {
     let input = buf_reader(&opts.input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
 
+    use mech3ax_anim::{LoadItem, LoadItemName};
     match opts.game {
         GameType::MW => {
             let metadata = zip_json(&mut zip, "metadata.json")?;
 
+            let load_item = |name: LoadItemName<'_>| match name {
+                LoadItemName::AnimDef(name) => zip_json(&mut zip, name).map(LoadItem::AnimDef),
+                LoadItemName::SiScript(name) => zip_json(&mut zip, name).map(LoadItem::SiScript),
+            };
+
             let mut write = buf_writer(&opts.output)?;
-            mech3ax_anim::mw::write_anim(&mut write, &metadata, |name| zip_json(&mut zip, name))
+            mech3ax_anim::mw::write_anim(&mut write, &metadata, load_item)
                 .context("Failed to write anim data")?;
         }
         GameType::PM => {
             let metadata = zip_json(&mut zip, "metadata.json")?;
 
+            let load_item = |name: LoadItemName<'_>| match name {
+                LoadItemName::AnimDef(name) => zip_json(&mut zip, name).map(LoadItem::AnimDef),
+                LoadItemName::SiScript(name) => zip_json(&mut zip, name).map(LoadItem::SiScript),
+            };
+
             let mut write = buf_writer(&opts.output)?;
-            mech3ax_anim::pm::write_anim(&mut write, &metadata, |name| zip_json(&mut zip, name))
+            mech3ax_anim::pm::write_anim(&mut write, &metadata, load_item)
                 .context("Failed to write anim data")?;
         }
         GameType::RC => {
             let metadata = zip_json(&mut zip, "metadata.json")?;
 
+            let load_item = |name: LoadItemName<'_>| match name {
+                LoadItemName::AnimDef(name) => zip_json(&mut zip, name).map(LoadItem::AnimDef),
+                LoadItemName::SiScript(name) => zip_json(&mut zip, name).map(LoadItem::SiScript),
+            };
+
             let mut write = buf_writer(&opts.output)?;
-            mech3ax_anim::rc::write_anim(&mut write, &metadata, |name| zip_json(&mut zip, name))
+            mech3ax_anim::rc::write_anim(&mut write, &metadata, load_item)
                 .context("Failed to write anim data")?;
         }
         GameType::CS => unreachable!("Crimson Skies support for Anim isn't implemented yet"),

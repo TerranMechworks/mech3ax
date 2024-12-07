@@ -338,12 +338,23 @@ pub extern "C" fn read_anim(
         }
         let input = buf_reader(filename)?;
         let mut read = CountingReader::new(input);
-        let metadata = mech3ax_anim::mw::read_anim(&mut read, |name, anim_def| {
-            let data = mech3ax_exchange::to_vec(&anim_def)?;
+
+        let save_item = |item: mech3ax_anim::SaveItem<'_>| {
+            let name = item.name();
+            let data = match item {
+                mech3ax_anim::SaveItem::AnimDef { anim_def, .. } => {
+                    mech3ax_exchange::to_vec(anim_def)
+                }
+                mech3ax_anim::SaveItem::SiScript { si_script, .. } => {
+                    mech3ax_exchange::to_vec(si_script)
+                }
+            }?;
 
             buffer_callback(callback, name, &data)
-        })
-        .context("Failed to read anim data")?;
+        };
+
+        let metadata = mech3ax_anim::mw::read_anim(&mut read, save_item)
+            .context("Failed to read anim data")?;
 
         let data = mech3ax_exchange::to_vec(&metadata)?;
         let name = "metadata.bin";

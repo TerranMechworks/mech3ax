@@ -1,11 +1,11 @@
 use super::{AnimHeaderC, AnimInfoC, Mission, SiScriptC};
 use crate::common::anim_list::read_anim_list;
 use crate::pm::anim_def::{read_anim_def, read_anim_def_zero};
-use crate::{SIGNATURE, VERSION_PM};
+use crate::{SaveItem, SIGNATURE, VERSION_PM};
 use log::{debug, trace};
 use mech3ax_anim_events::si_script::read_si_script_frames;
 use mech3ax_anim_names::pm::anim_list_fwd;
-use mech3ax_api_types::anim::{AnimDef, AnimMetadata, AnimPtr, SiScript};
+use mech3ax_api_types::anim::{AnimMetadata, AnimPtr, SiScript};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Error, Rename, Result};
@@ -25,17 +25,17 @@ struct AnimInfo {
 
 pub fn read_anim<R, F, E>(
     read: &mut CountingReader<R>,
-    save_anim_def: F,
+    save_item: F,
 ) -> std::result::Result<AnimMetadata, E>
 where
     R: Read,
-    F: FnMut(&str, &AnimDef) -> std::result::Result<(), E>,
+    F: FnMut(SaveItem<'_>) -> std::result::Result<(), E>,
     E: From<std::io::Error> + From<Error>,
 {
     let datetime = read_anim_header(read)?;
     let anim_list = read_anim_list(read, anim_list_fwd)?;
     let anim_info = read_anim_info(read)?;
-    let anim_ptrs = read_anim_defs(read, anim_info.def_count, save_anim_def)?;
+    let anim_ptrs = read_anim_defs(read, anim_info.def_count, save_item)?;
     let scripts = read_anim_scripts(read, anim_info.script_count)?;
     read.assert_end()?;
 
@@ -149,11 +149,11 @@ fn read_anim_info(read: &mut CountingReader<impl Read>) -> Result<AnimInfo> {
 fn read_anim_defs<R, F, E>(
     read: &mut CountingReader<R>,
     count: u16,
-    mut save_anim_def: F,
+    mut save_item: F,
 ) -> std::result::Result<Vec<AnimPtr>, E>
 where
     R: Read,
-    F: FnMut(&str, &AnimDef) -> std::result::Result<(), E>,
+    F: FnMut(SaveItem<'_>) -> std::result::Result<(), E>,
     E: From<std::io::Error> + From<Error>,
 {
     trace!("Reading anim def 0");
@@ -175,7 +175,11 @@ where
                 .unwrap_or(&anim_ptr.file_name);
 
             debug!("Saving anim def {}: `{}`", index, file_name);
-            save_anim_def(file_name, &anim_def)?;
+            let item = SaveItem::AnimDef {
+                name: file_name,
+                anim_def: &anim_def,
+            };
+            save_item(item)?;
             Ok(anim_ptr)
         })
         .collect()

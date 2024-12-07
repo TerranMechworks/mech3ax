@@ -1,11 +1,11 @@
 use super::{AnimHeaderC, AnimInfoC, Mission, SiScriptC};
 use crate::common::anim_list::write_anim_list;
 use crate::pm::anim_def::{write_anim_def, write_anim_def_zero};
-use crate::{SIGNATURE, VERSION_PM};
+use crate::{LoadItem, LoadItemName, SIGNATURE, VERSION_PM};
 use log::{debug, trace};
 use mech3ax_anim_events::si_script::{size_si_script_frames, write_si_script_frames};
 use mech3ax_anim_names::pm::anim_list_rev;
-use mech3ax_api_types::anim::{AnimDef, AnimMetadata, AnimPtr, SiScript};
+use mech3ax_api_types::anim::{AnimMetadata, AnimPtr, SiScript};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, Error, Result};
@@ -18,18 +18,18 @@ use std::io::Write;
 pub fn write_anim<W, F, E>(
     write: &mut CountingWriter<W>,
     metadata: &AnimMetadata,
-    load_anim_def: F,
+    load_item: F,
 ) -> std::result::Result<(), E>
 where
     W: Write,
-    F: FnMut(&str) -> std::result::Result<AnimDef, E>,
+    F: FnMut(LoadItemName<'_>) -> std::result::Result<LoadItem, E>,
     E: From<std::io::Error> + From<Error>,
 {
     let datetime = metadata.datetime.as_ref();
     write_anim_header(write, datetime)?;
     write_anim_list(write, &metadata.anim_list, anim_list_rev)?;
     write_anim_info(write, metadata)?;
-    write_anim_defs(write, &metadata.anim_ptrs, load_anim_def)?;
+    write_anim_defs(write, &metadata.anim_ptrs, load_item)?;
     write_anim_scripts(write, &metadata.scripts)?;
     Ok(())
 }
@@ -95,11 +95,11 @@ fn write_anim_info(write: &mut CountingWriter<impl Write>, metadata: &AnimMetada
 fn write_anim_defs<W, F, E>(
     write: &mut CountingWriter<W>,
     anim_ptrs: &[AnimPtr],
-    mut load_anim_def: F,
+    mut load_item: F,
 ) -> std::result::Result<(), E>
 where
     W: Write,
-    F: FnMut(&str) -> std::result::Result<AnimDef, E>,
+    F: FnMut(LoadItemName<'_>) -> std::result::Result<LoadItem, E>,
     E: From<std::io::Error> + From<Error>,
 {
     trace!("Writing anim def 0");
@@ -112,7 +112,8 @@ where
             .unwrap_or(&anim_ptr.file_name);
 
         debug!("Loading anim def {}: `{}`", index, file_name);
-        let anim_def = load_anim_def(file_name)?;
+        let item_name = LoadItemName::AnimDef(file_name);
+        let anim_def = load_item(item_name)?.anim_def(file_name)?;
 
         trace!("Writing anim def {}", index);
         write_anim_def(write, &anim_def, anim_ptr)?;
