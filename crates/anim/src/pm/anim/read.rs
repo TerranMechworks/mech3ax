@@ -25,7 +25,7 @@ struct AnimInfo {
 
 pub fn read_anim<R, F, E>(
     read: &mut CountingReader<R>,
-    save_item: F,
+    mut save_item: F,
 ) -> std::result::Result<AnimMetadata, E>
 where
     R: Read,
@@ -35,17 +35,17 @@ where
     let datetime = read_anim_header(read)?;
     let anim_list = read_anim_list(read, anim_list_fwd)?;
     let anim_info = read_anim_info(read)?;
-    let anim_ptrs = read_anim_defs(read, anim_info.def_count, save_item)?;
-    let scripts = read_anim_scripts(read, anim_info.script_count)?;
+    let anim_ptrs = read_anim_defs(read, anim_info.def_count, &mut save_item)?;
+    let script_names = read_anim_scripts(read, anim_info.script_count, save_item)?;
     read.assert_end()?;
 
     Ok(AnimMetadata {
         mission: anim_info.m.to_api(),
         gravity: anim_info.gravity,
         datetime: Some(datetime),
-        anim_list,
-        scripts,
+        script_names,
         anim_ptrs,
+        anim_list,
     })
 }
 
@@ -213,7 +213,16 @@ fn read_str_zero_terminated(
     })?)
 }
 
-fn read_anim_scripts(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<SiScript>> {
+fn read_anim_scripts<R, F, E>(
+    read: &mut CountingReader<R>,
+    count: u32,
+    mut save_item: F,
+) -> std::result::Result<Vec<String>, E>
+where
+    R: Read,
+    F: FnMut(SaveItem<'_>) -> std::result::Result<(), E>,
+    E: From<std::io::Error> + From<Error>,
+{
     let scripts = (0..count)
         .map(|index| {
             trace!("Reading anim script info {}", index);
@@ -283,7 +292,9 @@ fn read_anim_scripts(read: &mut CountingReader<impl Read>, count: u32) -> Result
             let size = u32_to_usize(si.script_data_len);
             let frames = read_si_script_frames(read, size, si.frame_count)?;
 
-            Ok(SiScript {
+            let file_name = script_name_to_file_name(&script_name, &object_name);
+
+            let si_script = SiScript {
                 script_name,
                 object_name,
                 frames,
@@ -291,7 +302,26 @@ fn read_anim_scripts(read: &mut CountingReader<impl Read>, count: u32) -> Result
                 script_name_ptr: si.script_name_ptr,
                 object_name_ptr: si.object_name_ptr,
                 script_data_ptr: si.script_data_ptr,
-            })
+            };
+
+            debug!("Saving anim script {}: `{}`", index, file_name);
+            let item = SaveItem::SiScript {
+                name: &file_name,
+                si_script: &si_script,
+            };
+            save_item(item)?;
+
+            Ok(file_name)
         })
-        .collect::<Result<Vec<_>>>()
+        .collect()
+}
+
+fn script_name_to_file_name(script_name: &str, object_name: &str) -> String {
+    let script_name = script_name
+        .strip_suffix(".zan")
+        .unwrap_or(script_name)
+        .trim_start_matches(['.', '\\'])
+        .replace("\\", "-");
+
+    format!("{}-{}.zan", script_name, object_name)
 }

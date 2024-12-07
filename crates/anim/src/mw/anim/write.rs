@@ -1,5 +1,6 @@
 use super::{AnimHeaderC, AnimInfoC, Mission};
 use crate::common::anim_list::write_anim_list;
+use crate::common::si_script::load_anim_scripts;
 use crate::mw::anim_def::{write_anim_def, write_anim_def_zero};
 use crate::{LoadItem, LoadItemName, SIGNATURE, VERSION_MW};
 use log::{debug, trace};
@@ -14,7 +15,7 @@ use std::io::Write;
 pub fn write_anim<W, F, E>(
     write: &mut CountingWriter<W>,
     metadata: &AnimMetadata,
-    load_item: F,
+    mut load_item: F,
 ) -> std::result::Result<(), E>
 where
     W: Write,
@@ -24,7 +25,8 @@ where
     write_anim_header(write)?;
     write_anim_list(write, &metadata.anim_list, anim_list_rev)?;
     write_anim_info(write, metadata)?;
-    write_anim_defs(write, &metadata.anim_ptrs, load_item, &metadata.scripts)?;
+    let scripts = load_anim_scripts(&metadata.script_names, &mut load_item)?;
+    write_anim_defs(write, &metadata.anim_ptrs, load_item, &scripts)?;
     Ok(())
 }
 

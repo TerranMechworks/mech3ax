@@ -1,5 +1,6 @@
 use super::{AnimHeaderC, AnimInfoC, Mission};
 use crate::common::anim_list::read_anim_list;
+use crate::common::si_script::save_anim_scripts;
 use crate::rc::anim_def::{read_anim_def, read_anim_def_zero};
 use crate::{SaveItem, SIGNATURE, VERSION_RC};
 use log::{debug, trace};
@@ -19,7 +20,7 @@ struct AnimInfo {
 
 pub fn read_anim<R, F, E>(
     read: &mut CountingReader<R>,
-    save_item: F,
+    mut save_item: F,
 ) -> std::result::Result<AnimMetadata, E>
 where
     R: Read,
@@ -30,16 +31,17 @@ where
     let anim_list = read_anim_list(read, anim_list_fwd)?;
     let anim_info = read_anim_info(read)?;
     let mut scripts = Vec::new();
-    let anim_ptrs = read_anim_defs(read, anim_info.def_count, save_item, &mut scripts)?;
+    let anim_ptrs = read_anim_defs(read, anim_info.def_count, &mut save_item, &mut scripts)?;
     read.assert_end()?;
+    let script_names = save_anim_scripts(scripts, save_item)?;
 
     Ok(AnimMetadata {
         mission: anim_info.m.to_api(),
         gravity: anim_info.gravity,
         datetime: None,
-        anim_list,
-        scripts,
+        script_names,
         anim_ptrs,
+        anim_list,
     })
 }
 

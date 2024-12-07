@@ -5,7 +5,7 @@ use crate::{LoadItem, LoadItemName, SIGNATURE, VERSION_PM};
 use log::{debug, trace};
 use mech3ax_anim_events::si_script::{size_si_script_frames, write_si_script_frames};
 use mech3ax_anim_names::pm::anim_list_rev;
-use mech3ax_api_types::anim::{AnimMetadata, AnimPtr, SiScript};
+use mech3ax_api_types::anim::{AnimMetadata, AnimPtr};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, Error, Result};
@@ -18,7 +18,7 @@ use std::io::Write;
 pub fn write_anim<W, F, E>(
     write: &mut CountingWriter<W>,
     metadata: &AnimMetadata,
-    load_item: F,
+    mut load_item: F,
 ) -> std::result::Result<(), E>
 where
     W: Write,
@@ -29,8 +29,8 @@ where
     write_anim_header(write, datetime)?;
     write_anim_list(write, &metadata.anim_list, anim_list_rev)?;
     write_anim_info(write, metadata)?;
-    write_anim_defs(write, &metadata.anim_ptrs, load_item)?;
-    write_anim_scripts(write, &metadata.scripts)?;
+    write_anim_defs(write, &metadata.anim_ptrs, &mut load_item)?;
+    write_anim_scripts(write, &metadata.script_names, load_item)?;
     Ok(())
 }
 
@@ -56,7 +56,7 @@ fn write_anim_info(write: &mut CountingWriter<impl Write>, metadata: &AnimMetada
     let m = Mission::from_api(metadata.mission);
 
     let def_count = assert_len!(u16, metadata.anim_ptrs.len() + 1, "anim defs")?;
-    let script_count = assert_len!(u32, metadata.scripts.len(), "anim scripts")?;
+    let script_count = assert_len!(u32, metadata.script_names.len(), "anim scripts")?;
 
     let anim_info = AnimInfoC {
         zero00: 0,
@@ -146,41 +146,60 @@ fn write_str_zero_terminated(
     Ok(())
 }
 
-fn write_anim_scripts(write: &mut CountingWriter<impl Write>, scripts: &[SiScript]) -> Result<()> {
-    for (index, script) in scripts.iter().enumerate() {
-        trace!("Writing anim script info {}", index);
+fn write_anim_scripts<W, F, E>(
+    write: &mut CountingWriter<W>,
+    script_names: &[String],
+    mut load_item: F,
+) -> std::result::Result<(), E>
+where
+    W: Write,
+    F: FnMut(LoadItemName<'_>) -> std::result::Result<LoadItem, E>,
+    E: From<std::io::Error> + From<Error>,
+{
+    let scripts = script_names
+        .iter()
+        .enumerate()
+        .map(|(index, name)| {
+            debug!("Loading anim script {}: `{}`", index, name);
+            let item_name = LoadItemName::SiScript(name);
+            let script = load_item(item_name)?.si_script(name)?;
 
-        let script_name_len = assert_len!(
-            u8,
-            script.script_name.len() + 1,
-            "si script script name len"
-        )?;
-        let object_name_len = assert_len!(
-            u8,
-            script.object_name.len() + 1,
-            "si script object name len"
-        )?;
-        let spline_interp = script.spline_interp.into();
-        let frame_count = assert_len!(u32, script.frames.len(), "si script frame len")?;
-        let script_data_len = size_si_script_frames(&script.frames)
-            .ok_or_else(|| assert_with_msg!("Anim script {} frame size overflow", index))?;
+            trace!("Writing anim script info {}", index);
 
-        let si = SiScriptC {
-            script_name_ptr: script.script_name_ptr,
-            object_name_ptr: script.object_name_ptr,
-            script_name_len,
-            object_name_len,
-            pad10: 0,
-            spline_interp,
-            frame_count,
-            script_data_len,
-            script_data_ptr: script.script_data_ptr,
-        };
-        write.write_struct(&si)?;
-    }
+            let script_name_len = assert_len!(
+                u8,
+                script.script_name.len() + 1,
+                "si script script name len"
+            )?;
+            let object_name_len = assert_len!(
+                u8,
+                script.object_name.len() + 1,
+                "si script object name len"
+            )?;
+            let spline_interp = script.spline_interp.into();
+            let frame_count = assert_len!(u32, script.frames.len(), "si script frame len")?;
+            let script_data_len = size_si_script_frames(&script.frames)
+                .ok_or_else(|| assert_with_msg!("Anim script {} frame size overflow", index))?;
+
+            let si = SiScriptC {
+                script_name_ptr: script.script_name_ptr,
+                object_name_ptr: script.object_name_ptr,
+                script_name_len,
+                object_name_len,
+                pad10: 0,
+                spline_interp,
+                frame_count,
+                script_data_len,
+                script_data_ptr: script.script_data_ptr,
+            };
+            write.write_struct(&si)?;
+
+            Ok(script)
+        })
+        .collect::<std::result::Result<Vec<_>, E>>()?;
 
     let mut buf = [0u8; 256];
-    for (index, script) in scripts.iter().enumerate() {
+    for (index, script) in scripts.into_iter().enumerate() {
         trace!("Writing anim script data {}", index);
 
         write_str_zero_terminated(

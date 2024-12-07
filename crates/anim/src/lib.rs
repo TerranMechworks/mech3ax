@@ -63,7 +63,20 @@ impl LoadItem {
         match self {
             LoadItem::AnimDef(anim_def) => Ok(*anim_def),
             LoadItem::SiScript(_) => Err(mech3ax_common::assert_with_msg!(
-                "expected `{}` to be an anim def, but an SI script was returned",
+                "expected `{}` to be an anim def, but an si script was returned",
+                file_name
+            )),
+        }
+    }
+
+    pub fn si_script(
+        self,
+        file_name: &str,
+    ) -> Result<mech3ax_api_types::anim::SiScript, mech3ax_common::Error> {
+        match self {
+            LoadItem::SiScript(si_script) => Ok(si_script),
+            LoadItem::AnimDef(_) => Err(mech3ax_common::assert_with_msg!(
+                "expected `{}` to be an si script, but an anim def was returned",
                 file_name
             )),
         }
