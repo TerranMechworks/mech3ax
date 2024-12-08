@@ -1,13 +1,13 @@
-use super::super::seq_def::{read_reset_state, read_sequence_defs};
 use super::{AnimDefC, AnimDefFlags};
 use crate::common::activation_prereq::read_activ_prereqs;
 use crate::common::fixup::Fwd;
+use crate::common::seq_def::{read_reset_state_pm, read_sequence_defs, ReadEventsPm};
 use crate::common::support::{
     read_anim_refs, read_dynamic_sounds, read_lights, read_puffers, read_static_sounds,
 };
 use crate::pm::support::{read_nodes, read_objects};
 use mech3ax_anim_names::pm::{anim_name_fwd, anim_root_name_fwd};
-use mech3ax_api_types::anim::events::EventData;
+// use mech3ax_api_types::anim::events::EventData;
 use mech3ax_api_types::anim::Execution;
 use mech3ax_api_types::anim::{AnimDef, AnimPtr};
 use mech3ax_api_types::Range;
@@ -364,10 +364,10 @@ pub(crate) fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<(Ani
     };
 
     if anim_def.reset_state_ptr != 0 {
-        result.reset_state = Some(read_reset_state(read, &result, anim_def.reset_state_ptr)?);
+        result.reset_state = Some(read_reset_state_pm(read, &result)?);
     };
 
-    result.sequences = read_sequence_defs(read, &result, anim_def.seq_def_count)?;
+    result.sequences = read_sequence_defs(read, &result, anim_def.seq_def_count, ReadEventsPm)?;
 
     // TODO
     // // the Callback event checks if callbacks are allowed, but i also wanted to catch

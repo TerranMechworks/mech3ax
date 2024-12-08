@@ -1,15 +1,16 @@
-use super::super::seq_def::{read_reset_state, read_sequence_defs};
 use super::{AnimDefC, AnimDefFlags, RESET_TIME_BORK};
 use crate::common::activation_prereq::read_activ_prereqs;
 use crate::common::fixup::Fwd;
-use crate::common::seq_def::RESET_SEQUENCE;
+use crate::common::seq_def::{
+    read_reset_state_pg, read_sequence_defs, ReadEventsRc, RESET_SEQUENCE,
+};
 use crate::common::support::{
     read_anim_refs, read_dynamic_sounds, read_effects, read_lights, read_nodes, read_objects,
     read_static_sounds,
 };
 use log::debug;
 use mech3ax_anim_names::rc::{anim_name_fwd, anim_root_name_fwd};
-use mech3ax_api_types::anim::events::EventData;
+// use mech3ax_api_types::anim::events::EventData;
 use mech3ax_api_types::anim::{AnimDef, AnimPtr, Execution, SiScript};
 use mech3ax_api_types::Range;
 use mech3ax_common::assert::assert_utf8;
@@ -341,15 +342,17 @@ pub(crate) fn read_anim_def(
     };
 
     // unconditional read
-    result.reset_state = read_reset_state(
+    let read_events = ReadEventsRc { scripts };
+    result.reset_state = read_reset_state_pg(
         read,
         &result,
         anim_def.reset_state.size,
         anim_def.reset_state.pointer,
-        scripts,
+        read_events,
     )?;
 
-    result.sequences = read_sequence_defs(read, &result, anim_def.seq_def_count, scripts)?;
+    let read_events = ReadEventsRc { scripts };
+    result.sequences = read_sequence_defs(read, &result, anim_def.seq_def_count, read_events)?;
 
     // TODO
     // // the Callback event checks if callbacks are allowed, but i also wanted to catch

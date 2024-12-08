@@ -1,8 +1,9 @@
-use super::super::seq_def::{write_reset_state, write_sequence_defs};
 use super::{AnimDefC, AnimDefFlags};
 use crate::common::activation_prereq::write_activ_prereqs;
 use crate::common::fixup::Rev;
-use crate::common::seq_def::{SeqDefInfoC, RESET_SEQUENCE};
+use crate::common::seq_def::{
+    write_reset_state_pg, write_sequence_defs, SeqDefInfoC, WriteEventsMw, RESET_SEQUENCE,
+};
 use crate::common::support::{
     write_anim_refs, write_dynamic_sounds, write_lights, write_nodes, write_objects, write_puffers,
     write_static_sounds,
@@ -226,8 +227,10 @@ pub(crate) fn write_anim_def(
     if let Some(anim_refs) = &anim_def.anim_refs {
         write_anim_refs(write, anim_refs)?;
     }
-    write_reset_state(write, anim_def, reset_state_size, scripts)?;
-    write_sequence_defs(write, anim_def, scripts)?;
+    let write_events = WriteEventsMw { scripts };
+    write_reset_state_pg(write, anim_def, reset_state_size, write_events)?;
+    let write_events = WriteEventsMw { scripts };
+    write_sequence_defs(write, anim_def, write_events)?;
 
     Ok(())
 }

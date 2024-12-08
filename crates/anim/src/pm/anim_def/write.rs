@@ -1,4 +1,3 @@
-use super::super::seq_def::{write_reset_state, write_sequence_defs};
 use super::{AnimDefC, AnimDefFlags};
 use crate::common::activation_prereq::write_activ_prereqs;
 use crate::common::fixup::Rev;
@@ -7,6 +6,7 @@ use crate::common::support::{
 };
 use crate::pm::support::{write_nodes, write_objects};
 // use mech3ax_api_types::anim::events::EventData;
+use crate::common::seq_def::{write_reset_state_pm, write_sequence_defs, WriteEventsPm};
 use mech3ax_anim_names::pm::{anim_name_rev, anim_root_name_rev};
 use mech3ax_api_types::anim::{AnimDef, AnimPtr, Execution};
 use mech3ax_common::io_ext::CountingWriter;
@@ -199,9 +199,10 @@ pub(crate) fn write_anim_def(
         write_anim_refs(write, anim_refs)?;
     }
     if let Some(reset_state) = &anim_def.reset_state {
-        write_reset_state(write, anim_def, reset_state)?;
+        write_reset_state_pm(write, anim_def, reset_state)?;
     }
-    write_sequence_defs(write, anim_def)?;
+    let write_events = WriteEventsPm;
+    write_sequence_defs(write, anim_def, write_events)?;
 
     Ok(())
 }
