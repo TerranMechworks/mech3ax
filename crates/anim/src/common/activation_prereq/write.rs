@@ -65,18 +65,13 @@ fn write_activ_prereq_object(
 
     let name = Ascii::from_str_padded(&prereq.name);
 
-    let active = if is_pm {
-        if prereq.active {
-            3
-        } else {
-            0
+    let active = if prereq.active {
+        match is_pm {
+            true => 3,
+            false => 1,
         }
     } else {
-        if prereq.active {
-            1
-        } else {
-            0
-        }
+        0
     };
 
     let prereq = ActivPrereqObjC {
@@ -97,18 +92,13 @@ fn write_activ_prereq_parent(
 
     let name = Ascii::from_str_padded(&prereq.name);
 
-    let active = if is_pm {
-        if prereq.active {
-            2
-        } else {
-            0
+    let active = if prereq.active {
+        match is_pm {
+            true => 2,
+            false => 1,
         }
     } else {
-        if prereq.active {
-            1
-        } else {
-            0
-        }
+        0
     };
 
     let prereq = ActivPrereqObjC {
