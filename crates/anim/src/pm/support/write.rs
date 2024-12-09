@@ -19,11 +19,18 @@ pub(crate) fn write_objects(
         trace!("Writing anim def object {}", index);
 
         let name = Ascii::from_str_node_name(&object.name);
-        let unk = Bytes::from_slice(&object.unk);
+
+        // TODO
+        let (unk, bytes) = object.unk.split_last_chunk().unwrap_or((&[], &[0, 0]));
+        let flags = u16::from_le_bytes(*bytes);
+        let unk = Bytes::from_slice(unk);
+
         let object_c = ObjectRefC {
             name,
             zero32: 0,
-            mone36: u32::MAX,
+            ptr: Ptr::INVALID,
+            flags,
+            root_idx: 0,
             unk,
         };
         write.write_struct(&object_c)?;
@@ -40,9 +47,13 @@ pub(crate) fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NodeR
     for (index, node) in nodes.iter().enumerate_one() {
         trace!("Writing anim def node {}", index);
 
+        // TODO
+        let flags = node.ptr as _;
+
         let name = Ascii::from_str_node_name(&node.name);
         let node_c = NodeRefC {
-            zero00: node.ptr,
+            flags,
+            root_idx: 0,
             name,
             zero36: 0,
             ptr: Ptr::INVALID,

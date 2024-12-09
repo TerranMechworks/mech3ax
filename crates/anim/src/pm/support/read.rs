@@ -24,10 +24,20 @@ pub(crate) fn read_objects(
     )?;
     assert_that!(
         "anim def object zero field 36",
-        object_c.mone36 == u32::MAX,
+        object_c.ptr == Ptr::INVALID,
         read.prev + 36
     )?;
-    assert_that!("anim def object zero unk", zero object_c.unk, read.prev + 0)?;
+    assert_that!(
+        "anim def object zero field 40",
+        object_c.flags == 0,
+        read.prev + 40
+    )?;
+    assert_that!(
+        "anim def object zero field 42",
+        object_c.root_idx == 0,
+        read.prev + 42
+    )?;
+    assert_that!("anim def object zero field 44", zero object_c.unk, read.prev + 44)?;
 
     let mut seen = HashSet::with_capacity(usize::from(count));
     (1..count)
@@ -49,13 +59,29 @@ pub(crate) fn read_objects(
             )?;
             assert_that!(
                 "anim def object field 36",
-                object_c.mone36 == u32::MAX,
+                object_c.ptr == Ptr::INVALID,
                 read.prev + 36
             )?;
+            // assert_that!(
+            //     "anim def object field 40",
+            //     object_c.flags == 0,
+            //     read.prev + 40
+            // )?;
+            assert_that!(
+                "anim def object field 42",
+                object_c.root_idx == 0,
+                read.prev + 42
+            )?;
+
             // TODO: this is cheating, but i have no idea how to interpret this data.
             // sometimes it's sensible, e.g. floats. other times, it seems like random
             // garbage.
-            let unk = object_c.unk.to_vec();
+            let mut unk = object_c.unk.to_vec();
+
+            let [a, b] = object_c.flags.to_le_bytes();
+            unk.push(a);
+            unk.push(b);
+
             Ok(ObjectRef { name, unk })
         })
         .collect()
@@ -68,8 +94,13 @@ pub(crate) fn read_nodes(read: &mut CountingReader<impl Read>, count: u8) -> Res
 
     assert_that!(
         "anim def node zero field 00",
-        node_c.zero00 == 0,
+        node_c.flags == 0,
         read.prev + 0
+    )?;
+    assert_that!(
+        "anim def node zero field 02",
+        node_c.root_idx == 0,
+        read.prev + 2
     )?;
     assert_that!("anim def node zero name", zero node_c.name, read.prev + 4)?;
     assert_that!(
@@ -78,7 +109,7 @@ pub(crate) fn read_nodes(read: &mut CountingReader<impl Read>, count: u8) -> Res
         read.prev + 36
     )?;
     assert_that!(
-        "anim def node zero pointer",
+        "anim def node zero field 40",
         node_c.ptr == Ptr::INVALID,
         read.prev + 40
     )?;
@@ -89,10 +120,12 @@ pub(crate) fn read_nodes(read: &mut CountingReader<impl Read>, count: u8) -> Res
             trace!("Reading anim def node {}", index);
             let node_c: NodeRefC = read.read_struct()?;
 
+            // TODO
+            // assert_that!("anim def node field 00", node_c.flags == 0, read.prev + 0)?;
             assert_that!(
-                "anim def node field 00",
-                node_c.zero00 < u32::from(u16::MAX),
-                read.prev + 0
+                "anim def node field 02",
+                node_c.root_idx == 0,
+                read.prev + 2
             )?;
             let name = assert_utf8("anim def node name", read.prev + 0, || {
                 node_c.name.to_str_node_name()
@@ -110,7 +143,7 @@ pub(crate) fn read_nodes(read: &mut CountingReader<impl Read>, count: u8) -> Res
 
             Ok(NodeRef {
                 name,
-                ptr: node_c.zero00,
+                ptr: node_c.flags as _, // TODO
             })
         })
         .collect()

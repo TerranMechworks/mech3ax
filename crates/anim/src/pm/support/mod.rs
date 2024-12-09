@@ -11,8 +11,10 @@ pub(crate) use write::{write_nodes, write_objects};
 struct ObjectRefC {
     name: Ascii<32>, // 00
     zero32: u32,     // 32
-    mone36: u32,     // 36
-    unk: Bytes<52>,  // 40
+    ptr: Ptr,        // 36
+    flags: u16,      // 40
+    root_idx: u16,   // 42,
+    unk: Bytes<48>,  // 44
 }
 impl_as_bytes!(ObjectRefC, 92);
 
@@ -22,7 +24,9 @@ impl Default for ObjectRefC {
         Self {
             name: Ascii::default(),
             zero32: 0,
-            mone36: u32::MAX,
+            ptr: Ptr::INVALID,
+            flags: 0,
+            root_idx: 0,
             unk: Bytes::default(),
         }
     }
@@ -31,7 +35,8 @@ impl Default for ObjectRefC {
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct NodeRefC {
-    zero00: u32,     // 00
+    flags: u16,      // 00
+    root_idx: u16,   // 02,
     name: Ascii<32>, // 04
     zero36: u32,     // 36
     ptr: Ptr,        // 40
@@ -42,7 +47,8 @@ impl Default for NodeRefC {
     #[inline]
     fn default() -> Self {
         Self {
-            zero00: 0,
+            flags: 0,
+            root_idx: 0,
             name: Ascii::default(),
             zero36: 0,
             ptr: Ptr::INVALID,
