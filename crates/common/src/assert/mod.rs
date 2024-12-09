@@ -262,6 +262,41 @@ where
     })
 }
 
+fn struct_cmp<S>(name: &str, pos: usize, expected: &S, actual: &S) -> AssertionError
+where
+    S: mech3ax_types::AsBytes + Default,
+{
+    let expected = expected.as_bytes();
+    let actual = actual.as_bytes();
+    assert_eq!(expected.len(), actual.len(), "struct bytes len");
+    let rel_pos = expected
+        .iter()
+        .copied()
+        .zip(actual.iter().copied())
+        .position(|(a, b)| a != b)
+        .unwrap_or(0);
+    let abs_pos = pos + rel_pos;
+
+    let type_name = std::any::type_name::<S>();
+    AssertionError(format!(
+        "Expected `{}` to be `{}::default()`, mismatch position {}/{} (at {})",
+        name, type_name, rel_pos, abs_pos, pos,
+    ))
+}
+
+#[inline]
+pub fn is_default<S>(name: &str, pos: usize, v: &S) -> Result<()>
+where
+    S: mech3ax_types::AsBytes + Default + PartialEq,
+{
+    let default = S::default();
+    if v == &default {
+        Ok(())
+    } else {
+        Err(struct_cmp(name, pos, &default, v))
+    }
+}
+
 #[macro_export]
 macro_rules! assert_that {
     ($name:expr, $expected_min:tt <= $($actual:tt).+ <= $expected_max:expr, $pos:expr) => {
@@ -311,6 +346,9 @@ macro_rules! assert_that {
     };
     ($name:expr, flags $actual:expr, $pos:expr) => {
         $crate::assert::is_bitflags($name, $pos, $actual)
+    };
+    ($name:expr, default $actual:expr, $pos:expr) => {
+        $crate::assert::is_default($name, $pos, &$actual)
     };
 }
 

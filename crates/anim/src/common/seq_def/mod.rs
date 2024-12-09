@@ -12,7 +12,7 @@ pub(crate) use write::{
     WriteEventsRc,
 };
 
-#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
 pub(crate) struct SeqDefInfoC {
     pub(crate) name: Ascii<32>,   // 00
