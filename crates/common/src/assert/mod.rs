@@ -23,7 +23,7 @@ impl std::error::Error for AssertionError {}
 type Result<T> = ::std::result::Result<T, AssertionError>;
 
 #[inline]
-pub fn is_equal_to<T>(name: &str, expected: T, actual: T, pos: usize) -> Result<()>
+pub fn is_equal_to<T>(name: &str, pos: usize, expected: T, actual: T) -> Result<()>
 where
     T: PartialEq + fmt::Debug,
 {
@@ -39,7 +39,7 @@ where
 }
 
 #[inline]
-pub fn is_not_equal_to<T>(name: &str, expected: T, actual: T, pos: usize) -> Result<()>
+pub fn is_not_equal_to<T>(name: &str, pos: usize, expected: T, actual: T) -> Result<()>
 where
     T: PartialEq + fmt::Debug,
 {
@@ -52,7 +52,7 @@ where
 }
 
 #[inline]
-pub fn is_less_than<T>(name: &str, expected: T, actual: T, pos: usize) -> Result<()>
+pub fn is_less_than<T>(name: &str, pos: usize, expected: T, actual: T) -> Result<()>
 where
     T: PartialOrd + fmt::Debug,
 {
@@ -68,7 +68,7 @@ where
 }
 
 #[inline]
-pub fn is_less_than_or_equal_to<T>(name: &str, expected: T, actual: T, pos: usize) -> Result<()>
+pub fn is_less_than_or_equal_to<T>(name: &str, pos: usize, expected: T, actual: T) -> Result<()>
 where
     T: PartialOrd + fmt::Debug,
 {
@@ -84,7 +84,7 @@ where
 }
 
 #[inline]
-pub fn is_greater_than<T>(name: &str, expected: T, actual: T, pos: usize) -> Result<()>
+pub fn is_greater_than<T>(name: &str, pos: usize, expected: T, actual: T) -> Result<()>
 where
     T: PartialOrd + fmt::Debug,
 {
@@ -100,7 +100,7 @@ where
 }
 
 #[inline]
-pub fn is_greater_than_or_equal_to<T>(name: &str, expected: T, actual: T, pos: usize) -> Result<()>
+pub fn is_greater_than_or_equal_to<T>(name: &str, pos: usize, expected: T, actual: T) -> Result<()>
 where
     T: PartialOrd + fmt::Debug,
 {
@@ -118,10 +118,10 @@ where
 #[inline]
 pub fn is_between<T>(
     name: &str,
+    pos: usize,
     expected_min: T,
     expected_max: T,
     actual: T,
-    pos: usize,
 ) -> Result<()>
 where
     T: PartialOrd + fmt::Debug,
@@ -138,7 +138,7 @@ where
 }
 
 #[inline]
-pub fn is_in_slice<T>(name: &str, haystack: &[T], needle: &T, pos: usize) -> Result<()>
+pub fn is_in_slice<T>(name: &str, pos: usize, haystack: &[T], needle: &T) -> Result<()>
 where
     T: PartialEq + fmt::Debug,
 {
@@ -154,7 +154,7 @@ where
 }
 
 #[inline]
-pub fn is_in_range<T>(name: &str, start: T, end: T, needle: T, pos: usize) -> Result<()>
+pub fn is_in_range<T>(name: &str, pos: usize, start: T, end: T, needle: T) -> Result<()>
 where
     T: Copy + PartialOrd + fmt::Display,
 {
@@ -199,7 +199,7 @@ where
 }
 
 #[inline]
-pub fn is_all_zero(name: &str, buf: &[u8], pos: usize) -> Result<()> {
+pub fn is_all_zero(name: &str, pos: usize, buf: &[u8]) -> Result<()> {
     let mut iter = buf.iter().copied();
     if let Some(index) = iter.position(|v| v != 0) {
         let value = buf[index];
@@ -217,7 +217,7 @@ pub fn is_all_zero(name: &str, buf: &[u8], pos: usize) -> Result<()> {
 }
 
 #[inline]
-pub fn is_bool<R>(name: &str, v: Bool<R>, pos: usize) -> Result<bool>
+pub fn is_bool<R>(name: &str, pos: usize, v: Bool<R>) -> Result<bool>
 where
     R: PrimitiveRepr,
     bool: SupportsMaybe<R>,
@@ -232,7 +232,7 @@ where
 }
 
 #[inline]
-pub fn is_bitflags<R, F>(name: &str, v: Maybe<R, F>, pos: usize) -> Result<F>
+pub fn is_bitflags<R, F>(name: &str, pos: usize, v: Maybe<R, F>) -> Result<F>
 where
     R: PrimitiveRepr,
     F: Bitflags<R>,
@@ -247,7 +247,7 @@ where
 }
 
 #[inline]
-pub fn is_enum<R, E>(name: &str, v: Maybe<R, E>, pos: usize) -> Result<E>
+pub fn is_enum<R, E>(name: &str, pos: usize, v: Maybe<R, E>) -> Result<E>
 where
     R: PrimitiveRepr,
     E: PrimitiveEnum<R>,
@@ -265,52 +265,52 @@ where
 #[macro_export]
 macro_rules! assert_that {
     ($name:expr, $expected_min:tt <= $($actual:tt).+ <= $expected_max:expr, $pos:expr) => {
-        $crate::assert::is_between($name, &$expected_min, &$expected_max, &$($actual).+, $pos)
+        $crate::assert::is_between($name, $pos, &$expected_min, &$expected_max, &$($actual).+)
     };
     ($name:expr, -$expected_min:tt <= $($actual:tt).+ <= $expected_max:expr, $pos:expr) => {
-        $crate::assert::is_between($name, &-$expected_min, &$expected_max, &$($actual).+, $pos)
+        $crate::assert::is_between($name, $pos, &-$expected_min, &$expected_max, &$($actual).+)
     };
     ($name:expr, $($actual:tt).+ == $expected:expr, $pos:expr) => {
-        $crate::assert::is_equal_to($name, &$expected, &$($actual).+, $pos)
+        $crate::assert::is_equal_to($name, $pos, &$expected, &$($actual).+)
     };
     ($name:expr, $($actual:tt).+ eq $expected:expr, $pos:expr) => {
-        $crate::assert::is_equal_to($name, $expected, $($actual).+.as_str(), $pos)
+        $crate::assert::is_equal_to($name, $pos, $expected, $($actual).+.as_str())
     };
     ($name:expr, $($actual:tt).+ != $expected:expr, $pos:expr) => {
-        $crate::assert::is_not_equal_to($name, &$expected, &$($actual).+, $pos)
+        $crate::assert::is_not_equal_to($name, $pos, &$expected, &$($actual).+)
     };
     ($name:expr, &$($actual:tt).+ != $expected:expr, $pos:expr) => {
-        $crate::assert::is_not_equal_to($name, &$expected, &$($actual).+, $pos)
+        $crate::assert::is_not_equal_to($name, $pos, &$expected, &$($actual).+)
     };
     ($name:expr, $($actual:tt).+ < $expected:expr, $pos:expr) => {
-        $crate::assert::is_less_than($name, &$expected, &$($actual).+, $pos)
+        $crate::assert::is_less_than($name, $pos, &$expected, &$($actual).+)
     };
     ($name:expr, $($actual:tt).+ <= $expected:expr, $pos:expr) => {
-        $crate::assert::is_less_than_or_equal_to($name, &$expected, &$($actual).+, $pos)
+        $crate::assert::is_less_than_or_equal_to($name, $pos, &$expected, &$($actual).+)
     };
     ($name:expr, $($actual:tt).+ > $expected:expr, $pos:expr) => {
-        $crate::assert::is_greater_than($name, &$expected, &$($actual).+, $pos)
+        $crate::assert::is_greater_than($name, $pos, &$expected, &$($actual).+)
     };
     ($name:expr, $($actual:tt).+ >= $expected:expr, $pos:expr) => {
-        $crate::assert::is_greater_than_or_equal_to($name, &$expected, &$($actual).+, $pos)
+        $crate::assert::is_greater_than_or_equal_to($name, $pos, &$expected, &$($actual).+)
     };
     ($name:expr, $($actual:tt).+ in ($start:literal..$end:literal), $pos:expr) => {
-        $crate::assert::is_in_range($name, $start, $end, $($actual).+, $pos)
+        $crate::assert::is_in_range($name, $pos, $start, $end, $($actual).+)
     };
     ($name:expr, $($actual:tt).+ in $haystack:expr, $pos:expr) => {
-        $crate::assert::is_in_slice($name, &$haystack, &$($actual).+, $pos)
+        $crate::assert::is_in_slice($name, $pos, &$haystack, &$($actual).+)
     };
     ($name:expr, bool $actual:expr, $pos:expr) => {
-        $crate::assert::is_bool($name, $actual, $pos)
+        $crate::assert::is_bool($name, $pos, $actual)
     };
     ($name:expr, enum $actual:expr, $pos:expr) => {
-        $crate::assert::is_enum($name, $actual, $pos)
+        $crate::assert::is_enum($name, $pos, $actual)
     };
     ($name:expr, zero $actual:expr, $pos:expr) => {
-        $crate::assert::is_all_zero($name, &$actual, $pos)
+        $crate::assert::is_all_zero($name, $pos, &$actual)
     };
     ($name:expr, flags $actual:expr, $pos:expr) => {
-        $crate::assert::is_bitflags($name, $actual, $pos)
+        $crate::assert::is_bitflags($name, $pos, $actual)
     };
 }
 
