@@ -13,4 +13,4 @@ mod serde;
 pub mod zmap;
 
 pub use crate::serde::bytes::Bytes;
-pub use common::{Color, Matrix, Quaternion, Range, Vec3};
+pub use common::{AffineMatrix, Color, Matrix, Quaternion, Range, Vec3};

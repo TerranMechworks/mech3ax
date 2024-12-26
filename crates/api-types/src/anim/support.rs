@@ -41,8 +41,16 @@ impl AnimRef {
 #[dotnet(val_struct)]
 pub struct ObjectRef {
     pub name: String,
+    /// Ignored in PM.
+    pub ptr: u32,
+    /// `u16` in PM.
+    pub flags: u32,
+    /// Ignored in PM.
+    pub flags_merged: u32,
+    /// The affine matrix cannot be serializes as is, because it contains bogus
+    /// floats/values.
     #[serde(with = "bytes")]
-    pub unk: Vec<u8>,
+    pub affine: Vec<u8>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]

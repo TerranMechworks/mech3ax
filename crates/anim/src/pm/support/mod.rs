@@ -2,19 +2,20 @@ mod read;
 mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_types::{impl_as_bytes, Ascii, Bytes, Ptr};
+use mech3ax_api_types::AffineMatrix;
+use mech3ax_types::{impl_as_bytes, Ascii, Hex, Ptr};
 pub(crate) use read::{read_nodes, read_objects};
 pub(crate) use write::{write_nodes, write_objects};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct ObjectRefC {
-    name: Ascii<32>, // 00
-    zero32: u32,     // 32
-    ptr: Ptr,        // 36
-    flags: u16,      // 40
-    root_idx: u16,   // 42,
-    unk: Bytes<48>,  // 44
+    name: Ascii<32>,      // 00
+    zero32: u32,          // 32
+    ptr: Ptr,             // 36
+    flags: Hex<u16>,      // 40
+    root_idx: u16,        // 42,
+    affine: AffineMatrix, // 44
 }
 impl_as_bytes!(ObjectRefC, 92);
 
@@ -25,9 +26,9 @@ impl Default for ObjectRefC {
             name: Ascii::default(),
             zero32: 0,
             ptr: Ptr::INVALID,
-            flags: 0,
+            flags: Hex(0),
             root_idx: 0,
-            unk: Bytes::default(),
+            affine: AffineMatrix::ZERO,
         }
     }
 }

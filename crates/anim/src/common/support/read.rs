@@ -7,12 +7,18 @@ use mech3ax_api_types::anim::{
     AnimRef, AnimRefCallAnimation, AnimRefCallObjectConnector, DynamicSoundRef, EffectRef,
     LightRef, NodeRef, ObjectRef, PufferRef, StaticSoundRef,
 };
+use mech3ax_api_types::AffineMatrix;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Result};
 use mech3ax_types::Ptr;
 use std::collections::HashSet;
 use std::io::Read;
+
+pub(crate) fn affine_to_bin(affine: &AffineMatrix) -> Vec<u8> {
+    let bytes: &[u8; 48] = bytemuck::must_cast_ref(affine);
+    bytes.to_vec()
+}
 
 pub(crate) fn read_objects(
     read: &mut CountingReader<impl Read>,
@@ -28,7 +34,26 @@ pub(crate) fn read_objects(
         object_c.zero32 == 0,
         read.prev + 32
     )?;
-    assert_that!("anim def object zero unk", zero object_c.unk, read.prev + 0)?;
+    assert_that!(
+        "anim def object zero ptr",
+        object_c.ptr == Ptr::NULL,
+        read.prev + 36
+    )?;
+    assert_that!(
+        "anim def object zero flags",
+        object_c.flags == 0,
+        read.prev + 40
+    )?;
+    assert_that!(
+        "anim def object zero flags merged",
+        object_c.flags_merged == 0,
+        read.prev + 44
+    )?;
+    assert_that!(
+        "anim def object zero affine",
+        object_c.affine == AffineMatrix::ZERO,
+        read.prev + 48
+    )?;
 
     let mut seen = HashSet::with_capacity(usize::from(count));
     (1..count)
@@ -53,11 +78,15 @@ pub(crate) fn read_objects(
                 object_c.zero32 == 0,
                 read.prev + 32
             )?;
-            // TODO: this is cheating, but i have no idea how to interpret this data.
-            // sometimes it's sensible, e.g. floats. other times, it seems like random
-            // garbage.
-            let unk = object_c.unk.to_vec();
-            Ok(ObjectRef { name, unk })
+            let affine = affine_to_bin(&object_c.affine);
+
+            Ok(ObjectRef {
+                name,
+                ptr: object_c.ptr.0,
+                flags: object_c.flags.0,
+                flags_merged: object_c.flags_merged.0,
+                affine,
+            })
         })
         .collect()
 }

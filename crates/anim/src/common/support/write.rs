@@ -7,10 +7,19 @@ use mech3ax_api_types::anim::{
     AnimRef, AnimRefCallAnimation, AnimRefCallObjectConnector, DynamicSoundRef, EffectRef,
     LightRef, NodeRef, ObjectRef, PufferRef, StaticSoundRef,
 };
+use mech3ax_api_types::AffineMatrix;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::Result;
-use mech3ax_types::{Ascii, Bytes, EnumerateEx as _, Ptr};
+use mech3ax_types::{Ascii, Bytes, EnumerateEx as _, Hex, Ptr};
 use std::io::Write;
+
+pub(crate) fn bin_to_affine(slice: &[u8]) -> AffineMatrix {
+    let src = Bytes::<48>::from_slice(slice);
+    let mut v = AffineMatrix::default();
+    let bytes: &mut [u8; 48] = bytemuck::must_cast_mut(&mut v);
+    bytes.copy_from_slice(&src);
+    v
+}
 
 pub(crate) fn write_objects(
     write: &mut CountingWriter<impl Write>,
@@ -30,11 +39,15 @@ pub(crate) fn write_objects(
         } else {
             Ascii::from_str_node_name(&object.name)
         };
-        let unk = Bytes::from_slice(&object.unk);
+        let affine = bin_to_affine(&object.affine);
+
         let object_c = ObjectRefC {
             name,
             zero32: 0,
-            unk,
+            ptr: Ptr(object.ptr),
+            flags: Hex(object.flags),
+            flags_merged: Hex(object.flags_merged),
+            affine,
         };
         write.write_struct(&object_c)?;
     }

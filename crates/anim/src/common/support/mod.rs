@@ -2,14 +2,15 @@ mod read;
 mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_types::{impl_as_bytes, primitive_enum, Ascii, Bytes, Maybe, Ptr};
+use mech3ax_api_types::AffineMatrix;
+use mech3ax_types::{impl_as_bytes, primitive_enum, Ascii, Hex, Maybe, Ptr};
 pub(crate) use read::{
-    read_anim_refs, read_dynamic_sounds, read_effects, read_lights, read_nodes, read_objects,
-    read_puffers, read_static_sounds,
+    affine_to_bin, read_anim_refs, read_dynamic_sounds, read_effects, read_lights, read_nodes,
+    read_objects, read_puffers, read_static_sounds,
 };
 pub(crate) use write::{
-    write_anim_refs, write_dynamic_sounds, write_effects, write_lights, write_nodes, write_objects,
-    write_puffers, write_static_sounds,
+    bin_to_affine, write_anim_refs, write_dynamic_sounds, write_effects, write_lights, write_nodes,
+    write_objects, write_puffers, write_static_sounds,
 };
 
 /// "Object" references are a list of "objects" (usually Object3D nodes) that
@@ -22,9 +23,12 @@ pub(crate) use write::{
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
 struct ObjectRefC {
-    name: Ascii<32>, // 00
-    zero32: u32,     // 32
-    unk: Bytes<60>,  // 36
+    name: Ascii<32>,        // 00
+    zero32: u32,            // 32
+    ptr: Ptr,               // 36
+    flags: Hex<u32>,        // 40
+    flags_merged: Hex<u32>, // 44,
+    affine: AffineMatrix,   // 48
 }
 impl_as_bytes!(ObjectRefC, 96);
 

@@ -1,6 +1,8 @@
 use super::{NodeRefC, ObjectRefC};
+use crate::common::support::affine_to_bin;
 use log::trace;
 use mech3ax_api_types::anim::{NodeRef, ObjectRef};
+use mech3ax_api_types::AffineMatrix;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Result};
@@ -23,21 +25,25 @@ pub(crate) fn read_objects(
         read.prev + 32
     )?;
     assert_that!(
-        "anim def object zero field 36",
+        "anim def object zero ptr",
         object_c.ptr == Ptr::INVALID,
         read.prev + 36
     )?;
     assert_that!(
-        "anim def object zero field 40",
+        "anim def object zero flags",
         object_c.flags == 0,
         read.prev + 40
     )?;
     assert_that!(
-        "anim def object zero field 42",
+        "anim def object zero root index",
         object_c.root_idx == 0,
         read.prev + 42
     )?;
-    assert_that!("anim def object zero field 44", zero object_c.unk, read.prev + 44)?;
+    assert_that!(
+        "anim def object zero affine",
+        object_c.affine == AffineMatrix::ZERO,
+        read.prev + 44
+    )?;
 
     let mut seen = HashSet::with_capacity(usize::from(count));
     (1..count)
@@ -58,31 +64,25 @@ pub(crate) fn read_objects(
                 read.prev + 32
             )?;
             assert_that!(
-                "anim def object field 36",
+                "anim def object ptr",
                 object_c.ptr == Ptr::INVALID,
                 read.prev + 36
             )?;
-            // assert_that!(
-            //     "anim def object field 40",
-            //     object_c.flags == 0,
-            //     read.prev + 40
-            // )?;
             assert_that!(
-                "anim def object field 42",
+                "anim def object root index",
                 object_c.root_idx == 0,
                 read.prev + 42
             )?;
+            // the affine matrix can contain invalid floats
+            let affine = affine_to_bin(&object_c.affine);
 
-            // TODO: this is cheating, but i have no idea how to interpret this data.
-            // sometimes it's sensible, e.g. floats. other times, it seems like random
-            // garbage.
-            let mut unk = object_c.unk.to_vec();
-
-            let [a, b] = object_c.flags.to_le_bytes();
-            unk.push(a);
-            unk.push(b);
-
-            Ok(ObjectRef { name, unk })
+            Ok(ObjectRef {
+                name,
+                ptr: 0, // ignored
+                flags: object_c.flags.0.into(),
+                flags_merged: 0, // ignored
+                affine,
+            })
         })
         .collect()
 }

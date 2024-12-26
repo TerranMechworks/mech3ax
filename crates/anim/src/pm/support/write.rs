@@ -1,9 +1,10 @@
 use super::{NodeRefC, ObjectRefC};
+use crate::common::support::bin_to_affine;
 use log::trace;
 use mech3ax_api_types::anim::{NodeRef, ObjectRef};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::Result;
-use mech3ax_types::{Ascii, Bytes, EnumerateEx as _, Ptr};
+use mech3ax_types::{Ascii, EnumerateEx as _, Hex, Ptr};
 use std::io::Write;
 
 pub(crate) fn write_objects(
@@ -19,11 +20,9 @@ pub(crate) fn write_objects(
         trace!("Writing anim def object {}", index);
 
         let name = Ascii::from_str_node_name(&object.name);
-
-        // TODO
-        let (unk, bytes) = object.unk.split_last_chunk().unwrap_or((&[], &[0, 0]));
-        let flags = u16::from_le_bytes(*bytes);
-        let unk = Bytes::from_slice(unk);
+        // truncate flags
+        let flags = Hex(object.flags as _);
+        let affine = bin_to_affine(&object.affine);
 
         let object_c = ObjectRefC {
             name,
@@ -31,7 +30,7 @@ pub(crate) fn write_objects(
             ptr: Ptr::INVALID,
             flags,
             root_idx: 0,
-            unk,
+            affine,
         };
         write.write_struct(&object_c)?;
     }
