@@ -30,7 +30,7 @@ impl HexDebug for u32 {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, AnyBitPattern, TransparentWrapper)]
+#[derive(Clone, Copy, PartialEq, Eq, AnyBitPattern, TransparentWrapper, Default)]
 #[repr(transparent)]
 pub struct Hex<T: HexDebug>(pub T);
 
@@ -41,5 +41,12 @@ impl<T: HexDebug> fmt::Debug for Hex<T> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         HexDebug::fmt(&self.0, f)
+    }
+}
+
+impl<T: PartialEq + HexDebug> PartialEq<T> for Hex<T> {
+    #[inline]
+    fn eq(&self, other: &T) -> bool {
+        self.0.eq(other)
     }
 }
