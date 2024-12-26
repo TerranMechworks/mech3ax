@@ -10,7 +10,7 @@ pub use activation_prereq::{
 };
 pub use anim_def::{
     AnimActivation, AnimDef, AnimDefFile, AnimPtr, Execution, NamePad, NamePtr, NamePtrFlags,
-    ResetState, SeqActivation, SeqDef,
+    ResetState, SeqDef, SeqDefState,
 };
 use mech3ax_metadata_proc_macro::{Enum, Struct};
 use mech3ax_timestamp::DateTime;

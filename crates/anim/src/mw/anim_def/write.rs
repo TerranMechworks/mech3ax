@@ -2,7 +2,7 @@ use super::{AnimDefC, AnimDefFlags};
 use crate::common::activation_prereq::write_activ_prereqs;
 use crate::common::fixup::Rev;
 use crate::common::seq_def::{
-    write_reset_state_pg, write_sequence_defs, SeqDefInfoC, WriteEventsMw, RESET_SEQUENCE,
+    write_reset_state_pg, write_sequence_defs, SeqDefInfoC, WriteEventsMw,
 };
 use crate::common::support::{
     write_anim_refs, write_dynamic_sounds, write_lights, write_nodes, write_objects, write_puffers,
@@ -146,13 +146,7 @@ pub(crate) fn write_anim_def(
         .transpose()?
         .unwrap_or(0);
 
-    let reset_state = SeqDefInfoC {
-        name: RESET_SEQUENCE,
-        flags: 0,
-        zero36: Zeros::new(),
-        pointer: reset_state_pointer,
-        size: reset_state_size,
-    };
+    let reset_state = SeqDefInfoC::make_reset_state(reset_state_pointer, reset_state_size);
 
     let anim_def_c = AnimDefC {
         anim_name,

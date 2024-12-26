@@ -1,10 +1,10 @@
-use super::{SeqDefInfoC, RESET_SEQUENCE, SEQ_ACTIVATION_INITIAL, SEQ_ACTIVATION_ON_CALL};
+use super::SeqDefInfoC;
 use log::trace;
 use mech3ax_api_types::anim::events::Event;
-use mech3ax_api_types::anim::{AnimDef, ResetState, SeqActivation, SiScript};
+use mech3ax_api_types::anim::{AnimDef, ResetState, SiScript};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_with_msg, Result};
-use mech3ax_types::{Ascii, Zeros};
+use mech3ax_types::Ascii;
 use std::io::Write;
 
 pub(crate) trait WriteEvents<W: Write> {
@@ -89,18 +89,20 @@ where
         trace!("Writing sequence definition {}", index);
 
         let name = Ascii::from_str_padded(&seq_def.name);
-        let flags = match seq_def.activation {
-            SeqActivation::OnCall => SEQ_ACTIVATION_ON_CALL,
-            SeqActivation::Initial => SEQ_ACTIVATION_INITIAL,
-        };
         let size = write_events
             .size(&seq_def.events)
             .ok_or_else(|| assert_with_msg!("Sequence definition {} event data overflow", index))?;
 
         let seq_def_c = SeqDefInfoC {
             name,
-            flags,
-            zero36: Zeros::new(),
+            seq_state: seq_def.seq_state.maybe(),
+            reset_state: seq_def.reset_state.maybe(),
+            pad34: 0,
+            loop_time: 0.0,
+            event_time: 0.0,
+            seq_time: 0.0,
+            loop_count: 0,
+            curr_event_ptr: 0,
             pointer: seq_def.pointer,
             size,
         };
@@ -129,13 +131,7 @@ where
         .map(|state| state.pointer)
         .unwrap_or(0);
 
-    let seq_def = SeqDefInfoC {
-        name: RESET_SEQUENCE,
-        flags: 0,
-        zero36: Zeros::new(),
-        pointer,
-        size,
-    };
+    let seq_def = SeqDefInfoC::make_reset_state(pointer, size);
     write.write_struct(&seq_def)?;
 
     if let Some(state) = &anim_def.reset_state {
@@ -154,13 +150,7 @@ pub(crate) fn write_reset_state_pm(
     let size = mech3ax_anim_events::pm::size_events(&reset_state.events)
         .ok_or_else(|| assert_with_msg!("Reset state event data overflow"))?;
 
-    let seq_def = SeqDefInfoC {
-        name: RESET_SEQUENCE,
-        flags: 0,
-        zero36: Zeros::new(),
-        pointer: reset_state.pointer,
-        size,
-    };
+    let seq_def = SeqDefInfoC::make_reset_state(reset_state.pointer, size);
     write.write_struct(&seq_def)?;
 
     mech3ax_anim_events::pm::write_events(write, anim_def, &reset_state.events)?;

@@ -1,9 +1,7 @@
 use super::{AnimDefC, AnimDefFlags, RESET_TIME_BORK};
 use crate::common::activation_prereq::read_activ_prereqs;
 use crate::common::fixup::Fwd;
-use crate::common::seq_def::{
-    read_reset_state_pg, read_sequence_defs, ReadEventsRc, RESET_SEQUENCE,
-};
+use crate::common::seq_def::{read_reset_state_pg, read_sequence_defs, ReadEventsRc};
 use crate::common::support::{
     read_anim_refs, read_dynamic_sounds, read_effects, read_lights, read_nodes, read_objects,
     read_static_sounds,
@@ -160,17 +158,7 @@ pub(crate) fn read_anim_def(
     )?;
 
     // reset state
-    assert_that!(
-        "anim def reset state name",
-        anim_def.reset_state.name == RESET_SEQUENCE,
-        prev + 196
-    )?;
-    assert_that!(
-        "anim def reset state flags",
-        anim_def.reset_state.flags == 0,
-        prev + 196 + 32
-    )?;
-    assert_that!("anim def reset state field 36", zero anim_def.reset_state.zero36, prev + 196 + 36)?;
+    let (reset_state_ptr, reset_state_size) = anim_def.reset_state.assert_reset_state(prev)?;
     // the reset state pointer and size are used later in `read_reset_state`
 
     // an anim definition must have at least one sequence definition?
@@ -346,8 +334,8 @@ pub(crate) fn read_anim_def(
     result.reset_state = read_reset_state_pg(
         read,
         &result,
-        anim_def.reset_state.size,
-        anim_def.reset_state.pointer,
+        reset_state_size,
+        reset_state_ptr,
         read_events,
     )?;
 

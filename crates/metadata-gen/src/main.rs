@@ -308,7 +308,7 @@ fn add_anim(resolver: &mut TypeResolver) {
     resolver.push::<api::anim::Execution>();
     resolver.push::<api::anim::NamePad>();
     resolver.push::<api::anim::NamePtrFlags>();
-    resolver.push::<api::anim::SeqActivation>();
+    resolver.push::<api::anim::SeqDefState>();
     resolver.push::<api::anim::AnimDefFile>();
     resolver.push::<api::anim::AnimDefFile>();
 

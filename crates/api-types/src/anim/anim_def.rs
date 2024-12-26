@@ -90,7 +90,7 @@ pub struct NamePtrFlags {
 
 primitive_enum! {
     #[derive(Serialize, Deserialize, Enum)]
-    pub enum SeqActivation: u32 {
+    pub enum SeqDefState: u8 {
         Initial = 0,
         OnCall = 3,
     }
@@ -105,7 +105,8 @@ pub struct ResetState {
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct SeqDef {
     pub name: String,
-    pub activation: SeqActivation,
+    pub seq_state: SeqDefState,
+    pub reset_state: SeqDefState,
     pub events: Vec<Event>,
     pub pointer: u32,
 }
