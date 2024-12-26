@@ -12,7 +12,13 @@ pub(crate) use write::{
     write_puffers, write_static_sounds,
 };
 
-// NOT PM!
+/// "Object" references are a list of "objects" (usually Object3D nodes) that
+/// sequence definition events of an animation definition uses/references.
+///
+/// These are implicitly derived from the reader data. It's unclear to me what
+/// determines if an argument is a node or an object, possibly the event itself.
+///
+/// PM uses a different structure!
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
 struct ObjectRefC {
@@ -22,7 +28,12 @@ struct ObjectRefC {
 }
 impl_as_bytes!(ObjectRefC, 96);
 
-// NOT PM!
+/// Node references are a list of nodes that sequence definition events of an
+/// animation definition uses/references.
+///
+/// These are implicitly derived from the reader data.
+///
+/// PM uses a different structure!
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
 struct NodeRefC {
@@ -37,6 +48,10 @@ const ABORT_TEST_RAW: Ascii<32> = Ascii::new(b"abort_test\0ng\0ame\0\0\0\0\0\0\0
 /// Fixup for one malformed node ref in RC.
 const ABORT_TEST_STR: &str = "abort_test";
 
+/// Light references are a list of light nodes that sequence definition events
+/// of an animation definition uses/references.
+///
+/// These are implicitly derived from the reader data.
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
 struct LightRefC {
@@ -47,6 +62,10 @@ struct LightRefC {
 }
 impl_as_bytes!(LightRefC, 44);
 
+/// Puffer references are a list of puffer nodes that sequence definition events
+/// of an animation definition uses/references.
+///
+/// These are implicitly derived from the reader data.
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
 struct PufferRefC {
@@ -57,6 +76,10 @@ struct PufferRefC {
 }
 impl_as_bytes!(PufferRefC, 44);
 
+/// Dynamic sound references are a list of sound nodes that sequence definition
+/// events of an animation definition uses/references.
+///
+/// These are implicitly derived from the reader data.
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
 struct DynamicSoundRefC {
@@ -67,6 +90,10 @@ struct DynamicSoundRefC {
 }
 impl_as_bytes!(DynamicSoundRefC, 44);
 
+/// Static sound references are a list of sounds (not sound nodes!) that
+/// sequence definition events of an animation definition uses/references.
+///
+/// These are implicitly derived from the reader data.
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
 struct StaticSoundRefC {
@@ -75,6 +102,14 @@ struct StaticSoundRefC {
 }
 impl_as_bytes!(StaticSoundRefC, 36);
 
+/// Effect references are a list of effects that sequence definition events of
+/// an animation definition uses/references.
+///
+/// These are implicitly derived from the reader data.
+///
+/// Effects seem to basically be cycled textures. Note that although technically
+/// MW and PM still support effects, all textures support cycling and this has
+/// become obsolete.
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
 struct EffectRefC {
@@ -83,6 +118,10 @@ struct EffectRefC {
 }
 impl_as_bytes!(EffectRefC, 36);
 
+/// Anim references are a list of animation definitions that sequence definition
+/// events of an animation definition uses/references.
+///
+/// These are implicitly derived from the reader data.
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct AnimRefC {
@@ -94,8 +133,9 @@ impl_as_bytes!(AnimRefC, 72);
 
 primitive_enum! {
     enum AnimRefType: u32 {
+        /// `CALL_ANIMATION`
         CallAnimation = 0,
-        // RC only?
+        // `CALL_OBJECT_CONNECTOR`? RC only?
         CallObjectConnector = 1,
     }
 }
