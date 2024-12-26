@@ -23,9 +23,10 @@ impl std::error::Error for AssertionError {}
 type Result<T> = ::std::result::Result<T, AssertionError>;
 
 #[inline]
-pub fn is_equal_to<T>(name: &str, pos: usize, expected: T, actual: T) -> Result<()>
+pub fn is_equal_to<T, U>(name: &str, pos: usize, expected: U, actual: T) -> Result<()>
 where
-    T: PartialEq + fmt::Debug,
+    T: PartialEq<U> + fmt::Debug,
+    U: fmt::Debug,
 {
     if actual == expected {
         Ok(())
@@ -39,9 +40,10 @@ where
 }
 
 #[inline]
-pub fn is_not_equal_to<T>(name: &str, pos: usize, expected: T, actual: T) -> Result<()>
+pub fn is_not_equal_to<T, U>(name: &str, pos: usize, expected: U, actual: T) -> Result<()>
 where
-    T: PartialEq + fmt::Debug,
+    T: PartialEq<U> + fmt::Debug,
+    U: fmt::Debug,
 {
     if actual != expected {
         Ok(())
@@ -52,9 +54,10 @@ where
 }
 
 #[inline]
-pub fn is_less_than<T>(name: &str, pos: usize, expected: T, actual: T) -> Result<()>
+pub fn is_less_than<T, U>(name: &str, pos: usize, expected: U, actual: T) -> Result<()>
 where
-    T: PartialOrd + fmt::Debug,
+    T: PartialOrd<U> + fmt::Debug,
+    U: fmt::Debug,
 {
     if actual < expected {
         Ok(())
@@ -68,9 +71,10 @@ where
 }
 
 #[inline]
-pub fn is_less_than_or_equal_to<T>(name: &str, pos: usize, expected: T, actual: T) -> Result<()>
+pub fn is_less_than_or_equal_to<T, U>(name: &str, pos: usize, expected: U, actual: T) -> Result<()>
 where
-    T: PartialOrd + fmt::Debug,
+    T: PartialOrd<U> + fmt::Debug,
+    U: fmt::Debug,
 {
     if actual <= expected {
         Ok(())
@@ -84,9 +88,10 @@ where
 }
 
 #[inline]
-pub fn is_greater_than<T>(name: &str, pos: usize, expected: T, actual: T) -> Result<()>
+pub fn is_greater_than<T, U>(name: &str, pos: usize, expected: U, actual: T) -> Result<()>
 where
-    T: PartialOrd + fmt::Debug,
+    T: PartialOrd<U> + fmt::Debug,
+    U: fmt::Debug,
 {
     if actual > expected {
         Ok(())
@@ -100,9 +105,15 @@ where
 }
 
 #[inline]
-pub fn is_greater_than_or_equal_to<T>(name: &str, pos: usize, expected: T, actual: T) -> Result<()>
+pub fn is_greater_than_or_equal_to<T, U>(
+    name: &str,
+    pos: usize,
+    expected: U,
+    actual: T,
+) -> Result<()>
 where
-    T: PartialOrd + fmt::Debug,
+    T: PartialOrd<U> + fmt::Debug,
+    U: fmt::Debug,
 {
     if actual >= expected {
         Ok(())
