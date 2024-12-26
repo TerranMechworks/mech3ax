@@ -4,7 +4,7 @@ mod write;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::SeqDefState;
 use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, Ascii, Maybe};
+use mech3ax_types::{impl_as_bytes, Ascii, Maybe, Ptr};
 pub(crate) use read::{
     read_reset_state_pg, read_reset_state_pm, read_sequence_defs, ReadEventsMw, ReadEventsPm,
     ReadEventsRc,
@@ -28,7 +28,7 @@ pub(crate) struct SeqDefInfoC {
     pub(crate) seq_time: f32,       // 44 guess
     pub(crate) loop_count: u32,     // 48
     pub(crate) curr_event_ptr: u32, // 52
-    pub(crate) pointer: u32,        // 56
+    pub(crate) pointer: Ptr,        // 56
     pub(crate) size: u32,           // 60
 }
 impl_as_bytes!(SeqDefInfoC, 64);
@@ -45,7 +45,7 @@ impl SeqDefInfoC {
             seq_time: 0.0,
             loop_count: 0,
             curr_event_ptr: 0,
-            pointer,
+            pointer: Ptr(pointer),
             size,
         }
     }
@@ -102,7 +102,7 @@ impl SeqDefInfoC {
         )?;
 
         self.assert_fields(offset)?;
-        Ok((self.pointer, self.size))
+        Ok((self.pointer.0, self.size))
     }
 }
 

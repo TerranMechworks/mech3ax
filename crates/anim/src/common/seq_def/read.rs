@@ -99,7 +99,7 @@ where
                 seq_state,
                 reset_state,
                 events,
-                pointer: seq_def.pointer,
+                pointer: seq_def.pointer.0,
             })
         })
         .collect()
