@@ -94,7 +94,7 @@ pub struct StaticSoundRef {
 #[dotnet(val_struct)]
 pub struct EffectRef {
     pub name: String,
-    pub unk32: u32,
+    pub index: u32,
     #[serde(with = "bytes")]
     pub pad: Vec<u8>,
 }

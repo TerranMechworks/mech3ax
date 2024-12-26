@@ -370,8 +370,8 @@ pub(crate) fn read_effects(
 
     assert_that!("anim def effect zero name", zero effect_c.name, read.prev + 0)?;
     assert_that!(
-        "anim def effect zero field 32",
-        effect_c.unk32 == 0,
+        "anim def effect zero index",
+        effect_c.index == 0,
         read.prev + 32
     )?;
 
@@ -389,15 +389,16 @@ pub(crate) fn read_effects(
                 log::error!("anim def duplicate effect ref `{}`", name);
             }
 
+            // 0..12, but allow for more
             assert_that!(
-                "anim def effect field 32",
-                effect_c.unk32 in (0..12),
+                "anim def effect index",
+                effect_c.index in (0..20),
                 read.prev + 32
             )?;
             Ok(EffectRef {
                 name,
                 pad,
-                unk32: effect_c.unk32,
+                index: effect_c.index,
             })
         })
         .collect()

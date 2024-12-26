@@ -186,7 +186,7 @@ pub(crate) fn write_effects(
         let name = Ascii::from_str_garbage(&effect.name, &effect.pad);
         let effect_c = EffectRefC {
             name,
-            unk32: effect.unk32,
+            index: effect.index,
         };
         write.write_struct(&effect_c)?;
     }

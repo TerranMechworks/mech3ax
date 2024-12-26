@@ -118,7 +118,7 @@ impl_as_bytes!(StaticSoundRefC, 36);
 #[repr(C)]
 struct EffectRefC {
     name: Ascii<32>, // 00
-    unk32: u32,      // 32
+    index: u32,      // 32
 }
 impl_as_bytes!(EffectRefC, 36);
 
