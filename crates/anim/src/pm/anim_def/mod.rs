@@ -30,7 +30,7 @@ type Flags = Maybe<u32, AnimDefFlags>;
 type Activ = Maybe<u8, AnimActivation>;
 
 /// `ANIMATION_DEFINITION` in readers
-#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct AnimDefC {
     anim_name: Ascii<32>,            // 000
@@ -83,3 +83,15 @@ struct AnimDefC {
     zero264: u32,                    // 264
 }
 impl_as_bytes!(AnimDefC, 268);
+
+impl Default for AnimDefC {
+    fn default() -> Self {
+        use bytemuck::Zeroable as _;
+        Self {
+            anim_ptr: u32::MAX,
+            anim_root_ptr: u32::MAX,
+            activation: AnimActivation::OnCall.maybe(),
+            ..AnimDefC::zeroed()
+        }
+    }
+}

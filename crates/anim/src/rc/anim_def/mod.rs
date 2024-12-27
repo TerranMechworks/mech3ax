@@ -10,13 +10,6 @@ pub(crate) use read::read_anim_def;
 pub(crate) use write::write_anim_def;
 pub(crate) use zero::{read_anim_def_zero, write_anim_def_zero};
 
-/// These anim def seq defs ptrs indicate the reset time is 0.0, and not -1.0
-const RESET_TIME_BORK: &[u32] = &[
-    0x016FACB0, 0x016FCC50, 0x0170FB10, 0x01726BA0, 0x0172FD60, 0x01734560, 0x0173E850, 0x017495E0,
-    0x01751B80, 0x017AF4F0, 0x017B1EE0, 0x017F5BA0, 0x01979E50, 0x01A0A7E0, 0x01A7E3F0, 0x01AB1860,
-    0x02E58900, 0x032067D0, 0x032663F0,
-];
-
 bitflags! {
     struct AnimDefFlags: u32 {
         const EXECUTION_BY_RANGE = 1 << 1;
@@ -100,3 +93,10 @@ impl Default for AnimDefC {
         }
     }
 }
+
+/// These anim def seq defs ptrs indicate the reset time is 0.0, and not -1.0
+const RESET_TIME_BORK: &[u32] = &[
+    0x016FACB0, 0x016FCC50, 0x0170FB10, 0x01726BA0, 0x0172FD60, 0x01734560, 0x0173E850, 0x017495E0,
+    0x01751B80, 0x017AF4F0, 0x017B1EE0, 0x017F5BA0, 0x01979E50, 0x01A0A7E0, 0x01A7E3F0, 0x01AB1860,
+    0x02E58900, 0x032067D0, 0x032663F0,
+];

@@ -11,7 +11,7 @@ pub(crate) use write::write_anim_def;
 pub(crate) use zero::{read_anim_def_zero, write_anim_def_zero};
 
 bitflags! {
-    pub(crate) struct AnimDefFlags: u32 {
+    struct AnimDefFlags: u32 {
         const EXECUTION_BY_RANGE = 1 << 1;
         const EXECUTION_BY_ZONE = 1 << 3;
         const HAS_CALLBACKS = 1 << 4;
