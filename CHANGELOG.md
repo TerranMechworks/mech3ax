@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Move fields from AnimFileName to AnimDef; AnimFileName is now only a list of the animation definition files in the archive.
+* Rename AnimPtr to AnimFileName
+* ObjectRef and NodeRef fields
+* SeqDef fields
+* Save SI scripts separately
+
 ## [0.6.1] - 2024-11-28
 
 * Update to Rust 1.83.0

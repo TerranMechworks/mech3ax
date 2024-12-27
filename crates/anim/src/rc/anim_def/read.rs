@@ -327,6 +327,22 @@ pub(crate) fn read_anim_def(
         // these need the anim def to do lookups
         reset_state: None,
         sequences: Vec::new(),
+
+        anim_ptr: anim_def.anim_ptr,
+        anim_root_ptr: anim_def.anim_root_ptr,
+        anim_hash,
+        anim_root_hash,
+        objects_ptr: anim_def.objects_ptr,
+        nodes_ptr: anim_def.nodes_ptr,
+        lights_ptr: anim_def.lights_ptr,
+        puffers_ptr: 0,
+        dynamic_sounds_ptr: anim_def.dynamic_sounds_ptr,
+        static_sounds_ptr: anim_def.static_sounds_ptr,
+        effects_ptr: anim_def.effects_ptr,
+        activ_prereqs_ptr: anim_def.activ_prereqs_ptr,
+        anim_refs_ptr: anim_def.anim_refs_ptr,
+        seq_defs_ptr: anim_def.seq_defs_ptr,
+        reset_state_ptr: 0,
     };
 
     // unconditional read
@@ -364,21 +380,6 @@ pub(crate) fn read_anim_def(
     let anim_def_name = AnimDefName {
         file_name,
         rename: None,
-        anim_ptr: anim_def.anim_ptr,
-        anim_root_ptr: anim_def.anim_root_ptr,
-        anim_hash,
-        anim_root_hash,
-        objects_ptr: anim_def.objects_ptr,
-        nodes_ptr: anim_def.nodes_ptr,
-        lights_ptr: anim_def.lights_ptr,
-        puffers_ptr: 0,
-        dynamic_sounds_ptr: anim_def.dynamic_sounds_ptr,
-        static_sounds_ptr: anim_def.static_sounds_ptr,
-        effects_ptr: anim_def.effects_ptr,
-        activ_prereqs_ptr: anim_def.activ_prereqs_ptr,
-        anim_refs_ptr: anim_def.anim_refs_ptr,
-        seq_defs_ptr: anim_def.seq_defs_ptr,
-        reset_state_ptr: 0,
     };
     Ok((result, anim_def_name))
 }

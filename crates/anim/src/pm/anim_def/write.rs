@@ -8,7 +8,7 @@ use crate::pm::support::{write_nodes, write_objects};
 // use mech3ax_api_types::anim::events::EventData;
 use crate::common::seq_def::{write_reset_state_pm, write_sequence_defs, WriteEventsPm};
 use mech3ax_anim_names::pm::{anim_name_rev, anim_root_name_rev};
-use mech3ax_api_types::anim::{AnimDef, AnimDefName, Execution};
+use mech3ax_api_types::anim::{AnimDef, Execution};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, Result};
 use mech3ax_types::{Ascii, Zeros};
@@ -17,13 +17,12 @@ use std::io::Write;
 pub(crate) fn write_anim_def(
     write: &mut CountingWriter<impl Write>,
     anim_def: &AnimDef,
-    anim_ptr: &AnimDefName,
 ) -> Result<()> {
     let rev = Rev::new("anim def anim name", anim_name_rev);
-    let anim_name = rev.fixup(&anim_def.anim_name, anim_ptr.anim_hash);
+    let anim_name = rev.fixup(&anim_def.anim_name, anim_def.anim_hash);
     let name = Ascii::from_str_padded(&anim_def.name);
     let rev = Rev::new("anim def anim root name", anim_root_name_rev);
-    let anim_root_name = rev.fixup(&anim_def.anim_root_name, anim_ptr.anim_root_hash);
+    let anim_root_name = rev.fixup(&anim_def.anim_root_name, anim_def.anim_root_hash);
 
     let status = if anim_def.active { 0 } else { 5 };
 
@@ -146,8 +145,8 @@ pub(crate) fn write_anim_def(
         zero192: 0,
         zero196: 0,
         zero200: 0,
-        seq_defs_ptr: anim_ptr.seq_defs_ptr,
-        reset_state_ptr: anim_ptr.reset_state_ptr,
+        seq_defs_ptr: anim_def.seq_defs_ptr,
+        reset_state_ptr: anim_def.reset_state_ptr,
         unknown_seq_ptr: 0,
         seq_def_count,
         object_count,
@@ -161,15 +160,15 @@ pub(crate) fn write_anim_def(
         activ_prereq_min_to_satisfy: anim_def.activ_prereq_min_to_satisfy,
         anim_ref_count,
         zero227: 0,
-        objects_ptr: anim_ptr.objects_ptr,
-        nodes_ptr: anim_ptr.nodes_ptr,
-        lights_ptr: anim_ptr.lights_ptr,
-        puffers_ptr: anim_ptr.puffers_ptr,
-        dynamic_sounds_ptr: anim_ptr.dynamic_sounds_ptr,
-        static_sounds_ptr: anim_ptr.static_sounds_ptr,
+        objects_ptr: anim_def.objects_ptr,
+        nodes_ptr: anim_def.nodes_ptr,
+        lights_ptr: anim_def.lights_ptr,
+        puffers_ptr: anim_def.puffers_ptr,
+        dynamic_sounds_ptr: anim_def.dynamic_sounds_ptr,
+        static_sounds_ptr: anim_def.static_sounds_ptr,
         effects_ptr: 0,
-        activ_prereqs_ptr: anim_ptr.activ_prereqs_ptr,
-        anim_refs_ptr: anim_ptr.anim_refs_ptr,
+        activ_prereqs_ptr: anim_def.activ_prereqs_ptr,
+        anim_refs_ptr: anim_def.anim_refs_ptr,
         zero264: 0,
     };
     write.write_struct(&anim_def_c)?;

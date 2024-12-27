@@ -82,12 +82,23 @@ where
     trace!("Writing anim def 0");
     write_anim_def_zero(write)?;
     for (index, anim_def_name) in anim_def_names.iter().enumerate_one() {
-        debug!("Loading anim def {}: `{}`", index, anim_def_name.file_name);
-        let item_name = LoadItemName::AnimDef(&anim_def_name.file_name);
-        let anim_def = load_item(item_name)?.anim_def(&anim_def_name.file_name)?;
+        let file_name = anim_def_name
+            .rename
+            .as_deref()
+            .inspect(|rename| {
+                debug!(
+                    "Renaming anim def `{}` to `{}`",
+                    anim_def_name.file_name, rename
+                )
+            })
+            .unwrap_or(&anim_def_name.file_name);
+
+        debug!("Loading anim def {}: `{}`", index, file_name);
+        let item_name = LoadItemName::AnimDef(file_name);
+        let anim_def = load_item(item_name)?.anim_def(file_name)?;
 
         trace!("Writing anim def {}", index);
-        write_anim_def(write, &anim_def, anim_def_name, scripts)?;
+        write_anim_def(write, &anim_def, scripts)?;
     }
     Ok(())
 }

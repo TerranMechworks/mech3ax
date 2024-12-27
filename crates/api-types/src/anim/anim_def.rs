@@ -15,27 +15,6 @@ pub struct AnimDefName {
     pub file_name: String,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub rename: Option<String>,
-
-    pub anim_ptr: u32,
-    pub anim_root_ptr: u32,
-
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub anim_hash: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub anim_root_hash: Option<u32>,
-
-    pub seq_defs_ptr: u32,
-    // PN only?
-    pub reset_state_ptr: u32,
-    pub objects_ptr: u32,
-    pub nodes_ptr: u32,
-    pub lights_ptr: u32,
-    pub puffers_ptr: u32,
-    pub dynamic_sounds_ptr: u32,
-    pub static_sounds_ptr: u32,
-    pub effects_ptr: u32,
-    pub activ_prereqs_ptr: u32,
-    pub anim_refs_ptr: u32,
 }
 
 /// `ANIMATION_DEFINITION_FILE` in an `ANIMATION_LIST`
@@ -170,4 +149,25 @@ pub struct AnimDef {
 
     pub reset_state: Option<ResetState>,
     pub sequences: Vec<SeqDef>,
+
+    pub anim_ptr: u32,
+    pub anim_root_ptr: u32,
+
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub anim_hash: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub anim_root_hash: Option<u32>,
+
+    pub seq_defs_ptr: u32,
+    // PN only?
+    pub reset_state_ptr: u32,
+    pub objects_ptr: u32,
+    pub nodes_ptr: u32,
+    pub lights_ptr: u32,
+    pub puffers_ptr: u32,
+    pub dynamic_sounds_ptr: u32,
+    pub static_sounds_ptr: u32,
+    pub effects_ptr: u32,
+    pub activ_prereqs_ptr: u32,
+    pub anim_refs_ptr: u32,
 }

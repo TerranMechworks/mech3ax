@@ -121,7 +121,7 @@ where
         let anim_def = load_item(item_name)?.anim_def(file_name)?;
 
         trace!("Writing anim def {}", index);
-        write_anim_def(write, &anim_def, anim_def_name)?;
+        write_anim_def(write, &anim_def)?;
     }
     Ok(())
 }
