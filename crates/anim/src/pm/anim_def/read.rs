@@ -8,12 +8,13 @@ use crate::common::support::{
 use crate::pm::support::{read_nodes, read_objects};
 use mech3ax_anim_names::pm::{anim_name_fwd, anim_root_name_fwd};
 // use mech3ax_api_types::anim::events::EventData;
-use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::anim::Execution;
+use mech3ax_api_types::anim::{AnimDef, AnimDefPtrs};
 use mech3ax_api_types::Range;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Result};
+use mech3ax_types::Ptr;
 use std::io::Read;
 
 pub(crate) fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<Box<AnimDef>> {
@@ -28,14 +29,14 @@ pub(crate) fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<Box<
     let name = assert_utf8("anim def name", prev + 40, || anim_def.name.to_str_padded())?;
     assert_that!(
         "anim def field 072",
-        anim_def.anim_ptr == u32::MAX,
+        anim_def.anim_ptr == Ptr::INVALID,
         prev + 72
     )?;
     let fwd = Fwd::new("anim def anim root name", anim_root_name_fwd);
     let (anim_root_name, anim_root_hash) = fwd.fixup(prev + 76, &anim_def.anim_root_name)?;
     assert_that!(
         "anim def field 108",
-        anim_def.anim_root_ptr == u32::MAX,
+        anim_def.anim_root_ptr == Ptr::INVALID,
         prev + 108
     )?;
 
@@ -170,18 +171,22 @@ pub(crate) fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<Box<
     )?;
     assert_that!(
         "anim def seq defs pointer",
-        anim_def.seq_defs_ptr != 0,
+        anim_def.seq_defs_ptr != Ptr::NULL,
         prev + 204
     )?;
 
     assert_that!(
         "anim def field 212",
-        anim_def.unknown_seq_ptr == 0,
+        anim_def.unknown_seq_ptr == Ptr::NULL,
         prev + 212
     )?;
 
     // if unknowns_count > 0, it would presumably be read here
-    assert_that!("anim def field 032", anim_def.unknowns_ptr == 0, prev + 32)?;
+    assert_that!(
+        "anim def field 032",
+        anim_def.unknowns_ptr == Ptr::NULL,
+        prev + 32
+    )?;
     assert_that!(
         "anim def field 036",
         anim_def.unknowns_count == 0,
@@ -191,46 +196,62 @@ pub(crate) fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<Box<
     let objects = if anim_def.object_count > 0 {
         assert_that!(
             "anim def objects ptr",
-            anim_def.objects_ptr != 0,
+            anim_def.objects_ptr != Ptr::NULL,
             prev + 228
         )?;
         Some(read_objects(read, anim_def.object_count)?)
     } else {
         assert_that!(
             "anim def objects ptr",
-            anim_def.objects_ptr == 0,
+            anim_def.objects_ptr == Ptr::NULL,
             prev + 228
         )?;
         None
     };
 
     let nodes = if anim_def.node_count > 0 {
-        assert_that!("anim def nodes ptr", anim_def.nodes_ptr != 0, prev + 232)?;
+        assert_that!(
+            "anim def nodes ptr",
+            anim_def.nodes_ptr != Ptr::NULL,
+            prev + 232
+        )?;
         Some(read_nodes(read, anim_def.node_count)?)
     } else {
-        assert_that!("anim def nodes ptr", anim_def.nodes_ptr == 0, prev + 232)?;
+        assert_that!(
+            "anim def nodes ptr",
+            anim_def.nodes_ptr == Ptr::NULL,
+            prev + 232
+        )?;
         None
     };
 
     let lights = if anim_def.light_count > 0 {
-        assert_that!("anim def lights ptr", anim_def.lights_ptr != 0, prev + 236)?;
+        assert_that!(
+            "anim def lights ptr",
+            anim_def.lights_ptr != Ptr::NULL,
+            prev + 236
+        )?;
         Some(read_lights(read, anim_def.light_count)?)
     } else {
-        assert_that!("anim def lights ptr", anim_def.lights_ptr == 0, prev + 236)?;
+        assert_that!(
+            "anim def lights ptr",
+            anim_def.lights_ptr == Ptr::NULL,
+            prev + 236
+        )?;
         None
     };
 
     let puffers = if anim_def.puffer_count > 0 {
         assert_that!(
             "anim def puffers ptr",
-            anim_def.puffers_ptr != 0,
+            anim_def.puffers_ptr != Ptr::NULL,
             prev + 240
         )?;
         Some(read_puffers(read, anim_def.puffer_count)?)
     } else {
         assert_that!(
             "anim def puffers ptr",
-            anim_def.puffers_ptr == 0,
+            anim_def.puffers_ptr == Ptr::NULL,
             prev + 240
         )?;
         None
@@ -239,14 +260,14 @@ pub(crate) fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<Box<
     let dynamic_sounds = if anim_def.dynamic_sound_count > 0 {
         assert_that!(
             "anim def dynamic sounds ptr",
-            anim_def.dynamic_sounds_ptr != 0,
+            anim_def.dynamic_sounds_ptr != Ptr::NULL,
             prev + 244
         )?;
         Some(read_dynamic_sounds(read, anim_def.dynamic_sound_count)?)
     } else {
         assert_that!(
             "anim def dynamic sounds ptr",
-            anim_def.dynamic_sounds_ptr == 0,
+            anim_def.dynamic_sounds_ptr == Ptr::NULL,
             prev + 244
         )?;
         None
@@ -255,14 +276,14 @@ pub(crate) fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<Box<
     let static_sounds = if anim_def.static_sound_count > 0 {
         assert_that!(
             "anim def static sounds ptr",
-            anim_def.static_sounds_ptr != 0,
+            anim_def.static_sounds_ptr != Ptr::NULL,
             prev + 248
         )?;
         Some(read_static_sounds(read, anim_def.static_sound_count)?)
     } else {
         assert_that!(
             "anim def static sounds ptr",
-            anim_def.static_sounds_ptr == 0,
+            anim_def.static_sounds_ptr == Ptr::NULL,
             prev + 248
         )?;
         None
@@ -276,14 +297,14 @@ pub(crate) fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<Box<
     )?;
     assert_that!(
         "anim def effects ptr",
-        anim_def.effects_ptr == 0,
+        anim_def.effects_ptr == Ptr::NULL,
         prev + 252
     )?;
 
     let activ_prereqs = if anim_def.activ_prereq_count > 0 {
         assert_that!(
             "anim def activ prereqs ptr",
-            anim_def.activ_prereqs_ptr != 0,
+            anim_def.activ_prereqs_ptr != Ptr::NULL,
             prev + 256
         )?;
         assert_that!(
@@ -295,7 +316,7 @@ pub(crate) fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<Box<
     } else {
         assert_that!(
             "anim def activ prereqs ptr",
-            anim_def.activ_prereqs_ptr == 0,
+            anim_def.activ_prereqs_ptr == Ptr::NULL,
             prev + 256
         )?;
         assert_that!(
@@ -309,20 +330,39 @@ pub(crate) fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<Box<
     let anim_refs = if anim_def.anim_ref_count > 0 {
         assert_that!(
             "anim def anim refs ptr",
-            anim_def.anim_refs_ptr != 0,
+            anim_def.anim_refs_ptr != Ptr::NULL,
             prev + 260
         )?;
         Some(read_anim_refs(read, anim_def.anim_ref_count)?)
     } else {
         assert_that!(
             "anim def anim refs ptr",
-            anim_def.anim_refs_ptr == 0,
+            anim_def.anim_refs_ptr == Ptr::NULL,
             prev + 260
         )?;
         None
     };
 
     assert_that!("anim def field 264", anim_def.zero264 == 0, prev + 260)?;
+
+    let ptrs = Some(AnimDefPtrs {
+        anim_hash,
+        anim_root_hash,
+        seq_defs_ptr: anim_def.seq_defs_ptr.0,
+        objects_ptr: anim_def.objects_ptr.0,
+        nodes_ptr: anim_def.nodes_ptr.0,
+        lights_ptr: anim_def.lights_ptr.0,
+        dynamic_sounds_ptr: anim_def.dynamic_sounds_ptr.0,
+        static_sounds_ptr: anim_def.static_sounds_ptr.0,
+        activ_prereqs_ptr: anim_def.activ_prereqs_ptr.0,
+        anim_refs_ptr: anim_def.anim_refs_ptr.0,
+        //
+        anim_ptr: u32::MAX,
+        anim_root_ptr: u32::MAX,
+        puffers_ptr: anim_def.puffers_ptr.0,
+        effects_ptr: 0,
+        reset_state_ptr: anim_def.reset_state_ptr.0,
+    });
 
     let mut result = AnimDef {
         name,
@@ -353,25 +393,10 @@ pub(crate) fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<Box<
         // these need the anim def to do lookups
         reset_state: None,
         sequences: Vec::new(),
-
-        anim_ptr: anim_def.anim_ptr,           // always u32::MAX
-        anim_root_ptr: anim_def.anim_root_ptr, // always u32::MAX
-        anim_hash,
-        anim_root_hash,
-        seq_defs_ptr: anim_def.seq_defs_ptr,
-        reset_state_ptr: anim_def.reset_state_ptr,
-        objects_ptr: anim_def.objects_ptr,
-        nodes_ptr: anim_def.nodes_ptr,
-        lights_ptr: anim_def.lights_ptr,
-        puffers_ptr: anim_def.puffers_ptr,
-        dynamic_sounds_ptr: anim_def.dynamic_sounds_ptr,
-        static_sounds_ptr: anim_def.static_sounds_ptr,
-        effects_ptr: 0,
-        activ_prereqs_ptr: anim_def.activ_prereqs_ptr,
-        anim_refs_ptr: anim_def.anim_refs_ptr,
+        ptrs,
     };
 
-    if anim_def.reset_state_ptr != 0 {
+    if anim_def.reset_state_ptr != Ptr::NULL {
         result.reset_state = Some(read_reset_state_pm(read, &result)?);
     };
 

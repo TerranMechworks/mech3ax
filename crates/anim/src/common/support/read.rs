@@ -254,7 +254,7 @@ pub(crate) fn read_puffers(
             Ok(PufferRef {
                 name,
                 flags,
-                ptr: puffer_c.ptr.into(),
+                ptr: puffer_c.ptr.0,
             })
         })
         .collect()

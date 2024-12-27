@@ -14,19 +14,33 @@ use mech3ax_anim_names::rc::{anim_name_rev, anim_root_name_rev};
 use mech3ax_api_types::anim::{AnimDef, Execution, SiScript};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, Result};
-use mech3ax_types::{Ascii, Zeros};
+use mech3ax_types::{Ascii, Ptr, Zeros};
 use std::io::Write;
+
+macro_rules! opt_to_ptr {
+    ($opt:expr) => {
+        if $opt.is_none() {
+            Ptr::NULL
+        } else {
+            Ptr::INVALID
+        }
+    };
+}
 
 pub(crate) fn write_anim_def(
     write: &mut CountingWriter<impl Write>,
     anim_def: &AnimDef,
     scripts: &[SiScript],
 ) -> Result<()> {
+    let ptrs = anim_def.ptrs.as_ref();
+
     let rev = Rev::new("anim def anim name", anim_name_rev);
-    let anim_name = rev.fixup(&anim_def.anim_name, anim_def.anim_hash);
+    let hash = ptrs.and_then(|ptrs| ptrs.anim_hash);
+    let anim_name = rev.fixup(&anim_def.anim_name, hash);
     let name = Ascii::from_str_padded(&anim_def.name);
     let rev = Rev::new("anim def anim root name", anim_root_name_rev);
-    let anim_root_name = rev.fixup(&anim_def.anim_root_name, anim_def.anim_root_hash);
+    let hash = ptrs.and_then(|ptrs| ptrs.anim_root_hash);
+    let anim_root_name = rev.fixup(&anim_def.anim_root_name, hash);
 
     if !anim_def.active {
         return Err(assert_with_msg!(
@@ -148,8 +162,42 @@ pub(crate) fn write_anim_def(
     let reset_state = SeqDefInfoC::make_reset_state(reset_state_pointer, reset_state_size);
 
     let execution_priority = if anim_def.low_priority { 1 } else { 4 };
+
+    let anim_ptr = ptrs.map(|ptrs| Ptr(ptrs.anim_ptr)).unwrap_or(Ptr::INVALID);
+    let anim_root_ptr = ptrs
+        .map(|ptrs| Ptr(ptrs.anim_root_ptr))
+        .unwrap_or(Ptr::INVALID);
+    let seq_defs_ptr = ptrs
+        .map(|ptrs| Ptr(ptrs.seq_defs_ptr))
+        .unwrap_or(Ptr::INVALID);
+
+    let objects_ptr = ptrs
+        .map(|ptrs| Ptr(ptrs.objects_ptr))
+        .unwrap_or(opt_to_ptr!(anim_def.objects));
+    let nodes_ptr = ptrs
+        .map(|ptrs| Ptr(ptrs.nodes_ptr))
+        .unwrap_or(opt_to_ptr!(anim_def.nodes));
+    let lights_ptr = ptrs
+        .map(|ptrs| Ptr(ptrs.lights_ptr))
+        .unwrap_or(opt_to_ptr!(anim_def.lights));
+    let dynamic_sounds_ptr = ptrs
+        .map(|ptrs| Ptr(ptrs.dynamic_sounds_ptr))
+        .unwrap_or(opt_to_ptr!(anim_def.dynamic_sounds));
+    let static_sounds_ptr = ptrs
+        .map(|ptrs| Ptr(ptrs.static_sounds_ptr))
+        .unwrap_or(opt_to_ptr!(anim_def.static_sounds));
+    let effects_ptr = ptrs
+        .map(|ptrs| Ptr(ptrs.effects_ptr))
+        .unwrap_or(opt_to_ptr!(anim_def.effects));
+    let activ_prereqs_ptr = ptrs
+        .map(|ptrs| Ptr(ptrs.activ_prereqs_ptr))
+        .unwrap_or(opt_to_ptr!(anim_def.activ_prereqs));
+    let anim_refs_ptr = ptrs
+        .map(|ptrs| Ptr(ptrs.anim_refs_ptr))
+        .unwrap_or(opt_to_ptr!(anim_def.anim_refs));
+
     let reset_time = anim_def.reset_time.unwrap_or_else(|| {
-        if RESET_TIME_BORK.contains(&anim_def.seq_defs_ptr) {
+        if RESET_TIME_BORK.contains(&seq_defs_ptr.0) {
             debug!("anim def reset time == 0.0 fixup");
             0.0
         } else {
@@ -160,9 +208,9 @@ pub(crate) fn write_anim_def(
     let anim_def_c = AnimDefC {
         anim_name,
         name,
-        anim_ptr: anim_def.anim_ptr,
+        anim_ptr,
         anim_root_name,
-        anim_root_ptr: anim_def.anim_root_ptr,
+        anim_root_ptr,
         zero104: Zeros::new(),
         flags: flags.maybe(),
         status: 0,
@@ -178,7 +226,7 @@ pub(crate) fn write_anim_def(
         zero180: 0,
         zero184: 0,
         zero188: 0,
-        seq_defs_ptr: anim_def.seq_defs_ptr,
+        seq_defs_ptr,
         reset_state,
         seq_def_count,
         object_count,
@@ -192,14 +240,14 @@ pub(crate) fn write_anim_def(
         anim_ref_count,
         zero270: 0,
         zero271: 0,
-        objects_ptr: anim_def.objects_ptr,
-        nodes_ptr: anim_def.nodes_ptr,
-        lights_ptr: anim_def.lights_ptr,
-        dynamic_sounds_ptr: anim_def.dynamic_sounds_ptr,
-        static_sounds_ptr: anim_def.static_sounds_ptr,
-        effects_ptr: anim_def.effects_ptr,
-        activ_prereqs_ptr: anim_def.activ_prereqs_ptr,
-        anim_refs_ptr: anim_def.anim_refs_ptr,
+        objects_ptr,
+        nodes_ptr,
+        lights_ptr,
+        dynamic_sounds_ptr,
+        static_sounds_ptr,
+        effects_ptr,
+        activ_prereqs_ptr,
+        anim_refs_ptr,
         zero304: 0,
     };
     write.write_struct(&anim_def_c)?;

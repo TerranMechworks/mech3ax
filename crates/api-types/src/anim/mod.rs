@@ -9,8 +9,8 @@ pub use activation_prereq::{
     ActivationPrerequisite, PrerequisiteAnimation, PrerequisiteObject, PrerequisiteParent,
 };
 pub use anim_def::{
-    AnimActivation, AnimDef, AnimDefFile, Execution, NamePad, NamePtr, NamePtrFlags, ResetState,
-    SeqDef, SeqDefState,
+    AnimActivation, AnimDef, AnimDefFile, AnimDefPtrs, Execution, NamePad, NamePtr, NamePtrFlags,
+    ResetState, SeqDef, SeqDefState,
 };
 use mech3ax_metadata_proc_macro::{Enum, Struct};
 use mech3ax_timestamp::DateTime;

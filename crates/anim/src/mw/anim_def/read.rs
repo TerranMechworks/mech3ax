@@ -8,11 +8,12 @@ use crate::common::support::{
 };
 use mech3ax_anim_names::mw::{anim_name_fwd, anim_root_name_fwd};
 // use mech3ax_api_types::anim::events::EventData;
-use mech3ax_api_types::anim::{AnimDef, Execution, SiScript};
+use mech3ax_api_types::anim::{AnimDef, AnimDefPtrs, Execution, SiScript};
 use mech3ax_api_types::Range;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Result};
+use mech3ax_types::Ptr;
 use std::io::Read;
 
 pub(crate) fn read_anim_def(
@@ -27,7 +28,11 @@ pub(crate) fn read_anim_def(
     let fwd = Fwd::new("anim def anim name", anim_name_fwd);
     let (anim_name, anim_hash) = fwd.fixup(prev + 0, &anim_def.anim_name)?;
     let name = assert_utf8("anim def name", prev + 32, || anim_def.name.to_str_padded())?;
-    assert_that!("anim def anim ptr", anim_def.anim_ptr != 0, prev + 64)?;
+    assert_that!(
+        "anim def anim ptr",
+        anim_def.anim_ptr != Ptr::NULL,
+        prev + 64
+    )?;
     let fwd = Fwd::new("anim def anim root name", anim_root_name_fwd);
     let (anim_root_name, anim_root_hash) = fwd.fixup(prev + 68, &anim_def.anim_root_name)?;
 
@@ -145,7 +150,7 @@ pub(crate) fn read_anim_def(
     // an anim definition must have at least one sequence definition?
     assert_that!(
         "anim def seq defs pointer",
-        anim_def.seq_defs_ptr != 0,
+        anim_def.seq_defs_ptr != Ptr::NULL,
         prev + 196
     )?;
 
@@ -169,46 +174,62 @@ pub(crate) fn read_anim_def(
     let objects = if anim_def.object_count > 0 {
         assert_that!(
             "anim def objects ptr",
-            anim_def.objects_ptr != 0,
+            anim_def.objects_ptr != Ptr::NULL,
             prev + 276
         )?;
         Some(read_objects(read, anim_def.object_count)?)
     } else {
         assert_that!(
             "anim def objects ptr",
-            anim_def.objects_ptr == 0,
+            anim_def.objects_ptr == Ptr::NULL,
             prev + 276
         )?;
         None
     };
 
     let nodes = if anim_def.node_count > 0 {
-        assert_that!("anim def nodes ptr", anim_def.nodes_ptr != 0, prev + 280)?;
+        assert_that!(
+            "anim def nodes ptr",
+            anim_def.nodes_ptr != Ptr::NULL,
+            prev + 280
+        )?;
         Some(read_nodes(read, anim_def.node_count)?)
     } else {
-        assert_that!("anim def nodes ptr", anim_def.nodes_ptr == 0, prev + 280)?;
+        assert_that!(
+            "anim def nodes ptr",
+            anim_def.nodes_ptr == Ptr::NULL,
+            prev + 280
+        )?;
         None
     };
 
     let lights = if anim_def.light_count > 0 {
-        assert_that!("anim def lights ptr", anim_def.lights_ptr != 0, prev + 284)?;
+        assert_that!(
+            "anim def lights ptr",
+            anim_def.lights_ptr != Ptr::NULL,
+            prev + 284
+        )?;
         Some(read_lights(read, anim_def.light_count)?)
     } else {
-        assert_that!("anim def lights ptr", anim_def.lights_ptr == 0, prev + 284)?;
+        assert_that!(
+            "anim def lights ptr",
+            anim_def.lights_ptr == Ptr::NULL,
+            prev + 284
+        )?;
         None
     };
 
     let puffers = if anim_def.puffer_count > 0 {
         assert_that!(
             "anim def puffers ptr",
-            anim_def.puffers_ptr != 0,
+            anim_def.puffers_ptr != Ptr::NULL,
             prev + 288
         )?;
         Some(read_puffers(read, anim_def.puffer_count)?)
     } else {
         assert_that!(
             "anim def puffers ptr",
-            anim_def.puffers_ptr == 0,
+            anim_def.puffers_ptr == Ptr::NULL,
             prev + 288
         )?;
         None
@@ -217,14 +238,14 @@ pub(crate) fn read_anim_def(
     let dynamic_sounds = if anim_def.dynamic_sound_count > 0 {
         assert_that!(
             "anim def dynamic sounds ptr",
-            anim_def.dynamic_sounds_ptr != 0,
+            anim_def.dynamic_sounds_ptr != Ptr::NULL,
             prev + 292
         )?;
         Some(read_dynamic_sounds(read, anim_def.dynamic_sound_count)?)
     } else {
         assert_that!(
             "anim def dynamic sounds ptr",
-            anim_def.dynamic_sounds_ptr == 0,
+            anim_def.dynamic_sounds_ptr == Ptr::NULL,
             prev + 292
         )?;
         None
@@ -233,14 +254,14 @@ pub(crate) fn read_anim_def(
     let static_sounds = if anim_def.static_sound_count > 0 {
         assert_that!(
             "anim def static sounds ptr",
-            anim_def.static_sounds_ptr != 0,
+            anim_def.static_sounds_ptr != Ptr::NULL,
             prev + 296
         )?;
         Some(read_static_sounds(read, anim_def.static_sound_count)?)
     } else {
         assert_that!(
             "anim def static sounds ptr",
-            anim_def.static_sounds_ptr == 0,
+            anim_def.static_sounds_ptr == Ptr::NULL,
             prev + 296
         )?;
         None
@@ -254,14 +275,14 @@ pub(crate) fn read_anim_def(
     )?;
     assert_that!(
         "anim def effects ptr",
-        anim_def.effects_ptr == 0,
+        anim_def.effects_ptr == Ptr::NULL,
         prev + 300
     )?;
 
     let activ_prereqs = if anim_def.activ_prereq_count > 0 {
         assert_that!(
             "anim def activ prereqs ptr",
-            anim_def.activ_prereqs_ptr != 0,
+            anim_def.activ_prereqs_ptr != Ptr::NULL,
             prev + 304
         )?;
         assert_that!(
@@ -277,7 +298,7 @@ pub(crate) fn read_anim_def(
     } else {
         assert_that!(
             "anim def activ prereqs ptr",
-            anim_def.activ_prereqs_ptr == 0,
+            anim_def.activ_prereqs_ptr == Ptr::NULL,
             prev + 304
         )?;
         assert_that!(
@@ -291,18 +312,37 @@ pub(crate) fn read_anim_def(
     let anim_refs = if anim_def.anim_ref_count > 0 {
         assert_that!(
             "anim def anim refs ptr",
-            anim_def.anim_refs_ptr != 0,
+            anim_def.anim_refs_ptr != Ptr::NULL,
             prev + 308
         )?;
         Some(read_anim_refs(read, anim_def.anim_ref_count)?)
     } else {
         assert_that!(
             "anim def anim refs ptr",
-            anim_def.anim_refs_ptr == 0,
+            anim_def.anim_refs_ptr == Ptr::NULL,
             prev + 308
         )?;
         None
     };
+
+    let ptrs = Some(AnimDefPtrs {
+        anim_hash,
+        anim_root_hash,
+        seq_defs_ptr: anim_def.seq_defs_ptr.0,
+        objects_ptr: anim_def.objects_ptr.0,
+        nodes_ptr: anim_def.nodes_ptr.0,
+        lights_ptr: anim_def.lights_ptr.0,
+        dynamic_sounds_ptr: anim_def.dynamic_sounds_ptr.0,
+        static_sounds_ptr: anim_def.static_sounds_ptr.0,
+        activ_prereqs_ptr: anim_def.activ_prereqs_ptr.0,
+        anim_refs_ptr: anim_def.anim_refs_ptr.0,
+        //
+        anim_ptr: anim_def.anim_ptr.0,
+        anim_root_ptr: anim_def.anim_root_ptr.0,
+        puffers_ptr: anim_def.puffers_ptr.0,
+        effects_ptr: 0,
+        reset_state_ptr: 0,
+    });
 
     let mut result = AnimDef {
         name,
@@ -333,22 +373,7 @@ pub(crate) fn read_anim_def(
         // these need the anim def to do lookups
         reset_state: None,
         sequences: Vec::new(),
-
-        anim_ptr: anim_def.anim_ptr,
-        anim_root_ptr: anim_def.anim_root_ptr,
-        anim_hash,
-        anim_root_hash,
-        objects_ptr: anim_def.objects_ptr,
-        nodes_ptr: anim_def.nodes_ptr,
-        lights_ptr: anim_def.lights_ptr,
-        puffers_ptr: anim_def.puffers_ptr,
-        dynamic_sounds_ptr: anim_def.dynamic_sounds_ptr,
-        static_sounds_ptr: anim_def.static_sounds_ptr,
-        effects_ptr: 0,
-        activ_prereqs_ptr: anim_def.activ_prereqs_ptr,
-        anim_refs_ptr: anim_def.anim_refs_ptr,
-        seq_defs_ptr: anim_def.seq_defs_ptr,
-        reset_state_ptr: 0,
+        ptrs,
     };
 
     // unconditional read

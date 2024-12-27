@@ -5,7 +5,7 @@ mod zero;
 use crate::common::seq_def::SeqDefInfoC;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::AnimActivation;
-use mech3ax_types::{bitflags, impl_as_bytes, Ascii, Maybe, Zeros};
+use mech3ax_types::{bitflags, impl_as_bytes, Ascii, Maybe, Ptr, Zeros};
 pub(crate) use read::read_anim_def;
 pub(crate) use write::write_anim_def;
 pub(crate) use zero::{read_anim_def_zero, write_anim_def_zero};
@@ -40,9 +40,9 @@ type Activ = Maybe<u8, AnimActivation>;
 struct AnimDefC {
     anim_name: Ascii<32>,            // 000
     name: Ascii<32>,                 // 032
-    anim_ptr: u32,                   // 064
+    anim_ptr: Ptr,                   // 064
     anim_root_name: Ascii<32>,       // 068
-    anim_root_ptr: u32,              // 100
+    anim_root_ptr: Ptr,              // 100
     zero104: Zeros<44>,              // 104
     flags: Flags,                    // 148
     status: u8,                      // 152
@@ -58,7 +58,7 @@ struct AnimDefC {
     zero180: u32,                    // 180
     zero184: u32,                    // 184
     zero188: u32,                    // 188
-    seq_defs_ptr: u32,               // 192
+    seq_defs_ptr: Ptr,               // 192
     reset_state: SeqDefInfoC,        // 196
     seq_def_count: u8,               // 260
     object_count: u8,                // 261
@@ -72,14 +72,14 @@ struct AnimDefC {
     anim_ref_count: u8,              // 269
     zero270: u8,                     // 270
     zero271: u8,                     // 271
-    objects_ptr: u32,                // 272
-    nodes_ptr: u32,                  // 276
-    lights_ptr: u32,                 // 280
-    dynamic_sounds_ptr: u32,         // 284
-    static_sounds_ptr: u32,          // 288
-    effects_ptr: u32,                // 292
-    activ_prereqs_ptr: u32,          // 296
-    anim_refs_ptr: u32,              // 300
+    objects_ptr: Ptr,                // 272
+    nodes_ptr: Ptr,                  // 276
+    lights_ptr: Ptr,                 // 280
+    dynamic_sounds_ptr: Ptr,         // 284
+    static_sounds_ptr: Ptr,          // 288
+    effects_ptr: Ptr,                // 292
+    activ_prereqs_ptr: Ptr,          // 296
+    anim_refs_ptr: Ptr,              // 300
     zero304: u32,                    // 304
 }
 impl_as_bytes!(AnimDefC, 308);
