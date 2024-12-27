@@ -85,19 +85,19 @@ fn read_anim_info(read: &mut CountingReader<impl Read>) -> Result<AnimInfo> {
     )?;
     // the gravity is always the same
 
-    assert_that!("anim info field 00", anim_info.zero00 == 0, read.prev + 0)?;
-    assert_that!("anim info field 04", anim_info.zero04 == 0, read.prev + 4)?;
-    assert_that!("anim info field 08", anim_info.zero08 == 0, read.prev + 8)?;
+    assert_that!("anim info field 000", anim_info.zero00 == 0, read.prev + 0)?;
+    assert_that!("anim info field 004", anim_info.zero04 == 0, read.prev + 4)?;
+    assert_that!("anim info field 008", anim_info.zero08 == 0, read.prev + 8)?;
 
-    assert_that!("anim info field 32", anim_info.zero32 == 0, read.prev + 32)?;
-    assert_that!("anim info field 36", anim_info.zero36 == 0, read.prev + 36)?;
-    assert_that!("anim info field 40", anim_info.zero40 == 0, read.prev + 40)?;
-    assert_that!("anim info field 44", anim_info.zero44 == 0, read.prev + 44)?;
-    assert_that!("anim info field 48", anim_info.zero48 == 0, read.prev + 48)?;
-    assert_that!("anim info field 52", anim_info.zero52 == 0, read.prev + 52)?;
-    assert_that!("anim info field 56", anim_info.zero56 == 0, read.prev + 56)?;
-    assert_that!("anim info field 60", anim_info.one60 == 1, read.prev + 60)?;
-    assert_that!("anim info field 64", anim_info.zero64 == 0, read.prev + 64)?;
+    assert_that!("anim info field 032", anim_info.zero32 == 0, read.prev + 32)?;
+    assert_that!("anim info field 036", anim_info.zero36 == 0, read.prev + 36)?;
+    assert_that!("anim info field 040", anim_info.zero40 == 0, read.prev + 40)?;
+    assert_that!("anim info field 044", anim_info.zero44 == 0, read.prev + 44)?;
+    assert_that!("anim info field 048", anim_info.zero48 == 0, read.prev + 48)?;
+    assert_that!("anim info field 052", anim_info.zero52 == 0, read.prev + 52)?;
+    assert_that!("anim info field 056", anim_info.zero56 == 0, read.prev + 56)?;
+    assert_that!("anim info field 060", anim_info.one60 == 1, read.prev + 60)?;
+    assert_that!("anim info field 064", anim_info.zero64 == 0, read.prev + 64)?;
 
     Ok(AnimInfo {
         m,
