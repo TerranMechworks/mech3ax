@@ -82,9 +82,9 @@ pub(crate) fn read_objects(
 
             Ok(ObjectRef {
                 name,
-                ptr: object_c.ptr.0,
+                ptr: Some(object_c.ptr.0),
                 flags: object_c.flags.0,
-                flags_merged: object_c.flags_merged.0,
+                flags_merged: Some(object_c.flags_merged.0),
                 affine,
             })
         })

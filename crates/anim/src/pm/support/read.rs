@@ -78,9 +78,9 @@ pub(crate) fn read_objects(
 
             Ok(ObjectRef {
                 name,
-                ptr: 0, // ignored
+                ptr: None, // ignored
                 flags: object_c.flags.0.into(),
-                flags_merged: 0, // ignored
+                flags_merged: None, // ignored
                 affine,
             })
         })

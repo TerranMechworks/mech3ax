@@ -42,11 +42,13 @@ impl AnimRef {
 pub struct ObjectRef {
     pub name: String,
     /// Ignored in PM.
-    pub ptr: u32,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub ptr: Option<u32>,
     /// `u16` in PM.
     pub flags: u32,
     /// Ignored in PM.
-    pub flags_merged: u32,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub flags_merged: Option<u32>,
     /// The affine matrix cannot be serializes as is, because it contains bogus
     /// floats/values.
     #[serde(with = "bytes")]

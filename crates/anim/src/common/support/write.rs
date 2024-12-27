@@ -44,9 +44,9 @@ pub(crate) fn write_objects(
         let object_c = ObjectRefC {
             name,
             zero32: 0,
-            ptr: Ptr(object.ptr),
+            ptr: Ptr(object.ptr.unwrap_or(0)),
             flags: Hex(object.flags),
-            flags_merged: Hex(object.flags_merged),
+            flags_merged: Hex(object.flags_merged.unwrap_or(0)),
             affine,
         };
         write.write_struct(&object_c)?;
