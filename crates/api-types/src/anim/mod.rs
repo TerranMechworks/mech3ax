@@ -119,10 +119,10 @@ pub struct AnimMetadata {
     /// The `anim.zbd` timestamp (PM only).
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub datetime: Option<DateTime>,
-    /// SI script names.
-    pub script_names: Vec<String>,
     /// Anim definition names.
     pub anim_def_names: Vec<AnimDefName>,
+    /// SI script names.
+    pub script_names: Vec<String>,
     /// The list of animation definition files.
     ///
     /// This is not used by the engine.

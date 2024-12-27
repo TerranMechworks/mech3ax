@@ -39,8 +39,8 @@ where
         mission: anim_info.m.to_api(),
         gravity: anim_info.gravity,
         datetime: None,
-        script_names,
         anim_def_names,
+        script_names,
         anim_list,
     })
 }
