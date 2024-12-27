@@ -11,7 +11,7 @@ use mech3ax_timestamp::DateTime;
 use mech3ax_types::primitive_enum;
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct AnimPtr {
+pub struct AnimDefName {
     pub file_name: String,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub rename: Option<String>,

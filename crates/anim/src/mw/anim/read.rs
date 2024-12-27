@@ -5,7 +5,7 @@ use crate::mw::anim_def::{read_anim_def, read_anim_def_zero};
 use crate::{SaveItem, SIGNATURE, VERSION_MW};
 use log::{debug, trace};
 use mech3ax_anim_names::mw::anim_list_fwd;
-use mech3ax_api_types::anim::{AnimMetadata, AnimPtr, SiScript};
+use mech3ax_api_types::anim::{AnimDefName, AnimMetadata, SiScript};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Error, Result};
 use std::convert::From;
@@ -31,7 +31,7 @@ where
     let anim_list = read_anim_list(read, anim_list_fwd)?;
     let anim_info = read_anim_info(read)?;
     let mut scripts = Vec::new();
-    let anim_ptrs = read_anim_defs(read, anim_info.def_count, &mut save_item, &mut scripts)?;
+    let anim_def_names = read_anim_defs(read, anim_info.def_count, &mut save_item, &mut scripts)?;
     read.assert_end()?;
     let script_names = save_anim_scripts(scripts, save_item)?;
 
@@ -40,7 +40,7 @@ where
         gravity: anim_info.gravity,
         datetime: None,
         script_names,
-        anim_ptrs,
+        anim_def_names,
         anim_list,
     })
 }
@@ -111,7 +111,7 @@ fn read_anim_defs<R, F, E>(
     count: u16,
     mut save_item: F,
     scripts: &mut Vec<SiScript>,
-) -> std::result::Result<Vec<AnimPtr>, E>
+) -> std::result::Result<Vec<AnimDefName>, E>
 where
     R: Read,
     F: FnMut(SaveItem<'_>) -> std::result::Result<(), E>,
@@ -122,15 +122,15 @@ where
     (1..count)
         .map(|index| {
             trace!("Reading anim def {}", index);
-            let (anim_def, anim_ptr) = read_anim_def(read, scripts)?;
+            let (anim_def, anim_def_name) = read_anim_def(read, scripts)?;
 
-            debug!("Saving anim def {}: `{}`", index, anim_ptr.file_name);
+            debug!("Saving anim def {}: `{}`", index, anim_def_name.file_name);
             let item = SaveItem::AnimDef {
-                name: &anim_ptr.file_name,
+                name: &anim_def_name.file_name,
                 anim_def: &anim_def,
             };
             save_item(item)?;
-            Ok(anim_ptr)
+            Ok(anim_def_name)
         })
         .collect()
 }

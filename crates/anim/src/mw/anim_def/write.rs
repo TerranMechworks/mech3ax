@@ -10,7 +10,7 @@ use crate::common::support::{
 };
 use mech3ax_anim_events::mw::size_events;
 use mech3ax_anim_names::mw::{anim_name_rev, anim_root_name_rev};
-use mech3ax_api_types::anim::{AnimDef, AnimPtr, Execution, SiScript};
+use mech3ax_api_types::anim::{AnimDef, AnimDefName, Execution, SiScript};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, Result};
 use mech3ax_types::{Ascii, Zeros};
@@ -19,7 +19,7 @@ use std::io::Write;
 pub(crate) fn write_anim_def(
     write: &mut CountingWriter<impl Write>,
     anim_def: &AnimDef,
-    anim_ptr: &AnimPtr,
+    anim_ptr: &AnimDefName,
     scripts: &[SiScript],
 ) -> Result<()> {
     let rev = Rev::new("anim def anim name", anim_name_rev);

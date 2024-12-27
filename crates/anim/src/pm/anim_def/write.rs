@@ -8,7 +8,7 @@ use crate::pm::support::{write_nodes, write_objects};
 // use mech3ax_api_types::anim::events::EventData;
 use crate::common::seq_def::{write_reset_state_pm, write_sequence_defs, WriteEventsPm};
 use mech3ax_anim_names::pm::{anim_name_rev, anim_root_name_rev};
-use mech3ax_api_types::anim::{AnimDef, AnimPtr, Execution};
+use mech3ax_api_types::anim::{AnimDef, AnimDefName, Execution};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, Result};
 use mech3ax_types::{Ascii, Zeros};
@@ -17,7 +17,7 @@ use std::io::Write;
 pub(crate) fn write_anim_def(
     write: &mut CountingWriter<impl Write>,
     anim_def: &AnimDef,
-    anim_ptr: &AnimPtr,
+    anim_ptr: &AnimDefName,
 ) -> Result<()> {
     let rev = Rev::new("anim def anim name", anim_name_rev);
     let anim_name = rev.fixup(&anim_def.anim_name, anim_ptr.anim_hash);

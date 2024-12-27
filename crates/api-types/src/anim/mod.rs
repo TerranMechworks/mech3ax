@@ -9,7 +9,7 @@ pub use activation_prereq::{
     ActivationPrerequisite, PrerequisiteAnimation, PrerequisiteObject, PrerequisiteParent,
 };
 pub use anim_def::{
-    AnimActivation, AnimDef, AnimDefFile, AnimPtr, Execution, NamePad, NamePtr, NamePtrFlags,
+    AnimActivation, AnimDef, AnimDefFile, AnimDefName, Execution, NamePad, NamePtr, NamePtrFlags,
     ResetState, SeqDef, SeqDefState,
 };
 use mech3ax_metadata_proc_macro::{Enum, Struct};
@@ -121,8 +121,8 @@ pub struct AnimMetadata {
     pub datetime: Option<DateTime>,
     /// SI script names.
     pub script_names: Vec<String>,
-    /// Anim definitions.
-    pub anim_ptrs: Vec<AnimPtr>,
+    /// Anim definition names.
+    pub anim_def_names: Vec<AnimDefName>,
     /// The list of animation definition files.
     ///
     /// This is not used by the engine.

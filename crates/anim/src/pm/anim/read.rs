@@ -5,7 +5,7 @@ use crate::{SaveItem, SIGNATURE, VERSION_PM};
 use log::{debug, trace};
 use mech3ax_anim_events::si_script::read_si_script_frames;
 use mech3ax_anim_names::pm::anim_list_fwd;
-use mech3ax_api_types::anim::{AnimMetadata, AnimPtr, SiScript};
+use mech3ax_api_types::anim::{AnimDefName, AnimMetadata, SiScript};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Error, Rename, Result};
@@ -35,7 +35,7 @@ where
     let datetime = read_anim_header(read)?;
     let anim_list = read_anim_list(read, anim_list_fwd)?;
     let anim_info = read_anim_info(read)?;
-    let anim_ptrs = read_anim_defs(read, anim_info.def_count, &mut save_item)?;
+    let anim_def_names = read_anim_defs(read, anim_info.def_count, &mut save_item)?;
     let script_names = read_anim_scripts(read, anim_info.script_count, save_item)?;
     read.assert_end()?;
 
@@ -44,7 +44,7 @@ where
         gravity: anim_info.gravity,
         datetime: Some(datetime),
         script_names,
-        anim_ptrs,
+        anim_def_names,
         anim_list,
     })
 }
@@ -150,7 +150,7 @@ fn read_anim_defs<R, F, E>(
     read: &mut CountingReader<R>,
     count: u16,
     mut save_item: F,
-) -> std::result::Result<Vec<AnimPtr>, E>
+) -> std::result::Result<Vec<AnimDefName>, E>
 where
     R: Read,
     F: FnMut(SaveItem<'_>) -> std::result::Result<(), E>,
@@ -163,16 +163,19 @@ where
     (1..count)
         .map(|index| {
             trace!("Reading anim def {}", index);
-            let (anim_def, mut anim_ptr) = read_anim_def(read)?;
+            let (anim_def, mut anim_def_name) = read_anim_def(read)?;
 
-            anim_ptr.rename = seen.insert(&anim_ptr.file_name);
-            let file_name = anim_ptr
+            anim_def_name.rename = seen.insert(&anim_def_name.file_name);
+            let file_name = anim_def_name
                 .rename
                 .as_deref()
                 .inspect(|rename| {
-                    debug!("Renaming anim def `{}` to `{}`", anim_ptr.file_name, rename)
+                    debug!(
+                        "Renaming anim def `{}` to `{}`",
+                        anim_def_name.file_name, rename
+                    )
                 })
-                .unwrap_or(&anim_ptr.file_name);
+                .unwrap_or(&anim_def_name.file_name);
 
             debug!("Saving anim def {}: `{}`", index, file_name);
             let item = SaveItem::AnimDef {
@@ -180,7 +183,7 @@ where
                 anim_def: &anim_def,
             };
             save_item(item)?;
-            Ok(anim_ptr)
+            Ok(anim_def_name)
         })
         .collect()
 }

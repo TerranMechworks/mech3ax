@@ -8,7 +8,7 @@ use crate::common::support::{
 };
 use mech3ax_anim_names::mw::{anim_name_fwd, anim_root_name_fwd};
 // use mech3ax_api_types::anim::events::EventData;
-use mech3ax_api_types::anim::{AnimDef, AnimPtr, Execution, SiScript};
+use mech3ax_api_types::anim::{AnimDef, AnimDefName, Execution, SiScript};
 use mech3ax_api_types::Range;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
@@ -18,7 +18,7 @@ use std::io::Read;
 pub(crate) fn read_anim_def(
     read: &mut CountingReader<impl Read>,
     scripts: &mut Vec<SiScript>,
-) -> Result<(AnimDef, AnimPtr)> {
+) -> Result<(AnimDef, AnimDefName)> {
     let anim_def: AnimDefC = read.read_struct()?;
 
     // save this so we can output accurate offsets after doing further reads
@@ -371,7 +371,7 @@ pub(crate) fn read_anim_def(
     //     prev + 148
     // )?;
 
-    let anim_ptr = AnimPtr {
+    let anim_def_names = AnimDefName {
         file_name,
         rename: None,
         anim_ptr: anim_def.anim_ptr,
@@ -390,5 +390,5 @@ pub(crate) fn read_anim_def(
         seq_defs_ptr: anim_def.seq_defs_ptr,
         reset_state_ptr: 0,
     };
-    Ok((result, anim_ptr))
+    Ok((result, anim_def_names))
 }
