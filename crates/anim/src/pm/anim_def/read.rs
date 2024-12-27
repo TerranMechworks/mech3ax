@@ -8,17 +8,15 @@ use crate::common::support::{
 use crate::pm::support::{read_nodes, read_objects};
 use mech3ax_anim_names::pm::{anim_name_fwd, anim_root_name_fwd};
 // use mech3ax_api_types::anim::events::EventData;
+use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::anim::Execution;
-use mech3ax_api_types::anim::{AnimDef, AnimDefName};
 use mech3ax_api_types::Range;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Result};
 use std::io::Read;
 
-pub(crate) fn read_anim_def(
-    read: &mut CountingReader<impl Read>,
-) -> Result<(AnimDef, AnimDefName)> {
+pub(crate) fn read_anim_def(read: &mut CountingReader<impl Read>) -> Result<Box<AnimDef>> {
     let anim_def: AnimDefC = read.read_struct()?;
 
     // save this so we can output accurate offsets after doing further reads
@@ -40,13 +38,6 @@ pub(crate) fn read_anim_def(
         anim_def.anim_root_ptr == u32::MAX,
         prev + 108
     )?;
-
-    let base_name = name.strip_suffix(".flt").unwrap_or(&name);
-    let file_name = if name != anim_root_name {
-        format!("{}-{}-{}", base_name, anim_name, anim_root_name)
-    } else {
-        format!("{}-{}", base_name, anim_name)
-    };
 
     assert_that!("anim def field 112", zero anim_def.zero112, prev + 112)?;
 
@@ -337,7 +328,6 @@ pub(crate) fn read_anim_def(
         name,
         anim_name,
         anim_root_name,
-        file_name: file_name.clone(),
         has_callbacks: flags.contains(AnimDefFlags::HAS_CALLBACKS),
         auto_reset_node_states: flags.contains(AnimDefFlags::AUTO_RESET_NODE_STATES),
         local_nodes_only: flags.contains(AnimDefFlags::LOCAL_NODES_ONLY),
@@ -406,9 +396,5 @@ pub(crate) fn read_anim_def(
     //     prev + 148
     // )?;
 
-    let anim_def_name = AnimDefName {
-        file_name,
-        rename: None,
-    };
-    Ok((result, anim_def_name))
+    Ok(Box::new(result))
 }

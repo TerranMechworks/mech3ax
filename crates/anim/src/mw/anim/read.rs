@@ -5,9 +5,9 @@ use crate::mw::anim_def::{read_anim_def, read_anim_def_zero};
 use crate::{SaveItem, SIGNATURE, VERSION_MW};
 use log::{debug, trace};
 use mech3ax_anim_names::mw::anim_list_fwd;
-use mech3ax_api_types::anim::{AnimDefName, AnimMetadata, SiScript};
+use mech3ax_api_types::anim::{AnimMetadata, SiScript};
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, Error, Result};
+use mech3ax_common::{assert_that, Error, Rename, Result};
 use std::convert::From;
 use std::io::Read;
 
@@ -111,7 +111,7 @@ fn read_anim_defs<R, F, E>(
     count: u16,
     mut save_item: F,
     scripts: &mut Vec<SiScript>,
-) -> std::result::Result<Vec<AnimDefName>, E>
+) -> std::result::Result<Vec<String>, E>
 where
     R: Read,
     F: FnMut(SaveItem<'_>) -> std::result::Result<(), E>,
@@ -119,14 +119,23 @@ where
 {
     trace!("Reading anim def 0");
     read_anim_def_zero(read)?;
+
+    let mut seen = Rename::new();
     (1..count)
         .map(|index| {
             trace!("Reading anim def {}", index);
-            let (anim_def, anim_def_name) = read_anim_def(read, scripts)?;
+            let anim_def = read_anim_def(read, scripts)?;
 
-            debug!("Saving anim def {}: `{}`", index, anim_def_name.file_name);
+            // MW doesn't need renames, but support it anyway
+            let mut anim_def_name = anim_def.file_name();
+            if let Some(rename) = seen.insert(&anim_def_name) {
+                debug!("Renaming anim def `{}` to `{}`", anim_def_name, rename);
+                anim_def_name = rename;
+            }
+
+            debug!("Saving anim def {}: `{}`", index, anim_def_name);
             let item = SaveItem::AnimDef {
-                name: &anim_def_name.file_name,
+                name: &anim_def_name,
                 anim_def: &anim_def,
             };
             save_item(item)?;

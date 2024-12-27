@@ -9,7 +9,7 @@ use crate::common::support::{
 use log::debug;
 use mech3ax_anim_names::rc::{anim_name_fwd, anim_root_name_fwd};
 // use mech3ax_api_types::anim::events::EventData;
-use mech3ax_api_types::anim::{AnimDef, AnimDefName, Execution, SiScript};
+use mech3ax_api_types::anim::{AnimDef, Execution, SiScript};
 use mech3ax_api_types::Range;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
@@ -19,7 +19,7 @@ use std::io::Read;
 pub(crate) fn read_anim_def(
     read: &mut CountingReader<impl Read>,
     scripts: &mut Vec<SiScript>,
-) -> Result<(AnimDef, AnimDefName)> {
+) -> Result<Box<AnimDef>> {
     let anim_def: AnimDefC = read.read_struct()?;
 
     // save this so we can output accurate offsets after doing further reads
@@ -32,22 +32,19 @@ pub(crate) fn read_anim_def(
     let fwd = Fwd::new("anim def anim root name", anim_root_name_fwd);
     let (anim_root_name, anim_root_hash) = fwd.fixup(prev + 68, &anim_def.anim_root_name)?;
 
-    let base_name = name.strip_suffix(".flt").unwrap_or(&name);
-    let file_name = if name != anim_root_name {
+    if name != anim_root_name {
         assert_that!(
             "anim def anim root ptr",
             anim_def.anim_root_ptr != anim_def.anim_ptr,
             prev + 100
         )?;
-        format!("{}-{}-{}", base_name, anim_name, anim_root_name)
     } else {
         assert_that!(
             "anim def anim root ptr",
             anim_def.anim_root_ptr == anim_def.anim_ptr,
             prev + 100
         )?;
-        format!("{}-{}", base_name, anim_name)
-    };
+    }
 
     assert_that!("anim def field 104", zero anim_def.zero104, prev + 104)?;
 
@@ -301,7 +298,6 @@ pub(crate) fn read_anim_def(
         name,
         anim_name,
         anim_root_name,
-        file_name: file_name.clone(),
         has_callbacks: flags.contains(AnimDefFlags::HAS_CALLBACKS),
         auto_reset_node_states: false,
         local_nodes_only: false,
@@ -377,9 +373,5 @@ pub(crate) fn read_anim_def(
     //     prev + 148
     // )?;
 
-    let anim_def_name = AnimDefName {
-        file_name,
-        rename: None,
-    };
-    Ok((result, anim_def_name))
+    Ok(Box::new(result))
 }

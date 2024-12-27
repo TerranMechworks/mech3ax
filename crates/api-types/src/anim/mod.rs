@@ -9,8 +9,8 @@ pub use activation_prereq::{
     ActivationPrerequisite, PrerequisiteAnimation, PrerequisiteObject, PrerequisiteParent,
 };
 pub use anim_def::{
-    AnimActivation, AnimDef, AnimDefFile, AnimDefName, Execution, NamePad, NamePtr, NamePtrFlags,
-    ResetState, SeqDef, SeqDefState,
+    AnimActivation, AnimDef, AnimDefFile, Execution, NamePad, NamePtr, NamePtrFlags, ResetState,
+    SeqDef, SeqDefState,
 };
 use mech3ax_metadata_proc_macro::{Enum, Struct};
 use mech3ax_timestamp::DateTime;
@@ -120,7 +120,7 @@ pub struct AnimMetadata {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub datetime: Option<DateTime>,
     /// Anim definition names.
-    pub anim_def_names: Vec<AnimDefName>,
+    pub anim_def_names: Vec<String>,
     /// SI script names.
     pub script_names: Vec<String>,
     /// The list of animation definition files.

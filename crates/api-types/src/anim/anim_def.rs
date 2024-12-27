@@ -10,13 +10,6 @@ use mech3ax_metadata_proc_macro::{Enum, Struct, Union};
 use mech3ax_timestamp::DateTime;
 use mech3ax_types::primitive_enum;
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct AnimDefName {
-    pub file_name: String,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub rename: Option<String>,
-}
-
 /// `ANIMATION_DEFINITION_FILE` in an `ANIMATION_LIST`
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct AnimDefFile {
@@ -100,7 +93,6 @@ pub struct AnimDef {
     pub name: String,
     pub anim_name: String,
     pub anim_root_name: String,
-    pub file_name: String,
 
     pub has_callbacks: bool,
     /// MW/PM only
@@ -170,4 +162,24 @@ pub struct AnimDef {
     pub effects_ptr: u32,
     pub activ_prereqs_ptr: u32,
     pub anim_refs_ptr: u32,
+}
+
+impl AnimDef {
+    pub fn file_name(&self) -> String {
+        let name = self.name.strip_suffix(".flt").unwrap_or(&self.name);
+        let anim_name = self
+            .anim_name
+            .strip_suffix(".flt")
+            .unwrap_or(&self.anim_name);
+        let anim_root_name = self
+            .anim_root_name
+            .strip_suffix(".flt")
+            .unwrap_or(&self.anim_root_name);
+
+        if name != anim_root_name {
+            format!("{}-{}-{}", name, anim_name, anim_root_name)
+        } else {
+            format!("{}-{}", name, anim_name)
+        }
+    }
 }

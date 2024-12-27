@@ -58,13 +58,13 @@ pub enum LoadItem {
 impl LoadItem {
     pub fn anim_def(
         self,
-        file_name: &str,
+        anim_def_name: &str,
     ) -> Result<mech3ax_api_types::anim::AnimDef, mech3ax_common::Error> {
         match self {
             LoadItem::AnimDef(anim_def) => Ok(*anim_def),
             LoadItem::SiScript(_) => Err(mech3ax_common::assert_with_msg!(
                 "expected `{}` to be an anim def, but an si script was returned",
-                file_name
+                anim_def_name
             )),
         }
     }

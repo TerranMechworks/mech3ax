@@ -302,7 +302,6 @@ fn add_anim(resolver: &mut TypeResolver) {
     resolver.push::<api::anim::EffectRef>();
 
     // --- anim/anim_def.rs (part 1)
-    resolver.push::<api::anim::AnimDefName>();
     resolver.push::<api::anim::AnimDefFile>();
     resolver.push::<api::anim::AnimActivation>();
     resolver.push::<api::anim::Execution>();

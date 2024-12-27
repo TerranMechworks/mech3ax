@@ -5,7 +5,7 @@ use crate::rc::anim_def::{read_anim_def, read_anim_def_zero};
 use crate::{SaveItem, SIGNATURE, VERSION_RC};
 use log::{debug, trace};
 use mech3ax_anim_names::rc::anim_list_fwd;
-use mech3ax_api_types::anim::{AnimDefName, AnimMetadata, SiScript};
+use mech3ax_api_types::anim::{AnimMetadata, SiScript};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Error, Rename, Result};
 use std::convert::From;
@@ -110,7 +110,7 @@ fn read_anim_defs<R, F, E>(
     count: u16,
     mut save_item: F,
     scripts: &mut Vec<SiScript>,
-) -> std::result::Result<Vec<AnimDefName>, E>
+) -> std::result::Result<Vec<String>, E>
 where
     R: Read,
     F: FnMut(SaveItem<'_>) -> std::result::Result<(), E>,
@@ -123,23 +123,18 @@ where
     (1..count)
         .map(|index| {
             trace!("Reading anim def {}", index);
-            let (anim_def, mut anim_def_name) = read_anim_def(read, scripts)?;
+            let anim_def = read_anim_def(read, scripts)?;
 
-            anim_def_name.rename = seen.insert(&anim_def_name.file_name);
-            let file_name = anim_def_name
-                .rename
-                .as_deref()
-                .inspect(|rename| {
-                    debug!(
-                        "Renaming anim def `{}` to `{}`",
-                        anim_def_name.file_name, rename
-                    )
-                })
-                .unwrap_or(&anim_def_name.file_name);
+            // RC needs 6 renames in each mission
+            let mut anim_def_name = anim_def.file_name();
+            if let Some(rename) = seen.insert(&anim_def_name) {
+                debug!("Renaming anim def `{}` to `{}`", anim_def_name, rename);
+                anim_def_name = rename;
+            }
 
-            debug!("Saving anim def {}: `{}`", index, file_name);
+            debug!("Saving anim def {}: `{}`", index, anim_def_name);
             let item = SaveItem::AnimDef {
-                name: file_name,
+                name: &anim_def_name,
                 anim_def: &anim_def,
             };
             save_item(item)?;
