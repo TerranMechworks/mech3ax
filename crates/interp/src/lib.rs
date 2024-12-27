@@ -3,11 +3,10 @@
 mod read;
 mod write;
 
-pub use read::read_interp;
-pub use write::write_interp;
-
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_types::{impl_as_bytes, Ascii, Hex};
+pub use read::read_interp;
+pub use write::write_interp;
 
 const SIGNATURE: Hex<u32> = Hex(0x08971119);
 const VERSION: u32 = 7;

@@ -35,7 +35,6 @@ mod e41_detonate_weapon;
 mod e42_puffer_state;
 
 pub(crate) use e12_object_motion_si_script as object_motion_si_script;
-
 use mech3ax_api_types::anim::AnimDef;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::Result;

@@ -2,11 +2,10 @@
 mod read;
 mod write;
 
-pub use read::read_motion;
-pub use write::write_motion;
-
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_types::{bitflags, impl_as_bytes};
+pub use read::read_motion;
+pub use write::write_motion;
 
 const VERSION: u32 = 4;
 

@@ -3,11 +3,10 @@
 mod read;
 mod write;
 
-pub use read::read_textures;
-pub use write::write_textures;
-
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_types::{bitflags, impl_as_bytes, Ascii, Maybe};
+pub use read::read_textures;
+pub use write::write_textures;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
