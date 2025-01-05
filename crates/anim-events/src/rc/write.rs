@@ -29,10 +29,7 @@ pub fn write_events(
     for (index, event) in events.iter().enumerate() {
         log::trace!("Writing seq event {}", index);
 
-        let event_type = crate::EventType::from_bits(event.event_type)
-            .unwrap()
-            .maybe();
-        // let event_type = event_type(&event.data);
+        let event_type = event_type(&event.data);
 
         let (start_offset, start_time) = match event.start.as_ref() {
             None => (StartOffset::Animation.maybe(), 0.0),
@@ -64,8 +61,6 @@ fn write_event(
     event: &Event,
     scripts: &[SiScript],
 ) -> Result<()> {
-    Ok(write.write_all(&event.data)?)
-    /*
     match &event.data {
         EventData::Sound(data) => write!(Sound, write, anim_def, data),
         EventData::SoundNode(data) => write!(SoundNode, write, anim_def, data),
@@ -119,12 +114,9 @@ fn write_event(
         EventData::DetonateWeapon(data) => write!(DetonateWeapon, write, anim_def, data),
         EventData::PufferState(_) => Err(assert_with_msg!("invalid event `PufferState` for RC")),
     }
-    */
 }
 
 fn size_event(event: &Event, scripts: &[SiScript]) -> Option<u32> {
-    Some(event.data.len() as _)
-    /*
     match &event.data {
         EventData::Sound(inner) => inner.size(),
         EventData::SoundNode(inner) => inner.size(),
@@ -166,7 +158,6 @@ fn size_event(event: &Event, scripts: &[SiScript]) -> Option<u32> {
         EventData::DetonateWeapon(inner) => inner.size(),
         EventData::PufferState(_) => Some(0),
     }
-    */
 }
 
 pub fn size_events(events: &[Event], scripts: &[SiScript]) -> Option<u32> {

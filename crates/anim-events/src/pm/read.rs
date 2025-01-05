@@ -53,16 +53,6 @@ pub fn read_events(
             })
         };
 
-        let mut data = vec![0; u32_to_usize(data_size)];
-        read.read_exact(&mut data)?;
-
-        events.push(Event {
-            event_type: event_type.maybe().value,
-            start,
-            data,
-        });
-
-        /*
         let data = match event_type {
             EventType::Sound => EventData::Sound(read!(Sound, read, anim_def, data_size)),
             EventType::SoundNode => {
@@ -180,8 +170,7 @@ pub fn read_events(
             }
         };
 
-        events.push(Event { data, start });
-        */
+        events.push(Event { start, data });
     }
 
     assert_that!("sequence event end", read.offset == end_offset, read.offset)?;

@@ -23,12 +23,8 @@ pub struct EventStart {
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Event {
-    // TODO
-    // pub data: EventData,
-    pub event_type: u8,
     pub start: Option<EventStart>,
-    #[serde(with = "bytes")]
-    pub data: Vec<u8>,
+    pub data: EventData,
 }
 
 /// AT_NODE
