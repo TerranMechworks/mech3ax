@@ -1,6 +1,6 @@
 use crate::csharp_type::CSharpType;
 use crate::enums::Enum;
-use crate::module_path::path_mod_root;
+use crate::module_path::{path_mod_root, path_mod_types};
 use crate::structs::Struct;
 use crate::unions::Union;
 use mech3ax_metadata_types::{
@@ -65,6 +65,7 @@ impl TypeResolver {
     pub fn new() -> Self {
         let mut directories = HashSet::new();
         directories.insert(path_mod_root());
+        directories.insert(path_mod_types());
         Self {
             names: HashSet::new(),
             enums: HashMap::new(),

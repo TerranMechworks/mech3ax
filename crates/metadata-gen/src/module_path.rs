@@ -5,6 +5,10 @@ pub fn path_mod_root() -> PathBuf {
     PathBuf::from("output/Mech3DotNet/AutoGen/")
 }
 
+pub fn path_mod_types() -> PathBuf {
+    PathBuf::from("output/Mech3DotNet/AutoGen/Types/")
+}
+
 pub fn rust_mod_path_to_dotnet(module_path: &'static str) -> String {
     let mut components = module_path.split("::");
     assert_eq!(components.next(), Some("mech3ax_api_types"));

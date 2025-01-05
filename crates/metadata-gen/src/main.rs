@@ -308,15 +308,17 @@ fn add_anim(resolver: &mut TypeResolver) {
     resolver.push::<api::anim::NamePad>();
     resolver.push::<api::anim::NamePtrFlags>();
     resolver.push::<api::anim::SeqDefState>();
-    resolver.push::<api::anim::AnimDefFile>();
-    resolver.push::<api::anim::AnimDefFile>();
 
     add_events(resolver);
 
     // --- anim/anim_def.rs (part 2)
     resolver.push::<api::anim::ResetState>();
     resolver.push::<api::anim::SeqDef>();
+    resolver.push::<api::anim::AnimDefPtrs>();
     resolver.push::<api::anim::AnimDef>();
+
+    // --- anim/mod.rs
+    resolver.push::<api::anim::AnimMission>();
     resolver.push::<api::anim::AnimMetadata>();
 }
 
