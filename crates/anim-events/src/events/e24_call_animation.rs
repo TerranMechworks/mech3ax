@@ -20,7 +20,6 @@ bitflags! {
         // AT_NODE has additional translate
         const TRANSLATE = 1 << 2;           // 0x04
         const WITH_NODE = 1 << 3;           // 0x08
-        // not in RC?
         const WAIT_FOR_COMPLETION = 1 << 4; // 0x10
     }
 }
@@ -158,22 +157,23 @@ fn read_call_animation(
         None
     };
 
-    // RC doesn't seem to have WAIT_FOR_COMPLETION
-    let has_wait_for = if is_rc {
-        call_anim.wait_for_completion > -1
-    } else {
-        flags.contains(CallAnimationFlags::WAIT_FOR_COMPLETION)
-    };
-
-    let wait_for_completion = if has_wait_for {
+    let wait_for_completion = if flags.contains(CallAnimationFlags::WAIT_FOR_COMPLETION) {
         let index = anim_def.anim_ref_from_index(call_anim.wait_for_completion, read.prev + 38)?;
         Some(index)
     } else {
-        assert_that!(
-            "call animation wait for",
-            call_anim.wait_for_completion == index!(-1),
-            read.prev + 38
-        )?;
+        if is_rc && name == "countdown_from_9" {
+            assert_that!(
+                "call animation wait for",
+                call_anim.wait_for_completion == index!(0),
+                read.prev + 38
+            )?;
+        } else {
+            assert_that!(
+                "call animation wait for",
+                call_anim.wait_for_completion == index!(-1),
+                read.prev + 38
+            )?;
+        }
         None
     };
 
@@ -207,13 +207,16 @@ fn write_call_animation(
 
     let wait_for_completion = match &call_anim.wait_for_completion {
         Some(index) => {
-            // RC doesn't seem to have WAIT_FOR_COMPLETION
-            if !is_rc {
-                flags |= CallAnimationFlags::WAIT_FOR_COMPLETION;
-            }
+            flags |= CallAnimationFlags::WAIT_FOR_COMPLETION;
             anim_def.anim_ref_to_index(*index)?
         }
-        None => index!(-1),
+        None => {
+            if is_rc && call_anim.name == "countdown_from_9" {
+                index!(0)
+            } else {
+                index!(-1)
+            }
+        }
     };
 
     let mut position = Vec3::DEFAULT;
