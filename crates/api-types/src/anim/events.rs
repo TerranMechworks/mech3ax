@@ -1,4 +1,3 @@
-use crate::serde::bytes;
 use crate::{Color, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
@@ -194,42 +193,47 @@ pub struct ObjectRotateState {
 }
 
 /// GRAVITY
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Enum)]
-pub enum GravityMode {
-    /// LOCAL
-    Local,
-    /// COMPLEX
-    Complex,
-    /// NO_ALTITUDE?
-    NoAltitude,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone, Struct)]
 #[dotnet(val_struct)]
 pub struct Gravity {
-    pub mode: GravityMode,
+    /// DEFAULT = -9.8
     pub value: f32,
+    /// LOCAL or COMPLEX
+    pub complex: bool,
+    /// NO_ALTITUDE
+    pub no_altitude: bool,
 }
 
+/// TRANSLATION_RANGE_MIN and TRANSLATION_RANGE_MAX
 #[derive(Debug, Serialize, Deserialize, Clone, Struct)]
 pub struct TranslationRange {
     pub xz: Range,
     pub y: Range,
-    pub delta: Range,
     pub initial: Range,
+    pub delta: Range,
 }
 
+/// TRANSLATION (unclear)
+#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
+pub struct ObjectMotionTranslation {
+    pub initial: Vec3,
+    pub delta: Vec3,
+    pub rnd_xz: Vec3,
+}
+
+/// FORWARD_ROTATION TIME (`["TIME", <initial>, <delta>]`)
 #[derive(Debug, Serialize, Deserialize, Clone, Struct)]
 #[dotnet(val_struct)]
 pub struct ForwardRotationTime {
-    pub v1: f32,
-    pub v2: f32,
+    pub initial: f32,
+    pub delta: f32,
 }
 
+/// FORWARD_ROTATION DIST (`["DISTANCE", <initial>, <delta_ign>]`)
 #[derive(Debug, Serialize, Deserialize, Clone, Struct)]
 #[dotnet(val_struct)]
 pub struct ForwardRotationDistance {
-    pub v1: f32,
+    pub initial: f32,
 }
 
 /// FORWARD_ROTATION
@@ -237,33 +241,33 @@ pub struct ForwardRotationDistance {
 pub enum ForwardRotation {
     /// TIME
     Time(ForwardRotationTime),
+    /// DISTANCE
     Distance(ForwardRotationDistance),
 }
 
+/// XYZ_ROTATION
 #[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct BounceSequence {
-    pub seq_name0: Option<String>,
-    pub seq_name1: Option<String>,
-    pub seq_name2: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct ObjectMotionTranslation {
-    pub delta: Vec3,
+pub struct ObjectMotionXyzRot {
     pub initial: Vec3,
-    pub unk: Vec3,
+    pub delta: Vec3,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct XyzRotation {
-    pub value: Vec3,
-    pub unk: Vec3,
-}
-
+/// SCALE
 #[derive(Debug, Serialize, Deserialize, Clone, Struct)]
 pub struct ObjectMotionScale {
-    pub value: Vec3,
-    pub unk: Vec3,
+    pub initial: Vec3,
+    pub delta: Vec3,
+}
+
+/// BOUNCE_SEQUENCE, BOUNCE_SEQUENCE_WATER, BOUNCE_SEQUENCE_LAVA
+#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
+pub struct BounceSequences {
+    /// BOUNCE_SEQUENCE
+    pub default: Option<String>,
+    /// BOUNCE_SEQUENCE_WATER (not RC)
+    pub water: Option<String>,
+    /// BOUNCE_SEQUENCE_LAVA (not RC)
+    pub lava: Option<String>,
 }
 
 /// BOUNCE_SOUND
@@ -275,16 +279,27 @@ pub struct BounceSound {
     pub volume: f32,
 }
 
+/// BOUNCE_SOUND, BOUNCE_SOUND_WATER, BOUNCE_SOUND_LAVA
+#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
+pub struct BounceSounds {
+    /// BOUNCE_SOUND
+    pub default: Option<BounceSound>,
+    /// BOUNCE_SOUND_WATER (not in reader, not RC)
+    pub water: Option<BounceSound>,
+    /// BOUNCE_SOUND_LAVA (not in reader, not RC)
+    pub lava: Option<BounceSound>,
+}
+
 /// OBJECT_MOTION Index: 10
 #[derive(Debug, Serialize, Deserialize, Clone, Struct)]
 pub struct ObjectMotion {
     /// NAME (node name)
     pub node: String,
-
+    /// IMPACT_FORCE
     pub impact_force: bool,
+    /// MORPH (not in reader)
+    pub morph: Option<f32>,
     /// GRAVITY
-    ///
-    /// DEFAULT / LOCAL
     pub gravity: Option<Gravity>,
     /// TRANSLATION_RANGE
     pub translation_range: Option<TranslationRange>,
@@ -293,13 +308,13 @@ pub struct ObjectMotion {
     /// FORWARD_ROTATION
     pub forward_rotation: Option<ForwardRotation>,
     /// XYZ_ROTATION
-    pub xyz_rotation: Option<XyzRotation>,
+    pub xyz_rotation: Option<ObjectMotionXyzRot>,
     /// SCALE
     pub scale: Option<ObjectMotionScale>,
-    /// BOUNCE_SEQUENCE
-    pub bounce_sequence: Option<BounceSequence>,
+    /// BOUNCE_SEQUENCE, BOUNCE_SEQUENCE_WATER, BOUNCE_SEQUENCE_LAVA
+    pub bounce_sequence: Option<BounceSequences>,
     /// BOUNCE_SOUND
-    pub bounce_sound: Option<BounceSound>,
+    pub bounce_sound: Option<BounceSounds>,
     /// RUN_TIME
     pub run_time: Option<f32>,
 }

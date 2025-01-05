@@ -179,17 +179,17 @@ fn add_events(resolver: &mut TypeResolver) {
     resolver.push::<api::anim::events::RotateBasis>();
     resolver.push::<api::anim::events::ObjectRotateState>();
     // 10
-    resolver.push::<api::anim::events::GravityMode>();
     resolver.push::<api::anim::events::Gravity>();
     resolver.push::<api::anim::events::TranslationRange>();
+    resolver.push::<api::anim::events::ObjectMotionTranslation>();
     resolver.push::<api::anim::events::ForwardRotationTime>();
     resolver.push::<api::anim::events::ForwardRotationDistance>();
     resolver.push::<api::anim::events::ForwardRotation>();
-    resolver.push::<api::anim::events::BounceSequence>();
-    resolver.push::<api::anim::events::ObjectMotionTranslation>();
-    resolver.push::<api::anim::events::XyzRotation>();
+    resolver.push::<api::anim::events::ObjectMotionXyzRot>();
     resolver.push::<api::anim::events::ObjectMotionScale>();
+    resolver.push::<api::anim::events::BounceSequences>();
     resolver.push::<api::anim::events::BounceSound>();
+    resolver.push::<api::anim::events::BounceSounds>();
     resolver.push::<api::anim::events::ObjectMotion>();
     // 11
     resolver.push::<api::anim::events::ObjectMotionFromTo>();
