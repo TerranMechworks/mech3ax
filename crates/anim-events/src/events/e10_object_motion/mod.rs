@@ -17,6 +17,8 @@ bitflags! {
         /// Reader: `TRANSLATION_RANGE_MIN`/`TRANSLATION_RANGE_MAX`
         const TRANSLATION_RANGE_MIN = 1 << 3;           // 0x00008
         /// Reader: `TRANSLATION_RANGE_MIN`/`TRANSLATION_RANGE_MAX`
+        ///
+        /// Note: this flag is not required for the engine to use the ranges
         const TRANSLATION_RANGE_MAX = 1 << 4;             // 0x00010
         /// Reader: `XYZ_ROTATION: [?, ?, ?, ?, ?, ?]`
         const XYZ_ROTATION = 1 << 5;                // 0x00020

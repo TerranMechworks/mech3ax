@@ -57,6 +57,12 @@ struct ObjectMotionNgC {
 }
 impl_as_bytes!(ObjectMotionNgC, 320);
 
+fn object_flags_is_borked(anim_def: &AnimDef) -> bool {
+    // these anim defs in MW C4 lack TRANSLATION_RANGE_MAX
+    (anim_def.name == "ramp1" || anim_def.name == "ramp2")
+        && (anim_def.anim_name == "hit_ramp1" || anim_def.anim_name == "hit_ramp2")
+}
+
 impl EventMw for ObjectMotion {
     #[inline]
     fn size(&self) -> Option<u32> {
@@ -103,7 +109,7 @@ fn read_ng(
     )?;
     let motion: ObjectMotionNgC = read.read_struct()?;
 
-    let flags = assert_that!("object motion flags", flags motion.flags, read.prev + 0)?;
+    let mut flags = assert_that!("object motion flags", flags motion.flags, read.prev + 0)?;
     let node = anim_def.node_from_index(motion.node_index, read.prev + 4)?;
 
     assert_that!("object motion field 006", motion.pad006 == 0, read.prev + 6)?;
@@ -148,6 +154,14 @@ fn read_ng(
         None
     };
 
+    let translation_range_min = flags.contains(ObjectMotionFlags::TRANSLATION_RANGE_MIN);
+    let translation_range_max = flags.contains(ObjectMotionFlags::TRANSLATION_RANGE_MAX);
+
+    if object_flags_is_borked(anim_def) && translation_range_min && !translation_range_max {
+        log::debug!("ObjectMotion flags translation range fixup");
+        flags |= ObjectMotionFlags::TRANSLATION_RANGE_MAX;
+    }
+
     let translation_range = if flags.contains(ObjectMotionFlags::TRANSLATION_RANGE) {
         Some(TranslationRange {
             xz: motion.trans_range_xz,
@@ -156,8 +170,6 @@ fn read_ng(
             delta: motion.trans_range_delta,
         })
     } else {
-        let translation_range_min = flags.contains(ObjectMotionFlags::TRANSLATION_RANGE_MIN);
-        let translation_range_max = flags.contains(ObjectMotionFlags::TRANSLATION_RANGE_MAX);
         assert_that!(
             "object motion flags translation range min",
             translation_range_min == false,
@@ -539,7 +551,12 @@ fn write_ng(
     let mut trans_range_delta = Range::DEFAULT;
 
     if let Some(tr) = &motion.translation_range {
-        flags |= ObjectMotionFlags::TRANSLATION_RANGE;
+        if object_flags_is_borked(anim_def) {
+            log::debug!("ObjectMotion flags translation range fixup");
+            flags |= ObjectMotionFlags::TRANSLATION_RANGE_MIN;
+        } else {
+            flags |= ObjectMotionFlags::TRANSLATION_RANGE;
+        }
 
         trans_range_xz = tr.xz;
         trans_range_y = tr.y;
