@@ -560,32 +560,25 @@ fn write_ng(
     }
 
     let (fwd_rot_initial, fwd_rot_delta) = match &motion.forward_rotation {
-        Some(ForwardRotation::Time(ForwardRotationTime {
-            initial: forward_rotation_1,
-            delta: forward_rotation_2,
-        })) => {
+        Some(ForwardRotation::Time(time)) => {
             flags |= ObjectMotionFlags::FORWARD_ROTATION_TIME;
-            (*forward_rotation_1, *forward_rotation_2)
+            (time.initial, time.delta)
         }
-        Some(ForwardRotation::Distance(ForwardRotationDistance {
-            initial: forward_rotation_1,
-        })) => {
+        Some(ForwardRotation::Distance(dist)) => {
             flags |= ObjectMotionFlags::FORWARD_ROTATION_DISTANCE;
-            (*forward_rotation_1, 0.0)
+            (dist.initial, 0.0)
         }
         None => (0.0, 0.0),
     };
 
-    let (xyz_rot_initial, xyz_rot_delta) = if let Some(ObjectMotionXyzRot {
-        initial: value,
-        delta: unk,
-    }) = &motion.xyz_rotation
-    {
-        flags |= ObjectMotionFlags::XYZ_ROTATION;
-        (*value, *unk)
-    } else {
-        (Vec3::DEFAULT, Vec3::DEFAULT)
-    };
+    let (xyz_rot_initial, xyz_rot_delta) = motion
+        .xyz_rotation
+        .clone()
+        .map(|ObjectMotionXyzRot { initial, delta }| {
+            flags |= ObjectMotionFlags::XYZ_ROTATION;
+            (initial, delta)
+        })
+        .unwrap_or_else(|| (Vec3::DEFAULT, Vec3::DEFAULT));
 
     let (scale_initial, scale_delta) = motion
         .scale
