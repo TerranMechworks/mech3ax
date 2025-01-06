@@ -186,7 +186,7 @@ pub enum RotateBasis {
 pub struct ObjectRotateState {
     /// NAME (node name)
     pub name: String,
-    /// STATE / AT_NODE_MATRIX / AT_NODE_XYZ
+    /// STATE / AT_NODE_MATRIX / AT_NODE_XYZ (Radians)
     pub state: Vec3,
     /// STATE / AT_NODE_MATRIX / AT_NODE_XYZ
     pub basis: RotateBasis,
@@ -207,6 +207,7 @@ pub struct Gravity {
 /// TRANSLATION_RANGE_MIN and TRANSLATION_RANGE_MAX
 #[derive(Debug, Serialize, Deserialize, Clone, Struct)]
 pub struct TranslationRange {
+    /// Radians
     pub xz: Range,
     pub y: Range,
     pub initial: Range,
@@ -225,7 +226,9 @@ pub struct ObjectMotionTranslation {
 #[derive(Debug, Serialize, Deserialize, Clone, Struct)]
 #[dotnet(val_struct)]
 pub struct ForwardRotationTime {
+    // Radians
     pub initial: f32,
+    // Radians
     pub delta: f32,
 }
 

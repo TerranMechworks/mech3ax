@@ -61,9 +61,9 @@ impl EventAll for ObjectRotateState {
             assert_that!("object rotate state y", -PI <= rotate.y <= PI, read.prev + 8)?;
             assert_that!("object rotate state z", -PI <= rotate.z <= PI, read.prev + 12)?;
             Vec3 {
-                x: rotate.x.to_degrees(),
-                y: rotate.y.to_degrees(),
-                z: rotate.z.to_degrees(),
+                x: rotate.x,
+                y: rotate.y,
+                z: rotate.z,
             }
         };
         let name = anim_def.node_from_index(state.node_index, read.prev + 16)?;
@@ -128,9 +128,9 @@ impl EventAll for ObjectRotateState {
     fn write(&self, write: &mut CountingWriter<impl Write>, anim_def: &AnimDef) -> Result<()> {
         let node_index = anim_def.node_to_index(&self.name)?;
         let rotate = Vec3 {
-            x: self.state.x.to_radians(),
-            y: self.state.y.to_radians(),
-            z: self.state.z.to_radians(),
+            x: self.state.x,
+            y: self.state.y,
+            z: self.state.z,
         };
 
         let mut flags = ObjectRotateStateFlags::empty();
