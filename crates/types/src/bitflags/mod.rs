@@ -2,10 +2,7 @@ mod disp;
 mod display_set;
 
 use crate::maybe::{PrimitiveRepr, SupportsMaybe};
-pub use disp::{
-    format_flags_u16, format_flags_u32, format_flags_u8, gather_flags_u16, gather_flags_u32,
-    gather_flags_u8,
-};
+pub use disp::{format_flags_u16, format_flags_u32, format_flags_u8, gather_flags};
 use std::fmt;
 use std::ops::{BitOr, BitOrAssign};
 
@@ -169,13 +166,13 @@ macro_rules! bitflags {
         $crate::bitflags::format_flags_u32
     };
     (@flags u8) => {
-        const FLAGS: &'static [::core::option::Option<&'static str>; 8] = &$crate::bitflags::gather_flags_u8(Self::VARIANTS);
+        const FLAGS: &'static [::core::option::Option<&'static str>; 8] = &$crate::bitflags::gather_flags(Self::VARIANTS);
     };
     (@flags u16) => {
-        const FLAGS: &'static [::core::option::Option<&'static str>; 16] = &$crate::bitflags::gather_flags_u16(Self::VARIANTS);
+        const FLAGS: &'static [::core::option::Option<&'static str>; 16] = &$crate::bitflags::gather_flags(Self::VARIANTS);
     };
     (@flags u32) => {
-        const FLAGS: &'static [::core::option::Option<&'static str>; 32] = &$crate::bitflags::gather_flags_u32(Self::VARIANTS);
+        const FLAGS: &'static [::core::option::Option<&'static str>; 32] = &$crate::bitflags::gather_flags(Self::VARIANTS);
     };
 }
 
