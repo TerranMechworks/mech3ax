@@ -4,4 +4,5 @@ pub mod gamez;
 mod materials;
 pub mod mechlib;
 mod mesh;
+mod model;
 mod textures;

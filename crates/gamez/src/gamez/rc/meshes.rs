@@ -1,7 +1,7 @@
 use crate::gamez::common::{
     read_meshes_info_sequential, write_meshes_info_sequential, MESHES_INFO_C_SIZE,
 };
-use crate::mesh::rc::{
+use crate::model::rc::{
     assert_model_info_zero, read_model_data, read_model_info, size_model, write_model_data,
     write_model_info, ModelRcC, MODEL_C_SIZE,
 };

@@ -1,5 +1,5 @@
 use super::{ModelRcC, PolygonBitFlags, PolygonRcC, WrappedModelRc};
-use crate::mesh::common::*;
+use crate::model::common::*;
 use log::trace;
 use mech3ax_api_types::gamez::mesh::{ModelRc, PolygonRc};
 use mech3ax_api_types::Vec3;
