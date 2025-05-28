@@ -2,23 +2,77 @@ mod read;
 mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::gamez::mesh::MeshRc;
-use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Bool32, Hex, Ptr};
-pub(crate) use read::{assert_mesh_info_zero, read_mesh_data, read_mesh_info};
-pub(crate) use write::{size_mesh, write_mesh_data, write_mesh_info};
+use mech3ax_api_types::gamez::mesh::{ModelFlags, ModelRc, ModelType};
+use mech3ax_api_types::Vec3;
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Hex, Maybe, Ptr};
+pub(crate) use read::{assert_model_info_zero, read_model_data, read_model_info};
+pub(crate) use write::{size_model, write_model_data, write_model_info};
+
+type MType = Maybe<u32, ModelType>;
+
+bitflags! {
+    struct ModelBitFlags: u32 {
+        const LIGHTING = 1 << 0;            // 0x01
+        const UNK1 = 1 << 1;                // 0x02
+        const TEXTURE_REGISTERED = 1 << 2;  // 0x04 (never)
+        const MORPH = 1 << 3;               // 0x08 (never)
+        const UNK4 = 1 << 4;                // 0x10 (never)
+        const UNK5 = 1 << 5;                // 0x20 (never)
+    }
+}
+
+impl From<&ModelFlags> for ModelBitFlags {
+    fn from(flags: &ModelFlags) -> Self {
+        let mut bitflags = Self::empty();
+        if flags.lighting {
+            bitflags |= Self::LIGHTING;
+        }
+        if flags.unk1 {
+            bitflags |= Self::UNK1;
+        }
+        if flags.texture_registered {
+            bitflags |= Self::TEXTURE_REGISTERED;
+        }
+        if flags.morph {
+            bitflags |= Self::MORPH;
+        }
+        if flags.unk4 {
+            bitflags |= Self::UNK4;
+        }
+        if flags.unk5 {
+            bitflags |= Self::UNK5;
+        }
+        bitflags
+    }
+}
+
+impl From<ModelBitFlags> for ModelFlags {
+    fn from(value: ModelBitFlags) -> Self {
+        Self {
+            lighting: value.contains(ModelBitFlags::LIGHTING),
+            unk1: value.contains(ModelBitFlags::UNK1),
+            texture_registered: value.contains(ModelBitFlags::TEXTURE_REGISTERED),
+            morph: value.contains(ModelBitFlags::MORPH),
+            unk4: value.contains(ModelBitFlags::UNK4),
+            unk5: value.contains(ModelBitFlags::UNK5),
+        }
+    }
+}
+
+type Flags = Maybe<u32, ModelBitFlags>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
-pub(crate) struct MeshRcC {
-    file_ptr: Bool32,   // 00
-    unk04: u32,         // 04
+pub(crate) struct ModelRcC {
+    model_type: MType,  // 00
+    flags: Flags,       // 04
     parent_count: u32,  // 08
     polygon_count: u32, // 12
     vertex_count: u32,  // 16
     normal_count: u32,  // 20
     morph_count: u32,   // 24
     light_count: u32,   // 28
-    zero32: u32,        // 32
+    morph_factor: f32,  // 32
     zero36: u32,        // 36
     zero40: u32,        // 40
     zero44: u32,        // 44
@@ -27,35 +81,34 @@ pub(crate) struct MeshRcC {
     normals_ptr: Ptr,   // 56
     lights_ptr: Ptr,    // 60
     morphs_ptr: Ptr,    // 64
-    unk68: f32,         // 68
-    unk72: f32,         // 72
-    unk76: f32,         // 76
-    unk80: f32,         // 80
+    bbox_mid: Vec3,     // 68
+    bbox_diag: f32,     // 80
 }
-impl_as_bytes!(MeshRcC, 84);
-pub(crate) const MESH_C_SIZE: u32 = MeshRcC::SIZE;
+impl_as_bytes!(ModelRcC, 84);
+pub(crate) const MODEL_C_SIZE: u32 = ModelRcC::SIZE;
+
+bitflags! {
+    struct PolygonBitFlags: u32 {
+        const SHOW_BACKFACE = 1 << 8;
+        const NORMALS = 1 << 9;
+    }
+}
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct PolygonRcC {
     vertex_info: Hex<u32>, // 00
-    unk04: i32,            // 04
+    priority: i32,         // 04
     vertices_ptr: Ptr,     // 08
     normals_ptr: Ptr,      // 12
     uvs_ptr: Ptr,          // 16
-    material_index: u32,   // 28
-    unk24: Hex<u32>,       // 24
+    material_index: u32,   // 20
+    zone_set: Hex<u32>,    // 24
 }
 impl_as_bytes!(PolygonRcC, 28);
 
-bitflags! {
-    struct PolygonBitFlags: u32 {
-        const UNK0 = 1 << 0;
-        const NORMALS = 1 << 1;
-    }
-}
-pub(crate) struct WrappedMeshRc {
-    pub(crate) mesh: MeshRc,
+pub(crate) struct WrappedModelRc {
+    pub(crate) model: ModelRc,
     pub(crate) polygon_count: u32,
     pub(crate) vertex_count: u32,
     pub(crate) normal_count: u32,

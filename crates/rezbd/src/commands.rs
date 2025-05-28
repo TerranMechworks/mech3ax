@@ -3,7 +3,7 @@ use eyre::{bail, Context as _, Result};
 use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::gamez::mechlib::{ModelMw, ModelPm};
-use mech3ax_api_types::gamez::mesh::{MeshMw, MeshNg, MeshRc};
+use mech3ax_api_types::gamez::mesh::{MeshMw, MeshNg, ModelRc};
 use mech3ax_api_types::gamez::{
     GameZDataCs, GameZDataMw, GameZDataPm, GameZDataRc, GameZMetadataCs, GameZMetadataMw,
     GameZMetadataPm, TextureName,
@@ -337,7 +337,7 @@ fn gamez_rc(opts: &ZipOpts) -> Result<()> {
 
     let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
     let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
-    let meshes: Vec<MeshRc> = zip_json(&mut zip, "meshes.json")?;
+    let models: Vec<ModelRc> = zip_json(&mut zip, "models.json")?;
     let nodes: Vec<NodeRc> = zip_json(&mut zip, "nodes.json")?;
 
     drop(zip);
@@ -345,7 +345,7 @@ fn gamez_rc(opts: &ZipOpts) -> Result<()> {
     let gamez = GameZDataRc {
         textures,
         materials,
-        meshes,
+        models,
         nodes,
     };
 

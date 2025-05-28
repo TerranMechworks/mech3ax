@@ -1,6 +1,6 @@
 use crate::flags::NodeBitFlags;
 use crate::rc::node::{NodeVariantRc, NodeVariantsRc};
-use crate::types::ZONE_DEFAULT;
+use crate::types::ZONE_ALWAYS;
 use mech3ax_api_types::nodes::{BoundingBox, Display};
 use mech3ax_common::{assert_that, Result};
 
@@ -15,7 +15,7 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
     )?;
     // zero040 (40) already asserted
     assert_that!("display field 044", node.unk044 == 0, offset + 44)?;
-    assert_that!("display zone id", node.zone_id == ZONE_DEFAULT, offset + 48)?;
+    assert_that!("display zone id", node.zone_id == ZONE_ALWAYS, offset + 48)?;
     // node_type (52) already asserted
     assert_that!("display data ptr", node.data_ptr != 0, offset + 56)?;
     assert_that!("display mesh index", node.mesh_index == -1, offset + 60)?;
@@ -65,7 +65,7 @@ pub(crate) fn make_variants(display: &Display) -> NodeVariantsRc {
         name: DISPLAY_NAME.to_owned(),
         flags: NodeBitFlags::DEFAULT,
         unk044: 0,
-        zone_id: ZONE_DEFAULT,
+        zone_id: ZONE_ALWAYS,
         data_ptr: display.data_ptr,
         mesh_index: -1,
         area_partition: None,

@@ -13,7 +13,7 @@ use std::io::{Read, Write};
 pub(crate) fn read_nodes(
     read: &mut CountingReader<impl Read>,
     count: u32,
-    meshes_count: i32,
+    models_count: i32,
 ) -> Result<Vec<NodeRc>> {
     let node_write_size = u32_to_usize(NodeRcC::SIZE) + 4;
     let valid_offset = read.offset + node_write_size * u32_to_usize(count);
@@ -73,8 +73,8 @@ pub(crate) fn read_nodes(
                 assert_that!("node position (object3d)", index > 3, node_info_pos)?;
                 if object3d.mesh_index >= 0 {
                     assert_that!(
-                        "object3d mesh index",
-                        object3d.mesh_index < meshes_count,
+                        "object3d model index",
+                        object3d.mesh_index < models_count,
                         node_info_pos
                     )?;
                 }

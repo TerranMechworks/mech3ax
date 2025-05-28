@@ -1,6 +1,6 @@
 use crate::flags::NodeBitFlags;
 use crate::rc::node::{NodeVariantLodRc, NodeVariantRc, NodeVariantsRc};
-use crate::types::ZONE_DEFAULT;
+use crate::types::ZONE_ALWAYS;
 use mech3ax_api_types::nodes::rc::Lod;
 use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_common::{assert_len, assert_that, Result};
@@ -63,9 +63,7 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
     } else {
         assert_that!("lod field 044", node.unk044 == 4, offset + 44)?;
     }
-    if node.zone_id != ZONE_DEFAULT {
-        assert_that!("lod zone id", 0 <= node.zone_id <= 80, offset + 48)?;
-    }
+    assert_that!("lod zone id", node.zone_id >= ZONE_ALWAYS, offset + 48)?;
     // node_type (52) already asserted
     assert_that!("lod data ptr", node.data_ptr != 0, offset + 56)?;
     assert_that!("lod mesh index", node.mesh_index == -1, offset + 60)?;
@@ -119,7 +117,7 @@ pub(crate) fn make_variants(lod: &Lod) -> Result<NodeVariantsRc> {
         name: lod.name.clone(),
         flags: NodeBitFlags::from(&lod.flags),
         unk044,
-        zone_id: lod.zone_id,
+        zone_id: lod.zone_id as i8, // TODO
         data_ptr: lod.data_ptr,
         mesh_index: -1,
         area_partition: None,

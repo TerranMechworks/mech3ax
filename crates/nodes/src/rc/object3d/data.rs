@@ -177,7 +177,7 @@ pub(crate) fn read(read: &mut CountingReader<impl Read>, node: NodeVariantsRc) -
     Ok(Object3d {
         name: node.name,
         flags: node.flags.into(),
-        zone_id: node.zone_id,
+        zone_id: node.zone_id as u32, // TODO
         mesh_index: node.mesh_index,
         area_partition: node.area_partition,
         transformation,

@@ -326,7 +326,7 @@ fn gamez_rc(opts: &ZipOpts) -> Result<()> {
 
     zip_json(&mut zip, "textures.json", &gamez.textures)?;
     zip_json(&mut zip, "materials.json", &gamez.materials)?;
-    zip_json(&mut zip, "meshes.json", &gamez.meshes)?;
+    zip_json(&mut zip, "models.json", &gamez.models)?;
     zip_json(&mut zip, "nodes.json", &gamez.nodes)?;
 
     zip.finish()?;

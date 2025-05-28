@@ -128,7 +128,9 @@ fn add_gamez(resolver: &mut TypeResolver) {
 
     // --- gamez/mesh/rc.rs
     resolver.push::<api::gamez::mesh::PolygonRc>();
-    resolver.push::<api::gamez::mesh::MeshRc>();
+    resolver.push::<api::gamez::mesh::ModelType>();
+    resolver.push::<api::gamez::mesh::ModelFlags>();
+    resolver.push::<api::gamez::mesh::ModelRc>();
 
     // nodes required for mechlib
     add_nodes(resolver);

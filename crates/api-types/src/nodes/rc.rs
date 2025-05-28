@@ -28,7 +28,7 @@ pub struct Empty {
     pub name: String,
     pub flags: NodeFlags,
     pub unk044: u32,
-    pub zone_id: u32,
+    pub zone_id: u32, // TODO: i8
     pub unk116: BoundingBox,
     pub unk140: BoundingBox,
     pub unk164: BoundingBox,

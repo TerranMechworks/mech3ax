@@ -1,6 +1,7 @@
 use mech3ax_types::primitive_enum;
 
 pub(crate) const ZONE_DEFAULT: u32 = 255;
+pub(crate) const ZONE_ALWAYS: i8 = -1;
 
 primitive_enum! {
     pub(crate) enum NodeType: u32 {

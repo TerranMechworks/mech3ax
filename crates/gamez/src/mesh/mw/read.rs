@@ -97,7 +97,7 @@ fn assert_polygon(
 ) -> Result<(u32, u32, bool, bool, PolygonMw)> {
     let vertex_info = poly.vertex_info.0;
     assert_that!("vertex info", vertex_info < 0x3FF, offset + 0)?;
-    assert_that!("field 04", 0 <= poly.unk04 <= 20, offset + 4)?;
+    assert_that!("field 04", -50 <= poly.unk04 <= 50, offset + 4)?;
 
     let unk_bit = (vertex_info & 0x100) != 0;
     let vtx_bit = (vertex_info & 0x200) != 0;

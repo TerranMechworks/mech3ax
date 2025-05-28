@@ -10,7 +10,7 @@ use ::serde::{Deserialize, Serialize};
 use materials::Material;
 use mech3ax_metadata_proc_macro::Struct;
 use mech3ax_timestamp::DateTime;
-use mesh::{MeshMw, MeshNg, MeshRc};
+use mesh::{MeshMw, MeshNg, ModelRc};
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct GameZMetadataMw {
@@ -74,6 +74,6 @@ pub struct GameZDataCs {
 pub struct GameZDataRc {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
-    pub meshes: Vec<MeshRc>,
+    pub models: Vec<ModelRc>,
     pub nodes: Vec<NodeRc>,
 }

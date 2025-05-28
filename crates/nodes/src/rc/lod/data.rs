@@ -81,7 +81,7 @@ pub(crate) fn read(read: &mut CountingReader<impl Read>, node: NodeVariantLodRc)
         unk60,
         unk76,
         flags: node.flags.into(),
-        zone_id: node.zone_id,
+        zone_id: node.zone_id as u32, // TODO
         parent,
         children,
         data_ptr: node.data_ptr,

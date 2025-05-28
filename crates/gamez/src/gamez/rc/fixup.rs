@@ -10,7 +10,7 @@ macro_rules! header_m6 {
             texture_count: 612,
             textures_offset: 36,
             materials_offset: 22068,
-            meshes_offset: 242084,
+            models_offset: 242084,
             node_array_size: 16000,
             node_count: $node_count,
             nodes_offset: 2299168,

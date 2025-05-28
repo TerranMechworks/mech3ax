@@ -83,14 +83,14 @@ pub(crate) struct LightC {
     pub(crate) unk00: u32,       // 00
     pub(crate) unk04: u32,       // 04
     pub(crate) unk08: f32,       // 08
-    pub(crate) extra_count: u32, // 12
+    pub(crate) extra_count: u32, // 12 dim_count
     pub(crate) zero16: u32,      // 16
     pub(crate) zero20: u32,      // 20
     pub(crate) unk24: Ptr,       // 24
     pub(crate) color: Color,     // 28
     pub(crate) pad40: u16,       // 40
     pub(crate) flags: Flags,     // 42
-    pub(crate) ptr: Ptr,         // 44
+    pub(crate) ptr: Ptr,         // 44 dims
     pub(crate) unk48: f32,       // 48
     pub(crate) unk52: f32,       // 52
     pub(crate) unk56: f32,       // 56

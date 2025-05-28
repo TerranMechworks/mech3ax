@@ -1,7 +1,7 @@
 use super::has_borked_parents;
 use crate::flags::NodeBitFlags;
 use crate::rc::node::{NodeVariantRc, NodeVariantsRc};
-use crate::types::ZONE_DEFAULT;
+use crate::types::ZONE_ALWAYS;
 use mech3ax_api_types::nodes::rc::Object3d;
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
 
@@ -52,9 +52,7 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
     assert_that!("object3d flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
     // zero040 (40) already asserted
     assert_that!("object3d field 044", node.unk044 == 4, offset + 44)?;
-    if node.zone_id != ZONE_DEFAULT {
-        assert_that!("object3d zone id", 0 <= node.zone_id <= 80, offset + 48)?;
-    }
+    assert_that!("object3d zone id", node.zone_id >= ZONE_ALWAYS, offset + 48)?;
     // node_type (52) already asserted
     assert_that!("object3d data ptr", node.data_ptr != 0, offset + 56)?;
     if node.flags.contains(NodeBitFlags::HAS_MESH) {
@@ -112,7 +110,7 @@ pub(crate) fn make_variants(object3d: &Object3d) -> Result<NodeVariantsRc> {
         name: object3d.name.clone(),
         flags: NodeBitFlags::from(&object3d.flags),
         unk044: 4,
-        zone_id: object3d.zone_id,
+        zone_id: object3d.zone_id as i8, // TODO
         data_ptr: object3d.data_ptr,
         mesh_index: object3d.mesh_index,
         area_partition: object3d.area_partition,

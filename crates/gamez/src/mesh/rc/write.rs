@@ -1,83 +1,183 @@
-use super::{MeshRcC, PolygonBitFlags, PolygonRcC};
+use super::{ModelBitFlags, ModelRcC, PolygonBitFlags, PolygonRcC};
 use crate::mesh::common::*;
-use log::trace;
-use mech3ax_api_types::gamez::mesh::{MeshRc, PolygonRc, UvCoord};
+use log::{trace, warn};
+use mech3ax_api_types::gamez::mesh::{ModelRc, PolygonRc, UvCoord};
 use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, Result};
+use mech3ax_common::{assert_len, assert_with_msg, Result};
 use mech3ax_types::{AsBytes as _, Hex, Ptr};
 use std::io::Write;
 
-pub(crate) fn write_mesh_info(write: &mut CountingWriter<impl Write>, mesh: &MeshRc) -> Result<()> {
-    let polygon_count = assert_len!(u32, mesh.polygons.len(), "mesh polygons")?;
-    let vertex_count = assert_len!(u32, mesh.vertices.len(), "mesh vertices")?;
-    let normal_count = assert_len!(u32, mesh.normals.len(), "mesh normals")?;
-    let morph_count = assert_len!(u32, mesh.morphs.len(), "mesh morphs")?;
-    let light_count = assert_len!(u32, mesh.lights.len(), "mesh lights")?;
+macro_rules! assert_ptr {
+    ($count:ident, $model:ident.$ptr:ident, $name:literal) => {{
+        if $count == 0 {
+            if $model.$ptr != 0 {
+                warn!(concat!(
+                    "WARN: model has no ",
+                    $name,
+                    ", but `",
+                    stringify!($ptr),
+                    "` is not null"
+                ));
+            }
+        } else {
+            if $model.$ptr == 0 {
+                warn!(concat!(
+                    "WARN: model has ",
+                    $name,
+                    ", but `",
+                    stringify!($ptr),
+                    "` is null"
+                ));
+            }
+        }
+        Ptr($model.$ptr)
+    }};
+}
 
-    let mesh = MeshRcC {
-        file_ptr: mesh.file_ptr.into(),
-        unk04: mesh.unk04,
-        parent_count: mesh.parent_count,
+pub(crate) fn write_model_info(
+    write: &mut CountingWriter<impl Write>,
+    model: &ModelRc,
+) -> Result<()> {
+    let polygon_count = assert_len!(u32, model.polygons.len(), "model polygons")?;
+    let vertex_count = assert_len!(u32, model.vertices.len(), "model vertices")?;
+    let normal_count = assert_len!(u32, model.normals.len(), "model normals")?;
+    let morph_count = assert_len!(u32, model.morphs.len(), "model morphs")?;
+    let light_count = assert_len!(u32, model.lights.len(), "model lights")?;
+
+    let polygons_ptr = assert_ptr!(polygon_count, model.polygons_ptr, "polygons");
+    let vertices_ptr = assert_ptr!(vertex_count, model.vertices_ptr, "vertices");
+    let normals_ptr = assert_ptr!(normal_count, model.normals_ptr, "normals");
+    let lights_ptr = assert_ptr!(light_count, model.lights_ptr, "lights");
+    let morphs_ptr = assert_ptr!(morph_count, model.morphs_ptr, "morphs");
+
+    let flags = ModelBitFlags::from(&model.flags);
+
+    let model = ModelRcC {
+        model_type: model.model_type.maybe(),
+        flags: flags.maybe(),
+        parent_count: model.parent_count,
         polygon_count,
         vertex_count,
         normal_count,
         morph_count,
         light_count,
-        zero32: 0,
+        morph_factor: model.morph_factor,
         zero36: 0,
         zero40: 0,
         zero44: 0,
-        polygons_ptr: Ptr(mesh.polygons_ptr),
-        vertices_ptr: Ptr(mesh.vertices_ptr),
-        normals_ptr: Ptr(mesh.normals_ptr),
-        lights_ptr: Ptr(mesh.lights_ptr),
-        morphs_ptr: Ptr(mesh.morphs_ptr),
-        unk68: mesh.unk68,
-        unk72: mesh.unk72,
-        unk76: mesh.unk76,
-        unk80: mesh.unk80,
+        polygons_ptr,
+        vertices_ptr,
+        normals_ptr,
+        lights_ptr,
+        morphs_ptr,
+        bbox_mid: model.bbox_mid,
+        bbox_diag: model.bbox_diag,
     };
-    write.write_struct(&mesh)?;
+    write.write_struct(&model)?;
     Ok(())
+}
+
+fn make_vertex_info(polygon: &PolygonRc) -> Result<Hex<u32>> {
+    let vertex_indices_len =
+        assert_len!(u32, polygon.vertex_indices.len(), "polygon vertex indices")?;
+
+    if vertex_indices_len > 0x0000_00FF {
+        return Err(assert_with_msg!(
+            "Expected < 256 vertex indices, but got {}",
+            vertex_indices_len
+        ));
+    }
+
+    if vertex_indices_len < 3 {
+        warn!(
+            "WARN: Expected > 3 vertex indices, but got {}",
+            vertex_indices_len
+        );
+    }
+
+    let mut flags = PolygonBitFlags::empty();
+    if polygon.show_backface {
+        flags |= PolygonBitFlags::SHOW_BACKFACE;
+    }
+    if polygon.normal_indices.is_some() {
+        flags |= PolygonBitFlags::NORMALS;
+    }
+
+    Ok(Hex(vertex_indices_len | flags.bits()))
+}
+
+fn make_zone_set(zone_set: &[i8]) -> Result<Hex<u32>> {
+    let (zone_set_len, zone1, zone2, zone3) = match zone_set {
+        &[] => (0u32, -1, -1, -1),
+        &[zone1] => (1, zone1, -1, -1),
+        &[zone1, zone2] => (2, zone1, zone2, -1),
+        &[zone1, zone2, zone3] => (3, zone1, zone2, zone3),
+        other => {
+            return Err(assert_with_msg!(
+                "Expected 3 or fewer zones, but got {}",
+                other.len()
+            ))
+        }
+    };
+
+    if zone1 < -1 {
+        warn!("Expected zone 1 >= -1, but was {}", zone1);
+    }
+    if zone2 < -1 {
+        warn!("Expected zone 2 >= -1, but was {}", zone2);
+    }
+    if zone3 < -1 {
+        warn!("Expected zone 3 >= -1, but was {}", zone3);
+    }
+
+    let zone_set = (zone_set_len << 0)
+        | ((zone1 as u32) << 8)
+        | ((zone2 as u32) << 16)
+        | ((zone3 as u32) << 24);
+
+    Ok(Hex(zone_set))
 }
 
 fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[PolygonRc]) -> Result<()> {
     let count = polygons.len();
     for (index, polygon) in polygons.iter().enumerate() {
         trace!("Writing polygon info {}/{}", index, count);
-        let vertex_indices_len =
-            assert_len!(u32, polygon.vertex_indices.len(), "polygon vertex indices")?;
-        let mut flags = PolygonBitFlags::empty();
-        if polygon.unk0_flag {
-            flags |= PolygonBitFlags::UNK0;
-        }
-        if polygon.normal_indices.is_some() {
-            flags |= PolygonBitFlags::NORMALS;
-        }
-        let vertex_info = Hex(vertex_indices_len | (flags.bits() << 8));
+
+        let vertex_info = make_vertex_info(polygon)?;
+        let zone_set = make_zone_set(&polygon.zone_set)?;
+
         let poly = PolygonRcC {
             vertex_info,
-            unk04: polygon.unk04,
+            priority: polygon.priority,
             vertices_ptr: Ptr(polygon.vertices_ptr),
             normals_ptr: Ptr(polygon.normals_ptr),
             uvs_ptr: Ptr(polygon.uvs_ptr),
             material_index: polygon.material_index,
-            unk24: Hex(polygon.unk24),
+            zone_set,
         };
         write.write_struct(&poly)?;
     }
     for (index, polygon) in polygons.iter().enumerate() {
         trace!("Writing polygon data {}/{}", index, count);
 
+        let vertex_count = polygon.vertex_indices.len();
         trace!(
             "Writing {} vertex indices at {}",
-            polygon.vertex_indices.len(),
+            vertex_count,
             write.offset
         );
         write_u32s(write, &polygon.vertex_indices)?;
 
         if let Some(normal_indices) = &polygon.normal_indices {
+            if normal_indices.len() != vertex_count {
+                warn!(
+                    "WARN: Have {} vertex indices and {} normal indices",
+                    vertex_count,
+                    normal_indices.len(),
+                );
+            }
+
             trace!(
                 "Writing {} normal indices at {}",
                 normal_indices.len(),
@@ -87,6 +187,14 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[PolygonRc]
         }
 
         if let Some(uv_coords) = &polygon.uv_coords {
+            if uv_coords.len() != vertex_count {
+                warn!(
+                    "WARN: Have {} vertex indices and {} UV coords",
+                    vertex_count,
+                    uv_coords.len(),
+                );
+            }
+
             trace!("Writing {} UV coords at {}", uv_coords.len(), write.offset);
             write_uvs(write, uv_coords)?;
         }
@@ -96,46 +204,53 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[PolygonRc]
     Ok(())
 }
 
-pub(crate) fn write_mesh_data(write: &mut CountingWriter<impl Write>, mesh: &MeshRc) -> Result<()> {
-    if !mesh.vertices.is_empty() {
+pub(crate) fn write_model_data(
+    write: &mut CountingWriter<impl Write>,
+    model: &ModelRc,
+) -> Result<()> {
+    if !model.vertices.is_empty() {
         trace!(
             "Writing {} vertices at {}",
-            mesh.vertices.len(),
+            model.vertices.len(),
             write.offset
         );
-        write_vec3s(write, &mesh.vertices)?;
+        write_vec3s(write, &model.vertices)?;
     }
 
-    if !mesh.normals.is_empty() {
-        trace!("Writing {} normals at {}", mesh.normals.len(), write.offset);
-        write_vec3s(write, &mesh.normals)?;
+    if !model.normals.is_empty() {
+        trace!(
+            "Writing {} normals at {}",
+            model.normals.len(),
+            write.offset
+        );
+        write_vec3s(write, &model.normals)?;
     }
 
-    if !mesh.morphs.is_empty() {
-        trace!("Writing {} morphs at {}", mesh.morphs.len(), write.offset);
-        write_vec3s(write, &mesh.morphs)?;
+    if !model.morphs.is_empty() {
+        trace!("Writing {} morphs at {}", model.morphs.len(), write.offset);
+        write_vec3s(write, &model.morphs)?;
     }
 
-    if !mesh.lights.is_empty() {
-        trace!("Writing {} lights at {}", mesh.lights.len(), write.offset);
-        write_lights(write, &mesh.lights)?;
+    if !model.lights.is_empty() {
+        trace!("Writing {} lights at {}", model.lights.len(), write.offset);
+        write_lights(write, &model.lights)?;
     }
 
-    write_polygons(write, &mesh.polygons)?;
+    write_polygons(write, &model.polygons)?;
 
     Ok(())
 }
 
 const U32_SIZE: u32 = std::mem::size_of::<u32>() as _;
 
-pub(crate) fn size_mesh(mesh: &MeshRc) -> u32 {
+pub(crate) fn size_model(model: &ModelRc) -> u32 {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let mut size =
-        Vec3::SIZE * (mesh.vertices.len() + mesh.normals.len() + mesh.morphs.len()) as u32;
-    for light in &mesh.lights {
+        Vec3::SIZE * (model.vertices.len() + model.normals.len() + model.morphs.len()) as u32;
+    for light in &model.lights {
         size += LightC::SIZE + Vec3::SIZE * light.extra.len() as u32;
     }
-    for polygon in &mesh.polygons {
+    for polygon in &model.polygons {
         let normal_indices_len = polygon
             .normal_indices
             .as_ref()
