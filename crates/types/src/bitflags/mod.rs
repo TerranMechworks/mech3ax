@@ -152,6 +152,11 @@ macro_rules! bitflags {
             fn fmt_value(v: $ty, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                 bitflags!(@fmt $ty)(v, f, Self::FLAGS)
             }
+
+            #[inline]
+            fn maybe(self) -> $crate::maybe::Maybe<$ty, $name> {
+                Self::maybe(self)
+            }
         }
 
         impl $crate::bitflags::Bitflags<$ty> for $name {}

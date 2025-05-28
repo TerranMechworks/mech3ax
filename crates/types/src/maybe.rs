@@ -3,6 +3,10 @@ use std::fmt;
 use std::marker::PhantomData;
 use std::ops::{BitAnd, BitOr, Not};
 
+/// A primitive type that forms the underlying representation of a [`Maybe`]
+/// value.
+///
+/// This is e.g. a `u32`.
 pub trait PrimitiveRepr
 where
     Self: Clone
@@ -42,6 +46,7 @@ impl_primitive_repr!(i8);
 impl_primitive_repr!(i16);
 impl_primitive_repr!(i32);
 
+/// Implemented by types that support being wrapped via [`Maybe`].
 pub trait SupportsMaybe<R>
 where
     R: PrimitiveRepr,
@@ -49,6 +54,7 @@ where
 {
     fn from_bits(v: R) -> Option<Self>;
     fn fmt_value(v: R, f: &mut fmt::Formatter<'_>) -> fmt::Result;
+    fn maybe(self) -> Maybe<R, Self>;
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]

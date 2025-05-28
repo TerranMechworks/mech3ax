@@ -22,7 +22,7 @@ pub use bytes::Bytes;
 pub use cast::{u16_to_usize, u32_to_i64, u32_to_usize, AsUsize};
 pub use enumerate::EnumerateEx;
 pub use hex::Hex;
-pub use maybe::{Maybe, PrimitiveRepr};
+pub use maybe::Maybe;
 pub use primitive_enum::PrimitiveEnum;
 pub use ptr::Ptr;
 pub use zeros::Zeros;

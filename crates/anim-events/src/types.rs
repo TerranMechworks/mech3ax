@@ -73,6 +73,11 @@ impl SupportsMaybe<i16> for Index {
     fn fmt_value(v: i16, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         <i16 as fmt::Debug>::fmt(&v, f)
     }
+
+    #[inline]
+    fn maybe(self) -> Maybe<i16, Self> {
+        Maybe::new(self.0)
+    }
 }
 
 impl SupportsMaybe<i32> for Index {
@@ -90,6 +95,11 @@ impl SupportsMaybe<i32> for Index {
     #[inline]
     fn fmt_value(v: i32, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         <i32 as fmt::Debug>::fmt(&v, f)
+    }
+
+    #[inline]
+    fn maybe(self) -> Maybe<i32, Self> {
+        Maybe::new(self.0 as i32)
     }
 }
 

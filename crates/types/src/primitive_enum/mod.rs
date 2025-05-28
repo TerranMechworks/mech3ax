@@ -73,6 +73,11 @@ macro_rules! primitive_enum {
                     ::core::option::Option::None => ::core::write!(f, "<unknown> ({})", v),
                 }
             }
+
+            #[inline]
+            fn maybe(self) -> $crate::maybe::Maybe<$ty, $name> {
+                Self::maybe(self)
+            }
         }
 
         impl $crate::primitive_enum::PrimitiveEnum<$ty> for $name {
