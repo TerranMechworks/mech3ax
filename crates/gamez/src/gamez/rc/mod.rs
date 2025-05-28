@@ -1,5 +1,5 @@
 mod fixup;
-mod meshes;
+mod models;
 mod nodes;
 
 use super::common::{NODE_INDEX_INVALID, SIGNATURE, VERSION_RC};
@@ -10,7 +10,6 @@ use mech3ax_api_types::gamez::GameZDataRc;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _};
-use meshes as models;
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern)]
@@ -76,7 +75,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataRc> {
         read.offset == textures_offset,
         read.offset
     )?;
-    let textures = textures::read_texture_infos(read, header.texture_count)?;
+    let textures = textures::read_texture_directory(read, header.texture_count)?;
     assert_that!(
         "materials offset",
         read.offset == materials_offset,
@@ -122,7 +121,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataRc) 
     fixup::write(&mut header);
     write.write_struct(&header)?;
 
-    textures::write_texture_infos(write, &gamez.textures)?;
+    textures::write_texture_directory(write, &gamez.textures)?;
     materials::write_materials(
         write,
         &gamez.textures,

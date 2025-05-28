@@ -18,7 +18,7 @@ struct TextureInfoRcC {
 }
 impl_as_bytes!(TextureInfoRcC, 36);
 
-pub(crate) fn read_texture_infos(
+pub(crate) fn read_texture_directory(
     read: &mut CountingReader<impl Read>,
     count: u32,
 ) -> Result<Vec<String>> {
@@ -37,7 +37,7 @@ pub(crate) fn read_texture_infos(
         .collect::<Result<Vec<_>>>()
 }
 
-pub(crate) fn write_texture_infos(
+pub(crate) fn write_texture_directory(
     write: &mut CountingWriter<impl Write>,
     textures: &[String],
 ) -> Result<()> {
