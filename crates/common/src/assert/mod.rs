@@ -1,5 +1,5 @@
-use mech3ax_types::maybe::SupportsMaybe;
-use mech3ax_types::{Bitflags, Bool, ConversionError, Maybe, PrimitiveEnum, PrimitiveRepr};
+use mech3ax_types::maybe::{PrimitiveRepr, SupportsMaybe};
+use mech3ax_types::{Bitflags, Bool, ConversionError, Maybe, Padded, PrimitiveEnum};
 use std::cmp::{PartialEq, PartialOrd};
 use std::fmt;
 
@@ -273,6 +273,24 @@ where
     })
 }
 
+#[inline]
+pub fn is_padded<R, P>(name: &str, pos: usize, v: Maybe<R, P>) -> Result<P>
+where
+    R: PrimitiveRepr,
+    P: Padded<R>,
+{
+    v.validate().ok_or_else(|| {
+        let msg = format!(
+            "Expected `{}` to be padded ({}), but was {} (at {})",
+            name,
+            P::PATTERN,
+            v,
+            pos
+        );
+        AssertionError(msg)
+    })
+}
+
 fn struct_cmp<S>(name: &str, pos: usize, expected: &S, actual: &S) -> AssertionError
 where
     S: mech3ax_types::AsBytes + Default,
@@ -360,6 +378,9 @@ macro_rules! assert_that {
     };
     ($name:expr, default $actual:expr, $pos:expr) => {
         $crate::assert::is_default($name, $pos, &$actual)
+    };
+    ($name:expr, padded $actual:expr, $pos:expr) => {
+        $crate::assert::is_padded($name, $pos, $actual)
     };
 }
 

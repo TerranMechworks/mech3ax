@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Nodes RC only: Node zone ID is `i8`. (`gamez`, RC)
 * GameZ RC only: Refer to meshes as models. Almost all model fields understood. (`gamez`, RC)
 * Move fields from AnimFileName to AnimDef; AnimFileName is now only a list of the animation definition files in the archive.
 * Rename AnimPtr to AnimFileName

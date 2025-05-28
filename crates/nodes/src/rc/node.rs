@@ -8,7 +8,8 @@ use mech3ax_api_types::nodes::{AreaPartition, BoundingBox};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, Ascii, Maybe, Ptr};
+use mech3ax_types::maybe::SupportsMaybe as _;
+use mech3ax_types::{impl_as_bytes, Ascii, Maybe, PaddedI8, Ptr};
 use std::io::{Read, Write};
 
 #[derive(Debug)]
@@ -76,9 +77,7 @@ pub struct NodeRcC {
     flags: Flags,                  // 036
     zero040: u32,                  // 040
     unk044: u32,                   // 044
-    zone_id: i8,                   // 048
-    pad49: u8,                     // 049
-    pad50: u16,                    // 050
+    zone_id: PaddedI8,             // 048
     node_type: NType,              // 052
     data_ptr: Ptr,                 // 056
     mesh_index: i32,               // 060
@@ -130,8 +129,7 @@ fn assert_node(node: NodeRcC, offset: usize) -> Result<(NodeType, NodeVariantsRc
     assert_that!("field 040", node.zero040 == 0, offset + 40)?;
     // unk044 (044) is variable
     // zone_id (048) is variable
-    assert_that!("pad 49", node.pad49 == 0, offset + 49)?;
-    assert_that!("pad 50", node.pad50 == 0, offset + 50)?;
+    let zone_id = assert_that!("node zone id", padded node.zone_id, offset + 48)?;
     // node_type (052) see above
     // data_ptr (056) is variable
     // mesh_index (060) is variable
@@ -197,7 +195,7 @@ fn assert_node(node: NodeRcC, offset: usize) -> Result<(NodeType, NodeVariantsRc
         name,
         flags,
         unk044: node.unk044,
-        zone_id: node.zone_id,
+        zone_id,
         data_ptr: node.data_ptr.0,
         mesh_index: node.mesh_index,
         area_partition,
@@ -275,9 +273,7 @@ fn write_variant(
         flags: variant.flags.maybe(),
         zero040: 0,
         unk044: variant.unk044,
-        zone_id: variant.zone_id,
-        pad49: 0,
-        pad50: 0,
+        zone_id: variant.zone_id.maybe(),
         node_type: node_type.maybe(),
         data_ptr: Ptr(variant.data_ptr),
         mesh_index: variant.mesh_index,
@@ -377,8 +373,6 @@ pub fn assert_node_info_zero(node: &NodeRcC, offset: usize) -> Result<()> {
     assert_that!("field 040", node.zero040 == 0, offset + 40)?;
     assert_that!("field 044", node.unk044 == 0, offset + 44)?;
     assert_that!("zone id", node.zone_id == 0, offset + 48)?;
-    assert_that!("pad 49", node.pad49 == 0, offset + 49)?;
-    assert_that!("pad 50", node.pad50 == 0, offset + 50)?;
     // node type (52)
     assert_that!("data ptr", node.data_ptr == Ptr::NULL, offset + 56)?;
     assert_that!("mesh index", node.mesh_index == -1, offset + 60)?;
