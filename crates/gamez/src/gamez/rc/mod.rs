@@ -6,7 +6,7 @@ use super::common::{NODE_INDEX_INVALID, SIGNATURE, VERSION_RC};
 use crate::materials;
 use crate::textures::rc as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::gamez::GameZDataRc;
+use mech3ax_api_types::gamez::{GameZDataRc, GameZMetadataRc};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _};
@@ -26,8 +26,6 @@ struct HeaderRcC {
     nodes_offset: u32,     // 32
 }
 impl_as_bytes!(HeaderRcC, 36);
-
-pub(crate) const NODE_ARRAY_SIZE: u32 = 16000;
 
 pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataRc> {
     let mut header: HeaderRcC = read.read_struct()?;
@@ -57,11 +55,6 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataRc> {
     let models_offset = u32_to_usize(header.models_offset);
     let nodes_offset = u32_to_usize(header.nodes_offset);
 
-    assert_that!(
-        "node array size",
-        header.node_array_size == NODE_ARRAY_SIZE,
-        read.prev + 24
-    )?;
     // need at least world, window, camera, display, and light
     assert_that!("node count", header.node_count > 5, read.prev + 28)?;
     assert_that!(
@@ -86,16 +79,24 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataRc> {
         materials::read_materials(read, &texture_names, materials::MatType::Rc)?;
 
     assert_that!("models offset", read.offset == models_offset, read.offset)?;
-    let (models, models_count) = models::read_models(read, nodes_offset, material_count)?;
-    assert_that!("nodes offset", read.offset == nodes_offset, read.offset)?;
-    let nodes = nodes::read_nodes(read, header.node_count, models_count)?;
-    // `read_nodes` calls `assert_end`
+    let (models, model_count, model_array_size) =
+        models::read_models(read, nodes_offset, material_count)?;
 
+    assert_that!("nodes offset", read.offset == nodes_offset, read.offset)?;
+    let nodes = nodes::read_nodes(read, header.node_array_size, header.node_count, model_count)?;
+
+    read.assert_end()?;
+
+    let metadata = GameZMetadataRc {
+        model_array_size,
+        node_array_size: header.node_array_size,
+    };
     Ok(GameZDataRc {
         textures,
         materials,
         models,
         nodes,
+        metadata,
     })
 }
 
@@ -103,11 +104,17 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataRc) 
     let texture_count = assert_len!(i32, gamez.textures.len(), "GameZ textures")?;
     let node_count = assert_len!(u32, gamez.nodes.len(), "GameZ nodes")?;
 
+    let GameZMetadataRc {
+        model_array_size,
+        node_array_size,
+    } = gamez.metadata;
+
     let textures_offset = HeaderRcC::SIZE;
     let materials_offset = textures_offset + textures::size_texture_infos(texture_count);
     let models_offset =
         materials_offset + materials::size_materials(&gamez.materials, materials::MatType::Rc);
-    let (nodes_offset, model_offsets) = models::size_models(models_offset, &gamez.models);
+    let (nodes_offset, model_offsets) =
+        models::size_models(models_offset, model_array_size, &gamez.models);
 
     let mut header = HeaderRcC {
         signature: SIGNATURE,
@@ -116,7 +123,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataRc) 
         textures_offset,
         materials_offset,
         models_offset,
-        node_array_size: NODE_ARRAY_SIZE,
+        node_array_size,
         node_count,
         nodes_offset,
     };
@@ -131,7 +138,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataRc) 
         &gamez.materials,
         materials::MatType::Rc,
     )?;
-    models::write_models(write, &gamez.models, &model_offsets)?;
-    nodes::write_nodes(write, &gamez.nodes, nodes_offset)?;
+    models::write_models(write, &gamez.models, model_array_size, &model_offsets)?;
+    nodes::write_nodes(write, &gamez.nodes, node_array_size, nodes_offset)?;
     Ok(())
 }

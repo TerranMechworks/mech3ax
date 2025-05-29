@@ -12,19 +12,12 @@ use mech3ax_common::{assert_len, assert_that, Result};
 use mech3ax_types::u32_to_usize;
 use std::io::{Read, Write};
 
-const MODEL_ARRAY_SIZE: i32 = 6000;
-
 pub(crate) fn read_models(
     read: &mut CountingReader<impl Read>,
     end_offset: usize,
     material_count: u32,
-) -> Result<(Vec<ModelRc>, i32)> {
+) -> Result<(Vec<ModelRc>, i32, i32)> {
     let model_indices = read_meshes_info_sequential(read)?;
-    assert_that!(
-        "models array size",
-        model_indices.array_size == MODEL_ARRAY_SIZE,
-        read.offset
-    )?;
 
     let mut prev_offset = read.offset;
     let models = model_indices
@@ -65,16 +58,17 @@ pub(crate) fn read_models(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    Ok((models, model_indices.count))
+    Ok((models, model_indices.count, model_indices.array_size))
 }
 
 pub(crate) fn write_models(
     write: &mut CountingWriter<impl Write>,
     models: &[ModelRc],
+    array_size: i32,
     offsets: &[u32],
 ) -> Result<()> {
     let count = assert_len!(i32, models.len(), "GameZ models")?;
-    let model_indices_zero = write_meshes_info_sequential(write, MODEL_ARRAY_SIZE, count)?;
+    let model_indices_zero = write_meshes_info_sequential(write, array_size, count)?;
 
     let count = models.len();
     for (model_index, (model, offset)) in models.iter().zip(offsets.iter().copied()).enumerate() {
@@ -86,7 +80,7 @@ pub(crate) fn write_models(
     trace!(
         "Writing {}..{} model info zeros at {}",
         count,
-        MODEL_ARRAY_SIZE,
+        array_size,
         write.offset
     );
     let model_zero = ModelRcC::default();
@@ -106,9 +100,9 @@ pub(crate) fn write_models(
 
 const U32_SIZE: u32 = std::mem::size_of::<u32>() as _;
 
-pub(crate) fn size_models(offset: u32, models: &[ModelRc]) -> (u32, Vec<u32>) {
+pub(crate) fn size_models(offset: u32, array_size: i32, models: &[ModelRc]) -> (u32, Vec<u32>) {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
-    let array_size = MODEL_ARRAY_SIZE as u32;
+    let array_size = array_size as u32;
     let mut offset = offset + MESHES_INFO_C_SIZE + (MODEL_C_SIZE + U32_SIZE) * array_size;
     let offsets = models
         .iter()

@@ -324,6 +324,7 @@ fn gamez_rc(opts: &ZipOpts) -> Result<()> {
     let output = buf_writer(&opts.output)?;
     let mut zip = ZipWriter::new(output);
 
+    zip_json(&mut zip, "metadata.json", &gamez.metadata)?;
     zip_json(&mut zip, "textures.json", &gamez.textures)?;
     zip_json(&mut zip, "materials.json", &gamez.materials)?;
     zip_json(&mut zip, "models.json", &gamez.models)?;

@@ -3,18 +3,10 @@ use eyre::{bail, Context as _, Result};
 use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::gamez::mechlib::{ModelMw, ModelPm};
-use mech3ax_api_types::gamez::mesh::{MeshMw, MeshNg, ModelRc};
-use mech3ax_api_types::gamez::{
-    GameZDataCs, GameZDataMw, GameZDataPm, GameZDataRc, GameZMetadataCs, GameZMetadataMw,
-    GameZMetadataPm, TextureName,
-};
+use mech3ax_api_types::gamez::{GameZDataCs, GameZDataMw, GameZDataPm, GameZDataRc};
 use mech3ax_api_types::image::TextureManifest;
 use mech3ax_api_types::interp::Script;
 use mech3ax_api_types::motion::Motion;
-use mech3ax_api_types::nodes::cs::NodeCs;
-use mech3ax_api_types::nodes::mw::NodeMw;
-use mech3ax_api_types::nodes::pm::NodePm;
-use mech3ax_api_types::nodes::rc::NodeRc;
 use mech3ax_api_types::saves::AnimActivation;
 use mech3ax_api_types::zmap::Zmap;
 use mech3ax_archive::{write_archive, Mode, Version};
@@ -263,11 +255,11 @@ fn gamez_mw(opts: &ZipOpts) -> Result<()> {
     let input = buf_reader(&opts.input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
 
-    let metadata: GameZMetadataMw = zip_json(&mut zip, "metadata.json")?;
-    let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
-    let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
-    let meshes: Vec<MeshMw> = zip_json(&mut zip, "meshes.json")?;
-    let nodes: Vec<NodeMw> = zip_json(&mut zip, "nodes.json")?;
+    let metadata = zip_json(&mut zip, "metadata.json")?;
+    let textures = zip_json(&mut zip, "textures.json")?;
+    let materials = zip_json(&mut zip, "materials.json")?;
+    let meshes = zip_json(&mut zip, "meshes.json")?;
+    let nodes = zip_json(&mut zip, "nodes.json")?;
 
     drop(zip);
 
@@ -287,11 +279,11 @@ fn gamez_pm(opts: &ZipOpts) -> Result<()> {
     let input = buf_reader(&opts.input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
 
-    let metadata: GameZMetadataPm = zip_json(&mut zip, "metadata.json")?;
-    let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
-    let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
-    let meshes: Vec<MeshNg> = zip_json(&mut zip, "meshes.json")?;
-    let nodes: Vec<NodePm> = zip_json(&mut zip, "nodes.json")?;
+    let metadata = zip_json(&mut zip, "metadata.json")?;
+    let textures = zip_json(&mut zip, "textures.json")?;
+    let materials = zip_json(&mut zip, "materials.json")?;
+    let meshes = zip_json(&mut zip, "meshes.json")?;
+    let nodes = zip_json(&mut zip, "nodes.json")?;
 
     drop(zip);
 
@@ -311,11 +303,11 @@ fn gamez_cs(opts: &ZipOpts) -> Result<()> {
     let input = buf_reader(&opts.input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
 
-    let metadata: GameZMetadataCs = zip_json(&mut zip, "metadata.json")?;
-    let textures: Vec<TextureName> = zip_json(&mut zip, "textures.json")?;
-    let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
-    let meshes: Vec<Option<MeshNg>> = zip_json(&mut zip, "meshes.json")?;
-    let nodes: Vec<NodeCs> = zip_json(&mut zip, "nodes.json")?;
+    let metadata = zip_json(&mut zip, "metadata.json")?;
+    let textures = zip_json(&mut zip, "textures.json")?;
+    let materials = zip_json(&mut zip, "materials.json")?;
+    let meshes = zip_json(&mut zip, "meshes.json")?;
+    let nodes = zip_json(&mut zip, "nodes.json")?;
 
     drop(zip);
 
@@ -335,10 +327,11 @@ fn gamez_rc(opts: &ZipOpts) -> Result<()> {
     let input = buf_reader(&opts.input)?;
     let mut zip = ZipArchive::new(input).context("Failed to open input")?;
 
-    let textures: Vec<String> = zip_json(&mut zip, "textures.json")?;
-    let materials: Vec<Material> = zip_json(&mut zip, "materials.json")?;
-    let models: Vec<ModelRc> = zip_json(&mut zip, "models.json")?;
-    let nodes: Vec<NodeRc> = zip_json(&mut zip, "nodes.json")?;
+    let metadata = zip_json(&mut zip, "metadata.json")?;
+    let textures = zip_json(&mut zip, "textures.json")?;
+    let materials = zip_json(&mut zip, "materials.json")?;
+    let models = zip_json(&mut zip, "models.json")?;
+    let nodes = zip_json(&mut zip, "nodes.json")?;
 
     drop(zip);
 
@@ -347,6 +340,7 @@ fn gamez_rc(opts: &ZipOpts) -> Result<()> {
         materials,
         models,
         nodes,
+        metadata,
     };
 
     let mut write = buf_writer(&opts.output)?;

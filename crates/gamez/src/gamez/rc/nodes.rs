@@ -1,4 +1,4 @@
-use super::{NODE_ARRAY_SIZE, NODE_INDEX_INVALID};
+use super::NODE_INDEX_INVALID;
 use log::trace;
 use mech3ax_api_types::nodes::rc::NodeRc;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -12,12 +12,13 @@ use std::io::{Read, Write};
 
 pub(crate) fn read_nodes(
     read: &mut CountingReader<impl Read>,
+    array_size: u32,
     count: u32,
-    models_count: i32,
+    model_count: i32,
 ) -> Result<Vec<NodeRc>> {
     let node_write_size = u32_to_usize(NodeRcC::SIZE) + 4;
     let valid_offset = read.offset + node_write_size * u32_to_usize(count);
-    let end_offset = read.offset + node_write_size * u32_to_usize(NODE_ARRAY_SIZE);
+    let end_offset = read.offset + node_write_size * u32_to_usize(array_size);
 
     let mut variants = Vec::new();
     let mut light_node: Option<u32> = None;
@@ -90,10 +91,10 @@ pub(crate) fn read_nodes(
     trace!(
         "Reading {}..{} node info zeros at {}",
         count,
-        NODE_ARRAY_SIZE,
+        array_size,
         read.offset
     );
-    for index in count..NODE_ARRAY_SIZE {
+    for index in count..array_size {
         let node: NodeRcC = read.read_struct_no_log()?;
         assert_node_info_zero(&node, read.prev)
             .inspect_err(|_| trace!("{:#?} (index: {}, at {})", node, index, read.prev))?;
@@ -101,7 +102,7 @@ pub(crate) fn read_nodes(
         let actual_index = read.read_u32()?;
 
         let mut expected_index = index + 1;
-        if expected_index == NODE_ARRAY_SIZE {
+        if expected_index == array_size {
             expected_index = NODE_INDEX_INVALID;
         }
         assert_that!("node zero index", actual_index == expected_index, read.prev)?;
@@ -138,7 +139,6 @@ pub(crate) fn read_nodes(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    read.assert_end()?;
     assert_area_partitions(&nodes, read.offset)?;
 
     Ok(nodes)
@@ -171,9 +171,10 @@ fn assert_area_partitions(nodes: &[NodeRc], offset: usize) -> Result<()> {
 pub(crate) fn write_nodes(
     write: &mut CountingWriter<impl Write>,
     nodes: &[NodeRc],
+    array_size: u32,
     offset: u32,
 ) -> Result<()> {
-    let mut offset = offset + (NodeRcC::SIZE + 4) * NODE_ARRAY_SIZE;
+    let mut offset = offset + (NodeRcC::SIZE + 4) * array_size;
     let node_count = assert_len!(u32, nodes.len(), "nodes")?;
 
     for (index, node) in nodes.iter().enumerate() {
@@ -191,14 +192,14 @@ pub(crate) fn write_nodes(
     trace!(
         "Writing {}..{} node info zeros at {}",
         node_count,
-        NODE_ARRAY_SIZE,
+        array_size,
         write.offset
     );
     let node_zero = NodeRcC::zero();
-    for index in node_count..NODE_ARRAY_SIZE {
+    for index in node_count..array_size {
         write.write_struct_no_log(&node_zero)?;
         let mut index = index + 1;
-        if index == NODE_ARRAY_SIZE {
+        if index == array_size {
             index = NODE_INDEX_INVALID;
         }
         write.write_u32(index)?;

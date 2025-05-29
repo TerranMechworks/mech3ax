@@ -13,7 +13,7 @@ macro_rules! assert_ptr {
         if $count == 0 {
             if $model.$ptr != 0 {
                 warn!(concat!(
-                    "WARN: model has no ",
+                    "WARN: Model has no ",
                     $name,
                     ", but `",
                     stringify!($ptr),
@@ -23,7 +23,7 @@ macro_rules! assert_ptr {
         } else {
             if $model.$ptr == 0 {
                 warn!(concat!(
-                    "WARN: model has ",
+                    "WARN: Model has ",
                     $name,
                     ", but `",
                     stringify!($ptr),

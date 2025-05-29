@@ -78,10 +78,17 @@ pub struct GameZDataCs {
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
+pub struct GameZMetadataRc {
+    pub model_array_size: i32,
+    pub node_array_size: u32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Struct)]
 #[dotnet(partial, namespace = "Mech3DotNet.Zbd")]
 pub struct GameZDataRc {
     pub textures: Vec<Texture>,
     pub materials: Vec<Material>,
     pub models: Vec<ModelRc>,
     pub nodes: Vec<NodeRc>,
+    pub metadata: GameZMetadataRc,
 }
