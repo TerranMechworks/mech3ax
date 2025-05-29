@@ -69,6 +69,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataRc> {
         read.offset
     )?;
     let textures = textures::read_texture_directory(read, header.texture_count)?;
+
     assert_that!(
         "materials offset",
         read.offset == materials_offset,

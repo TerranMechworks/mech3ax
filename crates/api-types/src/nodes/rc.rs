@@ -29,9 +29,9 @@ pub struct Empty {
     pub flags: NodeFlags,
     pub unk044: u32,
     pub zone_id: u32, // TODO: i8
-    pub unk116: BoundingBox,
-    pub unk140: BoundingBox,
-    pub unk164: BoundingBox,
+    pub node_bbox: BoundingBox,
+    pub model_bbox: BoundingBox,
+    pub child_bbox: BoundingBox,
     pub parent: u32,
 }
 
@@ -60,10 +60,13 @@ pub struct Lod {
     pub zone_id: u32,
     pub parent: Option<u32>,
     pub children: Vec<u32>,
+
+    pub node_bbox: BoundingBox,
+    pub child_bbox: BoundingBox,
+
     pub data_ptr: u32,
     pub parent_array_ptr: u32,
     pub children_array_ptr: u32,
-    pub unk116: BoundingBox,
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
@@ -74,18 +77,19 @@ pub struct Object3d {
     pub flags: NodeFlags,
     pub zone_id: u32,
     pub area_partition: Option<AreaPartition>,
-    pub mesh_index: i32,
+    pub model_index: i32,
     pub parent: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub parents: Option<Vec<u32>>,
     pub children: Vec<u32>,
 
+    pub node_bbox: BoundingBox,
+    pub model_bbox: BoundingBox,
+    pub child_bbox: BoundingBox,
+
     pub data_ptr: u32,
     pub parent_array_ptr: u32,
     pub children_array_ptr: u32,
-    pub unk116: BoundingBox,
-    pub unk140: BoundingBox,
-    pub unk164: BoundingBox,
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]

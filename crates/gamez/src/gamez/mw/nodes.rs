@@ -191,7 +191,6 @@ pub(crate) fn read_nodes(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    read.assert_end()?;
     assert_area_partitions(&nodes, read.offset)?;
     Ok(nodes)
 }

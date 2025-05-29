@@ -56,9 +56,9 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
     // node_type (52) already asserted
     assert_that!("object3d data ptr", node.data_ptr != 0, offset + 56)?;
     if node.flags.contains(NodeBitFlags::HAS_MESH) {
-        assert_that!("object3d mesh index", node.mesh_index >= 0, offset + 60)?;
+        assert_that!("object3d model index", node.model_index >= 0, offset + 60)?;
     } else {
-        assert_that!("object3d mesh index", node.mesh_index == -1, offset + 60)?;
+        assert_that!("object3d model index", node.model_index == -1, offset + 60)?;
     }
     // environment_data (64) already asserted
     // action_priority (68) already asserted
@@ -73,13 +73,11 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
     // parent_array_ptr (88) already asserted
     // children_count (92) is variable
     // children_array_ptr (96) already asserted
-    // zero100 (100) already asserted
-    // zero104 (104) already asserted
-    // zero108 (108) already asserted
-    // zero112 (112) already asserted
-    // unk116 (116) is variable
-    // unk140 (140) is variable
-    // unk164 (164) is variable
+    // bbox_mid (100) already asserted
+    // bbox_diag (112) already asserted
+    // node_bbox (116) is variable
+    // model_bbox (140) is variable
+    // child_bbox (164) is variable
     // zero188 (188) already asserted
     Ok(NodeVariantRc::Object3d(node))
 }
@@ -112,14 +110,14 @@ pub(crate) fn make_variants(object3d: &Object3d) -> Result<NodeVariantsRc> {
         unk044: 4,
         zone_id: object3d.zone_id as i8, // TODO
         data_ptr: object3d.data_ptr,
-        mesh_index: object3d.mesh_index,
+        model_index: object3d.model_index,
         area_partition: object3d.area_partition,
         parent_count,
         parent_array_ptr: object3d.parent_array_ptr,
         children_count,
         children_array_ptr: object3d.children_array_ptr,
-        unk116: object3d.unk116,
-        unk140: object3d.unk140,
-        unk164: object3d.unk164,
+        node_bbox: object3d.node_bbox,
+        model_bbox: object3d.model_bbox,
+        child_bbox: object3d.child_bbox,
     })
 }

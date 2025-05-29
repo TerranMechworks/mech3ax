@@ -32,7 +32,7 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
     assert_that!("light zone id", node.zone_id == ZONE_ALWAYS, offset + 48)?;
     // node_type (52) already asserted
     assert_that!("light data ptr", node.data_ptr != 0, offset + 56)?;
-    assert_that!("light mesh index", node.mesh_index == -1, offset + 60)?;
+    assert_that!("light model index", node.model_index == -1, offset + 60)?;
     // environment_data (64) already asserted
     // action_priority (68) already asserted
     // action_callback (72) already asserted
@@ -49,19 +49,21 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
         offset + 92
     )?;
     // children_array_ptr (96) already asserted
-    // zero100 (100) already asserted
-    // zero104 (104) already asserted
-    // zero108 (108) already asserted
-    // zero112 (112) already asserted
-    assert_that!("light bbox 1", node.unk116 == BBOX_LIGHT, offset + 116)?;
+    // bbox_mid (100) already asserted
+    // bbox_diag (112) already asserted
     assert_that!(
-        "light bbox 2",
-        node.unk140 == BoundingBox::EMPTY,
+        "light node bbox",
+        node.node_bbox == BBOX_LIGHT,
+        offset + 116
+    )?;
+    assert_that!(
+        "light model bbox",
+        node.model_bbox == BoundingBox::EMPTY,
         offset + 140
     )?;
     assert_that!(
-        "light bbox 3",
-        node.unk164 == BoundingBox::EMPTY,
+        "light child bbox",
+        node.child_bbox == BoundingBox::EMPTY,
         offset + 164
     )?;
     // zero188 (188) already asserted
@@ -77,14 +79,14 @@ pub(crate) fn make_variants(light: &Light) -> NodeVariantsRc {
         unk044: 0,
         zone_id: ZONE_ALWAYS,
         data_ptr: light.data_ptr,
-        mesh_index: -1,
+        model_index: -1,
         area_partition: None,
         parent_count: 0,
         parent_array_ptr: 0,
         children_count: 0,
         children_array_ptr: 0,
-        unk116: BBOX_LIGHT,
-        unk140: BoundingBox::EMPTY,
-        unk164: BoundingBox::EMPTY,
+        node_bbox: BBOX_LIGHT,
+        model_bbox: BoundingBox::EMPTY,
+        child_bbox: BoundingBox::EMPTY,
     }
 }

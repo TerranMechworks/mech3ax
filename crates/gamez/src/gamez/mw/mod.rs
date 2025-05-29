@@ -19,7 +19,7 @@ struct HeaderMwC {
     texture_count: u32,    // 08
     textures_offset: u32,  // 12
     materials_offset: u32, // 16
-    meshes_offset: u32,    // 20
+    models_offset: u32,    // 20
     node_array_size: u32,  // 24
     node_count: u32,       // 28
     nodes_offset: u32,     // 32
@@ -39,18 +39,18 @@ pub fn read_gamez(read: &mut CountingReader<impl Read + Seek>) -> Result<GameZDa
     )?;
     assert_that!(
         "materials offset",
-        header.materials_offset < header.meshes_offset,
+        header.materials_offset < header.models_offset,
         read.prev + 16
     )?;
     assert_that!(
-        "meshes offset",
-        header.meshes_offset < header.nodes_offset,
+        "models offset",
+        header.models_offset < header.nodes_offset,
         read.prev + 20
     )?;
 
     let textures_offset = u32_to_usize(header.textures_offset);
     let materials_offset = u32_to_usize(header.materials_offset);
-    let meshes_offset = u32_to_usize(header.meshes_offset);
+    let models_offset = u32_to_usize(header.models_offset);
     let nodes_offset = u32_to_usize(header.nodes_offset);
 
     // need at least world, window, camera, display, and light
@@ -67,6 +67,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read + Seek>) -> Result<GameZDa
         read.offset
     )?;
     let textures = textures::read_texture_infos(read, header.texture_count)?;
+
     assert_that!(
         "materials offset",
         read.offset == materials_offset,
@@ -79,9 +80,11 @@ pub fn read_gamez(read: &mut CountingReader<impl Read + Seek>) -> Result<GameZDa
     assert_that!("models offset", read.offset == models_offset, read.offset)?;
     let (meshes, meshes_count, mesh_array_size) =
         meshes::read_meshes(read, nodes_offset, material_count)?;
+
     assert_that!("nodes offset", read.offset == nodes_offset, read.offset)?;
     let nodes = nodes::read_nodes(read, header.node_array_size, meshes_count)?;
-    // `read_nodes` calls `assert_end`
+
+    read.assert_end()?;
 
     let metadata = GameZMetadataMw {
         meshes_array_size: mesh_array_size,
@@ -116,7 +119,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataMw) 
         texture_count,
         textures_offset,
         materials_offset,
-        meshes_offset,
+        models_offset: meshes_offset,
         node_array_size,
         node_count: gamez.metadata.node_data_count,
         nodes_offset,

@@ -5,6 +5,7 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use log::debug;
 use mech3ax_api_types::nodes::rc::{Empty, NodeRc};
 use mech3ax_api_types::nodes::{AreaPartition, BoundingBox};
+use mech3ax_api_types::Vec3;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
@@ -19,15 +20,15 @@ pub struct NodeVariantsRc {
     pub unk044: u32,
     pub zone_id: i8,
     pub data_ptr: u32,
-    pub mesh_index: i32,
+    pub model_index: i32,
     pub area_partition: Option<AreaPartition>,
     pub parent_count: u32,
     pub parent_array_ptr: u32,
     pub children_count: u32,
     pub children_array_ptr: u32,
-    pub unk116: BoundingBox,
-    pub unk140: BoundingBox,
-    pub unk164: BoundingBox,
+    pub node_bbox: BoundingBox,
+    pub model_bbox: BoundingBox,
+    pub child_bbox: BoundingBox,
 }
 
 #[derive(Debug)]
@@ -37,10 +38,11 @@ pub struct NodeVariantLodRc {
     pub zone_id: i8,
     pub data_ptr: u32,
     pub has_parent: bool,
+    pub node_bbox: BoundingBox,
+    pub child_bbox: BoundingBox,
     pub parent_array_ptr: u32,
     pub children_count: u32,
     pub children_array_ptr: u32,
-    pub unk116: BoundingBox,
 }
 
 #[derive(Debug)]
@@ -80,7 +82,7 @@ pub struct NodeRcC {
     zone_id: PaddedI8,             // 048
     node_type: NType,              // 052
     data_ptr: Ptr,                 // 056
-    mesh_index: i32,               // 060
+    model_index: i32,              // 060
     environment_data: u32,         // 064
     action_priority: u32,          // 068
     action_callback: u32,          // 072
@@ -89,13 +91,11 @@ pub struct NodeRcC {
     parent_array_ptr: Ptr,         // 088
     children_count: u32,           // 092
     children_array_ptr: Ptr,       // 096
-    zero100: u32,                  // 100
-    zero104: u32,                  // 104
-    zero108: u32,                  // 108
-    zero112: u32,                  // 112
-    unk116: BoundingBox,           // 116
-    unk140: BoundingBox,           // 140
-    unk164: BoundingBox,           // 164
+    bbox_mid: Vec3,                // 100
+    bbox_diag: f32,                // 112
+    node_bbox: BoundingBox,        // 116
+    model_bbox: BoundingBox,       // 140
+    child_bbox: BoundingBox,       // 164
     zero188: u32,                  // 188
 }
 impl_as_bytes!(NodeRcC, 192);
@@ -104,7 +104,7 @@ impl NodeRcC {
     #[inline]
     pub fn zero() -> Self {
         Self {
-            mesh_index: -1,
+            model_index: -1,
             ..Default::default()
         }
     }
@@ -132,7 +132,8 @@ fn assert_node(node: NodeRcC, offset: usize) -> Result<(NodeType, NodeVariantsRc
     let zone_id = assert_that!("node zone id", padded node.zone_id, offset + 48)?;
     // node_type (052) see above
     // data_ptr (056) is variable
-    // mesh_index (060) is variable
+    // model_index (060) is variable
+    assert_that!("model index", node.model_index >= -1, offset + 60)?;
     assert_that!("env data", node.environment_data == 0, offset + 64)?;
     assert_that!("action prio", node.action_priority == 1, offset + 68)?;
     assert_that!("action cb", node.action_callback == 0, offset + 72)?;
@@ -141,13 +142,11 @@ fn assert_node(node: NodeRcC, offset: usize) -> Result<(NodeType, NodeVariantsRc
     // parent_array_ptr (088) is variable
     // children_count (092) is variable
     // children_array_ptr (096) is variable
-    assert_that!("field 100", node.zero100 == 0, offset + 100)?;
-    assert_that!("field 104", node.zero104 == 0, offset + 104)?;
-    assert_that!("field 108", node.zero108 == 0, offset + 108)?;
-    assert_that!("field 112", node.zero112 == 0, offset + 112)?;
-    // unk116 (116) is variable
-    // unk140 (140) is variable
-    // unk164 (164) is variable
+    assert_that!("bbox mid", node.bbox_mid == Vec3::DEFAULT, offset + 100)?;
+    assert_that!("bbox diag", node.bbox_diag == 0.0, offset + 112)?;
+    // node_bbox (116) is variable
+    // model_bbox (140) is variable
+    // child_bbox (164) is variable
     assert_that!("field 188", node.zero188 == 0, offset + 188)?;
 
     // assert area partition properly once we have read the world data
@@ -197,15 +196,15 @@ fn assert_node(node: NodeRcC, offset: usize) -> Result<(NodeType, NodeVariantsRc
         unk044: node.unk044,
         zone_id,
         data_ptr: node.data_ptr.0,
-        mesh_index: node.mesh_index,
+        model_index: node.model_index,
         area_partition,
         parent_count: node.parent_count,
         parent_array_ptr: node.parent_array_ptr.0,
         children_count: node.children_count,
         children_array_ptr: node.children_array_ptr.0,
-        unk116: node.unk116,
-        unk140: node.unk140,
-        unk164: node.unk164,
+        node_bbox: node.node_bbox,
+        model_bbox: node.model_bbox,
+        child_bbox: node.child_bbox,
     };
 
     Ok((node_type, variants))
@@ -276,7 +275,7 @@ fn write_variant(
         zone_id: variant.zone_id.maybe(),
         node_type: node_type.maybe(),
         data_ptr: Ptr(variant.data_ptr),
-        mesh_index: variant.mesh_index,
+        model_index: variant.model_index,
         environment_data: 0,
         action_priority: 1,
         action_callback: 0,
@@ -285,13 +284,11 @@ fn write_variant(
         parent_array_ptr: Ptr(variant.parent_array_ptr),
         children_count: variant.children_count,
         children_array_ptr: Ptr(variant.children_array_ptr),
-        zero100: 0,
-        zero104: 0,
-        zero108: 0,
-        zero112: 0,
-        unk116: variant.unk116,
-        unk140: variant.unk140,
-        unk164: variant.unk164,
+        bbox_mid: Vec3::DEFAULT,
+        bbox_diag: 0.0,
+        node_bbox: variant.node_bbox,
+        model_bbox: variant.model_bbox,
+        child_bbox: variant.child_bbox,
         zero188: 0,
     };
     write.write_struct(&node)?;
@@ -375,7 +372,7 @@ pub fn assert_node_info_zero(node: &NodeRcC, offset: usize) -> Result<()> {
     assert_that!("zone id", node.zone_id == 0, offset + 48)?;
     // node type (52)
     assert_that!("data ptr", node.data_ptr == Ptr::NULL, offset + 56)?;
-    assert_that!("mesh index", node.mesh_index == -1, offset + 60)?;
+    assert_that!("model index", node.model_index == -1, offset + 60)?;
     assert_that!("env data", node.environment_data == 0, offset + 64)?;
     assert_that!("action prio", node.action_priority == 0, offset + 68)?;
     assert_that!("action cb", node.action_callback == 0, offset + 72)?;
@@ -396,13 +393,23 @@ pub fn assert_node_info_zero(node: &NodeRcC, offset: usize) -> Result<()> {
         node.children_array_ptr == Ptr::NULL,
         offset + 96
     )?;
-    assert_that!("field 100", node.zero100 == 0, offset + 100)?;
-    assert_that!("field 104", node.zero104 == 0, offset + 104)?;
-    assert_that!("field 108", node.zero108 == 0, offset + 108)?;
-    assert_that!("field 112", node.zero112 == 0, offset + 112)?;
-    assert_that!("bbox 1", node.unk116 == BoundingBox::EMPTY, offset + 116)?;
-    assert_that!("bbox 2", node.unk140 == BoundingBox::EMPTY, offset + 140)?;
-    assert_that!("bbox 3", node.unk164 == BoundingBox::EMPTY, offset + 164)?;
+    assert_that!("bbox mid", node.bbox_mid == Vec3::DEFAULT, offset + 100)?;
+    assert_that!("bbox diag", node.bbox_diag == 0.0, offset + 112)?;
+    assert_that!(
+        "bbox node",
+        node.node_bbox == BoundingBox::EMPTY,
+        offset + 116
+    )?;
+    assert_that!(
+        "bbox model",
+        node.model_bbox == BoundingBox::EMPTY,
+        offset + 140
+    )?;
+    assert_that!(
+        "bbox child",
+        node.child_bbox == BoundingBox::EMPTY,
+        offset + 164
+    )?;
     assert_that!("field 188", node.zero188 == 0, offset + 188)?;
     Ok(())
 }

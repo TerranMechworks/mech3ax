@@ -72,10 +72,10 @@ pub(crate) fn read_nodes(
             NodeVariantRc::Object3d(object3d) => {
                 // exclude world, window, camera, or display indices
                 assert_that!("node position (object3d)", index > 3, node_info_pos)?;
-                if object3d.mesh_index >= 0 {
+                if object3d.model_index >= 0 {
                     assert_that!(
                         "object3d model index",
-                        object3d.mesh_index < models_count,
+                        object3d.model_index < model_count,
                         node_info_pos
                     )?;
                 }

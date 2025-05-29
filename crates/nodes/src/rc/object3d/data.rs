@@ -178,19 +178,19 @@ pub(crate) fn read(read: &mut CountingReader<impl Read>, node: NodeVariantsRc) -
         name: node.name,
         flags: node.flags.into(),
         zone_id: node.zone_id as u32, // TODO
-        mesh_index: node.mesh_index,
+        model_index: node.model_index,
         area_partition: node.area_partition,
         transformation,
         matrix_signs,
         parent,
         parents,
         children,
+        node_bbox: node.node_bbox,
+        model_bbox: node.model_bbox,
+        child_bbox: node.child_bbox,
         data_ptr: node.data_ptr,
         parent_array_ptr: node.parent_array_ptr,
         children_array_ptr: node.children_array_ptr,
-        unk116: node.unk116,
-        unk140: node.unk140,
-        unk164: node.unk164,
     })
 }
 

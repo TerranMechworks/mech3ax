@@ -52,7 +52,7 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
     assert_that!("empty zone id", node.zone_id >= ZONE_ALWAYS, offset + 48)?;
     // node_type (52) already asserted
     assert_that!("empty data ptr", node.data_ptr == 0, offset + 56)?;
-    assert_that!("empty mesh index", node.mesh_index == -1, offset + 60)?;
+    assert_that!("empty model index", node.model_index == -1, offset + 60)?;
     // environment_data (64) already asserted
     // action_priority (68) already asserted
     // action_callback (72) already asserted
@@ -69,22 +69,20 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
         offset + 92
     )?;
     // children_array_ptr (96) already asserted
-    // zero100 (100) already asserted
-    // zero104 (104) already asserted
-    // zero108 (108) already asserted
-    // zero112 (112) already asserted
-    // unk116 (116) is variable
-    // unk140 (140) is variable
-    // unk164 (164) is variable
+    // bbox_mid (100) already asserted
+    // bbox_diag (112) already asserted
+    // node_bbox (116) is variable
+    // model_bbox (140) is variable
+    // child_bbox (164) is variable
     // zero188 (188) already asserted
     Ok(NodeVariantRc::Empty(Empty {
         name: node.name,
         flags: node.flags.into(),
         unk044: node.unk044,
         zone_id: node.zone_id as u32, // TODO
-        unk116: node.unk116,
-        unk140: node.unk140,
-        unk164: node.unk164,
+        node_bbox: node.node_bbox,
+        model_bbox: node.model_bbox,
+        child_bbox: node.child_bbox,
         parent: 0, // to be filled in via the index
     }))
 }
@@ -96,14 +94,14 @@ pub(crate) fn make_variants(empty: &Empty) -> NodeVariantsRc {
         unk044: empty.unk044,
         zone_id: empty.zone_id as i8, // TODO
         data_ptr: 0,
-        mesh_index: -1,
+        model_index: -1,
         area_partition: None,
         parent_count: 0,
         parent_array_ptr: 0,
         children_count: 0,
         children_array_ptr: 0,
-        unk116: empty.unk116,
-        unk140: empty.unk140,
-        unk164: empty.unk164,
+        node_bbox: empty.node_bbox,
+        model_bbox: empty.model_bbox,
+        child_bbox: empty.child_bbox,
     }
 }

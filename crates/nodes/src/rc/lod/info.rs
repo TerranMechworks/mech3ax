@@ -66,7 +66,7 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
     assert_that!("lod zone id", node.zone_id >= ZONE_ALWAYS, offset + 48)?;
     // node_type (52) already asserted
     assert_that!("lod data ptr", node.data_ptr != 0, offset + 56)?;
-    assert_that!("lod mesh index", node.mesh_index == -1, offset + 60)?;
+    assert_that!("lod model index", node.model_index == -1, offset + 60)?;
     // environment_data (64) already asserted
     // action_priority (68) already asserted
     // action_callback (72) already asserted
@@ -82,16 +82,16 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
     // parent_array_ptr (88) already asserted
     // children_count (92) is variable
     // children_array_ptr (96) already asserted
-    // zero100 (100) already asserted
-    // zero104 (104) already asserted
-    // zero108 (108) already asserted
-    // zero112 (112) already asserted
+    // bbox_mid (100) already asserted
+    // bbox_diag (112) already asserted
+    // node_bbox (116) is variable
     assert_that!(
-        "lod bbox 2",
-        node.unk140 == BoundingBox::EMPTY,
+        "lod model bbox",
+        node.model_bbox == BoundingBox::EMPTY,
         offset + 140
     )?;
-    assert_that!("lod bbox 3", node.unk164 == node.unk116, offset + 164)?;
+    // child_bbox (164) is variable... technically, it's always the same as the
+    // node_bbox, but I've decided to expose both
     // zero188 (188) already asserted
     Ok(NodeVariantRc::Lod(NodeVariantLodRc {
         name: node.name,
@@ -102,7 +102,8 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
         parent_array_ptr: node.parent_array_ptr,
         children_count: node.children_count,
         children_array_ptr: node.children_array_ptr,
-        unk116: node.unk116,
+        node_bbox: node.node_bbox,
+        child_bbox: node.child_bbox,
     }))
 }
 
@@ -119,14 +120,14 @@ pub(crate) fn make_variants(lod: &Lod) -> Result<NodeVariantsRc> {
         unk044,
         zone_id: lod.zone_id as i8, // TODO
         data_ptr: lod.data_ptr,
-        mesh_index: -1,
+        model_index: -1,
         area_partition: None,
         parent_count: if lod.parent.is_some() { 1 } else { 0 },
         parent_array_ptr: lod.parent_array_ptr,
         children_count,
         children_array_ptr: lod.children_array_ptr,
-        unk116: lod.unk116,
-        unk140: BoundingBox::EMPTY,
-        unk164: lod.unk116,
+        node_bbox: lod.node_bbox,
+        model_bbox: BoundingBox::EMPTY,
+        child_bbox: lod.child_bbox,
     })
 }

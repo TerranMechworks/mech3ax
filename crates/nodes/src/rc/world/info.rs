@@ -31,7 +31,7 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
     assert_that!("world zone id", node.zone_id == ZONE_ALWAYS, offset + 48)?;
     // node_type (52) already asserted
     assert_that!("world data ptr", node.data_ptr != 0, offset + 56)?;
-    assert_that!("world mesh index", node.mesh_index == -1, offset + 60)?;
+    assert_that!("world model index", node.model_index == -1, offset + 60)?;
     // environment_data (64) already asserted
     // action_priority (68) already asserted
     // action_callback (72) already asserted
@@ -44,23 +44,21 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
     // parent_array_ptr (88) already asserted
     assert_that!("world children count", 1 <= node.children_count <= 80, offset + 92)?;
     // children_array_ptr (96) already asserted
-    // zero100 (100) already asserted
-    // zero104 (104) already asserted
-    // zero108 (108) already asserted
-    // zero112 (112) already asserted
+    // bbox_mid (100) already asserted
+    // bbox_diag (112) already asserted
     assert_that!(
-        "world bbox 1",
-        node.unk116 == BoundingBox::EMPTY,
+        "world node bbox",
+        node.node_bbox == BoundingBox::EMPTY,
         offset + 116
     )?;
     assert_that!(
-        "world bbox 2",
-        node.unk140 == BoundingBox::EMPTY,
+        "world model bbox",
+        node.model_bbox == BoundingBox::EMPTY,
         offset + 140
     )?;
     assert_that!(
-        "world bbox 3",
-        node.unk164 == BoundingBox::EMPTY,
+        "world childd bbox",
+        node.child_bbox == BoundingBox::EMPTY,
         offset + 164
     )?;
     // zero188 (188) already asserted
@@ -85,14 +83,14 @@ pub(crate) fn make_variants(world: &World) -> Result<NodeVariantsRc> {
         unk044: 0,
         zone_id: ZONE_ALWAYS,
         data_ptr: world.data_ptr,
-        mesh_index: -1,
+        model_index: -1,
         area_partition: None,
         parent_count: 0,
         parent_array_ptr: 0,
         children_count,
         children_array_ptr: world.children_array_ptr,
-        unk116: BoundingBox::EMPTY,
-        unk140: BoundingBox::EMPTY,
-        unk164: BoundingBox::EMPTY,
+        node_bbox: BoundingBox::EMPTY,
+        model_bbox: BoundingBox::EMPTY,
+        child_bbox: BoundingBox::EMPTY,
     })
 }
