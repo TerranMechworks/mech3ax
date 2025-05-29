@@ -72,9 +72,11 @@ pub fn read_gamez(read: &mut CountingReader<impl Read + Seek>) -> Result<GameZDa
         read.offset == materials_offset,
         read.offset
     )?;
+    let texture_names: Vec<&String> = textures.iter().collect();
     let (materials, material_count) =
-        materials::read_materials(read, &textures, materials::MatType::Ng)?;
-    assert_that!("meshes offset", read.offset == meshes_offset, read.offset)?;
+        materials::read_materials(read, &texture_names, materials::MatType::Ng)?;
+
+    assert_that!("models offset", read.offset == models_offset, read.offset)?;
     let (meshes, meshes_count, mesh_array_size) =
         meshes::read_meshes(read, nodes_offset, material_count)?;
     assert_that!("nodes offset", read.offset == nodes_offset, read.offset)?;
@@ -122,9 +124,10 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataMw) 
     write.write_struct(&header)?;
 
     textures::write_texture_infos(write, &gamez.textures)?;
+    let texture_names: Vec<&String> = gamez.textures.iter().collect();
     materials::write_materials(
         write,
-        &gamez.textures,
+        &texture_names,
         &gamez.materials,
         materials::MatType::Ng,
     )?;

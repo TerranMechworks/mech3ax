@@ -17,7 +17,7 @@ use std::io::{Read, Write};
 struct HeaderRcC {
     signature: u32,        // 00
     version: u32,          // 04
-    texture_count: u32,    // 08
+    texture_count: i32,    // 08
     textures_offset: u32,  // 12
     materials_offset: u32, // 16
     models_offset: u32,    // 20
@@ -81,8 +81,10 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataRc> {
         read.offset == materials_offset,
         read.offset
     )?;
+    let texture_names: Vec<&String> = textures.iter().map(|texture| &texture.name).collect();
     let (materials, material_count) =
-        materials::read_materials(read, &textures, materials::MatType::Rc)?;
+        materials::read_materials(read, &texture_names, materials::MatType::Rc)?;
+
     assert_that!("models offset", read.offset == models_offset, read.offset)?;
     let (models, models_count) = models::read_models(read, nodes_offset, material_count)?;
     assert_that!("nodes offset", read.offset == nodes_offset, read.offset)?;
@@ -98,7 +100,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataRc> {
 }
 
 pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataRc) -> Result<()> {
-    let texture_count = assert_len!(u32, gamez.textures.len(), "GameZ textures")?;
+    let texture_count = assert_len!(i32, gamez.textures.len(), "GameZ textures")?;
     let node_count = assert_len!(u32, gamez.nodes.len(), "GameZ nodes")?;
 
     let textures_offset = HeaderRcC::SIZE;
@@ -122,9 +124,10 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataRc) 
     write.write_struct(&header)?;
 
     textures::write_texture_directory(write, &gamez.textures)?;
+    let texture_names: Vec<&String> = gamez.textures.iter().map(|texture| &texture.name).collect();
     materials::write_materials(
         write,
-        &gamez.textures,
+        &texture_names,
         &gamez.materials,
         materials::MatType::Rc,
     )?;

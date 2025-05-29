@@ -40,16 +40,16 @@ impl_as_bytes!(TextureEntryC, 40);
 bitflags! {
     struct TexFlags: u32 {
         // if set, 2 bytes per pixel, else 1 byte per pixel
-        const BYTES_PER_PIXEL2 = 1 << 0;
-        const HAS_ALPHA = 1 << 1;
-        const NO_ALPHA = 1 << 2;
-        const FULL_ALPHA = 1 << 3;
-        const GLOBAL_PALETTE = 1 << 4;
+        const BYTES_PER_PIXEL2 = 1 << 0;    // 0x01
+        const HAS_ALPHA = 1 << 1;           // 0x02
+        const NO_ALPHA = 1 << 2;            // 0x04
+        const FULL_ALPHA = 1 << 3;          // 0x08
+        const GLOBAL_PALETTE = 1 << 4;      // 0x10
         // these are used internally to track allocated buffers
         // if these are set in the file, they can be ignored
-        const IMAGE_LOADED = 1 << 5;
-        const ALPHA_LOADED = 1 << 6;
-        const PALETTE_LOADED = 1 << 7;
+        const IMAGE_LOADED = 1 << 5;        // 0x20
+        const ALPHA_LOADED = 1 << 6;        // 0x40
+        const PALETTE_LOADED = 1 << 7;      // 0x80
     }
 }
 

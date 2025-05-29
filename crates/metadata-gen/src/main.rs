@@ -140,6 +140,7 @@ fn add_gamez(resolver: &mut TypeResolver) {
     resolver.push::<api::gamez::mechlib::ModelPm>();
 
     // --- gamez/mod.rs
+    resolver.push::<api::gamez::Texture>();
     resolver.push::<api::gamez::GameZMetadataMw>();
     resolver.push::<api::gamez::GameZDataMw>();
     resolver.push::<api::gamez::GameZMetadataPm>();

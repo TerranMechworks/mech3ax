@@ -10,7 +10,7 @@ use std::io::Read;
 
 pub(crate) fn read_materials(
     read: &mut CountingReader<impl Read>,
-    textures: &[String],
+    texture_names: &[&String],
     ty: MatType,
 ) -> Result<(Vec<Material>, u32)> {
     let info: MaterialInfoC = read.read_struct()?;
@@ -26,8 +26,12 @@ pub(crate) fn read_materials(
             let material = match material {
                 RawMaterial::Textured(mat) => {
                     let texture_index = u32_to_usize(mat.pointer);
-                    assert_that!("texture index", texture_index < textures.len(), read.offset)?;
-                    let texture = textures[texture_index].clone();
+                    assert_that!(
+                        "texture index",
+                        texture_index < texture_names.len(),
+                        read.offset
+                    )?;
+                    let texture = texture_names[texture_index].clone();
                     trace!("{} -> `{}`", texture, texture_index);
 
                     Material::Textured(TexturedMaterial {
@@ -72,7 +76,7 @@ pub(crate) fn read_materials(
             Material::Textured(mat) if mat.pointer == 0 => {}
             Material::Textured(mat) => {
                 trace!("Reading cycle info {}", index);
-                read_cycle(read, mat, textures)?;
+                read_cycle(read, mat, texture_names)?;
             }
         }
     }

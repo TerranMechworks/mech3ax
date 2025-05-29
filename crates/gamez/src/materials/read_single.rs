@@ -100,7 +100,7 @@ pub(super) fn assert_material_zero(material: &MaterialC, ty: MatType, offset: us
 pub(super) fn read_cycle(
     read: &mut CountingReader<impl Read>,
     mat: &mut TexturedMaterial,
-    textures: &[String],
+    texture_names: &[&String],
 ) -> Result<()> {
     let info: CycleInfoC = read.read_struct()?;
 
@@ -115,8 +115,12 @@ pub(super) fn read_cycle(
     let textures = (0..info.count1)
         .map(|_| {
             let texture_index = u32_to_usize(read.read_u32()?);
-            assert_that!("texture index", texture_index < textures.len(), read.prev)?;
-            let texture = textures[texture_index].clone();
+            assert_that!(
+                "texture index",
+                texture_index < texture_names.len(),
+                read.prev
+            )?;
+            let texture = texture_names[texture_index].clone();
             trace!("{} -> `{}`", texture_index, texture);
             Ok(texture)
         })

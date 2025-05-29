@@ -9,7 +9,7 @@ use std::io::Write;
 
 pub(crate) fn write_materials(
     write: &mut CountingWriter<impl Write>,
-    textures: &[String],
+    texture_names: &[&String],
     materials: &[Material],
     ty: MatType,
 ) -> Result<()> {
@@ -30,7 +30,7 @@ pub(crate) fn write_materials(
 
         let pointer = if let Material::Textured(textured) = material {
             // reconstruct the texture index
-            let texture_index = find_texture_index_by_name(textures, &textured.texture)?;
+            let texture_index = find_texture_index_by_name(texture_names, &textured.texture)?;
             trace!("`{}` -> {}", textured.texture, texture_index);
             Some(texture_index)
         } else {
@@ -58,7 +58,7 @@ pub(crate) fn write_materials(
     write_materials_zero(write, materials_len, ty)?;
 
     for (index, material) in materials.iter().enumerate() {
-        write_cycle(write, textures, material, index)?;
+        write_cycle(write, texture_names, material, index)?;
     }
     Ok(())
 }

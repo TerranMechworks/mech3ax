@@ -138,6 +138,9 @@ fn generate_struct_field_default(default: DefaultHandling) -> Path {
         DefaultHandling::SoilIsDefault => parse_quote! {
             ::mech3ax_metadata_types::DefaultHandling::SoilIsDefault
         },
+        DefaultHandling::I32IsNegOne => parse_quote! {
+            ::mech3ax_metadata_types::DefaultHandling::I32IsNegOne
+        },
     }
 }
 

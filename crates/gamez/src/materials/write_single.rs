@@ -6,10 +6,13 @@ use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, Result};
 use std::io::Write;
 
-pub(super) fn find_texture_index_by_name(textures: &[String], texture_name: &str) -> Result<u32> {
-    let texture_index = textures
+pub(super) fn find_texture_index_by_name(
+    texture_names: &[&String],
+    texture_name: &str,
+) -> Result<u32> {
+    let texture_index = texture_names
         .iter()
-        .position(|name| name == texture_name)
+        .position(|name| *name == texture_name)
         .ok_or_else(|| assert_with_msg!("Texture `{}` not found in textures list", texture_name))?;
     // Cast safety: truncation only results in the wrong texture
     // index being written. Additionally writing the textures
@@ -78,7 +81,7 @@ pub(crate) fn write_material(
 
 pub(super) fn write_cycle(
     write: &mut CountingWriter<impl Write>,
-    textures: &[String],
+    texture_names: &[&String],
     material: &Material,
     index: usize,
 ) -> Result<()> {
@@ -99,7 +102,7 @@ pub(super) fn write_cycle(
             write.write_struct(&info)?;
 
             for texture_name in &cycle.textures {
-                let index = find_texture_index_by_name(textures, texture_name)?;
+                let index = find_texture_index_by_name(texture_names, texture_name)?;
                 trace!("`{}` -> {}", texture_name, index);
                 write.write_u32(index)?;
             }

@@ -73,6 +73,8 @@ pub struct TypeInfoUnion {
 ///   and implied during deserialization.
 /// * `SoilIsDefault` indicated `Soil::Default` values can be omitted from
 ///   serialization, and implied during deserialization.
+/// * `I32IsNegOne` indicates `-1` values can be omitted from serialization,
+///   and implied during deserialization.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DefaultHandling {
     Normal,
@@ -81,6 +83,7 @@ pub enum DefaultHandling {
     BoolTrue,
     PointerZero,
     SoilIsDefault,
+    I32IsNegOne,
 }
 
 /// Information for a field on a struct.

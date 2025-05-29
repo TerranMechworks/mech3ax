@@ -34,40 +34,34 @@ struct HeaderCsC {
 }
 impl_as_bytes!(HeaderCsC, 40);
 
-fn dedupe_texture_names(original_textures: Vec<String>) -> (Vec<String>, Vec<TextureName>) {
+fn dedupe_texture_names(original_textures: Vec<String>) -> Vec<TextureName> {
     let mut seen = Rename::new();
     original_textures
         .into_iter()
         .map(|original| {
             let renamed = seen.insert(&original);
-            let name = renamed
-                .as_ref()
-                .inspect(|renamed| {
-                    debug!("Renaming texture from `{}` to `{}`", original, renamed);
-                })
-                .unwrap_or(&original)
-                .clone();
-            (name, TextureName { original, renamed })
+            if let Some(renamed) = &renamed {
+                debug!("Renaming texture from `{}` to `{}`", original, renamed);
+            }
+            TextureName { original, renamed }
         })
-        .unzip()
+        .collect()
 }
 
-fn redupe_texture_names(textures: &[TextureName]) -> (Vec<String>, Vec<String>) {
+fn redupe_texture_names(textures: &[TextureName]) -> Vec<&String> {
     textures
         .iter()
-        .map(|texture| {
-            let original = texture.original.clone();
-            let name = texture
-                .renamed
-                .as_ref()
-                .inspect(|renamed| {
-                    debug!("Renaming texture from `{}` to `{}`", original, renamed);
-                })
-                .unwrap_or(&original)
-                .clone();
-            (original, name)
+        .map(|tex_name| match tex_name.renamed.as_ref() {
+            Some(renamed) => {
+                debug!(
+                    "Renaming texture from `{}` to `{}`",
+                    tex_name.original, renamed
+                );
+                renamed
+            }
+            None => &tex_name.original,
         })
-        .unzip()
+        .collect()
 }
 
 pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataCs> {
@@ -107,17 +101,24 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataCs> {
     )?;
     let (original_textures, texture_ptrs) =
         textures::read_texture_infos(read, header.texture_count)?;
-    let (renamed_textures, textures) = dedupe_texture_names(original_textures);
+    let textures = dedupe_texture_names(original_textures);
 
     assert_that!(
         "materials offset",
         read.offset == materials_offset,
         read.offset
     )?;
+    // use the renamed ones, so the materials resolve unambiguously
+    let texture_names: Vec<&String> = textures
+        .iter()
+        .map(|tex_name| tex_name.renamed.as_ref().unwrap_or(&tex_name.original))
+        .collect();
     let (materials, material_count) =
-        materials::read_materials(read, &renamed_textures, materials::MatType::Ng)?;
+        materials::read_materials(read, &texture_names, materials::MatType::Ng)?;
+
     assert_that!("meshes offset", read.offset == meshes_offset, read.offset)?;
     let meshes = meshes::read_meshes(read, nodes_offset, material_count, fixup)?;
+
     assert_that!("nodes offset", read.offset == nodes_offset, read.offset)?;
     let is_gamez = fixup != Fixup::Planes;
     let nodes = nodes::read_nodes(
@@ -183,12 +184,18 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataCs) 
     let fixup = fixup::Fixup::write(&header);
     write.write_struct(&header)?;
 
-    let (original_textures, renamed_textures) = redupe_texture_names(&gamez.textures);
-
+    let original_textures: Vec<String> = gamez
+        .textures
+        .iter()
+        .map(|tex_name| tex_name.original.clone())
+        .collect();
     textures::write_texture_infos(write, &original_textures, &gamez.metadata.texture_ptrs)?;
+
+    // the renamed ones were used, so that's what we must use here also
+    let texture_names = redupe_texture_names(&gamez.textures);
     materials::write_materials(
         write,
-        &renamed_textures,
+        &texture_names,
         &gamez.materials,
         materials::MatType::Ng,
     )?;

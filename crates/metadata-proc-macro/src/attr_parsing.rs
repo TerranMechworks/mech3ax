@@ -17,6 +17,7 @@ fn parse_serde_skip_serializing_if(lit: LitStr) -> Result<DefaultHandling> {
         "bool_true" => Ok(DefaultHandling::BoolTrue),
         "pointer_zero" => Ok(DefaultHandling::PointerZero),
         "Soil::is_default" => Ok(DefaultHandling::SoilIsDefault),
+        "i32_is_neg_one" => Ok(DefaultHandling::I32IsNegOne),
         _ => Err(Error::new_spanned(lit, format!("unknown skip `{}`", value))),
     }
 }
