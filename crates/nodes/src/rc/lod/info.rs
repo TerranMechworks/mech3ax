@@ -12,9 +12,9 @@ const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     | NodeBitFlags::INTERSECT_SURFACE.bits()
     // | NodeBitFlags::INTERSECT_BBOX.bits()
     // | NodeBitFlags::LANDMARK.bits()
-    // | NodeBitFlags::UNK08.bits()
-    // | NodeBitFlags::HAS_MESH.bits()
-    // | NodeBitFlags::UNK10.bits()
+    // | NodeBitFlags::BBOX_NODE.bits()
+    // | NodeBitFlags::BBOX_MODEL.bits()
+    // | NodeBitFlags::BBOX_CHILD.bits()
     // | NodeBitFlags::TERRAIN.bits()
     // | NodeBitFlags::CAN_MODIFY.bits()
     // | NodeBitFlags::CLIP_TO.bits()
@@ -31,9 +31,9 @@ const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     // | NodeBitFlags::INTERSECT_SURFACE.bits()
     // | NodeBitFlags::INTERSECT_BBOX.bits()
     // | NodeBitFlags::LANDMARK.bits()
-    | NodeBitFlags::UNK08.bits()
-    // | NodeBitFlags::HAS_MESH.bits()
-    | NodeBitFlags::UNK10.bits()
+    | NodeBitFlags::BBOX_NODE.bits()
+    // | NodeBitFlags::BBOX_MODEL.bits()
+    | NodeBitFlags::BBOX_CHILD.bits()
     // | NodeBitFlags::TERRAIN.bits()
     // | NodeBitFlags::CAN_MODIFY.bits()
     // | NodeBitFlags::CLIP_TO.bits()
@@ -52,8 +52,8 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
     // cannot assert name
     let const_flags = node.flags.mask_not(VARIABLE_FLAGS);
     assert_that!("lod flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
-    if node.flags.contains(NodeBitFlags::UNK08) {
-        let has_10 = node.flags.contains(NodeBitFlags::UNK10);
+    if node.flags.contains(NodeBitFlags::BBOX_NODE) {
+        let has_10 = node.flags.contains(NodeBitFlags::BBOX_CHILD);
         assert_that!("lod flags 10", has_10 == true, offset + 36)?;
     }
     // zero040 (40) already asserted

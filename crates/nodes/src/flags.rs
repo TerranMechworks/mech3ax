@@ -11,9 +11,9 @@ bitflags! {
         const INTERSECT_BBOX = 1 << 5;
         // const PROXIMITY = 1 << 6;
         const LANDMARK = 1 << 7;
-        const UNK08 = 1 << 8;
-        const HAS_MESH = 1 << 9;
-        const UNK10 = 1 << 10;
+        const BBOX_NODE = 1 << 8;
+        const BBOX_MODEL = 1 << 9;
+        const BBOX_CHILD = 1 << 10;
         // const UNK11 = 1 << 11;
         // const UNK12 = 1 << 12; // CS only
         // const UNK13 = 1 << 13;
@@ -60,9 +60,9 @@ impl From<NodeBitFlags> for NodeFlags {
             intersect_surface: flags.contains(NodeBitFlags::INTERSECT_SURFACE),
             intersect_bbox: flags.contains(NodeBitFlags::INTERSECT_BBOX),
             landmark: flags.contains(NodeBitFlags::LANDMARK),
-            unk08: flags.contains(NodeBitFlags::UNK08),
-            has_mesh: flags.contains(NodeBitFlags::HAS_MESH),
-            unk10: flags.contains(NodeBitFlags::UNK10),
+            bbox_node: flags.contains(NodeBitFlags::BBOX_NODE),
+            bbox_model: flags.contains(NodeBitFlags::BBOX_MODEL),
+            bbox_child: flags.contains(NodeBitFlags::BBOX_CHILD),
             terrain: flags.contains(NodeBitFlags::TERRAIN),
             can_modify: flags.contains(NodeBitFlags::CAN_MODIFY),
             clip_to: flags.contains(NodeBitFlags::CLIP_TO),
@@ -92,14 +92,14 @@ impl From<&NodeFlags> for NodeBitFlags {
         if flags.landmark {
             bitflags |= NodeBitFlags::LANDMARK;
         }
-        if flags.unk08 {
-            bitflags |= NodeBitFlags::UNK08;
+        if flags.bbox_node {
+            bitflags |= NodeBitFlags::BBOX_NODE;
         }
-        if flags.has_mesh {
-            bitflags |= NodeBitFlags::HAS_MESH;
+        if flags.bbox_model {
+            bitflags |= NodeBitFlags::BBOX_MODEL;
         }
-        if flags.unk10 {
-            bitflags |= NodeBitFlags::UNK10;
+        if flags.bbox_child {
+            bitflags |= NodeBitFlags::BBOX_CHILD;
         }
         if flags.terrain {
             bitflags |= NodeBitFlags::TERRAIN;

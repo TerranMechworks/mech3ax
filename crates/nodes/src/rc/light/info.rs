@@ -24,7 +24,7 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
     assert_that!("light name", node.name eq LIGHT_NAME, offset + 0)?;
     assert_that!(
         "light flags",
-        node.flags == NodeBitFlags::DEFAULT | NodeBitFlags::UNK08,
+        node.flags == NodeBitFlags::DEFAULT | NodeBitFlags::BBOX_NODE,
         offset + 36
     )?;
     // zero040 (40) already asserted
@@ -75,7 +75,7 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
 pub(crate) fn make_variants(light: &Light) -> NodeVariantsRc {
     NodeVariantsRc {
         name: LIGHT_NAME.to_owned(),
-        flags: NodeBitFlags::DEFAULT | NodeBitFlags::UNK08,
+        flags: NodeBitFlags::DEFAULT | NodeBitFlags::BBOX_NODE,
         unk044: 0,
         zone_id: ZONE_ALWAYS,
         data_ptr: light.data_ptr,

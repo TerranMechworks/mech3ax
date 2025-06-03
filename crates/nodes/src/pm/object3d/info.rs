@@ -10,9 +10,9 @@ const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     // | NodeBitFlags::INTERSECT_SURFACE.bits()
     // | NodeBitFlags::INTERSECT_BBOX.bits()
     // | NodeBitFlags::LANDMARK.bits()
-    // | NodeBitFlags::UNK08.bits()
-    // | NodeBitFlags::HAS_MESH.bits()
-    // | NodeBitFlags::UNK10.bits()
+    // | NodeBitFlags::BBOX_NODE.bits()
+    // | NodeBitFlags::BBOX_MODEL.bits()
+    // | NodeBitFlags::BBOX_CHILD.bits()
     // | NodeBitFlags::TERRAIN.bits()
     // | NodeBitFlags::CAN_MODIFY.bits()
     // | NodeBitFlags::CLIP_TO.bits()
@@ -29,9 +29,9 @@ const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     | NodeBitFlags::INTERSECT_SURFACE.bits()
     | NodeBitFlags::INTERSECT_BBOX.bits()
     | NodeBitFlags::LANDMARK.bits()
-    | NodeBitFlags::UNK08.bits()
-    | NodeBitFlags::HAS_MESH.bits()
-    | NodeBitFlags::UNK10.bits()
+    | NodeBitFlags::BBOX_NODE.bits()
+    | NodeBitFlags::BBOX_MODEL.bits()
+    | NodeBitFlags::BBOX_CHILD.bits()
     | NodeBitFlags::TERRAIN.bits()
     | NodeBitFlags::CAN_MODIFY.bits()
     | NodeBitFlags::CLIP_TO.bits()
@@ -58,14 +58,14 @@ pub(crate) fn assert_variants(
     // node_type (52) already asserted
     assert_that!("object3d data ptr", node.data_ptr != 0, offset + 56)?;
     if mesh_index_is_ptr {
-        if node.flags.contains(NodeBitFlags::HAS_MESH) {
+        if node.flags.contains(NodeBitFlags::BBOX_MODEL) {
             // non-zero, but the memory on 32-bit is limited
             assert_that!("object3d mesh index", node.mesh_index > 0, offset + 60)?;
         } else {
             assert_that!("object3d mesh index", node.mesh_index == 0, offset + 60)?;
         }
     } else {
-        if node.flags.contains(NodeBitFlags::HAS_MESH) {
+        if node.flags.contains(NodeBitFlags::BBOX_MODEL) {
             assert_that!("object3d mesh index", node.mesh_index >= 0, offset + 60)?;
         } else {
             assert_that!("object3d mesh index", node.mesh_index == -1, offset + 60)?;

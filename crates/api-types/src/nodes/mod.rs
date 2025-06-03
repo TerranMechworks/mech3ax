@@ -154,11 +154,11 @@ pub struct NodeFlags {
     #[serde(skip_serializing_if = "bool_false", default)]
     pub landmark: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
-    pub unk08: bool,
+    pub bbox_node: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
-    pub has_mesh: bool,
+    pub bbox_model: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
-    pub unk10: bool,
+    pub bbox_child: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
     pub terrain: bool,
     #[serde(skip_serializing_if = "bool_false", default)]

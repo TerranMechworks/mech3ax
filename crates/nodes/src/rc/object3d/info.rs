@@ -12,9 +12,9 @@ const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     // | NodeBitFlags::INTERSECT_SURFACE.bits()
     // | NodeBitFlags::INTERSECT_BBOX.bits()
     // | NodeBitFlags::LANDMARK.bits()
-    // | NodeBitFlags::UNK08.bits()
-    // | NodeBitFlags::HAS_MESH.bits()
-    // | NodeBitFlags::UNK10.bits()
+    // | NodeBitFlags::BBOX_NODE.bits()
+    // | NodeBitFlags::BBOX_MODEL.bits()
+    // | NodeBitFlags::BBOX_CHILD.bits()
     // | NodeBitFlags::TERRAIN.bits()
     // | NodeBitFlags::CAN_MODIFY.bits()
     // | NodeBitFlags::CLIP_TO.bits()
@@ -31,9 +31,9 @@ const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     | NodeBitFlags::INTERSECT_SURFACE.bits()
     | NodeBitFlags::INTERSECT_BBOX.bits()
     | NodeBitFlags::LANDMARK.bits()
-    | NodeBitFlags::UNK08.bits()
-    | NodeBitFlags::HAS_MESH.bits()
-    | NodeBitFlags::UNK10.bits()
+    | NodeBitFlags::BBOX_NODE.bits()
+    | NodeBitFlags::BBOX_MODEL.bits()
+    | NodeBitFlags::BBOX_CHILD.bits()
     // | NodeBitFlags::TERRAIN.bits()
     | NodeBitFlags::CAN_MODIFY.bits()
     | NodeBitFlags::CLIP_TO.bits()
@@ -55,11 +55,9 @@ pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<Nod
     assert_that!("object3d zone id", node.zone_id >= ZONE_ALWAYS, offset + 48)?;
     // node_type (52) already asserted
     assert_that!("object3d data ptr", node.data_ptr != 0, offset + 56)?;
-    if node.flags.contains(NodeBitFlags::HAS_MESH) {
-        assert_that!("object3d model index", node.model_index >= 0, offset + 60)?;
-    } else {
-        assert_that!("object3d model index", node.model_index == -1, offset + 60)?;
-    }
+    let model_bbox = node.flags.contains(NodeBitFlags::BBOX_MODEL);
+    let has_model = node.model_index > -1;
+    assert_that!("object3d bbox model", model_bbox == has_model, offset + 60)?;
     // environment_data (64) already asserted
     // action_priority (68) already asserted
     // action_callback (72) already asserted
