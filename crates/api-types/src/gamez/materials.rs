@@ -7,11 +7,12 @@ use mech3ax_types::primitive_enum;
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct CycleData {
     pub textures: Vec<String>,
-    pub unk00: bool,
-    pub unk04: u32,
-    pub unk12: f32,
-    pub info_ptr: u32,
-    pub data_ptr: u32,
+    pub looping: bool,
+    pub speed: f32,
+
+    pub current_frame: i32,
+    pub cycle_ptr: u32,
+    pub tex_map_ptr: u32,
 }
 
 primitive_enum! {

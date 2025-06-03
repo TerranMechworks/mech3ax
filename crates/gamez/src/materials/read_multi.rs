@@ -27,7 +27,7 @@ pub(crate) fn read_materials(
                 RawMaterial::Textured(mat) => {
                     let texture_index = u32_to_usize(mat.pointer);
                     assert_that!(
-                        "texture index",
+                        "matl texture index",
                         texture_index < texture_names.len(),
                         read.offset
                     )?;
@@ -54,14 +54,14 @@ pub(crate) fn read_materials(
                 expected_index1 = -1;
             }
             let actual_index1 = read.read_i16()?;
-            assert_that!("mat index 1", actual_index1 == expected_index1, read.prev)?;
+            assert_that!("matl index 1", actual_index1 == expected_index1, read.prev)?;
 
             let mut expected_index2 = index - 1;
             if expected_index2 < 0 {
                 expected_index2 = -1;
             }
             let actual_index2 = read.read_i16()?;
-            assert_that!("mat index 2", actual_index2 == expected_index2, read.prev)?;
+            assert_that!("matl index 2", actual_index2 == expected_index2, read.prev)?;
 
             Ok(material)
         })
@@ -85,11 +85,11 @@ pub(crate) fn read_materials(
 }
 
 fn assert_material_info(info: MaterialInfoC, ty: MatType, offset: usize) -> Result<(i16, u32)> {
-    assert_that!("mat array size", 0 <= info.array_size <= ty.size_i32(), offset + 0)?;
-    assert_that!("mat count", 0 <= info.count <= info.array_size, offset + 4)?;
-    assert_that!("mat index max", info.index_max == info.count, offset + 8)?;
+    assert_that!("matl array size", 0 <= info.array_size <= ty.size_i32(), offset + 0)?;
+    assert_that!("matl count", 0 <= info.count <= info.array_size, offset + 4)?;
+    assert_that!("matl index max", info.index_max == info.count, offset + 8)?;
     assert_that!(
-        "mat index last",
+        "matl index last",
         info.index_last == info.count - 1,
         offset + 12
     )?;
@@ -122,14 +122,14 @@ fn read_materials_zero(
             expected_index1 = -1;
         }
         let actual_index1 = read.read_i16()?;
-        assert_that!("mat index 1", actual_index1 == expected_index1, read.prev)?;
+        assert_that!("matl index 1", actual_index1 == expected_index1, read.prev)?;
 
         let mut expected_index2 = index + 1;
         if expected_index2 >= end {
             expected_index2 = -1;
         }
         let actual_index2 = read.read_i16()?;
-        assert_that!("mat index 2", actual_index2 == expected_index2, read.prev)?;
+        assert_that!("matl index 2", actual_index2 == expected_index2, read.prev)?;
     }
     trace!("Read material zeros at {}", read.offset);
     Ok(())

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* GameZ materials: More fields (`gamez`)
 * Nodes: Node flags 8, 9, 10 are for the different bounding boxes. (`gamez`)
 * Nodes RC only: Node zone ID is `i8`. (`gamez`, RC)
 * GameZ RC only: Refer to meshes as models. Almost all model fields understood. (`gamez`, RC)

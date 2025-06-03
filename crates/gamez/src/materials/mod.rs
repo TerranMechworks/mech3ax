@@ -86,13 +86,13 @@ impl_as_bytes!(MaterialC, 40);
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct CycleInfoC {
-    unk00: Bool32,
-    unk04: u32,
-    zero08: u32,
-    unk12: f32,
-    count1: u32,
-    count2: u32,
-    data_ptr: u32,
+    looping: Bool32,    // 00
+    current_frame: i32, // 04
+    current_index: f32, // 08
+    speed: f32,         // 12
+    tex_map_count: u32, // 16
+    tex_map_index: u32, // 20
+    tex_map_ptr: u32,   // 24
 }
 impl_as_bytes!(CycleInfoC, 28);
 

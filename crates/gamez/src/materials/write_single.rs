@@ -37,7 +37,7 @@ pub(crate) fn write_material(
             }
             let cycle_ptr = if let Some(cycle) = &material.cycle {
                 flags |= MaterialFlags::CYCLED;
-                cycle.info_ptr
+                cycle.cycle_ptr
             } else {
                 0
             };
@@ -91,13 +91,13 @@ pub(super) fn write_cycle(
 
             let count = assert_len!(u32, cycle.textures.len(), "cycle textures")?;
             let info = CycleInfoC {
-                unk00: cycle.unk00.into(),
-                unk04: cycle.unk04,
-                zero08: 0,
-                unk12: cycle.unk12,
-                count1: count,
-                count2: count,
-                data_ptr: cycle.data_ptr,
+                looping: cycle.looping.into(),
+                current_frame: cycle.current_frame,
+                current_index: 0.0,
+                speed: cycle.speed,
+                tex_map_count: count,
+                tex_map_index: count,
+                tex_map_ptr: cycle.tex_map_ptr,
             };
             write.write_struct(&info)?;
 
