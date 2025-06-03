@@ -361,15 +361,11 @@ pub fn size_node(node: &NodeRc) -> u32 {
 pub fn assert_node_info_zero(node: &NodeRcC, offset: usize) -> Result<()> {
     assert_that!("name", zero node.name, offset + 0)?;
     assert_that!("flags", node.flags == Flags::empty(), offset + 36)?;
-    assert_that!(
-        "node type",
-        node.node_type == NodeType::Empty.maybe(),
-        offset + 52
-    )?;
+    assert_that!("node type", node.node_type == NodeType::Empty, offset + 52)?;
 
     assert_that!("field 040", node.zero040 == 0, offset + 40)?;
     assert_that!("field 044", node.unk044 == 0, offset + 44)?;
-    assert_that!("zone id", node.zone_id == 0, offset + 48)?;
+    assert_that!("zone id", node.zone_id == 0i8, offset + 48)?;
     // node type (52)
     assert_that!("data ptr", node.data_ptr == Ptr::NULL, offset + 56)?;
     assert_that!("model index", node.model_index == -1, offset + 60)?;

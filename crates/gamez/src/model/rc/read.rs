@@ -1,7 +1,7 @@
-use super::{ModelRcC, PolygonBitFlags, PolygonRcC, WrappedModelRc};
+use super::{ModelBitFlags, ModelRcC, PolygonBitFlags, PolygonRcC, WrappedModelRc};
 use crate::model::common::*;
 use log::trace;
-use mech3ax_api_types::gamez::mesh::{ModelRc, PolygonRc};
+use mech3ax_api_types::gamez::mesh::{ModelRc, ModelType, PolygonRc};
 use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Result};
@@ -268,8 +268,12 @@ pub(crate) fn read_model_data(
 }
 
 pub(crate) fn assert_model_info_zero(model: &ModelRcC, offset: usize) -> Result<()> {
-    assert_that!("model_type", model.model_type == 0, offset + 0)?;
-    assert_that!("flags", model.flags == 0, offset + 4)?;
+    assert_that!(
+        "model_type",
+        model.model_type == ModelType::Default,
+        offset + 0
+    )?;
+    assert_that!("flags", model.flags == ModelBitFlags::empty(), offset + 4)?;
     assert_that!("parent_count", model.parent_count == 0, offset + 8)?;
     assert_that!("polygon_count", model.polygon_count == 0, offset + 12)?;
     assert_that!("vertex_count", model.vertex_count == 0, offset + 16)?;

@@ -90,7 +90,7 @@ pub fn read_pe_headers(buf: &[u8]) -> Result<SectionsAndDirectories> {
     )?;
     assert_that!(
         "File header optional header size",
-        file_header.size_of_optional_header == IMAGE_OPTIONAL_HEADER32::SIZE as _,
+        file_header.size_of_optional_header == IMAGE_OPTIONAL_HEADER32::SIZE as u16,
         file_header_offset
     )?;
 

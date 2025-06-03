@@ -36,6 +36,34 @@ where
 macro_rules! impl_primitive_repr {
     ($ty:ty) => {
         impl PrimitiveRepr for $ty {}
+
+        impl<F: SupportsMaybe<$ty>> PartialEq<Maybe<$ty, F>> for $ty {
+            #[inline]
+            fn eq(&self, other: &Maybe<$ty, F>) -> bool {
+                other.value.eq(self)
+            }
+        }
+
+        impl<F: SupportsMaybe<$ty>> PartialOrd<Maybe<$ty, F>> for $ty {
+            #[inline]
+            fn partial_cmp(&self, other: &Maybe<$ty, F>) -> Option<std::cmp::Ordering> {
+                other.value.partial_cmp(self)
+            }
+        }
+
+        impl<F: SupportsMaybe<$ty>> PartialEq<$ty> for Maybe<$ty, F> {
+            #[inline]
+            fn eq(&self, other: &$ty) -> bool {
+                self.value.eq(other)
+            }
+        }
+
+        impl<F: SupportsMaybe<$ty>> PartialOrd<$ty> for Maybe<$ty, F> {
+            #[inline]
+            fn partial_cmp(&self, other: &$ty) -> Option<std::cmp::Ordering> {
+                self.value.partial_cmp(other)
+            }
+        }
     };
 }
 
@@ -67,17 +95,17 @@ where
     pub marker: PhantomData<F>,
 }
 
-impl<R: PrimitiveRepr, F: SupportsMaybe<R>> PartialEq<R> for Maybe<R, F> {
+impl<R: PrimitiveRepr, F: SupportsMaybe<R>> PartialEq<F> for Maybe<R, F> {
     #[inline]
-    fn eq(&self, other: &R) -> bool {
-        self.value.eq(other)
+    fn eq(&self, other: &F) -> bool {
+        other.maybe().value.eq(&self.value)
     }
 }
 
-impl<R: PrimitiveRepr, F: SupportsMaybe<R>> PartialOrd<R> for Maybe<R, F> {
+impl<R: PrimitiveRepr, F: SupportsMaybe<R>> PartialOrd<F> for Maybe<R, F> {
     #[inline]
-    fn partial_cmp(&self, other: &R) -> Option<std::cmp::Ordering> {
-        self.value.partial_cmp(other)
+    fn partial_cmp(&self, other: &F) -> Option<std::cmp::Ordering> {
+        other.maybe().value.partial_cmp(&self.value)
     }
 }
 
