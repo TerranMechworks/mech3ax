@@ -12,12 +12,18 @@ type MType = Maybe<u32, ModelType>;
 
 bitflags! {
     struct ModelBitFlags: u32 {
+        /// Affected by lighting
         const LIGHTING = 1 << 0;            // 0x01
-        const UNK1 = 1 << 1;                // 0x02
+        /// Affected by fog
+        const FOG = 1 << 1;                 // 0x02
+        /// Textures registered to world (?)
         const TEXTURE_REGISTERED = 1 << 2;  // 0x04 (never)
+        /// Morph active
         const MORPH = 1 << 3;               // 0x08 (never)
-        const UNK4 = 1 << 4;                // 0x10 (never)
-        const UNK5 = 1 << 5;                // 0x20 (never)
+        /// Facade also tilts to face camera
+        const FACADE_TILT = 1 << 4;         // 0x10 (never)
+        /// Scroll active
+        const TEXTURE_SCROLL = 1 << 5;      // 0x20 (never)
     }
 }
 
@@ -27,8 +33,8 @@ impl From<&ModelFlags> for ModelBitFlags {
         if flags.lighting {
             bitflags |= Self::LIGHTING;
         }
-        if flags.unk1 {
-            bitflags |= Self::UNK1;
+        if flags.fog {
+            bitflags |= Self::FOG;
         }
         if flags.texture_registered {
             bitflags |= Self::TEXTURE_REGISTERED;
@@ -36,11 +42,11 @@ impl From<&ModelFlags> for ModelBitFlags {
         if flags.morph {
             bitflags |= Self::MORPH;
         }
-        if flags.unk4 {
-            bitflags |= Self::UNK4;
+        if flags.facade_tilt {
+            bitflags |= Self::FACADE_TILT;
         }
-        if flags.unk5 {
-            bitflags |= Self::UNK5;
+        if flags.texture_scroll {
+            bitflags |= Self::TEXTURE_SCROLL;
         }
         bitflags
     }
@@ -50,11 +56,11 @@ impl From<ModelBitFlags> for ModelFlags {
     fn from(value: ModelBitFlags) -> Self {
         Self {
             lighting: value.contains(ModelBitFlags::LIGHTING),
-            unk1: value.contains(ModelBitFlags::UNK1),
+            fog: value.contains(ModelBitFlags::FOG),
             texture_registered: value.contains(ModelBitFlags::TEXTURE_REGISTERED),
             morph: value.contains(ModelBitFlags::MORPH),
-            unk4: value.contains(ModelBitFlags::UNK4),
-            unk5: value.contains(ModelBitFlags::UNK5),
+            facade_tilt: value.contains(ModelBitFlags::FACADE_TILT),
+            texture_scroll: value.contains(ModelBitFlags::TEXTURE_SCROLL),
         }
     }
 }
@@ -64,25 +70,25 @@ type Flags = Maybe<u32, ModelBitFlags>;
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
 pub(crate) struct ModelRcC {
-    model_type: MType,  // 00
-    flags: Flags,       // 04
-    parent_count: u32,  // 08
-    polygon_count: u32, // 12
-    vertex_count: u32,  // 16
-    normal_count: u32,  // 20
-    morph_count: u32,   // 24
-    light_count: u32,   // 28
-    morph_factor: f32,  // 32
-    zero36: u32,        // 36
-    zero40: u32,        // 40
-    zero44: u32,        // 44
-    polygons_ptr: Ptr,  // 48
-    vertices_ptr: Ptr,  // 52
-    normals_ptr: Ptr,   // 56
-    lights_ptr: Ptr,    // 60
-    morphs_ptr: Ptr,    // 64
-    bbox_mid: Vec3,     // 68
-    bbox_diag: f32,     // 80
+    model_type: MType,     // 00
+    flags: Flags,          // 04
+    parent_count: u32,     // 08
+    polygon_count: u32,    // 12
+    vertex_count: u32,     // 16
+    normal_count: u32,     // 20
+    morph_count: u32,      // 24
+    light_count: u32,      // 28
+    morph_factor: f32,     // 32
+    tex_scroll_u: f32,     // 36
+    tex_scroll_v: f32,     // 40
+    tex_scroll_frame: u32, // 44
+    polygons_ptr: Ptr,     // 48
+    vertices_ptr: Ptr,     // 52
+    normals_ptr: Ptr,      // 56
+    lights_ptr: Ptr,       // 60
+    morphs_ptr: Ptr,       // 64
+    bbox_mid: Vec3,        // 68
+    bbox_diag: f32,        // 80
 }
 impl_as_bytes!(ModelRcC, 84);
 pub(crate) const MODEL_C_SIZE: u32 = ModelRcC::SIZE;

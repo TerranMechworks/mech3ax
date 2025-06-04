@@ -33,15 +33,15 @@ primitive_enum! {
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct ModelFlags {
     pub lighting: bool,
-    pub unk1: bool,
+    pub fog: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
     pub texture_registered: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
     pub morph: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
-    pub unk4: bool,
+    pub facade_tilt: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
-    pub unk5: bool,
+    pub texture_scroll: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
@@ -56,7 +56,6 @@ pub struct ModelRc {
     pub lights: Vec<MeshLight>,
     pub polygons: Vec<PolygonRc>,
 
-    pub morph_factor: f32,
     pub bbox_mid: Vec3,
     pub bbox_diag: f32,
 

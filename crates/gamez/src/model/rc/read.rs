@@ -19,9 +19,13 @@ fn assert_model_info(model: ModelRcC, offset: usize) -> Result<WrappedModelRc> {
 
     assert_that!("parent count (model)", model.parent_count > 0, offset + 8)?;
 
-    assert_that!("field 36", model.zero36 == 0, offset + 36)?;
-    assert_that!("field 40", model.zero40 == 0, offset + 40)?;
-    assert_that!("field 44", model.zero44 == 0, offset + 44)?;
+    assert_that!("texture scroll u", model.tex_scroll_u == 0.0, offset + 36)?;
+    assert_that!("texture scroll v", model.tex_scroll_v == 0.0, offset + 40)?;
+    assert_that!(
+        "texture scroll frame",
+        model.tex_scroll_frame == 0,
+        offset + 44
+    )?;
 
     if model.polygon_count == 0 {
         assert_that!("polygons ptr", model.polygons_ptr == Ptr::NULL, offset + 48)?;
@@ -64,14 +68,16 @@ fn assert_model_info(model: ModelRcC, offset: usize) -> Result<WrappedModelRc> {
         model_type,
         flags: flags.into(),
         parent_count: model.parent_count,
+
         vertices: vec![],
         normals: vec![],
         morphs: vec![],
         lights: vec![],
         polygons: vec![],
-        morph_factor: model.morph_factor,
+
         bbox_mid: model.bbox_mid,
         bbox_diag: model.bbox_diag,
+
         polygons_ptr: model.polygons_ptr.0,
         vertices_ptr: model.vertices_ptr.0,
         normals_ptr: model.normals_ptr.0,
@@ -281,9 +287,9 @@ pub(crate) fn assert_model_info_zero(model: &ModelRcC, offset: usize) -> Result<
     assert_that!("morph_count", model.morph_count == 0, offset + 24)?;
     assert_that!("light_count", model.light_count == 0, offset + 28)?;
     assert_that!("morph_factor", model.morph_factor == 0.0, offset + 32)?;
-    assert_that!("zero36", model.zero36 == 0, offset + 36)?;
-    assert_that!("zero40", model.zero40 == 0, offset + 40)?;
-    assert_that!("zero44", model.zero44 == 0, offset + 44)?;
+    assert_that!("tex_scroll_u", model.tex_scroll_u == 0.0, offset + 36)?;
+    assert_that!("tex_scroll_v", model.tex_scroll_v == 0.0, offset + 40)?;
+    assert_that!("tex_scroll_frame", model.tex_scroll_frame == 0, offset + 44)?;
     assert_that!("polygons_ptr", model.polygons_ptr == Ptr::NULL, offset + 48)?;
     assert_that!("vertices_ptr", model.vertices_ptr == Ptr::NULL, offset + 52)?;
     assert_that!("normals_ptr", model.normals_ptr == Ptr::NULL, offset + 56)?;
