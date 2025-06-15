@@ -1,4 +1,4 @@
-use super::{MeshLight, UvCoord};
+use super::{ModelFlags, ModelType, PointLight, UvCoord};
 use crate::{Color, Vec3};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::Struct;
@@ -6,14 +6,14 @@ use mech3ax_metadata_proc_macro::Struct;
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct PolygonMw {
     pub vertex_indices: Vec<u32>,
-    pub vertex_colors: Vec<Color>,
     pub normal_indices: Option<Vec<u32>>,
     pub uv_coords: Option<Vec<UvCoord>>,
+    pub vertex_colors: Vec<Color>,
     pub material_index: u32,
-    pub texture_info: u32,
-    pub unk04: i32,
-    pub unk_bit: bool,
-    pub vtx_bit: bool,
+    pub show_backface: bool,
+    pub priority: i32,
+    pub zone_set: Vec<i8>,
+
     pub vertices_ptr: u32,
     pub normals_ptr: u32,
     pub uvs_ptr: u32,
@@ -22,25 +22,24 @@ pub struct PolygonMw {
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct MeshMw {
+pub struct ModelMw {
+    pub model_type: ModelType,
+    pub flags: ModelFlags,
+    pub parent_count: u32,
+
     pub vertices: Vec<Vec3>,
     pub normals: Vec<Vec3>,
     pub morphs: Vec<Vec3>,
-    pub lights: Vec<MeshLight>,
+    pub lights: Vec<PointLight>,
     pub polygons: Vec<PolygonMw>,
+
+    pub texture_scroll: UvCoord,
+    pub bbox_mid: Vec3,
+    pub bbox_diag: f32,
+
     pub polygons_ptr: u32,
     pub vertices_ptr: u32,
     pub normals_ptr: u32,
     pub lights_ptr: u32,
     pub morphs_ptr: u32,
-    pub file_ptr: bool,
-    pub unk04: u32,
-    pub unk08: u32,
-    pub parent_count: u32,
-    pub unk40: f32,
-    pub unk44: f32,
-    pub unk72: f32,
-    pub unk76: f32,
-    pub unk80: f32,
-    pub unk84: f32,
 }

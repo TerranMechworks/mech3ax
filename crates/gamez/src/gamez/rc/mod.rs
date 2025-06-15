@@ -111,7 +111,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataRc) 
     } = gamez.metadata;
 
     let textures_offset = HeaderRcC::SIZE;
-    let materials_offset = textures_offset + textures::size_texture_infos(texture_count);
+    let materials_offset = textures_offset + textures::size_texture_directory(texture_count);
     let models_offset =
         materials_offset + materials::size_materials(&gamez.materials, materials::MatType::Rc);
     let (nodes_offset, model_offsets) =

@@ -1,43 +1,16 @@
 use super::{ModelBitFlags, ModelRcC, PolygonBitFlags, PolygonRcC};
 use crate::model::common::*;
 use log::{trace, warn};
-use mech3ax_api_types::gamez::mesh::{ModelRc, PolygonRc, UvCoord};
+use mech3ax_api_types::gamez::model::{Model, Polygon, UvCoord};
 use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, Result};
 use mech3ax_types::{AsBytes as _, Hex, Ptr};
 use std::io::Write;
 
-macro_rules! assert_ptr {
-    ($count:ident, $model:ident.$ptr:ident, $name:literal) => {{
-        if $count == 0 {
-            if $model.$ptr != 0 {
-                warn!(concat!(
-                    "WARN: Model has no ",
-                    $name,
-                    ", but `",
-                    stringify!($ptr),
-                    "` is not null"
-                ));
-            }
-        } else {
-            if $model.$ptr == 0 {
-                warn!(concat!(
-                    "WARN: Model has ",
-                    $name,
-                    ", but `",
-                    stringify!($ptr),
-                    "` is null"
-                ));
-            }
-        }
-        Ptr($model.$ptr)
-    }};
-}
-
 pub(crate) fn write_model_info(
     write: &mut CountingWriter<impl Write>,
-    model: &ModelRc,
+    model: &Model,
 ) -> Result<()> {
     let polygon_count = assert_len!(u32, model.polygons.len(), "model polygons")?;
     let vertex_count = assert_len!(u32, model.vertices.len(), "model vertices")?;
@@ -51,11 +24,32 @@ pub(crate) fn write_model_info(
     let lights_ptr = assert_ptr!(light_count, model.lights_ptr, "lights");
     let morphs_ptr = assert_ptr!(morph_count, model.morphs_ptr, "morphs");
 
-    let flags = ModelBitFlags::from(&model.flags);
+    let mut bitflags = ModelBitFlags::empty();
+    if model.flags.lighting {
+        bitflags |= ModelBitFlags::LIGHTING;
+    }
+    if model.flags.fog {
+        bitflags |= ModelBitFlags::FOG;
+    }
+    if model.flags.texture_registered {
+        bitflags |= ModelBitFlags::TEXTURE_REGISTERED;
+    }
+    if model.flags.morph {
+        bitflags |= ModelBitFlags::MORPH;
+    }
+    if model.flags.texture_scroll {
+        bitflags |= ModelBitFlags::TEXTURE_SCROLL;
+    }
+    if model.flags.facade_tilt {
+        bitflags |= ModelBitFlags::FACADE_TILT;
+    }
+    if model.flags.clouds {
+        warn!("WARN: model has `clouds` flag, this is ignored in RC");
+    }
 
     let model = ModelRcC {
         model_type: model.model_type.maybe(),
-        flags: flags.maybe(),
+        flags: bitflags.maybe(),
         parent_count: model.parent_count,
         polygon_count,
         vertex_count,
@@ -63,8 +57,8 @@ pub(crate) fn write_model_info(
         morph_count,
         light_count,
         morph_factor: 0.0,
-        tex_scroll_u: 0.0,
-        tex_scroll_v: 0.0,
+        tex_scroll_u: model.texture_scroll.u,
+        tex_scroll_v: model.texture_scroll.v,
         tex_scroll_frame: 0,
         polygons_ptr,
         vertices_ptr,
@@ -78,20 +72,21 @@ pub(crate) fn write_model_info(
     Ok(())
 }
 
-fn make_vertex_info(polygon: &PolygonRc) -> Result<Hex<u32>> {
+fn make_vertex_info(polygon: &Polygon) -> Result<Hex<u32>> {
     let vertex_indices_len =
         assert_len!(u32, polygon.vertex_indices.len(), "polygon vertex indices")?;
 
-    if vertex_indices_len > 0x0000_00FF {
+    if vertex_indices_len > PolygonBitFlags::VERTEX_COUNT {
         return Err(assert_with_msg!(
-            "Expected < 256 vertex indices, but got {}",
+            "Expected < {} vertex indices, but got {}",
+            PolygonBitFlags::VERTEX_COUNT + 1,
             vertex_indices_len
         ));
     }
 
     if vertex_indices_len < 3 {
         warn!(
-            "WARN: Expected > 3 vertex indices, but got {}",
+            "WARN: Expected >= 3 vertex indices, but got {}",
             vertex_indices_len
         );
     }
@@ -107,39 +102,7 @@ fn make_vertex_info(polygon: &PolygonRc) -> Result<Hex<u32>> {
     Ok(Hex(vertex_indices_len | flags.bits()))
 }
 
-fn make_zone_set(zone_set: &[i8]) -> Result<Hex<u32>> {
-    let (zone_set_len, zone1, zone2, zone3) = match zone_set {
-        &[] => (0u32, -1, -1, -1),
-        &[zone1] => (1, zone1, -1, -1),
-        &[zone1, zone2] => (2, zone1, zone2, -1),
-        &[zone1, zone2, zone3] => (3, zone1, zone2, zone3),
-        other => {
-            return Err(assert_with_msg!(
-                "Expected 3 or fewer zones, but got {}",
-                other.len()
-            ))
-        }
-    };
-
-    if zone1 < -1 {
-        warn!("Expected zone 1 >= -1, but was {}", zone1);
-    }
-    if zone2 < -1 {
-        warn!("Expected zone 2 >= -1, but was {}", zone2);
-    }
-    if zone3 < -1 {
-        warn!("Expected zone 3 >= -1, but was {}", zone3);
-    }
-
-    let zone_set = (zone_set_len << 0)
-        | ((zone1 as u32) << 8)
-        | ((zone2 as u32) << 16)
-        | ((zone3 as u32) << 24);
-
-    Ok(Hex(zone_set))
-}
-
-fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[PolygonRc]) -> Result<()> {
+fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) -> Result<()> {
     let count = polygons.len();
     for (index, polygon) in polygons.iter().enumerate() {
         trace!("Writing polygon info {}/{}", index, count);
@@ -150,8 +113,8 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[PolygonRc]
         let poly = PolygonRcC {
             vertex_info,
             priority: polygon.priority,
-            vertices_ptr: Ptr(polygon.vertices_ptr),
-            normals_ptr: Ptr(polygon.normals_ptr),
+            vertex_indices_ptr: Ptr(polygon.vertices_ptr),
+            normal_indices_ptr: Ptr(polygon.normals_ptr),
             uvs_ptr: Ptr(polygon.uvs_ptr),
             material_index: polygon.material_index,
             zone_set,
@@ -199,14 +162,16 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[PolygonRc]
             write_uvs(write, uv_coords)?;
         }
 
-        // no vertex colors
+        if !polygon.vertex_colors.is_empty() {
+            warn!("WARN: polygon has vertex colors, this is ignored in RC");
+        }
     }
     Ok(())
 }
 
 pub(crate) fn write_model_data(
     write: &mut CountingWriter<impl Write>,
-    model: &ModelRc,
+    model: &Model,
 ) -> Result<()> {
     if !model.vertices.is_empty() {
         trace!(
@@ -243,7 +208,7 @@ pub(crate) fn write_model_data(
 
 const U32_SIZE: u32 = std::mem::size_of::<u32>() as _;
 
-pub(crate) fn size_model(model: &ModelRc) -> u32 {
+pub(crate) fn size_model(model: &Model) -> u32 {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let mut size =
         Vec3::SIZE * (model.vertices.len() + model.normals.len() + model.morphs.len()) as u32;

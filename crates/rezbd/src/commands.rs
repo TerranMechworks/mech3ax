@@ -2,7 +2,7 @@ use crate::{InterpOpts, ZMapOpts, ZipOpts};
 use eyre::{bail, Context as _, Result};
 use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_api_types::gamez::materials::Material;
-use mech3ax_api_types::gamez::mechlib::{ModelMw, ModelPm};
+use mech3ax_api_types::gamez::mechlib::{MechlibModelMw, ModelPm};
 use mech3ax_api_types::gamez::{GameZDataCs, GameZDataMw, GameZDataPm, GameZDataRc};
 use mech3ax_api_types::image::TextureManifest;
 use mech3ax_api_types::interp::Script;
@@ -193,7 +193,7 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                     let name = replace_ext(original, ".flt", ".json");
                     match game {
                         GameType::MW => {
-                            let mut model: ModelMw = zip_json(zip, &name)?;
+                            let mut model: MechlibModelMw = zip_json(zip, &name)?;
                             mechlib::mw::write_model(&mut buf, &mut model).with_context(|| {
                                 format!("Failed to write mechlib model for `{}`", original)
                             })?;

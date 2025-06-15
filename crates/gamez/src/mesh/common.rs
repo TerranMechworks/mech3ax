@@ -1,11 +1,11 @@
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::trace;
-use mech3ax_api_types::gamez::mesh::{MeshLight, UvCoord};
+use log::{trace, warn};
+use mech3ax_api_types::gamez::model::{PointLight, UvCoord};
 use mech3ax_api_types::{Color, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlagsU16 as LightFlags;
-use mech3ax_common::{assert_len, assert_that, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Maybe, Ptr};
+use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Hex, Maybe, Ptr};
 use std::io::{Read, Write};
 
 #[inline(always)]
@@ -74,6 +74,99 @@ pub(crate) fn write_uvs(
     }
     Ok(())
 }
+
+pub(crate) fn assert_zone_set(zone_set: u32, offset: usize) -> Result<Vec<i8>> {
+    let zone_set_len = ((zone_set & 0x0000_00FF) >> 0) as u8;
+    let zone1 = ((zone_set & 0x0000_FF00) >> 8) as i8;
+    let zone2 = ((zone_set & 0x00FF_0000) >> 16) as i8;
+    let zone3 = ((zone_set & 0xFF00_0000) >> 24) as i8;
+
+    assert_that!("zone set len", zone_set_len <= 3, offset)?;
+
+    let zone_set = match zone_set_len {
+        0 => {
+            assert_that!("zone 1", zone1 == -1, offset)?;
+            assert_that!("zone 2", zone2 == -1, offset)?;
+            assert_that!("zone 3", zone3 == -1, offset)?;
+            vec![]
+        }
+        1 => {
+            assert_that!("zone 2", zone2 == -1, offset)?;
+            assert_that!("zone 3", zone3 == -1, offset)?;
+            vec![zone1]
+        }
+        2 => {
+            assert_that!("zone 3", zone3 == -1, offset)?;
+            vec![zone1, zone2]
+        }
+        3 => {
+            vec![zone1, zone2, zone3]
+        }
+        _ => unreachable!("zone set len = {} <= 3", zone_set_len),
+    };
+
+    Ok(zone_set)
+}
+
+pub(crate) fn make_zone_set(zone_set: &[i8]) -> Result<Hex<u32>> {
+    let (zone_set_len, zone1, zone2, zone3) = match zone_set {
+        &[] => (0u32, -1, -1, -1),
+        &[zone1] => (1, zone1, -1, -1),
+        &[zone1, zone2] => (2, zone1, zone2, -1),
+        &[zone1, zone2, zone3] => (3, zone1, zone2, zone3),
+        other => {
+            return Err(assert_with_msg!(
+                "Expected 3 or fewer zones, but got {}",
+                other.len()
+            ))
+        }
+    };
+
+    if zone1 < -1 {
+        warn!("Expected zone 1 >= -1, but was {}", zone1);
+    }
+    if zone2 < -1 {
+        warn!("Expected zone 2 >= -1, but was {}", zone2);
+    }
+    if zone3 < -1 {
+        warn!("Expected zone 3 >= -1, but was {}", zone3);
+    }
+
+    let zone_set = (zone_set_len << 0)
+        | ((zone1 as u32) << 8)
+        | ((zone2 as u32) << 16)
+        | ((zone3 as u32) << 24);
+
+    Ok(Hex(zone_set))
+}
+
+macro_rules! assert_ptr {
+    ($count:ident, $model:ident.$ptr:ident, $name:literal) => {{
+        if $count == 0 {
+            if $model.$ptr != 0 {
+                warn!(concat!(
+                    "WARN: Model has no ",
+                    $name,
+                    ", but `",
+                    stringify!($ptr),
+                    "` is not null"
+                ));
+            }
+        } else {
+            if $model.$ptr == 0 {
+                warn!(concat!(
+                    "WARN: Model has ",
+                    $name,
+                    ", but `",
+                    stringify!($ptr),
+                    "` is null"
+                ));
+            }
+        }
+        Ptr($model.$ptr)
+    }};
+}
+pub(crate) use assert_ptr;
 
 type Flags = Maybe<u16, LightFlags>;
 
@@ -192,7 +285,7 @@ fn assert_light(light: &LightC, offset: usize) -> Result<LightFlags> {
 pub(crate) fn read_lights(
     read: &mut CountingReader<impl Read>,
     count: u32,
-) -> Result<Vec<MeshLight>> {
+) -> Result<Vec<PointLight>> {
     let lights = (0..count)
         .map(|index| {
             trace!(
@@ -211,7 +304,7 @@ pub(crate) fn read_lights(
         .into_iter()
         .map(|light| {
             let extra = read_vec3s(read, light.extra_count)?;
-            Ok(MeshLight {
+            Ok(PointLight {
                 unk00: light.unk00,
                 unk04: light.unk04,
                 unk08: light.unk08,
@@ -234,7 +327,7 @@ pub(crate) fn read_lights(
 
 pub(crate) fn write_lights(
     write: &mut CountingWriter<impl Write>,
-    lights: &[MeshLight],
+    lights: &[PointLight],
 ) -> Result<()> {
     for (index, light) in lights.iter().enumerate() {
         trace!(

@@ -1,6 +1,7 @@
 pub mod materials;
 pub mod mechlib;
 pub mod mesh;
+pub mod model;
 
 use crate::nodes::cs::NodeCs;
 use crate::nodes::mw::NodeMw;
@@ -11,7 +12,8 @@ use ::serde::{Deserialize, Serialize};
 use materials::Material;
 use mech3ax_metadata_proc_macro::Struct;
 use mech3ax_timestamp::DateTime;
-use mesh::{MeshMw, MeshNg, ModelRc};
+use mesh::MeshNg;
+use model::Model;
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Texture {
@@ -32,7 +34,7 @@ pub struct GameZMetadataMw {
 pub struct GameZDataMw {
     pub textures: Vec<String>,
     pub materials: Vec<Material>,
-    pub meshes: Vec<MeshMw>,
+    pub meshes: Vec<Model>,
     pub nodes: Vec<NodeMw>,
     pub metadata: GameZMetadataMw,
 }
@@ -88,7 +90,7 @@ pub struct GameZMetadataRc {
 pub struct GameZDataRc {
     pub textures: Vec<Texture>,
     pub materials: Vec<Material>,
-    pub models: Vec<ModelRc>,
+    pub models: Vec<Model>,
     pub nodes: Vec<NodeRc>,
     pub metadata: GameZMetadataRc,
 }

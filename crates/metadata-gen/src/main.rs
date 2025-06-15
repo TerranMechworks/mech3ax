@@ -111,13 +111,13 @@ fn add_gamez(resolver: &mut TypeResolver) {
     resolver.push::<api::gamez::materials::ColoredMaterial>();
     resolver.push::<api::gamez::materials::Material>();
 
-    // --- gamez/mesh/mod.rs
-    resolver.push::<api::gamez::mesh::UvCoord>();
-    resolver.push::<api::gamez::mesh::MeshLight>();
-
-    // --- gamez/mesh/mw.rs
-    resolver.push::<api::gamez::mesh::PolygonMw>();
-    resolver.push::<api::gamez::mesh::MeshMw>();
+    // --- gamez/model.rs
+    resolver.push::<api::gamez::model::UvCoord>();
+    resolver.push::<api::gamez::model::PointLight>();
+    resolver.push::<api::gamez::model::Polygon>();
+    resolver.push::<api::gamez::model::ModelType>();
+    resolver.push::<api::gamez::model::ModelFlags>();
+    resolver.push::<api::gamez::model::Model>();
 
     // --- gamez/mesh/ng.rs
     resolver.push::<api::gamez::mesh::PolygonFlags>();
@@ -126,17 +126,11 @@ fn add_gamez(resolver: &mut TypeResolver) {
     resolver.push::<api::gamez::mesh::PolygonNg>();
     resolver.push::<api::gamez::mesh::MeshNg>();
 
-    // --- gamez/mesh/rc.rs
-    resolver.push::<api::gamez::mesh::PolygonRc>();
-    resolver.push::<api::gamez::mesh::ModelType>();
-    resolver.push::<api::gamez::mesh::ModelFlags>();
-    resolver.push::<api::gamez::mesh::ModelRc>();
-
     // nodes required for mechlib
     add_nodes(resolver);
 
     // --- gamez/mechlib.rs
-    resolver.push::<api::gamez::mechlib::ModelMw>();
+    resolver.push::<api::gamez::mechlib::MechlibModelMw>();
     resolver.push::<api::gamez::mechlib::ModelPm>();
 
     // --- gamez/mod.rs

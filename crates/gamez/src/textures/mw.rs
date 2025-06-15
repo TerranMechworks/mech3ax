@@ -9,60 +9,59 @@ use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
-struct TextureInfoMwC {
-    zero00: u32,        // 00
-    zero04: u32,        // 04
-    texture: Ascii<20>, // 08
-    state: u32,         // 28
-    index: u32,         // 32
-    unk36: i32,         // 36
+struct TextureMwC {
+    image_ptr: u32,   // 00
+    surface_ptr: u32, // 04
+    name: Ascii<20>,  // 08
+    state: u32,       // 28
+    zero32: u32,      // 32
+    mip: i32,         // 36
 }
-impl_as_bytes!(TextureInfoMwC, 40);
+impl_as_bytes!(TextureMwC, 40);
 
-pub(crate) fn read_texture_infos(
+pub(crate) fn read_texture_directory(
     read: &mut CountingReader<impl Read>,
-    count: u32,
+    count: i32,
 ) -> Result<Vec<String>> {
     (0..count)
         .map(|index| {
-            trace!("Reading texture info {}/{}", index, count);
-            let info: TextureInfoMwC = read.read_struct()?;
+            trace!("Reading texture {}/{}", index, count);
+            let info: TextureMwC = read.read_struct()?;
 
-            assert_that!("field 00", info.zero00 == 0, read.prev + 0)?;
-            assert_that!("field 04", info.zero04 == 0, read.prev + 4)?;
-            let texture = assert_utf8("texture", read.prev + 8, || info.texture.to_str_suffix())?;
+            assert_that!("image ptr", info.image_ptr == 0, read.prev + 0)?;
+            assert_that!("surface ptr", info.surface_ptr == 0, read.prev + 4)?;
+            let texture = assert_utf8("name", read.prev + 8, || info.name.to_str_suffix())?;
             // 2 if the texture is used, 0 if the texture is unused
             // 1 or 3 if the texture is being processed (deallocated?)
-            assert_that!("field 28", info.state == STATE_USED, read.prev + 28)?;
-            // stores the texture's index in the global texture array
-            assert_that!("field 32", info.index == 0, read.prev + 32)?;
-            assert_that!("field 36", info.unk36 == -1, read.prev + 36)?;
+            assert_that!("state", info.state == STATE_USED, read.prev + 28)?;
+            assert_that!("field 32", info.zero32 == 0, read.prev + 32)?;
+            assert_that!("mip index", info.mip == -1, read.prev + 36)?;
             Ok(texture)
         })
         .collect::<Result<Vec<_>>>()
 }
 
-pub(crate) fn write_texture_infos(
+pub(crate) fn write_texture_directory(
     write: &mut CountingWriter<impl Write>,
     textures: &[String],
 ) -> Result<()> {
     let count = textures.len();
-    for (index, name) in textures.iter().enumerate() {
-        trace!("Writing texture info {}/{}", index, count);
-        let texture = Ascii::from_str_suffix(name);
-        let info = TextureInfoMwC {
-            zero00: 0,
-            zero04: 0,
-            texture,
+    for (index, texture) in textures.iter().enumerate() {
+        trace!("Writing texture {}/{}", index, count);
+        let name = Ascii::from_str_suffix(texture);
+        let tex = TextureMwC {
+            image_ptr: 0,
+            surface_ptr: 0,
+            name,
             state: STATE_USED,
-            index: 0,
-            unk36: -1,
+            zero32: 0,
+            mip: -1,
         };
-        write.write_struct(&info)?;
+        write.write_struct(&tex)?;
     }
     Ok(())
 }
 
-pub(crate) fn size_texture_infos(count: u32) -> u32 {
-    TextureInfoMwC::SIZE * count
+pub(crate) fn size_texture_directory(count: i32) -> u32 {
+    TextureMwC::SIZE * (count as u32)
 }

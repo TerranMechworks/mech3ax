@@ -1,4 +1,4 @@
-use super::{MeshLight, UvCoord};
+pub use crate::gamez::model::{PointLight, UvCoord};
 use crate::serde::bool_false;
 use crate::{Color, Vec3};
 use ::serde::{Deserialize, Serialize};
@@ -21,9 +21,11 @@ pub struct PolygonFlags {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, NoUninit, AnyBitPattern, Struct)]
 #[repr(C)]
 pub struct MeshMaterialInfo {
-    pub material_index: u32,      // 00
+    pub material_index: u32, // 00
+    // polygon offset?
     pub polygon_usage_count: u32, // 04
-    pub unk_ptr: u32,             // 08
+    // polygons ptr
+    pub unk_ptr: u32, // 08
 }
 impl_as_bytes!(MeshMaterialInfo, 12);
 
@@ -56,7 +58,7 @@ pub struct MeshNg {
     pub vertices: Vec<Vec3>,
     pub normals: Vec<Vec3>,
     pub morphs: Vec<Vec3>,
-    pub lights: Vec<MeshLight>,
+    pub lights: Vec<PointLight>,
     pub polygons: Vec<PolygonNg>,
     pub material_infos: Vec<MeshMaterialInfo>,
     pub polygons_ptr: u32,

@@ -2,13 +2,11 @@ mod read;
 mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::gamez::mesh::{ModelFlags, ModelRc, ModelType};
+use mech3ax_api_types::gamez::model::{Model, ModelType};
 use mech3ax_api_types::Vec3;
 use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Hex, Maybe, Ptr};
 pub(crate) use read::{assert_model_info_zero, read_model_data, read_model_info};
 pub(crate) use write::{size_model, write_model_data, write_model_info};
-
-type MType = Maybe<u32, ModelType>;
 
 bitflags! {
     struct ModelBitFlags: u32 {
@@ -27,44 +25,7 @@ bitflags! {
     }
 }
 
-impl From<&ModelFlags> for ModelBitFlags {
-    fn from(flags: &ModelFlags) -> Self {
-        let mut bitflags = Self::empty();
-        if flags.lighting {
-            bitflags |= Self::LIGHTING;
-        }
-        if flags.fog {
-            bitflags |= Self::FOG;
-        }
-        if flags.texture_registered {
-            bitflags |= Self::TEXTURE_REGISTERED;
-        }
-        if flags.morph {
-            bitflags |= Self::MORPH;
-        }
-        if flags.facade_tilt {
-            bitflags |= Self::FACADE_TILT;
-        }
-        if flags.texture_scroll {
-            bitflags |= Self::TEXTURE_SCROLL;
-        }
-        bitflags
-    }
-}
-
-impl From<ModelBitFlags> for ModelFlags {
-    fn from(value: ModelBitFlags) -> Self {
-        Self {
-            lighting: value.contains(ModelBitFlags::LIGHTING),
-            fog: value.contains(ModelBitFlags::FOG),
-            texture_registered: value.contains(ModelBitFlags::TEXTURE_REGISTERED),
-            morph: value.contains(ModelBitFlags::MORPH),
-            facade_tilt: value.contains(ModelBitFlags::FACADE_TILT),
-            texture_scroll: value.contains(ModelBitFlags::TEXTURE_SCROLL),
-        }
-    }
-}
-
+type MType = Maybe<u32, ModelType>;
 type Flags = Maybe<u32, ModelBitFlags>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
@@ -95,26 +56,30 @@ pub(crate) const MODEL_C_SIZE: u32 = ModelRcC::SIZE;
 
 bitflags! {
     struct PolygonBitFlags: u32 {
-        const SHOW_BACKFACE = 1 << 8;
-        const NORMALS = 1 << 9;
+        const SHOW_BACKFACE = 1 << 8;    // 0x100
+        const NORMALS = 1 << 9;          // 0x200
     }
+}
+
+impl PolygonBitFlags {
+    const VERTEX_COUNT: u32 = 0x0FF;
 }
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct PolygonRcC {
-    vertex_info: Hex<u32>, // 00
-    priority: i32,         // 04
-    vertices_ptr: Ptr,     // 08
-    normals_ptr: Ptr,      // 12
-    uvs_ptr: Ptr,          // 16
-    material_index: u32,   // 20
-    zone_set: Hex<u32>,    // 24
+    vertex_info: Hex<u32>,   // 00
+    priority: i32,           // 04
+    vertex_indices_ptr: Ptr, // 08
+    normal_indices_ptr: Ptr, // 12
+    uvs_ptr: Ptr,            // 16
+    material_index: u32,     // 20
+    zone_set: Hex<u32>,      // 24
 }
 impl_as_bytes!(PolygonRcC, 28);
 
 pub(crate) struct WrappedModelRc {
-    pub(crate) model: ModelRc,
+    pub(crate) model: Model,
     pub(crate) polygon_count: u32,
     pub(crate) vertex_count: u32,
     pub(crate) normal_count: u32,

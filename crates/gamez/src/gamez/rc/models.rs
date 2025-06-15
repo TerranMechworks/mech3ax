@@ -6,7 +6,7 @@ use crate::model::rc::{
     write_model_info, ModelRcC, MODEL_C_SIZE,
 };
 use log::trace;
-use mech3ax_api_types::gamez::mesh::ModelRc;
+use mech3ax_api_types::gamez::model::Model;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use mech3ax_types::u32_to_usize;
@@ -16,7 +16,7 @@ pub(crate) fn read_models(
     read: &mut CountingReader<impl Read>,
     end_offset: usize,
     material_count: u32,
-) -> Result<(Vec<ModelRc>, i32, i32)> {
+) -> Result<(Vec<Model>, i32, i32)> {
     let model_indices = read_meshes_info_sequential(read)?;
 
     let mut prev_offset = read.offset;
@@ -26,7 +26,7 @@ pub(crate) fn read_models(
             trace!("Reading model info {}/{}", model_index, model_indices.count);
             let wrapped = read_model_info(read)?;
             let model_offset = u32_to_usize(read.read_u32()?);
-            assert_that!("mesh offset", prev_offset <= model_offset <= end_offset, read.prev)?;
+            assert_that!("model offset", prev_offset <= model_offset <= end_offset, read.prev)?;
             prev_offset = model_offset;
             Ok((wrapped, model_offset, model_index))
         })
@@ -63,7 +63,7 @@ pub(crate) fn read_models(
 
 pub(crate) fn write_models(
     write: &mut CountingWriter<impl Write>,
-    models: &[ModelRc],
+    models: &[Model],
     array_size: i32,
     offsets: &[u32],
 ) -> Result<()> {
@@ -100,7 +100,7 @@ pub(crate) fn write_models(
 
 const U32_SIZE: u32 = std::mem::size_of::<u32>() as _;
 
-pub(crate) fn size_models(offset: u32, array_size: i32, models: &[ModelRc]) -> (u32, Vec<u32>) {
+pub(crate) fn size_models(offset: u32, array_size: i32, models: &[Model]) -> (u32, Vec<u32>) {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let array_size = array_size as u32;
     let mut offset = offset + MESHES_INFO_C_SIZE + (MODEL_C_SIZE + U32_SIZE) * array_size;

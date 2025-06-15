@@ -16,7 +16,7 @@ use std::io::{Read, Seek, Write};
 struct HeaderMwC {
     signature: u32,        // 00
     version: u32,          // 04
-    texture_count: u32,    // 08
+    texture_count: i32,    // 08
     textures_offset: u32,  // 12
     materials_offset: u32, // 16
     models_offset: u32,    // 20
@@ -66,7 +66,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read + Seek>) -> Result<GameZDa
         read.offset == textures_offset,
         read.offset
     )?;
-    let textures = textures::read_texture_infos(read, header.texture_count)?;
+    let textures = textures::read_texture_directory(read, header.texture_count)?;
 
     assert_that!(
         "materials offset",
@@ -79,7 +79,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read + Seek>) -> Result<GameZDa
 
     assert_that!("models offset", read.offset == models_offset, read.offset)?;
     let (meshes, meshes_count, mesh_array_size) =
-        meshes::read_meshes(read, nodes_offset, material_count)?;
+        meshes::read_models(read, nodes_offset, material_count)?;
 
     assert_that!("nodes offset", read.offset == nodes_offset, read.offset)?;
     let nodes = nodes::read_nodes(read, header.node_array_size, meshes_count)?;
@@ -101,17 +101,17 @@ pub fn read_gamez(read: &mut CountingReader<impl Read + Seek>) -> Result<GameZDa
 }
 
 pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataMw) -> Result<()> {
-    let texture_count = assert_len!(u32, gamez.textures.len(), "GameZ textures")?;
+    let texture_count = assert_len!(i32, gamez.textures.len(), "GameZ textures")?;
 
     let node_array_size = gamez.metadata.node_array_size;
     let meshes_array_size = gamez.metadata.meshes_array_size;
 
     let textures_offset = HeaderMwC::SIZE;
-    let materials_offset = textures_offset + textures::size_texture_infos(texture_count);
+    let materials_offset = textures_offset + textures::size_texture_directory(texture_count);
     let meshes_offset =
         materials_offset + materials::size_materials(&gamez.materials, materials::MatType::Ng);
     let (nodes_offset, mesh_offsets) =
-        meshes::size_meshes(meshes_offset, meshes_array_size, &gamez.meshes);
+        meshes::size_models(meshes_offset, meshes_array_size, &gamez.meshes);
 
     let header = HeaderMwC {
         signature: SIGNATURE,
@@ -126,7 +126,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataMw) 
     };
     write.write_struct(&header)?;
 
-    textures::write_texture_infos(write, &gamez.textures)?;
+    textures::write_texture_directory(write, &gamez.textures)?;
     let texture_names: Vec<&String> = gamez.textures.iter().collect();
     materials::write_materials(
         write,
@@ -134,7 +134,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataMw) 
         &gamez.materials,
         materials::MatType::Ng,
     )?;
-    meshes::write_meshes(write, &gamez.meshes, &mesh_offsets, meshes_array_size)?;
+    meshes::write_models(write, &gamez.meshes, &mesh_offsets, meshes_array_size)?;
     nodes::write_nodes(write, &gamez.nodes, node_array_size, nodes_offset)?;
     Ok(())
 }
