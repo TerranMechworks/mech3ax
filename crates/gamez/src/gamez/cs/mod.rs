@@ -1,5 +1,7 @@
+mod data;
 mod fixup;
-mod meshes;
+#[path = "meshes.rs"]
+mod models;
 mod nodes;
 
 use super::common::{
@@ -9,8 +11,9 @@ use crate::gamez::cs::fixup::Fixup;
 use crate::materials;
 use crate::textures::ng as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
-use mech3ax_api_types::gamez::{GameZDataCs, GameZMetadataCs, TextureName};
+use data::Campaign;
+use log::{debug, trace};
+use mech3ax_api_types::gamez::{GameZDataCs, GameZMetadataCs, Texture, TextureName};
 use mech3ax_api_types::nodes::cs::NodeCs;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Rename, Result};
@@ -24,48 +27,62 @@ struct HeaderCsC {
     signature: u32,        // 00
     version: u32,          // 04
     timestamp: u32,        // 08
-    texture_count: u32,    // 12
+    texture_count: i32,    // 12
     textures_offset: u32,  // 16
     materials_offset: u32, // 20
-    meshes_offset: u32,    // 24
+    models_offset: u32,    // 24
     node_array_size: u32,  // 28
     light_index: u32,      // 32
     nodes_offset: u32,     // 36
 }
 impl_as_bytes!(HeaderCsC, 40);
 
-fn dedupe_texture_names(original_textures: Vec<String>) -> Vec<TextureName> {
+fn dedupe_texture_names(original_textures: Vec<Texture>) -> Vec<TextureName> {
     let mut seen = Rename::new();
     original_textures
         .into_iter()
         .map(|original| {
-            let renamed = seen.insert(&original);
+            let renamed = seen.insert(&original.name);
             if let Some(renamed) = &renamed {
-                debug!("Renaming texture from `{}` to `{}`", original, renamed);
+                debug!("Renaming texture from `{}` to `{}`", original.name, renamed);
             }
-            TextureName { original, renamed }
+            TextureName {
+                original: original.name,
+                renamed,
+                mip: original.mip,
+            }
         })
         .collect()
 }
 
-fn redupe_texture_names(textures: &[TextureName]) -> Vec<&String> {
+fn redupe_texture_names(textures: &[TextureName]) -> Vec<Texture> {
     textures
         .iter()
-        .map(|tex_name| match tex_name.renamed.as_ref() {
-            Some(renamed) => {
-                debug!(
-                    "Renaming texture from `{}` to `{}`",
-                    tex_name.original, renamed
-                );
-                renamed
+        .map(|tex_name| {
+            let name = match tex_name.renamed.as_ref() {
+                Some(renamed) => {
+                    debug!(
+                        "Renaming texture from `{}` to `{}`",
+                        tex_name.original, renamed
+                    );
+                    renamed
+                }
+                None => &tex_name.original,
             }
-            None => &tex_name.original,
+            .clone();
+
+            Texture {
+                name,
+                mip: tex_name.mip,
+            }
         })
         .collect()
 }
 
 pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataCs> {
     let header: HeaderCsC = read.read_struct()?;
+    let campaign = Campaign::from_header(&header);
+    trace!("Campaign: {:?}", campaign);
 
     assert_that!("signature", header.signature == SIGNATURE, read.prev + 0)?;
     assert_that!("version", header.version == VERSION_CS, read.prev + 4)?;
@@ -80,18 +97,18 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataCs> {
     )?;
     assert_that!(
         "materials offset",
-        header.materials_offset < header.meshes_offset,
+        header.materials_offset < header.models_offset,
         read.prev + 20
     )?;
     assert_that!(
-        "meshes offset",
-        header.meshes_offset < header.nodes_offset,
+        "models offset",
+        header.models_offset < header.nodes_offset,
         read.prev + 24
     )?;
 
     let textures_offset = u32_to_usize(header.textures_offset);
     let materials_offset = u32_to_usize(header.materials_offset);
-    let meshes_offset = u32_to_usize(header.meshes_offset);
+    let models_offset = u32_to_usize(header.models_offset);
     let nodes_offset = u32_to_usize(header.nodes_offset);
 
     assert_that!(
@@ -99,9 +116,8 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataCs> {
         read.offset == textures_offset,
         read.offset
     )?;
-    let (original_textures, texture_ptrs) =
-        textures::read_texture_infos(read, header.texture_count)?;
-    let textures = dedupe_texture_names(original_textures);
+    let original_textures = textures::read_texture_directory(read, header.texture_count)?;
+    let textures_renamed = dedupe_texture_names(original_textures);
 
     assert_that!(
         "materials offset",
@@ -109,15 +125,25 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataCs> {
         read.offset
     )?;
     // use the renamed ones, so the materials resolve unambiguously
-    let texture_names: Vec<&String> = textures
+    let textures: Vec<Texture> = textures_renamed
         .iter()
-        .map(|tex_name| tex_name.renamed.as_ref().unwrap_or(&tex_name.original))
+        .map(|tex_name| {
+            let name = tex_name
+                .renamed
+                .as_ref()
+                .unwrap_or(&tex_name.original)
+                .clone();
+            Texture {
+                name,
+                mip: tex_name.mip,
+            }
+        })
         .collect();
     let (materials, material_count) =
-        materials::read_materials(read, &texture_names, materials::MatType::Ng)?;
+        materials::read_materials(read, &textures, materials::MatType::Ng)?;
 
-    assert_that!("meshes offset", read.offset == meshes_offset, read.offset)?;
-    let meshes = meshes::read_meshes(read, nodes_offset, material_count, fixup)?;
+    assert_that!("model offset", read.offset == models_offset, read.offset)?;
+    let models = models::read_models(read, nodes_offset, material_count, fixup)?;
 
     assert_that!("nodes offset", read.offset == nodes_offset, read.offset)?;
     let is_gamez = fixup != Fixup::Planes;
@@ -125,33 +151,30 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataCs> {
         read,
         header.node_array_size,
         header.light_index,
-        &meshes,
+        &models,
         is_gamez,
     )?;
     // `read_nodes` calls `assert_end`
 
-    let metadata = GameZMetadataCs {
-        datetime,
-        texture_ptrs,
-    };
+    let metadata = GameZMetadataCs { datetime };
     Ok(GameZDataCs {
-        textures,
+        textures: textures_renamed,
         materials,
-        meshes,
+        models,
         nodes,
         metadata,
     })
 }
 
 pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataCs) -> Result<()> {
-    let texture_count = assert_len!(u32, gamez.textures.len(), "GameZ textures")?;
+    let texture_count = assert_len!(i32, gamez.textures.len(), "GameZ textures")?;
     let node_array_size = assert_len!(u32, gamez.nodes.len(), "GameZ nodes")?;
 
     let textures_offset = HeaderCsC::SIZE;
-    let materials_offset = textures_offset + textures::size_texture_infos(texture_count);
-    let meshes_offset =
+    let materials_offset = textures_offset + textures::size_texture_directory(texture_count);
+    let models_offset =
         materials_offset + materials::size_materials(&gamez.materials, materials::MatType::Ng);
-    let (nodes_offset, meshes) = meshes::size_meshes(meshes_offset, &gamez.meshes);
+    let (nodes_offset, models) = models::size_models(models_offset, &gamez.models);
 
     let timestamp = to_timestamp(&gamez.metadata.datetime);
 
@@ -176,30 +199,33 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataCs) 
         texture_count,
         textures_offset,
         materials_offset,
-        meshes_offset,
+        models_offset,
         node_array_size,
         light_index,
         nodes_offset,
     };
     let fixup = fixup::Fixup::write(&header);
     write.write_struct(&header)?;
+    let campaign = Campaign::from_header(&header);
+    trace!("Campaign: {:?}", campaign);
 
-    let original_textures: Vec<String> = gamez
+    let textures: Vec<Texture> = gamez
         .textures
         .iter()
-        .map(|tex_name| tex_name.original.clone())
+        .map(|tex_name| {
+            let name = tex_name.original.clone();
+            Texture {
+                name,
+                mip: tex_name.mip,
+            }
+        })
         .collect();
-    textures::write_texture_infos(write, &original_textures, &gamez.metadata.texture_ptrs)?;
+    textures::write_texture_directory(write, &textures, campaign.image_ptrs())?;
 
     // the renamed ones were used, so that's what we must use here also
-    let texture_names = redupe_texture_names(&gamez.textures);
-    materials::write_materials(
-        write,
-        &texture_names,
-        &gamez.materials,
-        materials::MatType::Ng,
-    )?;
-    meshes::write_meshes(write, meshes, fixup)?;
+    let textures = redupe_texture_names(&gamez.textures);
+    materials::write_materials(write, &textures, &gamez.materials, materials::MatType::Ng)?;
+    models::write_models(write, models, fixup)?;
     nodes::write_nodes(write, &gamez.nodes)?;
     Ok(())
 }

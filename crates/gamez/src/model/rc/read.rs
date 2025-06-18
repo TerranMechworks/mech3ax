@@ -1,7 +1,9 @@
 use super::{ModelBitFlags, ModelRcC, PolygonBitFlags, PolygonRcC, WrappedModelRc};
 use crate::model::common::*;
 use log::trace;
-use mech3ax_api_types::gamez::model::{Model, ModelFlags, ModelType, Polygon, UvCoord};
+use mech3ax_api_types::gamez::model::{
+    Model, ModelFlags, ModelType, Polygon, PolygonFlags, UvCoord,
+};
 use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Result};
@@ -75,6 +77,8 @@ fn assert_model_info(model: ModelRcC, offset: usize) -> Result<WrappedModelRc> {
         texture_scroll: bitflags.contains(ModelBitFlags::TEXTURE_SCROLL),
         facade_tilt: bitflags.contains(ModelBitFlags::FACADE_TILT),
         clouds: false,
+        unk7: false,
+        unk8: false,
     };
 
     let m = Model {
@@ -97,6 +101,10 @@ fn assert_model_info(model: ModelRcC, offset: usize) -> Result<WrappedModelRc> {
         normals_ptr: model.normals_ptr.0,
         lights_ptr: model.lights_ptr.0,
         morphs_ptr: model.morphs_ptr.0,
+        materials_ptr: 0,
+
+        // TODO
+        material_infos: vec![],
     };
 
     Ok(WrappedModelRc {
@@ -113,7 +121,7 @@ fn assert_vertex_info(vertex_info: u32, offset: usize) -> Result<(u32, PolygonBi
     let verts_in_poly = vertex_info & PolygonBitFlags::VERTEX_COUNT;
     assert_that!("verts in poly", verts_in_poly >= 3, offset)?;
 
-    let flag_bits = Maybe::new(vertex_info & !(PolygonBitFlags::VERTEX_COUNT));
+    let flag_bits = Maybe::new(vertex_info & (!PolygonBitFlags::VERTEX_COUNT));
     let flags: PolygonBitFlags = assert_that!("polygon flags", flags flag_bits, offset)?;
 
     Ok((verts_in_poly, flags))
@@ -125,10 +133,7 @@ fn assert_polygon_info(
     material_count: u32,
     poly_index: u32,
 ) -> Result<(u32, u32, Polygon)> {
-    let (verts_in_poly, flags) = assert_vertex_info(poly.vertex_info.0, offset + 0)?;
-
-    let show_backface = flags.contains(PolygonBitFlags::SHOW_BACKFACE);
-    let has_normals = flags.contains(PolygonBitFlags::NORMALS);
+    let (verts_in_poly, bitflags) = assert_vertex_info(poly.vertex_info.0, offset + 0)?;
 
     assert_that!("priority", -50 <= poly.priority <= 50, offset + 4)?;
     assert_that!(
@@ -136,7 +141,7 @@ fn assert_polygon_info(
         poly.vertex_indices_ptr != Ptr::NULL,
         offset + 8
     )?;
-    if has_normals {
+    if bitflags.contains(PolygonBitFlags::NORMALS) {
         assert_that!(
             "normal indices ptr",
             poly.normal_indices_ptr != Ptr::NULL,
@@ -157,21 +162,32 @@ fn assert_polygon_info(
     )?;
     let zone_set = assert_zone_set(poly.zone_set.0, offset + 24)?;
 
+    let flags = PolygonFlags {
+        show_backface: bitflags.contains(PolygonBitFlags::SHOW_BACKFACE),
+        triangle_strip: false,
+        unk3: false,
+        unk6: false,
+    };
+
     let polygon = Polygon {
         vertex_indices: vec![],
         vertex_colors: vec![],
         normal_indices: None,
         uv_coords: None,
         material_index: poly.material_index,
-        show_backface,
+        flags,
         priority: poly.priority,
         zone_set,
 
-        vertices_ptr: poly.vertex_indices_ptr.0,
-        normals_ptr: poly.normal_indices_ptr.0,
+        vertex_indices_ptr: poly.vertex_indices_ptr.0,
+        normal_indices_ptr: poly.normal_indices_ptr.0,
         uvs_ptr: poly.uvs_ptr.0,
-        colors_ptr: 0,
+        vertex_colors_ptr: 0,
         unk_ptr: 0,
+        materials_ptr: 0,
+
+        // TODO
+        materials: vec![],
     };
 
     Ok((poly_index, verts_in_poly, polygon))
@@ -244,7 +260,7 @@ fn read_polygons(
             );
             polygon.vertex_indices = read_u32s(read, verts_in_poly)?;
 
-            if polygon.normals_ptr != 0 {
+            if polygon.normal_indices_ptr != 0 {
                 trace!(
                     "Reading {} normal indices at {}",
                     verts_in_poly,

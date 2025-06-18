@@ -7,21 +7,21 @@ use mech3ax_nodes::rc::{
     assert_node_info_zero, read_node_data, read_node_info, size_node, write_node_data,
     write_node_info, NodeRcC, NodeVariantRc,
 };
-use mech3ax_types::{u32_to_usize, AsBytes as _};
+use mech3ax_types::{i32_to_usize, u32_to_usize, AsBytes as _};
 use std::io::{Read, Write};
 
 pub(crate) fn read_nodes(
     read: &mut CountingReader<impl Read>,
-    array_size: u32,
-    count: u32,
+    array_size: i32,
+    count: i32,
     model_count: i32,
 ) -> Result<Vec<NodeRc>> {
     let node_write_size = u32_to_usize(NodeRcC::SIZE) + 4;
-    let valid_offset = read.offset + node_write_size * u32_to_usize(count);
-    let end_offset = read.offset + node_write_size * u32_to_usize(array_size);
+    let valid_offset = read.offset + node_write_size * i32_to_usize(count);
+    let end_offset = read.offset + node_write_size * i32_to_usize(array_size);
 
     let mut variants = Vec::new();
-    let mut light_node: Option<u32> = None;
+    let mut light_node: Option<i32> = None;
     for index in 0..count {
         trace!("Reading node info {}/{}", index, count);
 
@@ -99,7 +99,7 @@ pub(crate) fn read_nodes(
         assert_node_info_zero(&node, read.prev)
             .inspect_err(|_| trace!("{:#?} (index: {}, at {})", node, index, read.prev))?;
 
-        let actual_index = read.read_u32()?;
+        let actual_index = read.read_i32()?;
 
         let mut expected_index = index + 1;
         if expected_index == array_size {
@@ -117,9 +117,10 @@ pub(crate) fn read_nodes(
         .map(|(index, (mut variant, node_data_offset))| {
             match &mut variant {
                 NodeVariantRc::Empty(empty) => {
+                    let parent_index = node_data_offset as i32;
                     assert_that!(
                         "empty parent index",
-                        node_data_offset != light_node_index,
+                        parent_index != light_node_index,
                         read.prev
                     )?;
                     // in the case of an empty node, the offset is used as the parent
@@ -171,11 +172,11 @@ fn assert_area_partitions(nodes: &[NodeRc], offset: usize) -> Result<()> {
 pub(crate) fn write_nodes(
     write: &mut CountingWriter<impl Write>,
     nodes: &[NodeRc],
-    array_size: u32,
+    array_size: i32,
     offset: u32,
 ) -> Result<()> {
-    let mut offset = offset + (NodeRcC::SIZE + 4) * array_size;
-    let node_count = assert_len!(u32, nodes.len(), "nodes")?;
+    let mut offset = offset + (NodeRcC::SIZE + 4) * (array_size as u32);
+    let node_count = assert_len!(i32, nodes.len(), "nodes")?;
 
     for (index, node) in nodes.iter().enumerate() {
         trace!("Writing node info {}/{}", index, node_count);
@@ -202,7 +203,7 @@ pub(crate) fn write_nodes(
         if index == array_size {
             index = NODE_INDEX_INVALID;
         }
-        write.write_u32(index)?;
+        write.write_i32(index)?;
     }
     trace!("Wrote note info zeros at {}", write.offset);
 

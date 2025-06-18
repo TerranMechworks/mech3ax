@@ -1,89 +1,173 @@
-use super::{MeshNgC, PolygonBitFlags, PolygonNgC};
-use crate::mesh::common::*;
-use log::trace;
-use mech3ax_api_types::gamez::mesh::{MeshMaterialInfo, MeshNg, PolygonNg, UvCoord};
+use super::{ModelBitFlags, ModelPmC, PolygonBitFlags, PolygonPmC};
+use crate::model::common::*;
+use log::{trace, warn};
+use mech3ax_api_types::gamez::model::{MeshMaterialInfo, Model, Polygon, UvCoord};
 use mech3ax_api_types::{Color, Vec3};
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, Result};
+use mech3ax_common::{assert_len, assert_with_msg, Result};
+use mech3ax_types::maybe::SupportsMaybe as _;
 use mech3ax_types::{AsBytes as _, Hex, Ptr};
 use std::io::Write;
 
-pub(crate) fn write_mesh_info(write: &mut CountingWriter<impl Write>, mesh: &MeshNg) -> Result<()> {
-    let polygon_count = assert_len!(u32, mesh.polygons.len(), "mesh polygons")?;
-    let vertex_count = assert_len!(u32, mesh.vertices.len(), "mesh vertices")?;
-    let normal_count = assert_len!(u32, mesh.normals.len(), "mesh normals")?;
-    let morph_count = assert_len!(u32, mesh.morphs.len(), "mesh morphs")?;
-    let light_count = assert_len!(u32, mesh.lights.len(), "mesh lights")?;
-    let material_count = assert_len!(u32, mesh.material_infos.len(), "mesh materials")?;
+pub(crate) fn write_model_info(
+    write: &mut CountingWriter<impl Write>,
+    model: &Model,
+) -> Result<()> {
+    let polygon_count = assert_len!(u32, model.polygons.len(), "model polygons")?;
+    let vertex_count = assert_len!(u32, model.vertices.len(), "model vertices")?;
+    let normal_count = assert_len!(u32, model.normals.len(), "model normals")?;
+    let morph_count = assert_len!(u32, model.morphs.len(), "model morphs")?;
+    let light_count = assert_len!(u32, model.lights.len(), "model lights")?;
+    let material_count = assert_len!(u32, model.material_infos.len(), "model materials")?;
 
-    let mesh = MeshNgC {
-        file_ptr: mesh.file_ptr.into(),
-        unk04: mesh.unk04,
-        unk08: mesh.unk08,
-        parent_count: mesh.parent_count,
+    let polygons_ptr = assert_ptr!(polygon_count, model.polygons_ptr, "polygons");
+    let vertices_ptr = assert_ptr!(vertex_count, model.vertices_ptr, "vertices");
+    let normals_ptr = assert_ptr!(normal_count, model.normals_ptr, "normals");
+    let lights_ptr = assert_ptr!(light_count, model.lights_ptr, "lights");
+    let morphs_ptr = assert_ptr!(morph_count, model.morphs_ptr, "morphs");
+    let materials_ptr = assert_ptr!(material_count, model.materials_ptr, "materials");
+
+    let mut bitflags = ModelBitFlags::empty();
+    if model.flags.lighting {
+        bitflags |= ModelBitFlags::LIGHTING;
+    }
+    if model.flags.fog {
+        bitflags |= ModelBitFlags::FOG;
+    }
+    if model.flags.texture_registered {
+        bitflags |= ModelBitFlags::TEXTURE_REGISTERED;
+    }
+    if model.flags.morph {
+        bitflags |= ModelBitFlags::MORPH;
+    }
+    if model.flags.texture_scroll {
+        bitflags |= ModelBitFlags::TEXTURE_SCROLL;
+    }
+    let facade_follow = model.flags.facade_tilt.maybe();
+    if model.flags.clouds {
+        bitflags |= ModelBitFlags::CLOUDS;
+    }
+    if model.flags.unk7 {
+        bitflags |= ModelBitFlags::UNK7;
+    }
+    if model.flags.unk8 {
+        bitflags |= ModelBitFlags::UNK8;
+    }
+    // TODO
+
+    let model = ModelPmC {
+        model_type: model.model_type.maybe(),
+        facade_follow,
+        flags: bitflags.maybe(),
+        parent_count: model.parent_count,
         polygon_count,
         vertex_count,
         normal_count,
         morph_count,
         light_count,
-        zero36: 0,
-        unk40: mesh.unk40,
-        unk44: mesh.unk44,
-        zero48: 0,
-        polygons_ptr: Ptr(mesh.polygons_ptr),
-        vertices_ptr: Ptr(mesh.vertices_ptr),
-        normals_ptr: Ptr(mesh.normals_ptr),
-        lights_ptr: Ptr(mesh.lights_ptr),
-        morphs_ptr: Ptr(mesh.morphs_ptr),
-        unk72: mesh.unk72,
-        unk76: mesh.unk76,
-        unk80: mesh.unk80,
-        unk84: mesh.unk84,
-        zero88: 0,
+        morph_factor: 0.0,
+        tex_scroll_u: model.texture_scroll.u,
+        tex_scroll_v: model.texture_scroll.v,
+        tex_scroll_frame: 0,
+        polygons_ptr,
+        vertices_ptr,
+        normals_ptr,
+        lights_ptr,
+        morphs_ptr,
+        bbox_mid: model.bbox_mid,
+        bbox_diag: model.bbox_diag,
+        active_polygon_index: 0,
         material_count,
-        materials_ptr: Ptr(mesh.materials_ptr),
+        materials_ptr,
     };
-    write.write_struct(&mesh)?;
+    write.write_struct(&model)?;
     Ok(())
 }
 
-fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[PolygonNg]) -> Result<()> {
+fn make_vertex_info(polygon: &Polygon) -> Result<Hex<u32>> {
+    let vertex_indices_len =
+        assert_len!(u32, polygon.vertex_indices.len(), "polygon vertex indices")?;
+
+    if vertex_indices_len > PolygonBitFlags::VERTEX_COUNT {
+        return Err(assert_with_msg!(
+            "Expected < {} vertex indices, but got {}",
+            PolygonBitFlags::VERTEX_COUNT + 1,
+            vertex_indices_len
+        ));
+    }
+
+    if vertex_indices_len < 3 {
+        warn!(
+            "WARN: Expected >= 3 vertex indices, but got {}",
+            vertex_indices_len
+        );
+    }
+
+    let mut bitflags = PolygonBitFlags::empty();
+    if polygon.flags.show_backface {
+        bitflags |= PolygonBitFlags::SHOW_BACKFACE;
+    }
+    if polygon.normal_indices.is_some() {
+        bitflags |= PolygonBitFlags::NORMALS;
+    }
+    if polygon.flags.triangle_strip {
+        bitflags |= PolygonBitFlags::TRI_STRIP;
+    }
+    if polygon.flags.unk3 {
+        bitflags |= PolygonBitFlags::UNK3;
+    }
+    if polygon.flags.unk6 {
+        bitflags |= PolygonBitFlags::UNK6;
+    }
+    // TODO
+
+    Ok(Hex(vertex_indices_len | bitflags.bits()))
+}
+
+fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) -> Result<()> {
     let count = polygons.len();
     for (index, polygon) in polygons.iter().enumerate() {
         trace!("Writing polygon info {}/{}", index, count);
+
         let mat_count = assert_len!(u32, polygon.materials.len(), "polygon materials count")?;
-        let vertex_indices_len =
-            assert_len!(u32, polygon.vertex_indices.len(), "polygon vertex indices")?;
-        let mut flags: PolygonBitFlags = (&polygon.flags).into();
-        if polygon.normal_indices.is_some() {
-            flags |= PolygonBitFlags::NORMALS;
-        }
-        let vertex_info = Hex(vertex_indices_len | (flags.bits() << 8));
-        let poly = PolygonNgC {
+
+        let vertex_info = make_vertex_info(polygon)?;
+        let zone_set = make_zone_set(&polygon.zone_set)?;
+
+        let poly = PolygonPmC {
             vertex_info,
-            unk04: polygon.unk04,
-            vertices_ptr: Ptr(polygon.vertices_ptr),
-            normals_ptr: Ptr(polygon.normals_ptr),
-            mat_count,
+            priority: polygon.priority,
+            vertex_indices_ptr: Ptr(polygon.vertex_indices_ptr),
+            normal_indices_ptr: Ptr(polygon.normal_indices_ptr),
+            material_count: mat_count,
+            materials_ptr: Ptr(polygon.materials_ptr),
             uvs_ptr: Ptr(polygon.uvs_ptr),
-            colors_ptr: Ptr(polygon.colors_ptr),
-            unk28: Ptr(polygon.unk28),
-            unk32: Ptr(polygon.unk32),
-            unk36: Hex(polygon.unk36),
+            vertex_colors_ptr: Ptr(polygon.vertex_colors_ptr),
+            matl_info_ptr: Ptr(polygon.unk_ptr),
+            zone_set,
         };
         write.write_struct(&poly)?;
     }
     for (index, polygon) in polygons.iter().enumerate() {
         trace!("Writing polygon data {}/{}", index, count);
 
+        let vertex_count = polygon.vertex_indices.len();
         trace!(
             "Writing {} vertex indices at {}",
-            polygon.vertex_indices.len(),
+            vertex_count,
             write.offset
         );
         write_u32s(write, &polygon.vertex_indices)?;
 
         if let Some(normal_indices) = &polygon.normal_indices {
+            if normal_indices.len() != vertex_count {
+                warn!(
+                    "WARN: Have {} vertex indices and {} normal indices",
+                    vertex_count,
+                    normal_indices.len(),
+                );
+            }
+
             trace!(
                 "Writing {} normal indices at {}",
                 normal_indices.len(),
@@ -120,39 +204,46 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[PolygonNg]
     Ok(())
 }
 
-pub(crate) fn write_mesh_data(write: &mut CountingWriter<impl Write>, mesh: &MeshNg) -> Result<()> {
-    if !mesh.vertices.is_empty() {
+pub(crate) fn write_model_data(
+    write: &mut CountingWriter<impl Write>,
+    model: &Model,
+) -> Result<()> {
+    if !model.vertices.is_empty() {
         trace!(
             "Writing {} vertices at {}",
-            mesh.vertices.len(),
+            model.vertices.len(),
             write.offset
         );
-        write_vec3s(write, &mesh.vertices)?;
+        write_vec3s(write, &model.vertices)?;
     }
 
-    if !mesh.normals.is_empty() {
-        trace!("Writing {} normals at {}", mesh.normals.len(), write.offset);
-        write_vec3s(write, &mesh.normals)?;
+    if !model.normals.is_empty() {
+        trace!(
+            "Writing {} normals at {}",
+            model.normals.len(),
+            write.offset
+        );
+        write_vec3s(write, &model.normals)?;
     }
 
-    if !mesh.morphs.is_empty() {
-        trace!("Writing {} morphs at {}", mesh.morphs.len(), write.offset);
-        write_vec3s(write, &mesh.morphs)?;
+    if !model.morphs.is_empty() {
+        trace!("Writing {} morphs at {}", model.morphs.len(), write.offset);
+        write_vec3s(write, &model.morphs)?;
     }
 
-    if !mesh.lights.is_empty() {
-        trace!("Writing {} lights at {}", mesh.lights.len(), write.offset);
-        write_lights(write, &mesh.lights)?;
+    if !model.lights.is_empty() {
+        trace!("Writing {} lights at {}", model.lights.len(), write.offset);
+        write_lights(write, &model.lights)?;
     }
 
-    write_polygons(write, &mesh.polygons)?;
+    write_polygons(write, &model.polygons)?;
 
     trace!(
-        "Writing {} mesh material infos at {}",
-        mesh.material_infos.len(),
+        "Writing {} model material infos at {}",
+        model.material_infos.len(),
         write.offset
     );
-    for mi in mesh.material_infos.iter() {
+    for mi in model.material_infos.iter() {
         write.write_struct(mi)?;
     }
 
@@ -161,20 +252,20 @@ pub(crate) fn write_mesh_data(write: &mut CountingWriter<impl Write>, mesh: &Mes
 
 const U32_SIZE: u32 = std::mem::size_of::<u32>() as _;
 
-pub(crate) fn size_mesh(mesh: &MeshNg) -> u32 {
+pub(crate) fn size_model(model: &Model) -> u32 {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let mut size =
-        Vec3::SIZE * (mesh.vertices.len() + mesh.normals.len() + mesh.morphs.len()) as u32;
-    for light in &mesh.lights {
+        Vec3::SIZE * (model.vertices.len() + model.normals.len() + model.morphs.len()) as u32;
+    for light in &model.lights {
         size += LightC::SIZE + Vec3::SIZE * light.extra.len() as u32;
     }
-    for polygon in &mesh.polygons {
+    for polygon in &model.polygons {
         let normal_indices_len = polygon
             .normal_indices
             .as_ref()
             .map(|v| v.len() as u32)
             .unwrap_or(0);
-        size += PolygonNgC::SIZE
+        size += PolygonPmC::SIZE
             + U32_SIZE * polygon.vertex_indices.len() as u32
             + U32_SIZE * normal_indices_len
             + Color::SIZE * polygon.vertex_colors.len() as u32;
@@ -182,6 +273,6 @@ pub(crate) fn size_mesh(mesh: &MeshNg) -> u32 {
             size += U32_SIZE + UvCoord::SIZE * material.uv_coords.len() as u32;
         }
     }
-    size += MeshMaterialInfo::SIZE * mesh.material_infos.len() as u32;
+    size += MeshMaterialInfo::SIZE * model.material_infos.len() as u32;
     size
 }

@@ -3,6 +3,7 @@ use super::{MatType, MaterialC, MaterialInfoC};
 use crate::materials::RawMaterial;
 use log::trace;
 use mech3ax_api_types::gamez::materials::{Material, TexturedMaterial};
+use mech3ax_api_types::gamez::Texture;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Result};
 use mech3ax_types::u32_to_usize;
@@ -10,7 +11,7 @@ use std::io::Read;
 
 pub(crate) fn read_materials(
     read: &mut CountingReader<impl Read>,
-    texture_names: &[&String],
+    textures: &[Texture],
     ty: MatType,
 ) -> Result<(Vec<Material>, u32)> {
     let info: MaterialInfoC = read.read_struct()?;
@@ -28,10 +29,10 @@ pub(crate) fn read_materials(
                     let texture_index = u32_to_usize(mat.pointer);
                     assert_that!(
                         "matl texture index",
-                        texture_index < texture_names.len(),
+                        texture_index < textures.len(),
                         read.offset
                     )?;
-                    let texture = texture_names[texture_index].clone();
+                    let texture = textures[texture_index].name.clone();
                     trace!("{} -> `{}`", texture, texture_index);
 
                     Material::Textured(TexturedMaterial {
@@ -76,7 +77,7 @@ pub(crate) fn read_materials(
             Material::Textured(mat) if mat.pointer == 0 => {}
             Material::Textured(mat) => {
                 trace!("Reading cycle info {}", index);
-                read_cycle(read, mat, texture_names)?;
+                read_cycle(read, mat, textures)?;
             }
         }
     }

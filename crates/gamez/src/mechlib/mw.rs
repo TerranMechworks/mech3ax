@@ -1,4 +1,4 @@
-use crate::mesh::mw::{read_model_data, read_model_info, write_model_data, write_model_info};
+use crate::model::mw::{read_model_data, read_model_info, write_model_data, write_model_info};
 use log::trace;
 use mech3ax_api_types::gamez::mechlib::MechlibModelMw;
 use mech3ax_api_types::gamez::model::Model;
@@ -88,12 +88,12 @@ pub fn read_model(read: &mut CountingReader<impl Read>) -> Result<MechlibModelMw
     })
 }
 
-fn write_node_and_mesh(
+fn write_node_and_model(
     write: &mut CountingWriter<impl Write>,
     node_index: u32,
     nodes: &mut [NodeMw],
     models: &[Model],
-    mesh_ptrs: &[i32],
+    model_ptrs: &[i32],
 ) -> Result<()> {
     let index = node_index as usize;
     let node = &mut nodes[index];
@@ -105,7 +105,7 @@ fn write_node_and_mesh(
             // before the node is written out
             if object3d.mesh_index > -1 {
                 let index = object3d.mesh_index as usize;
-                object3d.mesh_index = mesh_ptrs[index];
+                object3d.mesh_index = model_ptrs[index];
                 Some(index)
             } else {
                 object3d.mesh_index = 0;
@@ -119,12 +119,12 @@ fn write_node_and_mesh(
     write_node_info(write, node)?;
     write_node_data(write, node)?;
 
-    // if mesh_index isn't -1, then we need to write out the mesh, too
-    if let Some(mesh_index) = restore_index {
-        let mesh = &models[mesh_index];
-        trace!("Writing mesh {}", mesh_index);
-        write_model_info(write, mesh)?;
-        write_model_data(write, mesh)?;
+    // if mesh_index isn't -1, then we need to write out the model, too
+    if let Some(model_index) = restore_index {
+        let model = &models[model_index];
+        trace!("Writing model {}", model_index);
+        write_model_info(write, model)?;
+        write_model_data(write, model)?;
     }
 
     let child_indices = match node {
@@ -133,7 +133,7 @@ fn write_node_and_mesh(
     };
 
     for child_index in child_indices.into_iter() {
-        write_node_and_mesh(write, child_index, nodes, models, mesh_ptrs)?;
+        write_node_and_model(write, child_index, nodes, models, model_ptrs)?;
     }
     Ok(())
 }
@@ -142,7 +142,7 @@ pub fn write_model(
     write: &mut CountingWriter<impl Write>,
     mechlib_model: &mut MechlibModelMw,
 ) -> Result<()> {
-    write_node_and_mesh(
+    write_node_and_model(
         write,
         0,
         &mut mechlib_model.nodes,

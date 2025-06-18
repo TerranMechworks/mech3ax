@@ -1,6 +1,5 @@
 pub mod materials;
 pub mod mechlib;
-pub mod mesh;
 pub mod model;
 
 use crate::nodes::cs::NodeCs;
@@ -12,7 +11,6 @@ use ::serde::{Deserialize, Serialize};
 use materials::Material;
 use mech3ax_metadata_proc_macro::Struct;
 use mech3ax_timestamp::DateTime;
-use mesh::MeshNg;
 use model::Model;
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
@@ -24,17 +22,17 @@ pub struct Texture {
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct GameZMetadataMw {
-    pub meshes_array_size: i32,
-    pub node_array_size: u32,
-    pub node_data_count: u32,
+    pub model_array_size: i32,
+    pub node_array_size: i32,
+    pub node_data_count: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 #[dotnet(partial, namespace = "Mech3DotNet.Zbd")]
 pub struct GameZDataMw {
-    pub textures: Vec<String>,
+    pub textures: Vec<Texture>,
     pub materials: Vec<Material>,
-    pub meshes: Vec<Model>,
+    pub models: Vec<Model>,
     pub nodes: Vec<NodeMw>,
     pub metadata: GameZMetadataMw,
 }
@@ -42,17 +40,16 @@ pub struct GameZDataMw {
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct GameZMetadataPm {
     pub datetime: DateTime,
-    pub meshes_array_size: i32,
-    pub node_data_count: u32,
-    pub texture_ptrs: Vec<Option<u32>>,
+    pub model_array_size: i32,
+    pub node_data_count: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 #[dotnet(partial, namespace = "Mech3DotNet.Zbd")]
 pub struct GameZDataPm {
-    pub textures: Vec<String>,
+    pub textures: Vec<Texture>,
     pub materials: Vec<Material>,
-    pub meshes: Vec<MeshNg>,
+    pub models: Vec<Model>,
     pub nodes: Vec<NodePm>,
     pub metadata: GameZMetadataPm,
 }
@@ -60,13 +57,13 @@ pub struct GameZDataPm {
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct GameZMetadataCs {
     pub datetime: DateTime,
-    pub texture_ptrs: Vec<Option<u32>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct TextureName {
     pub original: String,
     pub renamed: Option<String>,
+    pub mip: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
@@ -74,7 +71,7 @@ pub struct TextureName {
 pub struct GameZDataCs {
     pub textures: Vec<TextureName>,
     pub materials: Vec<Material>,
-    pub meshes: Vec<Option<MeshNg>>,
+    pub models: Vec<Option<Model>>,
     pub nodes: Vec<NodeCs>,
     pub metadata: GameZMetadataCs,
 }
@@ -82,7 +79,7 @@ pub struct GameZDataCs {
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct GameZMetadataRc {
     pub model_array_size: i32,
-    pub node_array_size: u32,
+    pub node_array_size: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]

@@ -1,7 +1,7 @@
-use crate::mesh::ng::{read_mesh_data, read_mesh_info, write_mesh_data, write_mesh_info};
+use crate::model::ng::{read_model_data, read_model_info, write_model_data, write_model_info};
 use log::trace;
-use mech3ax_api_types::gamez::mechlib::ModelPm;
-use mech3ax_api_types::gamez::mesh::MeshNg;
+use mech3ax_api_types::gamez::mechlib::MechlibModelPm;
+use mech3ax_api_types::gamez::model::Model;
 use mech3ax_api_types::nodes::pm::{Lod, NodePm, Object3d};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::Result;
@@ -11,29 +11,27 @@ use mech3ax_nodes::pm::{
 };
 use std::io::{Read, Write};
 
-fn read_node_and_mesh(
+fn read_node(
     read: &mut CountingReader<impl Read>,
     nodes: &mut Vec<NodePm>,
-    meshes: &mut Vec<MeshNg>,
-    mesh_ptrs: &mut Vec<i32>,
+    models: &mut Vec<Model>,
+    model_ptrs: &mut Vec<i32>,
 ) -> Result<u32> {
     trace!("Reading node {}", nodes.len());
     match read_node_mechlib(read)? {
         WrappedNodePm::Object3d(wrapped) => {
-            read_node_and_mesh_object3d(read, nodes, meshes, mesh_ptrs, wrapped)
+            read_node_object3d(read, nodes, models, model_ptrs, wrapped)
         }
-        WrappedNodePm::Lod(wrapped) => {
-            read_node_and_mesh_lod(read, nodes, meshes, mesh_ptrs, wrapped)
-        }
+        WrappedNodePm::Lod(wrapped) => read_node_lod(read, nodes, models, model_ptrs, wrapped),
         _ => Err(mechlib_only_err_pm()),
     }
 }
 
-fn read_node_and_mesh_object3d(
+fn read_node_object3d(
     read: &mut CountingReader<impl Read>,
     nodes: &mut Vec<NodePm>,
-    meshes: &mut Vec<MeshNg>,
-    mesh_ptrs: &mut Vec<i32>,
+    models: &mut Vec<Model>,
+    model_ptrs: &mut Vec<i32>,
     wrapped: WrapperPm<Object3d>,
 ) -> Result<u32> {
     let WrapperPm {
@@ -43,17 +41,17 @@ fn read_node_and_mesh_object3d(
     } = wrapped;
 
     if object3d.mesh_index != 0 {
-        let mesh_index: i32 = mesh_ptrs.len().try_into().unwrap();
+        let mesh_index: i32 = model_ptrs.len().try_into().unwrap();
         // preserve the pointer, store the new index
-        mesh_ptrs.push(object3d.mesh_index);
+        model_ptrs.push(object3d.mesh_index);
         object3d.mesh_index = mesh_index;
 
-        trace!("Reading mesh {}", mesh_index);
-        let wrapped_mesh = read_mesh_info(read)?;
+        trace!("Reading model {}", mesh_index);
+        let wrapped_model = read_model_info(read)?;
         // TODO: we ought to base this on the materials in mechlib, but...
         let material_count = 4096;
-        let mesh = read_mesh_data(read, wrapped_mesh, material_count)?;
-        meshes.push(mesh);
+        let model = read_model_data(read, wrapped_model, material_count)?;
+        models.push(model);
     } else {
         object3d.mesh_index = -1;
     }
@@ -66,7 +64,7 @@ fn read_node_and_mesh_object3d(
     nodes.push(NodePm::Object3d(object3d));
 
     let child_indices = (0..children_count)
-        .map(|_| read_node_and_mesh(read, nodes, meshes, mesh_ptrs))
+        .map(|_| read_node(read, nodes, models, model_ptrs))
         .collect::<Result<Vec<_>>>()?;
 
     let object3d = match &mut nodes[current_index] {
@@ -78,11 +76,11 @@ fn read_node_and_mesh_object3d(
     Ok(current_index.try_into().unwrap())
 }
 
-fn read_node_and_mesh_lod(
+fn read_node_lod(
     read: &mut CountingReader<impl Read>,
     nodes: &mut Vec<NodePm>,
-    meshes: &mut Vec<MeshNg>,
-    mesh_ptrs: &mut Vec<i32>,
+    models: &mut Vec<Model>,
+    model_ptrs: &mut Vec<i32>,
     wrapped: WrapperPm<Lod>,
 ) -> Result<u32> {
     let WrapperPm {
@@ -95,7 +93,7 @@ fn read_node_and_mesh_lod(
     nodes.push(NodePm::Lod(lod));
 
     let child_indices = (0..children_count)
-        .map(|_| read_node_and_mesh(read, nodes, meshes, mesh_ptrs))
+        .map(|_| read_node(read, nodes, models, model_ptrs))
         .collect::<Result<Vec<_>>>()?;
 
     let object3d = match &mut nodes[current_index] {
@@ -107,25 +105,25 @@ fn read_node_and_mesh_lod(
     Ok(current_index.try_into().unwrap())
 }
 
-pub fn read_model(read: &mut CountingReader<impl Read>) -> Result<ModelPm> {
+pub fn read_model(read: &mut CountingReader<impl Read>) -> Result<MechlibModelPm> {
     let mut nodes = Vec::new();
-    let mut meshes = Vec::new();
-    let mut mesh_ptrs = Vec::new();
-    let _root_index = read_node_and_mesh(read, &mut nodes, &mut meshes, &mut mesh_ptrs)?;
+    let mut models = Vec::new();
+    let mut model_ptrs = Vec::new();
+    let _root_index = read_node(read, &mut nodes, &mut models, &mut model_ptrs)?;
     read.assert_end()?;
-    Ok(ModelPm {
+    Ok(MechlibModelPm {
         nodes,
-        meshes,
-        mesh_ptrs,
+        models,
+        model_ptrs,
     })
 }
 
-fn write_node_and_mesh(
+fn write_node(
     write: &mut CountingWriter<impl Write>,
     node_index: u32,
     nodes: &mut [NodePm],
-    meshes: &[MeshNg],
-    mesh_ptrs: &[i32],
+    models: &[Model],
+    model_ptrs: &[i32],
 ) -> Result<()> {
     let index = node_index as usize;
     let node = &mut nodes[index];
@@ -137,7 +135,7 @@ fn write_node_and_mesh(
             // before the node is written out
             if object3d.mesh_index > -1 {
                 let index = object3d.mesh_index as usize;
-                object3d.mesh_index = mesh_ptrs[index];
+                object3d.mesh_index = model_ptrs[index];
                 Some(index)
             } else {
                 object3d.mesh_index = 0;
@@ -152,12 +150,12 @@ fn write_node_and_mesh(
     write_node_info(write, node, true)?;
     write_node_data(write, node)?;
 
-    // if mesh_index isn't -1, then we need to write out the mesh, too
-    if let Some(mesh_index) = restore_index {
-        let mesh = &meshes[mesh_index];
-        trace!("Writing mesh {}", mesh_index);
-        write_mesh_info(write, mesh)?;
-        write_mesh_data(write, mesh)?;
+    // if mesh_index isn't -1, then we need to write out the model, too
+    if let Some(model_index) = restore_index {
+        let model = &models[model_index];
+        trace!("Writing model {}", model_index);
+        write_model_info(write, model)?;
+        write_model_data(write, model)?;
     }
 
     let child_indices = match node {
@@ -167,11 +165,14 @@ fn write_node_and_mesh(
     };
 
     for child_index in child_indices.into_iter() {
-        write_node_and_mesh(write, child_index, nodes, meshes, mesh_ptrs)?;
+        write_node(write, child_index, nodes, models, model_ptrs)?;
     }
     Ok(())
 }
 
-pub fn write_model(write: &mut CountingWriter<impl Write>, model: &mut ModelPm) -> Result<()> {
-    write_node_and_mesh(write, 0, &mut model.nodes, &model.meshes, &model.mesh_ptrs)
+pub fn write_model(
+    write: &mut CountingWriter<impl Write>,
+    model: &mut MechlibModelPm,
+) -> Result<()> {
+    write_node(write, 0, &mut model.nodes, &model.models, &model.model_ptrs)
 }

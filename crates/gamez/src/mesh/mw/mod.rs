@@ -22,6 +22,7 @@ bitflags! {
         const TEXTURE_SCROLL = 1 << 4;      // 0x10
         /// Affected by clouds
         const CLOUDS = 1 << 5;              // 0x20
+        const FACADE_SOMETHING = 1 << 6;    // 0x40
     }
 }
 
@@ -77,7 +78,7 @@ struct PolygonMwC {
     vertex_indices_ptr: Ptr, // 08
     normal_indices_ptr: Ptr, // 12
     uvs_ptr: Ptr,            // 16
-    colors_ptr: Ptr,         // 20
+    vertex_colors_ptr: Ptr,  // 20
     unk_ptr: Ptr,            // 24
     material_index: u32,     // 28
     zone_set: Hex<u32>,      // 32

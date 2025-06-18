@@ -8,22 +8,22 @@ use mech3ax_nodes::mw::{
     assert_node_info_zero, read_node_data, read_node_info_gamez, size_node, write_node_data,
     write_node_info, NodeMwC, NodeVariantMw, WrappedNodeMw,
 };
-use mech3ax_types::{u32_to_usize, AsBytes as _};
+use mech3ax_types::{i32_to_usize, u32_to_usize, AsBytes as _};
 use std::io::{Read, Seek, Write};
 
 pub(crate) fn read_nodes(
     read: &mut CountingReader<impl Read + Seek>,
-    array_size: u32,
-    meshes_count: i32,
+    array_size: i32,
+    model_count: i32,
 ) -> Result<Vec<NodeMw>> {
-    let end_offset = read.offset + (u32_to_usize(NodeMwC::SIZE) + 4) * u32_to_usize(array_size);
+    let end_offset = read.offset + (u32_to_usize(NodeMwC::SIZE) + 4) * i32_to_usize(array_size);
 
     let mut variants = Vec::new();
     // the node_count is wildly inaccurate for some files, and there are more nodes to
     // read after the provided count. so, we basically have to check the entire array
     let mut actual_count = array_size;
     let mut display_node = 0;
-    let mut light_node: Option<u32> = None;
+    let mut light_node: Option<i32> = None;
     for index in 0..array_size {
         trace!("Reading node info {}/?", index);
 
@@ -71,9 +71,10 @@ pub(crate) fn read_nodes(
                     NodeVariantMw::Empty(_) => {
                         // exclude world, window, camera, or display indices
                         assert_that!("node position (empty)", index > 3, node_info_pos)?;
+                        let parent_index = node_data_offset as i32;
                         // cannot be parented to world, window, camera, display, or light
                         // check for light parent later
-                        assert_that!("empty parent index", 4 <= node_data_offset <= array_size, read.prev)?;
+                        assert_that!("empty parent index", 4 <= parent_index <= array_size, read.prev)?;
                     }
                     NodeVariantMw::Light { .. } => {
                         // exclude world, window, camera, or display indices
@@ -98,7 +99,7 @@ pub(crate) fn read_nodes(
                         if object3d.mesh_index >= 0 {
                             assert_that!(
                                 "object3d mesh index",
-                                object3d.mesh_index < meshes_count,
+                                object3d.mesh_index < model_count,
                                 node_info_pos
                             )?;
                         }
@@ -120,7 +121,7 @@ pub(crate) fn read_nodes(
         assert_node_info_zero(&node, read.prev)
             .inspect_err(|_| trace!("{:#?} (index: {}, at {})", node, index, read.prev))?;
 
-        let actual_index = read.read_u32()?;
+        let actual_index = read.read_i32()?;
 
         let mut expected_index = index + 1;
         if expected_index == array_size {
@@ -141,9 +142,10 @@ pub(crate) fn read_nodes(
         .map(|(index, (mut variant, node_data_offset))| {
             match &mut variant {
                 NodeVariantMw::Empty(empty) => {
+                    let parent_index = node_data_offset as i32;
                     assert_that!(
                         "empty parent index",
-                        node_data_offset != light_node_index,
+                        parent_index != light_node_index,
                         read.prev
                     )?;
                     // in the case of an empty node, the offset is used as the parent
@@ -223,11 +225,11 @@ fn assert_area_partitions(nodes: &[NodeMw], offset: usize) -> Result<()> {
 pub(crate) fn write_nodes(
     write: &mut CountingWriter<impl Write>,
     nodes: &[NodeMw],
-    array_size: u32,
+    array_size: i32,
     offset: u32,
 ) -> Result<()> {
-    let mut offset = offset + (NodeMwC::SIZE + 4) * array_size;
-    let node_count = assert_len!(u32, nodes.len(), "nodes")?;
+    let mut offset = offset + (NodeMwC::SIZE + 4) * (array_size as u32);
+    let node_count = assert_len!(i32, nodes.len(), "nodes")?;
 
     for (index, node) in nodes.iter().enumerate() {
         trace!("Writing node info {}/{}", index, node_count);
@@ -259,7 +261,7 @@ pub(crate) fn write_nodes(
         if index == array_size {
             index = NODE_INDEX_INVALID;
         }
-        write.write_u32(index)?;
+        write.write_i32(index)?;
     }
     trace!("Wrote note info zeros at {}", write.offset);
 

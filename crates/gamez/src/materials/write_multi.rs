@@ -2,6 +2,7 @@ use super::write_single::{find_texture_index_by_name, write_cycle, write_materia
 use super::{MatType, MaterialC, MaterialFlags, MaterialInfoC};
 use log::trace;
 use mech3ax_api_types::gamez::materials::{Material, Soil};
+use mech3ax_api_types::gamez::Texture;
 use mech3ax_api_types::Color;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, Result};
@@ -9,7 +10,7 @@ use std::io::Write;
 
 pub(crate) fn write_materials(
     write: &mut CountingWriter<impl Write>,
-    texture_names: &[&String],
+    textures: &[Texture],
     materials: &[Material],
     ty: MatType,
 ) -> Result<()> {
@@ -30,7 +31,7 @@ pub(crate) fn write_materials(
 
         let pointer = if let Material::Textured(textured) = material {
             // reconstruct the texture index
-            let texture_index = find_texture_index_by_name(texture_names, &textured.texture)?;
+            let texture_index = find_texture_index_by_name(textures, &textured.texture)?;
             trace!("`{}` -> {}", textured.texture, texture_index);
             Some(texture_index)
         } else {
@@ -58,7 +59,7 @@ pub(crate) fn write_materials(
     write_materials_zero(write, materials_len, ty)?;
 
     for (index, material) in materials.iter().enumerate() {
-        write_cycle(write, texture_names, material, index)?;
+        write_cycle(write, textures, material, index)?;
     }
     Ok(())
 }

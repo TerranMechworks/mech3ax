@@ -52,7 +52,7 @@ fn construct_dumbass_formatting() -> [FormatItem<'static>; 14] {
 static RFC_3339_FORMAT: LazyLock<[FormatItem<'_>; 14]> =
     LazyLock::new(construct_dumbass_formatting);
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 #[repr(transparent)]
 pub struct DateTime(pub(crate) PrimitiveDateTime);
 

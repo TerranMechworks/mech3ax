@@ -20,7 +20,7 @@ pub use ascii::{str_from_ascii, str_to_ascii, string_from_ascii, Ascii};
 pub use bitflags::Bitflags;
 pub use boolean::{Bool, Bool16, Bool32, Bool8};
 pub use bytes::Bytes;
-pub use cast::{u16_to_usize, u32_to_i64, u32_to_usize, AsUsize};
+pub use cast::{i32_to_usize, u16_to_usize, u32_to_i64, u32_to_usize, AsUsize};
 pub use enumerate::EnumerateEx;
 pub use hex::Hex;
 pub use maybe::Maybe;

@@ -1,3 +1,5 @@
+#[path = "mw/mod.rs"]
+pub(crate) mod _mw;
+#[path = "ng/mod.rs"]
+pub(crate) mod _ng;
 pub(crate) mod common;
-pub(crate) mod mw;
-pub(crate) mod ng;

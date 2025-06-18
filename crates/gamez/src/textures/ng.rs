@@ -1,97 +1,108 @@
 //! GameZ texture support for PM, CS
-use super::{STATE_UNUSED, STATE_USED};
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::trace;
+use log::{trace, warn};
+use mech3ax_api_types::gamez::Texture;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _, Ascii, Ptr};
+use mech3ax_types::{impl_as_bytes, primitive_enum, AsBytes as _, Ascii, Maybe, Ptr};
 use std::io::{Read, Write};
+
+primitive_enum! {
+    enum TextureState: u32 {
+        Assigned = 1,
+        Used = 2,
+    }
+}
+
+type State = Maybe<u32, TextureState>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
-struct TextureInfoNgC {
-    unk00: Ptr,         // 00
-    zero04: u32,        // 04
-    zero08: u32,        // 08
-    texture: Ascii<20>, // 12
-    state: u32,         // 32
-    index: u32,         // 36
-    unk40: i32,         // 40
+struct TextureNgC {
+    image_ptr: Ptr,   // 00
+    zero04: u32,      // 04
+    surface_ptr: u32, // 08
+    name: Ascii<20>,  // 12
+    state: State,     // 32
+    category: u32,    // 36
+    mip: i32,         // 40
 }
-impl_as_bytes!(TextureInfoNgC, 44);
+impl_as_bytes!(TextureNgC, 44);
 
-pub(crate) fn read_texture_infos(
+pub(crate) fn read_texture_directory(
     read: &mut CountingReader<impl Read>,
-    count: u32,
-) -> Result<(Vec<String>, Vec<Option<u32>>)> {
-    let mut ptrs = Vec::with_capacity(u32_to_usize(count));
-    let names = (0..count)
+    count: i32,
+) -> Result<Vec<Texture>> {
+    (0..count)
         .map(|index| {
             trace!("Reading texture info {}/{}", index, count);
-            let info: TextureInfoNgC = read.read_struct()?;
+            let tex: TextureNgC = read.read_struct()?;
 
             // validate field 00 later, with used
-            assert_that!("field 04", info.zero04 == 0, read.prev + 4)?;
-            assert_that!("field 08", info.zero08 == 0, read.prev + 8)?;
-            let name = assert_utf8("texture", read.prev + 12, || info.texture.to_str_suffix())?;
-            // 2 if the texture is used, 0 if the texture is unused
-            // 1 or 3 if the texture is being processed (deallocated?)
-            assert_that!("field 32", info.state in [STATE_UNUSED, STATE_USED], read.prev + 32)?;
-            let ptr = if info.state == STATE_USED {
-                // somehow, this is now the rarer case
-                assert_that!("field 00", info.unk00 == Ptr::NULL, read.prev + 0)?;
-                None
-            } else {
-                // not sure what this is. a pointer to the previous texture in the global
-                // array? or a pointer to the texture?
-                assert_that!("field 00", info.unk00 != Ptr::NULL, read.prev + 0)?;
-                Some(info.unk00.0)
-            };
+            assert_that!("field 04", tex.zero04 == 0, read.prev + 4)?;
+            assert_that!("surface ptr", tex.surface_ptr == 0, read.prev + 8)?;
+            let name = assert_utf8("name", read.prev + 12, || tex.name.to_str_suffix())?;
+            let state = assert_that!("state", enum tex.state, read.prev + 32)?;
+            match state {
+                TextureState::Assigned => {
+                    assert_that!("image ptr", tex.image_ptr != Ptr::NULL, read.prev + 0)?;
+                }
+                TextureState::Used => {
+                    // somehow, this is now the rarer case
+                    assert_that!("image ptr", tex.image_ptr == Ptr::NULL, read.prev + 0)?;
+                }
+            }
 
-            assert_that!("field 36", info.index == 0, read.prev + 36)?;
-            assert_that!("field 40", info.unk40 == -1, read.prev + 40)?;
+            assert_that!("category", tex.category == 0, read.prev + 36)?;
+            assert_that!("mip index", tex.mip >= -1, read.prev + 40)?;
 
-            ptrs.push(ptr);
-            Ok(name)
+            Ok(Texture { name, mip: tex.mip })
         })
-        .collect::<Result<Vec<_>>>()?;
-    Ok((names, ptrs))
+        .collect::<Result<Vec<_>>>()
 }
 
-pub(crate) fn write_texture_infos(
+pub(crate) fn write_texture_directory(
     write: &mut CountingWriter<impl Write>,
-    textures: &[String],
-    ptrs: &[Option<u32>],
+    textures: &[Texture],
+    image_ptrs: &[u32],
 ) -> Result<()> {
-    let ptrs = ptrs
+    let ptrs = image_ptrs
         .iter()
-        .chain(std::iter::repeat(&Some(u32::MAX)))
-        .copied();
+        .copied()
+        .chain(std::iter::repeat(0xDEFA0175));
+
     let count = textures.len();
-    for (index, (name, ptr)) in textures.iter().zip(ptrs).enumerate() {
+    for (index, (texture, image_ptr)) in textures.iter().zip(ptrs).enumerate() {
         trace!("Writing texture info {}/{}", index, count);
-        let texture = Ascii::from_str_suffix(name);
-        let state = if ptr.is_some() {
-            STATE_UNUSED
+        let name = Ascii::from_str_suffix(&texture.name);
+        if texture.mip < -1 {
+            warn!(
+                "WARN: Expected texture mip index >= -1, but was {}",
+                texture.mip
+            );
+        }
+
+        let state = if image_ptr == 0 {
+            TextureState::Used
         } else {
-            STATE_USED
+            TextureState::Assigned
         };
-        let unk00 = Ptr(ptr.unwrap_or(0));
-        let info = TextureInfoNgC {
-            unk00,
+
+        let info = TextureNgC {
+            image_ptr: Ptr(image_ptr),
             zero04: 0,
-            zero08: 0,
-            texture,
-            state,
-            index: 0,
-            unk40: -1,
+            surface_ptr: 0,
+            name,
+            state: state.maybe(),
+            category: 0,
+            mip: texture.mip,
         };
         write.write_struct(&info)?;
     }
     Ok(())
 }
 
-pub(crate) fn size_texture_infos(count: u32) -> u32 {
-    TextureInfoNgC::SIZE * count
+pub(crate) fn size_texture_directory(count: i32) -> u32 {
+    TextureNgC::SIZE * (count as u32)
 }

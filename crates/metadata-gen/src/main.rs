@@ -119,19 +119,12 @@ fn add_gamez(resolver: &mut TypeResolver) {
     resolver.push::<api::gamez::model::ModelFlags>();
     resolver.push::<api::gamez::model::Model>();
 
-    // --- gamez/mesh/ng.rs
-    resolver.push::<api::gamez::mesh::PolygonFlags>();
-    resolver.push::<api::gamez::mesh::MeshMaterialInfo>();
-    resolver.push::<api::gamez::mesh::PolygonMaterialNg>();
-    resolver.push::<api::gamez::mesh::PolygonNg>();
-    resolver.push::<api::gamez::mesh::MeshNg>();
-
     // nodes required for mechlib
     add_nodes(resolver);
 
     // --- gamez/mechlib.rs
     resolver.push::<api::gamez::mechlib::MechlibModelMw>();
-    resolver.push::<api::gamez::mechlib::ModelPm>();
+    resolver.push::<api::gamez::mechlib::MechlibModelPm>();
 
     // --- gamez/mod.rs
     resolver.push::<api::gamez::Texture>();

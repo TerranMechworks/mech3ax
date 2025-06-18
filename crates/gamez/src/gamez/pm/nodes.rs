@@ -9,17 +9,17 @@ use mech3ax_nodes::pm::{
     read_node_data, read_node_info_gamez, write_node_data, write_node_info, NodeVariantPm,
     WrappedNodePm,
 };
-use mech3ax_types::{u32_to_usize, AsBytes as _};
+use mech3ax_types::{i32_to_usize, u32_to_usize, AsBytes as _};
 use std::io::{Read, Write};
 
 pub(crate) fn read_nodes(
     read: &mut CountingReader<impl Read>,
-    array_size: u32,
-    meshes_count: i32,
+    array_size: i32,
+    model_count: i32,
 ) -> Result<Vec<NodePm>> {
-    let end_offset = read.offset + (u32_to_usize(NodeMwC::SIZE) + 4) * u32_to_usize(array_size);
+    let end_offset = read.offset + (u32_to_usize(NodeMwC::SIZE) + 4) * i32_to_usize(array_size);
 
-    let mut light_node: Option<u32> = None;
+    let mut light_node: Option<i32> = None;
     let variants = (0..array_size)
         .map(|index| {
             trace!("Reading node info {}/{}", index, array_size);
@@ -73,7 +73,7 @@ pub(crate) fn read_nodes(
                     if object3d.mesh_index >= 0 {
                         assert_that!(
                             "object3d mesh index",
-                            object3d.mesh_index < meshes_count,
+                            object3d.mesh_index < model_count,
                             node_info_pos
                         )?;
                     }
@@ -129,7 +129,6 @@ pub(crate) fn read_nodes(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    read.assert_end()?;
     assert_area_partitions(&nodes, read.offset)?;
 
     Ok(nodes)

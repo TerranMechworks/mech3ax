@@ -10,6 +10,7 @@ const _: () = assert!((usize::MIN as u128) == (u32::MIN as u128));
 
 const _: () = assert!((usize::MAX as u128) >= (u16::MAX as u128));
 const _: () = assert!((usize::MAX as u128) >= (u32::MAX as u128));
+const _: () = assert!((usize::MAX as i128) >= (i32::MAX as i128));
 
 const _: () = assert!((i64::MIN as i128) < (u32::MIN as i128));
 const _: () = assert!((i64::MAX as i128) > (u32::MAX as i128));
@@ -22,6 +23,15 @@ pub const fn u16_to_usize(value: u16) -> usize {
 
 #[inline(always)]
 pub const fn u32_to_usize(value: u32) -> usize {
+    // Cast safety: guarded by assert above
+    value as _
+}
+
+#[inline(always)]
+pub const fn i32_to_usize(value: i32) -> usize {
+    if value < 0 {
+        panic!("value is negative");
+    }
     // Cast safety: guarded by assert above
     value as _
 }

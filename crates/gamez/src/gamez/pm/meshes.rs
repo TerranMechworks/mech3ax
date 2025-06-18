@@ -1,98 +1,98 @@
 use crate::gamez::common::{
-    read_meshes_info_sequential, write_meshes_info_sequential, MESHES_INFO_C_SIZE,
+    read_model_array_sequential, write_model_array_sequential, MODEL_ARRAY_C_SIZE,
 };
-use crate::mesh::ng::{
-    assert_mesh_info_zero, read_mesh_data, read_mesh_info, size_mesh, write_mesh_data,
-    write_mesh_info, MeshNgC, MESH_C_SIZE,
+use crate::model::ng::{
+    assert_model_info_zero, read_model_data, read_model_info, size_model, write_model_data,
+    write_model_info, ModelPmC, MODEL_C_SIZE,
 };
 use log::trace;
-use mech3ax_api_types::gamez::mesh::MeshNg;
+use mech3ax_api_types::gamez::model::Model;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use mech3ax_types::u32_to_usize;
 use std::io::{Read, Write};
 
-pub(crate) fn read_meshes(
+pub(crate) fn read_models(
     read: &mut CountingReader<impl Read>,
     end_offset: usize,
     material_count: u32,
-) -> Result<(Vec<MeshNg>, i32, i32)> {
-    let mesh_indices = read_meshes_info_sequential(read)?;
+) -> Result<(Vec<Model>, i32, i32)> {
+    let model_indices = read_model_array_sequential(read)?;
 
     let mut prev_offset = read.offset;
-    let meshes = mesh_indices
+    let models = model_indices
         .valid()
-        .map(|mesh_index| {
-            trace!("Reading mesh info {}/{}", mesh_index, mesh_indices.count);
-            let wrapped_mesh = read_mesh_info(read)?;
-            let mesh_offset = u32_to_usize(read.read_u32()?);
-            assert_that!("mesh offset", prev_offset <= mesh_offset <= end_offset, read.prev)?;
-            prev_offset = mesh_offset;
-            Ok((wrapped_mesh, mesh_offset, mesh_index))
+        .map(|index| {
+            trace!("Reading model info {}/{}", index, model_indices.count);
+            let wrapped = read_model_info(read)?;
+            let model_offset = u32_to_usize(read.read_u32()?);
+            assert_that!("model offset", prev_offset <= model_offset <= end_offset, read.prev)?;
+            prev_offset = model_offset;
+            Ok((wrapped, model_offset, index))
         })
         .collect::<Result<Vec<_>>>()?;
 
     trace!(
-        "Reading {}..{} mesh info zeros at {}",
-        mesh_indices.count,
-        mesh_indices.array_size,
+        "Reading {}..{} model info zeros at {}",
+        model_indices.count,
+        model_indices.array_size,
         read.offset
     );
-    for (mesh_index, expected_index) in mesh_indices.zeros() {
-        let mesh: MeshNgC = read.read_struct_no_log()?;
-        assert_mesh_info_zero(&mesh, read.prev)
-            .inspect_err(|_| trace!("{:#?} (index: {}, at {})", mesh, mesh_index, read.prev))?;
+    for (model_index, expected_index) in model_indices.zeros() {
+        let model: ModelPmC = read.read_struct_no_log()?;
+        assert_model_info_zero(&model, read.prev)
+            .inspect_err(|_| trace!("{:#?} (index: {}, at {})", model, model_index, read.prev))?;
 
         let actual_index = read.read_i32()?;
-        assert_that!("mesh index", actual_index == expected_index, read.prev)?;
+        assert_that!("model index", actual_index == expected_index, read.prev)?;
     }
-    trace!("Read mesh info zeros at {}", read.offset);
+    trace!("Read model info zeros at {}", read.offset);
 
-    let meshes = meshes
+    let models = models
         .into_iter()
-        .map(|(wrapped_mesh, mesh_offset, mesh_index)| {
-            trace!("Reading mesh data {}/{}", mesh_index, mesh_indices.count);
-            assert_that!("mesh offset", read.offset == mesh_offset, read.offset)?;
-            let mesh = read_mesh_data(read, wrapped_mesh, material_count)?;
-            Ok(mesh)
+        .map(|(wrapped, model_offset, index)| {
+            trace!("Reading model data {}/{}", index, model_indices.count);
+            assert_that!("model offset", read.offset == model_offset, read.offset)?;
+            let model = read_model_data(read, wrapped, material_count)?;
+            Ok(model)
         })
         .collect::<Result<Vec<_>>>()?;
 
-    Ok((meshes, mesh_indices.count, mesh_indices.array_size))
+    Ok((models, model_indices.count, model_indices.array_size))
 }
 
-pub(crate) fn write_meshes(
+pub(crate) fn write_models(
     write: &mut CountingWriter<impl Write>,
-    meshes: &[MeshNg],
+    models: &[Model],
     offsets: &[u32],
     array_size: i32,
 ) -> Result<()> {
-    let count = assert_len!(i32, meshes.len(), "GameZ meshes")?;
-    let mesh_indices_zero = write_meshes_info_sequential(write, array_size, count)?;
+    let count = assert_len!(i32, models.len(), "GameZ models")?;
+    let model_indices_zero = write_model_array_sequential(write, array_size, count)?;
 
-    let count = meshes.len();
-    for (mesh_index, (mesh, offset)) in meshes.iter().zip(offsets.iter().copied()).enumerate() {
-        trace!("Writing mesh info {}/{}", mesh_index, count);
-        write_mesh_info(write, mesh)?;
+    let count = models.len();
+    for (index, (model, offset)) in models.iter().zip(offsets.iter().copied()).enumerate() {
+        trace!("Writing model info {}/{}", index, count);
+        write_model_info(write, model)?;
         write.write_u32(offset)?;
     }
 
     trace!(
-        "Writing {}..{} mesh info zeros at {}",
+        "Writing {}..{} model info zeros at {}",
         count,
         array_size,
         write.offset
     );
-    let mesh_zero = MeshNgC::default();
-    for (_mesh_index, expected_index) in mesh_indices_zero {
-        write.write_struct_no_log(&mesh_zero)?;
+    let model_zero = ModelPmC::default();
+    for (_model_index, expected_index) in model_indices_zero {
+        write.write_struct_no_log(&model_zero)?;
         write.write_i32(expected_index)?;
     }
-    trace!("Wrote mesh info zeros at {}", write.offset);
+    trace!("Wrote model info zeros at {}", write.offset);
 
-    for (mesh_index, mesh) in meshes.iter().enumerate() {
-        trace!("Writing mesh data {}/{}", mesh_index, count);
-        write_mesh_data(write, mesh)?;
+    for (index, model) in models.iter().enumerate() {
+        trace!("Writing model data {}/{}", index, count);
+        write_model_data(write, model)?;
     }
 
     Ok(())
@@ -100,17 +100,17 @@ pub(crate) fn write_meshes(
 
 const U32_SIZE: u32 = std::mem::size_of::<u32>() as _;
 
-pub(crate) fn size_meshes(offset: u32, array_size: i32, meshes: &[MeshNg]) -> (u32, Vec<u32>) {
+pub(crate) fn size_models(offset: u32, array_size: i32, models: &[Model]) -> (u32, Vec<u32>) {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let array_size = array_size as u32;
-    let mut offset = offset + MESHES_INFO_C_SIZE + (MESH_C_SIZE + U32_SIZE) * array_size;
-    let mesh_offsets = meshes
+    let mut offset = offset + MODEL_ARRAY_C_SIZE + (MODEL_C_SIZE + U32_SIZE) * array_size;
+    let model_offsets = models
         .iter()
-        .map(|mesh| {
+        .map(|model| {
             let current = offset;
-            offset += size_mesh(mesh);
+            offset += size_model(model);
             current
         })
         .collect();
-    (offset, mesh_offsets)
+    (offset, model_offsets)
 }

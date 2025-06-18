@@ -45,6 +45,7 @@ pub(crate) fn write_model_info(
     if model.flags.clouds {
         bitflags |= ModelBitFlags::CLOUDS;
     }
+    // TODO
 
     let model = ModelMwC {
         model_type: model.model_type.maybe(),
@@ -92,15 +93,19 @@ fn make_vertex_info(polygon: &Polygon) -> Result<Hex<u32>> {
         );
     }
 
-    let mut flags = PolygonBitFlags::empty();
-    if polygon.show_backface {
-        flags |= PolygonBitFlags::SHOW_BACKFACE;
+    let mut bitflags = PolygonBitFlags::empty();
+    if polygon.flags.show_backface {
+        bitflags |= PolygonBitFlags::SHOW_BACKFACE;
     }
     if polygon.normal_indices.is_some() {
-        flags |= PolygonBitFlags::NORMALS;
+        bitflags |= PolygonBitFlags::NORMALS;
     }
+    if polygon.flags.triangle_strip {
+        return Err(assert_with_msg!("Triangle strips are unsupported in MW"));
+    }
+    // TODO
 
-    Ok(Hex(vertex_indices_len | flags.bits()))
+    Ok(Hex(vertex_indices_len | bitflags.bits()))
 }
 
 fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) -> Result<()> {
@@ -114,10 +119,10 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) 
         let poly = PolygonMwC {
             vertex_info,
             priority: polygon.priority,
-            vertex_indices_ptr: Ptr(polygon.vertices_ptr),
-            normal_indices_ptr: Ptr(polygon.normals_ptr),
+            vertex_indices_ptr: Ptr(polygon.vertex_indices_ptr),
+            normal_indices_ptr: Ptr(polygon.normal_indices_ptr),
             uvs_ptr: Ptr(polygon.uvs_ptr),
-            colors_ptr: Ptr(polygon.colors_ptr),
+            vertex_colors_ptr: Ptr(polygon.vertex_colors_ptr),
             unk_ptr: Ptr(polygon.unk_ptr),
             material_index: polygon.material_index,
             zone_set,

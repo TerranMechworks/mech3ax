@@ -2,7 +2,7 @@ use crate::{InterpOpts, ZMapOpts, ZipOpts};
 use eyre::{bail, Context as _, Result};
 use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_api_types::gamez::materials::Material;
-use mech3ax_api_types::gamez::mechlib::{MechlibModelMw, ModelPm};
+use mech3ax_api_types::gamez::mechlib::{MechlibModelMw, MechlibModelPm};
 use mech3ax_api_types::gamez::{GameZDataCs, GameZDataMw, GameZDataPm, GameZDataRc};
 use mech3ax_api_types::image::TextureManifest;
 use mech3ax_api_types::interp::Script;
@@ -199,7 +199,7 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                             })?;
                         }
                         GameType::PM => {
-                            let mut model: ModelPm = zip_json(zip, &name)?;
+                            let mut model: MechlibModelPm = zip_json(zip, &name)?;
                             mechlib::pm::write_model(&mut buf, &mut model).with_context(|| {
                                 format!("Failed to write mechlib model for `{}`", original)
                             })?;
@@ -258,7 +258,7 @@ fn gamez_mw(opts: &ZipOpts) -> Result<()> {
     let metadata = zip_json(&mut zip, "metadata.json")?;
     let textures = zip_json(&mut zip, "textures.json")?;
     let materials = zip_json(&mut zip, "materials.json")?;
-    let meshes = zip_json(&mut zip, "meshes.json")?;
+    let models = zip_json(&mut zip, "models.json")?;
     let nodes = zip_json(&mut zip, "nodes.json")?;
 
     drop(zip);
@@ -267,7 +267,7 @@ fn gamez_mw(opts: &ZipOpts) -> Result<()> {
         metadata,
         textures,
         materials,
-        meshes,
+        models,
         nodes,
     };
 
@@ -282,7 +282,7 @@ fn gamez_pm(opts: &ZipOpts) -> Result<()> {
     let metadata = zip_json(&mut zip, "metadata.json")?;
     let textures = zip_json(&mut zip, "textures.json")?;
     let materials = zip_json(&mut zip, "materials.json")?;
-    let meshes = zip_json(&mut zip, "meshes.json")?;
+    let models = zip_json(&mut zip, "models.json")?;
     let nodes = zip_json(&mut zip, "nodes.json")?;
 
     drop(zip);
@@ -291,7 +291,7 @@ fn gamez_pm(opts: &ZipOpts) -> Result<()> {
         metadata,
         textures,
         materials,
-        meshes,
+        models,
         nodes,
     };
 
@@ -306,7 +306,7 @@ fn gamez_cs(opts: &ZipOpts) -> Result<()> {
     let metadata = zip_json(&mut zip, "metadata.json")?;
     let textures = zip_json(&mut zip, "textures.json")?;
     let materials = zip_json(&mut zip, "materials.json")?;
-    let meshes = zip_json(&mut zip, "meshes.json")?;
+    let models = zip_json(&mut zip, "models.json")?;
     let nodes = zip_json(&mut zip, "nodes.json")?;
 
     drop(zip);
@@ -315,7 +315,7 @@ fn gamez_cs(opts: &ZipOpts) -> Result<()> {
         metadata,
         textures,
         materials,
-        meshes,
+        models,
         nodes,
     };
 

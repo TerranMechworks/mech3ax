@@ -1,6 +1,6 @@
 use super::{NODE_INDEX_BOT_MASK, NODE_INDEX_TOP, NODE_INDEX_TOP_MASK};
 use log::trace;
-use mech3ax_api_types::gamez::mesh::MeshNg;
+use mech3ax_api_types::gamez::model::Model;
 use mech3ax_api_types::nodes::cs::NodeCs;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
@@ -14,7 +14,7 @@ pub(crate) fn read_nodes(
     read: &mut CountingReader<impl Read>,
     array_size: u32,
     light_index: u32,
-    meshes: &[Option<MeshNg>],
+    models: &[Option<Model>],
     is_gamez: bool,
 ) -> Result<Vec<NodeCs>> {
     let end_offset = read.offset + (u32_to_usize(NODE_CS_C_SIZE) + 4) * u32_to_usize(array_size);
@@ -93,14 +93,14 @@ pub(crate) fn read_nodes(
                     }
                     if object3d.mesh_index >= 0 {
                         // Cast safety: >=0, usize::MAX > i32::MAX
-                        let mesh_index = object3d.mesh_index as usize;
+                        let model_index = object3d.mesh_index as usize;
                         assert_that!(
-                            "object3d mesh index",
-                            mesh_index < meshes.len(),
+                            "object3d model index",
+                            model_index < models.len(),
                             node_info_pos
                         )?;
-                        let mesh_exists = meshes[mesh_index].is_some();
-                        assert_that!("object3d mesh index", mesh_exists == true, node_info_pos)?;
+                        let exists = models[model_index].is_some();
+                        assert_that!("object3d model index", exists == true, node_info_pos)?;
                     }
                 }
             }

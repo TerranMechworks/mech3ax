@@ -1,4 +1,3 @@
-use crate::gamez::mesh::MeshNg;
 use crate::gamez::model::Model;
 use crate::nodes::mw::NodeMw;
 use crate::nodes::pm::NodePm;
@@ -13,8 +12,8 @@ pub struct MechlibModelMw {
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct ModelPm {
+pub struct MechlibModelPm {
     pub nodes: Vec<NodePm>,
-    pub meshes: Vec<MeshNg>,
-    pub mesh_ptrs: Vec<i32>,
+    pub models: Vec<Model>,
+    pub model_ptrs: Vec<i32>,
 }

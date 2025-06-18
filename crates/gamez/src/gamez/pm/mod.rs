@@ -1,12 +1,16 @@
-mod meshes;
+mod data;
+#[path = "meshes.rs"]
+mod models;
 mod nodes;
 
 use super::common::{
     NODE_INDEX_BOT_MASK, NODE_INDEX_TOP, NODE_INDEX_TOP_MASK, SIGNATURE, VERSION_PM,
 };
-use crate::materials;
+use crate::materials::{self, MatType};
 use crate::textures::ng as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
+use data::Campaign;
+use log::trace;
 use mech3ax_api_types::gamez::{GameZDataPm, GameZMetadataPm};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
@@ -14,51 +18,63 @@ use mech3ax_timestamp::unix::{from_timestamp, to_timestamp};
 use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _};
 use std::io::{Read, Write};
 
-#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
+#[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct HeaderPmC {
     signature: u32,        // 00
     version: u32,          // 04
     timestamp: u32,        // 08
-    texture_count: u32,    // 12
+    texture_count: i32,    // 12
     textures_offset: u32,  // 16
     materials_offset: u32, // 20
-    meshes_offset: u32,    // 24
-    node_array_size: u32,  // 28
-    node_count: u32,       // 32
+    models_offset: u32,    // 24
+    node_array_size: i32,  // 28
+    node_count: i32,       // 32
     nodes_offset: u32,     // 36
 }
 impl_as_bytes!(HeaderPmC, 40);
 
 pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataPm> {
     let header: HeaderPmC = read.read_struct()?;
+    let campaign = Campaign::from_header(&header);
+    trace!("Campaign: {:?}", campaign);
 
     assert_that!("signature", header.signature == SIGNATURE, read.prev + 0)?;
     assert_that!("version", header.version == VERSION_PM, read.prev + 4)?;
     let datetime = from_timestamp(header.timestamp);
-    // hardcoded limit in engine
-    assert_that!("texture count", header.texture_count < 4096, read.prev + 12)?;
+    assert_that!("texture count", 0 <= header.texture_count <= 4095, read.prev + 12)?;
+
     assert_that!(
         "texture offset",
-        header.textures_offset < header.materials_offset,
-        read.prev + 16
+        header.textures_offset == HeaderPmC::SIZE,
+        read.prev + 12
     )?;
     assert_that!(
         "materials offset",
-        header.materials_offset < header.meshes_offset,
+        header.materials_offset > header.textures_offset,
+        read.prev + 16
+    )?;
+    assert_that!(
+        "models offset",
+        header.models_offset > header.materials_offset,
         read.prev + 20
     )?;
     assert_that!(
-        "meshes offset",
-        header.meshes_offset < header.nodes_offset,
+        "nodes offset",
+        header.nodes_offset > header.models_offset,
         read.prev + 24
     )?;
 
     let textures_offset = u32_to_usize(header.textures_offset);
     let materials_offset = u32_to_usize(header.materials_offset);
-    let meshes_offset = u32_to_usize(header.meshes_offset);
+    let models_offset = u32_to_usize(header.models_offset);
     let nodes_offset = u32_to_usize(header.nodes_offset);
 
+    assert_that!(
+        "node array size",
+        header.node_array_size > 0,
+        read.prev + 28
+    )?;
     // need at least world, window, camera, display, and light
     assert_that!("node count", header.node_count > 5, read.prev + 32)?;
     assert_that!(
@@ -72,54 +88,58 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataPm> {
         read.offset == textures_offset,
         read.offset
     )?;
-    let (textures, texture_ptrs) = textures::read_texture_infos(read, header.texture_count)?;
+    let textures = textures::read_texture_directory(read, header.texture_count)?;
 
     assert_that!(
         "materials offset",
         read.offset == materials_offset,
         read.offset
     )?;
-    let texture_names: Vec<&String> = textures.iter().collect();
-    let (materials, material_count) =
-        materials::read_materials(read, &texture_names, materials::MatType::Ng)?;
+    let (materials, material_count) = materials::read_materials(read, &textures, MatType::Ng)?;
 
-    assert_that!("meshes offset", read.offset == meshes_offset, read.offset)?;
-    let (meshes, meshes_count, mesh_array_size) =
-        meshes::read_meshes(read, nodes_offset, material_count)?;
+    assert_that!("models offset", read.offset == models_offset, read.offset)?;
+    let (models, model_count, model_array_size) =
+        models::read_models(read, nodes_offset, material_count)?;
 
     assert_that!("nodes offset", read.offset == nodes_offset, read.offset)?;
-    let nodes = nodes::read_nodes(read, header.node_array_size, meshes_count)?;
-    // `read_nodes` calls `assert_end`
+    let nodes = nodes::read_nodes(read, header.node_array_size, model_count)?;
+
+    read.assert_end()?;
 
     let metadata = GameZMetadataPm {
         datetime,
-        meshes_array_size: mesh_array_size,
+        model_array_size,
         node_data_count: header.node_count,
-        texture_ptrs,
     };
     Ok(GameZDataPm {
         textures,
         materials,
-        meshes,
+        models,
         nodes,
         metadata,
     })
 }
 
 pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataPm) -> Result<()> {
-    let texture_count = assert_len!(u32, gamez.textures.len(), "GameZ textures")?;
+    let texture_count = assert_len!(i32, gamez.textures.len(), "GameZ textures")?;
+    let node_array_size = assert_len!(i32, gamez.nodes.len(), "GameZ nodes")?;
 
-    let node_array_size = assert_len!(u32, gamez.nodes.len(), "GameZ nodes")?;
-    let meshes_array_size = gamez.metadata.meshes_array_size;
+    let GameZMetadataPm {
+        datetime,
+        model_array_size,
+        node_data_count,
+    } = &gamez.metadata;
+
+    let model_array_size = *model_array_size;
+    let node_data_count = *node_data_count;
 
     let textures_offset = HeaderPmC::SIZE;
-    let materials_offset = textures_offset + textures::size_texture_infos(texture_count);
-    let meshes_offset =
-        materials_offset + materials::size_materials(&gamez.materials, materials::MatType::Ng);
-    let (nodes_offset, mesh_offsets) =
-        meshes::size_meshes(meshes_offset, meshes_array_size, &gamez.meshes);
+    let materials_offset = textures_offset + textures::size_texture_directory(texture_count);
+    let models_offset = materials_offset + materials::size_materials(&gamez.materials, MatType::Ng);
+    let (nodes_offset, model_offsets) =
+        models::size_models(models_offset, model_array_size, &gamez.models);
 
-    let timestamp = to_timestamp(&gamez.metadata.datetime);
+    let timestamp = to_timestamp(datetime);
 
     let header = HeaderPmC {
         signature: SIGNATURE,
@@ -128,22 +148,19 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataPm) 
         texture_count,
         textures_offset,
         materials_offset,
-        meshes_offset,
+        models_offset,
         node_array_size,
-        node_count: gamez.metadata.node_data_count,
+        node_count: node_data_count,
         nodes_offset,
     };
     write.write_struct(&header)?;
 
-    textures::write_texture_infos(write, &gamez.textures, &gamez.metadata.texture_ptrs)?;
-    let texture_names: Vec<&String> = gamez.textures.iter().collect();
-    materials::write_materials(
-        write,
-        &texture_names,
-        &gamez.materials,
-        materials::MatType::Ng,
-    )?;
-    meshes::write_meshes(write, &gamez.meshes, &mesh_offsets, meshes_array_size)?;
+    let campaign = Campaign::from_header(&header);
+    trace!("Campaign: {:?}", campaign);
+
+    textures::write_texture_directory(write, &gamez.textures, campaign.image_ptrs())?;
+    materials::write_materials(write, &gamez.textures, &gamez.materials, MatType::Ng)?;
+    models::write_models(write, &gamez.models, &model_offsets, model_array_size)?;
     nodes::write_nodes(write, &gamez.nodes)?;
     Ok(())
 }
