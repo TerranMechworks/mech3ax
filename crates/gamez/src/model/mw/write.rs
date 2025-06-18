@@ -5,7 +5,6 @@ use mech3ax_api_types::gamez::model::{Model, Polygon, UvCoord};
 use mech3ax_api_types::{Color, Vec3};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, Result};
-use mech3ax_types::maybe::SupportsMaybe as _;
 use mech3ax_types::{AsBytes as _, Hex, Ptr};
 use std::io::Write;
 
@@ -41,15 +40,17 @@ pub(crate) fn write_model_info(
     if model.flags.texture_scroll {
         bitflags |= ModelBitFlags::TEXTURE_SCROLL;
     }
-    let facade_follow = model.flags.facade_tilt.maybe();
     if model.flags.clouds {
         bitflags |= ModelBitFlags::CLOUDS;
+    }
+    if model.flags.facade_center_of_rot {
+        bitflags |= ModelBitFlags::FACADE_CENTER_OF_ROT;
     }
     // TODO
 
     let model = ModelMwC {
         model_type: model.model_type.maybe(),
-        facade_follow,
+        facade_mode: model.facade_mode.maybe(),
         flags: bitflags.maybe(),
         parent_count: model.parent_count,
         polygon_count,

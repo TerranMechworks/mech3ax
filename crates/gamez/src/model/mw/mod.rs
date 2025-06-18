@@ -2,38 +2,39 @@ mod read;
 mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::gamez::model::{Model, ModelType};
+use mech3ax_api_types::gamez::model::{FacadeMode, Model, ModelType};
 use mech3ax_api_types::Vec3;
-use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Bool32, Hex, Maybe, Ptr};
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Hex, Maybe, Ptr};
 pub(crate) use read::{assert_model_info_zero, read_model_data, read_model_info};
 pub(crate) use write::{size_model, write_model_data, write_model_info};
 
 bitflags! {
     struct ModelBitFlags: u32 {
         /// Affected by lighting
-        const LIGHTING = 1 << 0;            // 0x01
+        const LIGHTING = 1 << 0;                // 0x01
         /// Affected by fog
-        const FOG = 1 << 1;                 // 0x02
+        const FOG = 1 << 1;                     // 0x02
         /// Textures registered to world (?)
-        const TEXTURE_REGISTERED = 1 << 2;  // 0x04 (never)
+        const TEXTURE_REGISTERED = 1 << 2;      // 0x04 (never)
         /// Morph active
-        const MORPH = 1 << 3;               // 0x08 (never)
+        const MORPH = 1 << 3;                   // 0x08 (never)
         /// Scroll active
-        const TEXTURE_SCROLL = 1 << 4;      // 0x10
+        const TEXTURE_SCROLL = 1 << 4;          // 0x10
         /// Affected by clouds
-        const CLOUDS = 1 << 5;              // 0x20
-        const FACADE_SOMETHING = 1 << 6;    // 0x40
+        const CLOUDS = 1 << 5;                  // 0x20
+        const FACADE_CENTER_OF_ROT = 1 << 6;    // 0x40
     }
 }
 
 type MType = Maybe<u32, ModelType>;
+type FMode = Maybe<u32, FacadeMode>;
 type Flags = Maybe<u32, ModelBitFlags>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
 pub(crate) struct ModelMwC {
     model_type: MType,         // 00
-    facade_follow: Bool32,     // 04
+    facade_mode: FMode,        // 04
     flags: Flags,              // 08
     parent_count: u32,         // 12
     polygon_count: u32,        // 16

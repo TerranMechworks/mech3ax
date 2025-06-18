@@ -2,7 +2,7 @@ use super::{ModelBitFlags, ModelRcC, PolygonBitFlags, PolygonRcC, WrappedModelRc
 use crate::model::common::*;
 use log::trace;
 use mech3ax_api_types::gamez::model::{
-    Model, ModelFlags, ModelType, Polygon, PolygonFlags, UvCoord,
+    FacadeMode, Model, ModelFlags, ModelType, Polygon, PolygonFlags, UvCoord,
 };
 use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::CountingReader;
@@ -69,20 +69,27 @@ fn assert_model_info(model: ModelRcC, offset: usize) -> Result<WrappedModelRc> {
         v: model.tex_scroll_v,
     };
 
+    let facade_mode = if bitflags.contains(ModelBitFlags::FACADE_SPHERICAL) {
+        FacadeMode::SphericalY
+    } else {
+        FacadeMode::CylindricalY
+    };
+
     let flags = ModelFlags {
         lighting: bitflags.contains(ModelBitFlags::LIGHTING),
         fog: bitflags.contains(ModelBitFlags::FOG),
         texture_registered: bitflags.contains(ModelBitFlags::TEXTURE_REGISTERED),
         morph: bitflags.contains(ModelBitFlags::MORPH),
         texture_scroll: bitflags.contains(ModelBitFlags::TEXTURE_SCROLL),
-        facade_tilt: bitflags.contains(ModelBitFlags::FACADE_TILT),
         clouds: false,
+        facade_center_of_rot: false,
         unk7: false,
         unk8: false,
     };
 
     let m = Model {
         model_type,
+        facade_mode,
         flags,
         parent_count: model.parent_count,
 

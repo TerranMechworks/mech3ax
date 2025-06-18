@@ -1,7 +1,7 @@
 use super::{ModelBitFlags, ModelRcC, PolygonBitFlags, PolygonRcC};
 use crate::model::common::*;
 use log::{trace, warn};
-use mech3ax_api_types::gamez::model::{Model, Polygon, UvCoord};
+use mech3ax_api_types::gamez::model::{FacadeMode, Model, Polygon, UvCoord};
 use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, Result};
@@ -40,16 +40,31 @@ pub(crate) fn write_model_info(
     if model.flags.texture_scroll {
         bitflags |= ModelBitFlags::TEXTURE_SCROLL;
     }
-    if model.flags.facade_tilt {
-        bitflags |= ModelBitFlags::FACADE_TILT;
-    }
     if model.flags.clouds {
         warn!("WARN: model has `clouds` flag, this is ignored in RC");
     }
+    // TODO
     if model.flags.unk7 {
         warn!("WARN: model has `unk7` flag, this is ignored in RC");
     }
     // TODO
+
+    match model.facade_mode {
+        FacadeMode::CylindricalY => {}
+        FacadeMode::SphericalY => {
+            bitflags |= ModelBitFlags::FACADE_SPHERICAL;
+        }
+        FacadeMode::CylindricalX => {
+            return Err(assert_with_msg!(
+                "Facade mode `CylindricalX` is unsupported"
+            ));
+        }
+        FacadeMode::CylindricalZ => {
+            return Err(assert_with_msg!(
+                "Facade mode `CylindricalZ` is unsupported"
+            ));
+        }
+    }
 
     let model = ModelRcC {
         model_type: model.model_type.maybe(),

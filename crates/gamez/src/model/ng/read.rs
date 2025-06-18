@@ -2,7 +2,7 @@ use super::{ModelBitFlags, ModelPmC, PolygonBitFlags, PolygonPmC, WrappedModelPm
 use crate::model::common::*;
 use log::trace;
 use mech3ax_api_types::gamez::model::{
-    MeshMaterialInfo, Model, ModelFlags, ModelType, Polygon, PolygonFlags, PolygonMaterialNg,
+    Model, ModelFlags, ModelMaterialInfo, ModelType, Polygon, PolygonFlags, PolygonMaterialNg,
     UvCoord,
 };
 use mech3ax_api_types::Vec3;
@@ -18,11 +18,7 @@ pub(crate) fn read_model_info(read: &mut CountingReader<impl Read>) -> Result<Wr
 
 pub(crate) fn assert_model_info(model: ModelPmC, offset: usize) -> Result<WrappedModelPm> {
     let model_type = assert_that!("model type", enum model.model_type, offset + 0)?;
-    let facade_follow = if model.facade_follow.value == 2 {
-        false
-    } else {
-        assert_that!("facade follow", bool model.facade_follow, offset + 4)?
-    };
+    let facade_mode = assert_that!("facade mode", enum model.facade_mode, offset + 4)?;
     let bitflags = assert_that!("flags", flags model.flags, offset + 8)?;
     assert_that!("parent count (model)", model.parent_count > 0, offset + 12)?;
 
@@ -99,14 +95,15 @@ pub(crate) fn assert_model_info(model: ModelPmC, offset: usize) -> Result<Wrappe
         texture_registered: bitflags.contains(ModelBitFlags::TEXTURE_REGISTERED),
         morph: bitflags.contains(ModelBitFlags::MORPH),
         texture_scroll: bitflags.contains(ModelBitFlags::TEXTURE_SCROLL),
-        facade_tilt: facade_follow,
         clouds: bitflags.contains(ModelBitFlags::CLOUDS),
+        facade_center_of_rot: bitflags.contains(ModelBitFlags::FACADE_CENTER_OF_ROT),
         unk7: bitflags.contains(ModelBitFlags::UNK7),
         unk8: bitflags.contains(ModelBitFlags::UNK8),
     };
 
     let m = Model {
         model_type,
+        facade_mode,
         flags,
         parent_count: model.parent_count,
 
@@ -354,10 +351,10 @@ fn read_model_material_infos(
     read: &mut CountingReader<impl Read>,
     info_count: u32,
     material_count: u32,
-) -> Result<Vec<MeshMaterialInfo>> {
+) -> Result<Vec<ModelMaterialInfo>> {
     (0..info_count)
         .map(|_| {
-            let tex: MeshMaterialInfo = read.read_struct()?;
+            let tex: ModelMaterialInfo = read.read_struct()?;
             assert_that!(
                 "material index",
                 tex.material_index < material_count,
@@ -374,7 +371,7 @@ pub(crate) fn assert_model_info_zero(model: &ModelPmC, offset: usize) -> Result<
         model.model_type == ModelType::Default,
         offset + 0
     )?;
-    assert_that!("facade_follow", model.facade_follow == 0, offset + 4)?;
+    assert_that!("facade_follow", model.facade_mode == 0, offset + 4)?;
     assert_that!("flags", model.flags == ModelBitFlags::empty(), offset + 8)?;
     assert_that!("parent_count", model.parent_count == 0, offset + 12)?;
     assert_that!("polygon_count", model.polygon_count == 0, offset + 16)?;

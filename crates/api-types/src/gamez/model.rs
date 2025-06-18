@@ -90,6 +90,16 @@ primitive_enum! {
     }
 }
 
+primitive_enum! {
+    #[derive(Serialize, Deserialize, Enum)]
+    pub enum FacadeMode: u32 {
+        CylindricalY = 0,
+        SphericalY = 1,
+        CylindricalX = 2,
+        CylindricalZ = 3,
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct ModelFlags {
     pub lighting: bool,
@@ -101,9 +111,9 @@ pub struct ModelFlags {
     #[serde(skip_serializing_if = "bool_false", default)]
     pub texture_scroll: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
-    pub facade_tilt: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
     pub clouds: bool,
+    #[serde(skip_serializing_if = "bool_false", default)]
+    pub facade_center_of_rot: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
     pub unk7: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
@@ -113,18 +123,19 @@ pub struct ModelFlags {
 // TODO
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, NoUninit, AnyBitPattern, Struct)]
 #[repr(C)]
-pub struct MeshMaterialInfo {
+pub struct ModelMaterialInfo {
     pub material_index: u32, // 00
     // polygon offset?
     pub polygon_usage_count: u32, // 04
     // polygons ptr
     pub unk_ptr: u32, // 08
 }
-impl_as_bytes!(MeshMaterialInfo, 12);
+impl_as_bytes!(ModelMaterialInfo, 12);
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Model {
     pub model_type: ModelType,
+    pub facade_mode: FacadeMode,
     pub flags: ModelFlags,
     pub parent_count: u32,
     pub vertices: Vec<Vec3>,
@@ -144,5 +155,5 @@ pub struct Model {
     pub materials_ptr: u32,
 
     // TODO
-    pub material_infos: Vec<MeshMaterialInfo>,
+    pub material_infos: Vec<ModelMaterialInfo>,
 }

@@ -17,7 +17,7 @@ pub(crate) fn read_model_info(read: &mut CountingReader<impl Read>) -> Result<Wr
 
 fn assert_model_info(model: ModelMwC, offset: usize) -> Result<WrappedModelMw> {
     let model_type = assert_that!("model type", enum model.model_type, offset + 0)?;
-    let facade_follow = assert_that!("facade follow", bool model.facade_follow, offset + 4)?;
+    let facade_mode = assert_that!("facade mode", enum model.facade_mode, offset + 4)?;
     let bitflags = assert_that!("flags", flags model.flags, offset + 8)?;
     assert_that!("parent count (model)", model.parent_count > 0, offset + 12)?;
 
@@ -80,14 +80,15 @@ fn assert_model_info(model: ModelMwC, offset: usize) -> Result<WrappedModelMw> {
         texture_registered: bitflags.contains(ModelBitFlags::TEXTURE_REGISTERED),
         morph: bitflags.contains(ModelBitFlags::MORPH),
         texture_scroll: bitflags.contains(ModelBitFlags::TEXTURE_SCROLL),
-        facade_tilt: facade_follow,
         clouds: bitflags.contains(ModelBitFlags::CLOUDS),
+        facade_center_of_rot: bitflags.contains(ModelBitFlags::FACADE_CENTER_OF_ROT),
         unk7: false,
         unk8: false,
     };
 
     let m = Model {
         model_type,
+        facade_mode,
         flags,
         parent_count: model.parent_count,
 
@@ -299,7 +300,7 @@ pub(crate) fn assert_model_info_zero(model: &ModelMwC, offset: usize) -> Result<
         model.model_type == ModelType::Default,
         offset + 0
     )?;
-    assert_that!("facade_follow", model.facade_follow == 0, offset + 4)?;
+    assert_that!("facade_follow", model.facade_mode == 0, offset + 4)?;
     assert_that!("flags", model.flags == ModelBitFlags::empty(), offset + 8)?;
     assert_that!("parent_count", model.parent_count == 0, offset + 12)?;
     assert_that!("polygon_count", model.polygon_count == 0, offset + 16)?;

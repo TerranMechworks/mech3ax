@@ -3,9 +3,9 @@ mod read;
 mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::gamez::model::{Model, ModelType};
+use mech3ax_api_types::gamez::model::{FacadeMode, Model, ModelType};
 use mech3ax_api_types::Vec3;
-use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Bool32, Hex, Maybe, Ptr};
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Hex, Maybe, Ptr};
 pub(crate) use read::{
     assert_model_info, assert_model_info_zero, read_model_data, read_model_info,
 };
@@ -14,31 +14,32 @@ pub(crate) use write::{size_model, write_model_data, write_model_info};
 bitflags! {
     struct ModelBitFlags: u32 {
         /// Affected by lighting
-        const LIGHTING = 1 << 0;            // 0x001
+        const LIGHTING = 1 << 0;                // 0x001
         /// Affected by fog
-        const FOG = 1 << 1;                 // 0x002
+        const FOG = 1 << 1;                     // 0x002
         /// Textures registered to world (?)
-        const TEXTURE_REGISTERED = 1 << 2;  // 0x004 (never)
+        const TEXTURE_REGISTERED = 1 << 2;      // 0x004 (never)
         /// Morph active
-        const MORPH = 1 << 3;               // 0x008 (never)
+        const MORPH = 1 << 3;                   // 0x008 (never)
         /// Scroll active
-        const TEXTURE_SCROLL = 1 << 4;      // 0x010
+        const TEXTURE_SCROLL = 1 << 4;          // 0x010
         /// Affected by clouds
-        const CLOUDS = 1 << 5;              // 0x020
-        const FACADE_SOMETHING = 1 << 6;    // 0x040
-        const UNK7 = 1 << 7;                // 0x080
-        const UNK8 = 1 << 8;                // 0x100
+        const CLOUDS = 1 << 5;                  // 0x020
+        const FACADE_CENTER_OF_ROT = 1 << 6;    // 0x040
+        const UNK7 = 1 << 7;                    // 0x080
+        const UNK8 = 1 << 8;                    // 0x100
     }
 }
 
 type MType = Maybe<u32, ModelType>;
+type FMode = Maybe<u32, FacadeMode>;
 type Flags = Maybe<u32, ModelBitFlags>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
 pub(crate) struct ModelPmC {
     model_type: MType,            // 00
-    facade_follow: Bool32,        // 04
+    facade_mode: FMode,           // 04
     flags: Flags,                 // 08
     pub(crate) parent_count: u32, // 12
     polygon_count: u32,           // 16

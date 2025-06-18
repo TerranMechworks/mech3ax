@@ -1,11 +1,10 @@
 use super::{ModelBitFlags, ModelPmC, PolygonBitFlags, PolygonPmC};
 use crate::model::common::*;
 use log::{trace, warn};
-use mech3ax_api_types::gamez::model::{MeshMaterialInfo, Model, Polygon, UvCoord};
+use mech3ax_api_types::gamez::model::{Model, ModelMaterialInfo, Polygon, UvCoord};
 use mech3ax_api_types::{Color, Vec3};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, Result};
-use mech3ax_types::maybe::SupportsMaybe as _;
 use mech3ax_types::{AsBytes as _, Hex, Ptr};
 use std::io::Write;
 
@@ -43,9 +42,11 @@ pub(crate) fn write_model_info(
     if model.flags.texture_scroll {
         bitflags |= ModelBitFlags::TEXTURE_SCROLL;
     }
-    let facade_follow = model.flags.facade_tilt.maybe();
     if model.flags.clouds {
         bitflags |= ModelBitFlags::CLOUDS;
+    }
+    if model.flags.facade_center_of_rot {
+        bitflags |= ModelBitFlags::FACADE_CENTER_OF_ROT;
     }
     if model.flags.unk7 {
         bitflags |= ModelBitFlags::UNK7;
@@ -57,7 +58,7 @@ pub(crate) fn write_model_info(
 
     let model = ModelPmC {
         model_type: model.model_type.maybe(),
-        facade_follow,
+        facade_mode: model.facade_mode.maybe(),
         flags: bitflags.maybe(),
         parent_count: model.parent_count,
         polygon_count,
@@ -273,6 +274,6 @@ pub(crate) fn size_model(model: &Model) -> u32 {
             size += U32_SIZE + UvCoord::SIZE * material.uv_coords.len() as u32;
         }
     }
-    size += MeshMaterialInfo::SIZE * model.material_infos.len() as u32;
+    size += ModelMaterialInfo::SIZE * model.material_infos.len() as u32;
     size
 }

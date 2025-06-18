@@ -19,7 +19,7 @@ bitflags! {
         /// Morph active
         const MORPH = 1 << 3;               // 0x08 (never)
         /// Facade also tilts to face camera
-        const FACADE_TILT = 1 << 4;         // 0x10 (never)
+        const FACADE_SPHERICAL = 1 << 4;    // 0x10 (never)
         /// Scroll active
         const TEXTURE_SCROLL = 1 << 5;      // 0x20 (never)
     }
