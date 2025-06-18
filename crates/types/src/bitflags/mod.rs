@@ -31,6 +31,7 @@ where
 #[macro_export]
 macro_rules! bitflags {
     ($(#[$outer:meta])* $vis:vis struct $name:ident : $ty:tt {
+        $(static $base_name:ident = $base_val:literal;)?
         $(
             $(#[$inner:meta])*
             const $flag:ident = 1 << $val:literal;
@@ -42,17 +43,35 @@ macro_rules! bitflags {
         $vis struct $name($ty);
 
         impl $name {
-            const VARIANTS: &'static [(usize, &'static str)] = &[
+            const _VARIANTS: &'static [(usize, &'static str)] = &[
                 $(($val, stringify!($flag)),)+
             ];
-            bitflags!(@flags $ty);
+            const _FLAGS: &'static [::core::option::Option<&'static str>; bitflags!(@width $ty)] =
+                &$crate::bitflags::gather_flags(Self::_VARIANTS);
+            const _BASE: $ty = bitflags!(@base $($base_val)?);
 
-            const VALID: $ty = 0 $(| (1 << $val))+;
-            const INVALID: $ty = !Self::VALID;
+            const _VALID: $ty = Self::_BASE $(| (1 << $val))+;
+            const _INVALID: $ty = !Self::_VALID;
 
             $(
-                $(#[$inner])*
-                pub const $flag: Self = Self(1 << $val);
+            pub const $base_name: $ty = $base_val;
+
+            pub const fn base(self) -> $ty {
+                self.0 & Self::_BASE
+            }
+
+            pub fn with_base(self, base: $ty) -> Option<Self> {
+                if base > Self::_BASE {
+                    None
+                } else {
+                    Some(Self(self.0 | base))
+                }
+            }
+            )?
+
+            $(
+            $(#[$inner])*
+            pub const $flag: Self = Self(1 << $val);
             )+
 
             #[inline]
@@ -68,7 +87,7 @@ macro_rules! bitflags {
             #[inline]
             pub const fn from_bits(v: $ty) -> ::core::option::Option<Self> {
                 #[allow(clippy::bad_bit_mask)]
-                if v & Self::INVALID == 0 {
+                if v & Self::_INVALID == 0 {
                     ::core::option::Option::Some(Self(v))
                 } else {
                     ::core::option::Option::None
@@ -77,7 +96,7 @@ macro_rules! bitflags {
 
             #[inline]
             pub const fn from_bits_truncate(v: $ty) -> Self {
-                Self(v & Self::VALID)
+                Self(v & Self::_VALID)
             }
 
             #[inline]
@@ -94,14 +113,14 @@ macro_rules! bitflags {
         impl ::core::fmt::Display for $name {
             #[inline]
             fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-                bitflags!(@fmt $ty)(self.0, f, Self::FLAGS)
+                bitflags!(@fmt $ty)(self.0, f, Self::_BASE, Self::_FLAGS)
             }
         }
 
         impl ::core::fmt::Debug for $name {
             #[inline]
             fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-                bitflags!(@fmt $ty)(self.0, f, Self::FLAGS)
+                bitflags!(@fmt $ty)(self.0, f, Self::_BASE, Self::_FLAGS)
             }
         }
 
@@ -150,7 +169,7 @@ macro_rules! bitflags {
 
             #[inline]
             fn fmt_value(v: $ty, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-                bitflags!(@fmt $ty)(v, f, Self::FLAGS)
+                bitflags!(@fmt $ty)(v, f, Self::_BASE, Self::_FLAGS)
             }
 
             #[inline]
@@ -170,15 +189,11 @@ macro_rules! bitflags {
     (@fmt u32) => {
         $crate::bitflags::format_flags_u32
     };
-    (@flags u8) => {
-        const FLAGS: &'static [::core::option::Option<&'static str>; 8] = &$crate::bitflags::gather_flags(Self::VARIANTS);
-    };
-    (@flags u16) => {
-        const FLAGS: &'static [::core::option::Option<&'static str>; 16] = &$crate::bitflags::gather_flags(Self::VARIANTS);
-    };
-    (@flags u32) => {
-        const FLAGS: &'static [::core::option::Option<&'static str>; 32] = &$crate::bitflags::gather_flags(Self::VARIANTS);
-    };
+    (@width u8) => { 8 };
+    (@width u16) => { 16 };
+    (@width u32) => { 32 };
+    (@base $val:literal) => { $val };
+    (@base) => { 0 };
 }
 
 #[cfg(test)]

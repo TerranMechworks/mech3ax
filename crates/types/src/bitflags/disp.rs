@@ -12,11 +12,17 @@ macro_rules! fmt_flags {
     ($name:ident, $ty:ty, $bits:literal) => {
         #[inline]
         pub fn $name(
-            v: $ty,
+            mut v: $ty,
             f: &mut fmt::Formatter<'_>,
+            base: $ty,
             flags: &'static [Option<&'static str>; $bits],
         ) -> fmt::Result {
             let mut set = DisplaySet::new(f);
+            if base != 0 {
+                let num = v & base;
+                set.entry(&num);
+                v = v & !base;
+            }
             for index in 0..$bits {
                 if v & (1 << index) != 0 {
                     let flag = flags[index].unwrap_or(FLAGS_RAW[index]);
