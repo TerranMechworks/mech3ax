@@ -25,7 +25,7 @@ pub struct UvCoord {
 }
 impl_as_bytes!(UvCoord, 8);
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
+#[derive(Debug, Clone, Serialize, Deserialize, Struct)]
 pub struct PointLight {
     pub unk00: u32,
     pub unk04: u32,
@@ -44,12 +44,15 @@ pub struct PointLight {
     pub unk72: f32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Struct)]
 pub struct PolygonFlags {
-    pub show_backface: bool,  // RC, MW, PM
-    pub unk3: bool,           // MW, PM
+    pub show_backface: bool, // RC, MW, PM
+    #[serde(skip_serializing_if = "bool_false", default)]
+    pub unk3: bool, // MW, PM
+    #[serde(skip_serializing_if = "bool_false", default)]
     pub triangle_strip: bool, // PM
-    pub unk6: bool,           // PM
+    #[serde(skip_serializing_if = "bool_false", default)]
+    pub unk6: bool, // PM
 }
 
 // TODO
@@ -100,7 +103,7 @@ primitive_enum! {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Struct)]
 pub struct ModelFlags {
     pub lighting: bool,
     pub fog: bool,
@@ -113,7 +116,7 @@ pub struct ModelFlags {
     #[serde(skip_serializing_if = "bool_false", default)]
     pub clouds: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
-    pub facade_center_of_rot: bool,
+    pub facade_centroid: bool,
     #[serde(skip_serializing_if = "bool_false", default)]
     pub unk7: bool,
     #[serde(skip_serializing_if = "bool_false", default)]

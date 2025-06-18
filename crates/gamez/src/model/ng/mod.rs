@@ -25,7 +25,8 @@ bitflags! {
         const TEXTURE_SCROLL = 1 << 4;          // 0x010
         /// Affected by clouds
         const CLOUDS = 1 << 5;                  // 0x020
-        const FACADE_CENTER_OF_ROT = 1 << 6;    // 0x040
+        /// Facade rotates around centroid
+        const FACADE_CENTROID = 1 << 6;         // 0x040
         const UNK7 = 1 << 7;                    // 0x080
         const UNK8 = 1 << 8;                    // 0x100
     }
@@ -33,14 +34,14 @@ bitflags! {
 
 type MType = Maybe<u32, ModelType>;
 type FMode = Maybe<u32, FacadeMode>;
-type Flags = Maybe<u32, ModelBitFlags>;
+type MFlags = Maybe<u32, ModelBitFlags>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
 pub(crate) struct ModelPmC {
     model_type: MType,            // 00
     facade_mode: FMode,           // 04
-    flags: Flags,                 // 08
+    flags: MFlags,                // 08
     pub(crate) parent_count: u32, // 12
     polygon_count: u32,           // 16
     vertex_count: u32,            // 20
@@ -64,24 +65,24 @@ pub(crate) struct ModelPmC {
 }
 impl_as_bytes!(ModelPmC, 100);
 pub(crate) const MODEL_C_SIZE: u32 = ModelPmC::SIZE;
+
 bitflags! {
     struct PolygonBitFlags: u32 {
-        const SHOW_BACKFACE = 1 << 10;   // 0x0400
-        const UNK3 = 1 << 11;            // 0x0800 not in mechlib
-        const NORMALS = 1 << 12;         // 0x1000
-        const TRI_STRIP = 1 << 13;       // 0x2000
-        const UNK6 = 1 << 14;            // 0x4000 not in mechlib (InOut?)
+        static VERTEX_COUNT = 0x03FF;
+        const SHOW_BACKFACE = 1 << 10;   // 0, 0x0400
+        const UNK3 = 1 << 11;            // 1, 0x0800 not in mechlib
+        const NORMALS = 1 << 12;         // 2, 0x1000
+        const TRI_STRIP = 1 << 13;       // 3, 0x2000
+        const UNK6 = 1 << 14;            // 4, 0x4000 not in mechlib (InOut?)
     }
 }
 
-impl PolygonBitFlags {
-    const VERTEX_COUNT: u32 = 0x03FF; // (1 << 10) - 1
-}
+type PFlags = Maybe<u32, PolygonBitFlags>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct PolygonPmC {
-    vertex_info: Hex<u32>,   // 00
+    flags: PFlags,           // 00
     priority: i32,           // 04
     vertex_indices_ptr: Ptr, // 08
     normal_indices_ptr: Ptr, // 12

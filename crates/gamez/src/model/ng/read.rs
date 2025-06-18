@@ -8,7 +8,7 @@ use mech3ax_api_types::gamez::model::{
 use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{Maybe, Ptr};
+use mech3ax_types::Ptr;
 use std::io::Read;
 
 pub(crate) fn read_model_info(read: &mut CountingReader<impl Read>) -> Result<WrappedModelPm> {
@@ -96,7 +96,7 @@ pub(crate) fn assert_model_info(model: ModelPmC, offset: usize) -> Result<Wrappe
         morph: bitflags.contains(ModelBitFlags::MORPH),
         texture_scroll: bitflags.contains(ModelBitFlags::TEXTURE_SCROLL),
         clouds: bitflags.contains(ModelBitFlags::CLOUDS),
-        facade_center_of_rot: bitflags.contains(ModelBitFlags::FACADE_CENTER_OF_ROT),
+        facade_centroid: bitflags.contains(ModelBitFlags::FACADE_CENTROID),
         unk7: bitflags.contains(ModelBitFlags::UNK7),
         unk8: bitflags.contains(ModelBitFlags::UNK8),
     };
@@ -139,22 +139,15 @@ pub(crate) fn assert_model_info(model: ModelPmC, offset: usize) -> Result<Wrappe
     })
 }
 
-fn assert_vertex_info(vertex_info: u32, offset: usize) -> Result<(u32, PolygonBitFlags)> {
-    let verts_in_poly = vertex_info & PolygonBitFlags::VERTEX_COUNT;
-    assert_that!("verts in poly", verts_in_poly >= 3, offset)?;
-
-    let flag_bits = Maybe::new(vertex_info & (!PolygonBitFlags::VERTEX_COUNT));
-    let flags: PolygonBitFlags = assert_that!("polygon flags", flags flag_bits, offset)?;
-
-    Ok((verts_in_poly, flags))
-}
-
 fn assert_polygon_info(
     poly: PolygonPmC,
     offset: usize,
     poly_index: u32,
 ) -> Result<(u32, u32, u32, Polygon)> {
-    let (verts_in_poly, bitflags) = assert_vertex_info(poly.vertex_info.0, offset)?;
+    let bitflags = assert_that!("polygon flags", flags poly.flags, offset + 0)?;
+
+    let verts_in_poly = bitflags.base();
+    assert_that!("verts in poly", verts_in_poly >= 3, offset)?;
 
     assert_that!("priority", -50 <= poly.priority <= 50, offset + 4)?;
     assert_that!(

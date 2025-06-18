@@ -26,13 +26,13 @@ bitflags! {
 }
 
 type MType = Maybe<u32, ModelType>;
-type Flags = Maybe<u32, ModelBitFlags>;
+type MFlags = Maybe<u32, ModelBitFlags>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
 pub(crate) struct ModelRcC {
     model_type: MType,     // 00
-    flags: Flags,          // 04
+    flags: MFlags,         // 04
     parent_count: u32,     // 08
     polygon_count: u32,    // 12
     vertex_count: u32,     // 16
@@ -56,19 +56,18 @@ pub(crate) const MODEL_C_SIZE: u32 = ModelRcC::SIZE;
 
 bitflags! {
     struct PolygonBitFlags: u32 {
-        const SHOW_BACKFACE = 1 << 8;    // 0x100
-        const NORMALS = 1 << 9;          // 0x200
+        static VERTEX_COUNT = 0x0FF;
+        const SHOW_BACKFACE = 1 << 8;    // 0, 0x100
+        const NORMALS = 1 << 9;          // 1, 0x200
     }
 }
 
-impl PolygonBitFlags {
-    const VERTEX_COUNT: u32 = 0x0FF;
-}
+type PFlags = Maybe<u32, PolygonBitFlags>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct PolygonRcC {
-    vertex_info: Hex<u32>,   // 00
+    flags: PFlags,           // 00
     priority: i32,           // 04
     vertex_indices_ptr: Ptr, // 08
     normal_indices_ptr: Ptr, // 12

@@ -22,20 +22,21 @@ bitflags! {
         const TEXTURE_SCROLL = 1 << 4;          // 0x10
         /// Affected by clouds
         const CLOUDS = 1 << 5;                  // 0x20
-        const FACADE_CENTER_OF_ROT = 1 << 6;    // 0x40
+        /// Facade rotates around centroid
+        const FACADE_CENTROID = 1 << 6;         // 0x40
     }
 }
 
 type MType = Maybe<u32, ModelType>;
 type FMode = Maybe<u32, FacadeMode>;
-type Flags = Maybe<u32, ModelBitFlags>;
+type MFlags = Maybe<u32, ModelBitFlags>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
 pub(crate) struct ModelMwC {
     model_type: MType,         // 00
     facade_mode: FMode,        // 04
-    flags: Flags,              // 08
+    flags: MFlags,             // 08
     parent_count: u32,         // 12
     polygon_count: u32,        // 16
     vertex_count: u32,         // 20
@@ -60,21 +61,20 @@ pub(crate) const MODEL_C_SIZE: u32 = ModelMwC::SIZE;
 
 bitflags! {
     struct PolygonBitFlags: u32 {
-        const SHOW_BACKFACE = 1 << 8;    // 0x100
-        const NORMALS = 1 << 9;          // 0x200
+        static VERTEX_COUNT = 0x0FF;
+        const SHOW_BACKFACE = 1 << 8;    // 0, 0x100
+        const NORMALS = 1 << 9;          // 1, 0x200
         // this likely exists, but we don't know what it does
-        // const UNK3 = 1 << 10;            // 0x400
+        // const UNK2 = 1 << 10;            // 2, 0x400
     }
 }
 
-impl PolygonBitFlags {
-    const VERTEX_COUNT: u32 = 0x0FF;
-}
+type PFlags = Maybe<u32, PolygonBitFlags>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct PolygonMwC {
-    vertex_info: Hex<u32>,   // 00
+    flags: PFlags,           // 00
     priority: i32,           // 04
     vertex_indices_ptr: Ptr, // 08
     normal_indices_ptr: Ptr, // 12

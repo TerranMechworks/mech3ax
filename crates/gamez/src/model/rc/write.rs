@@ -1,12 +1,58 @@
 use super::{ModelBitFlags, ModelRcC, PolygonBitFlags, PolygonRcC};
 use crate::model::common::*;
 use log::{trace, warn};
-use mech3ax_api_types::gamez::model::{FacadeMode, Model, Polygon, UvCoord};
+use mech3ax_api_types::gamez::model::{
+    FacadeMode, Model, ModelFlags, Polygon, PolygonFlags, UvCoord,
+};
 use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, Result};
-use mech3ax_types::{AsBytes as _, Hex, Ptr};
+use mech3ax_types::{AsBytes as _, Ptr};
 use std::io::Write;
+
+fn make_model_flags(flags: &ModelFlags) -> ModelBitFlags {
+    let ModelFlags {
+        lighting,
+        fog,
+        texture_registered,
+        morph,
+        texture_scroll,
+        clouds,
+        facade_centroid,
+        unk7,
+        unk8,
+    } = *flags;
+
+    let mut bitflags = ModelBitFlags::empty();
+    if lighting {
+        bitflags |= ModelBitFlags::LIGHTING;
+    }
+    if fog {
+        bitflags |= ModelBitFlags::FOG;
+    }
+    if texture_registered {
+        bitflags |= ModelBitFlags::TEXTURE_REGISTERED;
+    }
+    if morph {
+        bitflags |= ModelBitFlags::MORPH;
+    }
+    if texture_scroll {
+        bitflags |= ModelBitFlags::TEXTURE_SCROLL;
+    }
+    if clouds {
+        warn!("WARN: model has `clouds` flag, this is ignored in RC");
+    }
+    if facade_centroid {
+        warn!("WARN: model has `facade_centroid` flag, this is ignored in RC");
+    }
+    if unk7 {
+        warn!("WARN: model has `unk7` flag, this is ignored in RC");
+    }
+    if unk8 {
+        warn!("WARN: model has `unk8` flag, this is ignored in RC");
+    }
+    bitflags
+}
 
 pub(crate) fn write_model_info(
     write: &mut CountingWriter<impl Write>,
@@ -24,30 +70,7 @@ pub(crate) fn write_model_info(
     let lights_ptr = assert_ptr!(light_count, model.lights_ptr, "lights");
     let morphs_ptr = assert_ptr!(morph_count, model.morphs_ptr, "morphs");
 
-    let mut bitflags = ModelBitFlags::empty();
-    if model.flags.lighting {
-        bitflags |= ModelBitFlags::LIGHTING;
-    }
-    if model.flags.fog {
-        bitflags |= ModelBitFlags::FOG;
-    }
-    if model.flags.texture_registered {
-        bitflags |= ModelBitFlags::TEXTURE_REGISTERED;
-    }
-    if model.flags.morph {
-        bitflags |= ModelBitFlags::MORPH;
-    }
-    if model.flags.texture_scroll {
-        bitflags |= ModelBitFlags::TEXTURE_SCROLL;
-    }
-    if model.flags.clouds {
-        warn!("WARN: model has `clouds` flag, this is ignored in RC");
-    }
-    // TODO
-    if model.flags.unk7 {
-        warn!("WARN: model has `unk7` flag, this is ignored in RC");
-    }
-    // TODO
+    let mut bitflags = make_model_flags(&model.flags);
 
     match model.facade_mode {
         FacadeMode::CylindricalY => {}
@@ -55,14 +78,10 @@ pub(crate) fn write_model_info(
             bitflags |= ModelBitFlags::FACADE_SPHERICAL;
         }
         FacadeMode::CylindricalX => {
-            return Err(assert_with_msg!(
-                "Facade mode `CylindricalX` is unsupported"
-            ));
+            warn!("WARN: model has `CylindricalX` facade mode, this is unsupported in RC");
         }
         FacadeMode::CylindricalZ => {
-            return Err(assert_with_msg!(
-                "Facade mode `CylindricalZ` is unsupported"
-            ));
+            warn!("WARN: model has `CylindricalZ` facade mode, this is unsupported in RC");
         }
     }
 
@@ -91,38 +110,50 @@ pub(crate) fn write_model_info(
     Ok(())
 }
 
-fn make_vertex_info(polygon: &Polygon) -> Result<Hex<u32>> {
-    let vertex_indices_len =
-        assert_len!(u32, polygon.vertex_indices.len(), "polygon vertex indices")?;
+fn make_polygon_flags(polygon: &Polygon) -> Result<PolygonBitFlags> {
+    let verts_in_poly = assert_len!(u32, polygon.vertex_indices.len(), "polygon vertex indices")?;
 
-    if vertex_indices_len > PolygonBitFlags::VERTEX_COUNT {
-        return Err(assert_with_msg!(
-            "Expected < {} vertex indices, but got {}",
-            PolygonBitFlags::VERTEX_COUNT + 1,
-            vertex_indices_len
-        ));
-    }
-
-    if vertex_indices_len < 3 {
+    if verts_in_poly < 3 {
         warn!(
             "WARN: Expected >= 3 vertex indices, but got {}",
-            vertex_indices_len
+            verts_in_poly
         );
     }
 
-    let mut bitflags = PolygonBitFlags::empty();
-    if polygon.flags.show_backface {
+    let mut bitflags = PolygonBitFlags::empty()
+        .with_base(verts_in_poly)
+        .ok_or_else(|| {
+            assert_with_msg!(
+                "Expected < {} vertex indices, but got {}",
+                PolygonBitFlags::VERTEX_COUNT + 1,
+                verts_in_poly
+            )
+        })?;
+
+    let PolygonFlags {
+        show_backface,
+        unk3,
+        triangle_strip,
+        unk6,
+    } = polygon.flags;
+
+    if show_backface {
         bitflags |= PolygonBitFlags::SHOW_BACKFACE;
     }
     if polygon.normal_indices.is_some() {
         bitflags |= PolygonBitFlags::NORMALS;
     }
-    if polygon.flags.triangle_strip {
+    if unk3 {
+        warn!("WARN: polygon has `unk3` flag, this is ignored in RC");
+    }
+    if triangle_strip {
         return Err(assert_with_msg!("Triangle strips are unsupported in RC"));
     }
-    // TODO
+    if unk6 {
+        warn!("WARN: polygon has `unk6` flag, this is ignored in RC");
+    }
 
-    Ok(Hex(vertex_indices_len | bitflags.bits()))
+    Ok(bitflags)
 }
 
 fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) -> Result<()> {
@@ -130,11 +161,11 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) 
     for (index, polygon) in polygons.iter().enumerate() {
         trace!("Writing polygon info {}/{}", index, count);
 
-        let vertex_info = make_vertex_info(polygon)?;
+        let bitflags = make_polygon_flags(polygon)?;
         let zone_set = make_zone_set(&polygon.zone_set)?;
 
         let poly = PolygonRcC {
-            vertex_info,
+            flags: bitflags.maybe(),
             priority: polygon.priority,
             vertex_indices_ptr: Ptr(polygon.vertex_indices_ptr),
             normal_indices_ptr: Ptr(polygon.normal_indices_ptr),
