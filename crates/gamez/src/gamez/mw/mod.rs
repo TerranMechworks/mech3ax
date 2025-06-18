@@ -1,4 +1,3 @@
-#[path = "meshes.rs"]
 mod models;
 mod nodes;
 

@@ -1,6 +1,5 @@
 mod data;
 mod fixup;
-#[path = "meshes.rs"]
 mod models;
 mod nodes;
 
