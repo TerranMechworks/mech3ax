@@ -22,7 +22,7 @@ type State = Maybe<u32, TextureState>;
 struct TextureNgC {
     image_ptr: Ptr,   // 00
     zero04: u32,      // 04
-    surface_ptr: u32, // 08
+    surface_ptr: Ptr, // 08
     name: Ascii<20>,  // 12
     state: State,     // 32
     category: u32,    // 36
@@ -36,12 +36,11 @@ pub(crate) fn read_texture_directory(
 ) -> Result<Vec<Texture>> {
     (0..count)
         .map(|index| {
-            trace!("Reading texture info {}/{}", index, count);
+            trace!("Reading texture {}/{}", index, count);
             let tex: TextureNgC = read.read_struct()?;
 
-            // validate field 00 later, with used
             assert_that!("field 04", tex.zero04 == 0, read.prev + 4)?;
-            assert_that!("surface ptr", tex.surface_ptr == 0, read.prev + 8)?;
+            assert_that!("surface ptr", tex.surface_ptr == Ptr::NULL, read.prev + 8)?;
             let name = assert_utf8("name", read.prev + 12, || tex.name.to_str_suffix())?;
             let state = assert_that!("state", enum tex.state, read.prev + 32)?;
             match state {
@@ -53,7 +52,6 @@ pub(crate) fn read_texture_directory(
                     assert_that!("image ptr", tex.image_ptr == Ptr::NULL, read.prev + 0)?;
                 }
             }
-
             assert_that!("category", tex.category == 0, read.prev + 36)?;
             assert_that!("mip index", tex.mip >= -1, read.prev + 40)?;
 
@@ -74,7 +72,7 @@ pub(crate) fn write_texture_directory(
 
     let count = textures.len();
     for (index, (texture, image_ptr)) in textures.iter().zip(ptrs).enumerate() {
-        trace!("Writing texture info {}/{}", index, count);
+        trace!("Writing texture {}/{}", index, count);
         let name = Ascii::from_str_suffix(&texture.name);
         if texture.mip < -1 {
             warn!(
@@ -89,16 +87,16 @@ pub(crate) fn write_texture_directory(
             TextureState::Assigned
         };
 
-        let info = TextureNgC {
+        let tex = TextureNgC {
             image_ptr: Ptr(image_ptr),
             zero04: 0,
-            surface_ptr: 0,
+            surface_ptr: Ptr::NULL,
             name,
             state: state.maybe(),
             category: 0,
             mip: texture.mip,
         };
-        write.write_struct(&info)?;
+        write.write_struct(&tex)?;
     }
     Ok(())
 }

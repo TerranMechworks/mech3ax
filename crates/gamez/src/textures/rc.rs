@@ -1,18 +1,25 @@
-use super::{State, TextureState};
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{trace, warn};
 use mech3ax_api_types::gamez::Texture;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii};
+use mech3ax_types::{impl_as_bytes, primitive_enum, AsBytes as _, Ascii, Maybe, Ptr};
 use std::io::{Read, Write};
+
+primitive_enum! {
+    enum TextureState: u32 {
+        Used = 2,
+    }
+}
+
+type State = Maybe<u32, TextureState>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
 struct TextureRcC {
-    image_ptr: u32,   // 00
-    surface_ptr: u32, // 04
+    image_ptr: Ptr,   // 00
+    surface_ptr: Ptr, // 04
     name: Ascii<20>,  // 08
     state: State,     // 28
     mip: i32,         // 32
@@ -28,10 +35,10 @@ pub(crate) fn read_texture_directory(
             trace!("Reading texture {}/{}", index, count);
             let tex: TextureRcC = read.read_struct()?;
 
-            assert_that!("image ptr", tex.image_ptr == 0, read.prev + 0)?;
-            assert_that!("surface ptr", tex.surface_ptr == 0, read.prev + 4)?;
+            assert_that!("image ptr", tex.image_ptr == Ptr::NULL, read.prev + 0)?;
+            assert_that!("surface ptr", tex.surface_ptr == Ptr::NULL, read.prev + 4)?;
             let name = assert_utf8("name", read.prev + 8, || tex.name.to_str_suffix())?;
-            assert_that!("state", enum tex.state, read.prev + 28)?;
+            let _state = assert_that!("state", enum tex.state, read.prev + 28)?;
             assert_that!("mip index", tex.mip >= -1, read.prev + 32)?;
 
             Ok(Texture { name, mip: tex.mip })
@@ -55,8 +62,8 @@ pub(crate) fn write_texture_directory(
         }
 
         let tex = TextureRcC {
-            image_ptr: 0,
-            surface_ptr: 0,
+            image_ptr: Ptr::NULL,
+            surface_ptr: Ptr::NULL,
             name,
             state: TextureState::Used.maybe(),
             mip: texture.mip,
