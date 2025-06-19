@@ -11,17 +11,17 @@ pub(crate) use write::{size_model, write_model_data, write_model_info};
 bitflags! {
     struct ModelBitFlags: u32 {
         /// Affected by lighting
-        const LIGHTING = 1 << 0;            // 0x01
+        const LIGHTING = 1 << 0;                // 0x01
         /// Affected by fog
-        const FOG = 1 << 1;                 // 0x02
+        const FOG = 1 << 1;                     // 0x02
         /// Textures registered to world (?)
-        const TEXTURE_REGISTERED = 1 << 2;  // 0x04 (never)
+        const TEXTURE_REGISTERED = 1 << 2;      // 0x04 (never)
         /// Morph active
-        const MORPH = 1 << 3;               // 0x08 (never)
+        const MORPH = 1 << 3;                   // 0x08 (never)
         /// Facade also tilts to face camera
-        const FACADE_SPHERICAL = 1 << 4;    // 0x10 (never)
+        const FACADE_SPHERICAL = 1 << 4;        // 0x10 (never)
         /// Scroll active
-        const TEXTURE_SCROLL = 1 << 5;      // 0x20 (never)
+        const TEXTURE_SCROLL = 1 << 5;          // 0x20 (never)
     }
 }
 

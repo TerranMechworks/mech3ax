@@ -123,18 +123,6 @@ pub struct ModelFlags {
     pub unk8: bool,
 }
 
-// TODO
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, NoUninit, AnyBitPattern, Struct)]
-#[repr(C)]
-pub struct ModelMaterialInfo {
-    pub material_index: u32, // 00
-    // polygon offset?
-    pub polygon_usage_count: u32, // 04
-    // polygons ptr
-    pub unk_ptr: u32, // 08
-}
-impl_as_bytes!(ModelMaterialInfo, 12);
-
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Model {
     pub model_type: ModelType,
@@ -156,7 +144,4 @@ pub struct Model {
     pub lights_ptr: u32,
     pub morphs_ptr: u32,
     pub materials_ptr: u32,
-
-    // TODO
-    pub material_infos: Vec<ModelMaterialInfo>,
 }

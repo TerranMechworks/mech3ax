@@ -76,3 +76,13 @@ pub enum Material {
     Textured(TexturedMaterial),
     Colored(ColoredMaterial),
 }
+
+impl Material {
+    #[inline]
+    pub fn is_cycled(&self) -> bool {
+        match self {
+            Self::Colored(_) => false,
+            Self::Textured(textured) => textured.cycle.is_some(),
+        }
+    }
+}

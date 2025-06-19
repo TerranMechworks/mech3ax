@@ -2,10 +2,11 @@ use crate::gamez::common::{
     read_model_array_sequential, write_model_array_sequential, MODEL_ARRAY_C_SIZE,
 };
 use crate::model::ng::{
-    assert_model_info_zero, read_model_data, read_model_info, size_model, write_model_data,
-    write_model_info, ModelPmC, MODEL_C_SIZE,
+    assert_model_info_zero, make_material_refs, read_model_data, read_model_info, size_model,
+    write_model_data, write_model_info, MaterialRefC, ModelPmC, MODEL_C_SIZE,
 };
 use log::trace;
+use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::gamez::model::Model;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
@@ -63,18 +64,17 @@ pub(crate) fn read_models(
 
 pub(crate) fn write_models(
     write: &mut CountingWriter<impl Write>,
-    models: &[Model],
-    offsets: &[u32],
+    models: &[ModelInfo],
     array_size: i32,
 ) -> Result<()> {
     let count = assert_len!(i32, models.len(), "GameZ models")?;
     let model_indices_zero = write_model_array_sequential(write, array_size, count)?;
 
     let count = models.len();
-    for (index, (model, offset)) in models.iter().zip(offsets.iter().copied()).enumerate() {
+    for (index, model_info) in models.iter().enumerate() {
         trace!("Processing model info {}/{}", index, count);
-        write_model_info(write, model)?;
-        write.write_u32(offset)?;
+        write_model_info(write, model_info.model, &model_info.material_refs)?;
+        write.write_u32(model_info.offset)?;
     }
 
     trace!(
@@ -90,27 +90,46 @@ pub(crate) fn write_models(
     }
     trace!("Processed model info zeros at {}", write.offset);
 
-    for (index, model) in models.iter().enumerate() {
+    for (index, model_info) in models.iter().enumerate() {
         trace!("Processing model data {}/{}", index, count);
-        write_model_data(write, model)?;
+        write_model_data(write, model_info.model, &model_info.material_refs)?;
     }
 
     Ok(())
 }
 
+pub(crate) struct ModelInfo<'a> {
+    model: &'a Model,
+    material_refs: Vec<MaterialRefC>,
+    offset: u32,
+}
+
+pub(crate) fn gather_materials<'a>(
+    materials: &[Material],
+    models: &'a [Model],
+) -> Vec<ModelInfo<'a>> {
+    models
+        .iter()
+        .map(|model| {
+            let material_refs = make_material_refs(materials, model, false);
+            ModelInfo {
+                model,
+                material_refs,
+                offset: 0,
+            }
+        })
+        .collect()
+}
+
 const U32_SIZE: u32 = std::mem::size_of::<u32>() as _;
 
-pub(crate) fn size_models(offset: u32, array_size: i32, models: &[Model]) -> (u32, Vec<u32>) {
+pub(crate) fn size_models(offset: u32, array_size: i32, models: &mut [ModelInfo]) -> u32 {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let array_size = array_size as u32;
     let mut offset = offset + MODEL_ARRAY_C_SIZE + (MODEL_C_SIZE + U32_SIZE) * array_size;
-    let model_offsets = models
-        .iter()
-        .map(|model| {
-            let current = offset;
-            offset += size_model(model);
-            current
-        })
-        .collect();
-    (offset, model_offsets)
+    for model_info in models {
+        model_info.offset = offset;
+        offset += size_model(model_info.model, &model_info.material_refs);
+    }
+    offset
 }

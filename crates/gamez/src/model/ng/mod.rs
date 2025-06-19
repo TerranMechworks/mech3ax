@@ -1,8 +1,10 @@
 //! GameZ and mechlib model support for PM, CS
+mod matl;
 mod read;
 mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
+pub(crate) use matl::make_material_refs;
 use mech3ax_api_types::gamez::model::{FacadeMode, Model, ModelType};
 use mech3ax_api_types::Vec3;
 use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Hex, Maybe, Ptr};
@@ -90,10 +92,19 @@ struct PolygonPmC {
     materials_ptr: Ptr,      // 20
     uvs_ptr: Ptr,            // 24
     vertex_colors_ptr: Ptr,  // 28
-    matl_info_ptr: Ptr,      // 32
+    matl_refs_ptr: Ptr,      // 32
     zone_set: Hex<u32>,      // 36
 }
 impl_as_bytes!(PolygonPmC, 40);
+
+#[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern)]
+#[repr(C)]
+pub struct MaterialRefC {
+    pub material_index: u32, // 00
+    pub usage_count: u32,    // 04
+    pub polygon_ptr: Ptr,    // 08
+}
+impl_as_bytes!(MaterialRefC, 12);
 
 pub(crate) struct WrappedModelPm {
     pub(crate) model: Model,

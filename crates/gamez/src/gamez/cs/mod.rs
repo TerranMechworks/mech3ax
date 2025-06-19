@@ -7,7 +7,7 @@ use super::common::{
     NODE_INDEX_BOT_MASK, NODE_INDEX_TOP, NODE_INDEX_TOP_MASK, SIGNATURE, VERSION_CS,
 };
 use crate::gamez::cs::fixup::Fixup;
-use crate::materials;
+use crate::materials::{self, MatType};
 use crate::textures::ng as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
 use data::Campaign;
@@ -138,8 +138,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataCs> {
             }
         })
         .collect();
-    let (materials, material_count) =
-        materials::read_materials(read, &textures, materials::MatType::Ng)?;
+    let (materials, material_count) = materials::read_materials(read, &textures, MatType::Ng)?;
 
     assert_that!("model offset", read.offset == models_offset, read.offset)?;
     let models = models::read_models(read, nodes_offset, material_count, fixup)?;
@@ -171,9 +170,9 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataCs) 
 
     let textures_offset = HeaderCsC::SIZE;
     let materials_offset = textures_offset + textures::size_texture_directory(texture_count);
-    let models_offset =
-        materials_offset + materials::size_materials(&gamez.materials, materials::MatType::Ng);
-    let (nodes_offset, models) = models::size_models(models_offset, &gamez.models);
+    let models_offset = materials_offset + materials::size_materials(&gamez.materials, MatType::Ng);
+    let mut models = models::gather_materials(&gamez.materials, &gamez.models);
+    let nodes_offset = models::size_models(models_offset, &mut models);
 
     let timestamp = to_timestamp(&gamez.metadata.datetime);
 
@@ -223,8 +222,8 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataCs) 
 
     // the renamed ones were used, so that's what we must use here also
     let textures = redupe_texture_names(&gamez.textures);
-    materials::write_materials(write, &textures, &gamez.materials, materials::MatType::Ng)?;
-    models::write_models(write, models, fixup)?;
+    materials::write_materials(write, &textures, &gamez.materials, MatType::Ng)?;
+    models::write_models(write, &models, fixup)?;
     nodes::write_nodes(write, &gamez.nodes)?;
     Ok(())
 }

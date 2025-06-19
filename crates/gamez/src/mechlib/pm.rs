@@ -1,4 +1,6 @@
-use crate::model::ng::{read_model_data, read_model_info, write_model_data, write_model_info};
+use crate::model::ng::{
+    make_material_refs, read_model_data, read_model_info, write_model_data, write_model_info,
+};
 use log::trace;
 use mech3ax_api_types::gamez::mechlib::MechlibModelPm;
 use mech3ax_api_types::gamez::model::Model;
@@ -154,8 +156,12 @@ fn write_node(
     if let Some(model_index) = restore_index {
         let model = &models[model_index];
         trace!("Processing model {}", model_index);
-        write_model_info(write, model)?;
-        write_model_data(write, model)?;
+        // TODO: we could get the materials here, but it would be a pain/API
+        // change. they are only used to determine if the material is cycled,
+        // and in the default mechlib, no materials are cycled.
+        let material_refs = make_material_refs(&[], model, true);
+        write_model_info(write, model, &material_refs)?;
+        write_model_data(write, model, &material_refs)?;
     }
 
     let child_indices = match node {

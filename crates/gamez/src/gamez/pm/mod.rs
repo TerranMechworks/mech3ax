@@ -135,8 +135,8 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataPm) 
     let textures_offset = HeaderPmC::SIZE;
     let materials_offset = textures_offset + textures::size_texture_directory(texture_count);
     let models_offset = materials_offset + materials::size_materials(&gamez.materials, MatType::Ng);
-    let (nodes_offset, model_offsets) =
-        models::size_models(models_offset, model_array_size, &gamez.models);
+    let mut models = models::gather_materials(&gamez.materials, &gamez.models);
+    let nodes_offset = models::size_models(models_offset, model_array_size, &mut models);
 
     let timestamp = to_timestamp(datetime);
 
@@ -159,7 +159,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataPm) 
 
     textures::write_texture_directory(write, &gamez.textures, campaign.image_ptrs())?;
     materials::write_materials(write, &gamez.textures, &gamez.materials, MatType::Ng)?;
-    models::write_models(write, &gamez.models, &model_offsets, model_array_size)?;
+    models::write_models(write, &models, model_array_size)?;
     nodes::write_nodes(write, &gamez.nodes)?;
     Ok(())
 }

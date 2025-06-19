@@ -12,6 +12,7 @@ pub(crate) enum Campaign {
     C3,
     C4,
     C5,
+    Planes,
     Unk,
 }
 
@@ -33,6 +34,8 @@ impl Campaign {
             Campaign::C4
         } else if header == &HEADER_C5 {
             Campaign::C5
+        } else if header == &HEADER_PLANES {
+            Campaign::Planes
         } else {
             Self::Unk
         }
@@ -134,4 +137,16 @@ const HEADER_C5: HeaderCsC = HeaderCsC {
     node_array_size: 11438,
     light_index: 9979,
     nodes_offset: 5259292,
+};
+const HEADER_PLANES: HeaderCsC = HeaderCsC {
+    signature: 43455010,
+    version: 42,
+    timestamp: 967277477,
+    texture_count: 298,
+    textures_offset: 40,
+    materials_offset: 13152,
+    models_offset: 103388,
+    node_array_size: 3317,
+    light_index: 2338,
+    nodes_offset: 4881228,
 };

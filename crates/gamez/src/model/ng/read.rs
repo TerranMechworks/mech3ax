@@ -1,9 +1,8 @@
-use super::{ModelBitFlags, ModelPmC, PolygonBitFlags, PolygonPmC, WrappedModelPm};
+use super::{MaterialRefC, ModelBitFlags, ModelPmC, PolygonBitFlags, PolygonPmC, WrappedModelPm};
 use crate::model::common::*;
 use log::trace;
 use mech3ax_api_types::gamez::model::{
-    Model, ModelFlags, ModelMaterialInfo, ModelType, Polygon, PolygonFlags, PolygonMaterialNg,
-    UvCoord,
+    Model, ModelFlags, ModelType, Polygon, PolygonFlags, PolygonMaterialNg, UvCoord,
 };
 use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::CountingReader;
@@ -19,7 +18,7 @@ pub(crate) fn read_model_info(read: &mut CountingReader<impl Read>) -> Result<Wr
 pub(crate) fn assert_model_info(model: ModelPmC, offset: usize) -> Result<WrappedModelPm> {
     let model_type = assert_that!("model type", enum model.model_type, offset + 0)?;
     let facade_mode = assert_that!("facade mode", enum model.facade_mode, offset + 4)?;
-    let bitflags = assert_that!("flags", flags model.flags, offset + 8)?;
+    let bitflags = assert_that!("model flags", flags model.flags, offset + 8)?;
     assert_that!("parent count (model)", model.parent_count > 0, offset + 12)?;
 
     assert_that!(
@@ -123,9 +122,6 @@ pub(crate) fn assert_model_info(model: ModelPmC, offset: usize) -> Result<Wrappe
         lights_ptr: model.lights_ptr.0,
         morphs_ptr: model.morphs_ptr.0,
         materials_ptr: model.materials_ptr.0,
-
-        // TODO
-        material_infos: vec![],
     };
 
     Ok(WrappedModelPm {
@@ -181,8 +177,8 @@ fn assert_polygon_info(
         offset + 28
     )?;
     assert_that!(
-        "material info ptr",
-        poly.matl_info_ptr != Ptr::NULL,
+        "material refs ptr",
+        poly.matl_refs_ptr != Ptr::NULL,
         offset + 32
     )?;
 
@@ -209,7 +205,7 @@ fn assert_polygon_info(
         normal_indices_ptr: poly.normal_indices_ptr.0,
         uvs_ptr: poly.uvs_ptr.0,
         vertex_colors_ptr: poly.vertex_colors_ptr.0,
-        unk_ptr: poly.matl_info_ptr.0,
+        unk_ptr: poly.matl_refs_ptr.0,
         materials_ptr: poly.materials_ptr.0,
 
         // TODO
@@ -265,11 +261,19 @@ pub(crate) fn read_model_data(
     model.polygons = read_polygons(read, wrapped.polygon_count, material_count)?;
 
     trace!(
-        "Processing {} material infos at {}",
+        "Processing {} material refs at {}",
         wrapped.material_count,
         read.offset
     );
-    model.material_infos = read_model_material_infos(read, wrapped.material_count, material_count)?;
+    // material references are discarded, since they can be re-calculated
+    for _ in 0..wrapped.material_count {
+        let material_ref: MaterialRefC = read.read_struct()?;
+        assert_that!(
+            "material ref index",
+            material_ref.material_index < material_count,
+            read.prev
+        )?;
+    }
 
     Ok(model)
 }
@@ -354,24 +358,6 @@ fn read_materials(
                 material_index,
                 uv_coords,
             })
-        })
-        .collect()
-}
-
-fn read_model_material_infos(
-    read: &mut CountingReader<impl Read>,
-    info_count: u32,
-    material_count: u32,
-) -> Result<Vec<ModelMaterialInfo>> {
-    (0..info_count)
-        .map(|_| {
-            let tex: ModelMaterialInfo = read.read_struct()?;
-            assert_that!(
-                "material index",
-                tex.material_index < material_count,
-                read.prev
-            )?;
-            Ok(tex)
         })
         .collect()
 }

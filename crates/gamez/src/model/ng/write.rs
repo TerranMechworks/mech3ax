@@ -1,9 +1,7 @@
-use super::{ModelBitFlags, ModelPmC, PolygonBitFlags, PolygonPmC};
+use super::{MaterialRefC, ModelBitFlags, ModelPmC, PolygonBitFlags, PolygonPmC};
 use crate::model::common::*;
 use log::{trace, warn};
-use mech3ax_api_types::gamez::model::{
-    Model, ModelFlags, ModelMaterialInfo, Polygon, PolygonFlags, UvCoord,
-};
+use mech3ax_api_types::gamez::model::{Model, ModelFlags, Polygon, PolygonFlags, UvCoord};
 use mech3ax_api_types::{Color, Vec3};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, Result};
@@ -57,19 +55,21 @@ fn make_model_flags(flags: &ModelFlags) -> ModelBitFlags {
 pub(crate) fn write_model_info(
     write: &mut CountingWriter<impl Write>,
     model: &Model,
+    material_refs: &[MaterialRefC],
 ) -> Result<()> {
     let polygon_count = assert_len!(u32, model.polygons.len(), "model polygons")?;
     let vertex_count = assert_len!(u32, model.vertices.len(), "model vertices")?;
     let normal_count = assert_len!(u32, model.normals.len(), "model normals")?;
     let morph_count = assert_len!(u32, model.morphs.len(), "model morphs")?;
     let light_count = assert_len!(u32, model.lights.len(), "model lights")?;
-    let material_count = assert_len!(u32, model.material_infos.len(), "model materials")?;
 
     let polygons_ptr = assert_ptr!(polygon_count, model.polygons_ptr, "polygons");
     let vertices_ptr = assert_ptr!(vertex_count, model.vertices_ptr, "vertices");
     let normals_ptr = assert_ptr!(normal_count, model.normals_ptr, "normals");
     let lights_ptr = assert_ptr!(light_count, model.lights_ptr, "lights");
     let morphs_ptr = assert_ptr!(morph_count, model.morphs_ptr, "morphs");
+
+    let material_count = assert_len!(u32, material_refs.len(), "model materials")?;
     let materials_ptr = assert_ptr!(material_count, model.materials_ptr, "materials");
 
     let bitflags = make_model_flags(&model.flags);
@@ -154,7 +154,7 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) 
     for (index, polygon) in polygons.iter().enumerate() {
         trace!("Processing polygon info {}/{}", index, count);
 
-        let mat_count = assert_len!(u32, polygon.materials.len(), "polygon materials count")?;
+        let material_count = assert_len!(u32, polygon.materials.len(), "polygon materials count")?;
 
         let bitflags = make_polygon_flags(polygon)?;
         let zone_set = make_zone_set(&polygon.zone_set)?;
@@ -164,11 +164,11 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) 
             priority: polygon.priority,
             vertex_indices_ptr: Ptr(polygon.vertex_indices_ptr),
             normal_indices_ptr: Ptr(polygon.normal_indices_ptr),
-            material_count: mat_count,
+            material_count,
             materials_ptr: Ptr(polygon.materials_ptr),
             uvs_ptr: Ptr(polygon.uvs_ptr),
             vertex_colors_ptr: Ptr(polygon.vertex_colors_ptr),
-            matl_info_ptr: Ptr(polygon.unk_ptr),
+            matl_refs_ptr: Ptr(polygon.unk_ptr),
             zone_set,
         };
         write.write_struct(&poly)?;
@@ -238,6 +238,7 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) 
 pub(crate) fn write_model_data(
     write: &mut CountingWriter<impl Write>,
     model: &Model,
+    material_refs: &[MaterialRefC],
 ) -> Result<()> {
     if !model.vertices.is_empty() {
         trace!(
@@ -278,12 +279,12 @@ pub(crate) fn write_model_data(
     write_polygons(write, &model.polygons)?;
 
     trace!(
-        "Processing {} material infos at {}",
-        model.material_infos.len(),
+        "Processing {} material refs at {}",
+        material_refs.len(),
         write.offset
     );
-    for mi in model.material_infos.iter() {
-        write.write_struct(mi)?;
+    for material_ref in material_refs.iter() {
+        write.write_struct(material_ref)?;
     }
 
     Ok(())
@@ -291,7 +292,7 @@ pub(crate) fn write_model_data(
 
 const U32_SIZE: u32 = std::mem::size_of::<u32>() as _;
 
-pub(crate) fn size_model(model: &Model) -> u32 {
+pub(crate) fn size_model(model: &Model, material_infos: &[MaterialRefC]) -> u32 {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let mut size =
         Vec3::SIZE * (model.vertices.len() + model.normals.len() + model.morphs.len()) as u32;
@@ -312,6 +313,6 @@ pub(crate) fn size_model(model: &Model) -> u32 {
             size += U32_SIZE + UvCoord::SIZE * material.uv_coords.len() as u32;
         }
     }
-    size += ModelMaterialInfo::SIZE * model.material_infos.len() as u32;
+    size += MaterialRefC::SIZE * material_infos.len() as u32;
     size
 }

@@ -17,8 +17,8 @@ pub(crate) fn read_model_info(read: &mut CountingReader<impl Read>) -> Result<Wr
 
 fn assert_model_info(model: ModelRcC, offset: usize) -> Result<WrappedModelRc> {
     let model_type = assert_that!("model type", enum model.model_type, offset + 0)?;
-    // facade tilt in flags
-    let bitflags = assert_that!("flags", flags model.flags, offset + 4)?;
+    // facade mode in flags
+    let bitflags = assert_that!("model flags", flags model.flags, offset + 4)?;
     assert_that!("parent count (model)", model.parent_count > 0, offset + 8)?;
 
     assert_that!(
@@ -109,9 +109,6 @@ fn assert_model_info(model: ModelRcC, offset: usize) -> Result<WrappedModelRc> {
         lights_ptr: model.lights_ptr.0,
         morphs_ptr: model.morphs_ptr.0,
         materials_ptr: 0,
-
-        // TODO
-        material_infos: vec![],
     };
 
     Ok(WrappedModelRc {

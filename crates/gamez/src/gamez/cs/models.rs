@@ -1,10 +1,11 @@
 use super::fixup::Fixup;
 use crate::gamez::common::{read_model_array_nonseq, write_model_array_nonseq, MODEL_ARRAY_C_SIZE};
 use crate::model::ng::{
-    assert_model_info, assert_model_info_zero, read_model_data, size_model, write_model_data,
-    write_model_info, ModelPmC, MODEL_C_SIZE,
+    assert_model_info, assert_model_info_zero, make_material_refs, read_model_data, size_model,
+    write_model_data, write_model_info, MaterialRefC, ModelPmC, MODEL_C_SIZE,
 };
 use log::trace;
+use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::gamez::model::Model;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
@@ -91,7 +92,7 @@ pub(crate) fn read_models(
 
 pub(crate) fn write_models(
     write: &mut CountingWriter<impl Write>,
-    models: Vec<Option<(&Model, u32)>>,
+    models: &[Option<ModelInfo>],
     fixup: Fixup,
 ) -> Result<()> {
     let array_size = assert_len!(i32, models.len(), "GameZ models")?;
@@ -106,19 +107,20 @@ pub(crate) fn write_models(
     let model_array = write_model_array_nonseq(write, array_size, count, last_index)?;
 
     let model_zero = ModelPmC::default();
+
     for ((model_index, expected_index), item) in model_array.iter().zip(models.iter()) {
         match item {
-            Some((model, offset)) => {
+            Some(model_info) => {
                 trace!("Processing model info {}/{}", model_index, array_size);
-                write_model_info(write, model)?;
-                write.write_u32(*offset)?;
+                write_model_info(write, model_info.model, &model_info.material_refs)?;
+                write.write_u32(model_info.offset)?;
             }
             None => {
                 trace!(
                     "Processing model info zero {}/{} at {}",
                     model_index,
                     array_size,
-                    write.offset
+                    write.offset,
                 );
                 write.write_struct_no_log(&model_zero)?;
                 let expected_index = fixup.model_index_remap(expected_index);
@@ -128,33 +130,52 @@ pub(crate) fn write_models(
     }
 
     for (index, item) in models.iter().enumerate() {
-        if let Some((model, _)) = item {
+        if let Some(model_info) = item {
             trace!("Processing model data {}/{}", index, array_size);
-            write_model_data(write, model)?;
+            write_model_data(write, model_info.model, &model_info.material_refs)?;
         }
     }
 
     Ok(())
 }
 
+pub(crate) struct ModelInfo<'a> {
+    model: &'a Model,
+    material_refs: Vec<MaterialRefC>,
+    offset: u32,
+}
+
+pub(crate) fn gather_materials<'a>(
+    materials: &[Material],
+    models: &'a [Option<Model>],
+) -> Vec<Option<ModelInfo<'a>>> {
+    models
+        .iter()
+        .map(Option::as_ref)
+        .map(|item| {
+            item.map(|model| {
+                let material_refs = make_material_refs(materials, model, false);
+                ModelInfo {
+                    model,
+                    material_refs,
+                    offset: 0,
+                }
+            })
+        })
+        .collect()
+}
+
 const U32_SIZE: u32 = std::mem::size_of::<u32>() as _;
 
-pub(crate) fn size_models(
-    offset: u32,
-    models: &[Option<Model>],
-) -> (u32, Vec<Option<(&Model, u32)>>) {
+pub(crate) fn size_models(offset: u32, models: &mut [Option<ModelInfo>]) -> u32 {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let array_size = models.len() as u32;
     let mut offset = offset + MODEL_ARRAY_C_SIZE + (MODEL_C_SIZE + U32_SIZE) * array_size;
-    let offsets = models
-        .iter()
-        .map(|model| {
-            model.as_ref().map(|model| {
-                let current = offset;
-                offset += size_model(model);
-                (model, current)
-            })
-        })
-        .collect();
-    (offset, offsets)
+    for item in models {
+        if let Some(model_info) = item {
+            model_info.offset = offset;
+            offset += size_model(model_info.model, &model_info.material_refs);
+        }
+    }
+    offset
 }

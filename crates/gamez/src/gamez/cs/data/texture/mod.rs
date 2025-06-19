@@ -6,6 +6,7 @@ mod c2b;
 mod c3;
 mod c4;
 mod c5;
+mod planes;
 
 use super::Campaign;
 
@@ -20,6 +21,7 @@ impl Campaign {
             Self::C3 => c3::IMAGE_PTR,
             Self::C4 => c4::IMAGE_PTR,
             Self::C5 => c5::IMAGE_PTR,
+            Self::Planes => planes::IMAGE_PTR,
             Self::Unk => &[],
         }
     }
