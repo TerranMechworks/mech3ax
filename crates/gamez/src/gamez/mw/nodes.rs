@@ -229,7 +229,7 @@ pub(crate) fn write_nodes(
     offset: u32,
 ) -> Result<()> {
     let mut offset = offset + (NodeMwC::SIZE + 4) * (array_size as u32);
-    let node_count = assert_len!(i32, nodes.len(), "nodes")?;
+    let node_count = assert_len!(i32, nodes.len(), "GameZ nodes")?;
 
     for (index, node) in nodes.iter().enumerate() {
         trace!("Processing node info {}/{}", index, node_count);

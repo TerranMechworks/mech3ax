@@ -401,23 +401,22 @@ macro_rules! assert_with_msg {
 
 #[macro_export]
 macro_rules! assert_len {
-    ($ty:ty, $value:expr, $name:literal) => {{
+    ($ty:ty, $value:expr, $fmt:literal) => {{
         let value: usize = $value;
         <$ty>::try_from(value).map_err(|_e| {
             $crate::Error::Assert($crate::assert::AssertionError(format!(
                 "`{}` must be <= {max}, but was {value}",
-                $name,
+                $fmt,
                 max = <$ty>::MAX,
                 value = value,
             )))
         })
     }};
-    ($ty:ty, $value:expr, $name:literal, $(arg:expr),+ $(,)?) => {{
+    ($ty:ty, $value:expr, $fmt:literal, $($arg:tt),+ $(,)?) => {{
         let value: usize = $value;
         <$ty>::try_from(value).map_err(|_e| {
             $crate::Error::Assert($crate::assert::AssertionError(format!(
-                concat!("`", $name, "` must be <= {max}, but was {value}"),
-                $name,
+                concat!("`", $fmt, "` must be <= {max}, but was {value}"),
                 $($arg,)+
                 max = <$ty>::MAX,
                 value = value,

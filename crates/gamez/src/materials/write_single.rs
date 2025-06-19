@@ -81,13 +81,18 @@ pub(super) fn write_cycle(
     write: &mut CountingWriter<impl Write>,
     textures: &[Texture],
     material: &Material,
-    index: usize,
+    matl_index: usize,
 ) -> Result<()> {
     if let Material::Textured(mat) = material {
         if let Some(cycle) = &mat.cycle {
-            trace!("Processing cycle info {}", index);
+            trace!("Processing cycle info {}", matl_index);
 
-            let count = assert_len!(u32, cycle.textures.len(), "cycle textures")?;
+            let count = assert_len!(
+                i32,
+                cycle.textures.len(),
+                "material {} cycle textures",
+                matl_index
+            )?;
             let info = CycleInfoC {
                 looping: cycle.looping.into(),
                 current_frame: cycle.current_frame,

@@ -58,11 +58,11 @@ pub(crate) fn write_model_info(
     material_refs: &[MaterialRefC],
     index: usize,
 ) -> Result<()> {
-    let polygon_count = assert_len!(u32, model.polygons.len(), "model polygons")?;
-    let vertex_count = assert_len!(u32, model.vertices.len(), "model vertices")?;
-    let normal_count = assert_len!(u32, model.normals.len(), "model normals")?;
-    let morph_count = assert_len!(u32, model.morphs.len(), "model morphs")?;
-    let light_count = assert_len!(u32, model.lights.len(), "model lights")?;
+    let polygon_count = assert_len!(u32, model.polygons.len(), "model {} polygons", index)?;
+    let vertex_count = assert_len!(u32, model.vertices.len(), "model {} vertices", index)?;
+    let normal_count = assert_len!(u32, model.normals.len(), "model {} normals", index)?;
+    let morph_count = assert_len!(u32, model.morphs.len(), "model {} morphs", index)?;
+    let light_count = assert_len!(u32, model.lights.len(), "model {} lights", index)?;
 
     let polygons_ptr = assert_ptr!(polygon_count, model.polygons_ptr, "polygons");
     let vertices_ptr = assert_ptr!(vertex_count, model.vertices_ptr, "vertices");
@@ -70,7 +70,7 @@ pub(crate) fn write_model_info(
     let lights_ptr = assert_ptr!(light_count, model.lights_ptr, "lights");
     let morphs_ptr = assert_ptr!(morph_count, model.morphs_ptr, "morphs");
 
-    let material_count = assert_len!(u32, material_refs.len(), "model materials")?;
+    let material_count = assert_len!(u32, material_refs.len(), "model {} materials", index)?;
     let materials_ptr = assert_ptr!(material_count, model.materials_ptr, "materials");
 
     let bitflags = make_model_flags(&model.flags, index);
@@ -109,7 +109,13 @@ fn make_polygon_flags(
     model_index: usize,
     poly_index: usize,
 ) -> Result<PolygonBitFlags> {
-    let verts_in_poly = assert_len!(u32, polygon.vertex_indices.len(), "polygon vertex indices")?;
+    let verts_in_poly = assert_len!(
+        u32,
+        polygon.vertex_indices.len(),
+        "model {} polygon {} vertex indices",
+        model_index,
+        poly_index,
+    )?;
 
     if verts_in_poly < 3 {
         warn!(
@@ -165,7 +171,13 @@ fn write_polygons(
     for (poly_index, polygon) in polygons.iter().enumerate() {
         trace!("Processing polygon info {}/{}", poly_index, count);
 
-        let material_count = assert_len!(u32, polygon.materials.len(), "polygon materials count")?;
+        let material_count = assert_len!(
+            u32,
+            polygon.materials.len(),
+            "model {} polygon {} materials count",
+            model_index,
+            poly_index,
+        )?;
 
         let bitflags = make_polygon_flags(polygon, model_index, poly_index)?;
         let zone_set = make_zone_set(&polygon.zone_set)?;
@@ -309,7 +321,7 @@ pub(crate) fn write_model_data(
             model.lights.len(),
             write.offset
         );
-        write_lights(write, &model.lights)?;
+        write_lights(write, &model.lights, index)?;
     }
 
     write_polygons(write, &model.polygons, index)?;

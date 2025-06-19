@@ -14,7 +14,7 @@ pub(crate) fn write_materials(
     materials: &[Material],
     ty: MatType,
 ) -> Result<()> {
-    let materials_len = assert_len!(i16, materials.len(), "materials")?;
+    let materials_len = assert_len!(i16, materials.len(), "GameZ materials")?;
     // Cast safety: i32 > i16
     let count = materials_len as i32;
 

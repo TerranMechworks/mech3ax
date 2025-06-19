@@ -176,7 +176,7 @@ pub(crate) struct LightC {
     pub(crate) unk00: u32,       // 00
     pub(crate) unk04: u32,       // 04
     pub(crate) unk08: f32,       // 08
-    pub(crate) extra_count: u32, // 12 dim_count
+    pub(crate) extra_count: i32, // 12 dim_count
     pub(crate) zero16: u32,      // 16
     pub(crate) zero20: u32,      // 20
     pub(crate) unk24: Ptr,       // 24
@@ -303,7 +303,7 @@ pub(crate) fn read_lights(
     lights
         .into_iter()
         .map(|light| {
-            let extra = read_vec3s(read, light.extra_count)?;
+            let extra = read_vec3s(read, light.extra_count as _)?;
             Ok(PointLight {
                 unk00: light.unk00,
                 unk04: light.unk04,
@@ -328,6 +328,7 @@ pub(crate) fn read_lights(
 pub(crate) fn write_lights(
     write: &mut CountingWriter<impl Write>,
     lights: &[PointLight],
+    model_index: usize,
 ) -> Result<()> {
     for (index, light) in lights.iter().enumerate() {
         trace!(
@@ -336,7 +337,7 @@ pub(crate) fn write_lights(
             LightC::SIZE,
             write.offset
         );
-        let extra_count = assert_len!(u32, light.extra.len(), "light extra")?;
+        let extra_count = assert_len!(i32, light.extra.len(), "model {} light extra", model_index)?;
         let flags = LightFlags::from_bits_truncate(light.flags);
         let light = LightC {
             unk00: light.unk00,

@@ -75,8 +75,8 @@ pub fn write_materials(
     write: &mut CountingWriter<impl Write>,
     materials: &[Material],
 ) -> Result<()> {
-    let materials_len = assert_len!(u32, materials.len(), "materials")?;
-    write.write_u32(materials_len)?;
+    let materials_len = assert_len!(i32, materials.len(), "mechlib materials")?;
+    write.write_i32(materials_len)?;
 
     for (index, material) in materials.iter().enumerate() {
         trace!("Processing material {}", index);
