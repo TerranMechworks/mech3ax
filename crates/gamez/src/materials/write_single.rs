@@ -1,10 +1,11 @@
-use super::{CycleInfoC, MatType, MaterialC, MaterialFlags};
+use super::{MatType, MaterialC, MaterialCycleC, MaterialFlags};
 use log::trace;
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::gamez::Texture;
 use mech3ax_api_types::Color;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, Result};
+use mech3ax_types::Ptr;
 use std::io::Write;
 
 pub(super) fn find_texture_index_by_name(textures: &[Texture], texture_name: &str) -> Result<u32> {
@@ -35,9 +36,9 @@ pub(crate) fn write_material(
             }
             let cycle_ptr = if let Some(cycle) = &material.cycle {
                 flags |= MaterialFlags::CYCLED;
-                cycle.cycle_ptr
+                Ptr(cycle.cycle_ptr)
             } else {
-                0
+                Ptr::NULL
             };
             MaterialC {
                 alpha: 0xFF,
@@ -69,7 +70,7 @@ pub(crate) fn write_material(
                 half24: 0.5,
                 half28: 0.5,
                 soil: material.soil.maybe(),
-                cycle_ptr: 0,
+                cycle_ptr: Ptr::NULL,
             }
         }
     };
@@ -85,7 +86,7 @@ pub(super) fn write_cycle(
 ) -> Result<()> {
     if let Material::Textured(mat) = material {
         if let Some(cycle) = &mat.cycle {
-            trace!("Processing cycle info {}", matl_index);
+            trace!("Processing material cycle {}", matl_index);
 
             let count = assert_len!(
                 i32,
@@ -93,16 +94,16 @@ pub(super) fn write_cycle(
                 "material {} cycle textures",
                 matl_index
             )?;
-            let info = CycleInfoC {
+            let cyc = MaterialCycleC {
                 looping: cycle.looping.into(),
                 current_frame: cycle.current_frame,
                 current_index: 0.0,
                 speed: cycle.speed,
                 tex_map_count: count,
                 tex_map_index: count,
-                tex_map_ptr: cycle.tex_map_ptr,
+                tex_map_ptr: Ptr(cycle.tex_map_ptr),
             };
-            write.write_struct(&info)?;
+            write.write_struct(&cyc)?;
 
             for texture_name in &cycle.textures {
                 let index = find_texture_index_by_name(textures, texture_name)?;

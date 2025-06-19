@@ -1,4 +1,4 @@
-use super::{CycleInfoC, MatType, MaterialC, MaterialFlags, RawMaterial, RawTexturedMaterial};
+use super::{MatType, MaterialC, MaterialCycleC, MaterialFlags, RawMaterial, RawTexturedMaterial};
 use log::trace;
 use mech3ax_api_types::gamez::materials::{ColoredMaterial, CycleData, Soil, TexturedMaterial};
 use mech3ax_api_types::gamez::Texture;
@@ -52,7 +52,7 @@ pub(crate) fn read_material(
 
         RawMaterial::Textured(RawTexturedMaterial {
             pointer: material.index,
-            cycle_ptr: material.cycle_ptr,
+            cycle_ptr: material.cycle_ptr.0,
             soil,
             flag: flag_unknown,
         })
@@ -107,26 +107,28 @@ pub(super) fn read_cycle(
     mat: &mut TexturedMaterial,
     textures: &[Texture],
 ) -> Result<()> {
-    let info: CycleInfoC = read.read_struct()?;
+    let cycle: MaterialCycleC = read.read_struct()?;
 
-    let looping = assert_that!("cycle looping", bool info.looping, read.prev + 0)?;
+    let looping = assert_that!("cycle looping", bool cycle.looping, read.prev + 0)?;
     assert_that!(
         "cycle current index",
-        info.current_index == 0.0,
+        cycle.current_index == 0.0,
         read.prev + 8
     )?;
-    // cycle speed, or frame rate?
-    // in MW: 2.0 <= info.unk12 <= 16.0
-    // in CS: 0.0 <= info.unk12 <= 16.0
 
     assert_that!(
-        "cycle tex map index",
-        info.tex_map_index == info.tex_map_count,
+        "cycle tex map count",
+        cycle.tex_map_count >= 0,
         read.prev + 20
     )?;
-    assert_that!("cycle tex map ptr", info.tex_map_ptr != 0, read.prev + 24)?;
+    assert_that!(
+        "cycle tex map index",
+        cycle.tex_map_index == cycle.tex_map_count,
+        read.prev + 20
+    )?;
+    assert_that!("cycle tex map ptr", cycle.tex_map_ptr != 0, read.prev + 24)?;
 
-    let textures = (0..info.tex_map_count)
+    let textures = (0..cycle.tex_map_count)
         .map(|_| {
             let texture_index = u32_to_usize(read.read_u32()?);
             assert_that!("texture index", texture_index < textures.len(), read.prev)?;
@@ -139,10 +141,10 @@ pub(super) fn read_cycle(
     mat.cycle = Some(CycleData {
         textures,
         looping,
-        speed: info.speed,
-        current_frame: info.current_frame,
+        speed: cycle.speed,
+        current_frame: cycle.current_frame,
         cycle_ptr: mat.pointer,
-        tex_map_ptr: info.tex_map_ptr,
+        tex_map_ptr: cycle.tex_map_ptr.0,
     });
     // undo the horrible hack
     mat.pointer = 0;

@@ -1,11 +1,12 @@
 use super::write_single::{find_texture_index_by_name, write_cycle, write_material};
-use super::{MatType, MaterialC, MaterialFlags, MaterialInfoC};
+use super::{MatType, MaterialArrayC, MaterialC, MaterialFlags};
 use log::trace;
 use mech3ax_api_types::gamez::materials::{Material, Soil};
 use mech3ax_api_types::gamez::Texture;
 use mech3ax_api_types::Color;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, Result};
+use mech3ax_types::Ptr;
 use std::io::Write;
 
 pub(crate) fn write_materials(
@@ -15,16 +16,15 @@ pub(crate) fn write_materials(
     ty: MatType,
 ) -> Result<()> {
     let materials_len = assert_len!(i16, materials.len(), "GameZ materials")?;
-    // Cast safety: i32 > i16
-    let count = materials_len as i32;
+    let count: i32 = materials_len.into();
 
-    let info = MaterialInfoC {
+    let matl_array = MaterialArrayC {
         array_size: ty.size_i32(),
         count,
         index_max: count,
         index_last: count - 1,
     };
-    write.write_struct(&info)?;
+    write.write_struct(&matl_array)?;
 
     for (index, material) in (0i16..).zip(materials.iter()) {
         trace!("Processing material {}/{}", index, materials_len);
@@ -90,7 +90,7 @@ fn write_materials_zero(
         half24: 0.0,
         half28: 0.0,
         soil: Soil::Default.maybe(),
-        cycle_ptr: 0,
+        cycle_ptr: Ptr::NULL,
     };
 
     let end = ty.size_i16();

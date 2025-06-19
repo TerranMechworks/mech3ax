@@ -7,7 +7,7 @@ mod write_single;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::materials::{ColoredMaterial, Material, Soil};
 use mech3ax_api_types::Color;
-use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Bool32, Maybe};
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Bool32, Maybe, Ptr};
 pub(crate) use read_multi::read_materials;
 pub(crate) use read_single::read_material;
 pub(crate) use write_multi::write_materials;
@@ -46,13 +46,13 @@ impl MatType {
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
-struct MaterialInfoC {
+struct MaterialArrayC {
     array_size: i32,
     count: i32,
     index_max: i32,
     index_last: i32,
 }
-impl_as_bytes!(MaterialInfoC, 16);
+impl_as_bytes!(MaterialArrayC, 16);
 
 bitflags! {
     struct MaterialFlags: u8 {
@@ -79,22 +79,22 @@ struct MaterialC {
     half24: f32,    // 24
     half28: f32,    // 28
     soil: MSoil,    // 32
-    cycle_ptr: u32, // 36
+    cycle_ptr: Ptr, // 36
 }
 impl_as_bytes!(MaterialC, 40);
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
-struct CycleInfoC {
+struct MaterialCycleC {
     looping: Bool32,    // 00
     current_frame: i32, // 04
     current_index: f32, // 08
     speed: f32,         // 12
-    tex_map_count: u32, // 16
-    tex_map_index: u32, // 20
-    tex_map_ptr: u32,   // 24
+    tex_map_count: i32, // 16
+    tex_map_index: i32, // 20
+    tex_map_ptr: Ptr,   // 24
 }
-impl_as_bytes!(CycleInfoC, 28);
+impl_as_bytes!(MaterialCycleC, 28);
 
 #[derive(Debug)]
 pub(crate) struct RawTexturedMaterial {
@@ -112,11 +112,11 @@ pub(crate) enum RawMaterial {
 
 pub(crate) fn size_materials(materials: &[Material], ty: MatType) -> u32 {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
-    let mut size = MaterialInfoC::SIZE + (MaterialC::SIZE + 2 + 2) * ty.size_u32();
+    let mut size = MaterialArrayC::SIZE + (MaterialC::SIZE + 2 + 2) * ty.size_u32();
     for material in materials {
         if let Material::Textured(mat) = material {
             if let Some(cycle) = &mat.cycle {
-                size += CycleInfoC::SIZE + (cycle.textures.len() as u32) * 4;
+                size += MaterialCycleC::SIZE + (cycle.textures.len() as u32) * 4;
             }
         }
     }

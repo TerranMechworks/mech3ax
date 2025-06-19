@@ -1,5 +1,5 @@
 use super::read_single::{assert_material_zero, read_cycle, read_material};
-use super::{MatType, MaterialC, MaterialInfoC};
+use super::{MatType, MaterialArrayC, MaterialC};
 use crate::materials::RawMaterial;
 use log::trace;
 use mech3ax_api_types::gamez::materials::{Material, TexturedMaterial};
@@ -14,9 +14,9 @@ pub(crate) fn read_materials(
     textures: &[Texture],
     ty: MatType,
 ) -> Result<(Vec<Material>, u32)> {
-    let info: MaterialInfoC = read.read_struct()?;
+    let matl_array: MaterialArrayC = read.read_struct()?;
 
-    let (valid, material_count) = assert_material_info(info, ty, read.prev)?;
+    let (valid, material_count) = assert_material_array(matl_array, ty, read.prev)?;
 
     // read materials without cycle data
     let mut materials = (0..valid)
@@ -76,7 +76,7 @@ pub(crate) fn read_materials(
             Material::Colored(_) => {}
             Material::Textured(mat) if mat.pointer == 0 => {}
             Material::Textured(mat) => {
-                trace!("Processing cycle info {}", index);
+                trace!("Processing material cycle {}", index);
                 read_cycle(read, mat, textures)?;
             }
         }
@@ -85,19 +85,27 @@ pub(crate) fn read_materials(
     Ok((materials, material_count))
 }
 
-fn assert_material_info(info: MaterialInfoC, ty: MatType, offset: usize) -> Result<(i16, u32)> {
-    assert_that!("matl array size", 0 <= info.array_size <= ty.size_i32(), offset + 0)?;
-    assert_that!("matl count", 0 <= info.count <= info.array_size, offset + 4)?;
-    assert_that!("matl index max", info.index_max == info.count, offset + 8)?;
+fn assert_material_array(
+    matl_array: MaterialArrayC,
+    ty: MatType,
+    offset: usize,
+) -> Result<(i16, u32)> {
+    assert_that!("matl array size", 0 <= matl_array.array_size <= ty.size_i32(), offset + 0)?;
+    assert_that!("matl count", 0 <= matl_array.count <= matl_array.array_size, offset + 4)?;
+    assert_that!(
+        "matl index max",
+        matl_array.index_max == matl_array.count,
+        offset + 8
+    )?;
     assert_that!(
         "matl index last",
-        info.index_last == info.count - 1,
+        matl_array.index_last == matl_array.count - 1,
         offset + 12
     )?;
 
     // Cast safety: see asserts above
-    let valid = info.count as i16;
-    let material_count = info.count as u32;
+    let valid = matl_array.count as i16;
+    let material_count = matl_array.count as u32;
     Ok((valid, material_count))
 }
 

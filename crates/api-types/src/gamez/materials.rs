@@ -55,7 +55,6 @@ pub struct TexturedMaterial {
     // the GameZ data doesn't use the pointer (it stores the texture name index)
     #[serde(skip_serializing_if = "pointer_zero", default)]
     pub pointer: u32,
-    // the Mechlib data doesn't have cycled textures
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub cycle: Option<CycleData>,
     #[serde(skip_serializing_if = "Soil::is_default", default)]
