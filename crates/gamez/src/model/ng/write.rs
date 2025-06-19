@@ -8,7 +8,7 @@ use mech3ax_common::{assert_len, assert_with_msg, Result};
 use mech3ax_types::{AsBytes as _, Ptr};
 use std::io::Write;
 
-fn make_model_flags(flags: &ModelFlags) -> ModelBitFlags {
+fn make_model_flags(flags: &ModelFlags, _index: usize) -> ModelBitFlags {
     let ModelFlags {
         lighting,
         fog,
@@ -56,6 +56,7 @@ pub(crate) fn write_model_info(
     write: &mut CountingWriter<impl Write>,
     model: &Model,
     material_refs: &[MaterialRefC],
+    index: usize,
 ) -> Result<()> {
     let polygon_count = assert_len!(u32, model.polygons.len(), "model polygons")?;
     let vertex_count = assert_len!(u32, model.vertices.len(), "model vertices")?;
@@ -72,7 +73,7 @@ pub(crate) fn write_model_info(
     let material_count = assert_len!(u32, material_refs.len(), "model materials")?;
     let materials_ptr = assert_ptr!(material_count, model.materials_ptr, "materials");
 
-    let bitflags = make_model_flags(&model.flags);
+    let bitflags = make_model_flags(&model.flags, index);
 
     let model = ModelPmC {
         model_type: model.model_type.maybe(),
@@ -103,13 +104,17 @@ pub(crate) fn write_model_info(
     Ok(())
 }
 
-fn make_polygon_flags(polygon: &Polygon) -> Result<PolygonBitFlags> {
+fn make_polygon_flags(
+    polygon: &Polygon,
+    model_index: usize,
+    poly_index: usize,
+) -> Result<PolygonBitFlags> {
     let verts_in_poly = assert_len!(u32, polygon.vertex_indices.len(), "polygon vertex indices")?;
 
     if verts_in_poly < 3 {
         warn!(
-            "WARN: Expected >= 3 vertex indices, but got {}",
-            verts_in_poly
+            "WARN: model {} polygon {} expected >= 3 vertex indices, but got {}",
+            model_index, poly_index, verts_in_poly,
         );
     }
 
@@ -117,9 +122,11 @@ fn make_polygon_flags(polygon: &Polygon) -> Result<PolygonBitFlags> {
         .with_base(verts_in_poly)
         .ok_or_else(|| {
             assert_with_msg!(
-                "Expected < {} vertex indices, but got {}",
+                "Model {} polygon {} expected < {} vertex indices, but got {}",
+                model_index,
+                poly_index,
                 PolygonBitFlags::VERTEX_COUNT + 1,
-                verts_in_poly
+                verts_in_poly,
             )
         })?;
 
@@ -149,14 +156,18 @@ fn make_polygon_flags(polygon: &Polygon) -> Result<PolygonBitFlags> {
     Ok(bitflags)
 }
 
-fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) -> Result<()> {
+fn write_polygons(
+    write: &mut CountingWriter<impl Write>,
+    polygons: &[Polygon],
+    model_index: usize,
+) -> Result<()> {
     let count = polygons.len();
-    for (index, polygon) in polygons.iter().enumerate() {
-        trace!("Processing polygon info {}/{}", index, count);
+    for (poly_index, polygon) in polygons.iter().enumerate() {
+        trace!("Processing polygon info {}/{}", poly_index, count);
 
         let material_count = assert_len!(u32, polygon.materials.len(), "polygon materials count")?;
 
-        let bitflags = make_polygon_flags(polygon)?;
+        let bitflags = make_polygon_flags(polygon, model_index, poly_index)?;
         let zone_set = make_zone_set(&polygon.zone_set)?;
 
         let poly = PolygonPmC {
@@ -168,13 +179,13 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) 
             materials_ptr: Ptr(polygon.materials_ptr),
             uvs_ptr: Ptr(polygon.uvs_ptr),
             vertex_colors_ptr: Ptr(polygon.vertex_colors_ptr),
-            matl_refs_ptr: Ptr(polygon.unk_ptr),
+            matl_refs_ptr: Ptr(polygon.matl_refs_ptr),
             zone_set,
         };
         write.write_struct(&poly)?;
     }
-    for (index, polygon) in polygons.iter().enumerate() {
-        trace!("Processing polygon data {}/{}", index, count);
+    for (poly_index, polygon) in polygons.iter().enumerate() {
+        trace!("Processing polygon data {}/{}", poly_index, count);
 
         let vertex_count = polygon.vertex_indices.len();
         trace!(
@@ -187,7 +198,9 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) 
         if let Some(normal_indices) = &polygon.normal_indices {
             if normal_indices.len() != vertex_count {
                 warn!(
-                    "WARN: Have {} vertex indices and {} normal indices",
+                    "WARN: model {} polygon {} has {} vertex indices and {} normal indices",
+                    model_index,
+                    poly_index,
                     vertex_count,
                     normal_indices.len(),
                 );
@@ -217,12 +230,34 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) 
         trace!("Material indices: {:?}", material_indices);
 
         for material in polygon.materials.iter() {
-            trace!(
-                "Processing {} UV coords at {}",
-                material.uv_coords.len(),
-                write.offset
+            if let Some(uv_coords) = &material.uv_coords {
+                if uv_coords.len() != vertex_count {
+                    warn!(
+                        "WARN: model {} polygon {} has {} vertex indices and {} UV coords",
+                        model_index,
+                        poly_index,
+                        vertex_count,
+                        uv_coords.len(),
+                    );
+                }
+
+                trace!(
+                    "Processing {} UV coords at {}",
+                    uv_coords.len(),
+                    write.offset
+                );
+                write_uvs(write, uv_coords)?;
+            }
+        }
+
+        if polygon.vertex_colors.len() != vertex_count {
+            warn!(
+                "WARN: model {} polygon{} has {} vertex indices and {} vertex colors",
+                model_index,
+                poly_index,
+                vertex_count,
+                polygon.vertex_colors.len(),
             );
-            write_uvs(write, &material.uv_coords)?;
         }
 
         trace!(
@@ -239,6 +274,7 @@ pub(crate) fn write_model_data(
     write: &mut CountingWriter<impl Write>,
     model: &Model,
     material_refs: &[MaterialRefC],
+    index: usize,
 ) -> Result<()> {
     if !model.vertices.is_empty() {
         trace!(
@@ -276,7 +312,7 @@ pub(crate) fn write_model_data(
         write_lights(write, &model.lights)?;
     }
 
-    write_polygons(write, &model.polygons)?;
+    write_polygons(write, &model.polygons, index)?;
 
     trace!(
         "Processing {} material refs at {}",
@@ -292,7 +328,7 @@ pub(crate) fn write_model_data(
 
 const U32_SIZE: u32 = std::mem::size_of::<u32>() as _;
 
-pub(crate) fn size_model(model: &Model, material_infos: &[MaterialRefC]) -> u32 {
+pub(crate) fn size_model(model: &Model, material_refs: &[MaterialRefC]) -> u32 {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let mut size =
         Vec3::SIZE * (model.vertices.len() + model.normals.len() + model.morphs.len()) as u32;
@@ -310,9 +346,14 @@ pub(crate) fn size_model(model: &Model, material_infos: &[MaterialRefC]) -> u32 
             + U32_SIZE * normal_indices_len
             + Color::SIZE * polygon.vertex_colors.len() as u32;
         for material in &polygon.materials {
-            size += U32_SIZE + UvCoord::SIZE * material.uv_coords.len() as u32;
+            let uv_len = material
+                .uv_coords
+                .as_ref()
+                .map(Vec::len)
+                .unwrap_or_default();
+            size += U32_SIZE + UvCoord::SIZE * uv_len as u32;
         }
     }
-    size += MaterialRefC::SIZE * material_infos.len() as u32;
+    size += MaterialRefC::SIZE * material_refs.len() as u32;
     size
 }

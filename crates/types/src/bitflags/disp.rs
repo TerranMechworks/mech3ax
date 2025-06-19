@@ -21,7 +21,7 @@ macro_rules! fmt_flags {
             if base != 0 {
                 let num = v & base;
                 set.entry(&num);
-                v = v & !base;
+                v &= !base;
             }
             for index in 0..$bits {
                 if v & (1 << index) != 0 {

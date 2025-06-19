@@ -123,8 +123,8 @@ fn write_node_and_model(
     if let Some(model_index) = restore_index {
         let model = &models[model_index];
         trace!("Processing model {}", model_index);
-        write_model_info(write, model)?;
-        write_model_data(write, model)?;
+        write_model_info(write, model, model_index)?;
+        write_model_data(write, model, model_index)?;
     }
 
     let child_indices = match node {

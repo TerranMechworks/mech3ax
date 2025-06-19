@@ -2,7 +2,7 @@ use super::{MaterialRefC, ModelBitFlags, ModelPmC, PolygonBitFlags, PolygonPmC, 
 use crate::model::common::*;
 use log::trace;
 use mech3ax_api_types::gamez::model::{
-    Model, ModelFlags, ModelType, Polygon, PolygonFlags, PolygonMaterialNg, UvCoord,
+    Model, ModelFlags, ModelType, Polygon, PolygonFlags, PolygonMaterial, UvCoord,
 };
 use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::CountingReader;
@@ -105,13 +105,11 @@ pub(crate) fn assert_model_info(model: ModelPmC, offset: usize) -> Result<Wrappe
         facade_mode,
         flags,
         parent_count: model.parent_count,
-
         vertices: vec![],
         normals: vec![],
         morphs: vec![],
         lights: vec![],
         polygons: vec![],
-
         texture_scroll,
         bbox_mid: model.bbox_mid,
         bbox_diag: model.bbox_diag,
@@ -170,7 +168,7 @@ fn assert_polygon_info(
         poly.materials_ptr != Ptr::NULL,
         offset + 20
     )?;
-    assert_that!("uvs ptr", poly.uvs_ptr != Ptr::NULL, offset + 24)?;
+    // uvs ptr is variable, and determines whether UVs are loaded
     assert_that!(
         "vertex colors ptr",
         poly.vertex_colors_ptr != Ptr::NULL,
@@ -192,24 +190,20 @@ fn assert_polygon_info(
     };
 
     let polygon = Polygon {
-        vertex_indices: vec![],
-        vertex_colors: vec![],
-        normal_indices: None,
-        uv_coords: None,
-        material_index: 0,
         flags,
         priority: poly.priority,
         zone_set,
+        vertex_indices: vec![],
+        normal_indices: None,
+        vertex_colors: vec![],
+        materials: vec![],
 
         vertex_indices_ptr: poly.vertex_indices_ptr.0,
         normal_indices_ptr: poly.normal_indices_ptr.0,
         uvs_ptr: poly.uvs_ptr.0,
         vertex_colors_ptr: poly.vertex_colors_ptr.0,
-        unk_ptr: poly.matl_refs_ptr.0,
+        matl_refs_ptr: poly.matl_refs_ptr.0,
         materials_ptr: poly.materials_ptr.0,
-
-        // TODO
-        materials: vec![],
     };
 
     Ok((poly_index, verts_in_poly, poly.material_count, polygon))
@@ -314,7 +308,13 @@ fn read_polygons(
                 polygon.normal_indices = Some(read_u32s(read, verts_in_poly)?);
             }
 
-            polygon.materials = read_materials(read, mat_count, material_count, verts_in_poly)?;
+            polygon.materials = read_materials(
+                read,
+                mat_count,
+                material_count,
+                verts_in_poly,
+                polygon.uvs_ptr != 0,
+            )?;
 
             trace!(
                 "Processing {} vertex colors at {}",
@@ -333,7 +333,8 @@ fn read_materials(
     mat_count: u32,
     material_count: u32,
     verts_in_poly: u32,
-) -> Result<Vec<PolygonMaterialNg>> {
+    has_uvs: bool,
+) -> Result<Vec<PolygonMaterial>> {
     trace!(
         "Processing {} material indices at {}",
         mat_count,
@@ -352,9 +353,13 @@ fn read_materials(
     material_indices
         .into_iter()
         .map(|material_index| {
-            trace!("Processing {} UV coords at {}", verts_in_poly, read.offset);
-            let uv_coords = read_uvs(read, verts_in_poly)?;
-            Ok(PolygonMaterialNg {
+            let uv_coords = if has_uvs {
+                trace!("Processing {} UV coords at {}", verts_in_poly, read.offset);
+                Some(read_uvs(read, verts_in_poly)?)
+            } else {
+                None
+            };
+            Ok(PolygonMaterial {
                 material_index,
                 uv_coords,
             })

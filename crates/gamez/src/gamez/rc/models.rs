@@ -73,7 +73,7 @@ pub(crate) fn write_models(
     let count = models.len();
     for (index, (model, offset)) in models.iter().zip(offsets.iter().copied()).enumerate() {
         trace!("Processing model info {}/{}", index, count);
-        write_model_info(write, model)?;
+        write_model_info(write, model, index)?;
         write.write_u32(offset)?;
     }
 
@@ -92,7 +92,7 @@ pub(crate) fn write_models(
 
     for (index, model) in models.iter().enumerate() {
         trace!("Processing model data {}/{}", index, count);
-        write_model_data(write, model)?;
+        write_model_data(write, model, index)?;
     }
 
     Ok(())

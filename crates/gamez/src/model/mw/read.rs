@@ -2,7 +2,7 @@ use super::{ModelBitFlags, ModelMwC, PolygonBitFlags, PolygonMwC, WrappedModelMw
 use crate::model::common::*;
 use log::trace;
 use mech3ax_api_types::gamez::model::{
-    Model, ModelFlags, ModelType, Polygon, PolygonFlags, UvCoord,
+    Model, ModelFlags, ModelType, Polygon, PolygonFlags, PolygonMaterial, UvCoord,
 };
 use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::CountingReader;
@@ -91,13 +91,11 @@ fn assert_model_info(model: ModelMwC, offset: usize) -> Result<WrappedModelMw> {
         facade_mode,
         flags,
         parent_count: model.parent_count,
-
         vertices: vec![],
         normals: vec![],
         morphs: vec![],
         lights: vec![],
         polygons: vec![],
-
         texture_scroll,
         bbox_mid: model.bbox_mid,
         bbox_diag: model.bbox_diag,
@@ -171,25 +169,26 @@ fn assert_polygon_info(
         unk6: false,
     };
 
-    let polygon = Polygon {
-        vertex_indices: vec![],
-        vertex_colors: vec![],
-        normal_indices: None,
-        uv_coords: None,
+    let materials = vec![PolygonMaterial {
         material_index: poly.material_index,
+        uv_coords: None,
+    }];
+
+    let polygon = Polygon {
         flags,
         priority: poly.priority,
         zone_set,
+        vertex_indices: vec![],
+        normal_indices: None,
+        vertex_colors: vec![],
+        materials,
 
         vertex_indices_ptr: poly.vertex_indices_ptr.0,
         normal_indices_ptr: poly.normal_indices_ptr.0,
         uvs_ptr: poly.uvs_ptr.0,
         vertex_colors_ptr: poly.vertex_colors_ptr.0,
-        unk_ptr: poly.unk_ptr.0,
+        matl_refs_ptr: poly.unk_ptr.0,
         materials_ptr: 0,
-
-        // TODO
-        materials: vec![],
     };
 
     Ok((poly_index, verts_in_poly, polygon))
@@ -281,7 +280,13 @@ fn read_polygons(
 
             if polygon.uvs_ptr != 0 {
                 trace!("Processing {} UV coords at {}", verts_in_poly, read.offset);
-                polygon.uv_coords = Some(read_uvs(read, verts_in_poly)?);
+                match &mut polygon.materials[..] {
+                    [matl] => {
+                        matl.uv_coords = Some(read_uvs(read, verts_in_poly)?);
+                    }
+                    [] => panic!("invalid materials (none)"),
+                    _ => panic!("invalid materials (multiple)"),
+                }
             }
 
             trace!(

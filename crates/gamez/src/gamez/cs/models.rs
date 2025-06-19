@@ -108,11 +108,13 @@ pub(crate) fn write_models(
 
     let model_zero = ModelPmC::default();
 
-    for ((model_index, expected_index), item) in model_array.iter().zip(models.iter()) {
+    for ((index, item), (model_index, expected_index)) in
+        models.iter().enumerate().zip(model_array.iter())
+    {
         match item {
             Some(model_info) => {
                 trace!("Processing model info {}/{}", model_index, array_size);
-                write_model_info(write, model_info.model, &model_info.material_refs)?;
+                write_model_info(write, model_info.model, &model_info.material_refs, index)?;
                 write.write_u32(model_info.offset)?;
             }
             None => {
@@ -132,7 +134,7 @@ pub(crate) fn write_models(
     for (index, item) in models.iter().enumerate() {
         if let Some(model_info) = item {
             trace!("Processing model data {}/{}", index, array_size);
-            write_model_data(write, model_info.model, &model_info.material_refs)?;
+            write_model_data(write, model_info.model, &model_info.material_refs, index)?;
         }
     }
 
@@ -171,11 +173,9 @@ pub(crate) fn size_models(offset: u32, models: &mut [Option<ModelInfo>]) -> u32 
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let array_size = models.len() as u32;
     let mut offset = offset + MODEL_ARRAY_C_SIZE + (MODEL_C_SIZE + U32_SIZE) * array_size;
-    for item in models {
-        if let Some(model_info) = item {
-            model_info.offset = offset;
-            offset += size_model(model_info.model, &model_info.material_refs);
-        }
+    for model_info in models.iter_mut().flatten() {
+        model_info.offset = offset;
+        offset += size_model(model_info.model, &model_info.material_refs);
     }
     offset
 }

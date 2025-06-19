@@ -55,33 +55,28 @@ pub struct PolygonFlags {
     pub unk6: bool, // PM
 }
 
-// TODO
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct PolygonMaterialNg {
+#[derive(Debug, Clone, Serialize, Deserialize, Struct)]
+pub struct PolygonMaterial {
     pub material_index: u32,
-    pub uv_coords: Vec<UvCoord>,
+    pub uv_coords: Option<Vec<UvCoord>>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
+#[derive(Debug, Clone, Serialize, Deserialize, Struct)]
 pub struct Polygon {
-    pub vertex_indices: Vec<u32>,
-    pub normal_indices: Option<Vec<u32>>,
-    pub uv_coords: Option<Vec<UvCoord>>,
-    pub vertex_colors: Vec<Color>,
-    pub material_index: u32,
     pub flags: PolygonFlags,
     pub priority: i32,
     pub zone_set: Vec<i8>,
+    pub vertex_indices: Vec<u32>,
+    pub normal_indices: Option<Vec<u32>>,
+    pub vertex_colors: Vec<Color>,
+    pub materials: Vec<PolygonMaterial>,
 
     pub vertex_indices_ptr: u32, // RC, MW, PM
     pub normal_indices_ptr: u32, // RC, MW, PM
     pub uvs_ptr: u32,            // RC, MW, PM
     pub vertex_colors_ptr: u32,  // MW, PM
-    pub unk_ptr: u32,            // MW, PM (matl info)
+    pub matl_refs_ptr: u32,      // MW, PM
     pub materials_ptr: u32,      // PM
-
-    // TODO
-    pub materials: Vec<PolygonMaterialNg>,
 }
 
 primitive_enum! {
