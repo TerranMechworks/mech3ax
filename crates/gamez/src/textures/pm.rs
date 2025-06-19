@@ -19,7 +19,7 @@ type State = Maybe<u32, TextureState>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
-struct TextureNgC {
+struct TexturePmC {
     image_ptr: Ptr,   // 00
     zero04: u32,      // 04
     surface_ptr: Ptr, // 08
@@ -28,7 +28,7 @@ struct TextureNgC {
     category: u32,    // 36
     mip: i32,         // 40
 }
-impl_as_bytes!(TextureNgC, 44);
+impl_as_bytes!(TexturePmC, 44);
 
 pub(crate) fn read_texture_directory(
     read: &mut CountingReader<impl Read>,
@@ -37,7 +37,7 @@ pub(crate) fn read_texture_directory(
     (0..count)
         .map(|index| {
             trace!("Processing texture {}/{}", index, count);
-            let tex: TextureNgC = read.read_struct()?;
+            let tex: TexturePmC = read.read_struct()?;
 
             assert_that!("field 04", tex.zero04 == 0, read.prev + 4)?;
             assert_that!("surface ptr", tex.surface_ptr == Ptr::NULL, read.prev + 8)?;
@@ -88,7 +88,7 @@ pub(crate) fn write_texture_directory(
             TextureState::Assigned
         };
 
-        let tex = TextureNgC {
+        let tex = TexturePmC {
             image_ptr,
             zero04: 0,
             surface_ptr: Ptr::NULL,
@@ -103,5 +103,5 @@ pub(crate) fn write_texture_directory(
 }
 
 pub(crate) fn size_texture_directory(count: i32) -> u32 {
-    TextureNgC::SIZE * (count as u32)
+    TexturePmC::SIZE * (count as u32)
 }

@@ -17,7 +17,8 @@ pub(crate) fn read_nodes(
     array_size: i32,
     model_count: i32,
 ) -> Result<Vec<NodePm>> {
-    let end_offset = read.offset + (u32_to_usize(NodeMwC::SIZE) + 4) * i32_to_usize(array_size);
+    let node_write_size = u32_to_usize(NodeMwC::SIZE) + 4;
+    let end_offset = read.offset + node_write_size * i32_to_usize(array_size);
 
     let mut light_node: Option<i32> = None;
     let variants = (0..array_size)

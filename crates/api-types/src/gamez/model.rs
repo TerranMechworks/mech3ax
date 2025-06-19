@@ -114,10 +114,8 @@ pub struct ModelFlags {
     #[serde(skip_serializing_if = "bool_false", default)]
     pub texture_scroll: bool,
     /// Affected by clouds/cloud casting
-    #[serde(skip_serializing_if = "bool_false", default)]
     pub clouds: bool,
     /// Facade rotates around centroid
-    #[serde(skip_serializing_if = "bool_false", default)]
     pub facade_centroid: bool,
 }
 

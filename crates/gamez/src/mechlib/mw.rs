@@ -11,7 +11,7 @@ use mech3ax_nodes::mw::{
 };
 use std::io::{Read, Write};
 
-fn read_node_and_model(
+fn read_node(
     read: &mut CountingReader<impl Read>,
     nodes: &mut Vec<NodeMw>,
     models: &mut Vec<Model>,
@@ -63,7 +63,7 @@ fn read_node_and_model_object3d(
     nodes.push(NodeMw::Object3d(object3d));
 
     let child_indices = (0..children_count)
-        .map(|_| read_node_and_model(read, nodes, models, model_ptrs))
+        .map(|_| read_node(read, nodes, models, model_ptrs))
         .collect::<Result<Vec<_>>>()?;
 
     let object3d = match &mut nodes[current_index] {
@@ -79,7 +79,7 @@ pub fn read_model(read: &mut CountingReader<impl Read>) -> Result<MechlibModelMw
     let mut nodes = Vec::new();
     let mut models = Vec::new();
     let mut model_ptrs = Vec::new();
-    let _root_index = read_node_and_model(read, &mut nodes, &mut models, &mut model_ptrs)?;
+    let _root_index = read_node(read, &mut nodes, &mut models, &mut model_ptrs)?;
     read.assert_end()?;
     Ok(MechlibModelMw {
         nodes,
@@ -88,7 +88,7 @@ pub fn read_model(read: &mut CountingReader<impl Read>) -> Result<MechlibModelMw
     })
 }
 
-fn write_node_and_model(
+fn write_node(
     write: &mut CountingWriter<impl Write>,
     node_index: u32,
     nodes: &mut [NodeMw],
@@ -133,7 +133,7 @@ fn write_node_and_model(
     };
 
     for child_index in child_indices.into_iter() {
-        write_node_and_model(write, child_index, nodes, models, model_ptrs)?;
+        write_node(write, child_index, nodes, models, model_ptrs)?;
     }
     Ok(())
 }
@@ -142,7 +142,7 @@ pub fn write_model(
     write: &mut CountingWriter<impl Write>,
     mechlib_model: &mut MechlibModelMw,
 ) -> Result<()> {
-    write_node_and_model(
+    write_node(
         write,
         0,
         &mut mechlib_model.nodes,

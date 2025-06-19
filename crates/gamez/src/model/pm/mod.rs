@@ -13,24 +13,24 @@ pub(crate) use write::{size_model, write_model_data, write_model_info};
 bitflags! {
     struct ModelBitFlags: u32 {
         /// Affected by lighting
-        const LIGHTING = 1 << 0;                // 0x001
+        const LIGHTING = 1 << 0;                // 0x01
         /// Affected by fog
-        const FOG = 1 << 1;                     // 0x002
+        const FOG = 1 << 1;                     // 0x02
         /// Textures registered to world (?)
-        const TEXTURE_REGISTERED = 1 << 2;      // 0x004 (never)
+        const TEXTURE_REGISTERED = 1 << 2;      // 0x04 (never)
         /// Morph active
-        const MORPH = 1 << 3;                   // 0x008 (never)
+        const MORPH = 1 << 3;                   // 0x08 (never)
         /// Scroll active
-        const TEXTURE_SCROLL = 1 << 4;          // 0x010
+        const TEXTURE_SCROLL = 1 << 4;          // 0x10
         /// Affected by clouds
-        const CLOUDS = 1 << 5;                  // 0x020
+        const CLOUDS = 1 << 5;                  // 0x20
         /// Facade rotates around centroid
-        const FACADE_CENTROID = 1 << 6;         // 0x040
+        const FACADE_CENTROID = 1 << 6;         // 0x40
         /// Polygons are optimized for hardware rendering/incompatible with
         /// software rendering (e.g. triangle strip or multi-material).
         ///
         /// For PM, almost every model has this set.
-        const HARDWARE_RENDER = 1 << 7;         // 0x080
+        const HARDWARE_RENDER = 1 << 7;         // 0x80
     }
 }
 
@@ -106,7 +106,7 @@ pub struct MaterialRefC {
 }
 impl_as_bytes!(MaterialRefC, 12);
 
-pub(crate) struct WrappedModelPm {
+pub(crate) struct WrappedModel {
     pub(crate) model: Model,
     pub(crate) polygon_count: u32,
     pub(crate) vertex_count: u32,

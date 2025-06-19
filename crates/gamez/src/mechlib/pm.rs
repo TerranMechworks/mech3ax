@@ -43,16 +43,16 @@ fn read_node_object3d(
     } = wrapped;
 
     if object3d.mesh_index != 0 {
-        let mesh_index: i32 = model_ptrs.len().try_into().unwrap();
+        let model_index: i32 = model_ptrs.len().try_into().unwrap();
         // preserve the pointer, store the new index
         model_ptrs.push(object3d.mesh_index);
-        object3d.mesh_index = mesh_index;
+        object3d.mesh_index = model_index;
 
-        trace!("Processing model {}", mesh_index);
-        let wrapped_model = read_model_info(read)?;
+        trace!("Processing model {}", model_index);
+        let wrapped = read_model_info(read)?;
         // TODO: we ought to base this on the materials in mechlib, but...
         let material_count = 4096;
-        let model = read_model_data(read, wrapped_model, material_count)?;
+        let model = read_model_data(read, wrapped, material_count)?;
         models.push(model);
     } else {
         object3d.mesh_index = -1;
@@ -178,7 +178,13 @@ fn write_node(
 
 pub fn write_model(
     write: &mut CountingWriter<impl Write>,
-    model: &mut MechlibModelPm,
+    mechlib_model: &mut MechlibModelPm,
 ) -> Result<()> {
-    write_node(write, 0, &mut model.nodes, &model.models, &model.model_ptrs)
+    write_node(
+        write,
+        0,
+        &mut mechlib_model.nodes,
+        &mechlib_model.models,
+        &mechlib_model.model_ptrs,
+    )
 }

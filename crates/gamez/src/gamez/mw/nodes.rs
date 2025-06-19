@@ -16,7 +16,8 @@ pub(crate) fn read_nodes(
     array_size: i32,
     model_count: i32,
 ) -> Result<Vec<NodeMw>> {
-    let end_offset = read.offset + (u32_to_usize(NodeMwC::SIZE) + 4) * i32_to_usize(array_size);
+    let node_write_size = u32_to_usize(NodeMwC::SIZE) + 4;
+    let end_offset = read.offset + node_write_size * i32_to_usize(array_size);
 
     let mut variants = Vec::new();
     // the node_count is wildly inaccurate for some files, and there are more nodes to
@@ -98,7 +99,7 @@ pub(crate) fn read_nodes(
                         assert_that!("node position (object3d)", index > 3, node_info_pos)?;
                         if object3d.mesh_index >= 0 {
                             assert_that!(
-                                "object3d mesh index",
+                                "object3d model index",
                                 object3d.mesh_index < model_count,
                                 node_info_pos
                             )?;
@@ -109,6 +110,10 @@ pub(crate) fn read_nodes(
             }
         }
     }
+
+    assert_that!("has display node", display_node > 0, read.offset)?;
+    let light_node_index = light_node
+        .ok_or_else(|| assert_with_msg!("GameZ contains no light node (at {})", read.offset))?;
 
     trace!(
         "Processing {}..{} node info zeros at {}",
@@ -132,9 +137,6 @@ pub(crate) fn read_nodes(
     trace!("Processed node info zeros at {}", read.offset);
 
     assert_that!("node info end", end_offset == read.offset, read.offset)?;
-    assert_that!("has display node", display_node > 0, read.offset)?;
-    let light_node_index = light_node
-        .ok_or_else(|| assert_with_msg!("GameZ contains no light node (at {})", read.offset))?;
 
     let nodes = variants
         .into_iter()

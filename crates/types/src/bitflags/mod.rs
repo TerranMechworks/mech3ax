@@ -56,15 +56,23 @@ macro_rules! bitflags {
             $(
             pub const $base_name: $ty = $base_val;
 
+            #[inline]
             pub const fn base(self) -> $ty {
                 self.0 & Self::_BASE
             }
 
+            #[inline]
+            pub const fn strip_base(self) -> Self {
+                Self(self.0 & !Self::_BASE)
+            }
+
+            #[inline]
             pub fn with_base(self, base: $ty) -> Option<Self> {
                 if base > Self::_BASE {
                     None
                 } else {
-                    Some(Self(self.0 | base))
+                    let v = self.0 & !Self::_BASE;
+                    Some(Self(v | base))
                 }
             }
             )?

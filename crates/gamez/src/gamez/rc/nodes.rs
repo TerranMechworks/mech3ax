@@ -141,7 +141,6 @@ pub(crate) fn read_nodes(
         .collect::<Result<Vec<_>>>()?;
 
     assert_area_partitions(&nodes, read.offset)?;
-
     Ok(nodes)
 }
 
@@ -181,10 +180,12 @@ pub(crate) fn write_nodes(
     for (index, node) in nodes.iter().enumerate() {
         trace!("Processing node info {}/{}", index, node_count);
         write_node_info(write, node)?;
+
         let node_data_offset = match node {
             NodeRc::Empty(empty) => empty.parent,
             _ => offset,
         };
+
         trace!("Node {} data offset: {}", index, node_data_offset);
         write.write_u32(node_data_offset)?;
         offset += size_node(node);

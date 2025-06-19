@@ -1,4 +1,4 @@
-use super::{ModelBitFlags, ModelRcC, PolygonBitFlags, PolygonRcC, WrappedModelRc};
+use super::{ModelBitFlags, ModelRcC, PolygonBitFlags, PolygonRcC, WrappedModel};
 use crate::model::common::*;
 use log::trace;
 use mech3ax_api_types::gamez::model::{
@@ -10,12 +10,10 @@ use mech3ax_common::{assert_that, Result};
 use mech3ax_types::Ptr;
 use std::io::Read;
 
-pub(crate) fn read_model_info(read: &mut CountingReader<impl Read>) -> Result<WrappedModelRc> {
+pub(crate) fn read_model_info(read: &mut CountingReader<impl Read>) -> Result<WrappedModel> {
     let model: ModelRcC = read.read_struct()?;
-    assert_model_info(model, read.prev)
-}
+    let offset = read.prev;
 
-fn assert_model_info(model: ModelRcC, offset: usize) -> Result<WrappedModelRc> {
     let model_type = assert_that!("model type", enum model.model_type, offset + 0)?;
     // facade mode in flags
     let bitflags = assert_that!("model flags", flags model.flags, offset + 4)?;
@@ -107,7 +105,7 @@ fn assert_model_info(model: ModelRcC, offset: usize) -> Result<WrappedModelRc> {
         material_refs_ptr: 0,
     };
 
-    Ok(WrappedModelRc {
+    Ok(WrappedModel {
         model: m,
         polygon_count: model.polygon_count,
         vertex_count: model.vertex_count,
@@ -189,7 +187,7 @@ fn assert_polygon_info(
 
 pub(crate) fn read_model_data(
     read: &mut CountingReader<impl Read>,
-    wrapped: WrappedModelRc,
+    wrapped: WrappedModel,
     material_count: u32,
 ) -> Result<Model> {
     let mut model = wrapped.model;

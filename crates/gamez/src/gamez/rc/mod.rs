@@ -1,4 +1,3 @@
-mod fixup;
 mod models;
 mod nodes;
 
@@ -28,9 +27,20 @@ struct HeaderRcC {
 }
 impl_as_bytes!(HeaderRcC, 36);
 
+const HEADER_M6: HeaderRcC = HeaderRcC {
+    signature: SIGNATURE,
+    version: VERSION_RC,
+    texture_count: 612,
+    textures_offset: 36,
+    materials_offset: 22068,
+    models_offset: 242084,
+    node_array_size: 16000,
+    node_count: 309,
+    nodes_offset: 2299168,
+};
+
 pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataRc> {
-    let mut header: HeaderRcC = read.read_struct()?;
-    fixup::read(&mut header);
+    let header: HeaderRcC = read.read_struct()?;
 
     assert_that!("signature", header.signature == SIGNATURE, read.prev + 0)?;
     assert_that!("version", header.version == VERSION_RC, read.prev + 4)?;
@@ -94,7 +104,13 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataRc> {
         models::read_models(read, nodes_offset, material_count)?;
 
     assert_that!("nodes offset", read.offset == nodes_offset, read.offset)?;
-    let nodes = nodes::read_nodes(read, header.node_array_size, header.node_count, model_count)?;
+    let node_count = if header == HEADER_M6 {
+        log::debug!("m6 node_count fixup: 309 -> 4955");
+        4955
+    } else {
+        header.node_count
+    };
+    let nodes = nodes::read_nodes(read, header.node_array_size, node_count, model_count)?;
 
     read.assert_end()?;
 
@@ -115,13 +131,12 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataRc> {
 
 pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataRc) -> Result<()> {
     let texture_count = assert_len!(i32, gamez.textures.len(), "GameZ textures")?;
-    let node_count = assert_len!(i32, gamez.nodes.len(), "GameZ nodes")?;
 
     let GameZMetadata {
         datetime: _,
         model_array_size,
         node_array_size,
-        node_data_count: _,
+        node_data_count,
     } = gamez.metadata;
 
     let textures_offset = HeaderRcC::SIZE;
@@ -130,7 +145,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataRc) 
     let (nodes_offset, model_offsets) =
         models::size_models(models_offset, model_array_size, &gamez.models);
 
-    let mut header = HeaderRcC {
+    let header = HeaderRcC {
         signature: SIGNATURE,
         version: VERSION_RC,
         texture_count,
@@ -138,10 +153,9 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataRc) 
         materials_offset,
         models_offset,
         node_array_size,
-        node_count,
+        node_count: node_data_count,
         nodes_offset,
     };
-    fixup::write(&mut header);
     write.write_struct(&header)?;
 
     textures::write_texture_directory(write, &gamez.textures)?;

@@ -86,7 +86,7 @@ struct PolygonMwC {
 }
 impl_as_bytes!(PolygonMwC, 36);
 
-pub(crate) struct WrappedModelMw {
+pub(crate) struct WrappedModel {
     pub(crate) model: Model,
     pub(crate) polygon_count: u32,
     pub(crate) vertex_count: u32,
