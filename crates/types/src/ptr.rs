@@ -10,6 +10,7 @@ pub struct Ptr(pub u32);
 
 impl Ptr {
     pub const NULL: Ptr = Ptr(0);
+    pub const NON_NULL: Ptr = Ptr(0xDEFA0175);
     pub const INVALID: Ptr = Ptr(u32::MAX);
 }
 

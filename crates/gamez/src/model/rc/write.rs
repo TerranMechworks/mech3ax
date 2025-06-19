@@ -2,7 +2,7 @@ use super::{ModelBitFlags, ModelRcC, PolygonBitFlags, PolygonRcC};
 use crate::model::common::*;
 use log::{trace, warn};
 use mech3ax_api_types::gamez::model::{
-    FacadeMode, Model, ModelFlags, Polygon, PolygonFlags, UvCoord,
+    FacadeMode, Model, ModelFlags, Polygon, PolygonFlags, PolygonMaterial, UvCoord,
 };
 use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::CountingWriter;
@@ -77,11 +77,16 @@ pub(crate) fn write_model_info(
     let morph_count = assert_len!(u32, model.morphs.len(), "model {} morphs", index)?;
     let light_count = assert_len!(u32, model.lights.len(), "model {} lights", index)?;
 
-    let polygons_ptr = assert_ptr!(polygon_count, model.polygons_ptr, "polygons");
-    let vertices_ptr = assert_ptr!(vertex_count, model.vertices_ptr, "vertices");
-    let normals_ptr = assert_ptr!(normal_count, model.normals_ptr, "normals");
-    let lights_ptr = assert_ptr!(light_count, model.lights_ptr, "lights");
-    let morphs_ptr = assert_ptr!(morph_count, model.morphs_ptr, "morphs");
+    let polygons_ptr = assert_ptr!(
+        polygon_count,
+        model.polygons_ptr,
+        "model {} polygons",
+        index
+    );
+    let vertices_ptr = assert_ptr!(vertex_count, model.vertices_ptr, "model {} vertices", index);
+    let normals_ptr = assert_ptr!(normal_count, model.normals_ptr, "model {} normals", index);
+    let lights_ptr = assert_ptr!(light_count, model.lights_ptr, "model {} lights", index);
+    let morphs_ptr = assert_ptr!(morph_count, model.morphs_ptr, "model {} morphs", index);
 
     let mut bitflags = make_model_flags(&model.flags, index);
 
@@ -197,20 +202,24 @@ fn make_polygon_flags(
     Ok(bitflags)
 }
 
-fn unwrap_material_index(polygon: &Polygon, model_index: usize, poly_index: usize) -> Result<u32> {
+fn unwrap_material(
+    polygon: &Polygon,
+    model_index: usize,
+    poly_index: usize,
+) -> Result<&PolygonMaterial> {
     match &polygon.materials[..] {
         [] => Err(assert_with_msg!(
             "Model {} polygon {} has no materials",
             model_index,
             poly_index
         )),
-        [one] => Ok(one.material_index),
+        [one] => Ok(one),
         [one, ..] => {
             warn!(
                 "WARN: model {} polygon {} has multiple materials, this is ignored in RC",
                 model_index, poly_index
             );
-            Ok(one.material_index)
+            Ok(one)
         }
     }
 }
@@ -225,16 +234,43 @@ fn write_polygons(
         trace!("Processing polygon info {}/{}", poly_index, count);
 
         let bitflags = make_polygon_flags(polygon, model_index, poly_index)?;
-        let material_index = unwrap_material_index(polygon, model_index, poly_index)?;
+
+        let normal_count = polygon
+            .normal_indices
+            .as_ref()
+            .map(Vec::len)
+            .unwrap_or_default();
+        let normal_indices_ptr = assert_ptr!(
+            normal_count,
+            polygon.normal_indices_ptr,
+            "model {} polygon {} normal indices",
+            model_index,
+            poly_index
+        );
+
+        let material = unwrap_material(polygon, model_index, poly_index)?;
+        let uvs_count = material
+            .uv_coords
+            .as_ref()
+            .map(Vec::len)
+            .unwrap_or_default();
+        let uvs_ptr = assert_ptr!(
+            uvs_count,
+            polygon.uvs_ptr,
+            "model {} polygon {} uvs",
+            model_index,
+            poly_index
+        );
+
         let zone_set = make_zone_set(&polygon.zone_set)?;
 
         let poly = PolygonRcC {
             flags: bitflags.maybe(),
             priority: polygon.priority,
             vertex_indices_ptr: Ptr(polygon.vertex_indices_ptr),
-            normal_indices_ptr: Ptr(polygon.normal_indices_ptr),
-            uvs_ptr: Ptr(polygon.uvs_ptr),
-            material_index,
+            normal_indices_ptr,
+            uvs_ptr,
+            material_index: material.material_index,
             zone_set,
         };
         write.write_struct(&poly)?;

@@ -62,8 +62,8 @@ pub(crate) struct ModelPmC {
     bbox_mid: Vec3,               // 72
     bbox_diag: f32,               // 84
     active_polygon_index: u32,    // 88
-    material_count: u32,          // 92
-    materials_ptr: Ptr,           // 96
+    material_ref_count: u32,      // 92
+    material_refs_ptr: Ptr,       // 96
 }
 impl_as_bytes!(ModelPmC, 100);
 pub(crate) const MODEL_C_SIZE: u32 = ModelPmC::SIZE;
@@ -113,5 +113,5 @@ pub(crate) struct WrappedModelPm {
     pub(crate) normal_count: u32,
     pub(crate) morph_count: u32,
     pub(crate) light_count: u32,
-    pub(crate) material_count: u32,
+    pub(crate) material_ref_count: u32,
 }

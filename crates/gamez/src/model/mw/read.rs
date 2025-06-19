@@ -105,7 +105,7 @@ fn assert_model_info(model: ModelMwC, offset: usize) -> Result<WrappedModelMw> {
         normals_ptr: model.normals_ptr.0,
         lights_ptr: model.lights_ptr.0,
         morphs_ptr: model.morphs_ptr.0,
-        materials_ptr: 0,
+        material_refs_ptr: 0,
     };
 
     Ok(WrappedModelMw {

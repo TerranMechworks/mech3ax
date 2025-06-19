@@ -68,7 +68,8 @@ pub(crate) fn write_texture_directory(
     let ptrs = image_ptrs
         .iter()
         .copied()
-        .chain(std::iter::repeat(0xDEFA0175));
+        .map(Ptr)
+        .chain(std::iter::repeat(Ptr::NON_NULL));
 
     let count = textures.len();
     for (index, (texture, image_ptr)) in textures.iter().zip(ptrs).enumerate() {
@@ -81,14 +82,14 @@ pub(crate) fn write_texture_directory(
             );
         }
 
-        let state = if image_ptr == 0 {
+        let state = if image_ptr == Ptr::NULL {
             TextureState::Used
         } else {
             TextureState::Assigned
         };
 
         let tex = TextureNgC {
-            image_ptr: Ptr(image_ptr),
+            image_ptr,
             zero04: 0,
             surface_ptr: Ptr::NULL,
             name,

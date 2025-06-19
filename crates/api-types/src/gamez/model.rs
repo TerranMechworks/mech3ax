@@ -138,5 +138,5 @@ pub struct Model {
     pub normals_ptr: u32,
     pub lights_ptr: u32,
     pub morphs_ptr: u32,
-    pub materials_ptr: u32,
+    pub material_refs_ptr: u32,
 }

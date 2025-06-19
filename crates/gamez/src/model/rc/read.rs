@@ -106,7 +106,7 @@ fn assert_model_info(model: ModelRcC, offset: usize) -> Result<WrappedModelRc> {
         normals_ptr: model.normals_ptr.0,
         lights_ptr: model.lights_ptr.0,
         morphs_ptr: model.morphs_ptr.0,
-        materials_ptr: 0,
+        material_refs_ptr: 0,
     };
 
     Ok(WrappedModelRc {

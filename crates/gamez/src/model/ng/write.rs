@@ -64,14 +64,24 @@ pub(crate) fn write_model_info(
     let morph_count = assert_len!(u32, model.morphs.len(), "model {} morphs", index)?;
     let light_count = assert_len!(u32, model.lights.len(), "model {} lights", index)?;
 
-    let polygons_ptr = assert_ptr!(polygon_count, model.polygons_ptr, "polygons");
-    let vertices_ptr = assert_ptr!(vertex_count, model.vertices_ptr, "vertices");
-    let normals_ptr = assert_ptr!(normal_count, model.normals_ptr, "normals");
-    let lights_ptr = assert_ptr!(light_count, model.lights_ptr, "lights");
-    let morphs_ptr = assert_ptr!(morph_count, model.morphs_ptr, "morphs");
+    let polygons_ptr = assert_ptr!(
+        polygon_count,
+        model.polygons_ptr,
+        "model {} polygons",
+        index
+    );
+    let vertices_ptr = assert_ptr!(vertex_count, model.vertices_ptr, "model {} vertices", index);
+    let normals_ptr = assert_ptr!(normal_count, model.normals_ptr, "model {} normals", index);
+    let lights_ptr = assert_ptr!(light_count, model.lights_ptr, "model {} lights", index);
+    let morphs_ptr = assert_ptr!(morph_count, model.morphs_ptr, "model {} morphs", index);
 
-    let material_count = assert_len!(u32, material_refs.len(), "model {} materials", index)?;
-    let materials_ptr = assert_ptr!(material_count, model.materials_ptr, "materials");
+    let material_ref_count = assert_len!(u32, material_refs.len(), "model {} materials", index)?;
+    let material_refs_ptr = assert_ptr!(
+        material_ref_count,
+        model.material_refs_ptr,
+        "model {} materials",
+        index
+    );
 
     let bitflags = make_model_flags(&model.flags, index);
 
@@ -97,8 +107,8 @@ pub(crate) fn write_model_info(
         bbox_mid: model.bbox_mid,
         bbox_diag: model.bbox_diag,
         active_polygon_index: 0,
-        material_count,
-        materials_ptr,
+        material_ref_count,
+        material_refs_ptr,
     };
     write.write_struct(&model)?;
     Ok(())
@@ -171,6 +181,21 @@ fn write_polygons(
     for (poly_index, polygon) in polygons.iter().enumerate() {
         trace!("Processing polygon info {}/{}", poly_index, count);
 
+        let bitflags = make_polygon_flags(polygon, model_index, poly_index)?;
+
+        let normal_count = polygon
+            .normal_indices
+            .as_ref()
+            .map(Vec::len)
+            .unwrap_or_default();
+        let normal_indices_ptr = assert_ptr!(
+            normal_count,
+            polygon.normal_indices_ptr,
+            "model {} polygon {} normal indices",
+            model_index,
+            poly_index
+        );
+
         let material_count = assert_len!(
             u32,
             polygon.materials.len(),
@@ -179,17 +204,29 @@ fn write_polygons(
             poly_index,
         )?;
 
-        let bitflags = make_polygon_flags(polygon, model_index, poly_index)?;
+        let has_uvs_count = polygon
+            .materials
+            .iter()
+            .filter(|matl| matl.uv_coords.is_some())
+            .count();
+        let uvs_ptr = assert_ptr!(
+            has_uvs_count,
+            polygon.uvs_ptr,
+            "model {} polygon {} material uvs",
+            model_index,
+            poly_index
+        );
+
         let zone_set = make_zone_set(&polygon.zone_set)?;
 
         let poly = PolygonPmC {
             flags: bitflags.maybe(),
             priority: polygon.priority,
             vertex_indices_ptr: Ptr(polygon.vertex_indices_ptr),
-            normal_indices_ptr: Ptr(polygon.normal_indices_ptr),
+            normal_indices_ptr,
             material_count,
             materials_ptr: Ptr(polygon.materials_ptr),
-            uvs_ptr: Ptr(polygon.uvs_ptr),
+            uvs_ptr,
             vertex_colors_ptr: Ptr(polygon.vertex_colors_ptr),
             matl_refs_ptr: Ptr(polygon.matl_refs_ptr),
             zone_set,

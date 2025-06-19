@@ -141,29 +141,35 @@ pub(crate) fn make_zone_set(zone_set: &[i8]) -> Result<Hex<u32>> {
 }
 
 macro_rules! assert_ptr {
-    ($count:ident, $model:ident.$ptr:ident, $name:literal) => {{
+    ($count:ident, $struct:ident.$ptr:ident, $fmt:literal, $($arg:tt),+ $(,)?) => {{
+        let ptr: u32 = $struct.$ptr;
         if $count == 0 {
-            if $model.$ptr != 0 {
+            if ptr != 0 {
                 warn!(concat!(
-                    "WARN: Model has no ",
-                    $name,
-                    ", but `",
+                    "WARN: ",
+                    $fmt,
+                    " count is 0, but `",
                     stringify!($ptr),
                     "` is not null"
-                ));
+                ), $($arg,)+);
+                Ptr::NULL
+            } else {
+                Ptr(ptr)
             }
         } else {
-            if $model.$ptr == 0 {
+            if ptr == 0 {
                 warn!(concat!(
-                    "WARN: Model has ",
-                    $name,
-                    ", but `",
+                    "WARN: ",
+                    $fmt,
+                    " count > 0, but `",
                     stringify!($ptr),
                     "` is null"
-                ));
+                ), $($arg,)+);
+                Ptr::NON_NULL
+            } else {
+                Ptr(ptr)
             }
         }
-        Ptr($model.$ptr)
     }};
 }
 pub(crate) use assert_ptr;

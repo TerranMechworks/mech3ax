@@ -69,16 +69,16 @@ pub(crate) fn assert_model_info(model: ModelPmC, offset: usize) -> Result<Wrappe
         assert_that!("morphs ptr", model.morphs_ptr != Ptr::NULL, offset + 68)?;
     }
 
-    if model.material_count == 0 {
+    if model.material_ref_count == 0 {
         assert_that!(
-            "materials ptr",
-            model.materials_ptr == Ptr::NULL,
+            "material refs ptr",
+            model.material_refs_ptr == Ptr::NULL,
             offset + 96
         )?;
     } else {
         assert_that!(
-            "materials ptr",
-            model.materials_ptr != Ptr::NULL,
+            "material refs ptr",
+            model.material_refs_ptr != Ptr::NULL,
             offset + 96
         )?;
     }
@@ -119,7 +119,7 @@ pub(crate) fn assert_model_info(model: ModelPmC, offset: usize) -> Result<Wrappe
         normals_ptr: model.normals_ptr.0,
         lights_ptr: model.lights_ptr.0,
         morphs_ptr: model.morphs_ptr.0,
-        materials_ptr: model.materials_ptr.0,
+        material_refs_ptr: model.material_refs_ptr.0,
     };
 
     Ok(WrappedModelPm {
@@ -129,7 +129,7 @@ pub(crate) fn assert_model_info(model: ModelPmC, offset: usize) -> Result<Wrappe
         normal_count: model.normal_count,
         morph_count: model.morph_count,
         light_count: model.light_count,
-        material_count: model.material_count,
+        material_ref_count: model.material_ref_count,
     })
 }
 
@@ -256,11 +256,11 @@ pub(crate) fn read_model_data(
 
     trace!(
         "Processing {} material refs at {}",
-        wrapped.material_count,
+        wrapped.material_ref_count,
         read.offset
     );
     // material references are discarded, since they can be re-calculated
-    for _ in 0..wrapped.material_count {
+    for _ in 0..wrapped.material_ref_count {
         let material_ref: MaterialRefC = read.read_struct()?;
         assert_that!(
             "material ref index",
@@ -397,10 +397,14 @@ pub(crate) fn assert_model_info_zero(model: &ModelPmC, offset: usize) -> Result<
         model.active_polygon_index == 0,
         offset + 88
     )?;
-    assert_that!("material_count", model.material_count == 0, offset + 92)?;
     assert_that!(
-        "materials_ptr",
-        model.materials_ptr == Ptr::NULL,
+        "material_ref_count",
+        model.material_ref_count == 0,
+        offset + 92
+    )?;
+    assert_that!(
+        "material_refs_ptr",
+        model.material_refs_ptr == Ptr::NULL,
         offset + 96
     )?;
     Ok(())
