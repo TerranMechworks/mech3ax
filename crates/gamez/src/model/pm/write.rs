@@ -10,7 +10,7 @@ use mech3ax_common::{assert_len, assert_with_msg, Result};
 use mech3ax_types::{AsBytes as _, Ptr};
 use std::io::Write;
 
-fn make_model_flags(model: &Model, _index: usize, is_cs: bool) -> ModelBitFlags {
+fn make_model_flags(model: &Model, _index: usize) -> ModelBitFlags {
     let ModelFlags {
         lighting,
         fog,
@@ -43,15 +43,8 @@ fn make_model_flags(model: &Model, _index: usize, is_cs: bool) -> ModelBitFlags 
     if facade_centroid {
         bitflags |= ModelBitFlags::FACADE_CENTROID;
     }
-
-    if is_cs {
-        if !model.polygons.is_empty() {
-            bitflags |= ModelBitFlags::UNK8;
-        }
-    } else {
-        if model.model_type == ModelType::Default && !model.polygons.is_empty() {
-            bitflags |= ModelBitFlags::HARDWARE_RENDER;
-        }
+    if model.model_type == ModelType::Default && !model.polygons.is_empty() {
+        bitflags |= ModelBitFlags::HARDWARE_RENDER;
     }
 
     bitflags
@@ -62,7 +55,6 @@ pub(crate) fn write_model_info(
     model: &Model,
     material_refs: &[MaterialRefC],
     index: usize,
-    is_cs: bool,
 ) -> Result<()> {
     let polygon_count = assert_len!(u32, model.polygons.len(), "model {} polygons", index)?;
     let vertex_count = assert_len!(u32, model.vertices.len(), "model {} vertices", index)?;
@@ -89,7 +81,7 @@ pub(crate) fn write_model_info(
         index
     );
 
-    let bitflags = make_model_flags(model, index, is_cs);
+    let bitflags = make_model_flags(model, index);
 
     let model = ModelPmC {
         model_type: model.model_type.maybe(),

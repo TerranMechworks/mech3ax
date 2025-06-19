@@ -3,7 +3,7 @@ use eyre::{bail, Context as _, Result};
 use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::gamez::mechlib::{MechlibModelMw, MechlibModelPm};
-use mech3ax_api_types::gamez::{GameZDataCs, GameZDataMw, GameZDataPm, GameZDataRc};
+use mech3ax_api_types::gamez::{GameZDataMw, GameZDataPm, GameZDataRc};
 use mech3ax_api_types::image::TextureManifest;
 use mech3ax_api_types::interp::Script;
 use mech3ax_api_types::motion::Motion;
@@ -245,7 +245,7 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
         GameType::RC => gamez_rc(&opts)?,
         GameType::MW => gamez_mw(&opts)?,
         GameType::PM => gamez_pm(&opts)?,
-        GameType::CS => gamez_cs(&opts)?,
+        GameType::CS => bail!("Crimson Skies support for GameZ isn't implemented any more"),
     }
     log::info!("GAMEZ: Wrote `{}`", opts.output);
     Ok(())
@@ -297,30 +297,6 @@ fn gamez_pm(opts: &ZipOpts) -> Result<()> {
 
     let mut write = buf_writer(&opts.output)?;
     gamez::pm::write_gamez(&mut write, &gamez).context("Failed to write gamez data")
-}
-
-fn gamez_cs(opts: &ZipOpts) -> Result<()> {
-    let input = buf_reader(&opts.input)?;
-    let mut zip = ZipArchive::new(input).context("Failed to open input")?;
-
-    let metadata = zip_json(&mut zip, "metadata.json")?;
-    let textures = zip_json(&mut zip, "textures.json")?;
-    let materials = zip_json(&mut zip, "materials.json")?;
-    let models = zip_json(&mut zip, "models.json")?;
-    let nodes = zip_json(&mut zip, "nodes.json")?;
-
-    drop(zip);
-
-    let gamez = GameZDataCs {
-        metadata,
-        textures,
-        materials,
-        models,
-        nodes,
-    };
-
-    let mut write = buf_writer(&opts.output)?;
-    gamez::cs::write_gamez(&mut write, &gamez).context("Failed to write gamez data")
 }
 
 fn gamez_rc(opts: &ZipOpts) -> Result<()> {

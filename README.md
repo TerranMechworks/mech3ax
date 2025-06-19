@@ -47,14 +47,12 @@ Legend:
 | Image/texture ZBDs                                     | ✅ | ✅ | ✅ | ✅ |
 | `mechlib.zbd`                                          | ⬛ | ✅ | ✅ | ⬛ |
 | `motion.zbd`                                           | ⬛ | ✅ | ✅ | ⬛ |
-| `gamez.zbd`                                            | ✅ | ✅ | ✅ | ✅ |
+| `gamez.zbd`                                            | ✅ | ✅ | ✅ | ❌ |
 | `anim.zbd`/`cam_anim.zbd`/`mis_anim.zbd`               | ❌ | ✅ | ❌ | ❌ |
 | `m*.zmap`                                              | ✅ | ⬛ | ⬛ | ⬛ |
-| `planes.zbd` *                                         | ⬛ | ⬛ | ⬛ | ✅ |
+| `planes.zbd`                                           | ⬛ | ⬛ | ⬛ | ❌ |
 
 \* Messages/localisation DLLs cannot easily be reconstructed, and so there is no support for this in `rezbd`.
-
-\* For `planes.zbd`, please use the `gamez` mode.
 
 ### MechWarrior 3
 

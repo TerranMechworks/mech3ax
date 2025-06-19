@@ -1,4 +1,3 @@
-//! GameZ and mechlib model support for PM, CS
 mod matl;
 mod read;
 mod write;
@@ -8,9 +7,7 @@ pub(crate) use matl::make_material_refs;
 use mech3ax_api_types::gamez::model::{FacadeMode, Model, ModelType};
 use mech3ax_api_types::Vec3;
 use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Hex, Maybe, Ptr};
-pub(crate) use read::{
-    assert_model_info, assert_model_info_zero, read_model_data, read_model_info,
-};
+pub(crate) use read::{assert_model_info_zero, read_model_data, read_model_info};
 pub(crate) use write::{size_model, write_model_data, write_model_info};
 
 bitflags! {
@@ -34,7 +31,6 @@ bitflags! {
         ///
         /// For PM, almost every model has this set.
         const HARDWARE_RENDER = 1 << 7;         // 0x080
-        const UNK8 = 1 << 8;                    // 0x100
     }
 }
 

@@ -256,7 +256,7 @@ pub(crate) fn gamez(opts: ZipOpts) -> Result<()> {
         GameType::RC => gamez_rc(&opts)?,
         GameType::MW => gamez_mw(&opts)?,
         GameType::PM => gamez_pm(&opts)?,
-        GameType::CS => gamez_cs(&opts)?,
+        GameType::CS => bail!("Crimson Skies support for GameZ isn't implemented any more"),
     }
     log::info!("GAMEZ: Wrote `{}`", opts.output);
     Ok(())
@@ -283,24 +283,6 @@ fn gamez_mw(opts: &ZipOpts) -> Result<()> {
 fn gamez_pm(opts: &ZipOpts) -> Result<()> {
     let mut input = CountingReader::new(buf_reader(&opts.input)?);
     let gamez = gamez::pm::read_gamez(&mut input).context("Failed to read gamez data")?;
-    drop(input);
-
-    let output = buf_writer(&opts.output)?;
-    let mut zip = ZipWriter::new(output);
-
-    zip_json(&mut zip, "metadata.json", &gamez.metadata)?;
-    zip_json(&mut zip, "textures.json", &gamez.textures)?;
-    zip_json(&mut zip, "materials.json", &gamez.materials)?;
-    zip_json(&mut zip, "models.json", &gamez.models)?;
-    zip_json(&mut zip, "nodes.json", &gamez.nodes)?;
-
-    zip.finish()?;
-    Ok(())
-}
-
-fn gamez_cs(opts: &ZipOpts) -> Result<()> {
-    let mut input = CountingReader::new(buf_reader(&opts.input)?);
-    let gamez = gamez::cs::read_gamez(&mut input).context("Failed to read gamez data")?;
     drop(input);
 
     let output = buf_writer(&opts.output)?;

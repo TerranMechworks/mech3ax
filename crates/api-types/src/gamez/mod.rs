@@ -2,7 +2,6 @@ pub mod materials;
 pub mod mechlib;
 pub mod model;
 
-use crate::nodes::cs::NodeCs;
 use crate::nodes::mw::NodeMw;
 use crate::nodes::pm::NodePm;
 use crate::nodes::rc::NodeRc;
@@ -52,28 +51,6 @@ pub struct GameZDataPm {
     pub models: Vec<Model>,
     pub nodes: Vec<NodePm>,
     pub metadata: GameZMetadataPm,
-}
-
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct GameZMetadataCs {
-    pub datetime: DateTime,
-}
-
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct TextureName {
-    pub original: String,
-    pub renamed: Option<String>,
-    pub mip: i32,
-}
-
-#[derive(Debug, Serialize, Deserialize, Struct)]
-#[dotnet(partial, namespace = "Mech3DotNet.Zbd")]
-pub struct GameZDataCs {
-    pub textures: Vec<TextureName>,
-    pub materials: Vec<Material>,
-    pub models: Vec<Option<Model>>,
-    pub nodes: Vec<NodeCs>,
-    pub metadata: GameZMetadataCs,
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]

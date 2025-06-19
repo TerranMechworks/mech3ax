@@ -1,7 +1,6 @@
 #![warn(clippy::all, clippy::cargo)]
 #![allow(clippy::identity_op)]
 pub mod common;
-pub mod cs;
 mod flags;
 mod math;
 pub mod mw;

@@ -92,15 +92,6 @@ fn add_nodes(resolver: &mut TypeResolver) {
     resolver.push::<api::nodes::rc::Object3d>();
     resolver.push::<api::nodes::rc::World>();
     resolver.push::<api::nodes::rc::NodeRc>();
-
-    // --- nodes/cs.rs (requires AreaPartitionPm?)
-    resolver.push::<api::nodes::cs::Camera>();
-    resolver.push::<api::nodes::cs::Light>();
-    resolver.push::<api::nodes::cs::Lod>();
-    resolver.push::<api::nodes::cs::Object3d>();
-    resolver.push::<api::nodes::cs::Window>();
-    resolver.push::<api::nodes::cs::World>();
-    resolver.push::<api::nodes::cs::NodeCs>();
 }
 
 fn add_gamez(resolver: &mut TypeResolver) {
@@ -132,11 +123,8 @@ fn add_gamez(resolver: &mut TypeResolver) {
     resolver.push::<api::gamez::GameZDataMw>();
     resolver.push::<api::gamez::GameZMetadataPm>();
     resolver.push::<api::gamez::GameZDataPm>();
-    // no rc metadata
+    resolver.push::<api::gamez::GameZMetadataRc>();
     resolver.push::<api::gamez::GameZDataRc>();
-    resolver.push::<api::gamez::GameZMetadataCs>();
-    resolver.push::<api::gamez::TextureName>();
-    resolver.push::<api::gamez::GameZDataCs>();
 }
 
 fn add_events(resolver: &mut TypeResolver) {

@@ -1,7 +1,7 @@
 use crate::gamez::common::{
     read_model_array_sequential, write_model_array_sequential, MODEL_ARRAY_C_SIZE,
 };
-use crate::model::ng::{
+use crate::model::pm::{
     assert_model_info_zero, make_material_refs, read_model_data, read_model_info, size_model,
     write_model_data, write_model_info, MaterialRefC, ModelPmC, MODEL_C_SIZE,
 };
@@ -73,13 +73,7 @@ pub(crate) fn write_models(
     let count = models.len();
     for (index, model_info) in models.iter().enumerate() {
         trace!("Processing model info {}/{}", index, count);
-        write_model_info(
-            write,
-            model_info.model,
-            &model_info.material_refs,
-            index,
-            false,
-        )?;
+        write_model_info(write, model_info.model, &model_info.material_refs, index)?;
         write.write_u32(model_info.offset)?;
     }
 

@@ -125,34 +125,3 @@ impl From<&NodeFlags> for NodeBitFlags {
         bitflags
     }
 }
-
-bitflags! {
-    pub struct NodeBitFlagsCs: u32 {
-        const UNK02 = 1 << 2;
-        const UNK03 = 1 << 3;
-        const UNK04 = 1 << 4;
-        const UNK05 = 1 << 5;
-        const UNK07 = 1 << 7;
-        const UNK08 = 1 << 8;
-        const UNK09 = 1 << 9;
-        const UNK10 = 1 << 10;
-        const UNK12 = 1 << 12;
-        const UNK15 = 1 << 15;
-        const UNK19 = 1 << 19;
-        const UNK23 = 1 << 23;
-        const UNK24 = 1 << 24;
-        const UNK25 = 1 << 25;
-    }
-}
-
-impl NodeBitFlagsCs {
-    #[inline]
-    pub(crate) const fn mask_not(self, v: Self) -> Self {
-        Self(self.0 & (!v.0))
-    }
-
-    #[inline]
-    pub(crate) const fn mask(self, v: Self) -> Self {
-        Self(self.0 & v.0)
-    }
-}

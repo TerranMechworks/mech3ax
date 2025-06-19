@@ -308,13 +308,7 @@ pub extern "C" fn read_gamez(filename: *const c_char, game_type_id: i32, callbac
                 }?;
                 mech3ax_exchange::to_vec(&gamez)?
             }
-            GameType::CS => {
-                let gamez = {
-                    mech3ax_gamez::gamez::cs::read_gamez(&mut read)
-                        .context("Failed to read gamez data")
-                }?;
-                mech3ax_exchange::to_vec(&gamez)?
-            }
+            GameType::CS => bail!("Crimson Skies support for GameZ isn't implemented any more"),
         };
         callback(data.as_ptr(), data.len());
         Ok(())

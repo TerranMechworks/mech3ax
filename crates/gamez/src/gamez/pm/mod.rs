@@ -6,7 +6,7 @@ use super::common::{
     NODE_INDEX_BOT_MASK, NODE_INDEX_TOP, NODE_INDEX_TOP_MASK, SIGNATURE, VERSION_PM,
 };
 use crate::materials::{self, MatType};
-use crate::textures::ng as textures;
+use crate::textures::pm as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
 use data::Campaign;
 use log::trace;

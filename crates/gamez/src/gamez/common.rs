@@ -10,6 +10,7 @@ pub(crate) const SIGNATURE: u32 = 0x02971222;
 pub(crate) const VERSION_RC: u32 = 15;
 pub(crate) const VERSION_MW: u32 = 27;
 pub(crate) const VERSION_PM: u32 = 41;
+#[expect(dead_code)]
 pub(crate) const VERSION_CS: u32 = 42;
 
 // we'll never know why???
@@ -84,18 +85,6 @@ pub(crate) fn read_model_array_sequential(
     })
 }
 
-impl ModelArrayC {
-    pub(crate) fn iter(&self) -> ModelIndexIter {
-        ModelIndexIter(0..self.array_size)
-    }
-}
-
-pub(crate) fn read_model_array_nonseq(read: &mut CountingReader<impl Read>) -> Result<ModelArrayC> {
-    let info: ModelArrayC = read.read_struct()?;
-    assert_that!("model array size", 1 <= info.array_size <= i32::MAX - 1, read.prev + 0)?;
-    Ok(info)
-}
-
 pub(crate) fn write_model_array_sequential(
     write: &mut CountingWriter<impl Write>,
     array_size: i32,
@@ -108,20 +97,4 @@ pub(crate) fn write_model_array_sequential(
     };
     write.write_struct(&info)?;
     Ok(ModelIndexIter(count..array_size))
-}
-
-pub(crate) fn write_model_array_nonseq(
-    write: &mut CountingWriter<impl Write>,
-    array_size: i32,
-    count: i32,
-    last_index: i32,
-) -> Result<ModelArrayC> {
-    assert_that!("model array size", 1 <= array_size <= i32::MAX - 1, write.offset)?;
-    let info = ModelArrayC {
-        array_size,
-        count,
-        last_index,
-    };
-    write.write_struct(&info)?;
-    Ok(info)
 }

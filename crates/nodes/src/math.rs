@@ -104,22 +104,6 @@ pub(crate) fn apply_matrix_signs(matrix: &Matrix, signs: u32) -> Matrix {
     }
 }
 
-pub(crate) fn extract_vec3_signs(v: &Vec3) -> u32 {
-    let mut signs = 0;
-    signs |= extract_zero_sign(v.x, 0);
-    signs |= extract_zero_sign(v.y, 1);
-    signs |= extract_zero_sign(v.z, 2);
-    signs
-}
-
-pub(crate) fn apply_vec3_signs(v: Vec3, signs: u32) -> Vec3 {
-    Vec3 {
-        x: apply_zero_sign(v.x, signs, 0),
-        y: apply_zero_sign(v.y, signs, 1),
-        z: apply_zero_sign(v.z, signs, 2),
-    }
-}
-
 #[inline]
 fn approx_sqrt(value: f32) -> f32 {
     let cast = i32::from_ne_bytes(value.to_ne_bytes());

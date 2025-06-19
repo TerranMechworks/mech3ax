@@ -15,7 +15,7 @@ pub(crate) fn read_model_info(read: &mut CountingReader<impl Read>) -> Result<Wr
     assert_model_info(model, read.prev)
 }
 
-pub(crate) fn assert_model_info(model: ModelPmC, offset: usize) -> Result<WrappedModelPm> {
+fn assert_model_info(model: ModelPmC, offset: usize) -> Result<WrappedModelPm> {
     let model_type = assert_that!("model type", enum model.model_type, offset + 0)?;
     let facade_mode = assert_that!("facade mode", enum model.facade_mode, offset + 4)?;
     let bitflags = assert_that!("model flags", flags model.flags, offset + 8)?;
