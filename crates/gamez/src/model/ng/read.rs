@@ -228,7 +228,7 @@ pub(crate) fn read_model_data(
 
     if wrapped.vertex_count > 0 {
         trace!(
-            "Reading {} vertices at {}",
+            "Processing {} vertices at {}",
             wrapped.vertex_count,
             read.offset
         );
@@ -237,7 +237,7 @@ pub(crate) fn read_model_data(
 
     if wrapped.normal_count > 0 {
         trace!(
-            "Reading {} normals at {}",
+            "Processing {} normals at {}",
             wrapped.normal_count,
             read.offset
         );
@@ -245,19 +245,27 @@ pub(crate) fn read_model_data(
     }
 
     if wrapped.morph_count > 0 {
-        trace!("Reading {} morphs at {}", wrapped.morph_count, read.offset);
+        trace!(
+            "Processing {} morphs at {}",
+            wrapped.morph_count,
+            read.offset
+        );
         model.morphs = read_vec3s(read, wrapped.morph_count)?;
     }
 
     if wrapped.light_count > 0 {
-        trace!("Reading {} lights at {}", wrapped.light_count, read.offset);
+        trace!(
+            "Processing {} lights at {}",
+            wrapped.light_count,
+            read.offset
+        );
         model.lights = read_lights(read, wrapped.light_count)?;
     }
 
     model.polygons = read_polygons(read, wrapped.polygon_count, material_count)?;
 
     trace!(
-        "Reading {} material infos at {}",
+        "Processing {} material infos at {}",
         wrapped.material_count,
         read.offset
     );
@@ -273,7 +281,7 @@ fn read_polygons(
 ) -> Result<Vec<Polygon>> {
     let poly_infos = (0..count)
         .map(|index| {
-            trace!("Reading polygon info {}/{}", index, count);
+            trace!("Processing polygon info {}/{}", index, count);
             let poly: PolygonPmC = read.read_struct()?;
 
             let result = assert_polygon_info(poly, read.prev, index)?;
@@ -284,10 +292,10 @@ fn read_polygons(
     poly_infos
         .into_iter()
         .map(|(index, verts_in_poly, mat_count, mut polygon)| {
-            trace!("Reading polygon data {}/{}", index, count);
+            trace!("Processing polygon data {}/{}", index, count);
 
             trace!(
-                "Reading {} vertex indices at {}",
+                "Processing {} vertex indices at {}",
                 verts_in_poly,
                 read.offset
             );
@@ -295,7 +303,7 @@ fn read_polygons(
 
             if polygon.normal_indices_ptr != 0 {
                 trace!(
-                    "Reading {} normal indices at {}",
+                    "Processing {} normal indices at {}",
                     verts_in_poly,
                     read.offset
                 );
@@ -304,7 +312,11 @@ fn read_polygons(
 
             polygon.materials = read_materials(read, mat_count, material_count, verts_in_poly)?;
 
-            trace!("Reading {} vertex colors at {}", verts_in_poly, read.offset);
+            trace!(
+                "Processing {} vertex colors at {}",
+                verts_in_poly,
+                read.offset
+            );
             polygon.vertex_colors = read_colors(read, verts_in_poly)?;
 
             Ok(polygon)
@@ -318,8 +330,12 @@ fn read_materials(
     material_count: u32,
     verts_in_poly: u32,
 ) -> Result<Vec<PolygonMaterialNg>> {
-    trace!("Reading {} material indices at {}", mat_count, read.offset);
-    let mat_indices = (0..mat_count)
+    trace!(
+        "Processing {} material indices at {}",
+        mat_count,
+        read.offset
+    );
+    let material_indices = (0..mat_count)
         .map(|_| {
             let mat_index = read.read_u32()?;
             assert_that!("material index", mat_index < material_count, read.prev)?;
@@ -327,10 +343,12 @@ fn read_materials(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    mat_indices
+    trace!("Material indices: {:?}", material_indices);
+
+    material_indices
         .into_iter()
         .map(|material_index| {
-            trace!("Reading {} UV coords at {}", verts_in_poly, read.offset);
+            trace!("Processing {} UV coords at {}", verts_in_poly, read.offset);
             let uv_coords = read_uvs(read, verts_in_poly)?;
             Ok(PolygonMaterialNg {
                 material_index,

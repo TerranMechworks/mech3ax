@@ -30,9 +30,9 @@ pub(crate) fn read_models(
 
             if model.parent_count > 0 {
                 trace!(
-                    "Reading model info {}/{}",
+                    "Processing model info {}/{}",
                     model_index,
-                    model_array.array_size
+                    model_array.array_size,
                 );
                 trace!("{:#?} (len: {}, at {})", model, ModelPmC::SIZE, read.prev);
 
@@ -46,6 +46,13 @@ pub(crate) fn read_models(
 
                 Ok(Some((wrapped, model_offset, model_index)))
             } else {
+                trace!(
+                    "Processing model info zero {}/{} at {}",
+                    model_index,
+                    model_array.array_size,
+                    read.prev,
+                );
+
                 assert_model_info_zero(&model, read.prev).inspect_err(|_| {
                     trace!("{:#?} (index: {}, at {})", model, model_index, read.prev)
                 })?;
@@ -70,7 +77,7 @@ pub(crate) fn read_models(
         .into_iter()
         .map(|item| match item {
             Some((wrapped, offset, index)) => {
-                trace!("Reading model data {}/{}", index, model_array.array_size);
+                trace!("Processing model data {}/{}", index, model_array.array_size);
                 assert_that!("model offset", read.offset == offset, read.offset)?;
                 let model = read_model_data(read, wrapped, material_count)?;
                 Ok(Some(model))
@@ -102,13 +109,13 @@ pub(crate) fn write_models(
     for ((model_index, expected_index), item) in model_array.iter().zip(models.iter()) {
         match item {
             Some((model, offset)) => {
-                trace!("Writing model info {}/{}", model_index, array_size);
+                trace!("Processing model info {}/{}", model_index, array_size);
                 write_model_info(write, model)?;
                 write.write_u32(*offset)?;
             }
             None => {
                 trace!(
-                    "Writing model info zero {}/{} at {}",
+                    "Processing model info zero {}/{} at {}",
                     model_index,
                     array_size,
                     write.offset
@@ -122,7 +129,7 @@ pub(crate) fn write_models(
 
     for (index, item) in models.iter().enumerate() {
         if let Some((model, _)) = item {
-            trace!("Writing model data {}/{}", index, array_size);
+            trace!("Processing model data {}/{}", index, array_size);
             write_model_data(write, model)?;
         }
     }

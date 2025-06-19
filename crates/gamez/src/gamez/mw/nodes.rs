@@ -25,7 +25,7 @@ pub(crate) fn read_nodes(
     let mut display_node = 0;
     let mut light_node: Option<i32> = None;
     for index in 0..array_size {
-        trace!("Reading node info {}/?", index);
+        trace!("Processing node info {}/?", index);
 
         let node_info_pos = read.offset;
         let variant = read_node_info_gamez(read)?;
@@ -111,7 +111,7 @@ pub(crate) fn read_nodes(
     }
 
     trace!(
-        "Reading {}..{} node info zeros at {}",
+        "Processing {}..{} node info zeros at {}",
         actual_count,
         array_size,
         read.offset
@@ -129,7 +129,7 @@ pub(crate) fn read_nodes(
         }
         assert_that!("node zero index", actual_index == expected_index, read.prev)?;
     }
-    trace!("Read node info zeros at {}", read.offset);
+    trace!("Processed node info zeros at {}", read.offset);
 
     assert_that!("node info end", end_offset == read.offset, read.offset)?;
     assert_that!("has display node", display_node > 0, read.offset)?;
@@ -159,7 +159,7 @@ pub(crate) fn read_nodes(
             }
 
             if !matches!(variant, NodeVariantMw::Empty(_)) {
-                trace!("Reading node data {}/{}", index, actual_count);
+                trace!("Processing node data {}/{}", index, actual_count);
             }
             // node data is wrapped because of mechlib reading
             match read_node_data(read, variant)? {
@@ -232,7 +232,7 @@ pub(crate) fn write_nodes(
     let node_count = assert_len!(i32, nodes.len(), "nodes")?;
 
     for (index, node) in nodes.iter().enumerate() {
-        trace!("Writing node info {}/{}", index, node_count);
+        trace!("Processing node info {}/{}", index, node_count);
         write_node_info(write, node)?;
 
         let node_data_offset = match node {
@@ -244,12 +244,12 @@ pub(crate) fn write_nodes(
         write.write_u32(node_data_offset)?;
         offset += size_node(node);
     }
-    // padding for spurious "Reading node info", since the count is not known
+    // padding for spurious "Processing node info", since the count is not known
     // and we have to peek for zero node infos.
     trace!("");
 
     trace!(
-        "Writing {}..{} node info zeros at {}",
+        "Processing {}..{} node info zeros at {}",
         node_count,
         array_size,
         write.offset
@@ -263,11 +263,11 @@ pub(crate) fn write_nodes(
         }
         write.write_i32(index)?;
     }
-    trace!("Wrote note info zeros at {}", write.offset);
+    trace!("Processed note info zeros at {}", write.offset);
 
     for (index, node) in nodes.iter().enumerate() {
         if !matches!(node, NodeMw::Empty(_)) {
-            trace!("Writing node data {}/{}", index, node_count);
+            trace!("Processing node data {}/{}", index, node_count);
         }
         write_node_data(write, node)?;
         match node {

@@ -23,7 +23,7 @@ pub(crate) fn read_nodes(
     let mut variants = Vec::new();
     let mut light_node: Option<i32> = None;
     for index in 0..count {
-        trace!("Reading node info {}/{}", index, count);
+        trace!("Processing node info {}/{}", index, count);
 
         let node_info_pos = read.offset;
         let variant = read_node_info(read)?;
@@ -89,7 +89,7 @@ pub(crate) fn read_nodes(
         .ok_or_else(|| assert_with_msg!("GameZ contains no light node (at {})", read.offset))?;
 
     trace!(
-        "Reading {}..{} node info zeros at {}",
+        "Processing {}..{} node info zeros at {}",
         count,
         array_size,
         read.offset
@@ -107,7 +107,7 @@ pub(crate) fn read_nodes(
         }
         assert_that!("node zero index", actual_index == expected_index, read.prev)?;
     }
-    trace!("Read node info zeros at {}", read.offset);
+    trace!("Processed node info zeros at {}", read.offset);
 
     assert_that!("node info end", end_offset == read.offset, read.offset)?;
 
@@ -134,7 +134,7 @@ pub(crate) fn read_nodes(
             }
 
             if !matches!(variant, NodeVariantRc::Empty(_)) {
-                trace!("Reading node data {}/{}", index, count);
+                trace!("Processing node data {}/{}", index, count);
             }
             read_node_data(read, variant)
         })
@@ -179,7 +179,7 @@ pub(crate) fn write_nodes(
     let node_count = assert_len!(i32, nodes.len(), "nodes")?;
 
     for (index, node) in nodes.iter().enumerate() {
-        trace!("Writing node info {}/{}", index, node_count);
+        trace!("Processing node info {}/{}", index, node_count);
         write_node_info(write, node)?;
         let node_data_offset = match node {
             NodeRc::Empty(empty) => empty.parent,
@@ -191,7 +191,7 @@ pub(crate) fn write_nodes(
     }
 
     trace!(
-        "Writing {}..{} node info zeros at {}",
+        "Processing {}..{} node info zeros at {}",
         node_count,
         array_size,
         write.offset
@@ -205,11 +205,11 @@ pub(crate) fn write_nodes(
         }
         write.write_i32(index)?;
     }
-    trace!("Wrote note info zeros at {}", write.offset);
+    trace!("Processed note info zeros at {}", write.offset);
 
     for (index, node) in nodes.iter().enumerate() {
         if !matches!(node, NodeRc::Empty(_)) {
-            trace!("Writing node data {}/{}", index, node_count);
+            trace!("Processing node data {}/{}", index, node_count);
         }
         write_node_data(write, node)?;
     }

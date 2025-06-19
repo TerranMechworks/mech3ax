@@ -17,7 +17,7 @@ fn read_node_and_model(
     models: &mut Vec<Model>,
     model_ptrs: &mut Vec<i32>,
 ) -> Result<u32> {
-    trace!("Reading node {}", nodes.len());
+    trace!("Processing node {}", nodes.len());
     match read_node_mechlib(read)? {
         WrappedNodeMw::Object3d(wrapped) => {
             read_node_and_model_object3d(read, nodes, models, model_ptrs, wrapped)
@@ -45,7 +45,7 @@ fn read_node_and_model_object3d(
         model_ptrs.push(object3d.mesh_index);
         object3d.mesh_index = model_index;
 
-        trace!("Reading model {}", model_index);
+        trace!("Processing model {}", model_index);
         let wrapped = read_model_info(read)?;
         // TODO: we ought to base this on the materials in mechlib, but...
         let material_count = 4096;
@@ -115,14 +115,14 @@ fn write_node_and_model(
         _ => return Err(mechlib_only_err_mw()),
     };
 
-    trace!("Writing node {}", index);
+    trace!("Processing node {}", index);
     write_node_info(write, node)?;
     write_node_data(write, node)?;
 
     // if mesh_index isn't -1, then we need to write out the model, too
     if let Some(model_index) = restore_index {
         let model = &models[model_index];
-        trace!("Writing model {}", model_index);
+        trace!("Processing model {}", model_index);
         write_model_info(write, model)?;
         write_model_data(write, model)?;
     }

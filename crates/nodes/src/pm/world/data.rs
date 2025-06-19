@@ -164,7 +164,7 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
         assert_that!("partition ptr", partition.ptr != 0, read.prev + 60)?;
 
         trace!(
-            "Reading {} partition node indices at {}",
+            "Processing {} partition node indices at {}",
             partition.count,
             read.offset
         );
@@ -493,7 +493,7 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
     write.write_struct(&partition_c)?;
 
     trace!(
-        "Writing {} partition node indices at {}",
+        "Processing {} partition node indices at {}",
         partition.nodes.len(),
         write.offset
     );

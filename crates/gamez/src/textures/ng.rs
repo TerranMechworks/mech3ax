@@ -36,7 +36,7 @@ pub(crate) fn read_texture_directory(
 ) -> Result<Vec<Texture>> {
     (0..count)
         .map(|index| {
-            trace!("Reading texture {}/{}", index, count);
+            trace!("Processing texture {}/{}", index, count);
             let tex: TextureNgC = read.read_struct()?;
 
             assert_that!("field 04", tex.zero04 == 0, read.prev + 4)?;
@@ -72,7 +72,7 @@ pub(crate) fn write_texture_directory(
 
     let count = textures.len();
     for (index, (texture, image_ptr)) in textures.iter().zip(ptrs).enumerate() {
-        trace!("Writing texture {}/{}", index, count);
+        trace!("Processing texture {}/{}", index, count);
         let name = Ascii::from_str_suffix(&texture.name);
         if texture.mip < -1 {
             warn!(

@@ -152,7 +152,7 @@ fn make_polygon_flags(polygon: &Polygon) -> Result<PolygonBitFlags> {
 fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) -> Result<()> {
     let count = polygons.len();
     for (index, polygon) in polygons.iter().enumerate() {
-        trace!("Writing polygon info {}/{}", index, count);
+        trace!("Processing polygon info {}/{}", index, count);
 
         let mat_count = assert_len!(u32, polygon.materials.len(), "polygon materials count")?;
 
@@ -174,11 +174,11 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) 
         write.write_struct(&poly)?;
     }
     for (index, polygon) in polygons.iter().enumerate() {
-        trace!("Writing polygon data {}/{}", index, count);
+        trace!("Processing polygon data {}/{}", index, count);
 
         let vertex_count = polygon.vertex_indices.len();
         trace!(
-            "Writing {} vertex indices at {}",
+            "Processing {} vertex indices at {}",
             vertex_count,
             write.offset
         );
@@ -194,7 +194,7 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) 
             }
 
             trace!(
-                "Writing {} normal indices at {}",
+                "Processing {} normal indices at {}",
                 normal_indices.len(),
                 write.offset
             );
@@ -202,17 +202,23 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) 
         }
 
         trace!(
-            "Writing {} material indices at {}",
+            "Processing {} material indices at {}",
             polygon.materials.len(),
             write.offset
         );
-        for material in polygon.materials.iter() {
-            write.write_u32(material.material_index)?;
-        }
+        let material_indices = polygon
+            .materials
+            .iter()
+            .map(|material| {
+                write.write_u32(material.material_index)?;
+                Ok(material.material_index)
+            })
+            .collect::<Result<Vec<u32>>>()?;
+        trace!("Material indices: {:?}", material_indices);
 
         for material in polygon.materials.iter() {
             trace!(
-                "Writing {} UV coords at {}",
+                "Processing {} UV coords at {}",
                 material.uv_coords.len(),
                 write.offset
             );
@@ -220,7 +226,7 @@ fn write_polygons(write: &mut CountingWriter<impl Write>, polygons: &[Polygon]) 
         }
 
         trace!(
-            "Writing {} vertex colors at {}",
+            "Processing {} vertex colors at {}",
             polygon.vertex_colors.len(),
             write.offset
         );
@@ -235,7 +241,7 @@ pub(crate) fn write_model_data(
 ) -> Result<()> {
     if !model.vertices.is_empty() {
         trace!(
-            "Writing {} vertices at {}",
+            "Processing {} vertices at {}",
             model.vertices.len(),
             write.offset
         );
@@ -244,7 +250,7 @@ pub(crate) fn write_model_data(
 
     if !model.normals.is_empty() {
         trace!(
-            "Writing {} normals at {}",
+            "Processing {} normals at {}",
             model.normals.len(),
             write.offset
         );
@@ -252,19 +258,27 @@ pub(crate) fn write_model_data(
     }
 
     if !model.morphs.is_empty() {
-        trace!("Writing {} morphs at {}", model.morphs.len(), write.offset);
+        trace!(
+            "Processing {} morphs at {}",
+            model.morphs.len(),
+            write.offset
+        );
         write_vec3s(write, &model.morphs)?;
     }
 
     if !model.lights.is_empty() {
-        trace!("Writing {} lights at {}", model.lights.len(), write.offset);
+        trace!(
+            "Processing {} lights at {}",
+            model.lights.len(),
+            write.offset
+        );
         write_lights(write, &model.lights)?;
     }
 
     write_polygons(write, &model.polygons)?;
 
     trace!(
-        "Writing {} model material infos at {}",
+        "Processing {} material infos at {}",
         model.material_infos.len(),
         write.offset
     );

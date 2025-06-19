@@ -22,7 +22,7 @@ pub(crate) fn read_nodes(
     let mut light_node = None;
     let variants = (0..array_size)
         .map(|index| {
-            trace!("Reading node info {}/{}", index, array_size);
+            trace!("Processing node info {}/{}", index, array_size);
 
             let node_info_pos = read.offset;
             let variant = read_node_info(read)?;
@@ -119,7 +119,7 @@ pub(crate) fn read_nodes(
         .into_iter()
         .enumerate()
         .map(|(index, (variant, node_index))| {
-            trace!("Reading node data {}/{}", index, array_size);
+            trace!("Processing node data {}/{}", index, array_size);
             read_node_data(read, variant, node_index)
         })
         .collect::<Result<Vec<_>>>()?;
@@ -181,7 +181,7 @@ pub(crate) fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NodeC
     let node_count = nodes.len();
 
     for (index, node) in nodes.iter().enumerate() {
-        trace!("Writing node info {}/{}", index, node_count);
+        trace!("Processing node info {}/{}", index, node_count);
         write_node_info(write, node)?;
         let node_index = match node {
             NodeCs::World(_) => 1,
@@ -200,7 +200,7 @@ pub(crate) fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NodeC
     }
 
     for (index, node) in nodes.iter().enumerate() {
-        trace!("Writing node data {}/{}", index, node_count);
+        trace!("Processing node data {}/{}", index, node_count);
         write_node_data(write, node)?;
     }
 

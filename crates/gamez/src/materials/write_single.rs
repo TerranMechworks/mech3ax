@@ -85,7 +85,7 @@ pub(super) fn write_cycle(
 ) -> Result<()> {
     if let Material::Textured(mat) = material {
         if let Some(cycle) = &mat.cycle {
-            trace!("Writing cycle info {}", index);
+            trace!("Processing cycle info {}", index);
 
             let count = assert_len!(u32, cycle.textures.len(), "cycle textures")?;
             let info = CycleInfoC {

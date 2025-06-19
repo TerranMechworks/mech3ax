@@ -23,7 +23,7 @@ pub(crate) fn read_models(
     let models = model_indices
         .valid()
         .map(|index| {
-            trace!("Reading model info {}/{}", index, model_indices.count);
+            trace!("Processing model info {}/{}", index, model_indices.count);
             let wrapped = read_model_info(read)?;
             let model_offset = u32_to_usize(read.read_u32()?);
             assert_that!("model offset", prev_offset <= model_offset <= end_offset, read.prev)?;
@@ -33,7 +33,7 @@ pub(crate) fn read_models(
         .collect::<Result<Vec<_>>>()?;
 
     trace!(
-        "Reading {}..{} model info zeros at {}",
+        "Processing {}..{} model info zeros at {}",
         model_indices.count,
         model_indices.array_size,
         read.offset
@@ -46,12 +46,12 @@ pub(crate) fn read_models(
         let actual_index = read.read_i32()?;
         assert_that!("model index", actual_index == expected_index, read.prev)?;
     }
-    trace!("Read model info zeros at {}", read.offset);
+    trace!("Processed model info zeros at {}", read.offset);
 
     let models = models
         .into_iter()
         .map(|(wrapped, model_offset, index)| {
-            trace!("Reading model data {}/{}", index, model_indices.count);
+            trace!("Processing model data {}/{}", index, model_indices.count);
             assert_that!("model offset", read.offset == model_offset, read.offset)?;
             let model = read_model_data(read, wrapped, material_count)?;
             Ok(model)
@@ -72,13 +72,13 @@ pub(crate) fn write_models(
 
     let count = models.len();
     for (index, (model, offset)) in models.iter().zip(offsets.iter().copied()).enumerate() {
-        trace!("Writing model info {}/{}", index, count);
+        trace!("Processing model info {}/{}", index, count);
         write_model_info(write, model)?;
         write.write_u32(offset)?;
     }
 
     trace!(
-        "Writing {}..{} model info zeros at {}",
+        "Processing {}..{} model info zeros at {}",
         count,
         array_size,
         write.offset
@@ -88,10 +88,10 @@ pub(crate) fn write_models(
         write.write_struct_no_log(&model_zero)?;
         write.write_i32(expected_index)?;
     }
-    trace!("Wrote model info zeros at {}", write.offset);
+    trace!("Processed model info zeros at {}", write.offset);
 
     for (index, model) in models.iter().enumerate() {
-        trace!("Writing model data {}/{}", index, count);
+        trace!("Processing model data {}/{}", index, count);
         write_model_data(write, model)?;
     }
 

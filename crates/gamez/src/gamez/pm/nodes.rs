@@ -22,7 +22,7 @@ pub(crate) fn read_nodes(
     let mut light_node: Option<i32> = None;
     let variants = (0..array_size)
         .map(|index| {
-            trace!("Reading node info {}/{}", index, array_size);
+            trace!("Processing node info {}/{}", index, array_size);
 
             let node_info_pos = read.offset;
             let variant = read_node_info_gamez(read)?;
@@ -91,7 +91,7 @@ pub(crate) fn read_nodes(
         .into_iter()
         .enumerate()
         .map(|(index, (variant, node_index))| {
-            trace!("Reading node data {}/{}", index, array_size);
+            trace!("Processing node data {}/{}", index, array_size);
             match read_node_data(read, variant)? {
                 WrappedNodePm::Camera(camera) => Ok(NodePm::Camera(camera)),
                 WrappedNodePm::Display(display) => Ok(NodePm::Display(display)),
@@ -167,7 +167,7 @@ pub(crate) fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NodeP
     let node_count = nodes.len();
 
     for (index, node) in nodes.iter().enumerate() {
-        trace!("Writing node info {}/{}", index, node_count);
+        trace!("Processing node info {}/{}", index, node_count);
         write_node_info(write, node, false)?;
         let node_index = match node {
             NodePm::World(_) => 1,
@@ -184,7 +184,7 @@ pub(crate) fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NodeP
     }
 
     for (index, node) in nodes.iter().enumerate() {
-        trace!("Writing node data {}/{}", index, node_count);
+        trace!("Processing node data {}/{}", index, node_count);
         write_node_data(write, node)?;
         match node {
             NodePm::Lod(lod) => {

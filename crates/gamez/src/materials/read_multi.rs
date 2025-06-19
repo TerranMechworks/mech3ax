@@ -21,7 +21,7 @@ pub(crate) fn read_materials(
     // read materials without cycle data
     let mut materials = (0..valid)
         .map(|index| {
-            trace!("Reading material {}/{}", index, valid);
+            trace!("Processing material {}/{}", index, valid);
             let material = read_material(read, ty)?;
 
             let material = match material {
@@ -33,7 +33,7 @@ pub(crate) fn read_materials(
                         read.offset
                     )?;
                     let texture = textures[texture_index].name.clone();
-                    trace!("{} -> `{}`", texture, texture_index);
+                    trace!("`{}` -> {}", texture, texture_index);
 
                     Material::Textured(TexturedMaterial {
                         texture,
@@ -76,7 +76,7 @@ pub(crate) fn read_materials(
             Material::Colored(_) => {}
             Material::Textured(mat) if mat.pointer == 0 => {}
             Material::Textured(mat) => {
-                trace!("Reading cycle info {}", index);
+                trace!("Processing cycle info {}", index);
                 read_cycle(read, mat, textures)?;
             }
         }
@@ -108,7 +108,7 @@ fn read_materials_zero(
 ) -> Result<()> {
     let end = ty.size_i16();
     trace!(
-        "Reading {}..{} material zeros at {}",
+        "Processing {}..{} material zeros at {}",
         start,
         end,
         read.offset
@@ -132,6 +132,6 @@ fn read_materials_zero(
         let actual_index2 = read.read_i16()?;
         assert_that!("matl index 2", actual_index2 == expected_index2, read.prev)?;
     }
-    trace!("Read material zeros at {}", read.offset);
+    trace!("Processed material zeros at {}", read.offset);
     Ok(())
 }

@@ -47,7 +47,7 @@ pub fn read_materials(read: &mut CountingReader<impl Read>) -> Result<Vec<Materi
     let count = read.read_u32()?;
     let materials = (0..count)
         .map(|index| {
-            trace!("Reading material {}", index);
+            trace!("Processing material {}", index);
             let material = read_material(read, MatType::Ng)?;
             Ok(match material {
                 RawMaterial::Textured(mat) => {
@@ -79,7 +79,7 @@ pub fn write_materials(
     write.write_u32(materials_len)?;
 
     for (index, material) in materials.iter().enumerate() {
-        trace!("Writing material {}", index);
+        trace!("Processing material {}", index);
         write_material(write, material, None, MatType::Ng)?;
         if let Material::Textured(textured) = material {
             if textured.cycle.is_some() {

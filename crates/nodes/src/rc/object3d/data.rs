@@ -155,7 +155,7 @@ pub(crate) fn read(read: &mut CountingReader<impl Read>, node: NodeVariantsRc) -
     let is_borked = has_borked_parents(node.data_ptr, node.parent_array_ptr);
     let (parent, parents) = if is_borked && node.parent_count > 1 {
         trace!(
-            "Reading {} parent indices {}",
+            "Processing {} parent indices {}",
             node.parent_count,
             read.offset
         );
@@ -243,7 +243,7 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, object3d: &Object3d)
         match (object3d.parent, &object3d.parents) {
             (None, Some(parents)) => {
                 trace!(
-                    "Writing {} parents indices at {}",
+                    "Processing {} parents indices at {}",
                     parents.len(),
                     write.offset
                 );

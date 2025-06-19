@@ -131,7 +131,7 @@ pub(super) fn read_cycle(
             let texture_index = u32_to_usize(read.read_u32()?);
             assert_that!("texture index", texture_index < textures.len(), read.prev)?;
             let texture = textures[texture_index].name.clone();
-            trace!("{} -> `{}`", texture_index, texture);
+            trace!("`{}` -> {}", texture, texture_index);
             Ok(texture)
         })
         .collect::<Result<Vec<_>>>()?;

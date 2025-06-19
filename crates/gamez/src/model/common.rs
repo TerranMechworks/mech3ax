@@ -289,7 +289,7 @@ pub(crate) fn read_lights(
     let lights = (0..count)
         .map(|index| {
             trace!(
-                "Reading light {} ({}) at {}",
+                "Processing light {} ({}) at {}",
                 index,
                 LightC::SIZE,
                 read.offset
@@ -331,7 +331,7 @@ pub(crate) fn write_lights(
 ) -> Result<()> {
     for (index, light) in lights.iter().enumerate() {
         trace!(
-            "Writing light {} (mw, {}) at {}",
+            "Processing light {} ({}) at {}",
             index,
             LightC::SIZE,
             write.offset

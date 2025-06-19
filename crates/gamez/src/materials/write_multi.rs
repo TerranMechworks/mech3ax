@@ -27,18 +27,25 @@ pub(crate) fn write_materials(
     write.write_struct(&info)?;
 
     for (index, material) in (0i16..).zip(materials.iter()) {
-        trace!("Writing material {}/{}", index, materials_len);
+        trace!("Processing material {}/{}", index, materials_len);
 
-        let pointer = if let Material::Textured(textured) = material {
+        let (pointer, info) = if let Material::Textured(textured) = material {
             // reconstruct the texture index
             let texture_index = find_texture_index_by_name(textures, &textured.texture)?;
-            trace!("`{}` -> {}", textured.texture, texture_index);
-            Some(texture_index)
+            (
+                Some(texture_index),
+                Some((&textured.texture, texture_index)),
+            )
         } else {
-            None
+            (None, None)
         };
 
         write_material(write, material, pointer, ty)?;
+
+        // print mapping after, to match read
+        if let Some((texture_name, texture_index)) = info {
+            trace!("`{}` -> {}", texture_name, texture_index);
+        }
 
         // since materials_len <= i16::MAX, this is also true for index, so no
         // overflow is possible
@@ -88,7 +95,7 @@ fn write_materials_zero(
 
     let end = ty.size_i16();
     trace!(
-        "Writing {}..{} material zeros at {}",
+        "Processing {}..{} material zeros at {}",
         start,
         end,
         write.offset
@@ -108,6 +115,6 @@ fn write_materials_zero(
         }
         write.write_i16(index2)?;
     }
-    trace!("Wrote material zeros at {}", write.offset);
+    trace!("Processed material zeros at {}", write.offset);
     Ok(())
 }
