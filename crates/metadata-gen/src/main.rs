@@ -20,7 +20,6 @@ fn add_types(resolver: &mut TypeResolver) {
 
     // --- zmap.rs
     resolver.push::<api::zmap::MapColor>();
-    resolver.push::<api::zmap::MapVertex>();
     resolver.push::<api::zmap::MapFeature>();
     resolver.push::<api::zmap::Zmap>();
 

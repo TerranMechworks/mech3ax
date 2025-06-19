@@ -27,12 +27,8 @@ pub fn write_map(write: &mut CountingWriter<impl Write>, map: &Zmap) -> Result<(
     let header = MapHeaderC {
         version: MAP_VERSION,
         unk04: map.unk04,
-        zero08: 0,
-        zero12: 0,
-        zero16: 0,
-        max_x: map.max_x,
-        zero24: 0,
-        max_y: map.max_y,
+        min: map.min,
+        max: map.max,
     };
     write.write_struct(&header)?;
 
