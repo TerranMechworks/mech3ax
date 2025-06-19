@@ -10,7 +10,7 @@ use crate::textures::pm as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
 use data::Campaign;
 use log::trace;
-use mech3ax_api_types::gamez::{GameZDataPm, GameZMetadataPm};
+use mech3ax_api_types::gamez::{GameZDataPm, GameZMetadata};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use mech3ax_timestamp::unix::{from_timestamp, to_timestamp};
@@ -105,9 +105,10 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataPm> {
 
     read.assert_end()?;
 
-    let metadata = GameZMetadataPm {
+    let metadata = GameZMetadata {
         datetime,
         model_array_size,
+        node_array_size: header.node_array_size,
         node_data_count: header.node_count,
     };
     Ok(GameZDataPm {
@@ -123,14 +124,12 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataPm) 
     let texture_count = assert_len!(i32, gamez.textures.len(), "GameZ textures")?;
     let node_array_size = assert_len!(i32, gamez.nodes.len(), "GameZ nodes")?;
 
-    let GameZMetadataPm {
+    let GameZMetadata {
         datetime,
         model_array_size,
+        node_array_size: _,
         node_data_count,
-    } = &gamez.metadata;
-
-    let model_array_size = *model_array_size;
-    let node_data_count = *node_data_count;
+    } = gamez.metadata;
 
     let textures_offset = HeaderPmC::SIZE;
     let materials_offset = textures_offset + textures::size_texture_directory(texture_count);
@@ -138,7 +137,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataPm) 
     let mut models = models::gather_materials(&gamez.materials, &gamez.models);
     let nodes_offset = models::size_models(models_offset, model_array_size, &mut models);
 
-    let timestamp = to_timestamp(datetime);
+    let timestamp = to_timestamp(&datetime);
 
     let header = HeaderPmC {
         signature: SIGNATURE,

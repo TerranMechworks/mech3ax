@@ -119,11 +119,9 @@ fn add_gamez(resolver: &mut TypeResolver) {
 
     // --- gamez/mod.rs
     resolver.push::<api::gamez::Texture>();
-    resolver.push::<api::gamez::GameZMetadataMw>();
+    resolver.push::<api::gamez::GameZMetadata>();
     resolver.push::<api::gamez::GameZDataMw>();
-    resolver.push::<api::gamez::GameZMetadataPm>();
     resolver.push::<api::gamez::GameZDataPm>();
-    resolver.push::<api::gamez::GameZMetadataRc>();
     resolver.push::<api::gamez::GameZDataRc>();
 }
 
