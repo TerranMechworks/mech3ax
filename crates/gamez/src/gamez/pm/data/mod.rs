@@ -13,6 +13,7 @@ pub(crate) enum Campaign {
 
 impl Campaign {
     pub(crate) fn from_header(header: &HeaderPmC) -> Self {
+        // could probably just use the timestamp...
         if header == &HEADER_C1 {
             Self::C1
         } else if header == &HEADER_C2 {

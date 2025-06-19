@@ -10,7 +10,7 @@ use mech3ax_common::{assert_len, assert_with_msg, Result};
 use mech3ax_types::{AsBytes as _, Ptr};
 use std::io::Write;
 
-fn make_model_flags(flags: &ModelFlags, index: usize) -> ModelBitFlags {
+fn make_model_flags(flags: &ModelFlags, _index: usize) -> ModelBitFlags {
     let ModelFlags {
         lighting,
         fog,
@@ -19,8 +19,6 @@ fn make_model_flags(flags: &ModelFlags, index: usize) -> ModelBitFlags {
         texture_scroll,
         clouds,
         facade_centroid,
-        unk7,
-        unk8,
     } = *flags;
 
     let mut bitflags = ModelBitFlags::empty();
@@ -44,18 +42,6 @@ fn make_model_flags(flags: &ModelFlags, index: usize) -> ModelBitFlags {
     }
     if facade_centroid {
         bitflags |= ModelBitFlags::FACADE_CENTROID;
-    }
-    if unk7 {
-        warn!(
-            "WARN: model {} has `unk7` flag, this is ignored in MW",
-            index
-        );
-    }
-    if unk8 {
-        warn!(
-            "WARN: model {} has `unk8` flag, this is ignored in MW",
-            index
-        );
     }
     bitflags
 }

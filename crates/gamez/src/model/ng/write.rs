@@ -1,14 +1,16 @@
 use super::{MaterialRefC, ModelBitFlags, ModelPmC, PolygonBitFlags, PolygonPmC};
 use crate::model::common::*;
 use log::{trace, warn};
-use mech3ax_api_types::gamez::model::{Model, ModelFlags, Polygon, PolygonFlags, UvCoord};
+use mech3ax_api_types::gamez::model::{
+    Model, ModelFlags, ModelType, Polygon, PolygonFlags, UvCoord,
+};
 use mech3ax_api_types::{Color, Vec3};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, Result};
 use mech3ax_types::{AsBytes as _, Ptr};
 use std::io::Write;
 
-fn make_model_flags(flags: &ModelFlags, _index: usize) -> ModelBitFlags {
+fn make_model_flags(model: &Model, _index: usize, is_cs: bool) -> ModelBitFlags {
     let ModelFlags {
         lighting,
         fog,
@@ -17,9 +19,7 @@ fn make_model_flags(flags: &ModelFlags, _index: usize) -> ModelBitFlags {
         texture_scroll,
         clouds,
         facade_centroid,
-        unk7,
-        unk8,
-    } = *flags;
+    } = model.flags;
 
     let mut bitflags = ModelBitFlags::empty();
     if lighting {
@@ -43,12 +43,17 @@ fn make_model_flags(flags: &ModelFlags, _index: usize) -> ModelBitFlags {
     if facade_centroid {
         bitflags |= ModelBitFlags::FACADE_CENTROID;
     }
-    if unk7 {
-        bitflags |= ModelBitFlags::UNK7;
+
+    if is_cs {
+        if !model.polygons.is_empty() {
+            bitflags |= ModelBitFlags::UNK8;
+        }
+    } else {
+        if model.model_type == ModelType::Default && !model.polygons.is_empty() {
+            bitflags |= ModelBitFlags::HARDWARE_RENDER;
+        }
     }
-    if unk8 {
-        bitflags |= ModelBitFlags::UNK8;
-    }
+
     bitflags
 }
 
@@ -57,6 +62,7 @@ pub(crate) fn write_model_info(
     model: &Model,
     material_refs: &[MaterialRefC],
     index: usize,
+    is_cs: bool,
 ) -> Result<()> {
     let polygon_count = assert_len!(u32, model.polygons.len(), "model {} polygons", index)?;
     let vertex_count = assert_len!(u32, model.vertices.len(), "model {} vertices", index)?;
@@ -83,7 +89,7 @@ pub(crate) fn write_model_info(
         index
     );
 
-    let bitflags = make_model_flags(&model.flags, index);
+    let bitflags = make_model_flags(model, index, is_cs);
 
     let model = ModelPmC {
         model_type: model.model_type.maybe(),

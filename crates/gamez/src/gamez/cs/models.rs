@@ -114,7 +114,13 @@ pub(crate) fn write_models(
         match item {
             Some(model_info) => {
                 trace!("Processing model info {}/{}", model_index, array_size);
-                write_model_info(write, model_info.model, &model_info.material_refs, index)?;
+                write_model_info(
+                    write,
+                    model_info.model,
+                    &model_info.material_refs,
+                    index,
+                    true,
+                )?;
                 write.write_u32(model_info.offset)?;
             }
             None => {

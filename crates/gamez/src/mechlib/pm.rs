@@ -160,7 +160,7 @@ fn write_node(
         // change. they are only used to determine if the material is cycled,
         // and in the default mechlib, no materials are cycled.
         let material_refs = make_material_refs(&[], model, true);
-        write_model_info(write, model, &material_refs, model_index)?;
+        write_model_info(write, model, &material_refs, model_index, false)?;
         write_model_data(write, model, &material_refs, model_index)?;
     }
 

@@ -82,8 +82,6 @@ fn assert_model_info(model: ModelMwC, offset: usize) -> Result<WrappedModelMw> {
         texture_scroll: bitflags.contains(ModelBitFlags::TEXTURE_SCROLL),
         clouds: bitflags.contains(ModelBitFlags::CLOUDS),
         facade_centroid: bitflags.contains(ModelBitFlags::FACADE_CENTROID),
-        unk7: false,
-        unk8: false,
     };
 
     let m = Model {

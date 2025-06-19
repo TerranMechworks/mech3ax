@@ -73,7 +73,13 @@ pub(crate) fn write_models(
     let count = models.len();
     for (index, model_info) in models.iter().enumerate() {
         trace!("Processing model info {}/{}", index, count);
-        write_model_info(write, model_info.model, &model_info.material_refs, index)?;
+        write_model_info(
+            write,
+            model_info.model,
+            &model_info.material_refs,
+            index,
+            false,
+        )?;
         write.write_u32(model_info.offset)?;
     }
 

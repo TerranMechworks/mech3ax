@@ -96,8 +96,6 @@ pub(crate) fn assert_model_info(model: ModelPmC, offset: usize) -> Result<Wrappe
         texture_scroll: bitflags.contains(ModelBitFlags::TEXTURE_SCROLL),
         clouds: bitflags.contains(ModelBitFlags::CLOUDS),
         facade_centroid: bitflags.contains(ModelBitFlags::FACADE_CENTROID),
-        unk7: bitflags.contains(ModelBitFlags::UNK7),
-        unk8: bitflags.contains(ModelBitFlags::UNK8),
     };
 
     let m = Model {

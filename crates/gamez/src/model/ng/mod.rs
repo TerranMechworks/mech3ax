@@ -29,7 +29,11 @@ bitflags! {
         const CLOUDS = 1 << 5;                  // 0x020
         /// Facade rotates around centroid
         const FACADE_CENTROID = 1 << 6;         // 0x040
-        const UNK7 = 1 << 7;                    // 0x080
+        /// Polygons are optimized for hardware rendering/incompatible with
+        /// software rendering (e.g. triangle strip or multi-material).
+        ///
+        /// For PM, almost every model has this set.
+        const HARDWARE_RENDER = 1 << 7;         // 0x080
         const UNK8 = 1 << 8;                    // 0x100
     }
 }

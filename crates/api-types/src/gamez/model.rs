@@ -100,22 +100,25 @@ primitive_enum! {
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Struct)]
 pub struct ModelFlags {
+    /// Affected by lighting
     pub lighting: bool,
+    /// Affected by fog
     pub fog: bool,
+    /// Textures registered to world (?)
     #[serde(skip_serializing_if = "bool_false", default)]
     pub texture_registered: bool,
+    /// Morph active (do not set)
     #[serde(skip_serializing_if = "bool_false", default)]
     pub morph: bool,
+    /// Scroll active
     #[serde(skip_serializing_if = "bool_false", default)]
     pub texture_scroll: bool,
+    /// Affected by clouds/cloud casting
     #[serde(skip_serializing_if = "bool_false", default)]
     pub clouds: bool,
+    /// Facade rotates around centroid
     #[serde(skip_serializing_if = "bool_false", default)]
     pub facade_centroid: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub unk7: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub unk8: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]

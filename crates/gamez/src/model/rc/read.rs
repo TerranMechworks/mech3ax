@@ -83,8 +83,6 @@ fn assert_model_info(model: ModelRcC, offset: usize) -> Result<WrappedModelRc> {
         texture_scroll: bitflags.contains(ModelBitFlags::TEXTURE_SCROLL),
         clouds: false,
         facade_centroid: false,
-        unk7: false,
-        unk8: false,
     };
 
     let m = Model {

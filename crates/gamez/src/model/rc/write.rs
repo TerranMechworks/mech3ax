@@ -19,8 +19,6 @@ fn make_model_flags(flags: &ModelFlags, index: usize) -> ModelBitFlags {
         texture_scroll,
         clouds,
         facade_centroid,
-        unk7,
-        unk8,
     } = *flags;
 
     let mut bitflags = ModelBitFlags::empty();
@@ -48,18 +46,6 @@ fn make_model_flags(flags: &ModelFlags, index: usize) -> ModelBitFlags {
     if facade_centroid {
         warn!(
             "WARN: model {} has `facade_centroid` flag, this is ignored in RC",
-            index
-        );
-    }
-    if unk7 {
-        warn!(
-            "WARN: model {} has `unk7` flag, this is ignored in RC",
-            index
-        );
-    }
-    if unk8 {
-        warn!(
-            "WARN: model {} has `unk8` flag, this is ignored in RC",
             index
         );
     }
