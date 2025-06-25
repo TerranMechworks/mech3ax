@@ -1,16 +1,6 @@
-mod csharp_type;
-mod enums;
-mod fields;
-mod flags;
-mod module_path;
-mod resolver;
-mod structs;
-mod templates;
-mod unions;
-
-use crate::resolver::TypeResolverValues;
+mod csharp;
+use csharp::TypeResolver;
 use mech3ax_api_types as api;
-use resolver::TypeResolver;
 
 fn add_types(resolver: &mut TypeResolver) {
     // --- common.rs
@@ -303,14 +293,14 @@ fn add_anim(resolver: &mut TypeResolver) {
 }
 
 fn main() {
-    let mut resolver = TypeResolver::new();
+    let mut resolver = csharp::TypeResolver::new();
 
     add_types(&mut resolver);
     add_gamez(&mut resolver);
     add_anim(&mut resolver);
 
-    let env = templates::make_env();
-    let TypeResolverValues {
+    let env = csharp::make_env();
+    let csharp::TypeResolverValues {
         enums,
         structs,
         unions,

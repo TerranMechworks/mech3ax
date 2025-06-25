@@ -1,7 +1,7 @@
-use crate::csharp_type::{CSharpType, SerializeType, TypeKind};
-use crate::fields::{sort_generics, Field};
-use crate::module_path::{dotnet_namespace_to_path, rust_mod_path_to_dotnet};
-use crate::resolver::TypeResolver;
+use super::csharp_type::{CSharpType, SerializeType, TypeKind};
+use super::fields::{sort_generics, Field};
+use super::module_path::{dotnet_namespace_to_path, rust_mod_path_to_dotnet};
+use super::resolver::TypeResolver;
 use mech3ax_metadata_types::{TypeInfoStruct, TypeSemantic};
 use minijinja::{context, Environment};
 use serde::Serialize;

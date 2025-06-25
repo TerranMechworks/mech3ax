@@ -1,6 +1,6 @@
-use crate::csharp_type::{CSharpType, SerializeType, TypeKind};
-use crate::module_path::{dotnet_namespace_to_path, rust_mod_path_to_dotnet};
-use crate::resolver::TypeResolver;
+use super::csharp_type::{CSharpType, SerializeType, TypeKind};
+use super::module_path::{dotnet_namespace_to_path, rust_mod_path_to_dotnet};
+use super::resolver::TypeResolver;
 use heck::ToUpperCamelCase as _;
 use mech3ax_metadata_types::{TypeInfoFlags, TypeInfoFlagsRepr};
 use minijinja::{context, Environment};

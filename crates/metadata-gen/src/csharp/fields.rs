@@ -1,5 +1,5 @@
-use crate::csharp_type::SerializeType;
-use crate::resolver::TypeResolver;
+use super::csharp_type::SerializeType;
+use super::resolver::TypeResolver;
 use heck::ToLowerCamelCase as _;
 use mech3ax_metadata_types::{DefaultHandling, TypeInfo, TypeInfoStructField};
 use serde::Serialize;

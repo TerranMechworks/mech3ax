@@ -1,9 +1,9 @@
-use crate::csharp_type::CSharpType;
-use crate::enums::Enum;
-use crate::flags::Flags;
-use crate::module_path::{path_mod_root, path_mod_types};
-use crate::structs::Struct;
-use crate::unions::Union;
+use super::csharp_type::CSharpType;
+use super::enums::Enum;
+use super::flags::Flags;
+use super::module_path::{path_mod_root, path_mod_types};
+use super::structs::Struct;
+use super::unions::Union;
 use mech3ax_metadata_types::{
     TypeInfo, TypeInfoBase, TypeInfoEnum, TypeInfoFlags, TypeInfoOption, TypeInfoStruct,
     TypeInfoUnion, TypeInfoVec,
