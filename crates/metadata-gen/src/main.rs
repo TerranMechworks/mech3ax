@@ -104,8 +104,11 @@ fn add_gamez(resolver: &mut TypeResolver) {
     // --- gamez/model.rs
     resolver.push::<api::gamez::model::UvCoord>();
     resolver.push::<api::gamez::model::PointLight>();
+    resolver.push::<api::gamez::model::PolygonFlags>();
+    resolver.push::<api::gamez::model::PolygonMaterial>();
     resolver.push::<api::gamez::model::Polygon>();
     resolver.push::<api::gamez::model::ModelType>();
+    resolver.push::<api::gamez::model::FacadeMode>();
     resolver.push::<api::gamez::model::ModelFlags>();
     resolver.push::<api::gamez::model::Model>();
 
