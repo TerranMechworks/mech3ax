@@ -160,9 +160,9 @@ fn assert_polygon_info(
 
     let flags = PolygonFlags {
         show_backface: bitflags.contains(PolygonBitFlags::SHOW_BACKFACE),
-        triangle_strip: false,
+        triangle_strip: bitflags.contains(PolygonBitFlags::TRI_STRIP),
         unk3: false,
-        unk6: false,
+        in_out: false,
     };
 
     let materials = vec![PolygonMaterial {

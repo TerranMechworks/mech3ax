@@ -64,8 +64,7 @@ bitflags! {
         static VERTEX_COUNT = 0x0FF;
         const SHOW_BACKFACE = 1 << 8;    // 0, 0x100
         const NORMALS = 1 << 9;          // 1, 0x200
-        // this likely exists, but we don't know what it does
-        // const UNK2 = 1 << 10;            // 2, 0x400
+        const TRI_STRIP = 1 << 10;       // 2, 0x400
     }
 }
 

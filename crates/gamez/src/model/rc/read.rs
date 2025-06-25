@@ -157,7 +157,7 @@ fn assert_polygon_info(
         show_backface: bitflags.contains(PolygonBitFlags::SHOW_BACKFACE),
         triangle_strip: false,
         unk3: false,
-        unk6: false,
+        in_out: false,
     };
 
     let materials = vec![PolygonMaterial {

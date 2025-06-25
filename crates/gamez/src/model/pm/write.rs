@@ -148,7 +148,7 @@ fn make_polygon_flags(
         show_backface,
         unk3,
         triangle_strip,
-        unk6,
+        in_out,
     } = polygon.flags;
 
     if show_backface {
@@ -163,8 +163,8 @@ fn make_polygon_flags(
     if triangle_strip {
         bitflags |= PolygonBitFlags::TRI_STRIP;
     }
-    if unk6 {
-        bitflags |= PolygonBitFlags::UNK6;
+    if in_out {
+        bitflags |= PolygonBitFlags::IN_OUT;
     }
 
     Ok(bitflags)

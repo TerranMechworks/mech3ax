@@ -75,7 +75,7 @@ bitflags! {
         const UNK3 = 1 << 11;            // 1, 0x0800 not in mechlib
         const NORMALS = 1 << 12;         // 2, 0x1000
         const TRI_STRIP = 1 << 13;       // 3, 0x2000
-        const UNK6 = 1 << 14;            // 4, 0x4000 not in mechlib (InOut?)
+        const IN_OUT = 1 << 14;          // 4, 0x4000 not in mechlib
     }
 }
 

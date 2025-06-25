@@ -133,7 +133,7 @@ fn make_polygon_flags(
         show_backface,
         unk3,
         triangle_strip,
-        unk6,
+        in_out,
     } = polygon.flags;
 
     if show_backface {
@@ -149,15 +149,11 @@ fn make_polygon_flags(
         );
     }
     if triangle_strip {
-        return Err(assert_with_msg!(
-            "Model {} polygon {} has `triangle_strip` flag, this is unsupported in MW",
-            model_index,
-            poly_index,
-        ));
+        bitflags |= PolygonBitFlags::TRI_STRIP;
     }
-    if unk6 {
+    if in_out {
         warn!(
-            "WARN: model {} polygon {} has `unk6` flag, this is ignored in MW",
+            "WARN: model {} polygon {} has `in_out` flag, this is ignored in MW",
             model_index, poly_index
         );
     }

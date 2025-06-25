@@ -181,7 +181,7 @@ fn assert_polygon_info(
         show_backface: bitflags.contains(PolygonBitFlags::SHOW_BACKFACE),
         triangle_strip: bitflags.contains(PolygonBitFlags::TRI_STRIP),
         unk3: bitflags.contains(PolygonBitFlags::UNK3),
-        unk6: bitflags.contains(PolygonBitFlags::UNK6),
+        in_out: bitflags.contains(PolygonBitFlags::IN_OUT),
     };
 
     let polygon = Polygon {

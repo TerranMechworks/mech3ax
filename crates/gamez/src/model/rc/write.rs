@@ -156,7 +156,7 @@ fn make_polygon_flags(
         show_backface,
         unk3,
         triangle_strip,
-        unk6,
+        in_out,
     } = polygon.flags;
 
     if show_backface {
@@ -178,9 +178,9 @@ fn make_polygon_flags(
             poly_index,
         ));
     }
-    if unk6 {
+    if in_out {
         warn!(
-            "WARN: model {} polygon {} has `unk6` flag, this is ignored in RC",
+            "WARN: model {} polygon {} has `in_out` flag, this is ignored in RC",
             model_index, poly_index
         );
     }

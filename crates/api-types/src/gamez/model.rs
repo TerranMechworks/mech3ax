@@ -50,9 +50,9 @@ pub struct PolygonFlags {
     #[serde(skip_serializing_if = "bool_false", default)]
     pub unk3: bool, // MW, PM
     #[serde(skip_serializing_if = "bool_false", default)]
-    pub triangle_strip: bool, // PM
+    pub triangle_strip: bool, // MW, PM
     #[serde(skip_serializing_if = "bool_false", default)]
-    pub unk6: bool, // PM
+    pub in_out: bool, // PM
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Struct)]
