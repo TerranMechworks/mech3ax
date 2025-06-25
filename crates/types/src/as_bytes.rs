@@ -31,20 +31,20 @@ pub trait AsBytes: NoUninit + AnyBitPattern + std::fmt::Debug {
 #[macro_export]
 macro_rules! impl_as_bytes {
     ($type:ty, $size:literal) => {
+        #[automatically_derived]
         impl $crate::AsBytes for $type {
-            #[allow(dead_code)]
             const SIZE: u32 = $size;
-
-            #[allow(dead_code)]
             const _ASSERT_SIZE: () = {
                 const _: [(); $size] = [(); ::std::mem::size_of::<$type>()];
             };
 
+            #[inline]
             fn as_bytes(&self) -> &[u8] {
                 let b: &[u8; $size] = ::bytemuck::must_cast_ref(self);
                 b
             }
 
+            #[inline]
             fn as_bytes_mut(&mut self) -> &mut [u8] {
                 let b: &mut [u8; $size] = ::bytemuck::must_cast_mut(self);
                 b

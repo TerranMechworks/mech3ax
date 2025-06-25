@@ -664,6 +664,16 @@ name = "mech3ax-types"
 version = "0.0.0"
 dependencies = [
  "bytemuck",
+ "mech3ax-types-proc-macro",
+]
+
+[[package]]
+name = "mech3ax-types-proc-macro"
+version = "0.0.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
