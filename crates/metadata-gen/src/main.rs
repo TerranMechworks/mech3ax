@@ -1,8 +1,10 @@
 mod csharp;
-use csharp::TypeResolver;
-use mech3ax_api_types as api;
+mod resolver;
 
-fn add_types(resolver: &mut TypeResolver) {
+use mech3ax_api_types as api;
+use resolver::Resolver;
+
+fn add_types(resolver: &mut impl Resolver) {
     // --- common.rs
     resolver.push::<api::Range>();
     resolver.push::<api::Vec3>();
@@ -43,7 +45,7 @@ fn add_types(resolver: &mut TypeResolver) {
     resolver.push::<api::archive::ArchiveEntry>();
 }
 
-fn add_nodes(resolver: &mut TypeResolver) {
+fn add_nodes(resolver: &mut impl Resolver) {
     // --- nodes/mod.rs
     resolver.push::<api::nodes::Camera>();
     resolver.push::<api::nodes::Display>();
@@ -85,7 +87,7 @@ fn add_nodes(resolver: &mut TypeResolver) {
     resolver.push::<api::nodes::rc::NodeRc>();
 }
 
-fn add_gamez(resolver: &mut TypeResolver) {
+fn add_gamez(resolver: &mut impl Resolver) {
     // --- gamez/materials.rs
     resolver.push::<api::gamez::materials::CycleData>();
     resolver.push::<api::gamez::materials::Soil>();
@@ -119,7 +121,7 @@ fn add_gamez(resolver: &mut TypeResolver) {
     resolver.push::<api::gamez::GameZDataRc>();
 }
 
-fn add_events(resolver: &mut TypeResolver) {
+fn add_events(resolver: &mut impl Resolver) {
     // --- anim/events.rs
 
     // events
@@ -245,7 +247,7 @@ fn add_events(resolver: &mut TypeResolver) {
     resolver.push::<api::anim::events::Event>();
 }
 
-fn add_anim(resolver: &mut TypeResolver) {
+fn add_anim(resolver: &mut impl Resolver) {
     // --- anim/si_script.rs
     resolver.push::<api::anim::TranslateData>();
     resolver.push::<api::anim::RotateData>();
@@ -293,6 +295,10 @@ fn add_anim(resolver: &mut TypeResolver) {
 }
 
 fn main() {
+    csharp();
+}
+
+fn csharp() {
     let mut resolver = csharp::TypeResolver::new();
 
     add_types(&mut resolver);

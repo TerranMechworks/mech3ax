@@ -4,12 +4,15 @@ use super::flags::Flags;
 use super::module_path::{path_mod_root, path_mod_types};
 use super::structs::Struct;
 use super::unions::Union;
+use crate::resolver::ResolveError;
 use mech3ax_metadata_types::{
     TypeInfo, TypeInfoBase, TypeInfoEnum, TypeInfoFlags, TypeInfoOption, TypeInfoStruct,
     TypeInfoUnion, TypeInfoVec,
 };
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
+
+type ResolveResult = ::std::result::Result<CSharpType, ResolveError>;
 
 #[derive(Debug)]
 pub(crate) struct TypeResolver {
@@ -30,47 +33,22 @@ pub(crate) struct TypeResolverValues {
     pub(crate) directories: Vec<PathBuf>,
 }
 
-#[derive(Debug)]
-struct ResolveErrorInner {
-    path: Vec<&'static str>,
-    name: &'static str,
-    module_path: &'static str,
-}
-
-#[derive(Debug)]
-struct ResolveError(Box<ResolveErrorInner>);
-
-impl ResolveError {
-    const DELIM: &'static str = ".";
-
-    pub(crate) fn new(module_path: &'static str, name: &'static str) -> Self {
-        let inner = ResolveErrorInner {
-            path: vec![name, Self::DELIM],
-            name,
-            module_path,
-        };
-        Self(Box::new(inner))
-    }
-
-    pub(crate) fn push(mut self, name: &'static str) -> Self {
-        self.0.path.push(name);
-        self.0.path.push(Self::DELIM);
-        self
-    }
-
-    pub(crate) fn into_string(self) -> String {
-        let mut inner = self.0;
-        inner.path.pop(); // remove last delimiter
-        inner.path.reverse();
-        let path: String = inner.path.into_iter().collect();
-        format!(
-            "type `{}::{}` required by `{}` not found",
-            inner.module_path, inner.name, path
-        )
+impl crate::resolver::Resolver for TypeResolver {
+    fn push<TI>(&mut self) -> String
+    where
+        TI: mech3ax_metadata_types::DerivedMetadata,
+    {
+        match TI::TYPE_INFO {
+            TypeInfo::Base(bi) => panic!("cannot push base type: {:?}", bi),
+            TypeInfo::Vec(vi) => panic!("cannot push vec type: {:?}", vi),
+            TypeInfo::Option(oi) => panic!("cannot push option type: {:?}", oi),
+            TypeInfo::Enum(ei) => self.push_enum(ei),
+            TypeInfo::Struct(si) => self.push_struct(si),
+            TypeInfo::Union(ui) => self.push_union(ui),
+            TypeInfo::Flags(fi) => self.push_flags(fi),
+        }
     }
 }
-
-type ResolveResult = ::std::result::Result<CSharpType, ResolveError>;
 
 impl TypeResolver {
     pub(crate) fn new() -> Self {
@@ -84,21 +62,6 @@ impl TypeResolver {
             unions: HashMap::new(),
             flags: HashMap::new(),
             directories,
-        }
-    }
-
-    pub(crate) fn push<TI>(&mut self) -> String
-    where
-        TI: mech3ax_metadata_types::DerivedMetadata,
-    {
-        match TI::TYPE_INFO {
-            TypeInfo::Base(bi) => panic!("cannot push base type: {:?}", bi),
-            TypeInfo::Vec(vi) => panic!("cannot push vec type: {:?}", vi),
-            TypeInfo::Option(oi) => panic!("cannot push option type: {:?}", oi),
-            TypeInfo::Enum(ei) => self.push_enum(ei),
-            TypeInfo::Struct(si) => self.push_struct(si),
-            TypeInfo::Union(ui) => self.push_union(ui),
-            TypeInfo::Flags(fi) => self.push_flags(fi),
         }
     }
 
