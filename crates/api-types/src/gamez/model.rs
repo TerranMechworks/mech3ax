@@ -1,5 +1,5 @@
 use crate::serde::bool_false;
-use crate::{Color, Vec3};
+use crate::{flags, Color, Vec3};
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_metadata_proc_macro::{Enum, Struct};
@@ -44,15 +44,15 @@ pub struct PointLight {
     pub unk72: f32,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Struct)]
-pub struct PolygonFlags {
-    pub show_backface: bool, // RC, MW, PM
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub unk3: bool, // MW, PM
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub triangle_strip: bool, // MW, PM
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub in_out: bool, // PM
+flags! {
+    struct PolygonFlags : u32 {
+        const SHOW_BACKFACE = 1 << 0;
+        const TRI_STRIP = 1 << 1;
+        #[serde(skip_serializing_if = "bool_false", default)]
+        const UNK3 = 1 << 2;
+        #[serde(skip_serializing_if = "bool_false", default)]
+        const IN_OUT = 1 << 3;
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Struct)]
@@ -98,25 +98,26 @@ primitive_enum! {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Struct)]
-pub struct ModelFlags {
-    /// Affected by lighting
-    pub lighting: bool,
-    /// Affected by fog
-    pub fog: bool,
-    /// Textures registered to world (?)
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub texture_registered: bool,
-    /// Morph active (do not set)
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub morph: bool,
-    /// Scroll active
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub texture_scroll: bool,
-    /// Affected by clouds/cloud casting
-    pub clouds: bool,
-    /// Facade rotates around centroid
-    pub facade_centroid: bool,
+flags! {
+    struct ModelFlags : u32 {
+        /// Affected by lighting
+        const LIGHTING = 1 << 0;
+        /// Affected by fog
+        const FOG = 1 << 2;
+        #[serde(skip_serializing_if = "bool_false", default)]
+        /// Textures registered to world (?)
+        const TEXTURE_REGISTERED = 1 << 3;
+        #[serde(skip_serializing_if = "bool_false", default)]
+        /// Morph active (do not set)
+        const MORPH = 1 << 4;
+        #[serde(skip_serializing_if = "bool_false", default)]
+        /// Scroll active
+        const TEXTURE_SCROLL = 1 << 5;
+        /// Affected by clouds/cloud casting
+        const CLOUDS = 1 << 6;
+        /// Facade rotates around centroid
+        const FACADE_CENTROID = 1 << 7;
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]

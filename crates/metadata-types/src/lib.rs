@@ -52,6 +52,26 @@ pub struct TypeInfoEnum {
     pub module_path: &'static str,
 }
 
+/// Bitflags base type.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TypeInfoFlagsRepr {
+    /// Rust: u8, C#: byte
+    U8,
+    /// Rust: u16, C#: ushort
+    U16,
+    /// Rust: u32, C#: uint
+    U32,
+}
+
+/// Bitflags.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TypeInfoFlags {
+    pub name: &'static str,
+    pub repr: TypeInfoFlagsRepr,
+    pub variants: &'static [(&'static str, u32)],
+    pub module_path: &'static str,
+}
+
 /// A discriminant union type.
 #[derive(Debug, Clone, PartialEq)]
 pub struct TypeInfoUnion {
@@ -127,6 +147,8 @@ pub enum TypeInfo {
     Base(TypeInfoBase),
     // leaf type
     Enum(TypeInfoEnum),
+    // leaf type
+    Flags(TypeInfoFlags),
     Vec(TypeInfoVec),
     Option(TypeInfoOption),
     Struct(TypeInfoStruct),

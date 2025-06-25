@@ -8,29 +8,29 @@ use std::borrow::Cow;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize)]
-pub struct Variant {
+pub(crate) struct Variant {
     /// The enum variant's name.
-    pub name: &'static str,
+    pub(crate) name: &'static str,
     /// The enum variant's index.
-    pub index: u32,
+    pub(crate) index: u32,
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct Enum {
+pub(crate) struct Enum {
     /// The enum's C# type name.
-    pub name: &'static str,
+    pub(crate) name: &'static str,
     /// The enum's C# namespace.
-    pub namespace: String,
+    pub(crate) namespace: String,
     /// The enum's full C# type, with namespace.
-    pub full_name: String,
+    pub(crate) full_name: String,
     /// The enum's C# variant names.
-    pub variants: Vec<Variant>,
+    pub(crate) variants: Vec<Variant>,
     /// The enum's path on the filesystem.
-    pub path: PathBuf,
+    pub(crate) path: PathBuf,
 }
 
 impl Enum {
-    pub fn make_type(&self) -> CSharpType {
+    pub(crate) fn make_type(&self) -> CSharpType {
         // our "enums" are a C# enum, which are a C# `struct` (value type)
         CSharpType {
             name: Cow::Owned(self.full_name.clone()),
@@ -40,7 +40,7 @@ impl Enum {
         }
     }
 
-    pub fn new(resolver: &mut TypeResolver, ei: &TypeInfoEnum) -> Self {
+    pub(crate) fn new(resolver: &mut TypeResolver, ei: &TypeInfoEnum) -> Self {
         // luckily, Rust's casing for enum and variant names matches C#.
         let name = ei.name;
         let namespace = rust_mod_path_to_dotnet(ei.module_path);
@@ -67,13 +67,13 @@ impl Enum {
         }
     }
 
-    pub fn render_impl(&self, env: &Environment<'_>) -> Result<String, minijinja::Error> {
+    pub(crate) fn render_impl(&self, env: &Environment<'_>) -> Result<String, minijinja::Error> {
         let template = env.get_template("enum_impl.cs")?;
         template.render(context! { enum => self })
     }
 }
 
-pub const ENUM_IMPL: &str = r#"using Mech3DotNet.Exchange;
+pub(crate) const ENUM_IMPL: &str = r#"using Mech3DotNet.Exchange;
 
 namespace {{ enum.namespace }}
 {

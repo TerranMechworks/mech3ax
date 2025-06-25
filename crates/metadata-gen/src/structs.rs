@@ -10,38 +10,38 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize)]
-pub struct Struct {
+pub(crate) struct Struct {
     /// The struct's C# struct name, without generics.
-    pub name: &'static str,
+    pub(crate) name: &'static str,
     /// The struct's C# type name, with generics.
-    pub type_name: Cow<'static, str>,
+    pub(crate) type_name: Cow<'static, str>,
     /// The struct's C# namespace.
-    pub namespace: String,
+    pub(crate) namespace: String,
     /// The struct's full C# type, with namespace and generics.
-    pub full_name: String,
+    pub(crate) full_name: String,
     /// The struct's C# converter type name, with generics.
-    pub conv_name: String,
+    pub(crate) conv_name: String,
     /// The struct's fields.
-    pub fields: Vec<Field>,
+    pub(crate) fields: Vec<Field>,
     /// The struct's C# semantic type.
     ///
     /// Used for `make_type()`, but not inside any templates.
     #[serde(skip)]
-    pub semantic: TypeSemantic,
+    pub(crate) semantic: TypeSemantic,
     /// The struct's generic arguments.
     ///
     /// Used for selecting the converter template, but not inside any templates.
     #[serde(skip)]
-    pub generics: Option<HashSet<&'static str>>,
-    pub generics_sorted: Vec<&'static str>,
+    pub(crate) generics: Option<HashSet<&'static str>>,
+    pub(crate) generics_sorted: Vec<&'static str>,
     /// Whether the struct is a partial struct.
-    pub partial: bool,
+    pub(crate) partial: bool,
     /// The structs's path on the filesystem.
-    pub path: PathBuf,
+    pub(crate) path: PathBuf,
 }
 
 impl Struct {
-    pub fn make_type(&self) -> CSharpType {
+    pub(crate) fn make_type(&self) -> CSharpType {
         // our "structs" can either be
         // * a C# `class` (reference type)
         // * a C# `struct` (value type)
@@ -61,7 +61,7 @@ impl Struct {
         }
     }
 
-    pub fn new(resolver: &mut TypeResolver, si: &TypeInfoStruct) -> Self {
+    pub(crate) fn new(resolver: &mut TypeResolver, si: &TypeInfoStruct) -> Self {
         // luckily, Rust's casing for structs matches C#.
         let name = si.name;
         let namespace = match si.dotnet.namespace {
@@ -127,7 +127,7 @@ impl Struct {
         }
     }
 
-    pub fn render_impl(&self, env: &Environment<'_>) -> Result<String, minijinja::Error> {
+    pub(crate) fn render_impl(&self, env: &Environment<'_>) -> Result<String, minijinja::Error> {
         let template_name = match self.semantic {
             TypeSemantic::Ref => "class_impl.cs",
             TypeSemantic::Val => "struct_impl.cs",
@@ -137,7 +137,7 @@ impl Struct {
     }
 }
 
-pub const CLASS_IMPL: &str = r#"using System;
+pub(crate) const CLASS_IMPL: &str = r#"using System;
 using Mech3DotNet.Exchange;
 
 namespace {{ struct.namespace }}
@@ -207,7 +207,7 @@ namespace {{ struct.namespace }}
 }
 "#;
 
-pub const STRUCT_IMPL: &str = r#"using System;
+pub(crate) const STRUCT_IMPL: &str = r#"using System;
 using Mech3DotNet.Exchange;
 
 namespace {{ struct.namespace }}
@@ -215,7 +215,7 @@ namespace {{ struct.namespace }}
     public struct {{ struct.type_name }}
     {
 {%- for field in struct.fields %}
-        public {{ field.ty }} {{ field.name }}{% if field.default %} = {{ field.default }}{% endif %};
+        public {{ field.ty }} {{ field.name }};
 {%- endfor %}
 
         public {{ struct.name }}({% for field in struct.fields %}{{ field.ty }} {{ field.name }}{% if not loop.last %}, {% endif %}{% endfor %})

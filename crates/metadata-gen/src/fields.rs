@@ -7,35 +7,37 @@ use std::borrow::Cow;
 use std::collections::HashSet;
 
 #[derive(Debug, Clone, Serialize)]
-pub struct FieldSerde {
-    pub serialize: String,
-    pub deserialize: String,
+pub(crate) struct FieldSerde {
+    pub(crate) serialize: String,
+    pub(crate) deserialize: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct Field {
+pub(crate) struct Field {
     /// The struct field's JSON key name.
-    pub key: String,
+    pub(crate) key: String,
     /// The struct field's C# field name.
-    pub name: String,
+    pub(crate) name: String,
     /// The struct field's C# type, with generics.
-    pub ty: String,
-    pub serde: FieldSerde,
+    pub(crate) ty: String,
+    pub(crate) serde: FieldSerde,
     /// Whether the type requires a null check on deserialization.
-    // pub null_check: bool,
+    // pub(crate) null_check: bool,
     /// The struct field's default value, if any.
-    pub default: Option<String>,
+    pub(crate) default: Option<String>,
     /// The struct field type generic parameters.
     ///
     /// The templates mainly care if this is `Some(_)` or `None`, but the
     /// struct also needs to aggregate generic parameters from all fields.
-    pub generics: Option<HashSet<&'static str>>,
+    pub(crate) generics: Option<HashSet<&'static str>>,
 }
 
 fn rust_to_csharp_field_name(name: &str) -> String {
     match name {
         // TODO: add more reserved keywords
-        "static_" => "static_".to_string(), // this breaks heck
+        "static_" => "static_".to_string(),  // this breaks heck
+        "base" => "base_".to_string(),       // this breaks C#
+        "default" => "default_".to_string(), // this breaks C#
         other => other.to_lower_camel_case(),
     }
 }
@@ -59,7 +61,7 @@ fn hashset_generics(rename: &'static str) -> Option<HashSet<&'static str>> {
     Some(h)
 }
 
-pub fn sort_generics(generics: &HashSet<&'static str>) -> Vec<&'static str> {
+pub(crate) fn sort_generics(generics: &HashSet<&'static str>) -> Vec<&'static str> {
     // sort the generics by name for a nice, stable display order.
     let mut generics_sorted: Vec<&'static str> = generics.iter().copied().collect();
     generics_sorted.sort();
@@ -67,7 +69,7 @@ pub fn sort_generics(generics: &HashSet<&'static str>) -> Vec<&'static str> {
 }
 
 impl Field {
-    pub fn new(
+    pub(crate) fn new(
         struct_name: &'static str,
         struct_generics: Option<&'static [(&'static TypeInfo, &'static str)]>,
         field_info: &TypeInfoStructField,

@@ -671,6 +671,7 @@ dependencies = [
 name = "mech3ax-types-proc-macro"
 version = "0.0.0"
 dependencies = [
+ "heck",
  "proc-macro2",
  "quote",
  "syn",

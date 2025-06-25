@@ -46,9 +46,9 @@ macro_rules! bitflags {
             const _VARIANTS: &'static [(usize, &'static str)] = &[
                 $(($val, stringify!($flag)),)+
             ];
-            const _FLAGS: &'static [::core::option::Option<&'static str>; bitflags!(@width $ty)] =
+            const _FLAGS: &'static [::core::option::Option<&'static str>; $crate::bitflags!(@width $ty)] =
                 &$crate::bitflags::gather_flags(Self::_VARIANTS);
-            const _BASE: $ty = bitflags!(@base $($base_val)?);
+            const _BASE: $ty = $crate::bitflags!(@base $($base_val)?);
 
             const _VALID: $ty = Self::_BASE $(| (1 << $val))+;
             const _INVALID: $ty = !Self::_VALID;
@@ -121,14 +121,14 @@ macro_rules! bitflags {
         impl ::core::fmt::Display for $name {
             #[inline]
             fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-                bitflags!(@fmt $ty)(self.0, f, Self::_BASE, Self::_FLAGS)
+                $crate::bitflags!(@fmt $ty)(self.0, f, Self::_BASE, Self::_FLAGS)
             }
         }
 
         impl ::core::fmt::Debug for $name {
             #[inline]
             fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-                bitflags!(@fmt $ty)(self.0, f, Self::_BASE, Self::_FLAGS)
+                $crate::bitflags!(@fmt $ty)(self.0, f, Self::_BASE, Self::_FLAGS)
             }
         }
 
@@ -177,7 +177,7 @@ macro_rules! bitflags {
 
             #[inline]
             fn fmt_value(v: $ty, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-                bitflags!(@fmt $ty)(v, f, Self::_BASE, Self::_FLAGS)
+                $crate::bitflags!(@fmt $ty)(v, f, Self::_BASE, Self::_FLAGS)
             }
 
             #[inline]

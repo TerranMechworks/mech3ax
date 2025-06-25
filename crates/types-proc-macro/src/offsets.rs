@@ -11,7 +11,7 @@ macro_rules! cannot_derive {
     };
 }
 
-pub fn derive(input: syn::DeriveInput) -> Result<TokenStream> {
+pub(crate) fn derive(input: syn::DeriveInput) -> Result<TokenStream> {
     let syn::DeriveInput {
         attrs: _,
         vis,

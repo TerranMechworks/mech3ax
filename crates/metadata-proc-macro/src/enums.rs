@@ -16,9 +16,9 @@ macro_rules! cannot_derive {
 
 #[derive(Debug)]
 struct EnumInfo {
-    pub ident: Ident,
-    pub name: String,
-    pub variants: Vec<String>,
+    pub(crate) ident: Ident,
+    pub(crate) name: String,
+    pub(crate) variants: Vec<String>,
 }
 
 fn parse_variant(variant: Variant) -> Result<String> {
@@ -79,7 +79,7 @@ fn generate_enum(info: EnumInfo) -> ItemImpl {
     }
 }
 
-pub fn derive(input: DeriveInput) -> Result<TokenStream> {
+pub(crate) fn derive(input: DeriveInput) -> Result<TokenStream> {
     let DeriveInput {
         attrs: _,
         vis: _,

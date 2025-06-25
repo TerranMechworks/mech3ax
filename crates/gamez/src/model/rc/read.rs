@@ -73,15 +73,22 @@ pub(crate) fn read_model_info(read: &mut CountingReader<impl Read>) -> Result<Wr
         FacadeMode::CylindricalY
     };
 
-    let flags = ModelFlags {
-        lighting: bitflags.contains(ModelBitFlags::LIGHTING),
-        fog: bitflags.contains(ModelBitFlags::FOG),
-        texture_registered: bitflags.contains(ModelBitFlags::TEXTURE_REGISTERED),
-        morph: bitflags.contains(ModelBitFlags::MORPH),
-        texture_scroll: bitflags.contains(ModelBitFlags::TEXTURE_SCROLL),
-        clouds: false,
-        facade_centroid: false,
-    };
+    let mut flags = ModelFlags::empty();
+    if bitflags.contains(ModelBitFlags::LIGHTING) {
+        flags |= ModelFlags::LIGHTING;
+    }
+    if bitflags.contains(ModelBitFlags::FOG) {
+        flags |= ModelFlags::FOG;
+    }
+    if bitflags.contains(ModelBitFlags::TEXTURE_REGISTERED) {
+        flags |= ModelFlags::TEXTURE_REGISTERED;
+    }
+    if bitflags.contains(ModelBitFlags::MORPH) {
+        flags |= ModelFlags::MORPH;
+    }
+    if bitflags.contains(ModelBitFlags::TEXTURE_SCROLL) {
+        flags |= ModelFlags::TEXTURE_SCROLL;
+    }
 
     let m = Model {
         model_type,
@@ -153,12 +160,10 @@ fn assert_polygon_info(
     )?;
     let zone_set = assert_zone_set(poly.zone_set.0, offset + 24)?;
 
-    let flags = PolygonFlags {
-        show_backface: bitflags.contains(PolygonBitFlags::SHOW_BACKFACE),
-        triangle_strip: false,
-        unk3: false,
-        in_out: false,
-    };
+    let mut flags = PolygonFlags::empty();
+    if bitflags.contains(PolygonBitFlags::SHOW_BACKFACE) {
+        flags |= PolygonFlags::SHOW_BACKFACE;
+    }
 
     let materials = vec![PolygonMaterial {
         material_index: poly.material_index,

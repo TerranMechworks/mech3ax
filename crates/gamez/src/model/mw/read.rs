@@ -72,15 +72,28 @@ pub(crate) fn read_model_info(read: &mut CountingReader<impl Read>) -> Result<Wr
         v: model.tex_scroll_v,
     };
 
-    let flags = ModelFlags {
-        lighting: bitflags.contains(ModelBitFlags::LIGHTING),
-        fog: bitflags.contains(ModelBitFlags::FOG),
-        texture_registered: bitflags.contains(ModelBitFlags::TEXTURE_REGISTERED),
-        morph: bitflags.contains(ModelBitFlags::MORPH),
-        texture_scroll: bitflags.contains(ModelBitFlags::TEXTURE_SCROLL),
-        clouds: bitflags.contains(ModelBitFlags::CLOUDS),
-        facade_centroid: bitflags.contains(ModelBitFlags::FACADE_CENTROID),
-    };
+    let mut flags = ModelFlags::empty();
+    if bitflags.contains(ModelBitFlags::LIGHTING) {
+        flags |= ModelFlags::LIGHTING;
+    }
+    if bitflags.contains(ModelBitFlags::FOG) {
+        flags |= ModelFlags::FOG;
+    }
+    if bitflags.contains(ModelBitFlags::TEXTURE_REGISTERED) {
+        flags |= ModelFlags::TEXTURE_REGISTERED;
+    }
+    if bitflags.contains(ModelBitFlags::MORPH) {
+        flags |= ModelFlags::MORPH;
+    }
+    if bitflags.contains(ModelBitFlags::TEXTURE_SCROLL) {
+        flags |= ModelFlags::TEXTURE_SCROLL;
+    }
+    if bitflags.contains(ModelBitFlags::CLOUDS) {
+        flags |= ModelFlags::CLOUDS;
+    }
+    if bitflags.contains(ModelBitFlags::FACADE_CENTROID) {
+        flags |= ModelFlags::FACADE_CENTROID;
+    }
 
     let m = Model {
         model_type,
@@ -158,12 +171,13 @@ fn assert_polygon_info(
     )?;
     let zone_set = assert_zone_set(poly.zone_set.0, offset + 32)?;
 
-    let flags = PolygonFlags {
-        show_backface: bitflags.contains(PolygonBitFlags::SHOW_BACKFACE),
-        triangle_strip: bitflags.contains(PolygonBitFlags::TRI_STRIP),
-        unk3: false,
-        in_out: false,
-    };
+    let mut flags = PolygonFlags::empty();
+    if bitflags.contains(PolygonBitFlags::SHOW_BACKFACE) {
+        flags |= PolygonFlags::SHOW_BACKFACE;
+    }
+    if bitflags.contains(PolygonBitFlags::TRI_STRIP) {
+        flags |= PolygonFlags::TRI_STRIP;
+    }
 
     let materials = vec![PolygonMaterial {
         material_index: poly.material_index,

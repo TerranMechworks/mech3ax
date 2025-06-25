@@ -40,7 +40,7 @@ fn parse_expr_to_str_lit(expr: Expr) -> Result<LitStr> {
     }
 }
 
-pub fn parse_serde_attr(attrs: &[Attribute]) -> Result<DefaultHandling> {
+pub(crate) fn parse_serde_attr(attrs: &[Attribute]) -> Result<DefaultHandling> {
     let attr = match find_attr(attrs, "serde") {
         Some(attr) => attr,
         None => return Ok(DefaultHandling::Normal),
@@ -64,11 +64,11 @@ pub fn parse_serde_attr(attrs: &[Attribute]) -> Result<DefaultHandling> {
 }
 
 #[derive(Debug)]
-pub struct DotNetInfoOwned {
-    pub semantic: TypeSemantic,
-    pub generics: Option<Vec<(Path, String)>>,
-    pub partial: bool,
-    pub namespace: Option<String>,
+pub(crate) struct DotNetInfoOwned {
+    pub(crate) semantic: TypeSemantic,
+    pub(crate) generics: Option<Vec<(Path, String)>>,
+    pub(crate) partial: bool,
+    pub(crate) namespace: Option<String>,
 }
 
 impl Default for DotNetInfoOwned {
@@ -114,7 +114,7 @@ fn parse_meta_list_to_generics(meta_list: MetaList) -> Result<Vec<(Path, String)
         .collect())
 }
 
-pub fn parse_dotnet_attr(attrs: &[Attribute]) -> Result<DotNetInfoOwned> {
+pub(crate) fn parse_dotnet_attr(attrs: &[Attribute]) -> Result<DotNetInfoOwned> {
     let Some(attr) = find_attr(attrs, "dotnet") else {
         return Ok(DotNetInfoOwned::default());
     };
@@ -160,4 +160,40 @@ pub fn parse_dotnet_attr(attrs: &[Attribute]) -> Result<DotNetInfoOwned> {
         }
     }
     Ok(dotnet)
+}
+
+#[derive(Debug)]
+pub(crate) enum ReprType {
+    U8,
+    U16,
+    U32,
+}
+
+pub(crate) fn parse_repr_attr(
+    enum_token: &syn::Token![enum],
+    attrs: &[Attribute],
+) -> Result<ReprType> {
+    let Some(attr) = find_attr(attrs, "repr") else {
+        return Err(Error::new_spanned(enum_token, "Expected #[repr(...)]"));
+    };
+
+    let mut repr_type = ReprType::U8;
+    attr.parse_nested_meta(|meta| {
+        if meta.path.is_ident("u8") {
+            repr_type = ReprType::U8;
+            return Ok(());
+        }
+        if meta.path.is_ident("u16") {
+            repr_type = ReprType::U16;
+            return Ok(());
+        }
+        if meta.path.is_ident("u32") {
+            repr_type = ReprType::U32;
+            return Ok(());
+        }
+
+        Err(meta.error("unsupported repr"))
+    })?;
+
+    Ok(repr_type)
 }

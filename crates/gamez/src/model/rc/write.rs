@@ -2,7 +2,8 @@ use super::{ModelBitFlags, ModelRcC, PolygonBitFlags, PolygonRcC};
 use crate::model::common::*;
 use log::{trace, warn};
 use mech3ax_api_types::gamez::model::{
-    FacadeMode, Model, ModelFlags, Polygon, PolygonFlags, PolygonMaterial, UvCoord,
+    FacadeMode, Model, ModelFlagsExhaustive, Polygon, PolygonFlagsExhaustive, PolygonMaterial,
+    UvCoord,
 };
 use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::CountingWriter;
@@ -10,8 +11,8 @@ use mech3ax_common::{assert_len, assert_with_msg, Result};
 use mech3ax_types::{AsBytes as _, Ptr};
 use std::io::Write;
 
-fn make_model_flags(flags: &ModelFlags, index: usize) -> ModelBitFlags {
-    let ModelFlags {
+fn make_model_flags(model: &Model, index: usize) -> ModelBitFlags {
+    let ModelFlagsExhaustive {
         lighting,
         fog,
         texture_registered,
@@ -19,7 +20,7 @@ fn make_model_flags(flags: &ModelFlags, index: usize) -> ModelBitFlags {
         texture_scroll,
         clouds,
         facade_centroid,
-    } = *flags;
+    } = model.flags.exhaustive();
 
     let mut bitflags = ModelBitFlags::empty();
     if lighting {
@@ -74,7 +75,7 @@ pub(crate) fn write_model_info(
     let lights_ptr = assert_ptr!(light_count, model.lights_ptr, "model {} lights", index);
     let morphs_ptr = assert_ptr!(morph_count, model.morphs_ptr, "model {} morphs", index);
 
-    let mut bitflags = make_model_flags(&model.flags, index);
+    let mut bitflags = make_model_flags(&model, index);
 
     match model.facade_mode {
         FacadeMode::CylindricalY => {}
@@ -152,12 +153,12 @@ fn make_polygon_flags(
             )
         })?;
 
-    let PolygonFlags {
+    let PolygonFlagsExhaustive {
         show_backface,
         unk3,
-        triangle_strip,
+        tri_strip,
         in_out,
-    } = polygon.flags;
+    } = polygon.flags.exhaustive();
 
     if show_backface {
         bitflags |= PolygonBitFlags::SHOW_BACKFACE;
@@ -171,7 +172,7 @@ fn make_polygon_flags(
             model_index, poly_index
         );
     }
-    if triangle_strip {
+    if tri_strip {
         return Err(assert_with_msg!(
             "Model {} polygon {} has `triangle_strip` flag, this is unsupported in RC",
             model_index,

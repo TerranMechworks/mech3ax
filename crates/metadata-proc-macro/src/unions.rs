@@ -22,9 +22,9 @@ enum VariantInfo {
 
 #[derive(Debug)]
 struct UnionInfo {
-    pub ident: Ident,
-    pub name: String,
-    pub variants: Vec<VariantInfo>,
+    pub(crate) ident: Ident,
+    pub(crate) name: String,
+    pub(crate) variants: Vec<VariantInfo>,
 }
 
 fn parse_variant(variant: Variant) -> Result<VariantInfo> {
@@ -145,7 +145,7 @@ fn generate_union(info: UnionInfo) -> ItemImpl {
     }
 }
 
-pub fn derive(input: DeriveInput) -> Result<TokenStream> {
+pub(crate) fn derive(input: DeriveInput) -> Result<TokenStream> {
     let DeriveInput {
         attrs: _,
         vis: _,

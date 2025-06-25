@@ -18,18 +18,18 @@ macro_rules! cannot_derive {
 }
 
 #[derive(Debug)]
-pub struct FieldInfoOwned {
-    pub name: String,
-    pub ty: Type,
-    pub default: DefaultHandling,
+pub(crate) struct FieldInfoOwned {
+    pub(crate) name: String,
+    pub(crate) ty: Type,
+    pub(crate) default: DefaultHandling,
 }
 
 #[derive(Debug)]
 struct StructInfo {
-    pub ident: Ident,
-    pub name: String,
-    pub fields: Vec<FieldInfoOwned>,
-    pub dotnet: DotNetInfoOwned,
+    pub(crate) ident: Ident,
+    pub(crate) name: String,
+    pub(crate) fields: Vec<FieldInfoOwned>,
+    pub(crate) dotnet: DotNetInfoOwned,
 }
 
 fn parse_struct_field(ident: Ident, attrs: &[Attribute], ty: &Type) -> Result<FieldInfoOwned> {
@@ -220,7 +220,7 @@ fn generate_struct(info: StructInfo, struct_generics: Generics) -> ItemImpl {
     }
 }
 
-pub fn derive(input: DeriveInput) -> Result<TokenStream> {
+pub(crate) fn derive(input: DeriveInput) -> Result<TokenStream> {
     let DeriveInput {
         attrs,
         vis: _,

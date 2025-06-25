@@ -2,7 +2,7 @@ use super::{MaterialRefC, ModelBitFlags, ModelPmC, PolygonBitFlags, PolygonPmC};
 use crate::model::common::*;
 use log::{trace, warn};
 use mech3ax_api_types::gamez::model::{
-    Model, ModelFlags, ModelType, Polygon, PolygonFlags, UvCoord,
+    Model, ModelFlagsExhaustive, ModelType, Polygon, PolygonFlagsExhaustive, UvCoord,
 };
 use mech3ax_api_types::{Color, Vec3};
 use mech3ax_common::io_ext::CountingWriter;
@@ -11,7 +11,7 @@ use mech3ax_types::{AsBytes as _, Ptr};
 use std::io::Write;
 
 fn make_model_flags(model: &Model, _index: usize) -> ModelBitFlags {
-    let ModelFlags {
+    let ModelFlagsExhaustive {
         lighting,
         fog,
         texture_registered,
@@ -19,7 +19,7 @@ fn make_model_flags(model: &Model, _index: usize) -> ModelBitFlags {
         texture_scroll,
         clouds,
         facade_centroid,
-    } = model.flags;
+    } = model.flags.exhaustive();
 
     let mut bitflags = ModelBitFlags::empty();
     if lighting {
@@ -144,12 +144,12 @@ fn make_polygon_flags(
             )
         })?;
 
-    let PolygonFlags {
+    let PolygonFlagsExhaustive {
         show_backface,
         unk3,
-        triangle_strip,
+        tri_strip,
         in_out,
-    } = polygon.flags;
+    } = polygon.flags.exhaustive();
 
     if show_backface {
         bitflags |= PolygonBitFlags::SHOW_BACKFACE;
@@ -160,7 +160,7 @@ fn make_polygon_flags(
     if unk3 {
         bitflags |= PolygonBitFlags::UNK3;
     }
-    if triangle_strip {
+    if tri_strip {
         bitflags |= PolygonBitFlags::TRI_STRIP;
     }
     if in_out {

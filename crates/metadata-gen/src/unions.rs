@@ -8,35 +8,35 @@ use std::borrow::Cow;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize)]
-pub struct VarantSerde {
-    pub serialize: String,
-    pub deserialize: String,
+pub(crate) struct VarantSerde {
+    pub(crate) serialize: String,
+    pub(crate) deserialize: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct Variant {
+pub(crate) struct Variant {
     /// The union variant's name.
-    pub name: &'static str,
+    pub(crate) name: &'static str,
     /// The union variant's index.
-    pub index: u32,
+    pub(crate) index: u32,
     /// The union variant's full C# type, with namespace; or the unit variant
     /// class name, without namespace.
-    pub type_name: String,
-    pub serde: Option<VarantSerde>,
+    pub(crate) type_name: String,
+    pub(crate) serde: Option<VarantSerde>,
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct Union {
+pub(crate) struct Union {
     /// The union's C# type name.
-    pub name: &'static str,
+    pub(crate) name: &'static str,
     /// The union's C# namespace.
-    pub namespace: String,
+    pub(crate) namespace: String,
     /// The union's full C# type, with namespace.
-    pub full_name: String,
+    pub(crate) full_name: String,
     /// The union variant types.
-    pub variants: Vec<Variant>,
+    pub(crate) variants: Vec<Variant>,
     /// The union's path on the filesystem.
-    pub path: PathBuf,
+    pub(crate) path: PathBuf,
 }
 
 fn resolve_variant(
@@ -70,7 +70,7 @@ fn resolve_variant(
 }
 
 impl Union {
-    pub fn make_type(&self) -> CSharpType {
+    pub(crate) fn make_type(&self) -> CSharpType {
         // our "unions" get transformed into C# classes (reference type)
         // disallow generics for now
         CSharpType {
@@ -81,7 +81,7 @@ impl Union {
         }
     }
 
-    pub fn new(resolver: &mut TypeResolver, ui: &TypeInfoUnion) -> Self {
+    pub(crate) fn new(resolver: &mut TypeResolver, ui: &TypeInfoUnion) -> Self {
         // luckily, Rust's casing for enum names matches C# classes.
         let name = ui.name;
         let namespace = rust_mod_path_to_dotnet(ui.module_path);
@@ -110,13 +110,13 @@ impl Union {
         }
     }
 
-    pub fn render_impl(&self, env: &Environment<'_>) -> Result<String, minijinja::Error> {
+    pub(crate) fn render_impl(&self, env: &Environment<'_>) -> Result<String, minijinja::Error> {
         let template = env.get_template("union_impl.cs")?;
         template.render(context! { union => self })
     }
 }
 
-pub const UNION_IMPL: &str = r#"using System;
+pub(crate) const UNION_IMPL: &str = r#"using System;
 using Mech3DotNet.Exchange;
 
 namespace {{ union.namespace }}

@@ -12,7 +12,7 @@ use std::fmt::Write as _;
 ///
 /// https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TypeKind {
+pub(crate) enum TypeKind {
     /// Value type, non-null
     Val,
     /// Value type, nullable
@@ -24,7 +24,7 @@ pub enum TypeKind {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum SerializeType {
+pub(crate) enum SerializeType {
     U8,
     U16,
     U32,
@@ -43,6 +43,7 @@ pub enum SerializeType {
     Class(String),
     Struct(String),
     Enum(String),
+    Flags(String),
     Union(String),
     Generic(&'static str),
 }
@@ -81,14 +82,14 @@ impl SerializeType {
             Class(full_type) | Union(full_type) => {
                 write!(s, "s.Serialize({}.Converter)", full_type).unwrap()
             }
-            Struct(full_type) | Enum(full_type) => {
+            Struct(full_type) | Enum(full_type) | Flags(full_type) => {
                 write!(s, "s.Serialize({}Converter.Converter)", full_type).unwrap()
             }
             Generic(full_type) => write!(s, "s.SerializeGeneric<{}>()", full_type).unwrap(),
         }
     }
 
-    pub fn make_serialize(&self) -> String {
+    pub(crate) fn make_serialize(&self) -> String {
         let mut s = String::new();
         self.make_ser(&mut s);
         s
@@ -127,14 +128,14 @@ impl SerializeType {
             Class(full_type) | Union(full_type) => {
                 write!(s, "d.Deserialize({}.Converter)", full_type).unwrap()
             }
-            Struct(full_type) | Enum(full_type) => {
+            Struct(full_type) | Enum(full_type) | Flags(full_type) => {
                 write!(s, "d.Deserialize({}Converter.Converter)", full_type).unwrap()
             }
             Generic(full_type) => write!(s, "d.DeserializeGeneric<{}>()", full_type).unwrap(),
         }
     }
 
-    pub fn make_deserialize(&self) -> String {
+    pub(crate) fn make_deserialize(&self) -> String {
         let mut s = String::new();
         self.make_de(&mut s);
         s
@@ -148,12 +149,12 @@ impl SerializeType {
 /// For generic types, the generic parameters must be part of the name, for
 /// example "Foo<T>".
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CSharpType {
+pub(crate) struct CSharpType {
     /// The fully-qualified C# type name.
-    pub name: Cow<'static, str>,
-    pub kind: TypeKind,
-    pub generics: Option<HashSet<&'static str>>,
-    pub serde: SerializeType,
+    pub(crate) name: Cow<'static, str>,
+    pub(crate) kind: TypeKind,
+    pub(crate) generics: Option<HashSet<&'static str>>,
+    pub(crate) serde: SerializeType,
 }
 
 impl From<&TypeInfoBase> for CSharpType {
@@ -182,14 +183,14 @@ impl From<&TypeInfoBase> for CSharpType {
 }
 
 impl CSharpType {
-    pub fn is_byte(&self) -> bool {
+    pub(crate) fn is_byte(&self) -> bool {
         self.name == "byte"
             && self.kind == TypeKind::Val
             && self.generics.is_none()
             && self.serde == SerializeType::U8
     }
 
-    pub fn byte_vec() -> Self {
+    pub(crate) fn byte_vec() -> Self {
         Self {
             name: Cow::Borrowed("byte[]"),
             kind: TypeKind::Val,
@@ -199,7 +200,7 @@ impl CSharpType {
     }
 
     /// Convert a type into an option/nullable type.
-    pub fn option(mut inner: Self) -> Self {
+    pub(crate) fn option(mut inner: Self) -> Self {
         match inner.kind {
             TypeKind::Val => {
                 inner.name = Cow::Owned(format!("{}?", inner.name));
@@ -222,7 +223,7 @@ impl CSharpType {
     }
 
     /// Convert a type into a vec/list type.
-    pub fn vec(mut inner: Self) -> Self {
+    pub(crate) fn vec(mut inner: Self) -> Self {
         inner.name = Cow::Owned(format!("System.Collections.Generic.List<{}>", inner.name));
         // a list is always a reference type, and has it's own nullability,
         // independent of the inner type.

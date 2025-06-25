@@ -1,22 +1,33 @@
 use crate::csharp_type::CSharpType;
 use crate::enums::Enum;
+use crate::flags::Flags;
 use crate::module_path::{path_mod_root, path_mod_types};
 use crate::structs::Struct;
 use crate::unions::Union;
 use mech3ax_metadata_types::{
-    TypeInfo, TypeInfoBase, TypeInfoEnum, TypeInfoOption, TypeInfoStruct, TypeInfoUnion,
-    TypeInfoVec,
+    TypeInfo, TypeInfoBase, TypeInfoEnum, TypeInfoFlags, TypeInfoOption, TypeInfoStruct,
+    TypeInfoUnion, TypeInfoVec,
 };
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
-pub struct TypeResolver {
+pub(crate) struct TypeResolver {
     names: HashSet<String>,
     enums: HashMap<(&'static str, &'static str), Enum>,
     structs: HashMap<(&'static str, &'static str), Struct>,
     unions: HashMap<(&'static str, &'static str), Union>,
+    flags: HashMap<(&'static str, &'static str), Flags>,
     directories: HashSet<PathBuf>,
+}
+
+#[derive(Debug)]
+pub(crate) struct TypeResolverValues {
+    pub(crate) enums: Vec<Enum>,
+    pub(crate) structs: Vec<Struct>,
+    pub(crate) unions: Vec<Union>,
+    pub(crate) flags: Vec<Flags>,
+    pub(crate) directories: Vec<PathBuf>,
 }
 
 #[derive(Debug)]
@@ -32,7 +43,7 @@ struct ResolveError(Box<ResolveErrorInner>);
 impl ResolveError {
     const DELIM: &'static str = ".";
 
-    pub fn new(module_path: &'static str, name: &'static str) -> Self {
+    pub(crate) fn new(module_path: &'static str, name: &'static str) -> Self {
         let inner = ResolveErrorInner {
             path: vec![name, Self::DELIM],
             name,
@@ -41,13 +52,13 @@ impl ResolveError {
         Self(Box::new(inner))
     }
 
-    pub fn push(mut self, name: &'static str) -> Self {
+    pub(crate) fn push(mut self, name: &'static str) -> Self {
         self.0.path.push(name);
         self.0.path.push(Self::DELIM);
         self
     }
 
-    pub fn into_string(self) -> String {
+    pub(crate) fn into_string(self) -> String {
         let mut inner = self.0;
         inner.path.pop(); // remove last delimiter
         inner.path.reverse();
@@ -62,7 +73,7 @@ impl ResolveError {
 type ResolveResult = ::std::result::Result<CSharpType, ResolveError>;
 
 impl TypeResolver {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         let mut directories = HashSet::new();
         directories.insert(path_mod_root());
         directories.insert(path_mod_types());
@@ -71,11 +82,12 @@ impl TypeResolver {
             enums: HashMap::new(),
             structs: HashMap::new(),
             unions: HashMap::new(),
+            flags: HashMap::new(),
             directories,
         }
     }
 
-    pub fn push<TI>(&mut self) -> String
+    pub(crate) fn push<TI>(&mut self) -> String
     where
         TI: mech3ax_metadata_types::DerivedMetadata,
     {
@@ -86,6 +98,7 @@ impl TypeResolver {
             TypeInfo::Enum(ei) => self.push_enum(ei),
             TypeInfo::Struct(si) => self.push_struct(si),
             TypeInfo::Union(ui) => self.push_union(ui),
+            TypeInfo::Flags(fi) => self.push_flags(fi),
         }
     }
 
@@ -119,11 +132,21 @@ impl TypeResolver {
         full_name
     }
 
-    pub fn add_directory(&mut self, path: &Path) {
+    fn push_flags(&mut self, fi: &TypeInfoFlags) -> String {
+        let f = Flags::new(self, fi);
+        if !self.names.insert(f.full_name.clone()) {
+            panic!("Duplicate type name `{}`", f.full_name);
+        }
+        let full_name = f.full_name.clone();
+        self.flags.insert((fi.module_path, fi.name), f);
+        full_name
+    }
+
+    pub(crate) fn add_directory(&mut self, path: &Path) {
         self.directories.insert(path.to_path_buf());
     }
 
-    pub fn resolve(&self, ti: &TypeInfo, name: &'static str) -> CSharpType {
+    pub(crate) fn resolve(&self, ti: &TypeInfo, name: &'static str) -> CSharpType {
         self.resolve_inner(ti).unwrap_or_else(|e| {
             let msg = e.push(name).into_string();
             panic!("`{}` not found", msg);
@@ -138,6 +161,7 @@ impl TypeResolver {
             TypeInfo::Option(oi) => self.resolve_option(oi),
             TypeInfo::Struct(si) => self.resolve_struct(si),
             TypeInfo::Union(ui) => self.resolve_union(ui),
+            TypeInfo::Flags(fi) => self.resolve_flags(fi),
         }
     }
 
@@ -186,19 +210,31 @@ impl TypeResolver {
             .ok_or_else(|| ResolveError::new(ui.module_path, ui.name))
     }
 
-    pub fn into_values(self) -> (Vec<Enum>, Vec<Struct>, Vec<Union>, Vec<PathBuf>) {
+    fn resolve_flags(&self, fi: &TypeInfoFlags) -> ResolveResult {
+        // flags must be pushed before they can be resolved
+        self.flags
+            .get(&(fi.module_path, fi.name))
+            .map(Flags::make_type)
+            .ok_or_else(|| ResolveError::new(fi.module_path, fi.name))
+    }
+
+    pub(crate) fn into_values(self) -> TypeResolverValues {
         let Self {
             names: _,
             enums,
             structs,
             unions,
+            flags,
             directories,
         } = self;
-        (
-            enums.into_values().collect(),
-            structs.into_values().collect(),
-            unions.into_values().collect(),
-            directories.into_iter().collect(),
-        )
+        let mut directories: Vec<PathBuf> = directories.into_iter().collect();
+        directories.sort();
+        TypeResolverValues {
+            enums: enums.into_values().collect(),
+            structs: structs.into_values().collect(),
+            unions: unions.into_values().collect(),
+            flags: flags.into_values().collect(),
+            directories,
+        }
     }
 }

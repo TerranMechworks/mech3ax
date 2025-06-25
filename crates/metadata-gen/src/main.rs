@@ -1,12 +1,14 @@
 mod csharp_type;
 mod enums;
 mod fields;
+mod flags;
 mod module_path;
 mod resolver;
 mod structs;
 mod templates;
 mod unions;
 
+use crate::resolver::TypeResolverValues;
 use mech3ax_api_types as api;
 use resolver::TypeResolver;
 
@@ -308,8 +310,13 @@ fn main() {
     add_anim(&mut resolver);
 
     let env = templates::make_env();
-    let (enums, structs, unions, mut directories) = resolver.into_values();
-    directories.sort();
+    let TypeResolverValues {
+        enums,
+        structs,
+        unions,
+        flags,
+        directories,
+    } = resolver.into_values();
 
     for path in directories {
         std::fs::create_dir(&path)
@@ -317,6 +324,12 @@ fn main() {
     }
 
     for item in enums {
+        let contents = item.render_impl(&env).unwrap();
+        std::fs::write(&item.path, contents)
+            .unwrap_or_else(|e| panic!("failed to write `{}`: {:?}", item.path.display(), e));
+    }
+
+    for item in flags {
         let contents = item.render_impl(&env).unwrap();
         std::fs::write(&item.path, contents)
             .unwrap_or_else(|e| panic!("failed to write `{}`: {:?}", item.path.display(), e));

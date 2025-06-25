@@ -443,7 +443,7 @@ pub enum ObjectConnectorPos {
 #[derive(Debug, Serialize, Deserialize, Clone, Union)]
 pub enum ObjectConnectorTime {
     /// FROM_T / TO_T
-    Value(f32),
+    Scalar(f32),
     /// FROM_T_START + FROM_T_END / TO_T_START + FROM_T_END
     Range(Range),
 }

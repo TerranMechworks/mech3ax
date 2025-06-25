@@ -26,6 +26,7 @@ bitflags! {
         const FROM_T_RANGE = 1 << 11;    // 0x0800
         const TO_T = 1 << 12;            // 0x1000
         const TO_T_RANGE = 1 << 13;      // 0x2000
+        //                               // 0x4000
         const MAX_LENGTH = 1 << 15;      // 0x8000
     }
 }
@@ -204,7 +205,7 @@ impl EventAll for ObjectConnector {
                 conn.from_t_start == conn.from_t_end,
                 read.prev + 52
             )?;
-            Some(ObjectConnectorTime::Value(conn.from_t_start))
+            Some(ObjectConnectorTime::Scalar(conn.from_t_start))
         } else {
             assert_that!(
                 "object connector from t start",
@@ -245,7 +246,7 @@ impl EventAll for ObjectConnector {
                 conn.to_t_start == conn.to_t_end,
                 read.prev + 52
             )?;
-            Some(ObjectConnectorTime::Value(conn.to_t_start))
+            Some(ObjectConnectorTime::Scalar(conn.to_t_start))
         } else {
             assert_that!(
                 "object connector to t start",
@@ -344,7 +345,7 @@ impl EventAll for ObjectConnector {
         };
 
         let (from_t_start, from_t_end) = match &self.from_t {
-            Some(ObjectConnectorTime::Value(t)) => {
+            Some(ObjectConnectorTime::Scalar(t)) => {
                 flags |= ObjectConnectorFlags::FROM_T;
                 (*t, *t)
             }
@@ -357,7 +358,7 @@ impl EventAll for ObjectConnector {
         let from_t_delta = delta(from_t_start, from_t_end, self.run_time);
 
         let (to_t_start, to_t_end) = match &self.to_t {
-            Some(ObjectConnectorTime::Value(t)) => {
+            Some(ObjectConnectorTime::Scalar(t)) => {
                 flags |= ObjectConnectorFlags::TO_T;
                 (*t, *t)
             }

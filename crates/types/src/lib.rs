@@ -25,7 +25,7 @@ pub use cast::{i32_to_usize, u16_to_usize, u32_to_i64, u32_to_usize, AsUsize};
 pub use enumerate::EnumerateEx;
 pub use hex::Hex;
 pub use maybe::Maybe;
-pub use mech3ax_types_proc_macro::Offsets;
+pub use mech3ax_types_proc_macro::{json_flags, Offsets};
 pub use padded::{Padded, PaddedI8};
 pub use primitive_enum::PrimitiveEnum;
 pub use ptr::Ptr;

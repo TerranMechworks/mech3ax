@@ -1,15 +1,15 @@
 use heck::ToUpperCamelCase as _;
 use std::path::PathBuf;
 
-pub fn path_mod_root() -> PathBuf {
+pub(crate) fn path_mod_root() -> PathBuf {
     PathBuf::from("output/Mech3DotNet/AutoGen/")
 }
 
-pub fn path_mod_types() -> PathBuf {
+pub(crate) fn path_mod_types() -> PathBuf {
     PathBuf::from("output/Mech3DotNet/AutoGen/Types/")
 }
 
-pub fn rust_mod_path_to_dotnet(module_path: &'static str) -> String {
+pub(crate) fn rust_mod_path_to_dotnet(module_path: &'static str) -> String {
     let mut components = module_path.split("::");
     assert_eq!(components.next(), Some("mech3ax_api_types"));
 
@@ -21,7 +21,7 @@ pub fn rust_mod_path_to_dotnet(module_path: &'static str) -> String {
     path
 }
 
-pub fn dotnet_namespace_to_path(namespace: &str) -> PathBuf {
+pub(crate) fn dotnet_namespace_to_path(namespace: &str) -> PathBuf {
     let mut components = namespace.split('.');
     assert_eq!(components.next(), Some("Mech3DotNet"));
 
