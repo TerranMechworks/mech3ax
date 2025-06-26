@@ -20,9 +20,8 @@ pub(crate) struct Field {
     pub(crate) name: String,
     /// The struct field's C# type, with generics.
     pub(crate) ty: String,
+    /// The struct field's serialization information.
     pub(crate) serde: FieldSerde,
-    /// Whether the type requires a null check on deserialization.
-    // pub(crate) null_check: bool,
     /// The struct field's default value, if any.
     pub(crate) default: Option<String>,
     /// The struct field type generic parameters.

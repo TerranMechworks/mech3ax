@@ -1,8 +1,8 @@
-mod csharp_type;
 mod enums;
 mod fields;
 mod flags;
 mod module_path;
+mod python_type;
 mod resolver;
 mod structs;
 mod templates;
@@ -17,18 +17,23 @@ macro_rules! write {
     };
 }
 
+const INIT_PY: &str = "from __future__ import annotations\n\n";
+
 pub(crate) fn write(resolver: TypeResolver) {
     let resolver::TypeResolverValues {
         enums,
+        flags,
         structs,
         unions,
-        flags,
         directories,
     } = resolver.into_values();
 
-    for path in directories {
+    for mut path in directories {
         std::fs::create_dir(&path)
             .unwrap_or_else(|e| panic!("failed to create `{}`: {:?}", path.display(), e));
+
+        path.push("__init__.py");
+        write!(path, INIT_PY);
     }
 
     let env = templates::make_env();

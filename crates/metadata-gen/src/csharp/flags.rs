@@ -18,19 +18,19 @@ pub(crate) struct Variant {
 
 #[derive(Debug, Clone, Serialize)]
 pub(crate) struct Flags {
-    /// The flags's C# type name.
+    /// The flags' C# type name.
     pub(crate) name: &'static str,
-    /// The flags's C# namespace.
+    /// The flags' C# namespace.
     pub(crate) namespace: String,
-    /// The flags's full C# type, with namespace.
+    /// The flags' full C# type, with namespace.
     pub(crate) full_name: String,
-    /// The flag's C# (de)serialization type.
+    /// The flags' C# (de)serialization type.
     pub(crate) serde_type: &'static str,
-    /// The flag's C# base type.
+    /// The flags' C# base type.
     pub(crate) base_type: &'static str,
-    /// The flags's C# variant names.
+    /// The flags' C# variant names.
     pub(crate) variants: Vec<Variant>,
-    /// The flags's path on the filesystem.
+    /// The flags' path on the filesystem.
     pub(crate) path: PathBuf,
 }
 

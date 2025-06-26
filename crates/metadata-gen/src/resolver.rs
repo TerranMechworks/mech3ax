@@ -1,5 +1,5 @@
 pub(crate) trait Resolver {
-    fn push<TI>(&mut self) -> String
+    fn push<TI>(&mut self)
     where
         TI: mech3ax_metadata_types::DerivedMetadata;
 }

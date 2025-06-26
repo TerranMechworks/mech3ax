@@ -1,4 +1,5 @@
 mod csharp;
+mod python;
 mod resolver;
 
 use mech3ax_api_types as api;
@@ -296,6 +297,7 @@ fn add_anim(resolver: &mut impl Resolver) {
 
 fn main() {
     csharp();
+    python();
 }
 
 fn csharp() {
@@ -305,41 +307,15 @@ fn csharp() {
     add_gamez(&mut resolver);
     add_anim(&mut resolver);
 
-    let env = csharp::make_env();
-    let csharp::TypeResolverValues {
-        enums,
-        structs,
-        unions,
-        flags,
-        directories,
-    } = resolver.into_values();
+    csharp::write(resolver);
+}
 
-    for path in directories {
-        std::fs::create_dir(&path)
-            .unwrap_or_else(|e| panic!("failed to create `{}`: {:?}", path.display(), e));
-    }
+fn python() {
+    let mut resolver = python::TypeResolver::new();
 
-    for item in enums {
-        let contents = item.render_impl(&env).unwrap();
-        std::fs::write(&item.path, contents)
-            .unwrap_or_else(|e| panic!("failed to write `{}`: {:?}", item.path.display(), e));
-    }
+    add_types(&mut resolver);
+    add_gamez(&mut resolver);
+    add_anim(&mut resolver);
 
-    for item in flags {
-        let contents = item.render_impl(&env).unwrap();
-        std::fs::write(&item.path, contents)
-            .unwrap_or_else(|e| panic!("failed to write `{}`: {:?}", item.path.display(), e));
-    }
-
-    for item in structs {
-        let contents = item.render_impl(&env).unwrap();
-        std::fs::write(&item.path, contents)
-            .unwrap_or_else(|e| panic!("failed to write `{}`: {:?}", item.path.display(), e));
-    }
-
-    for item in unions {
-        let contents = item.render_impl(&env).unwrap();
-        std::fs::write(&item.path, contents)
-            .unwrap_or_else(|e| panic!("failed to write `{}`: {:?}", item.path.display(), e));
-    }
+    python::write(resolver);
 }

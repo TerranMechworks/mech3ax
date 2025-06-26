@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Support Python codegen (codegen)
 * GameZ: No longer support CS (`gamez`, breaking change)
 * GameZ/Nodes: Many, many changes (`gamez`/`nodes`, breaking change)
 * Move fields from AnimFileName to AnimDef; AnimFileName is now only a list of the animation definition files in the archive.
