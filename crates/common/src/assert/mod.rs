@@ -165,12 +165,12 @@ where
 }
 
 #[inline]
-pub fn is_in_range<T>(name: &str, pos: usize, start: T, end: T, needle: T) -> Result<()>
+pub fn is_in_range<T>(name: &str, pos: usize, start: T, end: T, needle: T) -> Result<T>
 where
     T: Copy + PartialOrd + fmt::Display,
 {
     if needle >= start && needle <= end {
-        Ok(())
+        Ok(needle)
     } else {
         let msg = format!(
             "Expected `{}` to be in {}..{}, but was {} (at {})",

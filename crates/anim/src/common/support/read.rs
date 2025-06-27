@@ -36,7 +36,7 @@ pub(crate) fn read_objects(
     )?;
     assert_that!(
         "anim def object zero ptr",
-        object_c.ptr == Ptr::NULL,
+        object_c.node_ptr == Ptr::NULL,
         read.prev + 36
     )?;
     assert_that!(
@@ -82,7 +82,7 @@ pub(crate) fn read_objects(
 
             Ok(ObjectRef {
                 name,
-                ptr: Some(object_c.ptr.0),
+                ptr: Some(object_c.node_ptr.0),
                 flags: object_c.flags.0,
                 flags_merged: Some(object_c.flags_merged.0),
                 affine,
@@ -104,7 +104,7 @@ pub(crate) fn read_nodes(read: &mut CountingReader<impl Read>, count: u8) -> Res
     )?;
     assert_that!(
         "anim def node zero pointer",
-        node_c.ptr == Ptr::NULL,
+        node_c.node_ptr == Ptr::NULL,
         read.prev + 36
     )?;
 
@@ -129,12 +129,12 @@ pub(crate) fn read_nodes(read: &mut CountingReader<impl Read>, count: u8) -> Res
             assert_that!("anim def node field 32", node_c.zero32 == 0, read.prev + 32)?;
             assert_that!(
                 "anim def node pointer",
-                node_c.ptr != Ptr::NULL,
+                node_c.node_ptr != Ptr::NULL,
                 read.prev + 36
             )?;
             Ok(NodeRef {
                 name,
-                ptr: node_c.ptr.into(),
+                ptr: node_c.node_ptr.into(),
             })
         })
         .collect()

@@ -44,7 +44,7 @@ pub(crate) fn write_objects(
         let object_c = ObjectRefC {
             name,
             zero32: 0,
-            ptr: Ptr(object.ptr.unwrap_or(0)),
+            node_ptr: Ptr(object.ptr.unwrap_or(0)),
             flags: Hex(object.flags),
             flags_merged: Hex(object.flags_merged.unwrap_or(0)),
             affine,
@@ -72,7 +72,7 @@ pub(crate) fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NodeR
         let node_c = NodeRefC {
             name,
             zero32: 0,
-            ptr: node.ptr.into(),
+            node_ptr: node.ptr.into(),
         };
         write.write_struct(&node_c)?;
     }

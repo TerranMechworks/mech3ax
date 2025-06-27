@@ -25,9 +25,9 @@ pub(crate) use write::{
 struct ObjectRefC {
     name: Ascii<32>,        // 00
     zero32: u32,            // 32
-    ptr: Ptr,               // 36
+    node_ptr: Ptr,          // 36
     flags: Hex<u32>,        // 40
-    flags_merged: Hex<u32>, // 44,
+    flags_merged: Hex<u32>, // 44
     affine: AffineMatrix,   // 48
 }
 impl_as_bytes!(ObjectRefC, 96);
@@ -43,7 +43,7 @@ impl_as_bytes!(ObjectRefC, 96);
 struct NodeRefC {
     name: Ascii<32>, // 00
     zero32: u32,     // 32
-    ptr: Ptr,        // 36
+    node_ptr: Ptr,   // 36
 }
 impl_as_bytes!(NodeRefC, 40);
 

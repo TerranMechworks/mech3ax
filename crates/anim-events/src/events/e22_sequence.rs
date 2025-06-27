@@ -12,6 +12,7 @@ use std::io::{Read, Write};
 #[repr(C)]
 struct SequenceC {
     name: Ascii<32>,
+    // the sequence/seq def index on the animation
     index: i32,
 }
 impl_as_bytes!(SequenceC, 36);

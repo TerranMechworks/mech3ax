@@ -12,18 +12,18 @@ pub(crate) use zero::{read_anim_def_zero, write_anim_def_zero};
 
 bitflags! {
     struct AnimDefFlags: u32 {
-        const EXECUTION_BY_RANGE = 1 << 1;
-        const EXECUTION_BY_ZONE = 1 << 3;
-        const HAS_CALLBACKS = 1 << 4;
-        const RESET_TIME = 1 << 5;
-        const NETWORK_LOG = 1 << 10;
+        const EXECUTION_BY_RANGE = 1 << 1;      // 0x00002
+        const EXECUTION_BY_ZONE = 1 << 3;       // 0x00008
+        const HAS_CALLBACKS = 1 << 4;           // 0x00010
+        const RESET_TIME = 1 << 5;              // 0x00020
+        const NETWORK_LOG = 1 << 10;            // 0x00400
         // /// MW/PM only
-        // const NETWORK_LOG_ON = 1 << 11;
-        const SAVE_LOG = 1 << 12;
+        // const NETWORK_LOG_ON = 1 << 11;          // 0x00800
+        const SAVE_LOG = 1 << 12;               // 0x01000
         // /// MW/PM only
-        // const SAVE_LOG_ON = 1 << 13;
+        // const SAVE_LOG_ON = 1 << 13;             // 0x02000
         // /// MW/PM only
-        // const AUTO_RESET_NODE_STATES = 1 << 16;
+        // const AUTO_RESET_NODE_STATES = 1 << 16; // 0x10000
         // /// PM only
         // const LOCAL_NODES_ONLY = 1 << 19;
         // /// MW/PM only

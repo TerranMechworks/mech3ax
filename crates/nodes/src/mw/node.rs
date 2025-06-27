@@ -90,13 +90,13 @@ pub struct NodeMwC {
     parent_array_ptr: Ptr,         // 088
     children_count: u32,           // 092
     children_array_ptr: Ptr,       // 096
-    zero100: u32,                  // 100
+    zero100: u32,                  // 100 bbox_mid
     zero104: u32,                  // 104
     zero108: u32,                  // 108
-    zero112: u32,                  // 112
-    unk116: BoundingBox,           // 116
-    unk140: BoundingBox,           // 140
-    unk164: BoundingBox,           // 164
+    zero112: u32,                  // 112 bbox_diag
+    unk116: BoundingBox,           // 116 node_bbox
+    unk140: BoundingBox,           // 140 model_bbox
+    unk164: BoundingBox,           // 164 child_bbox
     zero188: u32,                  // 188
     zero192: u32,                  // 192
     unk196: u32,                   // 196

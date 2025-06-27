@@ -235,7 +235,7 @@ class {{ union.name }}:
                 return f"{{ union.name }}.{{ variant.name }}({self._value!r})"
 {%- else %}
             case {{ variant.in_type }}():
-                return f"{{ union.name }}.{{ variant.name }}()"
+                return "{{ union.name }}.{{ variant.name }}()"
 {%- endif %}
 {%- endfor %}
 

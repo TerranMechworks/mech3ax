@@ -13,10 +13,10 @@ const DEFAULT_FOG_NAME: Ascii<32> = Ascii::new(b"default_fog_name\0\0\0\0\0\0\0\
 
 bitflags! {
     struct FogStateFlags: u32 {
-        const FOG_TYPE = 1 << 0;
-        const COLOR = 1 << 1;
-        const ALTITUDE = 1 << 2;
-        const DENSITY = 1 << 3;
+        const FOG_TYPE = 1 << 0;    // 0x1
+        const COLOR = 1 << 1;       // 0x2
+        const ALTITUDE = 1 << 2;    // 0x4
+        const DENSITY = 1 << 3;     // 0x8
     }
 }
 
