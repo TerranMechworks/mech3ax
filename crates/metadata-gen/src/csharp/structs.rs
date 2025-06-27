@@ -275,4 +275,5 @@ namespace {{ struct.namespace }}
         }
     }
 }
+
 "#;

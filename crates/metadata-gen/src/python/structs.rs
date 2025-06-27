@@ -2,7 +2,6 @@ use super::fields::Field;
 use super::module_path::{rust_mod_path_to_path, rust_mod_path_to_py};
 use super::resolver::TypeResolver;
 use crate::python::python_type::{PythonType, SerializeType};
-use heck::AsSnakeCase;
 use mech3ax_metadata_types::{TypeInfoStruct, TypeSemantic};
 use minijinja::{context, Environment};
 use serde::Serialize;
@@ -39,7 +38,7 @@ impl Struct {
     pub(crate) fn new(resolver: &mut TypeResolver, si: &TypeInfoStruct) -> Self {
         // luckily, Rust's casing for structs matches Python.
         let name = si.name;
-        let namespace = rust_mod_path_to_py(si.module_path, name);
+        let (namespace, filename) = rust_mod_path_to_py(si.module_path, name);
         let slots = matches!(si.dotnet.semantic, TypeSemantic::Val);
 
         let fields: Vec<_> = si
@@ -59,7 +58,7 @@ impl Struct {
 
         let mut path = rust_mod_path_to_path(si.module_path);
         resolver.add_directory(&path);
-        path.push(format!("{}.py", AsSnakeCase(name)));
+        path.push(filename);
 
         Self {
             name,
@@ -81,7 +80,7 @@ pub(crate) const STRUCT_IMPL: &str = r#"from __future__ import annotations
 
 from dataclasses import dataclass
 from mech3py.exchange.deserializer import Deserializer
-from mech3py.exchange.field import Field
+{% if struct.fields %}from mech3py.exchange.field import Field{% endif %}
 from mech3py.exchange.serializer import Serializer
 
 {% for import in struct.imports %}
@@ -92,9 +91,11 @@ _STRUCT_NAME: str = "{{ struct.name }}"
 
 @dataclass{% if struct.slots %}(slots=True){% endif %}
 class {{ struct.name }}:
-{%- for field in struct.fields %}
+{%- if struct.fields %}{% for field in struct.fields %}
     {{ field.name }}: {{ field.ty }}
-{%- endfor %}
+{%- endfor %}{% else %}
+    pass
+{%- endif %}
 
     def serialize(self, s: Serializer) -> None:
         s.serialize_struct({{ struct.fields | length }})
@@ -105,6 +106,7 @@ class {{ struct.name }}:
 
     @classmethod
     def deserialize(cls, d: Deserializer) -> {{ struct.name }}:
+{%- if struct.fields %}
         @dataclass
         class Fields:
 {%- for field in struct.fields %}
@@ -113,9 +115,10 @@ class {{ struct.name }}:
 
         fields = Fields(
 {%- for field in struct.fields %}
-            {{ field.name }}=Field{% if field.default %}.some({{ field.default }}){% else %}.none(){% endif %},
+            {{ field.name }}=Field[{{ field.ty }}]{% if field.default %}.some({{ field.default }}){% else %}.none(){% endif %},
 {%- endfor %}
         )
+{%- endif %}
         for field_name in d.deserialize_struct():
             match field_name:
 {%- for field in struct.fields %}

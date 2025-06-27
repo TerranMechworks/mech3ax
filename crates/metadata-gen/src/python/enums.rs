@@ -1,7 +1,6 @@
-use super::module_path::{rust_mod_path_to_path, rust_mod_path_to_py};
+use super::module_path::{py_camel_case, rust_mod_path_to_path, rust_mod_path_to_py};
 use super::python_type::{PythonType, SerializeType};
 use super::resolver::TypeResolver;
-use heck::AsSnakeCase;
 use mech3ax_metadata_types::TypeInfoEnum;
 use minijinja::{context, Environment};
 use serde::Serialize;
@@ -40,20 +39,23 @@ impl Enum {
 
     pub(crate) fn new(resolver: &mut TypeResolver, ei: &TypeInfoEnum) -> Self {
         // luckily, Rust's casing for enum and variant names matches C#.
-        let name = ei.name;
-        let namespace = rust_mod_path_to_py(ei.module_path, name);
+        let name = py_camel_case(ei.name);
+        let (namespace, filename) = rust_mod_path_to_py(ei.module_path, ei.name);
 
         let variants = ei
             .variants
             .iter()
             .copied()
             .zip(0u32..)
-            .map(|(name, index)| Variant { name, index })
+            .map(|(name, index)| Variant {
+                name: py_camel_case(name),
+                index,
+            })
             .collect();
 
         let mut path = rust_mod_path_to_path(ei.module_path);
         resolver.add_directory(&path);
-        path.push(format!("{}.py", AsSnakeCase(name)));
+        path.push(filename);
 
         Self {
             name,

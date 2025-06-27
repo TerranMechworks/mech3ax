@@ -1,8 +1,8 @@
-use super::module_path::{rust_mod_path_to_path, rust_mod_path_to_py};
+use super::module_path::{
+    py_camel_case, py_to_camel_case, rust_mod_path_to_path, rust_mod_path_to_py,
+};
 use super::python_type::{PythonType, SerializeType};
 use super::resolver::TypeResolver;
-use heck::AsSnakeCase;
-use heck::ToUpperCamelCase as _;
 use mech3ax_metadata_types::{TypeInfoFlags, TypeInfoFlagsRepr};
 use minijinja::{context, Environment};
 use serde::Serialize;
@@ -43,8 +43,8 @@ impl Flags {
 
     pub(crate) fn new(resolver: &mut TypeResolver, fi: &TypeInfoFlags) -> Self {
         // luckily, Rust's casing for structs matches Python.
-        let name = fi.name;
-        let namespace = rust_mod_path_to_py(fi.module_path, name);
+        let name = py_camel_case(fi.name);
+        let (namespace, filename) = rust_mod_path_to_py(fi.module_path, fi.name);
 
         let serde_type = match fi.repr {
             TypeInfoFlagsRepr::U8 => "u8",
@@ -57,14 +57,14 @@ impl Flags {
             .iter()
             .copied()
             .map(|(name, index)| Variant {
-                name: name.to_upper_camel_case(),
+                name: py_to_camel_case(name),
                 index,
             })
             .collect();
 
         let mut path = rust_mod_path_to_path(fi.module_path);
         resolver.add_directory(&path);
-        path.push(format!("{}.py", AsSnakeCase(name)));
+        path.push(filename);
 
         Self {
             name,

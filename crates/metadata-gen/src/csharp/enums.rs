@@ -113,4 +113,5 @@ namespace {{ enum.namespace }}
         }
     }
 }
+
 "#;

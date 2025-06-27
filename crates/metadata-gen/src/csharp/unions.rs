@@ -200,4 +200,5 @@ namespace {{ union.namespace }}
         }
     }
 }
+
 "#;

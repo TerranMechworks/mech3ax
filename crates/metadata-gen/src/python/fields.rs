@@ -1,4 +1,5 @@
 use super::resolver::TypeResolver;
+use crate::python::module_path::py_snake_case;
 use mech3ax_metadata_types::{DefaultHandling, TypeInfoStructField};
 use serde::Serialize;
 use std::borrow::Cow;
@@ -25,13 +26,6 @@ pub(crate) struct Field {
     pub(crate) default: Option<String>,
 }
 
-fn rust_to_python_field_name(name: &'static str) -> &'static str {
-    match name {
-        // TODO: add more reserved keywords
-        other => other,
-    }
-}
-
 impl Field {
     pub(crate) fn new(
         struct_name: &'static str,
@@ -41,7 +35,7 @@ impl Field {
         // the JSON field name should match the type name, barring any serde
         // rename shenanigans.
         let key = field_info.name;
-        let python_name = rust_to_python_field_name(field_info.name);
+        let python_name = py_snake_case(field_info.name);
 
         let ty = resolver.resolve(field_info.type_info, struct_name);
 
@@ -57,7 +51,8 @@ impl Field {
             DefaultHandling::BoolTrue => Some("True".to_string()),
             DefaultHandling::PointerZero => Some("0".to_string()),
             DefaultHandling::SoilIsDefault => {
-                Some("mech3py.types.gamez.materials.Soil.Default".to_string())
+                // Soil must be imported
+                Some("Soil.Default".to_string())
             }
             DefaultHandling::I32IsNegOne => Some("-1".to_string()),
         };

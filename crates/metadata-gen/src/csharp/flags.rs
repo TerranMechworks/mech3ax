@@ -120,4 +120,5 @@ namespace {{ flags.namespace }}
         }
     }
 }
+
 "#;
