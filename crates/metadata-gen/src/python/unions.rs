@@ -127,6 +127,7 @@ fn variant_types_wrap(variants: &mut [Variant]) -> Vec<VariantWrap> {
             variant.in_type = in_type;
         }
     }
+    wraps.sort_by(|a, b| a.external.cmp(&b.external));
     wraps
 }
 
