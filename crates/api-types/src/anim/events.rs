@@ -796,8 +796,8 @@ pub struct DetonateWeapon {
 
 num! {
     enum PufferIntervalType {
-        Time,
-        Distance,
+        Time = 1,
+        Distance = 2,
     }
 }
 

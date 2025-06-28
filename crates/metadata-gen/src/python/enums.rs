@@ -46,7 +46,6 @@ impl Enum {
             .variants
             .iter()
             .copied()
-            .zip(0u32..)
             .map(|(name, index)| Variant {
                 name: py_camel_case(name),
                 index,

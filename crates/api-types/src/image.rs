@@ -6,9 +6,9 @@ use mech3ax_metadata_proc_macro::{Struct, Union};
 
 num! {
     enum TextureAlpha {
-        None,
-        Simple,
-        Full,
+        None = 0,
+        Simple = 1,
+        Full = 2,
     }
 }
 

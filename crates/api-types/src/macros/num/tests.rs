@@ -10,8 +10,8 @@ num! {
 
 num! {
     enum TestPlain {
-        FooBar,
-        SpamEggs,
+        FooBar = 3,
+        SpamEggs = 4,
     }
 }
 

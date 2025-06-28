@@ -48,7 +48,7 @@ pub struct TypeInfoOption {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeInfoEnum {
     pub name: &'static str,
-    pub variants: &'static [&'static str],
+    pub variants: &'static [(&'static str, u32)],
     pub module_path: &'static str,
 }
 

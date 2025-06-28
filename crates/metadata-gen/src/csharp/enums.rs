@@ -50,7 +50,6 @@ impl Enum {
             .variants
             .iter()
             .copied()
-            .zip(0u32..)
             .map(|(name, index)| Variant { name, index })
             .collect();
 
