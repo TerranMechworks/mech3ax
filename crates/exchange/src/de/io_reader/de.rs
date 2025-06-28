@@ -233,21 +233,18 @@ impl<'a, 'de: 'a, R: Read> de::Deserializer<'de> for &'a mut IoReader<R> {
     fn deserialize_enum<V>(
         self,
         _name: &'static str,
-        variants: &'static [&'static str],
+        _variants: &'static [&'static str],
         visitor: V,
     ) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
     {
         let (enum_type, variant_index) = self.read_enum()?;
-        let variant = variants
-            .get(variant_index as usize)
-            .ok_or_else(|| Error::new(ErrorCode::InvalidVariant))?;
         match enum_type {
-            EnumType::Unit => visitor.visit_enum(EnumUnit { variant }),
+            EnumType::Unit => visitor.visit_enum(EnumUnit { variant_index }),
             EnumType::NewType => visitor.visit_enum(EnumNewType {
                 deserializer: self,
-                variant,
+                variant_index,
             }),
         }
     }
@@ -329,7 +326,7 @@ impl<'a, 'de: 'a, R: Read> de::MapAccess<'de> for SizedMapAccess<'a, R> {
 }
 
 struct EnumUnit {
-    variant: &'static str,
+    variant_index: u32,
 }
 
 impl<'de> de::EnumAccess<'de> for EnumUnit {
@@ -340,7 +337,7 @@ impl<'de> de::EnumAccess<'de> for EnumUnit {
     where
         V: de::DeserializeSeed<'de>,
     {
-        let deserializer = de::value::StrDeserializer::new(self.variant);
+        let deserializer = de::value::U32Deserializer::new(self.variant_index);
         let val = seed.deserialize(deserializer)?;
         Ok((val, self))
     }
@@ -381,7 +378,7 @@ impl<'de> de::VariantAccess<'de> for EnumUnit {
 
 struct EnumNewType<'a, R> {
     deserializer: &'a mut IoReader<R>,
-    variant: &'static str,
+    variant_index: u32,
 }
 
 impl<'a, 'de: 'a, R: Read> de::EnumAccess<'de> for EnumNewType<'a, R> {
@@ -392,7 +389,7 @@ impl<'a, 'de: 'a, R: Read> de::EnumAccess<'de> for EnumNewType<'a, R> {
     where
         V: de::DeserializeSeed<'de>,
     {
-        let deserializer = de::value::StrDeserializer::new(self.variant);
+        let deserializer = de::value::U32Deserializer::new(self.variant_index);
         let val = seed.deserialize(deserializer)?;
         Ok((val, self))
     }
