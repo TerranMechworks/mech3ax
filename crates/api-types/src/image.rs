@@ -1,19 +1,19 @@
 //! Image/texture data structures.
+use crate::num;
 use crate::serde::bytes;
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::{Enum, Struct, Union};
-use mech3ax_types::primitive_enum;
+use mech3ax_metadata_proc_macro::{Struct, Union};
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Enum)]
-pub enum TextureAlpha {
-    None,
-    Simple,
-    Full,
+num! {
+    enum TextureAlpha {
+        None,
+        Simple,
+        Full,
+    }
 }
 
-primitive_enum! {
-    #[derive(Serialize, Deserialize, Enum)]
-    pub enum TextureStretch: u16 {
+num! {
+    enum TextureStretch: u16 {
         None = 0,
         Vertical = 1,
         Horizontal = 2,
@@ -40,7 +40,6 @@ pub struct GlobalPalette {
 }
 
 #[derive(Debug, Serialize, Deserialize, Union)]
-#[repr(u16)]
 pub enum TexturePalette {
     None,
     Local(PaletteData),

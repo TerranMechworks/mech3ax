@@ -1,8 +1,7 @@
 use crate::serde::pointer_zero;
-use crate::Color;
+use crate::{num, Color};
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::{Enum, Struct, Union};
-use mech3ax_types::primitive_enum;
+use mech3ax_metadata_proc_macro::{Struct, Union};
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct CycleData {
@@ -15,9 +14,8 @@ pub struct CycleData {
     pub tex_map_ptr: u32,
 }
 
-primitive_enum! {
-    #[derive(Serialize, Deserialize, Enum)]
-    pub enum Soil: u32 {
+num! {
+    enum Soil: u32 {
         Default = 0,
         Water = 1,
         Seafloor = 2,

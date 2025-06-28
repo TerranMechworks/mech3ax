@@ -4,11 +4,10 @@ use super::support::{
     AnimRef, DynamicSoundRef, EffectRef, LightRef, NodeRef, ObjectRef, PufferRef, StaticSoundRef,
 };
 use crate::serde::{bool_false, bool_true, bytes};
-use crate::Range;
+use crate::{num, Range};
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::{Enum, Struct, Union};
+use mech3ax_metadata_proc_macro::{Struct, Union};
 use mech3ax_timestamp::DateTime;
-use mech3ax_types::primitive_enum;
 
 /// `ANIMATION_DEFINITION_FILE` in an `ANIMATION_LIST`
 #[derive(Debug, Serialize, Deserialize, Struct)]
@@ -19,9 +18,8 @@ pub struct AnimDefFile {
     pub hash: Option<u32>,
 }
 
-primitive_enum! {
-    #[derive(Serialize, Deserialize, Enum)]
-    pub enum AnimActivation: u8 {
+num! {
+    enum AnimActivation: u8 {
         WeaponHit = 0,
         CollideHit = 1,
         WeaponOrCollideHit = 2,
@@ -60,9 +58,8 @@ pub struct NamePtrFlags {
     pub flags: u32,
 }
 
-primitive_enum! {
-    #[derive(Serialize, Deserialize, Enum)]
-    pub enum SeqDefState: u8 {
+num! {
+    enum SeqDefState: u8 {
         Initial = 0,
         OnCall = 3,
     }

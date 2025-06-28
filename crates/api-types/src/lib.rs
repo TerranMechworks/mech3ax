@@ -2,10 +2,10 @@
 pub mod anim;
 pub mod archive;
 mod common;
-pub(crate) mod flags;
 pub mod gamez;
 pub mod image;
 pub mod interp;
+pub(crate) mod macros;
 pub mod messages;
 pub mod motion;
 pub mod nodes;
@@ -13,6 +13,8 @@ pub mod saves;
 mod serde;
 pub mod zmap;
 
-pub(crate) use crate::flags::flags;
+pub(crate) use crate::macros::bit::bit;
+pub(crate) use crate::macros::num::num;
+
 pub use crate::serde::bytes::Bytes;
 pub use common::{AffineMatrix, Color, Matrix, Quaternion, Range, Vec3};

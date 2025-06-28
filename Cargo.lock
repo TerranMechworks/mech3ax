@@ -456,6 +456,7 @@ version = "0.0.0"
 dependencies = [
  "base64",
  "bytemuck",
+ "mech3ax-exchange",
  "mech3ax-metadata-proc-macro",
  "mech3ax-metadata-types",
  "mech3ax-timestamp",

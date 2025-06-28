@@ -1,12 +1,11 @@
-use crate::{Color, Range, Vec3};
+use crate::{num, Color, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_metadata_proc_macro::{Enum, Struct, Union};
-use mech3ax_types::{impl_as_bytes, primitive_enum};
+use mech3ax_metadata_proc_macro::{Struct, Union};
+use mech3ax_types::impl_as_bytes;
 
-primitive_enum! {
-    #[derive(Serialize, Deserialize, Enum)]
-    pub enum StartOffset: u8 {
+num! {
+    enum StartOffset: u8 {
         Animation = 1,
         Sequence = 2,
         Event = 3,
@@ -72,9 +71,8 @@ pub struct Effect {
     pub at_node: AtNode,
 }
 
-primitive_enum! {
-    #[derive(Serialize, Deserialize, Enum)]
-    pub enum LightType: u32 {
+num! {
+    enum LightType: u32 {
         Directed = 0,
         PointSource = 1,
     }
@@ -639,9 +637,8 @@ pub struct InvalidateAnimation {
     pub name: String,
 }
 
-primitive_enum! {
-    #[derive(Serialize, Deserialize, Enum)]
-    pub enum FogType: u32 {
+num! {
+    enum FogType: u32 {
         /// OFF
         Off = 0,
         /// LINEAR
@@ -797,10 +794,11 @@ pub struct DetonateWeapon {
     pub at_node: AtNode,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Enum)]
-pub enum PufferIntervalType {
-    Time,
-    Distance,
+num! {
+    enum PufferIntervalType {
+        Time,
+        Distance,
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Struct)]

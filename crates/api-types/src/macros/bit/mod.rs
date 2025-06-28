@@ -1,16 +1,17 @@
-macro_rules! flags {
-    ($(#[$outer:meta])* struct $name:ident : $ty:tt {
-        $(
+macro_rules! bit {
+    (
+        $(#[doc = $flags_doc:literal])*
+        struct $name:ident : $ty:tt {$(
             $(#[serde($($serde:tt)*)])?
-            $(#[doc = $doc:literal])*
+            $(#[doc = $variant_doc:literal])*
             const $flag:ident = 1 << $val:literal;
-        )+
-    }) => {
+        )+}
+    ) => {
         ::mech3ax_types::bitflags! {
-            $(#[$outer])*
+            $(#[doc = $flags_doc])*
             pub struct $name : $ty {
             $(
-                $(#[doc = $doc])*
+                $(#[doc = $variant_doc])*
                 const $flag = 1 << $val;
             )+
             }
@@ -25,14 +26,15 @@ macro_rules! flags {
             }
         }
 
+        #[automatically_derived]
         impl ::mech3ax_metadata_types::DerivedMetadata for $name {
             const TYPE_INFO: &'static ::mech3ax_metadata_types::TypeInfo =
                 &::mech3ax_metadata_types::TypeInfo::Flags(::mech3ax_metadata_types::TypeInfoFlags {
                     name: stringify!($name),
-                    repr: $crate::flags!(@repr $ty),
-                    variants: &[$(
-                        (stringify!($flag), $val),
-                    )+],
+                    repr: $crate::bit!(@repr $ty),
+                    variants: &[
+                        $((stringify!($flag), $val),)+
+                    ],
                     module_path: ::std::module_path!(),
                 });
         }
@@ -49,7 +51,7 @@ macro_rules! flags {
                     let json = v.exhaustive();
                     ::serde::ser::Serialize::serialize(&json, serializer)
                 } else {
-                    $crate::flags!(@ser $ty)(serializer, v.0)
+                    $crate::bit!(@ser $ty)(serializer, v.0)
                 }
             }
         }
@@ -83,7 +85,7 @@ macro_rules! flags {
     (@ser u16) => { ::serde::ser::Serializer::serialize_u16 };
     (@ser u32) => { ::serde::ser::Serializer::serialize_u32 };
 }
-pub(crate) use flags;
+pub(crate) use bit;
 
 #[cfg(test)]
 mod tests;

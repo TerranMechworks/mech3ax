@@ -1,12 +1,11 @@
 //! Work in progress.
+use crate::num;
 use crate::serde::bytes::Bytes;
 use ::serde::{Deserialize, Serialize};
-use mech3ax_types::primitive_enum;
 use std::num::NonZeroU32;
 
-primitive_enum! {
-    #[derive(Serialize, Deserialize)]
-    pub enum ActivationStatus: u8 {
+num! {
+    enum ActivationStatus: u8 {
         Unk1 = 1,
         // Unk2 = 2,
         Executed = 3,

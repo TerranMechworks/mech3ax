@@ -161,39 +161,3 @@ pub(crate) fn parse_dotnet_attr(attrs: &[Attribute]) -> Result<DotNetInfoOwned> 
     }
     Ok(dotnet)
 }
-
-#[derive(Debug)]
-pub(crate) enum ReprType {
-    U8,
-    U16,
-    U32,
-}
-
-pub(crate) fn parse_repr_attr(
-    enum_token: &syn::Token![enum],
-    attrs: &[Attribute],
-) -> Result<ReprType> {
-    let Some(attr) = find_attr(attrs, "repr") else {
-        return Err(Error::new_spanned(enum_token, "Expected #[repr(...)]"));
-    };
-
-    let mut repr_type = ReprType::U8;
-    attr.parse_nested_meta(|meta| {
-        if meta.path.is_ident("u8") {
-            repr_type = ReprType::U8;
-            return Ok(());
-        }
-        if meta.path.is_ident("u16") {
-            repr_type = ReprType::U16;
-            return Ok(());
-        }
-        if meta.path.is_ident("u32") {
-            repr_type = ReprType::U32;
-            return Ok(());
-        }
-
-        Err(meta.error("unsupported repr"))
-    })?;
-
-    Ok(repr_type)
-}

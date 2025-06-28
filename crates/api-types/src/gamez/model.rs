@@ -1,9 +1,9 @@
 use crate::serde::bool_false;
-use crate::{flags, Color, Vec3};
+use crate::{bit, num, Color, Vec3};
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_metadata_proc_macro::{Enum, Struct};
-use mech3ax_types::{impl_as_bytes, primitive_enum};
+use mech3ax_metadata_proc_macro::Struct;
+use mech3ax_types::impl_as_bytes;
 
 #[derive(
     Debug,
@@ -44,7 +44,7 @@ pub struct PointLight {
     pub unk72: f32,
 }
 
-flags! {
+bit! {
     struct PolygonFlags : u32 {
         const SHOW_BACKFACE = 1 << 0;
         const TRI_STRIP = 1 << 1;
@@ -79,18 +79,16 @@ pub struct Polygon {
     pub materials_ptr: u32,      // PM
 }
 
-primitive_enum! {
-    #[derive(Serialize, Deserialize, Enum)]
-    pub enum ModelType: u32 {
+num! {
+    enum ModelType: u32 {
         Default = 0,
         Facade = 1,
         Points = 2,
     }
 }
 
-primitive_enum! {
-    #[derive(Serialize, Deserialize, Enum)]
-    pub enum FacadeMode: u32 {
+num! {
+    enum FacadeMode: u32 {
         CylindricalY = 0,
         SphericalY = 1,
         CylindricalX = 2,
@@ -98,7 +96,7 @@ primitive_enum! {
     }
 }
 
-flags! {
+bit! {
     struct ModelFlags : u32 {
         /// Affected by lighting
         const LIGHTING = 1 << 0;

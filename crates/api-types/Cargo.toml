@@ -24,3 +24,4 @@ mech3ax-timestamp = { path = "../timestamp" }
 [dev-dependencies]
 serde_json.workspace = true
 serde_test.workspace = true
+mech3ax-exchange = { path = "../exchange" }
