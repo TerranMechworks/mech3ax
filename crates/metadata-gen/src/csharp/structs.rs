@@ -205,6 +205,7 @@ namespace {{ struct.namespace }}
         }
     }
 }
+
 "#;
 
 pub(crate) const STRUCT_IMPL: &str = r#"using System;

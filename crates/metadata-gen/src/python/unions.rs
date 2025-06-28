@@ -110,7 +110,7 @@ fn variant_types_wrap(variants: &mut [Variant]) -> Vec<VariantWrap> {
     for (index, variant) in variants.iter().enumerate() {
         dupes
             .entry(variant.out_type.clone())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(index);
     }
     dupes.retain(|_k, v| v.len() > 1);

@@ -43,17 +43,17 @@ impl SerializeType {
             Option(inner) => {
                 s.push_str("s.serialize_option(");
                 inner.make_ser(s);
-                s.push_str(")");
+                s.push(')');
             }
             Vec(inner) => {
                 s.push_str("s.serialize_vec(");
                 inner.make_ser(s);
-                s.push_str(")");
+                s.push(')');
             }
             Class(type_name) | Enum(type_name) | Flags(type_name) | Union(type_name) => {
                 s.push_str("s.serialize(");
                 s.push_str(type_name);
-                s.push_str(")");
+                s.push(')');
             }
         }
     }

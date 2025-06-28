@@ -85,7 +85,7 @@ impl SupportsMaybe<i32> for Index {
     fn from_bits(v: i32) -> Option<Self> {
         const MIN: i32 = i16::MIN as _;
         const MAX: i32 = i16::MAX as _;
-        if v < MIN || v > MAX {
+        if !(MIN..=MAX).contains(&v) {
             None
         } else {
             Some(Self(v as i16))

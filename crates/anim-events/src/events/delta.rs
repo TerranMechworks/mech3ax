@@ -27,8 +27,8 @@ pub(crate) fn delta(from: f32, to: f32, run_time: f32) -> f32 {
     }
 }
 
-#[inline]
-pub(crate) fn dec_f32(value: f32) -> f32 {
-    let dec = u32::from_ne_bytes(value.to_ne_bytes()) - 1;
-    f32::from_ne_bytes(dec.to_ne_bytes())
-}
+// #[inline]
+// pub(crate) fn dec_f32(value: f32) -> f32 {
+//     let dec = u32::from_ne_bytes(value.to_ne_bytes()) - 1;
+//     f32::from_ne_bytes(dec.to_ne_bytes())
+// }

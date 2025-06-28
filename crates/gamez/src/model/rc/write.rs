@@ -75,7 +75,7 @@ pub(crate) fn write_model_info(
     let lights_ptr = assert_ptr!(light_count, model.lights_ptr, "model {} lights", index);
     let morphs_ptr = assert_ptr!(morph_count, model.morphs_ptr, "model {} morphs", index);
 
-    let mut bitflags = make_model_flags(&model, index);
+    let mut bitflags = make_model_flags(model, index);
 
     match model.facade_mode {
         FacadeMode::CylindricalY => {}

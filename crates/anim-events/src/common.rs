@@ -5,6 +5,8 @@ use mech3ax_common::{assert_that, assert_with_msg, Result};
 use mech3ax_types::AsBytes as _;
 use std::io::{Read, Write};
 
+// TODO
+
 // pub(crate) fn read_event_header(
 //     read: &mut CountingReader<impl Read>,
 // ) -> Result<(EventType, u32, Option<EventStart>)> {

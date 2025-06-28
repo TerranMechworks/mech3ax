@@ -1,6 +1,6 @@
 #![warn(clippy::all, clippy::cargo)]
 #![allow(clippy::identity_op)]
-pub(crate) mod common;
+// pub(crate) mod common;
 pub(crate) mod events;
 pub mod mw;
 pub mod pm;

@@ -76,7 +76,7 @@ fn write_event(
         EventData::ObjectMotion(data) => write!(ObjectMotion, write, anim_def, data),
         EventData::ObjectMotionFromTo(data) => write!(ObjectMotionFromTo, write, anim_def, data),
         EventData::ObjectMotionSiScript(data) => {
-            let size = object_motion_si_script::size_rc(&data, scripts);
+            let size = object_motion_si_script::size_rc(data, scripts);
             log::trace!(
                 "Writing event data `ObjectMotionSiScript` of {} bytes (at {})",
                 size.unwrap_or(0),
