@@ -2,10 +2,10 @@ pub mod mw;
 pub mod pm;
 pub mod rc;
 
-use crate::{fld, Color, Matrix, Range, Vec3};
+use crate::{api, Color, Matrix, Range, Vec3};
 use mech3ax_types::impl_as_bytes;
 
-fld! {
+api! {
     struct Camera {
         clip: Range,
         fov: Range,
@@ -14,7 +14,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct Display {
         resolution_x: u32,
         resolution_y: u32,
@@ -23,7 +23,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct Window {
         resolution_x: u32,
         resolution_y: u32,
@@ -31,7 +31,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     #[repr(C)]
     struct AreaPartition {
         x: i32,
@@ -52,7 +52,7 @@ impl AreaPartition {
     pub const ZERO: Self = Self { x: 0, y: 0 };
 }
 
-fld! {
+api! {
     struct Area : Val {
         left: i32,
         top: i32,
@@ -73,7 +73,7 @@ impl Area {
     }
 }
 
-fld! {
+api! {
     #[repr(C)]
     struct BoundingBox {
         a: Vec3,
@@ -95,7 +95,7 @@ impl BoundingBox {
     };
 }
 
-fld! {
+api! {
     struct Transformation {
         rotation: Vec3,
         translation: Vec3,
@@ -103,7 +103,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct PartitionPg {
         x: i32,
         y: i32,
@@ -115,7 +115,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     #[repr(C)]
     struct PartitionValue {
         index: u32,
@@ -125,7 +125,7 @@ fld! {
 }
 impl_as_bytes!(PartitionValue, 12);
 
-fld! {
+api! {
     struct PartitionNg {
         x: i32,
         y: i32,
@@ -136,7 +136,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct NodeFlags {
         active: bool = { true },
         altitude_surface: bool = { false },

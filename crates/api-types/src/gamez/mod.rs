@@ -2,7 +2,7 @@ pub mod materials;
 pub mod mechlib;
 pub mod model;
 
-use crate::fld;
+use crate::api;
 use crate::nodes::mw::NodeMw;
 use crate::nodes::pm::NodePm;
 use crate::nodes::rc::NodeRc;
@@ -10,7 +10,7 @@ use materials::Material;
 use mech3ax_timestamp::DateTime;
 use model::Model;
 
-fld! {
+api! {
     struct GameZMetadata {
         datetime: DateTime,
         model_array_size: i32,
@@ -19,14 +19,14 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct Texture {
         name: String,
         mip: i32 = { -1i32 },
     }
 }
 
-fld! {
+api! {
     struct GameZDataMw {
         textures: Vec<Texture>,
         materials: Vec<Material>,
@@ -36,7 +36,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct GameZDataPm {
         textures: Vec<Texture>,
         materials: Vec<Material>,
@@ -46,7 +46,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct GameZDataRc {
         textures: Vec<Texture>,
         materials: Vec<Material>,

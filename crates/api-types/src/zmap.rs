@@ -1,8 +1,8 @@
 //! Recoil `m*.zmap` data structures.
-use crate::{fld, Vec3};
+use crate::{api, Vec3};
 use mech3ax_types::impl_as_bytes;
 
-fld! {
+api! {
     #[repr(C)]
     struct MapColor : Val {
         r: u8,
@@ -12,7 +12,7 @@ fld! {
 }
 impl_as_bytes!(MapColor, 3);
 
-fld! {
+api! {
     struct MapFeature {
         color: MapColor,
         vertices: Vec<Vec3>,
@@ -20,7 +20,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct Zmap {
         unk04: u32,
         min: Vec3,

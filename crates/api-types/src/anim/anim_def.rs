@@ -4,10 +4,10 @@ use super::support::{
     AnimRef, DynamicSoundRef, EffectRef, LightRef, NodeRef, ObjectRef, PufferRef, StaticSoundRef,
 };
 use crate::serde::bytes;
-use crate::{fld, num, sum, Range};
+use crate::{api, num, sum, Range};
 use mech3ax_timestamp::DateTime;
 
-fld! {
+api! {
     /// `ANIMATION_DEFINITION_FILE` in an `ANIMATION_LIST`
     struct AnimDefFile {
         name: String,
@@ -34,7 +34,7 @@ sum! {
     }
 }
 
-fld! {
+api! {
     struct NamePad : Val {
         name: String,
         #[serde(with = "bytes")]
@@ -42,14 +42,14 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct NamePtr : Val {
         name: String,
         pointer: u32,
     }
 }
 
-fld! {
+api! {
     struct NamePtrFlags : Val {
         name: String,
         pointer: u32,
@@ -64,14 +64,14 @@ num! {
     }
 }
 
-fld! {
+api! {
     struct ResetState {
         events: Vec<Event>,
         pointer: u32,
     }
 }
 
-fld! {
+api! {
     struct SeqDef {
         name: String,
         seq_state: SeqDefState,
@@ -81,7 +81,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct AnimDef {
         name: String,
         anim_name: String,
@@ -143,7 +143,7 @@ impl AnimDef {
     }
 }
 
-fld! {
+api! {
     struct AnimDefPtrs {
         anim_hash: Option<u32> = { None },
         anim_root_hash: Option<u32> = { None },

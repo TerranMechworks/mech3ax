@@ -1,8 +1,8 @@
 //! Interpreter (`interp.zbd`) data structures.
-use crate::fld;
+use crate::api;
 use mech3ax_timestamp::DateTime;
 
-fld! {
+api! {
     struct Script {
         name: String,
         datetime: DateTime,

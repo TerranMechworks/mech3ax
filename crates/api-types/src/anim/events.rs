@@ -1,4 +1,4 @@
-use crate::{fld, num, sum, Color, Range, Vec3};
+use crate::{api, num, sum, Color, Range, Vec3};
 use mech3ax_types::impl_as_bytes;
 
 num! {
@@ -9,21 +9,21 @@ num! {
     }
 }
 
-fld! {
+api! {
     struct EventStart : Val {
         offset: StartOffset,
         time: f32,
     }
 }
 
-fld! {
+api! {
     struct Event {
         start: Option<EventStart>,
         data: EventData,
     }
 }
 
-fld! {
+api! {
     /// AT_NODE
     struct AtNode : Val {
         /// node name
@@ -41,7 +41,7 @@ sum! {
     }
 }
 
-fld! {
+api! {
     /// SOUND Index: 01
     struct Sound {
         /// NAME (static sound name)
@@ -51,7 +51,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// SOUND_NODE Index: 02
     struct SoundNode {
         /// NAME (sound node name)
@@ -63,7 +63,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// EFFECT Index: 03
     struct Effect {
         /// NAME (effect name)
@@ -80,7 +80,7 @@ num! {
     }
 }
 
-fld! {
+api! {
     /// LIGHT_STATE Index: 04
     struct LightState {
         /// NAME (light name)
@@ -118,7 +118,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// LIGHT_ANIMATION Index: 05
     struct LightAnimation {
         /// NAME (light name)
@@ -134,7 +134,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// OBJECT_ACTIVE_STATE Index: 06
     struct ObjectActiveState {
         /// NAME (node name or INPUT_NODE)
@@ -144,7 +144,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// OBJECT_TRANSLATE_STATE Index: 07
     struct ObjectTranslateState {
         /// NAME (node name)
@@ -158,7 +158,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// OBJECT_SCALE_STATE Index: 08
     struct ObjectScaleState {
         /// NAME (node name)
@@ -185,7 +185,7 @@ sum! {
     }
 }
 
-fld! {
+api! {
     /// OBJECT_ROTATE_STATE Index: 09
     /// Camera and Object3d nodes only!
     struct ObjectRotateState {
@@ -198,7 +198,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// GRAVITY
     struct Gravity : Val {
         /// DEFAULT = -9.8
@@ -210,7 +210,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// TRANSLATION_RANGE_MIN and TRANSLATION_RANGE_MAX
     struct TranslationRange {
         /// Radians
@@ -221,7 +221,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// TRANSLATION (unclear)
     struct ObjectMotionTranslation {
         initial: Vec3,
@@ -230,7 +230,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// FORWARD_ROTATION TIME (`["TIME", <initial>, <delta>]`)
     struct ForwardRotationTime : Val {
         // Radians
@@ -240,7 +240,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// FORWARD_ROTATION DIST (`["DISTANCE", <initial>, <delta_ign>]`)
     struct ForwardRotationDistance : Val {
         initial: f32,
@@ -257,7 +257,7 @@ sum! {
     }
 }
 
-fld! {
+api! {
     /// XYZ_ROTATION
     struct ObjectMotionXyzRot {
         initial: Vec3,
@@ -265,7 +265,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// SCALE
     struct ObjectMotionScale {
         initial: Vec3,
@@ -273,7 +273,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// BOUNCE_SEQUENCE, BOUNCE_SEQUENCE_WATER, BOUNCE_SEQUENCE_LAVA
     struct BounceSequences {
         /// BOUNCE_SEQUENCE
@@ -285,7 +285,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// BOUNCE_SOUND
     struct BounceSound {
         /// NAME
@@ -295,7 +295,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// BOUNCE_SOUND, BOUNCE_SOUND_WATER, BOUNCE_SOUND_LAVA
     struct BounceSounds {
         /// BOUNCE_SOUND
@@ -307,7 +307,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// OBJECT_MOTION Index: 10
     struct ObjectMotion {
         /// NAME (node name)
@@ -337,14 +337,14 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct Vec3FromTo {
         from: Vec3,
         to: Vec3,
     }
 }
 
-fld! {
+api! {
     /// OBJECT_MOTION_FROM_TO Index: 11
     struct ObjectMotionFromTo {
         /// NAME (node name)
@@ -374,7 +374,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// OBJECT_MOTION_SI_SCRIPT Index: 12
     struct ObjectMotionSiScript {
         /// NAME (node name)
@@ -384,7 +384,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// OBJECT_OPACITY_STATE Index: 13
     struct ObjectOpacityState {
         /// NAME (node name or INPUT_NODE)
@@ -396,7 +396,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct ObjectOpacity : Val {
         /// STATE
         opacity: f32,
@@ -405,7 +405,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// OBJECT_OPACITY_FROM_TO Index: 14
     struct ObjectOpacityFromTo {
         /// NAME (node name)
@@ -421,7 +421,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// OBJECT_ADD_CHILD Index: 15
     struct ObjectAddChild {
         /// PARENT_CHILD (node name)
@@ -431,7 +431,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// OBJECT_DELETE_CHILD Index: 16
     struct ObjectDeleteChild {
         /// PARENT_CHILD (node name)
@@ -441,7 +441,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// OBJECT_CYCLE_TEXTURE Index: 17
     struct ObjectCycleTexture {
         /// NAME (node name)
@@ -469,7 +469,7 @@ sum! {
     }
 }
 
-fld! {
+api! {
     /// OBJECT_CONNECTOR Index: 18
     struct ObjectConnector {
         /// NAME
@@ -497,7 +497,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct CallObjectConnectorTarget {
         /// FROM_NODE / TO_NODE (node name or INPUT_NODE)
         name: String,
@@ -508,7 +508,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// CALL_OBJECT_CONNECTOR Index: 19
     struct CallObjectConnector {
         /// NAME (anim name)
@@ -530,7 +530,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// CAMERA_STATE Index: 20
     struct CameraState {
         /// NAME (node name)
@@ -552,14 +552,14 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct FloatFromTo {
         from: f32,
         to: f32,
     }
 }
 
-fld! {
+api! {
     /// CAMERA_FROM_TO Index: 21
     struct CameraFromTo {
         /// NAME (node name)
@@ -583,7 +583,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// CALL_SEQUENCE Index: 22
     struct CallSequence {
         /// NAME (sequence name)
@@ -591,7 +591,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// STOP_SEQUENCE Index: 23
     struct StopSequence {
         /// NAME (sequence name)
@@ -599,7 +599,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// AT_NODE
     struct CallAnimationAtNode {
         /// node name or INPUT_NODE
@@ -616,7 +616,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// WITH_NODE
     struct CallAnimationWithNode {
         /// node name or INPUT_NODE
@@ -637,7 +637,7 @@ sum! {
     }
 }
 
-fld! {
+api! {
     /// CALL_ANIMATION Index: 24
     struct CallAnimation {
         /// NAME (anim name)
@@ -651,7 +651,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// STOP_ANIMATION Index: 25
     struct StopAnimation {
         /// NAME (anim name)
@@ -659,7 +659,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// RESET_ANIMATION Index: 26
     struct ResetAnimation {
         /// NAME (anim name)
@@ -667,7 +667,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// INVALIDATE_ANIMATION Index: 27
     struct InvalidateAnimation {
         /// NAME (anim name)
@@ -686,7 +686,7 @@ num! {
     }
 }
 
-fld! {
+api! {
     /// FOG_STATE Index: 28
     struct FogState {
         /// TYPE
@@ -712,7 +712,7 @@ sum! {
     }
 }
 
-fld! {
+api! {
     /// NODE_UNDERCOVER
     struct NodeUndercover : Val {
         node_index: u32,
@@ -737,31 +737,31 @@ sum! {
     }
 }
 
-fld! {
+api! {
     /// IF Index: 31
     struct If {
         condition: Condition,
     }
 }
 
-fld! {
+api! {
     /// ELSE Index: 32
     struct Else {}
 }
 
-fld! {
+api! {
     /// ELSEIF Index: 33
     struct Elseif {
         condition: Condition,
     }
 }
 
-fld! {
+api! {
     /// ENDIF Index: 34
     struct Endif {}
 }
 
-fld! {
+api! {
     /// CALLBACK Index: 35
     struct Callback {
         /// VALUE
@@ -769,7 +769,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct Rgba : Val {
         r: f32,
         g: f32,
@@ -778,7 +778,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// FBFX_COLOR_FROM_TO Index: 36
     struct FbfxColorFromTo {
         /// FROM
@@ -792,14 +792,14 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct FbfxCsinwaveScreenPos {
         x: FloatFromTo,
         y: FloatFromTo,
     }
 }
 
-fld! {
+api! {
     struct FbfxCsinwaveCsin {
         x: FloatFromTo,
         y: FloatFromTo,
@@ -807,7 +807,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// FBFX_CSINWAVE_FROM_TO Index: 37
     struct FbfxCsinwaveFromTo {
         /// AT_NODE (node name)
@@ -825,7 +825,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// ANIM_VERBOSE Index: 39
     ///
     /// This does nothing, even in RC.
@@ -835,7 +835,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     /// DETONATE_WEAPON Index: 41
     struct DetonateWeapon {
         /// WEAPON
@@ -852,14 +852,14 @@ num! {
     }
 }
 
-fld! {
+api! {
     struct PufferInterval {
         interval_type: PufferIntervalType,
         interval_value: f32,
     }
 }
 
-fld! {
+api! {
     struct PufferIntervalGarbage {
         interval_type: PufferIntervalType,
         has_interval_type: bool,
@@ -868,14 +868,14 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct PufferStateTexture {
         name: String,
         run_time: Option<f32>,
     }
 }
 
-fld! {
+api! {
     #[repr(C)]
     struct PufferStateColor {
         unk00: f32,
@@ -893,7 +893,7 @@ impl PufferStateColor {
     };
 }
 
-fld! {
+api! {
     /// PUFFER_STATE Index: 42
     struct PufferState {
         /// NAME (puffer name)

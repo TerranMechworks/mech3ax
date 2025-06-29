@@ -1,14 +1,14 @@
 use super::{Area, AreaPartition, BoundingBox, Camera, Display, NodeFlags, PartitionPg, Window};
-use crate::{fld, sum, Color, Matrix, Range, Vec3};
+use crate::{api, sum, Color, Matrix, Range, Vec3};
 
-fld! {
+api! {
     struct RotationTranslation {
         rotation: Vec3,
         translation: Vec3,
     }
 }
 
-fld! {
+api! {
     struct TranslationOnly {
         translation: Vec3,
         matrix: Option<Matrix>,
@@ -24,7 +24,7 @@ sum! {
     }
 }
 
-fld! {
+api! {
     struct Empty {
         name: String,
         flags: NodeFlags,
@@ -37,7 +37,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct Light {
         name: String,
         unk008: f32,
@@ -52,7 +52,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct Lod {
         name: String,
         level: bool,
@@ -73,7 +73,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct Object3d {
         name: String,
         transformation: Transformation,
@@ -96,7 +96,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct World {
         name: String,
         area: Area,

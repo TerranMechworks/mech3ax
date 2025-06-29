@@ -1,7 +1,7 @@
 //! Localisation data structures.
-use crate::fld;
+use crate::api;
 
-fld! {
+api! {
     struct MessageEntry {
         key: String,
         id: u32,
@@ -9,7 +9,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct Messages {
         language_id: u32,
         entries: Vec<MessageEntry>,

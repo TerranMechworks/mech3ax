@@ -1,8 +1,8 @@
 use super::{Area, BoundingBox, Camera, Display, NodeFlags, PartitionNg, Transformation, Window};
-use crate::{fld, sum, Range};
+use crate::{api, sum, Range};
 use mech3ax_types::impl_as_bytes;
 
-fld! {
+api! {
     #[repr(C)]
     struct AreaPartitionPm {
         x: i16,
@@ -28,7 +28,7 @@ impl AreaPartitionPm {
     };
 }
 
-fld! {
+api! {
     struct Light {
         name: String,
         unk004: f32,
@@ -41,7 +41,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct Lod {
         name: String,
         level: bool,
@@ -59,7 +59,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct Object3d {
         name: String,
         transformation: Option<Transformation>,
@@ -83,7 +83,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct World {
         name: String,
         area: Area,

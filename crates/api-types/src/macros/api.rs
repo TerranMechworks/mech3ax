@@ -1,4 +1,4 @@
-macro_rules! fld {
+macro_rules! api {
     (
         $(#[doc = $struct_doc:literal])*
         struct $name:ident $(: $semantic:tt)? {$(
@@ -19,12 +19,12 @@ macro_rules! fld {
             const TYPE_INFO: &'static ::mech3ax_metadata_types::TypeInfo =
                 &::mech3ax_metadata_types::TypeInfo::Struct(::mech3ax_metadata_types::TypeInfoStruct {
                     name: stringify!($name),
-                    semantic: $crate::fld!(@sem $($semantic)?),
+                    semantic: $crate::api!(@sem $($semantic)?),
                     fields: &[$(
                         ::mech3ax_metadata_types::TypeInfoStructField {
                             name: stringify!($field_name),
                             type_info: <$field_ty as ::mech3ax_metadata_types::DerivedMetadata>::TYPE_INFO,
-                            default: $crate::fld!(@default $($($default)*)?),
+                            default: $crate::api!(@default $($($default)*)?),
                         },
                     )*],
                     module_path: ::std::module_path!(),
@@ -102,7 +102,7 @@ macro_rules! fld {
             const TYPE_INFO: &'static ::mech3ax_metadata_types::TypeInfo =
                 &::mech3ax_metadata_types::TypeInfo::Struct(::mech3ax_metadata_types::TypeInfoStruct {
                     name: stringify!($name),
-                    semantic: $crate::fld!(@sem $($semantic)?),
+                    semantic: $crate::api!(@sem $($semantic)?),
                     fields: &[$(
                         ::mech3ax_metadata_types::TypeInfoStructField {
                             name: stringify!($field_name),
@@ -115,4 +115,4 @@ macro_rules! fld {
         }
     };
 }
-pub(crate) use fld;
+pub(crate) use api;

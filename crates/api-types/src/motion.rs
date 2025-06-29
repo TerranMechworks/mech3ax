@@ -1,21 +1,21 @@
 //! MW3/PM `motion.zbd` data structures.
-use crate::{fld, Quaternion, Vec3};
+use crate::{api, Quaternion, Vec3};
 
-fld! {
+api! {
     struct MotionFrame {
         translation: Vec3,
         rotation: Quaternion,
     }
 }
 
-fld! {
+api! {
     struct MotionPart {
         name: String,
         frames: Vec<MotionFrame>,
     }
 }
 
-fld! {
+api! {
     struct Motion {
         loop_time: f32,
         parts: Vec<MotionPart>,

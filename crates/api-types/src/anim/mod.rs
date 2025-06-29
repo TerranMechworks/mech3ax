@@ -5,7 +5,7 @@ pub mod events;
 mod si_script;
 mod support;
 
-use crate::{fld, num};
+use crate::{api, num};
 pub use activation_prereq::{
     ActivationPrerequisite, PrerequisiteAnimation, PrerequisiteObject, PrerequisiteParent,
 };
@@ -109,7 +109,7 @@ num! {
     }
 }
 
-fld! {
+api! {
     struct AnimMetadata {
         /// The mission is used for junk data (e.g. pointers).
         mission: AnimMission,

@@ -1,7 +1,7 @@
 use crate::serde::bytes;
-use crate::{fld, Quaternion, Vec3};
+use crate::{api, Quaternion, Vec3};
 
-fld! {
+api! {
     struct TranslateData {
         base: Vec3,
         delta: Vec3,
@@ -15,7 +15,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct RotateData {
         base: Quaternion,
         delta: Vec3,
@@ -28,7 +28,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct ScaleData {
         base: Vec3,
         delta: Vec3,
@@ -42,7 +42,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct ObjectMotionSiFrame {
         start_time: f32,
         end_time: f32,
@@ -52,7 +52,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct SiScript {
         script_name: String,
         object_name: String,

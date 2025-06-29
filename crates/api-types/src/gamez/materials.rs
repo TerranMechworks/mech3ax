@@ -1,6 +1,6 @@
-use crate::{fld, num, sum, Color};
+use crate::{api, num, sum, Color};
 
-fld! {
+api! {
     struct CycleData {
         textures: Vec<String>,
         looping: bool,
@@ -44,7 +44,7 @@ impl Default for Soil {
     }
 }
 
-fld! {
+api! {
     struct TexturedMaterial {
         texture: String,
         // the GameZ data doesn't use the pointer (it stores the texture name index)
@@ -55,7 +55,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct ColoredMaterial {
         color: Color,
         alpha: u8,

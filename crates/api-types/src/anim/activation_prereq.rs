@@ -1,13 +1,13 @@
-use crate::{fld, sum};
+use crate::{api, sum};
 
-fld! {
+api! {
     struct PrerequisiteAnimation: Val {
         name: String,
         required: bool,
     }
 }
 
-fld! {
+api! {
     struct PrerequisiteObject: Val {
         name: String,
         required: bool,
@@ -16,7 +16,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct PrerequisiteParent: Val {
         name: String,
         required: bool,

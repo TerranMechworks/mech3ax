@@ -1,6 +1,6 @@
 //! Image/texture data structures.
 use crate::serde::bytes;
-use crate::{fld, num, sum};
+use crate::{api, num, sum};
 
 num! {
     enum TextureAlpha {
@@ -25,14 +25,14 @@ num! {
     }
 }
 
-fld! {
+api! {
     struct PaletteData {
         #[serde(with = "bytes")]
         data: Vec<u8>,
     }
 }
 
-fld! {
+api! {
     struct GlobalPalette {
         index: u32,
         count: u16,
@@ -47,7 +47,7 @@ sum! {
     }
 }
 
-fld! {
+api! {
     struct TextureInfo {
         name: String,
         rename: Option<String> = { None },
@@ -62,7 +62,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct TextureManifest {
         texture_infos: Vec<TextureInfo>,
         global_palettes: Vec<PaletteData>,

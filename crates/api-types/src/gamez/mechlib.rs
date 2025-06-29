@@ -1,9 +1,9 @@
-use crate::fld;
+use crate::api;
 use crate::gamez::model::Model;
 use crate::nodes::mw::NodeMw;
 use crate::nodes::pm::NodePm;
 
-fld! {
+api! {
     struct MechlibModelMw {
         nodes: Vec<NodeMw>,
         models: Vec<Model>,
@@ -11,7 +11,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct MechlibModelPm {
         nodes: Vec<NodePm>,
         models: Vec<Model>,

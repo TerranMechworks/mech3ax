@@ -1,7 +1,7 @@
 use crate::serde::bytes;
-use crate::{fld, sum};
+use crate::{api, sum};
 
-fld! {
+api! {
     struct AnimRefCallAnimation: Val {
         name: String,
         #[serde(with = "bytes")]
@@ -9,7 +9,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct AnimRefCallObjectConnector: Val {
         name: String,
         #[serde(with = "bytes")]
@@ -37,7 +37,7 @@ impl AnimRef {
     }
 }
 
-fld! {
+api! {
     struct ObjectRef: Val {
         name: String,
         /// Ignored in PM.
@@ -53,21 +53,21 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct NodeRef: Val {
         name: String,
         ptr: u32,
     }
 }
 
-fld! {
+api! {
     struct LightRef: Val {
         name: String,
         ptr: u32,
     }
 }
 
-fld! {
+api! {
     struct PufferRef: Val {
         name: String,
         flags: u8,
@@ -75,14 +75,14 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct DynamicSoundRef: Val {
         name: String,
         ptr: u32,
     }
 }
 
-fld! {
+api! {
     struct StaticSoundRef: Val {
         name: String,
         #[serde(with = "bytes")]
@@ -90,7 +90,7 @@ fld! {
     }
 }
 
-fld! {
+api! {
     struct EffectRef: Val {
         name: String,
         index: u32,

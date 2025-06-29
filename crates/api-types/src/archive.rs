@@ -1,9 +1,9 @@
 //! Archive-based `*.zbd` data structures.
 use crate::serde::bytes;
-use crate::{fld, sum};
+use crate::{api, sum};
 use mech3ax_timestamp::DateTime;
 
-fld! {
+api! {
     struct ArchiveEntry {
         name: String,
         rename: Option<String> = { None },
@@ -19,14 +19,14 @@ sum! {
     }
 }
 
-fld! {
+api! {
     struct ArchiveEntryInfoValid {
         comment: String,
         datetime: DateTime,
     }
 }
 
-fld! {
+api! {
     struct ArchiveEntryInfoInvalid {
         #[serde(with = "bytes")]
         comment: Vec<u8>,

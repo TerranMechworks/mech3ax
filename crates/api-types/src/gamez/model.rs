@@ -1,8 +1,8 @@
 use crate::serde::bool_false;
-use crate::{bit, fld, num, Color, Vec3};
+use crate::{api, bit, num, Color, Vec3};
 use mech3ax_types::impl_as_bytes;
 
-fld! {
+api! {
     #[repr(C)]
     struct UvCoord : Val {
         u: f32,
@@ -11,7 +11,7 @@ fld! {
 }
 impl_as_bytes!(UvCoord, 8);
 
-fld! {
+api! {
     struct PointLight {
         unk00: u32,
         unk04: u32,
@@ -42,14 +42,14 @@ bit! {
     }
 }
 
-fld! {
+api! {
     struct PolygonMaterial {
         material_index: u32,
         uv_coords: Option<Vec<UvCoord>>,
     }
 }
 
-fld! {
+api! {
     struct Polygon {
         flags: PolygonFlags,
         priority: i32,
@@ -106,7 +106,7 @@ bit! {
     }
 }
 
-fld! {
+api! {
     struct Model {
         model_type: ModelType,
         facade_mode: FacadeMode,

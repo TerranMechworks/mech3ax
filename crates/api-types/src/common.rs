@@ -1,7 +1,7 @@
-use crate::fld;
+use crate::api;
 use mech3ax_types::impl_as_bytes;
 
-fld! {
+api! {
     #[repr(C)]
     struct Range : Val {
         min: f32,
@@ -14,7 +14,7 @@ impl Range {
     pub const DEFAULT: Self = Self { min: 0.0, max: 0.0 };
 }
 
-fld! {
+api! {
     #[repr(C)]
     struct Vec3 : Val {
         x: f32,
@@ -39,7 +39,7 @@ impl Vec3 {
     };
 }
 
-fld! {
+api! {
     #[repr(C)]
     struct Color : Val {
         r: f32,
@@ -67,7 +67,7 @@ impl Color {
     };
 }
 
-fld! {
+api! {
     #[repr(C)]
     struct Quaternion : Val {
         x: f32,
@@ -94,7 +94,7 @@ impl Quaternion {
     };
 }
 
-fld! {
+api! {
     #[repr(C)]
     struct Matrix {
         a: f32,
@@ -142,7 +142,7 @@ impl Matrix {
     };
 }
 
-fld! {
+api! {
     /// A cut-down affine matrix, without the 4th row.
     #[repr(C)]
     struct AffineMatrix {
