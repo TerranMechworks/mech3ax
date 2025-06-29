@@ -1,7 +1,7 @@
-use crate::{num, Color, Range, Vec3};
+use crate::{num, sum, Color, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_metadata_proc_macro::{Struct, Union};
+use mech3ax_metadata_proc_macro::Struct;
 use mech3ax_types::impl_as_bytes;
 
 num! {
@@ -26,7 +26,7 @@ pub struct Event {
 }
 
 /// AT_NODE
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Struct)]
 #[dotnet(val_struct)]
 pub struct AtNode {
     /// node name
@@ -36,10 +36,11 @@ pub struct AtNode {
     pub pos: Vec3,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Union)]
-pub enum Translate {
-    Absolute(Vec3),
-    AtNode(AtNode),
+sum! {
+    enum Translate {
+        Absolute(Vec3),
+        AtNode(AtNode),
+    }
 }
 
 /// SOUND Index: 01
@@ -52,7 +53,7 @@ pub struct Sound {
 }
 
 /// SOUND_NODE Index: 02
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct SoundNode {
     /// NAME (sound node name)
     pub name: String,
@@ -79,7 +80,7 @@ num! {
 }
 
 /// LIGHT_STATE Index: 04
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct LightState {
     /// NAME (light name)
     pub name: String,
@@ -162,25 +163,26 @@ pub struct ObjectScaleState {
     pub state: Vec3,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Union)]
-pub enum RotateBasis {
-    /// STATE
-    Absolute,
-    /// not in reader
-    Relative,
-    /// AT_NODE_MATRIX (node name or INPUT_NODE)
-    ///
-    /// Warning: Ignored for Camera nodes!
-    AtNodeMatrix(String),
-    /// AT_NODE_XYZ (node name or INPUT_NODE)
-    ///
-    /// Warning: Ignored for Camera nodes!
-    AtNodeXYZ(String),
+sum! {
+    enum RotateBasis {
+        /// STATE
+        Absolute,
+        /// not in reader
+        Relative,
+        /// AT_NODE_MATRIX (node name or INPUT_NODE)
+        ///
+        /// Warning: Ignored for Camera nodes!
+        AtNodeMatrix(String),
+        /// AT_NODE_XYZ (node name or INPUT_NODE)
+        ///
+        /// Warning: Ignored for Camera nodes!
+        AtNodeXYZ(String),
+    }
 }
 
 /// OBJECT_ROTATE_STATE Index: 09
 /// Camera and Object3d nodes only!
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct ObjectRotateState {
     /// NAME (node name)
     pub name: String,
@@ -237,13 +239,14 @@ pub struct ForwardRotationDistance {
     pub initial: f32,
 }
 
-/// FORWARD_ROTATION
-#[derive(Debug, Serialize, Deserialize, Clone, Union)]
-pub enum ForwardRotation {
-    /// TIME
-    Time(ForwardRotationTime),
-    /// DISTANCE
-    Distance(ForwardRotationDistance),
+sum! {
+    /// FORWARD_ROTATION
+    enum ForwardRotation {
+        /// TIME
+        Time(ForwardRotationTime),
+        /// DISTANCE
+        Distance(ForwardRotationDistance),
+    }
 }
 
 /// XYZ_ROTATION
@@ -292,7 +295,7 @@ pub struct BounceSounds {
 }
 
 /// OBJECT_MOTION Index: 10
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct ObjectMotion {
     /// NAME (node name)
     pub node: String,
@@ -430,24 +433,26 @@ pub struct ObjectCycleTexture {
     pub reset: u16,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Union)]
-pub enum ObjectConnectorPos {
-    /// FROM_POS / TO_POS
-    Pos(Vec3),
-    /// FROM_INPUT_POS / TO_INPUT_POS
-    Input,
+sum! {
+    enum ObjectConnectorPos {
+        /// FROM_POS / TO_POS
+        Pos(Vec3),
+        /// FROM_INPUT_POS / TO_INPUT_POS
+        Input,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Union)]
-pub enum ObjectConnectorTime {
-    /// FROM_T / TO_T
-    Scalar(f32),
-    /// FROM_T_START + FROM_T_END / TO_T_START + FROM_T_END
-    Range(Range),
+sum! {
+    enum ObjectConnectorTime {
+        /// FROM_T / TO_T
+        Scalar(f32),
+        /// FROM_T_START + FROM_T_END / TO_T_START + FROM_T_END
+        Range(Range),
+    }
 }
 
 /// OBJECT_CONNECTOR Index: 18
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct ObjectConnector {
     /// NAME
     pub name: String,
@@ -484,7 +489,7 @@ pub struct CallObjectConnectorTarget {
 }
 
 /// CALL_OBJECT_CONNECTOR Index: 19
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct CallObjectConnector {
     /// NAME (anim name)
     pub name: String,
@@ -595,16 +600,17 @@ pub struct CallAnimationWithNode {
     pub position: Option<Vec3>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Union)]
-pub enum CallAnimationParameters {
-    /// AT_NODE
-    AtNode(CallAnimationAtNode),
-    /// WITH_NODE
-    WithNode(CallAnimationWithNode),
+sum! {
+    enum CallAnimationParameters {
+        /// AT_NODE
+        AtNode(CallAnimationAtNode),
+        /// WITH_NODE
+        WithNode(CallAnimationWithNode),
+    }
 }
 
 /// CALL_ANIMATION Index: 24
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct CallAnimation {
     /// NAME (anim name)
     pub name: String,
@@ -663,13 +669,14 @@ pub struct FogState {
 
 // no index 29
 
-/// LOOP Index 30
-#[derive(Debug, Serialize, Deserialize, Clone, Union)]
-pub enum Loop {
-    /// LOOP_COUNT
-    Count(i16),
-    /// LOOP_RUN_TIME (not in reader)
-    RunTime(f32),
+sum! {
+    /// LOOP Index 30
+    enum Loop {
+        /// LOOP_COUNT
+        Count(i16),
+        /// LOOP_RUN_TIME (not in reader)
+        RunTime(f32),
+    }
 }
 
 /// NODE_UNDERCOVER
@@ -680,24 +687,25 @@ pub struct NodeUndercover {
     pub distance: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Union)]
-pub enum Condition {
-    /// RANDOM_WEIGHT
-    RandomWeight(f32),
-    /// PLAYER_RANGE (squared?)
-    PlayerRange(f32),
-    /// ANIMATION_LOD
-    AnimationLod(u32),
-    /// NODE_UNDERCOVER
-    NodeUndercover(NodeUndercover),
-    /// HW_RENDER
-    HwRender(bool),
-    /// PLAYER_1ST_PERSON
-    PlayerFirstPerson(bool),
+sum! {
+    enum Condition {
+        /// RANDOM_WEIGHT
+        RandomWeight(f32),
+        /// PLAYER_RANGE (squared?)
+        PlayerRange(f32),
+        /// ANIMATION_LOD
+        AnimationLod(u32),
+        /// NODE_UNDERCOVER
+        NodeUndercover(NodeUndercover),
+        /// HW_RENDER
+        HwRender(bool),
+        /// PLAYER_1ST_PERSON
+        PlayerFirstPerson(bool),
+    }
 }
 
 /// IF Index: 31
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct If {
     pub condition: Condition,
 }
@@ -707,7 +715,7 @@ pub struct If {
 pub struct Else {}
 
 /// ELSEIF Index: 33
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
+#[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Elseif {
     pub condition: Condition,
 }
@@ -895,45 +903,46 @@ pub struct PufferState {
     pub interval_garbage: Option<PufferIntervalGarbage>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Union)]
-pub enum EventData {
-    Sound(Sound),
-    SoundNode(SoundNode),
-    Effect(Effect),
-    LightState(LightState),
-    LightAnimation(LightAnimation),
-    ObjectActiveState(ObjectActiveState),
-    ObjectTranslateState(ObjectTranslateState),
-    ObjectScaleState(ObjectScaleState),
-    ObjectRotateState(ObjectRotateState),
-    ObjectMotion(ObjectMotion),
-    ObjectMotionFromTo(ObjectMotionFromTo),
-    ObjectMotionSiScript(ObjectMotionSiScript),
-    ObjectOpacityState(ObjectOpacityState),
-    ObjectOpacityFromTo(ObjectOpacityFromTo),
-    ObjectAddChild(ObjectAddChild),
-    ObjectDeleteChild(ObjectDeleteChild),
-    ObjectCycleTexture(ObjectCycleTexture),
-    ObjectConnector(ObjectConnector),
-    CallObjectConnector(CallObjectConnector),
-    CameraState(CameraState),
-    CameraFromTo(CameraFromTo),
-    CallSequence(CallSequence),
-    StopSequence(StopSequence),
-    CallAnimation(CallAnimation),
-    StopAnimation(StopAnimation),
-    ResetAnimation(ResetAnimation),
-    InvalidateAnimation(InvalidateAnimation),
-    FogState(FogState),
-    Loop(Loop),
-    If(If),
-    Else(Else),
-    Elseif(Elseif),
-    Endif(Endif),
-    Callback(Callback),
-    FbfxColorFromTo(FbfxColorFromTo),
-    FbfxCsinwaveFromTo(FbfxCsinwaveFromTo),
-    AnimVerbose(AnimVerbose),
-    DetonateWeapon(DetonateWeapon),
-    PufferState(PufferState),
+sum! {
+    enum EventData {
+        Sound(Sound),
+        SoundNode(SoundNode),
+        Effect(Effect),
+        LightState(LightState),
+        LightAnimation(LightAnimation),
+        ObjectActiveState(ObjectActiveState),
+        ObjectTranslateState(ObjectTranslateState),
+        ObjectScaleState(ObjectScaleState),
+        ObjectRotateState(ObjectRotateState),
+        ObjectMotion(ObjectMotion),
+        ObjectMotionFromTo(ObjectMotionFromTo),
+        ObjectMotionSiScript(ObjectMotionSiScript),
+        ObjectOpacityState(ObjectOpacityState),
+        ObjectOpacityFromTo(ObjectOpacityFromTo),
+        ObjectAddChild(ObjectAddChild),
+        ObjectDeleteChild(ObjectDeleteChild),
+        ObjectCycleTexture(ObjectCycleTexture),
+        ObjectConnector(ObjectConnector),
+        CallObjectConnector(CallObjectConnector),
+        CameraState(CameraState),
+        CameraFromTo(CameraFromTo),
+        CallSequence(CallSequence),
+        StopSequence(StopSequence),
+        CallAnimation(CallAnimation),
+        StopAnimation(StopAnimation),
+        ResetAnimation(ResetAnimation),
+        InvalidateAnimation(InvalidateAnimation),
+        FogState(FogState),
+        Loop(Loop),
+        If(If),
+        Else(Else),
+        Elseif(Elseif),
+        Endif(Endif),
+        Callback(Callback),
+        FbfxColorFromTo(FbfxColorFromTo),
+        FbfxCsinwaveFromTo(FbfxCsinwaveFromTo),
+        AnimVerbose(AnimVerbose),
+        DetonateWeapon(DetonateWeapon),
+        PufferState(PufferState),
+    }
 }

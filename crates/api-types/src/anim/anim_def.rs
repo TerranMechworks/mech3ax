@@ -4,9 +4,9 @@ use super::support::{
     AnimRef, DynamicSoundRef, EffectRef, LightRef, NodeRef, ObjectRef, PufferRef, StaticSoundRef,
 };
 use crate::serde::{bool_false, bool_true, bytes};
-use crate::{num, Range};
+use crate::{num, sum, Range};
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::{Struct, Union};
+use mech3ax_metadata_proc_macro::Struct;
 use mech3ax_timestamp::DateTime;
 
 /// `ANIMATION_DEFINITION_FILE` in an `ANIMATION_LIST`
@@ -28,11 +28,12 @@ num! {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Union)]
-pub enum Execution {
-    ByRange(Range),
-    ByZone,
-    None,
+sum! {
+    enum Execution {
+        ByRange(Range),
+        ByZone,
+        None,
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]

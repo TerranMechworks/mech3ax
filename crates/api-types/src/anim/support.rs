@@ -1,8 +1,9 @@
 use crate::serde::bytes;
+use crate::sum;
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::{Struct, Union};
+use mech3ax_metadata_proc_macro::Struct;
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
+#[derive(Debug, Clone, Serialize, Deserialize, Struct)]
 #[dotnet(val_struct)]
 pub struct AnimRefCallAnimation {
     pub name: String,
@@ -10,7 +11,7 @@ pub struct AnimRefCallAnimation {
     pub name_pad: Vec<u8>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
+#[derive(Debug, Clone, Serialize, Deserialize, Struct)]
 #[dotnet(val_struct)]
 pub struct AnimRefCallObjectConnector {
     pub name: String,
@@ -21,10 +22,11 @@ pub struct AnimRefCallObjectConnector {
     pub local_name_pad: Vec<u8>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Union)]
-pub enum AnimRef {
-    CallAnimation(AnimRefCallAnimation),
-    CallObjectConnector(AnimRefCallObjectConnector),
+sum! {
+    enum AnimRef {
+        CallAnimation(AnimRefCallAnimation),
+        CallObjectConnector(AnimRefCallObjectConnector),
+    }
 }
 
 impl AnimRef {

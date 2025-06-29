@@ -1,7 +1,7 @@
 use super::{Area, AreaPartition, BoundingBox, Camera, Display, NodeFlags, PartitionPg, Window};
-use crate::{Color, Matrix, Range, Vec3};
+use crate::{sum, Color, Matrix, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::{Struct, Union};
+use mech3ax_metadata_proc_macro::Struct;
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct RotationTranslation {
@@ -15,12 +15,13 @@ pub struct TranslationOnly {
     pub matrix: Option<Matrix>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Union)]
-pub enum Transformation {
-    None,
-    ScaleOnly(Vec3),
-    RotationTranslation(RotationTranslation),
-    TranslationOnly(TranslationOnly),
+sum! {
+    enum Transformation {
+        None,
+        ScaleOnly(Vec3),
+        RotationTranslation(RotationTranslation),
+        TranslationOnly(TranslationOnly),
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
@@ -113,14 +114,15 @@ pub struct World {
     pub children_array_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Union)]
-pub enum NodeRc {
-    Camera(Camera),
-    Display(Display),
-    Empty(Empty),
-    Light(Light),
-    Lod(Lod),
-    Object3d(Object3d),
-    Window(Window),
-    World(World),
+sum! {
+    enum NodeRc {
+        Camera(Camera),
+        Display(Display),
+        Empty(Empty),
+        Light(Light),
+        Lod(Lod),
+        Object3d(Object3d),
+        Window(Window),
+        World(World),
+    }
 }

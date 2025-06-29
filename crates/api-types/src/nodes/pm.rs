@@ -1,8 +1,8 @@
 use super::{Area, BoundingBox, Camera, Display, NodeFlags, PartitionNg, Transformation, Window};
-use crate::Range;
+use crate::{sum, Range};
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_metadata_proc_macro::{Struct, Union};
+use mech3ax_metadata_proc_macro::Struct;
 use mech3ax_types::impl_as_bytes;
 
 #[derive(
@@ -101,13 +101,14 @@ pub struct World {
     pub children_array_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Union)]
-pub enum NodePm {
-    Camera(Camera),
-    Display(Display),
-    Light(Light),
-    Lod(Lod),
-    Object3d(Object3d),
-    Window(Window),
-    World(World),
+sum! {
+    enum NodePm {
+        Camera(Camera),
+        Display(Display),
+        Light(Light),
+        Lod(Lod),
+        Object3d(Object3d),
+        Window(Window),
+        World(World),
+    }
 }

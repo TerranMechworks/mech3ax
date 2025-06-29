@@ -15,6 +15,7 @@ pub mod zmap;
 
 pub(crate) use crate::macros::bit::bit;
 pub(crate) use crate::macros::num::num;
+pub(crate) use crate::macros::sum::sum;
 
 pub use crate::serde::bytes::Bytes;
 pub use common::{AffineMatrix, Color, Matrix, Quaternion, Range, Vec3};

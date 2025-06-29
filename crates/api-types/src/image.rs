@@ -1,8 +1,8 @@
 //! Image/texture data structures.
-use crate::num;
 use crate::serde::bytes;
+use crate::{num, sum};
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::{Struct, Union};
+use mech3ax_metadata_proc_macro::Struct;
 
 num! {
     enum TextureAlpha {
@@ -27,23 +27,24 @@ num! {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
+#[derive(Debug, Clone, Serialize, Deserialize, Struct)]
 pub struct PaletteData {
     #[serde(with = "bytes")]
     pub data: Vec<u8>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
+#[derive(Debug, Clone, Serialize, Deserialize, Struct)]
 pub struct GlobalPalette {
     pub index: u32,
     pub count: u16,
 }
 
-#[derive(Debug, Serialize, Deserialize, Union)]
-pub enum TexturePalette {
-    None,
-    Local(PaletteData),
-    Global(GlobalPalette),
+sum! {
+    enum TexturePalette {
+        None,
+        Local(PaletteData),
+        Global(GlobalPalette),
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]

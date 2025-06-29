@@ -2,9 +2,9 @@ use super::{
     Area, AreaPartition, BoundingBox, Camera, Display, NodeFlags, PartitionPg, Transformation,
     Window,
 };
-use crate::{Color, Range, Vec3};
+use crate::{sum, Color, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::{Struct, Union};
+use mech3ax_metadata_proc_macro::Struct;
 
 #[derive(Debug, Serialize, Deserialize, Struct)]
 pub struct Empty {
@@ -90,14 +90,15 @@ pub struct World {
     pub children_array_ptr: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Union)]
-pub enum NodeMw {
-    Camera(Camera),
-    Display(Display),
-    Empty(Empty),
-    Light(Light),
-    Lod(Lod),
-    Object3d(Object3d),
-    Window(Window),
-    World(World),
+sum! {
+    enum NodeMw {
+        Camera(Camera),
+        Display(Display),
+        Empty(Empty),
+        Light(Light),
+        Lod(Lod),
+        Object3d(Object3d),
+        Window(Window),
+        World(World),
+    }
 }
