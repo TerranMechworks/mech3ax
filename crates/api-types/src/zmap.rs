@@ -1,19 +1,14 @@
 //! Recoil `m*.zmap` data structures.
 use crate::{fld, Vec3};
-use ::serde::{Deserialize, Serialize};
-use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_metadata_proc_macro::Struct;
 use mech3ax_types::impl_as_bytes;
 
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, NoUninit, AnyBitPattern, Struct,
-)]
-#[dotnet(val_struct)]
-#[repr(C)]
-pub struct MapColor {
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
+fld! {
+    #[repr(C)]
+    struct MapColor : Val {
+        r: u8,
+        g: u8,
+        b: u8,
+    }
 }
 impl_as_bytes!(MapColor, 3);
 
@@ -25,11 +20,11 @@ fld! {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-#[dotnet(partial, namespace = "Mech3DotNet.Zbd")]
-pub struct Zmap {
-    pub unk04: u32,
-    pub min: Vec3,
-    pub max: Vec3,
-    pub features: Vec<MapFeature>,
+fld! {
+    struct Zmap {
+        unk04: u32,
+        min: Vec3,
+        max: Vec3,
+        features: Vec<MapFeature>,
+    }
 }

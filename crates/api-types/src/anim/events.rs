@@ -1,7 +1,4 @@
 use crate::{fld, num, sum, Color, Range, Vec3};
-use ::serde::{Deserialize, Serialize};
-use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_metadata_proc_macro::Struct;
 use mech3ax_types::impl_as_bytes;
 
 num! {
@@ -132,9 +129,8 @@ fld! {
         color: Color,
         /// RUN_TIME
         run_time: f32,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
         /// RANGE (second set of values?)
-        range_alt: Option<Range>,
+        range_alt: Option<Range> = { None },
     }
 }
 
@@ -369,15 +365,12 @@ fld! {
         ///
         /// Warning: Only applies to Object3D nodes!
         scale: Option<Vec3FromTo>,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
         /// Only used for binary accuracy.
-        translate_delta: Option<Vec3>,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
+        translate_delta: Option<Vec3> = { None },
         /// Only used for binary accuracy.
-        rotate_delta: Option<Vec3>,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
+        rotate_delta: Option<Vec3> = { None },
         /// Only used for binary accuracy.
-        scale_delta: Option<Vec3>,
+        scale_delta: Option<Vec3> = { None },
     }
 }
 
@@ -423,9 +416,8 @@ fld! {
         opacity_to: ObjectOpacity,
         /// RUN_TIME
         run_time: f32,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
         /// Only used for binary accuracy.
-        opacity_delta: Option<f32>,
+        opacity_delta: Option<f32> = { None },
     }
 }
 
@@ -795,9 +787,8 @@ fld! {
         to: Rgba,
         /// RUN_TIME
         run_time: f32,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
         /// Only used for binary accuracy.
-        alpha_delta: Option<f32>,
+        alpha_delta: Option<f32> = { None },
     }
 }
 
@@ -884,14 +875,13 @@ fld! {
     }
 }
 
-#[derive(
-    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, NoUninit, AnyBitPattern, Struct,
-)]
-#[repr(C)]
-pub struct PufferStateColor {
-    pub unk00: f32,
-    pub color: Color,
-    pub unk16: f32,
+fld! {
+    #[repr(C)]
+    struct PufferStateColor {
+        unk00: f32,
+        color: Color,
+        unk16: f32,
+    }
 }
 impl_as_bytes!(PufferStateColor, 20);
 
@@ -954,8 +944,7 @@ fld! {
         colors: Option<Vec<PufferStateColor>>,
         /// GROWTH_FACTOR
         growth_factors: Option<Vec<Range>>,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
-        interval_garbage: Option<PufferIntervalGarbage>,
+        interval_garbage: Option<PufferIntervalGarbage> = { None },
     }
 }
 

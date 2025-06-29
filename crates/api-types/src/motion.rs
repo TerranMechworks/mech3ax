@@ -1,13 +1,11 @@
 //! MW3/PM `motion.zbd` data structures.
 use crate::{fld, Quaternion, Vec3};
-use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::Struct;
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Struct)]
-#[dotnet(generic(Vec3 = "TVec3", Quaternion = "TQuaternion"))]
-pub struct MotionFrame {
-    pub translation: Vec3,
-    pub rotation: Quaternion,
+fld! {
+    struct MotionFrame {
+        translation: Vec3,
+        rotation: Quaternion,
+    }
 }
 
 fld! {

@@ -32,18 +32,6 @@ pub enum TypeInfoBase {
     DateTime,
 }
 
-/// A `Vec<T>`/`List<T>` type.
-#[derive(Debug, Clone, PartialEq)]
-pub struct TypeInfoVec {
-    pub inner: &'static TypeInfo,
-}
-
-/// An `Option<T>`/`Nullable<T>` type.
-#[derive(Debug, Clone, PartialEq)]
-pub struct TypeInfoOption {
-    pub inner: &'static TypeInfo,
-}
-
 /// An enum type, with string variants.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeInfoEnum {
@@ -85,23 +73,23 @@ pub struct TypeInfoUnion {
 /// * `Normal` indicates values must be present.
 /// * `OptionIsNone` indicates `None` values can be omitted from serialization,
 ///   and implied during deserialization.
-/// * `BoolFalse` indicates `false` values can be omitted from serialization,
+/// * `BoolIsFalse` indicates `false` values can be omitted from serialization,
 ///   and implied during deserialization.
-/// * `BoolTrue` indicates `true` values can be omitted from serialization,
+/// * `BoolIsTrue` indicates `true` values can be omitted from serialization,
 ///   and implied during deserialization.
-/// * `PointerZero` indicates `0` values can be omitted from serialization,
+/// * `PointerIsZero` indicates `0` values can be omitted from serialization,
 ///   and implied during deserialization.
 /// * `SoilIsDefault` indicated `Soil::Default` values can be omitted from
 ///   serialization, and implied during deserialization.
-/// * `I32IsNegOne` indicates `-1` values can be omitted from serialization,
-///   and implied during deserialization.
+/// * `I32IsNegOne` indicates `-1` values can be omitted from serialization, and
+///   implied during deserialization.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DefaultHandling {
     Normal,
     OptionIsNone,
-    BoolFalse,
-    BoolTrue,
-    PointerZero,
+    BoolIsFalse,
+    BoolIsTrue,
+    PointerIsZero,
     SoilIsDefault,
     I32IsNegOne,
 }
@@ -122,22 +110,13 @@ pub enum TypeSemantic {
     Ref,
 }
 
-/// DotNet/C#-specific information for (Rust) struct types.
-#[derive(Debug, Clone, PartialEq)]
-pub struct TypeInfoStructDotNet {
-    pub semantic: TypeSemantic,
-    pub generics: Option<&'static [(&'static TypeInfo, &'static str)]>,
-    pub partial: bool,
-    pub namespace: Option<&'static str>,
-}
-
 /// A (Rust) struct type.
 #[derive(Debug, Clone, PartialEq)]
 pub struct TypeInfoStruct {
     pub name: &'static str,
+    pub semantic: TypeSemantic,
     pub fields: &'static [TypeInfoStructField],
     pub module_path: &'static str,
-    pub dotnet: TypeInfoStructDotNet,
 }
 
 /// A type.
@@ -149,8 +128,10 @@ pub enum TypeInfo {
     Enum(TypeInfoEnum),
     // leaf type
     Flags(TypeInfoFlags),
-    Vec(TypeInfoVec),
-    Option(TypeInfoOption),
+    /// A `Vec<T>`/`List<T>` type.
+    Vec(&'static TypeInfo),
+    /// An `Option<T>`/`Nullable<T>` type.
+    Option(&'static TypeInfo),
     Struct(TypeInfoStruct),
     Union(TypeInfoUnion),
 }
@@ -182,13 +163,9 @@ base_type!(String, TypeInfoBase::String);
 base_type!(DateTime, TypeInfoBase::DateTime);
 
 impl<Inner: DerivedMetadata> DerivedMetadata for Vec<Inner> {
-    const TYPE_INFO: &'static TypeInfo = &TypeInfo::Vec(TypeInfoVec {
-        inner: Inner::TYPE_INFO,
-    });
+    const TYPE_INFO: &'static TypeInfo = &TypeInfo::Vec(Inner::TYPE_INFO);
 }
 
 impl<Inner: DerivedMetadata> DerivedMetadata for Option<Inner> {
-    const TYPE_INFO: &'static TypeInfo = &TypeInfo::Option(TypeInfoOption {
-        inner: Inner::TYPE_INFO,
-    });
+    const TYPE_INFO: &'static TypeInfo = &TypeInfo::Option(Inner::TYPE_INFO);
 }

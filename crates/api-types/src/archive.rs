@@ -6,8 +6,7 @@ use mech3ax_timestamp::DateTime;
 fld! {
     struct ArchiveEntry {
         name: String,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
-        rename: Option<String>,
+        rename: Option<String> = { None },
         flags: u32,
         info: ArchiveEntryInfo,
     }

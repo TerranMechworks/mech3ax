@@ -6,8 +6,7 @@ use super::structs::Struct;
 use super::unions::Union;
 use crate::resolver::ResolveError;
 use mech3ax_metadata_types::{
-    TypeInfo, TypeInfoBase, TypeInfoEnum, TypeInfoFlags, TypeInfoOption, TypeInfoStruct,
-    TypeInfoUnion, TypeInfoVec,
+    TypeInfo, TypeInfoBase, TypeInfoEnum, TypeInfoFlags, TypeInfoStruct, TypeInfoUnion,
 };
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -98,8 +97,8 @@ impl TypeResolver {
         match ti {
             TypeInfo::Base(bi) => self.resolve_base(bi),
             TypeInfo::Enum(ei) => self.resolve_enum(ei),
-            TypeInfo::Vec(vi) => self.resolve_vec(vi),
-            TypeInfo::Option(oi) => self.resolve_option(oi),
+            TypeInfo::Vec(inner) => self.resolve_vec(inner),
+            TypeInfo::Option(inner) => self.resolve_option(inner),
             TypeInfo::Struct(si) => self.resolve_struct(si),
             TypeInfo::Union(ui) => self.resolve_union(ui),
             TypeInfo::Flags(fi) => self.resolve_flags(fi),
@@ -111,8 +110,8 @@ impl TypeResolver {
         Ok(bi.into())
     }
 
-    fn resolve_vec(&self, vi: &TypeInfoVec) -> ResolveResult {
-        match self.resolve_inner(vi.inner) {
+    fn resolve_vec(&self, inner: &TypeInfo) -> ResolveResult {
+        match self.resolve_inner(inner) {
             // remap byte vec
             Ok(inner) if inner.is_byte() => Ok(PythonType::byte_vec()),
             Ok(inner) => Ok(PythonType::vec(inner)),
@@ -120,8 +119,8 @@ impl TypeResolver {
         }
     }
 
-    fn resolve_option(&self, oi: &TypeInfoOption) -> ResolveResult {
-        match self.resolve_inner(oi.inner) {
+    fn resolve_option(&self, inner: &TypeInfo) -> ResolveResult {
+        match self.resolve_inner(inner) {
             Ok(inner) => Ok(PythonType::option(inner)),
             Err(e) => Err(e.push("Option")),
         }

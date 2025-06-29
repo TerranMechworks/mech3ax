@@ -1,4 +1,3 @@
-use crate::serde::pointer_zero;
 use crate::{fld, num, sum, Color};
 
 fld! {
@@ -49,12 +48,9 @@ fld! {
     struct TexturedMaterial {
         texture: String,
         // the GameZ data doesn't use the pointer (it stores the texture name index)
-        #[serde(skip_serializing_if = "pointer_zero", default)]
-        pointer: u32,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
-        cycle: Option<CycleData>,
-        #[serde(skip_serializing_if = "Soil::is_default", default)]
-        soil: Soil,
+        pointer: u32 = { 0u32 },
+        cycle: Option<CycleData> = { None },
+        soil: Soil = { Soil::Default },
         flag: bool,
     }
 }
@@ -63,8 +59,7 @@ fld! {
     struct ColoredMaterial {
         color: Color,
         alpha: u8,
-        #[serde(skip_serializing_if = "Soil::is_default", default)]
-        soil: Soil,
+        soil: Soil = { Soil::Default },
     }
 }
 

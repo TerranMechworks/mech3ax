@@ -2,11 +2,7 @@ pub mod mw;
 pub mod pm;
 pub mod rc;
 
-use crate::serde::{bool_false, bool_true};
 use crate::{fld, Color, Matrix, Range, Vec3};
-use ::serde::{Deserialize, Serialize};
-use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_metadata_proc_macro::Struct;
 use mech3ax_types::impl_as_bytes;
 
 fld! {
@@ -35,39 +31,34 @@ fld! {
     }
 }
 
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-    NoUninit,
-    AnyBitPattern,
-    Struct,
-    Default,
-)]
-#[dotnet(val_struct)]
-#[repr(C)]
-pub struct AreaPartition {
-    pub x: i32,
-    pub y: i32,
+fld! {
+    #[repr(C)]
+    struct AreaPartition {
+        x: i32,
+        y: i32,
+    }
 }
 impl_as_bytes!(AreaPartition, 8);
+
+impl Default for AreaPartition {
+    #[inline]
+    fn default() -> Self {
+        Self::DEFAULT
+    }
+}
 
 impl AreaPartition {
     pub const DEFAULT: Self = Self { x: -1, y: -1 };
     pub const ZERO: Self = Self { x: 0, y: 0 };
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Struct)]
-#[dotnet(val_struct)]
-pub struct Area {
-    pub left: i32,
-    pub top: i32,
-    pub right: i32,
-    pub bottom: i32,
+fld! {
+    struct Area : Val {
+        left: i32,
+        top: i32,
+        right: i32,
+        bottom: i32,
+    }
 }
 
 impl Area {
@@ -82,13 +73,19 @@ impl Area {
     }
 }
 
-#[derive(
-    Debug, Clone, Copy, PartialEq, Serialize, Deserialize, NoUninit, AnyBitPattern, Struct, Default,
-)]
-#[repr(C)]
-pub struct BoundingBox {
-    pub a: Vec3,
-    pub b: Vec3,
+fld! {
+    #[repr(C)]
+    struct BoundingBox {
+        a: Vec3,
+        b: Vec3,
+    }
+}
+
+impl Default for BoundingBox {
+    #[inline]
+    fn default() -> Self {
+        Self::EMPTY
+    }
 }
 
 impl BoundingBox {
@@ -112,21 +109,19 @@ fld! {
         y: i32,
         z_min: f32,
         z_max: f32,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
-        z_mid: Option<f32>,
+        z_mid: Option<f32> = { None },
         nodes: Vec<u32>,
         ptr: u32,
     }
 }
 
-#[derive(
-    Debug, Clone, Copy, PartialEq, Serialize, Deserialize, NoUninit, AnyBitPattern, Struct,
-)]
-#[repr(C)]
-pub struct PartitionValue {
-    pub index: u32,
-    pub z_min: f32,
-    pub z_max: f32,
+fld! {
+    #[repr(C)]
+    struct PartitionValue {
+        index: u32,
+        z_min: f32,
+        z_max: f32,
+    }
 }
 impl_as_bytes!(PartitionValue, 12);
 
@@ -141,41 +136,22 @@ fld! {
     }
 }
 
-#[inline]
-fn _true() -> bool {
-    true
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Struct)]
-pub struct NodeFlags {
-    #[serde(skip_serializing_if = "bool_true", default = "_true")]
-    pub active: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub altitude_surface: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub intersect_surface: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub intersect_bbox: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub landmark: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub bbox_node: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub bbox_model: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub bbox_child: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub terrain: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub can_modify: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub clip_to: bool,
-    #[serde(skip_serializing_if = "bool_true", default = "_true")]
-    pub tree_valid: bool,
-    #[serde(skip_serializing_if = "bool_true", default = "_true")]
-    pub id_zone_check: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub unk25: bool,
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub unk28: bool,
+fld! {
+    struct NodeFlags {
+        active: bool = { true },
+        altitude_surface: bool = { false },
+        intersect_surface: bool = { false },
+        intersect_bbox: bool = { false },
+        landmark: bool = { false },
+        bbox_node: bool = { false },
+        bbox_model: bool = { false },
+        bbox_child: bool = { false },
+        terrain: bool = { false },
+        can_modify: bool = { false },
+        clip_to: bool = { false },
+        tree_valid: bool = { true },
+        id_zone_check: bool = { true },
+        unk25: bool = { false },
+        unk28: bool = { false },
+    }
 }

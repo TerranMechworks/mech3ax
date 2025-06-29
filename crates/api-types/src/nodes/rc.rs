@@ -83,8 +83,7 @@ fld! {
         area_partition: Option<AreaPartition>,
         model_index: i32,
         parent: Option<u32>,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
-        parents: Option<Vec<u32>>,
+        parents: Option<Vec<u32>> = { None },
         children: Vec<u32>,
 
         node_bbox: BoundingBox,

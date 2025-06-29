@@ -39,7 +39,7 @@ impl Struct {
         // luckily, Rust's casing for structs matches Python.
         let name = si.name;
         let (namespace, filename) = rust_mod_path_to_py(si.module_path, name);
-        let slots = matches!(si.dotnet.semantic, TypeSemantic::Val);
+        let slots = matches!(si.semantic, TypeSemantic::Val);
 
         let fields: Vec<_> = si
             .fields

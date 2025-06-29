@@ -6,10 +6,7 @@ use crate::fld;
 use crate::nodes::mw::NodeMw;
 use crate::nodes::pm::NodePm;
 use crate::nodes::rc::NodeRc;
-use crate::serde::{i32_is_neg_one, i32_neg_one};
-use ::serde::{Deserialize, Serialize};
 use materials::Material;
-use mech3ax_metadata_proc_macro::Struct;
 use mech3ax_timestamp::DateTime;
 use model::Model;
 
@@ -25,37 +22,36 @@ fld! {
 fld! {
     struct Texture {
         name: String,
-        #[serde(skip_serializing_if = "i32_is_neg_one", default = "i32_neg_one")]
-        mip: i32,
+        mip: i32 = { -1i32 },
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-#[dotnet(partial, namespace = "Mech3DotNet.Zbd")]
-pub struct GameZDataMw {
-    pub textures: Vec<Texture>,
-    pub materials: Vec<Material>,
-    pub models: Vec<Model>,
-    pub nodes: Vec<NodeMw>,
-    pub metadata: GameZMetadata,
+fld! {
+    struct GameZDataMw {
+        textures: Vec<Texture>,
+        materials: Vec<Material>,
+        models: Vec<Model>,
+        nodes: Vec<NodeMw>,
+        metadata: GameZMetadata,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-#[dotnet(partial, namespace = "Mech3DotNet.Zbd")]
-pub struct GameZDataPm {
-    pub textures: Vec<Texture>,
-    pub materials: Vec<Material>,
-    pub models: Vec<Model>,
-    pub nodes: Vec<NodePm>,
-    pub metadata: GameZMetadata,
+fld! {
+    struct GameZDataPm {
+        textures: Vec<Texture>,
+        materials: Vec<Material>,
+        models: Vec<Model>,
+        nodes: Vec<NodePm>,
+        metadata: GameZMetadata,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-#[dotnet(partial, namespace = "Mech3DotNet.Zbd")]
-pub struct GameZDataRc {
-    pub textures: Vec<Texture>,
-    pub materials: Vec<Material>,
-    pub models: Vec<Model>,
-    pub nodes: Vec<NodeRc>,
-    pub metadata: GameZMetadata,
+fld! {
+    struct GameZDataRc {
+        textures: Vec<Texture>,
+        materials: Vec<Material>,
+        models: Vec<Model>,
+        nodes: Vec<NodeRc>,
+        metadata: GameZMetadata,
+    }
 }

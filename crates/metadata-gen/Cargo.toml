@@ -14,5 +14,4 @@ serde.workspace = true
 minijinja.workspace = true
 
 mech3ax-api-types = { path = "../api-types" }
-mech3ax-metadata-proc-macro = { path = "../metadata-proc-macro" }
 mech3ax-metadata-types = { path = "../metadata-types" }

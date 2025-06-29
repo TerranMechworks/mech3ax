@@ -1,27 +1,13 @@
 use crate::serde::bool_false;
 use crate::{bit, fld, num, Color, Vec3};
-use ::serde::{Deserialize, Serialize};
-use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_metadata_proc_macro::Struct;
 use mech3ax_types::impl_as_bytes;
 
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    PartialOrd,
-    Serialize,
-    Deserialize,
-    NoUninit,
-    AnyBitPattern,
-    Struct,
-)]
-#[dotnet(val_struct)]
-#[repr(C)]
-pub struct UvCoord {
-    pub u: f32,
-    pub v: f32,
+fld! {
+    #[repr(C)]
+    struct UvCoord : Val {
+        u: f32,
+        v: f32,
+    }
 }
 impl_as_bytes!(UvCoord, 8);
 

@@ -3,10 +3,8 @@ use super::events::Event;
 use super::support::{
     AnimRef, DynamicSoundRef, EffectRef, LightRef, NodeRef, ObjectRef, PufferRef, StaticSoundRef,
 };
-use crate::serde::{bool_false, bool_true, bytes};
+use crate::serde::bytes;
 use crate::{fld, num, sum, Range};
-use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::Struct;
 use mech3ax_timestamp::DateTime;
 
 fld! {
@@ -14,8 +12,7 @@ fld! {
     struct AnimDefFile {
         name: String,
         datetime: DateTime,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
-        hash: Option<u32>,
+        hash: Option<u32> = { None },
     }
 }
 
@@ -84,67 +81,46 @@ fld! {
     }
 }
 
-#[inline]
-fn _true() -> bool {
-    true
-}
+fld! {
+    struct AnimDef {
+        name: String,
+        anim_name: String,
+        anim_root_name: String,
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct AnimDef {
-    pub name: String,
-    pub anim_name: String,
-    pub anim_root_name: String,
+        has_callbacks: bool,
+        /// MW/PM only
+        auto_reset_node_states: bool,
+        /// PM only
+        local_nodes_only: bool,
+        /// MW/PM only
+        proximity_damage: bool,
 
-    pub has_callbacks: bool,
-    /// MW/PM only
-    pub auto_reset_node_states: bool,
-    /// PM only
-    pub local_nodes_only: bool,
-    /// MW/PM only
-    pub proximity_damage: bool,
+        /// PM only?
+        active: bool = { true },
+        /// RC only?
+        low_priority: bool = { false },
+        activation: AnimActivation,
+        execution: Execution,
+        network_log: Option<bool> = { None },
+        save_log: Option<bool> = { None },
+        reset_time: Option<f32> = { None },
 
-    /// PM only?
-    #[serde(skip_serializing_if = "bool_true", default = "_true")]
-    pub active: bool,
-    /// RC only?
-    #[serde(skip_serializing_if = "bool_false", default)]
-    pub low_priority: bool,
-    pub activation: AnimActivation,
-    pub execution: Execution,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub network_log: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub save_log: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub reset_time: Option<f32>,
+        health: f32,
+        activ_prereq_min_to_satisfy: u8,
 
-    pub health: f32,
-    pub activ_prereq_min_to_satisfy: u8,
-
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub objects: Option<Vec<ObjectRef>>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub nodes: Option<Vec<NodeRef>>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub lights: Option<Vec<LightRef>>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub puffers: Option<Vec<PufferRef>>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub dynamic_sounds: Option<Vec<DynamicSoundRef>>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub static_sounds: Option<Vec<StaticSoundRef>>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub effects: Option<Vec<EffectRef>>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub activ_prereqs: Option<Vec<ActivationPrerequisite>>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub anim_refs: Option<Vec<AnimRef>>,
-
-    pub reset_state: Option<ResetState>,
-    pub sequences: Vec<SeqDef>,
-
-    #[serde(default)]
-    pub ptrs: Option<AnimDefPtrs>,
+        objects: Option<Vec<ObjectRef>> = { None },
+        nodes: Option<Vec<NodeRef>> = { None },
+        lights: Option<Vec<LightRef>> = { None },
+        puffers: Option<Vec<PufferRef>> = { None },
+        dynamic_sounds: Option<Vec<DynamicSoundRef>> = { None },
+        static_sounds: Option<Vec<StaticSoundRef>> = { None },
+        effects: Option<Vec<EffectRef>> = { None },
+        activ_prereqs: Option<Vec<ActivationPrerequisite>> = { None },
+        anim_refs: Option<Vec<AnimRef>> = { None },
+        reset_state: Option<ResetState>,
+        sequences: Vec<SeqDef>,
+        ptrs: Option<AnimDefPtrs> = { None },
+    }
 }
 
 impl AnimDef {
@@ -169,10 +145,8 @@ impl AnimDef {
 
 fld! {
     struct AnimDefPtrs {
-        #[serde(skip_serializing_if = "Option::is_none", default)]
-        anim_hash: Option<u32>,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
-        anim_root_hash: Option<u32>,
+        anim_hash: Option<u32> = { None },
+        anim_root_hash: Option<u32> = { None },
 
         seq_defs_ptr: u32,
         objects_ptr: u32,

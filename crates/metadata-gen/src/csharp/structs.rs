@@ -9,6 +9,17 @@ use std::borrow::Cow;
 use std::collections::HashSet;
 use std::path::PathBuf;
 
+const MOTION_FRAME_GENERICS: &[(&mech3ax_metadata_types::TypeInfo, &str)] = &[
+    (
+        <mech3ax_api_types::Vec3 as mech3ax_metadata_types::DerivedMetadata>::TYPE_INFO,
+        "TVec3",
+    ),
+    (
+        <mech3ax_api_types::Quaternion as mech3ax_metadata_types::DerivedMetadata>::TYPE_INFO,
+        "TQuaternion",
+    ),
+];
+
 #[derive(Debug, Clone, Serialize)]
 pub(crate) struct Struct {
     /// The struct's C# struct name, without generics.
@@ -64,18 +75,25 @@ impl Struct {
     pub(crate) fn new(resolver: &mut TypeResolver, si: &TypeInfoStruct) -> Self {
         // luckily, Rust's casing for structs matches C#.
         let name = si.name;
-        let namespace = match si.dotnet.namespace {
-            Some(namespace) => namespace.to_string(),
-            None => rust_mod_path_to_dotnet(si.module_path),
+        let (namespace, partial) = match si.name {
+            "GameZDataMw" | "GameZDataPm" | "GameZDataRc" | "Messages" | "Zmap" => {
+                ("Mech3DotNet.Zbd".to_string(), true)
+            }
+            _ => (rust_mod_path_to_dotnet(si.module_path), false),
         };
-        let semantic = si.dotnet.semantic;
-        let partial = si.dotnet.partial;
+        let semantic = si.semantic;
+
+        let generics = if si.name == "MotionFrame" {
+            Some(MOTION_FRAME_GENERICS)
+        } else {
+            None
+        };
 
         // field generics must be declared on this struct specifically.
         let fields: Vec<_> = si
             .fields
             .iter()
-            .map(|field_info| Field::new(si.name, si.dotnet.generics, field_info, resolver))
+            .map(|field_info| Field::new(si.name, generics, field_info, resolver))
             .collect();
 
         // since the struct's generics should've be used in fields, we can

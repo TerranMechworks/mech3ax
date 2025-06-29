@@ -1,19 +1,15 @@
 use super::{Area, BoundingBox, Camera, Display, NodeFlags, PartitionNg, Transformation, Window};
 use crate::{fld, sum, Range};
-use ::serde::{Deserialize, Serialize};
-use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_metadata_proc_macro::Struct;
 use mech3ax_types::impl_as_bytes;
 
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, NoUninit, AnyBitPattern, Struct,
-)]
-#[repr(C)]
-pub struct AreaPartitionPm {
-    pub x: i16,
-    pub y: i16,
-    pub virtual_x: i16,
-    pub virtual_y: i16,
+fld! {
+    #[repr(C)]
+    struct AreaPartitionPm {
+        x: i16,
+        y: i16,
+        virtual_x: i16,
+        virtual_y: i16,
+    }
 }
 impl_as_bytes!(AreaPartitionPm, 8);
 

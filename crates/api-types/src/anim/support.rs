@@ -40,17 +40,15 @@ impl AnimRef {
 fld! {
     struct ObjectRef: Val {
         name: String,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
         /// Ignored in PM.
-        ptr: Option<u32>,
+        ptr: Option<u32> = { None },
         /// `u16` in PM.
         flags: u32,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
         /// Ignored in PM.
-        flags_merged: Option<u32>,
-        #[serde(with = "bytes")]
+        flags_merged: Option<u32> = { None },
         /// The affine matrix cannot be serializes as is, because it contains bogus
         /// floats/values.
+        #[serde(with = "bytes")]
         affine: Vec<u8>,
     }
 }

@@ -106,9 +106,9 @@ impl Field {
         let default = match field_info.default {
             DefaultHandling::Normal => None,
             DefaultHandling::OptionIsNone => Some("null".to_string()),
-            DefaultHandling::BoolFalse => Some("false".to_string()),
-            DefaultHandling::BoolTrue => Some("true".to_string()),
-            DefaultHandling::PointerZero => Some("0".to_string()),
+            DefaultHandling::BoolIsFalse => Some("false".to_string()),
+            DefaultHandling::BoolIsTrue => Some("true".to_string()),
+            DefaultHandling::PointerIsZero => Some("0".to_string()),
             DefaultHandling::SoilIsDefault => {
                 Some("Mech3DotNet.Types.Gamez.Materials.Soil.Default".to_string())
             }

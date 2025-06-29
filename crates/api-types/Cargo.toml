@@ -16,7 +16,6 @@ base64.workspace = true
 bytemuck.workspace = true
 serde.workspace = true
 
-mech3ax-metadata-proc-macro = { path = "../metadata-proc-macro" }
 mech3ax-metadata-types = { path = "../metadata-types" }
 mech3ax-types = { path = "../types" }
 mech3ax-timestamp = { path = "../timestamp" }

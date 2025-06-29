@@ -1,25 +1,12 @@
-use ::serde::{Deserialize, Serialize};
-use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_metadata_proc_macro::Struct;
+use crate::fld;
 use mech3ax_types::impl_as_bytes;
 
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    PartialOrd,
-    Serialize,
-    Deserialize,
-    NoUninit,
-    AnyBitPattern,
-    Struct,
-)]
-#[dotnet(val_struct)]
-#[repr(C)]
-pub struct Range {
-    pub min: f32,
-    pub max: f32,
+fld! {
+    #[repr(C)]
+    struct Range : Val {
+        min: f32,
+        max: f32,
+    }
 }
 impl_as_bytes!(Range, 8);
 
@@ -27,27 +14,22 @@ impl Range {
     pub const DEFAULT: Self = Self { min: 0.0, max: 0.0 };
 }
 
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    PartialOrd,
-    Serialize,
-    Deserialize,
-    NoUninit,
-    AnyBitPattern,
-    Struct,
-    Default,
-)]
-#[dotnet(val_struct)]
-#[repr(C)]
-pub struct Vec3 {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
+fld! {
+    #[repr(C)]
+    struct Vec3 : Val {
+        x: f32,
+        y: f32,
+        z: f32,
+    }
 }
 impl_as_bytes!(Vec3, 12);
+
+impl Default for Vec3 {
+    #[inline]
+    fn default() -> Self {
+        Self::DEFAULT
+    }
+}
 
 impl Vec3 {
     pub const DEFAULT: Self = Self {
@@ -57,24 +39,13 @@ impl Vec3 {
     };
 }
 
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    PartialOrd,
-    Serialize,
-    Deserialize,
-    NoUninit,
-    AnyBitPattern,
-    Struct,
-)]
-#[dotnet(val_struct)]
-#[repr(C)]
-pub struct Color {
-    pub r: f32,
-    pub g: f32,
-    pub b: f32,
+fld! {
+    #[repr(C)]
+    struct Color : Val {
+        r: f32,
+        g: f32,
+        b: f32,
+    }
 }
 impl_as_bytes!(Color, 12);
 
@@ -96,28 +67,23 @@ impl Color {
     };
 }
 
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    PartialOrd,
-    Serialize,
-    Deserialize,
-    NoUninit,
-    AnyBitPattern,
-    Struct,
-    Default,
-)]
-#[dotnet(val_struct)]
-#[repr(C)]
-pub struct Quaternion {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-    pub w: f32,
+fld! {
+    #[repr(C)]
+    struct Quaternion : Val {
+        x: f32,
+        y: f32,
+        z: f32,
+        w: f32,
+    }
 }
 impl_as_bytes!(Quaternion, 16);
+
+impl Default for Quaternion {
+    #[inline]
+    fn default() -> Self {
+        Self::DEFAULT
+    }
+}
 
 impl Quaternion {
     pub const DEFAULT: Self = Self {
@@ -128,33 +94,28 @@ impl Quaternion {
     };
 }
 
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    PartialOrd,
-    Serialize,
-    Deserialize,
-    NoUninit,
-    AnyBitPattern,
-    Struct,
-    Default,
-)]
-#[dotnet(val_struct)]
-#[repr(C)]
-pub struct Matrix {
-    pub a: f32,
-    pub b: f32,
-    pub c: f32,
-    pub d: f32,
-    pub e: f32,
-    pub f: f32,
-    pub g: f32,
-    pub h: f32,
-    pub i: f32,
+fld! {
+    #[repr(C)]
+    struct Matrix {
+        a: f32,
+        b: f32,
+        c: f32,
+        d: f32,
+        e: f32,
+        f: f32,
+        g: f32,
+        h: f32,
+        i: f32,
+    }
 }
 impl_as_bytes!(Matrix, 36);
+
+impl Default for Matrix {
+    #[inline]
+    fn default() -> Self {
+        Self::EMPTY
+    }
+}
 
 impl Matrix {
     pub const EMPTY: Self = Self {
@@ -181,37 +142,32 @@ impl Matrix {
     };
 }
 
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    PartialOrd,
-    Serialize,
-    Deserialize,
-    NoUninit,
-    AnyBitPattern,
-    Struct,
-    Default,
-)]
-#[dotnet(val_struct)]
-#[repr(C)]
-/// A cut-down affine matrix, without the 4th row.
-pub struct AffineMatrix {
-    pub r00: f32,
-    pub r01: f32,
-    pub r02: f32,
-    pub r10: f32,
-    pub r11: f32,
-    pub r12: f32,
-    pub r20: f32,
-    pub r21: f32,
-    pub r22: f32,
-    pub r30: f32,
-    pub r31: f32,
-    pub r32: f32,
+fld! {
+    /// A cut-down affine matrix, without the 4th row.
+    #[repr(C)]
+    struct AffineMatrix {
+        r00: f32,
+        r01: f32,
+        r02: f32,
+        r10: f32,
+        r11: f32,
+        r12: f32,
+        r20: f32,
+        r21: f32,
+        r22: f32,
+        r30: f32,
+        r31: f32,
+        r32: f32,
+    }
 }
 impl_as_bytes!(AffineMatrix, 48);
+
+impl Default for AffineMatrix {
+    #[inline]
+    fn default() -> Self {
+        Self::ZERO
+    }
+}
 
 impl AffineMatrix {
     pub const ZERO: Self = Self {

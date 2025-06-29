@@ -457,7 +457,6 @@ dependencies = [
  "base64",
  "bytemuck",
  "mech3ax-exchange",
- "mech3ax-metadata-proc-macro",
  "mech3ax-metadata-types",
  "mech3ax-timestamp",
  "mech3ax-types",
@@ -582,20 +581,9 @@ version = "0.0.0"
 dependencies = [
  "heck",
  "mech3ax-api-types",
- "mech3ax-metadata-proc-macro",
  "mech3ax-metadata-types",
  "minijinja",
  "serde",
-]
-
-[[package]]
-name = "mech3ax-metadata-proc-macro"
-version = "0.0.0"
-dependencies = [
- "mech3ax-metadata-types",
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]

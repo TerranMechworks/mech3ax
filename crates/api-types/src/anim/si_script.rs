@@ -46,12 +46,9 @@ fld! {
     struct ObjectMotionSiFrame {
         start_time: f32,
         end_time: f32,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
-        translate: Option<TranslateData>,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
-        rotate: Option<RotateData>,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
-        scale: Option<ScaleData>,
+        translate: Option<TranslateData> = { None },
+        rotate: Option<RotateData> = { None },
+        scale: Option<ScaleData> = { None },
     }
 }
 

@@ -47,9 +47,9 @@ impl Field {
         let default = match field_info.default {
             DefaultHandling::Normal => None,
             DefaultHandling::OptionIsNone => Some("None".to_string()),
-            DefaultHandling::BoolFalse => Some("False".to_string()),
-            DefaultHandling::BoolTrue => Some("True".to_string()),
-            DefaultHandling::PointerZero => Some("0".to_string()),
+            DefaultHandling::BoolIsFalse => Some("False".to_string()),
+            DefaultHandling::BoolIsTrue => Some("True".to_string()),
+            DefaultHandling::PointerIsZero => Some("0".to_string()),
             DefaultHandling::SoilIsDefault => {
                 // Soil must be imported
                 Some("Soil.Default".to_string())

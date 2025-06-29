@@ -115,9 +115,8 @@ fld! {
         mission: AnimMission,
         /// From `anim.zrd`: `GRAVITY`
         gravity: f32,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
         /// The `anim.zbd` timestamp (PM only).
-        datetime: Option<DateTime>,
+        datetime: Option<DateTime> = { None },
         /// Anim definition names.
         anim_def_names: Vec<String>,
         /// SI script names.
