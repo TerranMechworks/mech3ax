@@ -1,5 +1,5 @@
 //! Recoil `m*.zmap` data structures.
-use crate::Vec3;
+use crate::{fld, Vec3};
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_metadata_proc_macro::Struct;
@@ -17,11 +17,12 @@ pub struct MapColor {
 }
 impl_as_bytes!(MapColor, 3);
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct MapFeature {
-    pub color: MapColor,
-    pub vertices: Vec<Vec3>,
-    pub objective: i32,
+fld! {
+    struct MapFeature {
+        color: MapColor,
+        vertices: Vec<Vec3>,
+        objective: i32,
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]

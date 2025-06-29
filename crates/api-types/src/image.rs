@@ -1,8 +1,6 @@
 //! Image/texture data structures.
 use crate::serde::bytes;
-use crate::{num, sum};
-use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::Struct;
+use crate::{fld, num, sum};
 
 num! {
     enum TextureAlpha {
@@ -27,16 +25,18 @@ num! {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Struct)]
-pub struct PaletteData {
-    #[serde(with = "bytes")]
-    pub data: Vec<u8>,
+fld! {
+    struct PaletteData {
+        #[serde(with = "bytes")]
+        data: Vec<u8>,
+    }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Struct)]
-pub struct GlobalPalette {
-    pub index: u32,
-    pub count: u16,
+fld! {
+    struct GlobalPalette {
+        index: u32,
+        count: u16,
+    }
 }
 
 sum! {
@@ -47,23 +47,25 @@ sum! {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct TextureInfo {
-    pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub rename: Option<String>,
-    pub alpha: TextureAlpha,
-    pub width: u16,
-    pub height: u16,
-    pub stretch: TextureStretch,
-    pub image_loaded: bool,
-    pub alpha_loaded: bool,
-    pub palette_loaded: bool,
-    pub palette: TexturePalette,
+fld! {
+    struct TextureInfo {
+        name: String,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        rename: Option<String>,
+        alpha: TextureAlpha,
+        width: u16,
+        height: u16,
+        stretch: TextureStretch,
+        image_loaded: bool,
+        alpha_loaded: bool,
+        palette_loaded: bool,
+        palette: TexturePalette,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct TextureManifest {
-    pub texture_infos: Vec<TextureInfo>,
-    pub global_palettes: Vec<PaletteData>,
+fld! {
+    struct TextureManifest {
+        texture_infos: Vec<TextureInfo>,
+        global_palettes: Vec<PaletteData>,
+    }
 }

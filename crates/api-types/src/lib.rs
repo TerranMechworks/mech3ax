@@ -14,6 +14,7 @@ mod serde;
 pub mod zmap;
 
 pub(crate) use crate::macros::bit::bit;
+pub(crate) use crate::macros::fld::fld;
 pub(crate) use crate::macros::num::num;
 pub(crate) use crate::macros::sum::sum;
 

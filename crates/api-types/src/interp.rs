@@ -1,11 +1,11 @@
 //! Interpreter (`interp.zbd`) data structures.
-use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::Struct;
+use crate::fld;
 use mech3ax_timestamp::DateTime;
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct Script {
-    pub name: String,
-    pub datetime: DateTime,
-    pub lines: Vec<String>,
+fld! {
+    struct Script {
+        name: String,
+        datetime: DateTime,
+        lines: Vec<String>,
+    }
 }

@@ -1,17 +1,15 @@
 use crate::serde::pointer_zero;
-use crate::{num, sum, Color};
-use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::Struct;
+use crate::{fld, num, sum, Color};
 
-#[derive(Debug, Clone, Serialize, Deserialize, Struct)]
-pub struct CycleData {
-    pub textures: Vec<String>,
-    pub looping: bool,
-    pub speed: f32,
-
-    pub current_frame: i32,
-    pub cycle_ptr: u32,
-    pub tex_map_ptr: u32,
+fld! {
+    struct CycleData {
+        textures: Vec<String>,
+        looping: bool,
+        speed: f32,
+        current_frame: i32,
+        cycle_ptr: u32,
+        tex_map_ptr: u32,
+    }
 }
 
 num! {
@@ -47,25 +45,27 @@ impl Default for Soil {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Struct)]
-pub struct TexturedMaterial {
-    pub texture: String,
-    // the GameZ data doesn't use the pointer (it stores the texture name index)
-    #[serde(skip_serializing_if = "pointer_zero", default)]
-    pub pointer: u32,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub cycle: Option<CycleData>,
-    #[serde(skip_serializing_if = "Soil::is_default", default)]
-    pub soil: Soil,
-    pub flag: bool,
+fld! {
+    struct TexturedMaterial {
+        texture: String,
+        // the GameZ data doesn't use the pointer (it stores the texture name index)
+        #[serde(skip_serializing_if = "pointer_zero", default)]
+        pointer: u32,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        cycle: Option<CycleData>,
+        #[serde(skip_serializing_if = "Soil::is_default", default)]
+        soil: Soil,
+        flag: bool,
+    }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Struct)]
-pub struct ColoredMaterial {
-    pub color: Color,
-    pub alpha: u8,
-    #[serde(skip_serializing_if = "Soil::is_default", default)]
-    pub soil: Soil,
+fld! {
+    struct ColoredMaterial {
+        color: Color,
+        alpha: u8,
+        #[serde(skip_serializing_if = "Soil::is_default", default)]
+        soil: Soil,
+    }
 }
 
 sum! {

@@ -1,4 +1,4 @@
-use crate::{num, sum, Color, Range, Vec3};
+use crate::{fld, num, sum, Color, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_metadata_proc_macro::Struct;
@@ -12,28 +12,29 @@ num! {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-#[dotnet(val_struct)]
-pub struct EventStart {
-    pub offset: StartOffset,
-    pub time: f32,
+fld! {
+    struct EventStart : Val {
+        offset: StartOffset,
+        time: f32,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct Event {
-    pub start: Option<EventStart>,
-    pub data: EventData,
+fld! {
+    struct Event {
+        start: Option<EventStart>,
+        data: EventData,
+    }
 }
 
-/// AT_NODE
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Struct)]
-#[dotnet(val_struct)]
-pub struct AtNode {
-    /// node name
-    ///
-    /// Warning: Whether INPUT_NODE is allowed depends on the parent struct!
-    pub name: String,
-    pub pos: Vec3,
+fld! {
+    /// AT_NODE
+    struct AtNode : Val {
+        /// node name
+        ///
+        /// Warning: Whether INPUT_NODE is allowed depends on the parent struct!
+        name: String,
+        pos: Vec3,
+    }
 }
 
 sum! {
@@ -43,33 +44,36 @@ sum! {
     }
 }
 
-/// SOUND Index: 01
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct Sound {
-    /// NAME (static sound name)
-    pub name: String,
-    /// AT_NODE (node name)
-    pub at_node: Option<AtNode>,
+fld! {
+    /// SOUND Index: 01
+    struct Sound {
+        /// NAME (static sound name)
+        name: String,
+        /// AT_NODE (node name)
+        at_node: Option<AtNode>,
+    }
 }
 
-/// SOUND_NODE Index: 02
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct SoundNode {
-    /// NAME (sound node name)
-    pub name: String,
-    /// ACTIVE_STATE
-    pub active_state: bool,
-    /// AT_NODE TODO (node name)
-    pub translate: Option<Translate>,
+fld! {
+    /// SOUND_NODE Index: 02
+    struct SoundNode {
+        /// NAME (sound node name)
+        name: String,
+        /// ACTIVE_STATE
+        active_state: bool,
+        /// AT_NODE TODO (node name)
+        translate: Option<Translate>,
+    }
 }
 
-/// EFFECT Index: 03
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct Effect {
-    /// NAME (effect name)
-    pub name: String,
-    /// AT_NODE (node name or INPUT_NODE)
-    pub at_node: AtNode,
+fld! {
+    /// EFFECT Index: 03
+    struct Effect {
+        /// NAME (effect name)
+        name: String,
+        /// AT_NODE (node name or INPUT_NODE)
+        at_node: AtNode,
+    }
 }
 
 num! {
@@ -79,88 +83,93 @@ num! {
     }
 }
 
-/// LIGHT_STATE Index: 04
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct LightState {
-    /// NAME (light name)
-    pub name: String,
-    /// ACTIVE_STATE
-    pub active_state: bool,
-    /// TYPE
-    pub type_: LightType,
-    /// AT_NODE TODO (node name or INPUT_NODE)
-    pub translate: Option<Translate>,
-    /// DIRECTIONAL
-    pub directional: Option<bool>,
-    /// SATURATED
-    pub saturated: Option<bool>,
-    /// SUBDIVIDE
-    pub subdivide: Option<bool>,
-    /// LIGHTMAP
-    pub lightmap: Option<bool>,
-    /// STATIC
-    pub static_: Option<bool>,
-    /// BICOLORED (not in reader)
-    pub bicolored: Option<bool>,
-    /// ORIENTATION (not in reader)
-    pub orientation: Option<Vec3>,
-    /// RANGE
-    pub range: Option<Range>,
-    /// COLOR
-    pub color: Option<Color>,
-    /// AMBIENT_COLOR (not in reader)
-    pub ambient_color: Option<Color>,
-    /// AMBIENT
-    pub ambient: Option<f32>,
-    /// DIFFUSE
-    pub diffuse: Option<f32>,
+fld! {
+    /// LIGHT_STATE Index: 04
+    struct LightState {
+        /// NAME (light name)
+        name: String,
+        /// ACTIVE_STATE
+        active_state: bool,
+        /// TYPE
+        type_: LightType,
+        /// AT_NODE TODO (node name or INPUT_NODE)
+        translate: Option<Translate>,
+        /// DIRECTIONAL
+        directional: Option<bool>,
+        /// SATURATED
+        saturated: Option<bool>,
+        /// SUBDIVIDE
+        subdivide: Option<bool>,
+        /// LIGHTMAP
+        lightmap: Option<bool>,
+        /// STATIC
+        static_: Option<bool>,
+        /// BICOLORED (not in reader)
+        bicolored: Option<bool>,
+        /// ORIENTATION (not in reader)
+        orientation: Option<Vec3>,
+        /// RANGE
+        range: Option<Range>,
+        /// COLOR
+        color: Option<Color>,
+        /// AMBIENT_COLOR (not in reader)
+        ambient_color: Option<Color>,
+        /// AMBIENT
+        ambient: Option<f32>,
+        /// DIFFUSE
+        diffuse: Option<f32>,
+    }
 }
 
-/// LIGHT_ANIMATION Index: 05
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct LightAnimation {
-    /// NAME (light name)
-    pub name: String,
-    /// RANGE
-    pub range: Range,
-    /// COLOR
-    pub color: Color,
-    /// RUN_TIME
-    pub run_time: f32,
-    /// RANGE (second set of values?)
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub range_alt: Option<Range>,
+fld! {
+    /// LIGHT_ANIMATION Index: 05
+    struct LightAnimation {
+        /// NAME (light name)
+        name: String,
+        /// RANGE
+        range: Range,
+        /// COLOR
+        color: Color,
+        /// RUN_TIME
+        run_time: f32,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        /// RANGE (second set of values?)
+        range_alt: Option<Range>,
+    }
 }
 
-/// OBJECT_ACTIVE_STATE Index: 06
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct ObjectActiveState {
-    /// NAME (node name or INPUT_NODE)
-    pub node: String,
-    /// STATE
-    pub state: bool,
+fld! {
+    /// OBJECT_ACTIVE_STATE Index: 06
+    struct ObjectActiveState {
+        /// NAME (node name or INPUT_NODE)
+        node: String,
+        /// STATE
+        state: bool,
+    }
 }
 
-/// OBJECT_TRANSLATE_STATE Index: 07
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct ObjectTranslateState {
-    /// NAME (node name)
-    pub node: String,
-    /// STATE / RELATIVE
-    pub relative: bool,
-    /// STATE / RELATIVE
-    pub state: Vec3,
-    /// AT_NODE (node name or INPUT_NODE)
-    pub at_node: Option<String>,
+fld! {
+    /// OBJECT_TRANSLATE_STATE Index: 07
+    struct ObjectTranslateState {
+        /// NAME (node name)
+        node: String,
+        /// STATE / RELATIVE
+        relative: bool,
+        /// STATE / RELATIVE
+        state: Vec3,
+        /// AT_NODE (node name or INPUT_NODE)
+        at_node: Option<String>,
+    }
 }
 
-/// OBJECT_SCALE_STATE Index: 08
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct ObjectScaleState {
-    /// NAME (node name)
-    pub name: String,
-    /// STATE
-    pub state: Vec3,
+fld! {
+    /// OBJECT_SCALE_STATE Index: 08
+    struct ObjectScaleState {
+        /// NAME (node name)
+        name: String,
+        /// STATE
+        state: Vec3,
+    }
 }
 
 sum! {
@@ -180,63 +189,66 @@ sum! {
     }
 }
 
-/// OBJECT_ROTATE_STATE Index: 09
-/// Camera and Object3d nodes only!
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct ObjectRotateState {
-    /// NAME (node name)
-    pub name: String,
-    /// STATE / AT_NODE_MATRIX / AT_NODE_XYZ (Radians)
-    pub state: Vec3,
-    /// STATE / AT_NODE_MATRIX / AT_NODE_XYZ
-    pub basis: RotateBasis,
+fld! {
+    /// OBJECT_ROTATE_STATE Index: 09
+    /// Camera and Object3d nodes only!
+    struct ObjectRotateState {
+        /// NAME (node name)
+        name: String,
+        /// STATE / AT_NODE_MATRIX / AT_NODE_XYZ (Radians)
+        state: Vec3,
+        /// STATE / AT_NODE_MATRIX / AT_NODE_XYZ
+        basis: RotateBasis,
+    }
 }
 
-/// GRAVITY
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-#[dotnet(val_struct)]
-pub struct Gravity {
-    /// DEFAULT = -9.8
-    pub value: f32,
-    /// LOCAL or COMPLEX
-    pub complex: bool,
-    /// NO_ALTITUDE
-    pub no_altitude: bool,
+fld! {
+    /// GRAVITY
+    struct Gravity : Val {
+        /// DEFAULT = -9.8
+        value: f32,
+        /// LOCAL or COMPLEX
+        complex: bool,
+        /// NO_ALTITUDE
+        no_altitude: bool,
+    }
 }
 
-/// TRANSLATION_RANGE_MIN and TRANSLATION_RANGE_MAX
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct TranslationRange {
-    /// Radians
-    pub xz: Range,
-    pub y: Range,
-    pub initial: Range,
-    pub delta: Range,
+fld! {
+    /// TRANSLATION_RANGE_MIN and TRANSLATION_RANGE_MAX
+    struct TranslationRange {
+        /// Radians
+        xz: Range,
+        y: Range,
+        initial: Range,
+        delta: Range,
+    }
 }
 
-/// TRANSLATION (unclear)
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct ObjectMotionTranslation {
-    pub initial: Vec3,
-    pub delta: Vec3,
-    pub rnd_xz: Vec3,
+fld! {
+    /// TRANSLATION (unclear)
+    struct ObjectMotionTranslation {
+        initial: Vec3,
+        delta: Vec3,
+        rnd_xz: Vec3,
+    }
 }
 
-/// FORWARD_ROTATION TIME (`["TIME", <initial>, <delta>]`)
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-#[dotnet(val_struct)]
-pub struct ForwardRotationTime {
-    // Radians
-    pub initial: f32,
-    // Radians
-    pub delta: f32,
+fld! {
+    /// FORWARD_ROTATION TIME (`["TIME", <initial>, <delta>]`)
+    struct ForwardRotationTime : Val {
+        // Radians
+        initial: f32,
+        // Radians
+        delta: f32,
+    }
 }
 
-/// FORWARD_ROTATION DIST (`["DISTANCE", <initial>, <delta_ign>]`)
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-#[dotnet(val_struct)]
-pub struct ForwardRotationDistance {
-    pub initial: f32,
+fld! {
+    /// FORWARD_ROTATION DIST (`["DISTANCE", <initial>, <delta_ign>]`)
+    struct ForwardRotationDistance : Val {
+        initial: f32,
+    }
 }
 
 sum! {
@@ -249,188 +261,202 @@ sum! {
     }
 }
 
-/// XYZ_ROTATION
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct ObjectMotionXyzRot {
-    pub initial: Vec3,
-    pub delta: Vec3,
-}
-
-/// SCALE
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct ObjectMotionScale {
-    pub initial: Vec3,
-    pub delta: Vec3,
-}
-
-/// BOUNCE_SEQUENCE, BOUNCE_SEQUENCE_WATER, BOUNCE_SEQUENCE_LAVA
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct BounceSequences {
-    /// BOUNCE_SEQUENCE
-    pub default: Option<String>,
-    /// BOUNCE_SEQUENCE_WATER (not RC)
-    pub water: Option<String>,
-    /// BOUNCE_SEQUENCE_LAVA (not RC)
-    pub lava: Option<String>,
-}
-
-/// BOUNCE_SOUND
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct BounceSound {
-    /// NAME
-    pub name: String,
-    /// FULL_VOLUME_VELOCITY
-    pub volume: f32,
-}
-
-/// BOUNCE_SOUND, BOUNCE_SOUND_WATER, BOUNCE_SOUND_LAVA
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct BounceSounds {
-    /// BOUNCE_SOUND
-    pub default: Option<BounceSound>,
-    /// BOUNCE_SOUND_WATER (not in reader, not RC)
-    pub water: Option<BounceSound>,
-    /// BOUNCE_SOUND_LAVA (not in reader, not RC)
-    pub lava: Option<BounceSound>,
-}
-
-/// OBJECT_MOTION Index: 10
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct ObjectMotion {
-    /// NAME (node name)
-    pub node: String,
-    /// IMPACT_FORCE
-    pub impact_force: bool,
-    /// MORPH (not in reader)
-    pub morph: Option<f32>,
-    /// GRAVITY
-    pub gravity: Option<Gravity>,
-    /// TRANSLATION_RANGE
-    pub translation_range: Option<TranslationRange>,
-    /// TRANSLATION
-    pub translation: Option<ObjectMotionTranslation>,
-    /// FORWARD_ROTATION
-    pub forward_rotation: Option<ForwardRotation>,
+fld! {
     /// XYZ_ROTATION
-    pub xyz_rotation: Option<ObjectMotionXyzRot>,
+    struct ObjectMotionXyzRot {
+        initial: Vec3,
+        delta: Vec3,
+    }
+}
+
+fld! {
     /// SCALE
-    pub scale: Option<ObjectMotionScale>,
+    struct ObjectMotionScale {
+        initial: Vec3,
+        delta: Vec3,
+    }
+}
+
+fld! {
     /// BOUNCE_SEQUENCE, BOUNCE_SEQUENCE_WATER, BOUNCE_SEQUENCE_LAVA
-    pub bounce_sequence: Option<BounceSequences>,
+    struct BounceSequences {
+        /// BOUNCE_SEQUENCE
+        default: Option<String>,
+        /// BOUNCE_SEQUENCE_WATER (not RC)
+        water: Option<String>,
+        /// BOUNCE_SEQUENCE_LAVA (not RC)
+        lava: Option<String>,
+    }
+}
+
+fld! {
     /// BOUNCE_SOUND
-    pub bounce_sound: Option<BounceSounds>,
-    /// RUN_TIME
-    pub run_time: Option<f32>,
+    struct BounceSound {
+        /// NAME
+        name: String,
+        /// FULL_VOLUME_VELOCITY
+        volume: f32,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct Vec3FromTo {
-    pub from: Vec3,
-    pub to: Vec3,
+fld! {
+    /// BOUNCE_SOUND, BOUNCE_SOUND_WATER, BOUNCE_SOUND_LAVA
+    struct BounceSounds {
+        /// BOUNCE_SOUND
+        default: Option<BounceSound>,
+        /// BOUNCE_SOUND_WATER (not in reader, not RC)
+        water: Option<BounceSound>,
+        /// BOUNCE_SOUND_LAVA (not in reader, not RC)
+        lava: Option<BounceSound>,
+    }
 }
 
-/// OBJECT_MOTION_FROM_TO Index: 11
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct ObjectMotionFromTo {
-    /// NAME (node name)
-    pub name: String,
-    /// RUN_TIME
-    pub run_time: f32,
-    /// MORPH_FROM / MORPH_TO
-    pub morph: Option<FloatFromTo>,
-    /// TRANSLATE_FROM / TRANSLATE_TO
-    ///
-    /// Warning: Only applies to Camera/Object3D nodes!
-    pub translate: Option<Vec3FromTo>,
-    /// ROTATE_FROM / ROTATE_TO
-    ///
-    /// Warning: Only applies to Camera/Object3D nodes!
-    pub rotate: Option<Vec3FromTo>,
-    /// SCALE_FROM / SCALE_TO
-    ///
-    /// Warning: Only applies to Object3D nodes!
-    pub scale: Option<Vec3FromTo>,
-    /// Only used for binary accuracy.
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub translate_delta: Option<Vec3>,
-    /// Only used for binary accuracy.
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub rotate_delta: Option<Vec3>,
-    /// Only used for binary accuracy.
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub scale_delta: Option<Vec3>,
+fld! {
+    /// OBJECT_MOTION Index: 10
+    struct ObjectMotion {
+        /// NAME (node name)
+        node: String,
+        /// IMPACT_FORCE
+        impact_force: bool,
+        /// MORPH (not in reader)
+        morph: Option<f32>,
+        /// GRAVITY
+        gravity: Option<Gravity>,
+        /// TRANSLATION_RANGE
+        translation_range: Option<TranslationRange>,
+        /// TRANSLATION
+        translation: Option<ObjectMotionTranslation>,
+        /// FORWARD_ROTATION
+        forward_rotation: Option<ForwardRotation>,
+        /// XYZ_ROTATION
+        xyz_rotation: Option<ObjectMotionXyzRot>,
+        /// SCALE
+        scale: Option<ObjectMotionScale>,
+        /// BOUNCE_SEQUENCE, BOUNCE_SEQUENCE_WATER, BOUNCE_SEQUENCE_LAVA
+        bounce_sequence: Option<BounceSequences>,
+        /// BOUNCE_SOUND
+        bounce_sound: Option<BounceSounds>,
+        /// RUN_TIME
+        run_time: Option<f32>,
+    }
 }
 
-/// OBJECT_MOTION_SI_SCRIPT Index: 12
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct ObjectMotionSiScript {
-    /// NAME (node name)
-    pub name: String,
-    /// SCRIPT_FILENAME
-    pub index: u32,
+fld! {
+    struct Vec3FromTo {
+        from: Vec3,
+        to: Vec3,
+    }
 }
 
-/// OBJECT_OPACITY_STATE Index: 13
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct ObjectOpacityState {
-    /// NAME (node name or INPUT_NODE)
-    pub name: String,
-    /// STATE / IsSet in interp
-    pub state: bool,
-    /// STATE
-    pub opacity: Option<f32>,
+fld! {
+    /// OBJECT_MOTION_FROM_TO Index: 11
+    struct ObjectMotionFromTo {
+        /// NAME (node name)
+        name: String,
+        /// RUN_TIME
+        run_time: f32,
+        /// MORPH_FROM / MORPH_TO
+        morph: Option<FloatFromTo>,
+        /// TRANSLATE_FROM / TRANSLATE_TO
+        ///
+        /// Warning: Only applies to Camera/Object3D nodes!
+        translate: Option<Vec3FromTo>,
+        /// ROTATE_FROM / ROTATE_TO
+        ///
+        /// Warning: Only applies to Camera/Object3D nodes!
+        rotate: Option<Vec3FromTo>,
+        /// SCALE_FROM / SCALE_TO
+        ///
+        /// Warning: Only applies to Object3D nodes!
+        scale: Option<Vec3FromTo>,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        /// Only used for binary accuracy.
+        translate_delta: Option<Vec3>,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        /// Only used for binary accuracy.
+        rotate_delta: Option<Vec3>,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        /// Only used for binary accuracy.
+        scale_delta: Option<Vec3>,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-#[dotnet(val_struct)]
-pub struct ObjectOpacity {
-    /// STATE
-    pub opacity: f32,
-    /// STATE / IsSet in interp
-    pub state: Option<bool>,
+fld! {
+    /// OBJECT_MOTION_SI_SCRIPT Index: 12
+    struct ObjectMotionSiScript {
+        /// NAME (node name)
+        name: String,
+        /// SCRIPT_FILENAME
+        index: u32,
+    }
 }
 
-/// OBJECT_OPACITY_FROM_TO Index: 14
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct ObjectOpacityFromTo {
-    /// NAME (node name)
-    pub name: String,
-    /// OPACITY_FROM
-    pub opacity_from: ObjectOpacity,
-    /// OPACITY_TO
-    pub opacity_to: ObjectOpacity,
-    /// RUN_TIME
-    pub run_time: f32,
-    /// Only used for binary accuracy.
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub opacity_delta: Option<f32>,
+fld! {
+    /// OBJECT_OPACITY_STATE Index: 13
+    struct ObjectOpacityState {
+        /// NAME (node name or INPUT_NODE)
+        name: String,
+        /// STATE / IsSet in interp
+        state: bool,
+        /// STATE
+        opacity: Option<f32>,
+    }
 }
 
-/// OBJECT_ADD_CHILD Index: 15
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct ObjectAddChild {
-    /// PARENT_CHILD (node name)
-    pub parent: String,
-    /// PARENT_CHILD (node name)
-    pub child: String,
+fld! {
+    struct ObjectOpacity : Val {
+        /// STATE
+        opacity: f32,
+        /// STATE / IsSet in interp
+        state: Option<bool>,
+    }
 }
 
-/// OBJECT_DELETE_CHILD Index: 16
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct ObjectDeleteChild {
-    /// PARENT_CHILD (node name)
-    pub parent: String,
-    /// PARENT_CHILD (node name)
-    pub child: String,
+fld! {
+    /// OBJECT_OPACITY_FROM_TO Index: 14
+    struct ObjectOpacityFromTo {
+        /// NAME (node name)
+        name: String,
+        /// OPACITY_FROM
+        opacity_from: ObjectOpacity,
+        /// OPACITY_TO
+        opacity_to: ObjectOpacity,
+        /// RUN_TIME
+        run_time: f32,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        /// Only used for binary accuracy.
+        opacity_delta: Option<f32>,
+    }
 }
 
-/// OBJECT_CYCLE_TEXTURE Index: 17
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct ObjectCycleTexture {
-    /// NAME (node name)
-    pub name: String,
-    /// RESET (0..6)
-    pub reset: u16,
+fld! {
+    /// OBJECT_ADD_CHILD Index: 15
+    struct ObjectAddChild {
+        /// PARENT_CHILD (node name)
+        parent: String,
+        /// PARENT_CHILD (node name)
+        child: String,
+    }
+}
+
+fld! {
+    /// OBJECT_DELETE_CHILD Index: 16
+    struct ObjectDeleteChild {
+        /// PARENT_CHILD (node name)
+        parent: String,
+        /// PARENT_CHILD (node name)
+        child: String,
+    }
+}
+
+fld! {
+    /// OBJECT_CYCLE_TEXTURE Index: 17
+    struct ObjectCycleTexture {
+        /// NAME (node name)
+        name: String,
+        /// RESET (0..6)
+        reset: u16,
+    }
 }
 
 sum! {
@@ -451,153 +477,163 @@ sum! {
     }
 }
 
-/// OBJECT_CONNECTOR Index: 18
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct ObjectConnector {
-    /// NAME
-    pub name: String,
-    /// FROM_NODE / FROM_INPUT_NODE (node name or INPUT_NODE)
-    pub from_node: Option<String>,
-    /// TO_NODE / TO_INPUT_NODE (node name or INPUT_NODE)
-    pub to_node: Option<String>,
-    /// FROM_POS / FROM_INPUT_POS
-    ///
-    /// Warning: This is ignored if `from_node` is set!
-    pub from_pos: Option<ObjectConnectorPos>,
-    /// TO_POS / TO_INPUT_POS
-    ///
-    /// Warning: This is ignored if `to_node` is set!
-    pub to_pos: Option<ObjectConnectorPos>,
-    /// FROM_T_START + FROM_T_END / FROM_T
-    pub from_t: Option<ObjectConnectorTime>,
-    /// TO_T_START + FROM_T_END / TO_T
-    pub to_t: Option<ObjectConnectorTime>,
-    /// RUN_TIME
-    pub run_time: f32,
-    /// MAX_LENGTH
-    pub max_length: Option<f32>,
+fld! {
+    /// OBJECT_CONNECTOR Index: 18
+    struct ObjectConnector {
+        /// NAME
+        name: String,
+        /// FROM_NODE / FROM_INPUT_NODE (node name or INPUT_NODE)
+        from_node: Option<String>,
+        /// TO_NODE / TO_INPUT_NODE (node name or INPUT_NODE)
+        to_node: Option<String>,
+        /// FROM_POS / FROM_INPUT_POS
+        ///
+        /// Warning: This is ignored if `from_node` is set!
+        from_pos: Option<ObjectConnectorPos>,
+        /// TO_POS / TO_INPUT_POS
+        ///
+        /// Warning: This is ignored if `to_node` is set!
+        to_pos: Option<ObjectConnectorPos>,
+        /// FROM_T_START + FROM_T_END / FROM_T
+        from_t: Option<ObjectConnectorTime>,
+        /// TO_T_START + FROM_T_END / TO_T
+        to_t: Option<ObjectConnectorTime>,
+        /// RUN_TIME
+        run_time: f32,
+        /// MAX_LENGTH
+        max_length: Option<f32>,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct CallObjectConnectorTarget {
-    /// FROM_NODE / TO_NODE (node name or INPUT_NODE)
-    pub name: String,
-    /// FROM_NODE_POS / TO_NODE_POS (node name or INPUT_NODE)
-    ///
-    /// Warning: This overrides the position and unsets the node!
-    pub pos: bool,
+fld! {
+    struct CallObjectConnectorTarget {
+        /// FROM_NODE / TO_NODE (node name or INPUT_NODE)
+        name: String,
+        /// FROM_NODE_POS / TO_NODE_POS (node name or INPUT_NODE)
+        ///
+        /// Warning: This overrides the position and unsets the node!
+        pos: bool,
+    }
 }
 
-/// CALL_OBJECT_CONNECTOR Index: 19
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct CallObjectConnector {
-    /// NAME (anim name)
-    pub name: String,
-    /// LOCAL_NAME? (anim ref)
-    pub save_index: Option<i16>,
-    /// FROM_NODE / FROM_NODE_POS / FROM_INPUT_NODE / FROM_INPUT_NODE_POS
-    pub from_node: Option<CallObjectConnectorTarget>,
-    /// TO_NODE / TO_NODE_POS / FROM_INPUT_NODE / TO_INPUT_NODE_POS
-    pub to_node: Option<CallObjectConnectorTarget>,
-    /// FROM_POS / FROM_INPUT_POS
-    ///
-    /// Warning: This can be ignored if `from_node` is set!
-    pub from_pos: Option<ObjectConnectorPos>,
-    /// TO_POS / TO_INPUT_POS
-    ///
-    /// Warning: This can be ignored if `to_node` is set!
-    pub to_pos: Option<ObjectConnectorPos>,
+fld! {
+    /// CALL_OBJECT_CONNECTOR Index: 19
+    struct CallObjectConnector {
+        /// NAME (anim name)
+        name: String,
+        /// LOCAL_NAME? (anim ref)
+        save_index: Option<i16>,
+        /// FROM_NODE / FROM_NODE_POS / FROM_INPUT_NODE / FROM_INPUT_NODE_POS
+        from_node: Option<CallObjectConnectorTarget>,
+        /// TO_NODE / TO_NODE_POS / FROM_INPUT_NODE / TO_INPUT_NODE_POS
+        to_node: Option<CallObjectConnectorTarget>,
+        /// FROM_POS / FROM_INPUT_POS
+        ///
+        /// Warning: This can be ignored if `from_node` is set!
+        from_pos: Option<ObjectConnectorPos>,
+        /// TO_POS / TO_INPUT_POS
+        ///
+        /// Warning: This can be ignored if `to_node` is set!
+        to_pos: Option<ObjectConnectorPos>,
+    }
 }
 
-/// CAMERA_STATE Index: 20
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct CameraState {
-    /// NAME (node name)
-    pub name: String,
-    /// NEAR_CLIP
-    pub clip_near: Option<f32>,
-    /// FAR_CLIP
-    pub clip_far: Option<f32>,
-    /// LOD_MULTIPLIER
-    pub lod_multiplier: Option<f32>,
-    /// H_FOV (not in reader)
-    pub fov_h: Option<f32>,
-    /// V_FOV (not in reader)
-    pub fov_v: Option<f32>,
-    /// H_ZOOM
-    pub zoom_h: Option<f32>,
-    /// V_ZOOM
-    pub zoom_v: Option<f32>,
+fld! {
+    /// CAMERA_STATE Index: 20
+    struct CameraState {
+        /// NAME (node name)
+        name: String,
+        /// NEAR_CLIP
+        clip_near: Option<f32>,
+        /// FAR_CLIP
+        clip_far: Option<f32>,
+        /// LOD_MULTIPLIER
+        lod_multiplier: Option<f32>,
+        /// H_FOV (not in reader)
+        fov_h: Option<f32>,
+        /// V_FOV (not in reader)
+        fov_v: Option<f32>,
+        /// H_ZOOM
+        zoom_h: Option<f32>,
+        /// V_ZOOM
+        zoom_v: Option<f32>,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct FloatFromTo {
-    pub from: f32,
-    pub to: f32,
+fld! {
+    struct FloatFromTo {
+        from: f32,
+        to: f32,
+    }
 }
 
-/// CAMERA_FROM_TO Index: 21
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct CameraFromTo {
-    /// NAME (node name)
-    pub name: String,
-    /// NEAR_CLIP_FROM_TO (not in reader)
-    pub clip_near: Option<FloatFromTo>,
-    /// FAR_CLIP_FROM_TO (not in reader)
-    pub clip_far: Option<FloatFromTo>,
-    /// LOD_MULTIPLIER_FROM_TO (not in reader)
-    pub lod_multiplier: Option<FloatFromTo>,
-    /// H_FOV_FROM_TO (not in reader)
-    pub fov_h: Option<FloatFromTo>,
-    /// V_FOV_FROM_TO (not in reader)
-    pub fov_v: Option<FloatFromTo>,
-    /// H_ZOOM_FROM_TO
-    pub zoom_h: Option<FloatFromTo>,
-    /// V_ZOOM_FROM_TO
-    pub zoom_v: Option<FloatFromTo>,
-    /// RUN_TIME
-    pub run_time: f32,
+fld! {
+    /// CAMERA_FROM_TO Index: 21
+    struct CameraFromTo {
+        /// NAME (node name)
+        name: String,
+        /// NEAR_CLIP_FROM_TO (not in reader)
+        clip_near: Option<FloatFromTo>,
+        /// FAR_CLIP_FROM_TO (not in reader)
+        clip_far: Option<FloatFromTo>,
+        /// LOD_MULTIPLIER_FROM_TO (not in reader)
+        lod_multiplier: Option<FloatFromTo>,
+        /// H_FOV_FROM_TO (not in reader)
+        fov_h: Option<FloatFromTo>,
+        /// V_FOV_FROM_TO (not in reader)
+        fov_v: Option<FloatFromTo>,
+        /// H_ZOOM_FROM_TO
+        zoom_h: Option<FloatFromTo>,
+        /// V_ZOOM_FROM_TO
+        zoom_v: Option<FloatFromTo>,
+        /// RUN_TIME
+        run_time: f32,
+    }
 }
 
-/// CALL_SEQUENCE Index: 22
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct CallSequence {
-    /// NAME (sequence name)
-    pub name: String,
+fld! {
+    /// CALL_SEQUENCE Index: 22
+    struct CallSequence {
+        /// NAME (sequence name)
+        name: String,
+    }
 }
 
-/// STOP_SEQUENCE Index: 23
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct StopSequence {
-    /// NAME (sequence name)
-    pub name: String,
+fld! {
+    /// STOP_SEQUENCE Index: 23
+    struct StopSequence {
+        /// NAME (sequence name)
+        name: String,
+    }
 }
 
-/// AT_NODE
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct CallAnimationAtNode {
-    /// node name or INPUT_NODE
-    pub node: String,
-    /// Warning: If and only if the node is "INPUT_NODE", the anim def's input
-    /// position is added to the position value. Otherwise, only the position
-    /// value is used; the node's position is not used.
-    pub position: Option<Vec3>,
-    /// Warning: If this is set, then the position and translate are somehow
-    /// derived from the node, and finally this translate value is added to the
-    /// node's translate value. I'm also unsure if the position value in this
-    /// struct is used at all.
-    pub translate: Option<Vec3>,
+fld! {
+    /// AT_NODE
+    struct CallAnimationAtNode {
+        /// node name or INPUT_NODE
+        node: String,
+        /// Warning: If and only if the node is "INPUT_NODE", the anim def's input
+        /// position is added to the position value. Otherwise, only the position
+        /// value is used; the node's position is not used.
+        position: Option<Vec3>,
+        /// Warning: If this is set, then the position and translate are somehow
+        /// derived from the node, and finally this translate value is added to the
+        /// node's translate value. I'm also unsure if the position value in this
+        /// struct is used at all.
+        translate: Option<Vec3>,
+    }
 }
 
-/// WITH_NODE
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct CallAnimationWithNode {
-    /// node name or INPUT_NODE
-    pub node: String,
-    /// Warning: If and only if the node is "INPUT_NODE", the anim def's input
-    /// position is added to the position value. Otherwise, only the position
-    /// value is used; the node's position is not used.
-    pub position: Option<Vec3>,
+fld! {
+    /// WITH_NODE
+    struct CallAnimationWithNode {
+        /// node name or INPUT_NODE
+        node: String,
+        /// Warning: If and only if the node is "INPUT_NODE", the anim def's input
+        /// position is added to the position value. Otherwise, only the position
+        /// value is used; the node's position is not used.
+        position: Option<Vec3>,
+    }
 }
 
 sum! {
@@ -609,38 +645,42 @@ sum! {
     }
 }
 
-/// CALL_ANIMATION Index: 24
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct CallAnimation {
-    /// NAME (anim name)
-    pub name: String,
-    /// OPERAND_NODE (node name)
-    pub operand_node: Option<String>,
-    /// WAIT_FOR_COMPLETION (anim ref)
-    pub wait_for_completion: Option<i16>,
-    /// AT_NODE / WITH_NODE
-    pub parameters: Option<CallAnimationParameters>,
+fld! {
+    /// CALL_ANIMATION Index: 24
+    struct CallAnimation {
+        /// NAME (anim name)
+        name: String,
+        /// OPERAND_NODE (node name)
+        operand_node: Option<String>,
+        /// WAIT_FOR_COMPLETION (anim ref)
+        wait_for_completion: Option<i16>,
+        /// AT_NODE / WITH_NODE
+        parameters: Option<CallAnimationParameters>,
+    }
 }
 
-/// STOP_ANIMATION Index: 25
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct StopAnimation {
-    /// NAME (anim name)
-    pub name: String,
+fld! {
+    /// STOP_ANIMATION Index: 25
+    struct StopAnimation {
+        /// NAME (anim name)
+        name: String,
+    }
 }
 
-/// RESET_ANIMATION Index: 26
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct ResetAnimation {
-    /// NAME (anim name)
-    pub name: String,
+fld! {
+    /// RESET_ANIMATION Index: 26
+    struct ResetAnimation {
+        /// NAME (anim name)
+        name: String,
+    }
 }
 
-/// INVALIDATE_ANIMATION Index: 27
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct InvalidateAnimation {
-    /// NAME (anim name)
-    pub name: String,
+fld! {
+    /// INVALIDATE_ANIMATION Index: 27
+    struct InvalidateAnimation {
+        /// NAME (anim name)
+        name: String,
+    }
 }
 
 num! {
@@ -654,17 +694,18 @@ num! {
     }
 }
 
-/// FOG_STATE Index: 28
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct FogState {
-    /// TYPE
-    pub type_: Option<FogType>,
-    /// COLOR
-    pub color: Option<Color>,
-    /// ALTITUDE
-    pub altitude: Option<Range>,
-    /// RANGE
-    pub range: Option<Range>,
+fld! {
+    /// FOG_STATE Index: 28
+    struct FogState {
+        /// TYPE
+        type_: Option<FogType>,
+        /// COLOR
+        color: Option<Color>,
+        /// ALTITUDE
+        altitude: Option<Range>,
+        /// RANGE
+        range: Option<Range>,
+    }
 }
 
 // no index 29
@@ -679,12 +720,12 @@ sum! {
     }
 }
 
-/// NODE_UNDERCOVER
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, Struct)]
-#[dotnet(val_struct)]
-pub struct NodeUndercover {
-    pub node_index: u32,
-    pub distance: u32,
+fld! {
+    /// NODE_UNDERCOVER
+    struct NodeUndercover : Val {
+        node_index: u32,
+        distance: u32,
+    }
 }
 
 sum! {
@@ -704,102 +745,113 @@ sum! {
     }
 }
 
-/// IF Index: 31
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct If {
-    pub condition: Condition,
+fld! {
+    /// IF Index: 31
+    struct If {
+        condition: Condition,
+    }
 }
 
-/// ELSE Index: 32
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct Else {}
-
-/// ELSEIF Index: 33
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct Elseif {
-    pub condition: Condition,
+fld! {
+    /// ELSE Index: 32
+    struct Else {}
 }
 
-/// ENDIF Index: 34
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct Endif {}
-
-/// CALLBACK Index: 35
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct Callback {
-    /// VALUE
-    pub value: u32,
+fld! {
+    /// ELSEIF Index: 33
+    struct Elseif {
+        condition: Condition,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-#[dotnet(val_struct)]
-pub struct Rgba {
-    pub r: f32,
-    pub g: f32,
-    pub b: f32,
-    pub a: f32,
+fld! {
+    /// ENDIF Index: 34
+    struct Endif {}
 }
 
-/// FBFX_COLOR_FROM_TO Index: 36
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct FbfxColorFromTo {
-    /// FROM
-    pub from: Rgba,
-    /// TO
-    pub to: Rgba,
-    /// RUN_TIME
-    pub run_time: f32,
-    /// Only used for binary accuracy.
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub alpha_delta: Option<f32>,
+fld! {
+    /// CALLBACK Index: 35
+    struct Callback {
+        /// VALUE
+        value: u32,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct FbfxCsinwaveScreenPos {
-    pub x: FloatFromTo,
-    pub y: FloatFromTo,
+fld! {
+    struct Rgba : Val {
+        r: f32,
+        g: f32,
+        b: f32,
+        a: f32,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct FbfxCsinwaveCsin {
-    pub x: FloatFromTo,
-    pub y: FloatFromTo,
-    pub z: FloatFromTo,
+fld! {
+    /// FBFX_COLOR_FROM_TO Index: 36
+    struct FbfxColorFromTo {
+        /// FROM
+        from: Rgba,
+        /// TO
+        to: Rgba,
+        /// RUN_TIME
+        run_time: f32,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        /// Only used for binary accuracy.
+        alpha_delta: Option<f32>,
+    }
 }
 
-/// FBFX_CSINWAVE_FROM_TO Index: 37
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct FbfxCsinwaveFromTo {
-    /// AT_NODE (node name)
-    pub at_node: Option<AtNode>,
-    /// SCREEN_POS_FROM / SCREEN_POS_TO
-    pub screen_pos: Option<FbfxCsinwaveScreenPos>,
-    /// WORLD_RADIUS_FROM / WORLD_RADIUS_TO
-    pub world_radius: Option<FloatFromTo>,
-    /// SCREEN_RADIUS_FROM / SCREEN_RADIUS_TO
-    pub screen_radius: Option<FloatFromTo>,
-    /// CSIN_FROM / CSIN_TO
-    pub csin: FbfxCsinwaveCsin,
-    /// RUN_TIME
-    pub run_time: f32,
+fld! {
+    struct FbfxCsinwaveScreenPos {
+        x: FloatFromTo,
+        y: FloatFromTo,
+    }
 }
 
-/// ANIM_VERBOSE Index: 39
-///
-/// This does nothing, even in RC.
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct AnimVerbose {
-    /// ON
-    pub on: bool,
+fld! {
+    struct FbfxCsinwaveCsin {
+        x: FloatFromTo,
+        y: FloatFromTo,
+        z: FloatFromTo,
+    }
 }
 
-/// DETONATE_WEAPON Index: 41
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct DetonateWeapon {
-    /// WEAPON
-    pub weapon: String,
-    /// AT_NODE (node name or INPUT_NODE)
-    pub at_node: AtNode,
+fld! {
+    /// FBFX_CSINWAVE_FROM_TO Index: 37
+    struct FbfxCsinwaveFromTo {
+        /// AT_NODE (node name)
+        at_node: Option<AtNode>,
+        /// SCREEN_POS_FROM / SCREEN_POS_TO
+        screen_pos: Option<FbfxCsinwaveScreenPos>,
+        /// WORLD_RADIUS_FROM / WORLD_RADIUS_TO
+        world_radius: Option<FloatFromTo>,
+        /// SCREEN_RADIUS_FROM / SCREEN_RADIUS_TO
+        screen_radius: Option<FloatFromTo>,
+        /// CSIN_FROM / CSIN_TO
+        csin: FbfxCsinwaveCsin,
+        /// RUN_TIME
+        run_time: f32,
+    }
+}
+
+fld! {
+    /// ANIM_VERBOSE Index: 39
+    ///
+    /// This does nothing, even in RC.
+    struct AnimVerbose {
+        /// ON
+        on: bool,
+    }
+}
+
+fld! {
+    /// DETONATE_WEAPON Index: 41
+    struct DetonateWeapon {
+        /// WEAPON
+        weapon: String,
+        /// AT_NODE (node name or INPUT_NODE)
+        at_node: AtNode,
+    }
 }
 
 num! {
@@ -809,24 +861,27 @@ num! {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct PufferInterval {
-    pub interval_type: PufferIntervalType,
-    pub interval_value: f32,
+fld! {
+    struct PufferInterval {
+        interval_type: PufferIntervalType,
+        interval_value: f32,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct PufferIntervalGarbage {
-    pub interval_type: PufferIntervalType,
-    pub has_interval_type: bool,
-    pub interval_value: f32,
-    pub has_interval_value: bool,
+fld! {
+    struct PufferIntervalGarbage {
+        interval_type: PufferIntervalType,
+        has_interval_type: bool,
+        interval_value: f32,
+        has_interval_value: bool,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct PufferStateTexture {
-    pub name: String,
-    pub run_time: Option<f32>,
+fld! {
+    struct PufferStateTexture {
+        name: String,
+        run_time: Option<f32>,
+    }
 }
 
 #[derive(
@@ -848,59 +903,60 @@ impl PufferStateColor {
     };
 }
 
-/// PUFFER_STATE Index: 42
-#[derive(Debug, Serialize, Deserialize, Clone, Struct)]
-pub struct PufferState {
-    /// NAME (puffer name)
-    pub name: String,
-    /// ACTIVE_STATE
-    ///
-    /// Warning: Not a boolean?
-    pub active_state: Option<u32>,
-    /// AT_NODE TODO
-    pub translate: Option<Vec3>,
-    /// AT_NODE TODO
-    pub at_node: Option<String>,
-    /// LOCAL_VELOCITY
-    pub local_velocity: Option<Vec3>,
-    /// WORLD_VELOCITY
-    pub world_velocity: Option<Vec3>,
-    /// MIN_RANDOM_VELOCITY
-    pub min_random_velocity: Option<Vec3>,
-    /// MAX_RANDOM_VELOCITY
-    pub max_random_velocity: Option<Vec3>,
-    /// WORLD_ACCELERATION
-    pub world_acceleration: Option<Vec3>,
-    /// DISTANCE_INTERVAL / TIME_INTERVAL
-    pub interval: Option<PufferInterval>,
-    /// SIZE_RANGE
-    pub size_range: Option<Range>,
-    /// LIFETIME_RANGE
-    pub lifetime_range: Option<Range>,
-    /// START_AGE_RANGE
-    pub start_age_range: Option<Range>,
-    /// DEVIATION_DISTANCE
-    pub deviation_distance: Option<f32>,
-    /// (not in reader)
-    pub unk_range: Option<Range>,
-    /// FADE_RANGE
-    pub fade_range: Option<Range>,
-    /// FRICTION
-    pub friction: Option<f32>,
-    /// WIND_FACTOR
-    pub wind_factor: Option<f32>,
-    /// PRIORITY
-    pub priority: Option<f32>,
-    /// NUMBER
-    pub number: Option<u32>,
-    /// TEXTURES
-    pub textures: Option<Vec<PufferStateTexture>>,
-    /// COLORS
-    pub colors: Option<Vec<PufferStateColor>>,
-    /// GROWTH_FACTOR
-    pub growth_factors: Option<Vec<Range>>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub interval_garbage: Option<PufferIntervalGarbage>,
+fld! {
+    /// PUFFER_STATE Index: 42
+    struct PufferState {
+        /// NAME (puffer name)
+        name: String,
+        /// ACTIVE_STATE
+        ///
+        /// Warning: Not a boolean?
+        active_state: Option<u32>,
+        /// AT_NODE TODO
+        translate: Option<Vec3>,
+        /// AT_NODE TODO
+        at_node: Option<String>,
+        /// LOCAL_VELOCITY
+        local_velocity: Option<Vec3>,
+        /// WORLD_VELOCITY
+        world_velocity: Option<Vec3>,
+        /// MIN_RANDOM_VELOCITY
+        min_random_velocity: Option<Vec3>,
+        /// MAX_RANDOM_VELOCITY
+        max_random_velocity: Option<Vec3>,
+        /// WORLD_ACCELERATION
+        world_acceleration: Option<Vec3>,
+        /// DISTANCE_INTERVAL / TIME_INTERVAL
+        interval: Option<PufferInterval>,
+        /// SIZE_RANGE
+        size_range: Option<Range>,
+        /// LIFETIME_RANGE
+        lifetime_range: Option<Range>,
+        /// START_AGE_RANGE
+        start_age_range: Option<Range>,
+        /// DEVIATION_DISTANCE
+        deviation_distance: Option<f32>,
+        /// (not in reader)
+        unk_range: Option<Range>,
+        /// FADE_RANGE
+        fade_range: Option<Range>,
+        /// FRICTION
+        friction: Option<f32>,
+        /// WIND_FACTOR
+        wind_factor: Option<f32>,
+        /// PRIORITY
+        priority: Option<f32>,
+        /// NUMBER
+        number: Option<u32>,
+        /// TEXTURES
+        textures: Option<Vec<PufferStateTexture>>,
+        /// COLORS
+        colors: Option<Vec<PufferStateColor>>,
+        /// GROWTH_FACTOR
+        growth_factors: Option<Vec<Range>>,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        interval_garbage: Option<PufferIntervalGarbage>,
+    }
 }
 
 sum! {

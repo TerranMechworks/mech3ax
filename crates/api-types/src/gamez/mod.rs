@@ -2,6 +2,7 @@ pub mod materials;
 pub mod mechlib;
 pub mod model;
 
+use crate::fld;
 use crate::nodes::mw::NodeMw;
 use crate::nodes::pm::NodePm;
 use crate::nodes::rc::NodeRc;
@@ -12,19 +13,21 @@ use mech3ax_metadata_proc_macro::Struct;
 use mech3ax_timestamp::DateTime;
 use model::Model;
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct GameZMetadata {
-    pub datetime: DateTime,
-    pub model_array_size: i32,
-    pub node_array_size: i32,
-    pub node_data_count: i32,
+fld! {
+    struct GameZMetadata {
+        datetime: DateTime,
+        model_array_size: i32,
+        node_array_size: i32,
+        node_data_count: i32,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct Texture {
-    pub name: String,
-    #[serde(skip_serializing_if = "i32_is_neg_one", default = "i32_neg_one")]
-    pub mip: i32,
+fld! {
+    struct Texture {
+        name: String,
+        #[serde(skip_serializing_if = "i32_is_neg_one", default = "i32_neg_one")]
+        mip: i32,
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]

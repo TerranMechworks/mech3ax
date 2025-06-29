@@ -1,12 +1,14 @@
 //! Localisation data structures.
+use crate::fld;
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::Struct;
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct MessageEntry {
-    pub key: String,
-    pub id: u32,
-    pub value: String,
+fld! {
+    struct MessageEntry {
+        key: String,
+        id: u32,
+        value: String,
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Struct)]

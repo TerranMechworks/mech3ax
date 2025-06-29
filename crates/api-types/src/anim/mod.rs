@@ -5,8 +5,7 @@ pub mod events;
 mod si_script;
 mod support;
 
-use crate::num;
-use ::serde::{Deserialize, Serialize};
+use crate::{fld, num};
 pub use activation_prereq::{
     ActivationPrerequisite, PrerequisiteAnimation, PrerequisiteObject, PrerequisiteParent,
 };
@@ -14,7 +13,6 @@ pub use anim_def::{
     AnimActivation, AnimDef, AnimDefFile, AnimDefPtrs, Execution, NamePad, NamePtr, NamePtrFlags,
     ResetState, SeqDef, SeqDefState,
 };
-use mech3ax_metadata_proc_macro::Struct;
 use mech3ax_timestamp::DateTime;
 pub use si_script::{ObjectMotionSiFrame, RotateData, ScaleData, SiScript, TranslateData};
 pub use support::{
@@ -111,27 +109,28 @@ num! {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct AnimMetadata {
-    /// The mission is used for junk data (e.g. pointers).
-    pub mission: AnimMission,
-    /// From `anim.zrd`: `GRAVITY`
-    pub gravity: f32,
-    /// The `anim.zbd` timestamp (PM only).
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub datetime: Option<DateTime>,
-    /// Anim definition names.
-    pub anim_def_names: Vec<String>,
-    /// SI script names.
-    pub script_names: Vec<String>,
-    /// The list of animation definition files.
-    ///
-    /// This is not used by the engine.
-    ///
-    /// From `anim.zrd`:
-    /// * `ANIMATION_DEFINITIONS`
-    ///   * `ANIMATION_PATH` (maybe?)
-    ///   * `ANIMATION_LIST`
-    ///     * `ANIMATION_DEFINITION_FILE`
-    pub anim_list: Vec<AnimDefFile>,
+fld! {
+    struct AnimMetadata {
+        /// The mission is used for junk data (e.g. pointers).
+        mission: AnimMission,
+        /// From `anim.zrd`: `GRAVITY`
+        gravity: f32,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        /// The `anim.zbd` timestamp (PM only).
+        datetime: Option<DateTime>,
+        /// Anim definition names.
+        anim_def_names: Vec<String>,
+        /// SI script names.
+        script_names: Vec<String>,
+        /// The list of animation definition files.
+        ///
+        /// This is not used by the engine.
+        ///
+        /// From `anim.zrd`:
+        /// * `ANIMATION_DEFINITIONS`
+        ///   * `ANIMATION_PATH` (maybe?)
+        ///   * `ANIMATION_LIST`
+        ///     * `ANIMATION_DEFINITION_FILE`
+        anim_list: Vec<AnimDefFile>,
+    }
 }

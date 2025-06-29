@@ -7,7 +7,7 @@ macro_rules! sum {
         )+}
     ) => {
         $(#[doc = $sum_doc])*
-        #[derive(Debug, ::serde::Serialize, ::serde::Deserialize)]
+        #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
         pub enum $name {$(
             $(#[doc = $variant_doc])*
             $variant $(($ty))?,

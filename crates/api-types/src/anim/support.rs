@@ -1,25 +1,23 @@
 use crate::serde::bytes;
-use crate::sum;
-use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::Struct;
+use crate::{fld, sum};
 
-#[derive(Debug, Clone, Serialize, Deserialize, Struct)]
-#[dotnet(val_struct)]
-pub struct AnimRefCallAnimation {
-    pub name: String,
-    #[serde(with = "bytes")]
-    pub name_pad: Vec<u8>,
+fld! {
+    struct AnimRefCallAnimation: Val {
+        name: String,
+        #[serde(with = "bytes")]
+        name_pad: Vec<u8>,
+    }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Struct)]
-#[dotnet(val_struct)]
-pub struct AnimRefCallObjectConnector {
-    pub name: String,
-    #[serde(with = "bytes")]
-    pub name_pad: Vec<u8>,
-    pub local_name: String,
-    #[serde(with = "bytes")]
-    pub local_name_pad: Vec<u8>,
+fld! {
+    struct AnimRefCallObjectConnector: Val {
+        name: String,
+        #[serde(with = "bytes")]
+        name_pad: Vec<u8>,
+        local_name: String,
+        #[serde(with = "bytes")]
+        local_name_pad: Vec<u8>,
+    }
 }
 
 sum! {
@@ -39,66 +37,66 @@ impl AnimRef {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-#[dotnet(val_struct)]
-pub struct ObjectRef {
-    pub name: String,
-    /// Ignored in PM.
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub ptr: Option<u32>,
-    /// `u16` in PM.
-    pub flags: u32,
-    /// Ignored in PM.
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub flags_merged: Option<u32>,
-    /// The affine matrix cannot be serializes as is, because it contains bogus
-    /// floats/values.
-    #[serde(with = "bytes")]
-    pub affine: Vec<u8>,
+fld! {
+    struct ObjectRef: Val {
+        name: String,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        /// Ignored in PM.
+        ptr: Option<u32>,
+        /// `u16` in PM.
+        flags: u32,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        /// Ignored in PM.
+        flags_merged: Option<u32>,
+        #[serde(with = "bytes")]
+        /// The affine matrix cannot be serializes as is, because it contains bogus
+        /// floats/values.
+        affine: Vec<u8>,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-#[dotnet(val_struct)]
-pub struct NodeRef {
-    pub name: String,
-    pub ptr: u32,
+fld! {
+    struct NodeRef: Val {
+        name: String,
+        ptr: u32,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-#[dotnet(val_struct)]
-pub struct LightRef {
-    pub name: String,
-    pub ptr: u32,
+fld! {
+    struct LightRef: Val {
+        name: String,
+        ptr: u32,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-#[dotnet(val_struct)]
-pub struct PufferRef {
-    pub name: String,
-    pub flags: u8,
-    pub ptr: u32,
+fld! {
+    struct PufferRef: Val {
+        name: String,
+        flags: u8,
+        ptr: u32,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-#[dotnet(val_struct)]
-pub struct DynamicSoundRef {
-    pub name: String,
-    pub ptr: u32,
+fld! {
+    struct DynamicSoundRef: Val {
+        name: String,
+        ptr: u32,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-#[dotnet(val_struct)]
-pub struct StaticSoundRef {
-    pub name: String,
-    #[serde(with = "bytes")]
-    pub pad: Vec<u8>,
+fld! {
+    struct StaticSoundRef: Val {
+        name: String,
+        #[serde(with = "bytes")]
+        pad: Vec<u8>,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-#[dotnet(val_struct)]
-pub struct EffectRef {
-    pub name: String,
-    pub index: u32,
-    #[serde(with = "bytes")]
-    pub pad: Vec<u8>,
+fld! {
+    struct EffectRef: Val {
+        name: String,
+        index: u32,
+        #[serde(with = "bytes")]
+        pad: Vec<u8>,
+    }
 }

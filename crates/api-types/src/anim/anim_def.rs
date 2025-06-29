@@ -4,18 +4,19 @@ use super::support::{
     AnimRef, DynamicSoundRef, EffectRef, LightRef, NodeRef, ObjectRef, PufferRef, StaticSoundRef,
 };
 use crate::serde::{bool_false, bool_true, bytes};
-use crate::{num, sum, Range};
+use crate::{fld, num, sum, Range};
 use ::serde::{Deserialize, Serialize};
 use mech3ax_metadata_proc_macro::Struct;
 use mech3ax_timestamp::DateTime;
 
-/// `ANIMATION_DEFINITION_FILE` in an `ANIMATION_LIST`
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct AnimDefFile {
-    pub name: String,
-    pub datetime: DateTime,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub hash: Option<u32>,
+fld! {
+    /// `ANIMATION_DEFINITION_FILE` in an `ANIMATION_LIST`
+    struct AnimDefFile {
+        name: String,
+        datetime: DateTime,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        hash: Option<u32>,
+    }
 }
 
 num! {
@@ -36,27 +37,27 @@ sum! {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-#[dotnet(val_struct)]
-pub struct NamePad {
-    pub name: String,
-    #[serde(with = "bytes")]
-    pub pad: Vec<u8>,
+fld! {
+    struct NamePad : Val {
+        name: String,
+        #[serde(with = "bytes")]
+        pad: Vec<u8>,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-#[dotnet(val_struct)]
-pub struct NamePtr {
-    pub name: String,
-    pub pointer: u32,
+fld! {
+    struct NamePtr : Val {
+        name: String,
+        pointer: u32,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-#[dotnet(val_struct)]
-pub struct NamePtrFlags {
-    pub name: String,
-    pub pointer: u32,
-    pub flags: u32,
+fld! {
+    struct NamePtrFlags : Val {
+        name: String,
+        pointer: u32,
+        flags: u32,
+    }
 }
 
 num! {
@@ -66,19 +67,21 @@ num! {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct ResetState {
-    pub events: Vec<Event>,
-    pub pointer: u32,
+fld! {
+    struct ResetState {
+        events: Vec<Event>,
+        pointer: u32,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct SeqDef {
-    pub name: String,
-    pub seq_state: SeqDefState,
-    pub reset_state: SeqDefState,
-    pub events: Vec<Event>,
-    pub pointer: u32,
+fld! {
+    struct SeqDef {
+        name: String,
+        seq_state: SeqDefState,
+        reset_state: SeqDefState,
+        events: Vec<Event>,
+        pointer: u32,
+    }
 }
 
 #[inline]
@@ -164,29 +167,30 @@ impl AnimDef {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct AnimDefPtrs {
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub anim_hash: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub anim_root_hash: Option<u32>,
+fld! {
+    struct AnimDefPtrs {
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        anim_hash: Option<u32>,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        anim_root_hash: Option<u32>,
 
-    pub seq_defs_ptr: u32,
-    pub objects_ptr: u32,
-    pub nodes_ptr: u32,
-    pub lights_ptr: u32,
-    pub dynamic_sounds_ptr: u32,
-    pub static_sounds_ptr: u32,
-    pub activ_prereqs_ptr: u32,
-    pub anim_refs_ptr: u32,
+        seq_defs_ptr: u32,
+        objects_ptr: u32,
+        nodes_ptr: u32,
+        lights_ptr: u32,
+        dynamic_sounds_ptr: u32,
+        static_sounds_ptr: u32,
+        activ_prereqs_ptr: u32,
+        anim_refs_ptr: u32,
 
-    // MW/RC only, not PM
-    pub anim_ptr: u32,
-    // MW/RC only, not PM
-    pub anim_root_ptr: u32,
-    pub puffers_ptr: u32,
-    // RC only, not MW/PM
-    pub effects_ptr: u32,
-    // PM only, not MW/RC
-    pub reset_state_ptr: u32,
+        // MW/RC only, not PM
+        anim_ptr: u32,
+        // MW/RC only, not PM
+        anim_root_ptr: u32,
+        puffers_ptr: u32,
+        // RC only, not MW/PM
+        effects_ptr: u32,
+        // PM only, not MW/RC
+        reset_state_ptr: u32,
+    }
 }

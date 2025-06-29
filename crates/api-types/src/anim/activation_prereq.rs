@@ -1,30 +1,28 @@
-use crate::sum;
-use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::Struct;
+use crate::{fld, sum};
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Struct)]
-#[dotnet(val_struct)]
-pub struct PrerequisiteAnimation {
-    pub name: String,
-    pub required: bool,
+fld! {
+    struct PrerequisiteAnimation: Val {
+        name: String,
+        required: bool,
+    }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Struct)]
-#[dotnet(val_struct)]
-pub struct PrerequisiteObject {
-    pub name: String,
-    pub required: bool,
-    pub active: bool,
-    pub ptr: u32,
+fld! {
+    struct PrerequisiteObject: Val {
+        name: String,
+        required: bool,
+        active: bool,
+        ptr: u32,
+    }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Struct)]
-#[dotnet(val_struct)]
-pub struct PrerequisiteParent {
-    pub name: String,
-    pub required: bool,
-    pub active: bool,
-    pub ptr: u32,
+fld! {
+    struct PrerequisiteParent: Val {
+        name: String,
+        required: bool,
+        active: bool,
+        ptr: u32,
+    }
 }
 
 sum! {

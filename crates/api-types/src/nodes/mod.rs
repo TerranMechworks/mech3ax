@@ -3,33 +3,36 @@ pub mod pm;
 pub mod rc;
 
 use crate::serde::{bool_false, bool_true};
-use crate::{Color, Matrix, Range, Vec3};
+use crate::{fld, Color, Matrix, Range, Vec3};
 use ::serde::{Deserialize, Serialize};
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_metadata_proc_macro::Struct;
 use mech3ax_types::impl_as_bytes;
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct Camera {
-    pub clip: Range,
-    pub fov: Range,
-    pub focus_node_xy: i32,
-    pub data_ptr: u32,
+fld! {
+    struct Camera {
+        clip: Range,
+        fov: Range,
+        focus_node_xy: i32,
+        data_ptr: u32,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct Display {
-    pub resolution_x: u32,
-    pub resolution_y: u32,
-    pub clear_color: Color,
-    pub data_ptr: u32,
+fld! {
+    struct Display {
+        resolution_x: u32,
+        resolution_y: u32,
+        clear_color: Color,
+        data_ptr: u32,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct Window {
-    pub resolution_x: u32,
-    pub resolution_y: u32,
-    pub data_ptr: u32,
+fld! {
+    struct Window {
+        resolution_x: u32,
+        resolution_y: u32,
+        data_ptr: u32,
+    }
 }
 
 #[derive(
@@ -95,23 +98,25 @@ impl BoundingBox {
     };
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct Transformation {
-    pub rotation: Vec3,
-    pub translation: Vec3,
-    pub matrix: Option<Matrix>,
+fld! {
+    struct Transformation {
+        rotation: Vec3,
+        translation: Vec3,
+        matrix: Option<Matrix>,
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct PartitionPg {
-    pub x: i32,
-    pub y: i32,
-    pub z_min: f32,
-    pub z_max: f32,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub z_mid: Option<f32>,
-    pub nodes: Vec<u32>,
-    pub ptr: u32,
+fld! {
+    struct PartitionPg {
+        x: i32,
+        y: i32,
+        z_min: f32,
+        z_max: f32,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        z_mid: Option<f32>,
+        nodes: Vec<u32>,
+        ptr: u32,
+    }
 }
 
 #[derive(
@@ -125,14 +130,15 @@ pub struct PartitionValue {
 }
 impl_as_bytes!(PartitionValue, 12);
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct PartitionNg {
-    pub x: i32,
-    pub y: i32,
-    pub z_min: f32,
-    pub z_max: f32,
-    pub nodes: Vec<PartitionValue>,
-    pub ptr: u32,
+fld! {
+    struct PartitionNg {
+        x: i32,
+        y: i32,
+        z_min: f32,
+        z_max: f32,
+        nodes: Vec<PartitionValue>,
+        ptr: u32,
+    }
 }
 
 #[inline]
@@ -140,7 +146,7 @@ fn _true() -> bool {
     true
 }
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Struct)]
 pub struct NodeFlags {
     #[serde(skip_serializing_if = "bool_true", default = "_true")]
     pub active: bool,

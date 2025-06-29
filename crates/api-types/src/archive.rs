@@ -1,17 +1,16 @@
 //! Archive-based `*.zbd` data structures.
 use crate::serde::bytes;
-use crate::sum;
-use ::serde::{Deserialize, Serialize};
-use mech3ax_metadata_proc_macro::Struct;
+use crate::{fld, sum};
 use mech3ax_timestamp::DateTime;
 
-#[derive(Debug, Serialize, Deserialize, Struct)]
-pub struct ArchiveEntry {
-    pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub rename: Option<String>,
-    pub flags: u32,
-    pub info: ArchiveEntryInfo,
+fld! {
+    struct ArchiveEntry {
+        name: String,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        rename: Option<String>,
+        flags: u32,
+        info: ArchiveEntryInfo,
+    }
 }
 
 sum! {
@@ -21,15 +20,17 @@ sum! {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Struct)]
-pub struct ArchiveEntryInfoValid {
-    pub comment: String,
-    pub datetime: DateTime,
+fld! {
+    struct ArchiveEntryInfoValid {
+        comment: String,
+        datetime: DateTime,
+    }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Struct)]
-pub struct ArchiveEntryInfoInvalid {
-    #[serde(with = "bytes")]
-    pub comment: Vec<u8>,
-    pub filetime: u64,
+fld! {
+    struct ArchiveEntryInfoInvalid {
+        #[serde(with = "bytes")]
+        comment: Vec<u8>,
+        filetime: u64,
+    }
 }
