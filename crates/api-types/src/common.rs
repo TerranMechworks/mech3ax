@@ -165,12 +165,12 @@ impl_as_bytes!(AffineMatrix, 48);
 impl Default for AffineMatrix {
     #[inline]
     fn default() -> Self {
-        Self::ZERO
+        Self::DEFAULT
     }
 }
 
 impl AffineMatrix {
-    pub const ZERO: Self = Self {
+    pub const DEFAULT: Self = Self {
         r00: 0.0,
         r01: 0.0,
         r02: 0.0,
@@ -184,4 +184,28 @@ impl AffineMatrix {
         r31: 0.0,
         r32: 0.0,
     };
+
+    pub const IDENTITY: Self = Self {
+        r00: 1.0,
+        r01: 0.0,
+        r02: 0.0,
+        r10: 0.0,
+        r11: 1.0,
+        r12: 0.0,
+        r20: 0.0,
+        r21: 0.0,
+        r22: 1.0,
+        r30: 0.0,
+        r31: 0.0,
+        r32: 0.0,
+    };
+
+    #[inline]
+    pub fn translate(&self) -> Vec3 {
+        Vec3 {
+            x: self.r30,
+            y: self.r31,
+            z: self.r32,
+        }
+    }
 }

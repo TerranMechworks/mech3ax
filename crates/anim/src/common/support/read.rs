@@ -51,7 +51,7 @@ pub(crate) fn read_objects(
     )?;
     assert_that!(
         "anim def object zero affine",
-        object_c.affine == AffineMatrix::ZERO,
+        object_c.affine == AffineMatrix::DEFAULT,
         read.prev + 48
     )?;
 

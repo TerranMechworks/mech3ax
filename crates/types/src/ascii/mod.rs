@@ -1,3 +1,4 @@
+pub(crate) mod check;
 mod conv;
 
 use bytemuck::{AnyBitPattern, NoUninit, TransparentWrapper, Zeroable};
@@ -68,6 +69,38 @@ impl<const N: usize> Ascii<N> {
     #[inline]
     pub const fn into_bytes(self) -> crate::bytes::Bytes<N> {
         crate::bytes::Bytes::new(self.0)
+    }
+
+    pub const fn node_name(s: &str) -> Self {
+        if !s.is_ascii() {
+            panic!("non-ASCII string");
+        }
+
+        let mut name: [u8; N] = [0u8; N];
+
+        let b = b"Default_node_name";
+        let len = b.len();
+        let len = if len < N { len } else { N };
+        {
+            let (dst, _back) = name.split_at_mut(len);
+            let (src, _back) = b.split_at(len);
+            dst.copy_from_slice(src);
+        }
+
+        let b = s.as_bytes();
+        let len = b.len();
+        let len = if len < N { len } else { N - 1 };
+
+        {
+            let (dst, _back) = name.split_at_mut(len);
+            let (src, _back) = b.split_at(len);
+            dst.copy_from_slice(src);
+        }
+
+        // zero terminate
+        name[len] = 0;
+
+        Self(name)
     }
 }
 

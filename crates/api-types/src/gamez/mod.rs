@@ -1,11 +1,12 @@
 pub mod materials;
 pub mod mechlib;
 pub mod model;
+pub mod nodes;
 
 use crate::api;
+use crate::gamez::nodes::Node;
 use crate::nodes::mw::NodeMw;
 use crate::nodes::pm::NodePm;
-use crate::nodes::rc::NodeRc;
 use materials::Material;
 use mech3ax_timestamp::DateTime;
 use model::Model;
@@ -51,7 +52,7 @@ api! {
         textures: Vec<Texture>,
         materials: Vec<Material>,
         models: Vec<Model>,
-        nodes: Vec<NodeRc>,
+        nodes: Vec<Node>,
         metadata: GameZMetadata,
     }
 }

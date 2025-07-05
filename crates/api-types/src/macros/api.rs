@@ -15,21 +15,7 @@ macro_rules! api {
             pub $field_name: $field_ty,
         )*}
 
-        impl ::mech3ax_metadata_types::DerivedMetadata for $name {
-            const TYPE_INFO: &'static ::mech3ax_metadata_types::TypeInfo =
-                &::mech3ax_metadata_types::TypeInfo::Struct(::mech3ax_metadata_types::TypeInfoStruct {
-                    name: stringify!($name),
-                    semantic: $crate::api!(@sem $($semantic)?),
-                    fields: &[$(
-                        ::mech3ax_metadata_types::TypeInfoStructField {
-                            name: stringify!($field_name),
-                            type_info: <$field_ty as ::mech3ax_metadata_types::DerivedMetadata>::TYPE_INFO,
-                            default: $crate::api!(@default $($($default)*)?),
-                        },
-                    )*],
-                    module_path: ::std::module_path!(),
-                });
-        }
+        $crate::api!(@md $name { $($field_name: $field_ty,)* });
     };
     (@sem ) => {
         ::mech3ax_metadata_types::TypeSemantic::Ref
@@ -91,6 +77,7 @@ macro_rules! api {
             ::bytemuck::NoUninit,
             ::serde::Serialize,
             ::serde::Deserialize,
+            ::mech3ax_types::Offsets,
         )]
         #[repr(C)]
         pub struct $name {$(
@@ -98,6 +85,11 @@ macro_rules! api {
             pub $field_name: $field_ty,
         )*}
 
+        $crate::api!(@md $name $(: $semantic)? { $($field_name: $field_ty,)* });
+    };
+    (@md $name:ident $(: $semantic:tt)? {$(
+        $field_name:ident: $field_ty:ty,
+    )*}) => {
         impl ::mech3ax_metadata_types::DerivedMetadata for $name {
             const TYPE_INFO: &'static ::mech3ax_metadata_types::TypeInfo =
                 &::mech3ax_metadata_types::TypeInfo::Struct(::mech3ax_metadata_types::TypeInfoStruct {
@@ -113,6 +105,6 @@ macro_rules! api {
                     module_path: ::std::module_path!(),
                 });
         }
-    };
+    }
 }
 pub(crate) use api;

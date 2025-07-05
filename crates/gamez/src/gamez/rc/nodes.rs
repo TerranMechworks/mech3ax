@@ -1,12 +1,12 @@
 use super::NODE_INDEX_INVALID;
+use crate::nodes::helpers::read_node_indices;
+use crate::nodes::node::rc::{assert_node, assert_node_zero, NodeRcC};
+use crate::nodes::NodeClass;
 use log::trace;
-use mech3ax_api_types::nodes::rc::NodeRc;
+use mech3ax_api_types::gamez::nodes::{Node, NodeData};
+use mech3ax_common::check::amend_err;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
-use mech3ax_nodes::rc::{
-    assert_node_info_zero, read_node_data, read_node_info, size_node, write_node_data,
-    write_node_info, NodeRcC, NodeVariantRc,
-};
+use mech3ax_common::{assert_that, assert_with_msg, err, Result};
 use mech3ax_types::{i32_to_usize, u32_to_usize, AsBytes as _};
 use std::io::{Read, Write};
 
@@ -15,78 +15,34 @@ pub(crate) fn read_nodes(
     array_size: i32,
     count: i32,
     model_count: i32,
-) -> Result<Vec<NodeRc>> {
+) -> Result<Vec<Node>> {
     let node_write_size = u32_to_usize(NodeRcC::SIZE) + 4;
     let valid_offset = read.offset + node_write_size * i32_to_usize(count);
     let end_offset = read.offset + node_write_size * i32_to_usize(array_size);
 
-    let mut variants = Vec::new();
-    let mut light_node: Option<i32> = None;
-    for index in 0..count {
-        trace!("Processing node info {}/{}", index, count);
+    let nodes = (0..count)
+        .map(|index| {
+            trace!("Processing node info {}/{}", index, count);
+            let node: NodeRcC = read.read_struct()?;
+            let mut node_info = assert_node(&node, read.prev, model_count)?;
+            // note: the offset is read separately because it's a pain for zero
+            // nodes, empty nodes, and for the mechlib in MW/PM.
+            //
+            // usually, this is the offset of the node data, or for empty nodes
+            // it's the parent index since they do not have data.
+            node_info.offset = read.read_u32()?;
+            Ok(node_info)
+        })
+        .collect::<Result<Vec<_>>>()?;
 
-        let node_info_pos = read.offset;
-        let variant = read_node_info(read)?;
-
-        // this is an index for empty/zero nodes, and the offset for others
-        let node_data_offset = read.read_u32()?;
-        trace!("Node {} data offset: {}", index, node_data_offset);
-
-        match &variant {
-            NodeVariantRc::World { .. } => {
-                assert_that!("node position (world)", index == 0, node_info_pos)?;
-            }
-            NodeVariantRc::Window { .. } => {
-                assert_that!("node position (window)", index == 1, node_info_pos)?;
-            }
-            NodeVariantRc::Camera { .. } => {
-                assert_that!("node position (camera)", index == 2, node_info_pos)?;
-            }
-            NodeVariantRc::Display { .. } => {
-                assert_that!("node position (display)", index == 3, node_info_pos)?;
-            }
-            NodeVariantRc::Empty(_) => {
-                // exclude world, window, camera, or display indices
-                assert_that!("node position (empty)", index > 3, node_info_pos)?;
-                // cannot be parented to world, window, camera, display, or light
-                // check for light parent later
-                assert_that!("empty parent index", node_data_offset > 3, read.prev)?;
-            }
-            NodeVariantRc::Light { .. } => {
-                // exclude world, window, camera, or display indices
-                assert_that!("node position (light)", index > 3, node_info_pos)?;
-                if let Some(i) = light_node {
-                    return Err(assert_with_msg!(
-                        "Unexpected light node in position {}, already found in {} (at {})",
-                        index,
-                        i,
-                        node_info_pos,
-                    ));
-                }
-                light_node = Some(index);
-            }
-            NodeVariantRc::Lod(_) => {
-                // exclude world, window, camera, or display indices
-                assert_that!("node position (lod)", index > 3, node_info_pos)?;
-            }
-            NodeVariantRc::Object3d(object3d) => {
-                // exclude world, window, camera, or display indices
-                assert_that!("node position (object3d)", index > 3, node_info_pos)?;
-                if object3d.model_index >= 0 {
-                    assert_that!(
-                        "object3d model index",
-                        object3d.model_index < model_count,
-                        node_info_pos
-                    )?;
-                }
-            }
-        }
-        variants.push((variant, node_data_offset));
+    // TODO: kinda dumb?
+    if read.offset != valid_offset {
+        return Err(err!(
+            "read offset {} != {} (node info)",
+            read.offset,
+            valid_offset
+        ));
     }
-
-    assert_that!("node info valid", valid_offset == read.offset, read.offset)?;
-    let light_node_index = light_node
-        .ok_or_else(|| assert_with_msg!("GameZ contains no light node (at {})", read.offset))?;
 
     trace!(
         "Processing {}..{} node info zeros at {}",
@@ -96,7 +52,7 @@ pub(crate) fn read_nodes(
     );
     for index in count..array_size {
         let node: NodeRcC = read.read_struct_no_log()?;
-        assert_node_info_zero(&node, read.prev)
+        assert_node_zero(&node, read.prev)
             .inspect_err(|_| trace!("{:#?} (index: {}, at {})", node, index, read.prev))?;
 
         let actual_index = read.read_i32()?;
@@ -105,115 +61,176 @@ pub(crate) fn read_nodes(
         if expected_index == array_size {
             expected_index = NODE_INDEX_INVALID;
         }
-        assert_that!("node zero index", actual_index == expected_index, read.prev)?;
+
+        if actual_index != expected_index {
+            return Err(err!(
+                "node off {} != {} (index: {}, at {})",
+                actual_index,
+                expected_index,
+                index,
+                read.prev,
+            ));
+        }
     }
     trace!("Processed node info zeros at {}", read.offset);
 
-    assert_that!("node info end", end_offset == read.offset, read.offset)?;
+    // TODO: kinda dumb?
+    if read.offset != end_offset {
+        return Err(err!(
+            "read offset {} != {} (node zero)",
+            read.offset,
+            end_offset
+        ));
+    }
 
-    let nodes = variants
+    let nodes = nodes
         .into_iter()
         .enumerate()
-        .map(|(index, (mut variant, node_data_offset))| {
-            match &mut variant {
-                NodeVariantRc::Empty(empty) => {
-                    let parent_index = node_data_offset as i32;
-                    assert_that!(
-                        "empty parent index",
-                        parent_index != light_node_index,
-                        read.prev
-                    )?;
-                    // in the case of an empty node, the offset is used as the parent
-                    // index, and not the offset (there is no node data)
-                    empty.parent = node_data_offset;
-                }
-                _ => {
-                    let offset = u32_to_usize(node_data_offset);
-                    assert_that!("node data offset", read.offset == offset, read.offset)?;
+        .map(|(index, node_info)| {
+            trace!("Processing node data {}/{}", index, count);
+
+            if node_info.node_class != NodeClass::Empty {
+                let node_offset = u32_to_usize(node_info.offset);
+                if read.offset != node_offset {
+                    return Err(err!(
+                        "read offset {} != {} (node {})",
+                        read.offset,
+                        end_offset,
+                        index,
+                    ));
                 }
             }
 
-            if !matches!(variant, NodeVariantRc::Empty(_)) {
-                trace!("Processing node data {}/{}", index, count);
+            let mut node = Node {
+                name: node_info.name,
+                flags: node_info.flags,
+                update_flags: node_info.update_flags,
+                zone_id: node_info.zone_id,
+                model_index: node_info.model_index,
+                area_partition: node_info.area_partition,
+                parent_indices: Vec::new(),
+                child_indices: Vec::new(),
+                active_bbox: node_info.active_bbox,
+                node_bbox: node_info.node_bbox,
+                model_bbox: node_info.model_bbox,
+                child_bbox: node_info.child_bbox,
+                field192: node_info.field192,
+                field196: node_info.field196,
+                field200: node_info.field200,
+                field204: node_info.field204,
+                data: NodeData::Empty,
+                data_ptr: node_info.data_ptr.0,
+                parent_array_ptr: node_info.parent_array_ptr.0,
+                child_array_ptr: node_info.child_array_ptr.0,
+            };
+
+            match node_info.node_class {
+                NodeClass::Camera => {
+                    let camera = crate::nodes::camera::rc::read(read)?;
+                    node.data = NodeData::Camera(camera);
+                }
+                NodeClass::Display => {
+                    let display = crate::nodes::display::rc::read(read)?;
+                    node.data = NodeData::Display(display);
+                }
+                NodeClass::Empty => {
+                    let parent_index = node_info.offset as i32;
+                    let parent_index =
+                        crate::nodes::check::node_index2(parent_index).map_err(|msg| {
+                            let name = format!("empty {}/{} parent index", index, count);
+                            amend_err(msg, &name, read.offset, file!(), line!())
+                        })?;
+                    node.parent_indices = vec![parent_index];
+                }
+                NodeClass::Light => {
+                    let light = crate::nodes::light::rc::read(read)?;
+                    node.data = NodeData::Light(light);
+                }
+                NodeClass::Lod => {
+                    let lod = crate::nodes::lod::rc::read(read)?;
+                    node.data = NodeData::Lod(lod);
+                }
+                NodeClass::Object3d => {
+                    let object3d = crate::nodes::object3d::rc::read(read)?;
+                    node.data = NodeData::Object3d(object3d);
+                }
+                NodeClass::Window => {
+                    let window = crate::nodes::window::rc::read(read)?;
+                    node.data = NodeData::Window(window);
+                }
+                NodeClass::World => {
+                    let world = crate::nodes::world::rc::read(read)?;
+                    node.data = NodeData::World(world);
+                }
+            };
+
+            if node_info.parent_count > 0 {
+                node.parent_indices =
+                    read_node_indices!(read, node_info.parent_count, |idx, cnt| {
+                        format!("node {}/{} parent index {}/{}", index, count, idx, cnt)
+                    })?;
             }
-            read_node_data(read, variant)
+
+            if node_info.child_count > 0 {
+                node.child_indices =
+                    read_node_indices!(read, node_info.child_count, |idx, cnt| {
+                        format!("node {}/{} child index {}/{}", index, count, idx, cnt)
+                    })?;
+            }
+
+            Ok(node)
         })
         .collect::<Result<Vec<_>>>()?;
 
-    assert_area_partitions(&nodes, read.offset)?;
     Ok(nodes)
-}
-
-fn assert_area_partitions(nodes: &[NodeRc], offset: usize) -> Result<()> {
-    let (x_count, y_count) = match nodes.first() {
-        Some(NodeRc::World(world)) => Ok((
-            world.virt_partition_x_count as i32,
-            world.virt_partition_y_count as i32,
-        )),
-        Some(_) => Err(assert_with_msg!("Expected the world node to be first")),
-        None => Err(assert_with_msg!("Expected to have read some nodes")),
-    }?;
-
-    for node in nodes {
-        let area_partition = match node {
-            NodeRc::Object3d(object3d) => &object3d.area_partition,
-            _ => &None,
-        };
-        if let Some(ap) = area_partition {
-            assert_that!("partition x", ap.x < x_count, offset)?;
-            assert_that!("partition y", ap.y < y_count, offset)?;
-        }
-    }
-
-    Ok(())
 }
 
 pub(crate) fn write_nodes(
     write: &mut CountingWriter<impl Write>,
-    nodes: &[NodeRc],
+    nodes: &[Node],
     array_size: i32,
     offset: u32,
 ) -> Result<()> {
-    let mut offset = offset + (NodeRcC::SIZE + 4) * (array_size as u32);
-    let node_count = assert_len!(i32, nodes.len(), "GameZ nodes")?;
+    // let mut offset = offset + (NodeRcC::SIZE + 4) * (array_size as u32);
+    // let node_count = assert_len!(i32, nodes.len(), "GameZ nodes")?;
 
-    for (index, node) in nodes.iter().enumerate() {
-        trace!("Processing node info {}/{}", index, node_count);
-        write_node_info(write, node)?;
+    // for (index, node) in nodes.iter().enumerate() {
+    //     trace!("Processing node info {}/{}", index, node_count);
+    //     write_node_info(write, node)?;
 
-        let node_data_offset = match node {
-            NodeRc::Empty(empty) => empty.parent,
-            _ => offset,
-        };
+    //     let node_data_offset = match node {
+    //         NodeRc::Empty(empty) => empty.parent,
+    //         _ => offset,
+    //     };
 
-        trace!("Node {} data offset: {}", index, node_data_offset);
-        write.write_u32(node_data_offset)?;
-        offset += size_node(node);
-    }
+    //     trace!("Node {} data offset: {}", index, node_data_offset);
+    //     write.write_u32(node_data_offset)?;
+    //     offset += size_node(node);
+    // }
 
-    trace!(
-        "Processing {}..{} node info zeros at {}",
-        node_count,
-        array_size,
-        write.offset
-    );
-    let node_zero = NodeRcC::zero();
-    for index in node_count..array_size {
-        write.write_struct_no_log(&node_zero)?;
-        let mut index = index + 1;
-        if index == array_size {
-            index = NODE_INDEX_INVALID;
-        }
-        write.write_i32(index)?;
-    }
-    trace!("Processed note info zeros at {}", write.offset);
+    // trace!(
+    //     "Processing {}..{} node info zeros at {}",
+    //     node_count,
+    //     array_size,
+    //     write.offset
+    // );
+    // let node_zero = NodeRcC::zero();
+    // for index in node_count..array_size {
+    //     write.write_struct_no_log(&node_zero)?;
+    //     let mut index = index + 1;
+    //     if index == array_size {
+    //         index = NODE_INDEX_INVALID;
+    //     }
+    //     write.write_i32(index)?;
+    // }
+    // trace!("Processed note info zeros at {}", write.offset);
 
-    for (index, node) in nodes.iter().enumerate() {
-        if !matches!(node, NodeRc::Empty(_)) {
-            trace!("Processing node data {}/{}", index, node_count);
-        }
-        write_node_data(write, node)?;
-    }
+    // for (index, node) in nodes.iter().enumerate() {
+    //     if !matches!(node, NodeRc::Empty(_)) {
+    //         trace!("Processing node data {}/{}", index, node_count);
+    //     }
+    //     write_node_data(write, node)?;
+    // }
 
     Ok(())
 }

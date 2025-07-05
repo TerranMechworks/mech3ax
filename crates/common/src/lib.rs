@@ -1,5 +1,6 @@
 #![warn(clippy::all, clippy::cargo)]
 pub mod assert;
+pub mod check;
 mod errors;
 pub mod io_ext;
 pub mod light;

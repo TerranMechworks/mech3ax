@@ -28,7 +28,7 @@ impl Default for ObjectRefC {
             ptr: Ptr::INVALID,
             flags: Hex(0),
             root_idx: 0,
-            affine: AffineMatrix::ZERO,
+            affine: AffineMatrix::DEFAULT,
         }
     }
 }

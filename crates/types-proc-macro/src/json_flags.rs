@@ -41,14 +41,21 @@ pub(crate) fn make(input: JsonFlagsInput) -> Result<proc_macro2::TokenStream> {
     let struct_name = struct_ident.to_string();
     let json_ident = quote::format_ident!("{}Exhaustive", struct_ident);
 
-    let (variants, variant_attrs): (Vec<Ident>, Vec<Vec<syn::Attribute>>) = variants
+    let (variants, mut variant_attrs): (Vec<Ident>, Vec<Vec<syn::Attribute>>) = variants
         .into_iter()
         .map(|JsonFlagsVariant { attrs, ident }| (ident, attrs))
         .unzip();
     let field_idents: Vec<Ident> = variants
         .iter()
-        .map(|ident| {
-            let name = ident.to_string().to_snake_case();
+        .zip(variant_attrs.iter_mut())
+        .map(|(ident, attrs)| {
+            let mut name = ident.to_string().to_snake_case();
+            if name == "override" {
+                name = "override_".to_string();
+                attrs.push(parse_quote! {
+                    #[serde(rename = "override")]
+                });
+            }
             Ident::new(&name, ident.span())
         })
         .collect();

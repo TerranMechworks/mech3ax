@@ -1,7 +1,8 @@
 mod json_flags;
 mod offsets;
 
-/// This exists because macro_rules cannot (yes) generate unique idents
+/// This exists because macro_rules cannot (yet) generate unique idents, and
+/// also using a declarative macro sometimes breaks comment alignment.
 #[proc_macro_derive(Offsets, attributes(serde, dotnet))]
 pub fn derive_offsets(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);

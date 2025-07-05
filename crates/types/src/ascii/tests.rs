@@ -119,6 +119,33 @@ fn ascii_from_str_node_name_invalid() {
 }
 
 #[test]
+fn ascii_node_name_valid() {
+    let a = Ascii::<16>::node_name("");
+    assert_eq!(a, ascii!(b"\0efault_node_nam"));
+    let a = Ascii::<17>::node_name("");
+    assert_eq!(a, ascii!(b"\0efault_node_name"));
+    let a = Ascii::<18>::node_name("");
+    assert_eq!(a, ascii!(b"\0efault_node_name\0"));
+
+    let a = Ascii::<17>::node_name("a");
+    assert_eq!(a, ascii!(b"a\0fault_node_name"));
+    let a = Ascii::<17>::node_name("abcd");
+    assert_eq!(a, ascii!(b"abcd\0lt_node_name"));
+    let a = Ascii::<17>::node_name("abcdefghijklmno");
+    assert_eq!(a, ascii!(b"abcdefghijklmno\0e"));
+    let a = Ascii::<17>::node_name("abcdefghijklmnop");
+    assert_eq!(a, ascii!(b"abcdefghijklmnop\0"));
+    let a = Ascii::<17>::node_name("abcdefghijklmnopq");
+    assert_eq!(a, ascii!(b"abcdefghijklmnop\0"));
+}
+
+#[test]
+#[should_panic(expected = "non-ASCII string")]
+fn ascii_node_name_invalid() {
+    Ascii::<0>::node_name("spam🎅eggs");
+}
+
+#[test]
 fn ascii_to_str_node_name_valid() {
     let s = ascii!(b"abc\0").to_str_node_name();
     assert_eq!(s, ok!("abc"));
