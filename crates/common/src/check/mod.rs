@@ -1,6 +1,6 @@
 pub use mech3ax_types::cstruct::CStruct;
 use mech3ax_types::maybe::{PrimitiveRepr, SupportsMaybe};
-use mech3ax_types::{Bitflags, Bool, Maybe, Padded, PrimitiveEnum};
+use mech3ax_types::Maybe;
 use std::cmp::{PartialEq, PartialOrd};
 use std::fmt;
 
@@ -121,44 +121,8 @@ where
 }
 
 #[inline]
-pub fn is_bool<R>(v: Bool<R>) -> Result<bool>
-where
-    R: PrimitiveRepr,
-    bool: SupportsMaybe<R>,
-{
-    v.validate()
-        .ok_or_else(|| format!("invalid bool {}, expected 0 or 1", v))
-}
-
-#[inline]
-pub fn is_enum<R, E>(v: Maybe<R, E>) -> Result<E>
-where
-    R: PrimitiveRepr,
-    E: PrimitiveEnum<R>,
-{
-    v.validate().ok_or_else(|| {
-        let discriminants = mech3ax_types::primitive_enum::format_discriminants(E::DISCRIMINANTS);
-        format!("invalid enum {}, expected {}", v, discriminants)
-    })
-}
-
-#[inline]
-pub fn flags<R, F>(v: Maybe<R, F>) -> Result<F>
-where
-    R: PrimitiveRepr,
-    F: Bitflags<R>,
-{
-    v.validate().ok_or_else(|| format!("invalid flags {}", v))
-}
-
-#[inline]
-pub fn padded<R, P>(v: Maybe<R, P>) -> Result<P>
-where
-    R: PrimitiveRepr,
-    P: Padded<R>,
-{
-    v.validate()
-        .ok_or_else(|| format!("invalid padding {}, expected {}", v, P::PATTERN))
+pub fn maybe<R: PrimitiveRepr, T: SupportsMaybe<R>>(v: Maybe<R, T>) -> Result<T> {
+    v.check()
 }
 
 #[macro_export]
@@ -226,28 +190,10 @@ macro_rules! chk {
             $crate::check::amend_err(msg, name, offset, FILE, LINE)
         })
     }};
-    ($offset:expr, bool $struct:ident.$field:ident) => {{
+    ($offset:expr, ?$struct:ident.$field:ident) => {{
         const FILE: &str = file!();
         const LINE: u32 = line!();
-        $crate::check::is_bool($struct.$field).map_err(|msg| {
-            let name = chk!(__name $struct.$field);
-            let offset = chk!(__offset $struct.$field, $offset);
-            $crate::check::amend_err(msg, name, offset, FILE, LINE)
-        })
-    }};
-    ($offset:expr, enum $struct:ident.$field:ident) => {{
-        const FILE: &str = file!();
-        const LINE: u32 = line!();
-        $crate::check::is_enum($struct.$field).map_err(|msg| {
-            let name = chk!(__name $struct.$field);
-            let offset = chk!(__offset $struct.$field, $offset);
-            $crate::check::amend_err(msg, name, offset, FILE, LINE)
-        })
-    }};
-    ($offset:expr, flags $struct:ident.$field:ident) => {{
-        const FILE: &str = file!();
-        const LINE: u32 = line!();
-        $crate::check::flags($struct.$field).map_err(|msg| {
+        $crate::check::maybe($struct.$field).map_err(|msg| {
             let name = chk!(__name $struct.$field);
             let offset = chk!(__offset $struct.$field, $offset);
             $crate::check::amend_err(msg, name, offset, FILE, LINE)

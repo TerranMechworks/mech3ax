@@ -4,6 +4,7 @@ pub mod archive;
 mod common;
 pub mod gamez;
 pub mod image;
+mod index;
 pub mod interp;
 pub(crate) mod macros;
 pub mod messages;
@@ -20,3 +21,4 @@ pub(crate) use crate::macros::sum::sum;
 
 pub use crate::serde::bytes::Bytes;
 pub use common::{AffineMatrix, Color, Matrix, Quaternion, Range, Vec3};
+pub use index::Index;

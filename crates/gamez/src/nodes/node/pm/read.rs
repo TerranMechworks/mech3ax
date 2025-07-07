@@ -1,5 +1,5 @@
 use super::NodePmC;
-use crate::nodes::check::{ap_pm, model_index, padded, ptr};
+use crate::nodes::check::{ap_pm, model_index, ptr};
 use crate::nodes::types::{AreaPartitionPm, NodeClass, NodeInfo, ZONE_ALWAYS};
 use mech3ax_api_types::gamez::nodes::{ActiveBoundingBox, AreaPartition, NodeFlags};
 use mech3ax_api_types::nodes::BoundingBox;
@@ -11,12 +11,12 @@ use mech3ax_types::{Ascii, Ptr};
 fn assert_node(node: NodePmC, offset: usize) -> Result<NodeInfo> {
     let name = chk!(offset, node_name(&node.name))?;
 
-    let flags = chk!(offset, flags node.flags)?;
+    let flags = chk!(offset, ?node.flags)?;
     chk!(offset, node.field040 == 0)?;
     // TODO
     // let update_flags 44
-    let zone_id = chk!(offset, padded(node.zone_id))?;
-    let node_class = chk!(offset, enum node.node_class)?;
+    let zone_id = chk!(offset, ?node.zone_id)?;
+    let node_class = chk!(offset, ?node.node_class)?;
     // data_ptr (056) is variable
     let model_index = chk!(offset, model_index(node.model_index))?;
     chk!(offset, node.environment_data == 0)?;
@@ -47,7 +47,7 @@ fn assert_node(node: NodePmC, offset: usize) -> Result<NodeInfo> {
 
     chk!(offset, node.bbox_mid == Vec3::DEFAULT)?;
     chk!(offset, node.bbox_diag == 0.0)?;
-    let active_bbox = chk!(offset, enum node.active_bbox)?;
+    let active_bbox = chk!(offset, ?node.active_bbox)?;
     // TODO: assert based on flags
     // node_bbox (116) is variable
     // model_bbox (140) is variable

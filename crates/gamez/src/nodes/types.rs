@@ -2,6 +2,7 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::nodes::{
     ActiveBoundingBox, AreaPartition, BoundingBox, NodeData, NodeFlags,
 };
+use mech3ax_api_types::Index;
 use mech3ax_types::{impl_as_bytes, primitive_enum, Offsets, Ptr};
 
 pub(crate) struct NodeInfo {
@@ -10,7 +11,7 @@ pub(crate) struct NodeInfo {
     pub(crate) update_flags: u32,
     pub(crate) zone_id: i8,
     pub(crate) data_ptr: Ptr,
-    pub(crate) model_index: Option<u16>,
+    pub(crate) model_index: Option<Index>,
     pub(crate) area_partition: Option<AreaPartition>,
     pub(crate) parent_count: u16,
     pub(crate) parent_array_ptr: Ptr,

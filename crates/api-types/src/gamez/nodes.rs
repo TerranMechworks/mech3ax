@@ -1,6 +1,5 @@
 pub use crate::nodes::BoundingBox;
-use crate::{api, bit, num, sum, AffineMatrix, Color, Range, Vec3};
-use mech3ax_types::impl_as_bytes;
+use crate::{api, bit, num, sum, AffineMatrix, Color, Index, Range, Vec3};
 
 bit! {
     struct NodeFlags: u32 {
@@ -82,10 +81,10 @@ api! {
         flags: NodeFlags,
         update_flags: u32,
         zone_id: i8,
-        model_index: Option<u16>,
+        model_index: Option<Index>,
         area_partition: Option<AreaPartition>,
-        parent_indices: Vec<u16>,
-        child_indices: Vec<u16>,
+        parent_indices: Vec<Index>,
+        child_indices: Vec<Index>,
         active_bbox: ActiveBoundingBox,
         node_bbox: BoundingBox,
         model_bbox: BoundingBox,
@@ -115,7 +114,6 @@ sum! {
 }
 
 api! {
-    #[repr(C)]
     struct Display {
         origin_x: u32,
         origin_y: u32,
@@ -124,14 +122,13 @@ api! {
         clear_color: Color,
     }
 }
-impl_as_bytes!(Display, 28);
 
 api! {
     struct Camera {
-        world_index: Option<u16>,
-        window_index: Option<u16>,
-        focus_node_xy: Option<u16>,
-        focus_node_xz: Option<u16>,
+        world_index: Option<Index>,
+        window_index: Option<Index>,
+        focus_node_xy: Option<Index>,
+        focus_node_xz: Option<Index>,
         clip_near: f32,
         clip_far: f32,
         lod_multiplier: f32,
@@ -143,11 +140,46 @@ api! {
 }
 
 api! {
-    struct Light {}
+    struct Light {
+        recalc: i32,
+        field004: i32,
+        orientation: Vec3,
+        translate: Vec3,
+        diffuse: f32,
+        ambient: f32,
+        color: Color,
+        directional: i32,
+        directed_source: i32,
+        point_source: i32,
+        saturated: i32,
+        field200: i32,
+        range: Range,
+        parent_indices: Vec<Index>,
+        parent_ptr: u32,
+    }
 }
 
 api! {
-    struct Lod {}
+    struct Lod {
+        field00: i32,
+        range: Range,
+        field16: f32,
+        field20: f32,
+        field24: f32,
+        field28: f32,
+        field32: f32,
+        field36: f32,
+        field40: f32,
+        field44: f32,
+        field48: i32,
+        field52: f32,
+        field56: f32,
+        field60: f32,
+        field64: f32,
+        field68: i32,
+        field72: f32,
+        field76: f32,
+    }
 }
 
 api! {
@@ -172,6 +204,7 @@ api! {
         color: Option<Color>,
         unk: f32,
         transform: Transform,
+        signs: u32,
     }
 }
 
@@ -211,7 +244,7 @@ impl Area {
     }
 
     #[inline]
-    pub const fn y_count(&self, size: i32) -> i32 {
+    pub const fn z_count(&self, size: i32) -> i32 {
         (self.bottom - self.top) / size
     }
 }
@@ -232,7 +265,7 @@ api! {
         z: i32,
         min: Vec3,
         max: Vec3,
-        nodes: Vec<u16>,
+        node_indices: Vec<Index>,
         nodes_ptr: u32,
     }
 }
@@ -253,9 +286,10 @@ api! {
         fog: WorldFog,
         area: Area,
         partition_max_dec_feature_count: u8,
-        light_indices: Vec<u16>,
-        sound_indices: Vec<u16>,
+        light_indices: Vec<Index>,
+        sound_indices: Vec<Index>,
         partitions: Vec<Vec<WorldPartition>>,
+        unk: i32,
         ptrs: WorldPtrs,
     }
 }

@@ -83,6 +83,7 @@ where
     fn from_bits(v: R) -> Option<Self>;
     fn fmt_value(v: R, f: &mut fmt::Formatter<'_>) -> fmt::Result;
     fn maybe(self) -> Maybe<R, Self>;
+    fn check(v: R) -> Result<Self, String>;
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -92,7 +93,7 @@ where
     R: PrimitiveRepr,
 {
     pub value: R,
-    pub marker: PhantomData<F>,
+    marker: PhantomData<F>,
 }
 
 impl<R: PrimitiveRepr, F: SupportsMaybe<R>> PartialEq<F> for Maybe<R, F> {
@@ -119,8 +120,8 @@ impl<R: PrimitiveRepr, F: SupportsMaybe<R>> Maybe<R, F> {
     }
 
     #[inline]
-    pub fn validate(self) -> Option<F> {
-        F::from_bits(self.value)
+    pub fn check(self) -> Result<F, String> {
+        F::check(self.value)
     }
 }
 

@@ -49,12 +49,12 @@ impl_as_bytes!(WindowC, 248);
 mod size {
     pub(crate) fn size() -> u32 {
         use mech3ax_types::AsBytes as _;
-        mech3ax_api_types::gamez::nodes::Display::SIZE
+        super::WindowC::SIZE
     }
 }
 
 pub(crate) mod rc {
     pub(crate) use super::read::read;
     pub(crate) use super::size::size;
-    // pub(crate) use super::write::write;
+    pub(crate) use super::write::write;
 }

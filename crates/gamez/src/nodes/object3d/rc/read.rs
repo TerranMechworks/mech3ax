@@ -1,5 +1,5 @@
 use super::{Object3dFlags, Object3dRcC, SCALE_INITIAL};
-use crate::nodes::math::object_matrix;
+use crate::nodes::math::{extract_signs, object_matrix};
 use mech3ax_api_types::gamez::nodes::{Object3d, RotateTranslateScale, Transform};
 use mech3ax_api_types::{AffineMatrix, Color, Vec3};
 use mech3ax_common::io_ext::CountingReader;
@@ -10,9 +10,7 @@ pub(crate) fn read(read: &mut CountingReader<impl Read>) -> Result<Object3d> {
     let object3d: Object3dRcC = read.read_struct()?;
 
     // let matrix_signs = extract_matrix_signs(&object3d.matrix);
-    let obj = assert_object3d(&object3d, read.prev)?;
-
-    Ok(obj)
+    assert_object3d(&object3d, read.prev)
 }
 
 fn rotation(value: f32) -> std::result::Result<(), String> {
@@ -25,7 +23,7 @@ fn rotation(value: f32) -> std::result::Result<(), String> {
 }
 
 fn assert_object3d(object3d: &Object3dRcC, offset: usize) -> Result<Object3d> {
-    let flags = chk!(offset, flags object3d.flags)?;
+    let flags = chk!(offset, ?object3d.flags)?;
     // TODO: UNK5
     let opacity = if flags.contains(Object3dFlags::OPACITY) {
         Some(object3d.opacity)
@@ -42,6 +40,7 @@ fn assert_object3d(object3d: &Object3dRcC, offset: usize) -> Result<Object3d> {
     };
     chk!(offset, object3d.field096 == AffineMatrix::DEFAULT)?;
 
+    let signs = extract_signs(&object3d.transform);
     let transform = if flags.contains(Object3dFlags::TRANSFORM_INITIAL) {
         chk!(offset, object3d.rotate == Vec3::DEFAULT)?;
         chk!(offset, object3d.scale == SCALE_INITIAL)?;
@@ -72,5 +71,6 @@ fn assert_object3d(object3d: &Object3dRcC, offset: usize) -> Result<Object3d> {
         color,
         unk,
         transform,
+        signs,
     })
 }

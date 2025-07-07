@@ -1,5 +1,5 @@
-use mech3ax_types::maybe::{PrimitiveRepr, SupportsMaybe};
-use mech3ax_types::{Bitflags, Bool, ConversionError, Maybe, Padded, PrimitiveEnum};
+use mech3ax_types::maybe::{Maybe, PrimitiveRepr, SupportsMaybe};
+use mech3ax_types::ConversionError;
 use std::cmp::{PartialEq, PartialOrd};
 use std::fmt;
 
@@ -228,12 +228,12 @@ pub fn is_all_zero(name: &str, pos: usize, buf: &[u8]) -> Result<()> {
 }
 
 #[inline]
-pub fn is_bool<R>(name: &str, pos: usize, v: Bool<R>) -> Result<bool>
+pub fn is_bool<R>(name: &str, pos: usize, v: Maybe<R, bool>) -> Result<bool>
 where
     R: PrimitiveRepr,
     bool: SupportsMaybe<R>,
 {
-    v.validate().ok_or_else(|| {
+    <bool as SupportsMaybe<R>>::from_bits(v.value).ok_or_else(|| {
         let msg = format!(
             "Expected `{}` to be 0 or 1, but was {} (at {})",
             name, v, pos
@@ -246,9 +246,9 @@ where
 pub fn is_bitflags<R, F>(name: &str, pos: usize, v: Maybe<R, F>) -> Result<F>
 where
     R: PrimitiveRepr,
-    F: Bitflags<R>,
+    F: SupportsMaybe<R>,
 {
-    v.validate().ok_or_else(|| {
+    F::from_bits(v.value).ok_or_else(|| {
         let msg = format!(
             "Expected `{}` to have valid flags, but was {} (at {})",
             name, v, pos
@@ -261,14 +261,10 @@ where
 pub fn is_enum<R, E>(name: &str, pos: usize, v: Maybe<R, E>) -> Result<E>
 where
     R: PrimitiveRepr,
-    E: PrimitiveEnum<R>,
+    E: SupportsMaybe<R>,
 {
-    v.validate().ok_or_else(|| {
-        let discriminants = mech3ax_types::primitive_enum::format_discriminants(E::DISCRIMINANTS);
-        let msg = format!(
-            "Expected `{}` to be {}, but was {} (at {})",
-            name, discriminants, v, pos
-        );
+    E::from_bits(v.value).ok_or_else(|| {
+        let msg = format!("Expected `{}` to be enum, but was {} (at {})", name, v, pos);
         AssertionError(msg)
     })
 }
@@ -277,15 +273,12 @@ where
 pub fn is_padded<R, P>(name: &str, pos: usize, v: Maybe<R, P>) -> Result<P>
 where
     R: PrimitiveRepr,
-    P: Padded<R>,
+    P: SupportsMaybe<R>,
 {
-    v.validate().ok_or_else(|| {
+    P::from_bits(v.value).ok_or_else(|| {
         let msg = format!(
-            "Expected `{}` to be padded ({}), but was {} (at {})",
-            name,
-            P::PATTERN,
-            v,
-            pos
+            "Expected `{}` to be padded, but was {} (at {})",
+            name, v, pos
         );
         AssertionError(msg)
     })

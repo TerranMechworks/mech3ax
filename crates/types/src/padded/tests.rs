@@ -7,13 +7,13 @@ fn maybe_u32_i8_from_bits() {
         let maybe: PaddedI8 = i.maybe();
         let v: u32 = maybe.into();
         assert_eq!(i8::from_bits(v), Some(i), "{} / 0x{:08X}", i, v);
-        assert_eq!(maybe.validate(), Some(i), "{} / 0x{:08X}", i, v);
+        assert_eq!(maybe.check().ok(), Some(i), "{} / 0x{:08X}", i, v);
     }
 
     for v in [0xFFFF_FFFF, 0x8000_0000, 0x0000_0100] {
         let maybe: PaddedI8 = PaddedI8::new(v);
         assert_eq!(i8::from_bits(v), None, "0x{:08X}", v);
-        assert_eq!(maybe.validate(), None, "0x{:08X}", v);
+        assert_eq!(maybe.check().ok(), None, "0x{:08X}", v);
     }
 }
 

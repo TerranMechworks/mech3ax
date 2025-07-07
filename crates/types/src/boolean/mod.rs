@@ -1,8 +1,13 @@
+use crate::maybe::{Maybe, SupportsMaybe};
 use std::fmt;
+
+pub type Bool8 = Maybe<u8, bool>;
+pub type Bool16 = Maybe<u16, bool>;
+pub type Bool32 = Maybe<u32, bool>;
 
 macro_rules! impl_bool_maybe {
     ($ty:ty) => {
-        impl $crate::maybe::SupportsMaybe<$ty> for bool {
+        impl SupportsMaybe<$ty> for bool {
             #[inline]
             fn from_bits(v: $ty) -> Option<Self> {
                 match v {
@@ -12,29 +17,35 @@ macro_rules! impl_bool_maybe {
                 }
             }
 
+            #[inline]
             fn fmt_value(v: $ty, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 match v {
                     0 => <bool as fmt::Display>::fmt(&false, f),
                     1 => <bool as fmt::Display>::fmt(&true, f),
-                    _ => write!(f, "{}", v),
+                    _ => <$ty as fmt::Display>::fmt(&v, f),
                 }
             }
 
             #[inline]
-            fn maybe(self) -> $crate::maybe::Maybe<$ty, bool> {
-                $crate::maybe::Maybe::new(self as _)
+            fn maybe(self) -> Maybe<$ty, bool> {
+                Maybe::new(self as _)
+            }
+
+            #[inline]
+            fn check(v: $ty) -> Result<Self, String> {
+                Self::from_bits(v).ok_or_else(|| format!("expected {} to be 0 or 1", v))
             }
         }
 
         // TODO: replace with `SupportsMaybe::maybe()`
-        impl From<bool> for $crate::maybe::Maybe<$ty, bool> {
+        impl From<bool> for Maybe<$ty, bool> {
             #[inline]
             fn from(value: bool) -> Self {
-                $crate::maybe::Maybe::new(value as _)
+                Maybe::new(value as _)
             }
         }
 
-        impl $crate::maybe::Maybe<$ty, bool> {
+        impl Maybe<$ty, bool> {
             pub const FALSE: Self = Self::new(false as _);
             pub const TRUE: Self = Self::new(true as _);
         }
@@ -44,12 +55,6 @@ macro_rules! impl_bool_maybe {
 impl_bool_maybe!(u8);
 impl_bool_maybe!(u16);
 impl_bool_maybe!(u32);
-
-pub type Bool<T> = crate::maybe::Maybe<T, bool>;
-
-pub type Bool8 = crate::maybe::Maybe<u8, bool>;
-pub type Bool16 = crate::maybe::Maybe<u16, bool>;
-pub type Bool32 = crate::maybe::Maybe<u32, bool>;
 
 #[cfg(test)]
 mod tests;

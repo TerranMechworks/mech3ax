@@ -1,5 +1,5 @@
 use super::NodeMwC;
-use crate::nodes::check::{ap, model_index, node_count, padded, ptr};
+use crate::nodes::check::{ap, model_index, node_count, ptr};
 use crate::nodes::types::{AreaPartitionPg, NodeClass, NodeInfo, ZONE_ALWAYS};
 use mech3ax_api_types::gamez::nodes::{ActiveBoundingBox, AreaPartition, NodeFlags};
 use mech3ax_api_types::nodes::BoundingBox;
@@ -10,12 +10,12 @@ use mech3ax_types::{Ascii, Ptr};
 
 pub(crate) fn assert_node(node: NodeMwC, offset: usize) -> Result<NodeInfo> {
     let name = chk!(offset, node_name(&node.name))?;
-    let flags = chk!(offset, flags node.flags)?;
+    let flags = chk!(offset, ?node.flags)?;
     chk!(offset, node.field040 == 0)?;
     // TODO
     // let update_flags 44
-    let zone_id = chk!(offset, padded(node.zone_id))?;
-    let node_class = chk!(offset, enum node.node_class)?;
+    let zone_id = chk!(offset, ?node.zone_id)?;
+    let node_class = chk!(offset, ?node.node_class)?;
     // data_ptr (056) is variable
     let model_index = chk!(offset, model_index(node.model_index))?;
     chk!(offset, node.environment_data == Ptr::NULL)?;

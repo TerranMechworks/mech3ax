@@ -72,7 +72,7 @@ macro_rules! bit {
                             concat!("Invalid value {} for ", stringify!($name)),
                             v
                         );
-                        <<D as ::serde::de::Deserializer>::Error as ::serde::de::Error>::custom(msg)
+                        ::serde::de::Error::custom(msg)
                     })
                 }
             }

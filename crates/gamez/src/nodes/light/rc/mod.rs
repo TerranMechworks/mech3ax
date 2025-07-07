@@ -2,9 +2,17 @@ mod read;
 mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::{AffineMatrix, Color, Range, Vec3};
+use mech3ax_api_types::gamez::nodes::Light;
+use mech3ax_api_types::{AffineMatrix, Color, Vec3};
 use mech3ax_types::{impl_as_bytes, Offsets, Ptr};
 pub(crate) use read::read;
+pub(crate) use write::write;
+
+pub(crate) fn size(light: &Light) -> u32 {
+    let parent_size = (light.parent_indices.len() as u32) * 4;
+    use mech3ax_types::AsBytes as _;
+    LightRcC::SIZE.wrapping_add(parent_size)
+}
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]

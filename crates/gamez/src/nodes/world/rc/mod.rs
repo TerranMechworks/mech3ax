@@ -2,10 +2,33 @@ mod read;
 mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::gamez::nodes::FogType;
+use mech3ax_api_types::gamez::nodes::{FogType, World};
 use mech3ax_api_types::{Color, Range, Vec3};
-use mech3ax_types::{impl_as_bytes, Maybe, Offsets, PaddedU8, Ptr};
+use mech3ax_types::{impl_as_bytes, Hex, Maybe, Offsets, PaddedU8, Ptr};
 pub(crate) use read::read;
+pub(crate) use write::write;
+
+pub(crate) fn size(world: &World) -> u32 {
+    use mech3ax_types::AsBytes as _;
+
+    let light_size = (world.light_indices.len() as u32) * 4;
+    let sound_size = (world.sound_indices.len() as u32) * 4;
+
+    let mut size = WorldRcC::SIZE
+        .wrapping_add(light_size)
+        .wrapping_add(sound_size);
+
+    for partitions in &world.partitions {
+        for partition in partitions {
+            let node_size = (partition.node_indices.len() as u32) * 4;
+            size = size
+                .wrapping_add(PartitionRcC::SIZE)
+                .wrapping_add(node_size);
+        }
+    }
+
+    size
+}
 
 type FType = Maybe<u32, FogType>;
 
@@ -30,16 +53,16 @@ struct WorldRcC {
     partition_max_dec_feature_count: PaddedU8, // 076
     virtual_partition: i32,                    // 080
     virt_partition_x_size: f32,                // 084
-    virt_partition_y_size: f32,                // 088
+    virt_partition_z_size: f32,                // 088
     virt_partition_x_half: f32,                // 092
-    virt_partition_y_half: f32,                // 096
+    virt_partition_z_half: f32,                // 096
     virt_partition_x_inv: f32,                 // 100
-    virt_partition_y_inv: f32,                 // 104
+    virt_partition_z_inv: f32,                 // 104
     virt_partition_diag: f32,                  // 108
     partition_inclusion_tol_low: f32,          // 112
     partition_inclusion_tol_high: f32,         // 116
     virt_partition_x_count: i32,               // 120
-    virt_partition_y_count: i32,               // 124
+    virt_partition_z_count: i32,               // 124
     virt_partition_ptr: Ptr,                   // 128
     field132: f32,                             // 132 (1)
     field136: f32,                             // 136 (1)
@@ -57,7 +80,7 @@ impl_as_bytes!(WorldRcC, 172);
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
 struct PartitionRcC {
-    flags: u32,      // 00
+    flags: Hex<u32>, // 00
     field04: i32,    // 04
     x: f32,          // 08
     z: f32,          // 12

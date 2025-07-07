@@ -12,4 +12,4 @@ mod types;
 pub(crate) mod window;
 pub(crate) mod world;
 
-pub(crate) use types::{NodeClass, NodeInfo};
+pub(crate) use types::NodeClass;

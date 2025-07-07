@@ -4,11 +4,12 @@ use crate::nodes::node::rc::{assert_node, assert_node_zero, NodeRcC};
 use crate::nodes::NodeClass;
 use log::trace;
 use mech3ax_api_types::gamez::nodes::{Node, NodeData};
+use mech3ax_api_types::Index;
 use mech3ax_common::check::amend_err;
-use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, err, Result};
-use mech3ax_types::{i32_to_usize, u32_to_usize, AsBytes as _};
-use std::io::{Read, Write};
+use mech3ax_common::io_ext::CountingReader;
+use mech3ax_common::{err, Result};
+use mech3ax_types::u32_to_usize;
+use std::io::Read;
 
 pub(crate) fn read_nodes(
     read: &mut CountingReader<impl Read>,
@@ -16,10 +17,6 @@ pub(crate) fn read_nodes(
     count: i32,
     model_count: i32,
 ) -> Result<Vec<Node>> {
-    let node_write_size = u32_to_usize(NodeRcC::SIZE) + 4;
-    let valid_offset = read.offset + node_write_size * i32_to_usize(count);
-    let end_offset = read.offset + node_write_size * i32_to_usize(array_size);
-
     let nodes = (0..count)
         .map(|index| {
             trace!("Processing node info {}/{}", index, count);
@@ -31,18 +28,10 @@ pub(crate) fn read_nodes(
             // usually, this is the offset of the node data, or for empty nodes
             // it's the parent index since they do not have data.
             node_info.offset = read.read_u32()?;
+            trace!("Node data offset: {}", node_info.offset);
             Ok(node_info)
         })
         .collect::<Result<Vec<_>>>()?;
-
-    // TODO: kinda dumb?
-    if read.offset != valid_offset {
-        return Err(err!(
-            "read offset {} != {} (node info)",
-            read.offset,
-            valid_offset
-        ));
-    }
 
     trace!(
         "Processing {}..{} node info zeros at {}",
@@ -64,7 +53,7 @@ pub(crate) fn read_nodes(
 
         if actual_index != expected_index {
             return Err(err!(
-                "node off {} != {} (index: {}, at {})",
+                "node offset {} != {} (index: {}, at {})",
                 actual_index,
                 expected_index,
                 index,
@@ -73,15 +62,6 @@ pub(crate) fn read_nodes(
         }
     }
     trace!("Processed node info zeros at {}", read.offset);
-
-    // TODO: kinda dumb?
-    if read.offset != end_offset {
-        return Err(err!(
-            "read offset {} != {} (node zero)",
-            read.offset,
-            end_offset
-        ));
-    }
 
     let nodes = nodes
         .into_iter()
@@ -95,7 +75,7 @@ pub(crate) fn read_nodes(
                     return Err(err!(
                         "read offset {} != {} (node {})",
                         read.offset,
-                        end_offset,
+                        node_offset,
                         index,
                     ));
                 }
@@ -135,11 +115,10 @@ pub(crate) fn read_nodes(
                 }
                 NodeClass::Empty => {
                     let parent_index = node_info.offset as i32;
-                    let parent_index =
-                        crate::nodes::check::node_index2(parent_index).map_err(|msg| {
-                            let name = format!("empty {}/{} parent index", index, count);
-                            amend_err(msg, &name, read.offset, file!(), line!())
-                        })?;
+                    let parent_index = Index::check_i32(parent_index).map_err(|msg| {
+                        let name = format!("empty {}/{} parent index", index, count);
+                        amend_err(msg, &name, read.offset, file!(), line!())
+                    })?;
                     node.parent_indices = vec![parent_index];
                 }
                 NodeClass::Light => {
@@ -182,55 +161,6 @@ pub(crate) fn read_nodes(
         })
         .collect::<Result<Vec<_>>>()?;
 
+    trace!("Processed node data at {}", read.offset);
     Ok(nodes)
-}
-
-pub(crate) fn write_nodes(
-    write: &mut CountingWriter<impl Write>,
-    nodes: &[Node],
-    array_size: i32,
-    offset: u32,
-) -> Result<()> {
-    // let mut offset = offset + (NodeRcC::SIZE + 4) * (array_size as u32);
-    // let node_count = assert_len!(i32, nodes.len(), "GameZ nodes")?;
-
-    // for (index, node) in nodes.iter().enumerate() {
-    //     trace!("Processing node info {}/{}", index, node_count);
-    //     write_node_info(write, node)?;
-
-    //     let node_data_offset = match node {
-    //         NodeRc::Empty(empty) => empty.parent,
-    //         _ => offset,
-    //     };
-
-    //     trace!("Node {} data offset: {}", index, node_data_offset);
-    //     write.write_u32(node_data_offset)?;
-    //     offset += size_node(node);
-    // }
-
-    // trace!(
-    //     "Processing {}..{} node info zeros at {}",
-    //     node_count,
-    //     array_size,
-    //     write.offset
-    // );
-    // let node_zero = NodeRcC::zero();
-    // for index in node_count..array_size {
-    //     write.write_struct_no_log(&node_zero)?;
-    //     let mut index = index + 1;
-    //     if index == array_size {
-    //         index = NODE_INDEX_INVALID;
-    //     }
-    //     write.write_i32(index)?;
-    // }
-    // trace!("Processed note info zeros at {}", write.offset);
-
-    // for (index, node) in nodes.iter().enumerate() {
-    //     if !matches!(node, NodeRc::Empty(_)) {
-    //         trace!("Processing node data {}/{}", index, node_count);
-    //     }
-    //     write_node_data(write, node)?;
-    // }
-
-    Ok(())
 }

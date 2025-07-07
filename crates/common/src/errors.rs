@@ -130,4 +130,11 @@ impl From<PeError> for Error {
     }
 }
 
-pub type Result<T> = std::result::Result<T, Error>;
+impl From<String> for Error {
+    #[inline]
+    fn from(value: String) -> Self {
+        Self::Assert(AssertionError(value))
+    }
+}
+
+pub type Result<T, E = Error> = std::result::Result<T, E>;

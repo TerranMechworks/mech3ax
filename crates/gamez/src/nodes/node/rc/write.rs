@@ -1,9 +1,10 @@
 use super::{Class, Flags, NodeRcC, ABORT_TEST_NAME, ABORT_TEST_NODE_NAME, ZERO_NAME};
 use crate::nodes::types::AreaPartitionPg;
 use crate::nodes::NodeClass;
-use mech3ax_api_types::gamez::nodes::{Node, NodeData};
+use mech3ax_api_types::gamez::nodes::Node;
 use mech3ax_api_types::nodes::BoundingBox;
-use mech3ax_api_types::Vec3;
+use mech3ax_api_types::{Index, Vec3};
+use mech3ax_common::{assert_len, Result};
 use mech3ax_types::maybe::SupportsMaybe as _;
 use mech3ax_types::{Ascii, PaddedI8, Ptr};
 
@@ -34,7 +35,7 @@ pub(crate) fn make_node_zero() -> NodeRcC {
     }
 }
 
-pub(crate) fn make_node(node: &Node) -> NodeRcC {
+pub(crate) fn make_node(node: &Node) -> Result<NodeRcC> {
     let name = if node.name == ABORT_TEST_NAME {
         log::debug!("node name `abort_test` fixup");
         ABORT_TEST_NODE_NAME
@@ -44,7 +45,30 @@ pub(crate) fn make_node(node: &Node) -> NodeRcC {
 
     let node_class = NodeClass::from_data(&node.data);
 
-    NodeRcC {
+    let area_partition = match &node.area_partition {
+        Some(ap) => {
+            if ap.virtual_x != 0 || ap.virtual_y != 0 {
+                log::warn!("node area partition virtual coordinates ignored in RC");
+            }
+            AreaPartitionPg {
+                x: ap.x.into(),
+                y: ap.y.into(),
+            }
+        }
+        None => AreaPartitionPg::DEFAULT,
+    };
+
+    // TODO
+    let mut parent_count = assert_len!(i32, node.parent_indices.len(), "node parent indices")?;
+    let child_count = assert_len!(i32, node.child_indices.len(), "node child indices")?;
+    let parent_array_ptr = Ptr(node.parent_array_ptr);
+    let child_array_ptr = Ptr(node.child_array_ptr);
+
+    if node_class == NodeClass::Empty {
+        parent_count = 0;
+    }
+
+    Ok(NodeRcC {
         name,
         flags: node.flags.maybe(),
         field040: 0,
@@ -52,20 +76,20 @@ pub(crate) fn make_node(node: &Node) -> NodeRcC {
         zone_id: node.zone_id.maybe(),
         node_class: node_class.maybe(),
         data_ptr: Ptr(node.data_ptr),
-        model_index: node.model_index.map(Into::into).unwrap_or(-1),
+        model_index: node.model_index.map(Index::to_i32).unwrap_or(-1),
         environment_data: Ptr::NULL,
-        action_priority: 0,
+        action_priority: 1,
         action_callback: Ptr::NULL,
-        area_partition: AreaPartitionPg::ZERO,
-        parent_count: 0,
-        parent_array_ptr: Ptr::NULL,
-        child_count: 0,
-        child_array_ptr: Ptr::NULL,
+        area_partition,
+        parent_count,
+        parent_array_ptr,
+        child_count,
+        child_array_ptr,
         bbox_mid: Vec3::DEFAULT,
         bbox_diag: 0.0,
-        node_bbox: BoundingBox::EMPTY,
-        model_bbox: BoundingBox::EMPTY,
-        child_bbox: BoundingBox::EMPTY,
+        node_bbox: node.node_bbox,
+        model_bbox: node.model_bbox,
+        child_bbox: node.child_bbox,
         activation_ptr: Ptr::NULL,
-    }
+    })
 }

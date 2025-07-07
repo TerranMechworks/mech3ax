@@ -1,12 +1,10 @@
 use super::{PartitionRcC, WorldRcC};
-
 use crate::nodes::check::{node_count, ptr};
 use crate::nodes::helpers::read_node_indices;
 use crate::nodes::math::partition_diag;
 use crate::nodes::range::RangeI32;
 use log::trace;
 use mech3ax_api_types::gamez::nodes::{Area, World, WorldFog, WorldPartition, WorldPtrs};
-use mech3ax_common::check::padded;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{chk, Result};
 use mech3ax_types::Ptr;
@@ -55,7 +53,7 @@ fn assert_world(world: &WorldRcC, offset: usize) -> Result<WorldTemp> {
     chk!(offset, world.area_partition_ptr != Ptr::NULL)?;
 
     // -- fog
-    let fog_type = chk!(offset, enum world.fog_type)?;
+    let fog_type = chk!(offset, ?world.fog_type)?;
     // TODO
     // chk!(offset, world.fog_color == 0)?;
     // chk!(offset, world.fog_range == 0)?;
@@ -85,23 +83,22 @@ fn assert_world(world: &WorldRcC, offset: usize) -> Result<WorldTemp> {
 
     // -- virtual partition
     // usually 16
-    let partition_max_dec_feature_count =
-        chk!(offset, padded(world.partition_max_dec_feature_count))?;
+    let partition_max_dec_feature_count = chk!(offset, ?world.partition_max_dec_feature_count)?;
     chk!(offset, world.virtual_partition == 0)?;
     chk!(offset, world.virt_partition_x_size == 256.0)?;
-    chk!(offset, world.virt_partition_y_size == -256.0)?;
+    chk!(offset, world.virt_partition_z_size == -256.0)?;
     chk!(offset, world.virt_partition_x_half == 128.0)?;
-    chk!(offset, world.virt_partition_y_half == -128.0)?;
+    chk!(offset, world.virt_partition_z_half == -128.0)?;
     chk!(offset, world.virt_partition_x_inv == 1.0 / 256.0)?;
-    chk!(offset, world.virt_partition_y_inv == 1.0 / -256.0)?;
-    // this is sqrt(x_size * x_size + y_size * y_size) * -0.5, but because of the
+    chk!(offset, world.virt_partition_z_inv == 1.0 / -256.0)?;
+    // this is sqrt(x_size * x_size + z_size * z_size) * -0.5, but because of the
     // (poor) sqrt approximation used, it comes out as -192.0 instead of -181.0
     chk!(offset, world.virt_partition_diag == -192.0)?;
-    // TODO: x * 0.125 / y * -0.125?
+    // TODO: x * 0.125 / z * -0.125?
     chk!(offset, world.partition_inclusion_tol_low == 3.0)?;
     chk!(offset, world.partition_inclusion_tol_high == 3.0)?;
     chk!(offset, world.virt_partition_x_count == area.x_count(256))?;
-    chk!(offset, world.virt_partition_y_count == area.y_count(256))?;
+    chk!(offset, world.virt_partition_z_count == area.z_count(256))?;
     chk!(offset, world.virt_partition_ptr != Ptr::NULL)?;
     chk!(offset, world.field132 == 1.0)?;
     chk!(offset, world.field136 == 1.0)?;
@@ -132,6 +129,7 @@ fn assert_world(world: &WorldRcC, offset: usize) -> Result<WorldTemp> {
         light_indices: Vec::new(),
         sound_indices: Vec::new(),
         partitions: Vec::new(),
+        unk: world.area_partition_unk,
         ptrs: WorldPtrs {
             area_partition_ptr: world.area_partition_ptr.0,
             virt_partition_ptr: world.virt_partition_ptr.0,
@@ -154,7 +152,7 @@ fn read_partitions(
     area: &Area,
 ) -> Result<Vec<Vec<WorldPartition>>> {
     let area_x = RangeI32::new(area.left, area.right, 256);
-    // because the virtual partition y size is negative, this is inverted!
+    // because the virtual partition z size is negative, this is inverted!
     let area_z = RangeI32::new(area.bottom, area.top, -256);
 
     let z_len = area_z.len();
@@ -162,7 +160,7 @@ fn read_partitions(
 
     area_z
         .enumerate()
-        .map(|(y_idx, z_pos)| {
+        .map(|(z_idx, z_pos)| {
             area_x
                 .clone()
                 .enumerate()
@@ -177,7 +175,7 @@ fn read_partitions(
                         area.bottom,
                         z_pos,
                         area.top,
-                        y_idx,
+                        z_idx,
                         z_len,
                     );
                     let partition: PartitionRcC = read.read_struct()?;
@@ -187,12 +185,13 @@ fn read_partitions(
                     } = assert_partition(&partition, x_pos, z_pos, read.prev)?;
 
                     if node_count > 0 {
-                        partition.nodes = read_node_indices!(read, node_count, |idx, cnt| {
-                            format!(
-                                "world partition x: {} z: {} node index {}/{}",
-                                x_pos, z_pos, idx, cnt
-                            )
-                        })?;
+                        partition.node_indices =
+                            read_node_indices!(read, node_count, |idx, cnt| {
+                                format!(
+                                    "world partition x: {} z: {} node index {}/{}",
+                                    x_pos, z_pos, idx, cnt
+                                )
+                            })?;
                     }
 
                     Ok(partition)
@@ -218,11 +217,6 @@ fn assert_partition(
     chk!(offset, partition.field56 == 0)?;
     let nodes_ptr = chk!(offset, ptr(partition.nodes_ptr, partition.node_count))?;
 
-    // chk!(offset, partition.min == 0)?; // Vec3
-    // chk!(offset, partition.max == 0)?; // Vec3
-    // chk!(offset, partition.mid == 0)?; // Vec3
-    // chk!(offset, partition.diagonal == 0)?; // f32
-
     chk!(offset, partition.min.x == xf)?;
     // y is unknown
     chk!(offset, partition.min.z == zf - 256.0)?;
@@ -231,18 +225,11 @@ fn assert_partition(
     // y is unknown
     chk!(offset, partition.max.z == zf)?;
 
-    // assert_that!(
-    //     "partition x mid",
-    //     partition.x_mid == xf + 128.0,
-    //     read.prev + 40
-    // )?;
-    // let z_mid = (partition.z_max + partition.z_min) * 0.5;
-    // assert_that!("partition z_mid", partition.z_mid == z_mid, read.prev + 44)?;
-    // assert_that!(
-    //     "partition y mid",
-    //     partition.y_mid == zf - 128.0,
-    //     read.prev + 48
-    // )?;
+    chk!(offset, partition.mid.x == xf + 128.0)?;
+    chk!(offset, partition.mid.z == zf - 128.0)?;
+
+    let mid_y = (partition.max.y + partition.min.y) * 0.5;
+    chk!(offset, partition.mid.y == mid_y)?;
 
     // since x and z always have a side of 128.0/-128.0 * 2 length respectively,
     // and the sign doesn't matter because the values are squared, only min.y and
@@ -256,7 +243,7 @@ fn assert_partition(
         z,
         min: partition.min,
         max: partition.max,
-        nodes: Vec::new(),
+        node_indices: Vec::new(),
         nodes_ptr: nodes_ptr.0,
     };
 

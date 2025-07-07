@@ -1,7 +1,7 @@
 use super::CameraC;
 use crate::nodes::math::cotangent;
 use mech3ax_api_types::gamez::nodes::Camera;
-use mech3ax_api_types::{AffineMatrix, Vec3};
+use mech3ax_api_types::{AffineMatrix, Index, Vec3};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::Result;
 use std::io::Write;
@@ -16,11 +16,11 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, camera: &Camera) -> 
     let fov_v_cot = cotangent(fov_v_half);
 
     let camera = CameraC {
-        world_index: camera.world_index.map(Into::into).unwrap_or(-1),
-        window_index: camera.window_index.map(Into::into).unwrap_or(-1),
-        focus_node_xy: camera.focus_node_xy.map(Into::into).unwrap_or(-1),
-        focus_node_xz: camera.focus_node_xz.map(Into::into).unwrap_or(-1),
-        flags: 0,
+        world_index: camera.world_index.map(Index::to_i32).unwrap_or(-1),
+        window_index: camera.window_index.map(Index::to_i32).unwrap_or(-1),
+        focus_node_xy: camera.focus_node_xy.map(Index::to_i32).unwrap_or(-1),
+        focus_node_xz: camera.focus_node_xz.map(Index::to_i32).unwrap_or(-1),
+        flags: 0, // TODO
         translate: Vec3::DEFAULT,
         rotate: Vec3::DEFAULT,
         world_translate: Vec3::DEFAULT,

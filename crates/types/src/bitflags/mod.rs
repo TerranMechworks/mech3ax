@@ -1,32 +1,7 @@
 mod disp;
 mod display_set;
 
-use crate::maybe::{PrimitiveRepr, SupportsMaybe};
 pub use disp::{format_flags_u16, format_flags_u32, format_flags_u8, gather_flags};
-use std::fmt;
-use std::ops::{BitOr, BitOrAssign};
-
-pub trait Bitflags<R>
-where
-    R: PrimitiveRepr,
-    Self: Clone
-        + Copy
-        + PartialEq
-        + Eq
-        + fmt::Debug
-        + fmt::Display
-        + fmt::LowerHex
-        + fmt::UpperHex
-        + fmt::Binary
-        + BitOr<Self, Output = Self>
-        + BitOrAssign<Self>
-        + Sized
-        + Sync
-        + Send
-        + 'static
-        + SupportsMaybe<R>,
-{
-}
 
 #[macro_export]
 macro_rules! bitflags {
@@ -184,9 +159,12 @@ macro_rules! bitflags {
             fn maybe(self) -> $crate::maybe::Maybe<$ty, $name> {
                 Self::maybe(self)
             }
-        }
 
-        impl $crate::bitflags::Bitflags<$ty> for $name {}
+            #[inline]
+            fn check(v: $ty) -> ::std::result::Result<Self, String> {
+                Self::from_bits(v).ok_or_else(|| format!("expected {} to be valid flags", v))
+            }
+        }
     };
     (@fmt u8) => {
         $crate::bitflags::format_flags_u8

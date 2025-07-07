@@ -1,5 +1,5 @@
 use super::{NodeRcC, ABORT_TEST_NAME, ABORT_TEST_NODE_NAME, ZERO_NAME};
-use crate::nodes::check::{ap, model_index, node_count, padded, ptr};
+use crate::nodes::check::{ap, model_index, node_count, ptr};
 use crate::nodes::types::{AreaPartitionPg, NodeClass, NodeInfo, ZONE_ALWAYS};
 use mech3ax_api_types::gamez::nodes::{ActiveBoundingBox, AreaPartition, NodeFlags};
 use mech3ax_api_types::nodes::BoundingBox;
@@ -42,12 +42,12 @@ pub(crate) fn assert_node(node: &NodeRcC, offset: usize, model_count: i32) -> Re
         chk!(offset, node_name(&node.name))?
     };
 
-    let flags = chk!(offset, flags node.flags)?;
+    let flags = chk!(offset, ?node.flags)?;
     chk!(offset, node.field040 == 0)?;
     // TODO
     // update_flags 44
-    let zone_id = chk!(offset, padded(node.zone_id))?;
-    let node_class = chk!(offset, enum node.node_class)?;
+    let zone_id = chk!(offset, ?node.zone_id)?;
+    let node_class = chk!(offset, ?node.node_class)?;
     // data_ptr (056) is variable
     let model_index = chk!(offset, model_index(node.model_index))?;
     chk!(offset, node.model_index < model_count)?;
@@ -77,10 +77,95 @@ pub(crate) fn assert_node(node: &NodeRcC, offset: usize, model_count: i32) -> Re
 
     chk!(offset, node.bbox_mid == Vec3::DEFAULT)?;
     chk!(offset, node.bbox_diag == 0.0)?;
+
     // TODO
     // node_bbox (116) is variable
     // model_bbox (140) is variable
     // child_bbox (164) is variable
+
+    if node_class == NodeClass::Lod {
+        if flags.contains(NodeFlags::BBOX_NODE) {
+            // ()
+            // chk!(offset, node.node_bbox != BoundingBox::EMPTY)?;
+        } else {
+            // chk!(offset, node.node_bbox == BoundingBox::EMPTY)?;
+            if node.node_bbox != BoundingBox::EMPTY {
+                log::warn!("LOD BBOX_NODE FAIL");
+            } else {
+                log::warn!("LOD BBOX_NODE PASS");
+            }
+        }
+
+        // model bbox is never set
+        if flags.contains(NodeFlags::BBOX_MODEL) {
+            panic!("LOD BBOX_MODEL");
+        }
+
+        if flags.contains(NodeFlags::BBOX_CHILD) {
+            // ()
+            // chk!(offset, node.child_bbox != BoundingBox::EMPTY)?;
+        } else {
+            // chk!(offset, node.child_bbox == BoundingBox::EMPTY)?;
+            if node.child_bbox != BoundingBox::EMPTY {
+                log::warn!("LOD BBOX_CHILD FAIL");
+            } else {
+                log::warn!("LOD BBOX_CHILD PASS");
+            }
+        }
+    } else if node_class == NodeClass::Empty {
+        if flags.contains(NodeFlags::BBOX_NODE) {
+            // ()
+            // chk!(offset, node.node_bbox != BoundingBox::EMPTY)?;
+        } else {
+            // chk!(offset, node.node_bbox == BoundingBox::EMPTY)?;
+            if node.node_bbox != BoundingBox::EMPTY {
+                log::warn!("EMPTY BBOX_NODE FAIL");
+            } else {
+                log::warn!("EMPTY BBOX_NODE PASS");
+            }
+        }
+
+        if flags.contains(NodeFlags::BBOX_MODEL) {
+            // ()
+            // chk!(offset, node.model_bbox != BoundingBox::EMPTY)?;
+        } else {
+            // chk!(offset, node.model_bbox == BoundingBox::EMPTY)?;
+            if node.model_bbox != BoundingBox::EMPTY {
+                log::warn!("EMPTY BBOX_MODEL FAIL");
+            } else {
+                log::warn!("EMPTY BBOX_MODEL PASS");
+            }
+        }
+
+        if flags.contains(NodeFlags::BBOX_CHILD) {
+            // ()
+            // chk!(offset, node.child_bbox != BoundingBox::EMPTY)?;
+        } else {
+            chk!(offset, node.child_bbox == BoundingBox::EMPTY)?;
+        }
+    } else {
+        if flags.contains(NodeFlags::BBOX_NODE) {
+            // ()
+            // chk!(offset, node.node_bbox != BoundingBox::EMPTY)?;
+        } else {
+            chk!(offset, node.node_bbox == BoundingBox::EMPTY)?;
+        }
+
+        if flags.contains(NodeFlags::BBOX_MODEL) {
+            // ()
+            // chk!(offset, node.model_bbox != BoundingBox::EMPTY)?;
+        } else {
+            chk!(offset, node.model_bbox == BoundingBox::EMPTY)?;
+        }
+
+        if flags.contains(NodeFlags::BBOX_CHILD) {
+            // ()
+            // chk!(offset, node.child_bbox != BoundingBox::EMPTY)?;
+        } else {
+            chk!(offset, node.child_bbox == BoundingBox::EMPTY)?;
+        }
+    }
+
     chk!(offset, node.activation_ptr == Ptr::NULL)?;
 
     match node_class {

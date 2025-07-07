@@ -1,24 +1,35 @@
 use super::{LightRcC, WORLD_VIEW};
+use crate::nodes::check::node_count;
+use crate::nodes::helpers::read_node_indices;
 use mech3ax_api_types::gamez::nodes::Light;
-use mech3ax_api_types::{AffineMatrix, Vec3};
+use mech3ax_api_types::{AffineMatrix, Range, Vec3};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{chk, Result};
 use mech3ax_types::Ptr;
 use std::io::Read;
 
-pub(crate) fn read(read: &mut CountingReader<impl Read>) -> Result<Light> {
-    let light: LightRcC = read.read_struct()?;
-    assert_light(&light, read.prev)?;
-
-    // TODO: read_node_indices?
-    // read as a result of parent_count, but is always 0 (= world node index)
-    let light_parent = read.read_i32()?;
-    // chk!("light parent", light_parent == 0, read.prev)?;
-
-    Ok(Light {})
+struct LightTemp {
+    light: Light,
+    parent_count: u16,
 }
 
-fn assert_light(light: &LightRcC, offset: usize) -> Result<()> {
+pub(crate) fn read(read: &mut CountingReader<impl Read>) -> Result<Light> {
+    let light: LightRcC = read.read_struct()?;
+    let LightTemp {
+        mut light,
+        parent_count,
+    } = assert_light(&light, read.prev)?;
+
+    // read as a result of parent_count, which is always 1 in a normal ZBD,
+    // and should always be 0 (= world node index)
+    light.parent_indices = read_node_indices!(read, parent_count, |idx, cnt| {
+        format!("light node parent index {}/{}", idx, cnt)
+    })?;
+
+    Ok(light)
+}
+
+fn assert_light(light: &LightRcC, offset: usize) -> Result<LightTemp> {
     chk!(offset, light.recalc == 1)?;
     chk!(offset, light.field004 == 1)?;
     // TODO (always Z = 0.0)
@@ -48,8 +59,35 @@ fn assert_light(light: &LightRcC, offset: usize) -> Result<()> {
     chk!(offset, light.range_far_sq == range_far_sq)?;
     let range_inv = 1.0 / (light.range_far - light.range_near);
     chk!(offset, light.range_inv == range_inv)?;
-    chk!(offset, light.parent_count == 1)?;
+    let parent_count = chk!(offset, node_count(light.parent_count))?;
     chk!(offset, light.parent_ptr != Ptr::NULL)?;
 
-    Ok(())
+    let range = Range {
+        min: light.range_near,
+        max: light.range_far,
+    };
+
+    // TODO
+    let licht = Light {
+        recalc: light.recalc,
+        field004: light.field004,
+        orientation: light.orientation,
+        translate: light.translate,
+        diffuse: light.diffuse,
+        ambient: light.ambient,
+        color: light.color,
+        directional: light.directional,
+        directed_source: light.directed_source,
+        point_source: light.point_source,
+        saturated: light.saturated,
+        field200: light.field200,
+        range,
+        parent_indices: Vec::new(),
+        parent_ptr: light.parent_ptr.0,
+    };
+
+    Ok(LightTemp {
+        light: licht,
+        parent_count,
+    })
 }
