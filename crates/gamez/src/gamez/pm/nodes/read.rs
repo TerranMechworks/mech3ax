@@ -1,16 +1,13 @@
 use super::{NODE_INDEX_BOT_MASK, NODE_INDEX_TOP, NODE_INDEX_TOP_MASK};
 use log::trace;
 use mech3ax_api_types::nodes::pm::NodePm;
-use mech3ax_common::io_ext::{CountingReader, CountingWriter};
+use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_nodes::common::{read_child_indices, write_child_indices};
+use mech3ax_nodes::common::read_child_indices;
 use mech3ax_nodes::mw::NodeMwC;
-use mech3ax_nodes::pm::{
-    read_node_data, read_node_info_gamez, write_node_data, write_node_info, NodeVariantPm,
-    WrappedNodePm,
-};
+use mech3ax_nodes::pm::{read_node_data, read_node_info_gamez, NodeVariantPm, WrappedNodePm};
 use mech3ax_types::{i32_to_usize, u32_to_usize, AsBytes as _};
-use std::io::{Read, Write};
+use std::io::Read;
 
 pub(crate) fn read_nodes(
     read: &mut CountingReader<impl Read>,
@@ -158,50 +155,6 @@ fn assert_area_partitions(nodes: &[NodePm], offset: usize) -> Result<()> {
             assert_that!("area partition y", ap.y < y_count, offset)?;
             assert_that!("virt partition x", ap.virtual_x <= x_count, offset)?;
             assert_that!("virt partition y", ap.virtual_y <= y_count, offset)?;
-        }
-    }
-
-    Ok(())
-}
-
-pub(crate) fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NodePm]) -> Result<()> {
-    let node_count = nodes.len();
-
-    for (index, node) in nodes.iter().enumerate() {
-        trace!("Processing node info {}/{}", index, node_count);
-        write_node_info(write, node, false)?;
-        let node_index = match node {
-            NodePm::World(_) => 1,
-            NodePm::Window(_) => 2,
-            NodePm::Camera(_) => 3,
-            NodePm::Display(_) => 4,
-            NodePm::Light(light) => light.node_index,
-            NodePm::Lod(lod) => lod.node_index,
-            NodePm::Object3d(object3d) => object3d.node_index,
-        };
-        trace!("Node {} index: {}", index, node_index);
-        let node_index = node_index | NODE_INDEX_TOP;
-        write.write_u32(node_index)?;
-    }
-
-    for (index, node) in nodes.iter().enumerate() {
-        trace!("Processing node data {}/{}", index, node_count);
-        write_node_data(write, node)?;
-        match node {
-            NodePm::Lod(lod) => {
-                write.write_u32(lod.parent)?;
-                write_child_indices(write, &lod.children)?;
-            }
-            NodePm::Object3d(object3d) => {
-                if let Some(parent) = object3d.parent {
-                    write.write_u32(parent)?;
-                }
-                write_child_indices(write, &object3d.children)?;
-            }
-            NodePm::World(world) => {
-                write_child_indices(write, &world.children)?;
-            }
-            _ => {}
         }
     }
 
