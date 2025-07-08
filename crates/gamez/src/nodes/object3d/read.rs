@@ -1,5 +1,4 @@
-use super::{Object3dFlags, Object3dPmC, SCALE_INITIAL};
-use crate::nodes::math::{extract_matrix_signs, extract_rotate_signs, object_matrix};
+use super::{math, Flags, Object3dC, Object3dFlags, SCALE_INITIAL};
 use mech3ax_api_types::gamez::nodes::{Object3d, RotateTranslateScale, Transform};
 use mech3ax_api_types::{AffineMatrix, Color, Vec3};
 use mech3ax_common::io_ext::CountingReader;
@@ -7,22 +6,34 @@ use mech3ax_common::{chk, Result};
 use std::io::Read;
 
 pub(crate) fn read(read: &mut CountingReader<impl Read>) -> Result<Object3d> {
-    let object3d: Object3dPmC = read.read_struct()?;
+    let object3d: Object3dC = read.read_struct()?;
     assert_object3d(&object3d, read.prev)
 }
 
-fn rotation(value: f32) -> std::result::Result<(), String> {
+fn flags_has_unk5(_: Flags, flags: Object3dFlags) -> Result<(), String> {
+    if flags.contains(Object3dFlags::UNK5) {
+        Ok(())
+    } else {
+        Err(format!(
+            "expected {flags} to contain {}",
+            Object3dFlags::UNK5
+        ))
+    }
+}
+
+fn rotation(value: f32) -> Result<(), String> {
     const PI: f32 = std::f32::consts::PI;
     if value < -PI || value > PI {
-        Err(format!("expected {} in -PI..=PI", value))
+        Err(format!("expected {value} in -pi..=pi"))
     } else {
         Ok(())
     }
 }
 
-fn assert_object3d(object3d: &Object3dPmC, offset: usize) -> Result<Object3d> {
+fn assert_object3d(object3d: &Object3dC, offset: usize) -> Result<Object3d> {
     let flags = chk!(offset, ?object3d.flags)?;
-    // TODO: UNK5
+    chk!(offset, flags_has_unk5(object3d.flags, flags))?;
+
     let opacity = if flags.contains(Object3dFlags::OPACITY) {
         Some(object3d.opacity)
     } else {
@@ -38,7 +49,8 @@ fn assert_object3d(object3d: &Object3dPmC, offset: usize) -> Result<Object3d> {
     };
     chk!(offset, object3d.field096 == AffineMatrix::DEFAULT)?;
 
-    let signs = extract_matrix_signs(&object3d.transform) | extract_rotate_signs(&object3d.rotate);
+    let signs = math::save_signs(object3d);
+
     let transform = if flags.contains(Object3dFlags::TRANSFORM_INITIAL) {
         chk!(offset, object3d.rotate == Vec3::DEFAULT)?;
         chk!(offset, object3d.scale == SCALE_INITIAL)?;
@@ -54,22 +66,28 @@ fn assert_object3d(object3d: &Object3dPmC, offset: usize) -> Result<Object3d> {
         chk!(offset, rotation(object3d.rotate.z))?;
 
         let translate = object3d.transform.translate();
+        let transform = math::object_matrix(object3d.rotate, object3d.scale, translate);
 
-        let transform = object_matrix(object3d.rotate, object3d.scale, translate);
-        // TODO
-        // chk!(offset, object3d.transform == transform)?;
-        let transform = if object3d.transform == transform {
-            log::warn!("OBJECT3D AFFINE PASS");
+        // the transform calculation is almost perfect
+        // RC: all pass
+        // MW: 161 / 12289 fail (v1.2)
+        // PM: 82 / 7021 fail
+        let original = if object3d.transform == transform {
             None
         } else {
-            log::warn!("OBJECT3D AFFINE FAIL");
+            log::warn!(
+                "object3d transform fail {:?} != {:?}",
+                object3d.transform,
+                transform
+            );
             Some(object3d.transform)
         };
+
         Transform::RotateTranslateScale(RotateTranslateScale {
             rotate: object3d.rotate,
             translate,
             scale: object3d.scale,
-            transform,
+            original,
         })
     };
 

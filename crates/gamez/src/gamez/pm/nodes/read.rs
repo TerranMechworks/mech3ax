@@ -70,11 +70,11 @@ pub(crate) fn read_nodes(
 
             match node_info.node_class {
                 NodeClass::Camera => {
-                    let camera = crate::nodes::camera::pm::read(read)?;
+                    let camera = crate::nodes::camera::read(read)?;
                     node.data = NodeData::Camera(camera);
                 }
                 NodeClass::Display => {
-                    let display = crate::nodes::display::pm::read(read)?;
+                    let display = crate::nodes::display::read(read)?;
                     node.data = NodeData::Display(display);
                 }
                 NodeClass::Empty => {
@@ -89,11 +89,11 @@ pub(crate) fn read_nodes(
                     node.data = NodeData::Lod(lod);
                 }
                 NodeClass::Object3d => {
-                    let object3d = crate::nodes::object3d::pm::read(read)?;
+                    let object3d = crate::nodes::object3d::read(read)?;
                     node.data = NodeData::Object3d(object3d);
                 }
                 NodeClass::Window => {
-                    let window = crate::nodes::window::pm::read(read)?;
+                    let window = crate::nodes::window::read(read)?;
                     node.data = NodeData::Window(window);
                 }
                 NodeClass::World => {

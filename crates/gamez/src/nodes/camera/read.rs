@@ -1,6 +1,5 @@
-use super::CameraC;
+use super::{cotangent, CameraC};
 use crate::nodes::check::node_index;
-use crate::nodes::math::cotangent;
 use mech3ax_api_types::gamez::nodes::Camera;
 use mech3ax_api_types::{AffineMatrix, Vec3};
 use mech3ax_common::io_ext::CountingReader;

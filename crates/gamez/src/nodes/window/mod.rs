@@ -3,7 +3,9 @@ mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::Vec3;
-use mech3ax_types::{impl_as_bytes, Offsets, Ptr};
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Offsets, Ptr};
+pub(crate) use read::read;
+pub(crate) use write::write;
 
 #[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
@@ -46,26 +48,6 @@ struct WindowC {
 }
 impl_as_bytes!(WindowC, 248);
 
-mod size {
-    pub(crate) fn size() -> u32 {
-        use mech3ax_types::AsBytes as _;
-        super::WindowC::SIZE
-    }
-}
-
-pub(crate) mod rc {
-    pub(crate) use super::read::read;
-    pub(crate) use super::size::size;
-    pub(crate) use super::write::write;
-}
-
-pub(crate) mod mw {
-    pub(crate) use super::read::read;
-    pub(crate) use super::size::size;
-    pub(crate) use super::write::write;
-}
-
-pub(crate) mod pm {
-    pub(crate) use super::read::read;
-    pub(crate) use super::write::write;
+pub(crate) const fn size() -> u32 {
+    WindowC::SIZE
 }

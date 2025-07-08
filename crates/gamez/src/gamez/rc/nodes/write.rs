@@ -56,13 +56,13 @@ pub(crate) fn write_nodes(
     for (index, node) in nodes.iter().enumerate() {
         trace!("Processing node data {}/{}", index, node_count);
         match &node.data {
-            NodeData::Camera(camera) => crate::nodes::camera::rc::write(write, camera)?,
-            NodeData::Display(display) => crate::nodes::display::rc::write(write, display)?,
+            NodeData::Camera(camera) => crate::nodes::camera::write(write, camera)?,
+            NodeData::Display(display) => crate::nodes::display::write(write, display)?,
             NodeData::Empty => {}
             NodeData::Light(light) => crate::nodes::light::rc::write(write, light)?,
             NodeData::Lod(lod) => crate::nodes::lod::rc::write(write, lod)?,
-            NodeData::Object3d(object3d) => crate::nodes::object3d::rc::write(write, object3d)?,
-            NodeData::Window(window) => crate::nodes::window::rc::write(write, window)?,
+            NodeData::Object3d(object3d) => crate::nodes::object3d::write(write, object3d)?,
+            NodeData::Window(window) => crate::nodes::window::write(write, window)?,
             NodeData::World(world) => crate::nodes::world::rc::write(write, world)?,
         }
 
@@ -78,13 +78,13 @@ pub(crate) fn write_nodes(
 
 fn size_node(node: &Node) -> u32 {
     let node_size = match &node.data {
-        NodeData::Camera(_camera) => crate::nodes::camera::rc::size(),
-        NodeData::Display(_display) => crate::nodes::display::rc::size(),
+        NodeData::Camera(_camera) => crate::nodes::camera::size(),
+        NodeData::Display(_display) => crate::nodes::display::size(),
         NodeData::Empty => return 0,
         NodeData::Light(light) => crate::nodes::light::rc::size(light),
         NodeData::Lod(_lod) => crate::nodes::lod::rc::size(),
-        NodeData::Object3d(_object3d) => crate::nodes::object3d::rc::size(),
-        NodeData::Window(_window) => crate::nodes::window::rc::size(),
+        NodeData::Object3d(_object3d) => crate::nodes::object3d::size(),
+        NodeData::Window(_window) => crate::nodes::window::size(),
         NodeData::World(world) => crate::nodes::world::rc::size(world),
     };
 

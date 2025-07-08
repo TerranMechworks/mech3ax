@@ -3,7 +3,9 @@ mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::{AffineMatrix, Vec3};
-use mech3ax_types::{impl_as_bytes, Offsets};
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Offsets};
+pub(crate) use read::read;
+pub(crate) use write::write;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
@@ -63,26 +65,11 @@ struct CameraC {
 }
 impl_as_bytes!(CameraC, 488);
 
-mod size {
-    pub(crate) fn size() -> u32 {
-        use mech3ax_types::AsBytes as _;
-        super::CameraC::SIZE
-    }
+fn cotangent(value: f32) -> f32 {
+    // must perform this calculation with doubles to avoid loss of precision
+    (1.0f64 / (value as f64).tan()) as f32
 }
 
-pub(crate) mod rc {
-    pub(crate) use super::read::read;
-    pub(crate) use super::size::size;
-    pub(crate) use super::write::write;
-}
-
-pub(crate) mod mw {
-    pub(crate) use super::read::read;
-    pub(crate) use super::size::size;
-    pub(crate) use super::write::write;
-}
-
-pub(crate) mod pm {
-    pub(crate) use super::read::read;
-    pub(crate) use super::write::write;
+pub(crate) const fn size() -> u32 {
+    CameraC::SIZE
 }

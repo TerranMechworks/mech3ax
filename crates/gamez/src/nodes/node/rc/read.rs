@@ -1,8 +1,7 @@
 use super::{NodeRcC, ABORT_TEST_NAME, ABORT_TEST_NODE_NAME, ZERO_NAME};
 use crate::nodes::check::{ap, model_index, node_count, ptr};
 use crate::nodes::types::{AreaPartitionC, NodeClass, NodeInfo, ZONE_ALWAYS};
-use mech3ax_api_types::gamez::nodes::{ActiveBoundingBox, NodeFlags, Partition};
-use mech3ax_api_types::nodes::BoundingBox;
+use mech3ax_api_types::gamez::nodes::{ActiveBoundingBox, BoundingBox, NodeFlags, Partition};
 use mech3ax_api_types::Vec3;
 use mech3ax_common::{chk, Result};
 use mech3ax_types::check::node_name;

@@ -1,8 +1,7 @@
 use super::{Class, Flags, NodeRcC, ABORT_TEST_NAME, ABORT_TEST_NODE_NAME, ZERO_NAME};
 use crate::nodes::types::AreaPartitionC;
 use crate::nodes::NodeClass;
-use mech3ax_api_types::gamez::nodes::Node;
-use mech3ax_api_types::nodes::BoundingBox;
+use mech3ax_api_types::gamez::nodes::{BoundingBox, Node};
 use mech3ax_api_types::{Index, Vec3};
 use mech3ax_common::{assert_len, Result};
 use mech3ax_types::maybe::SupportsMaybe as _;

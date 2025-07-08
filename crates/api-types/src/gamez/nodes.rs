@@ -1,4 +1,3 @@
-pub use crate::nodes::BoundingBox;
 use crate::{api, bit, num, sum, AffineMatrix, Color, Index, Range, Vec3};
 
 bit! {
@@ -64,6 +63,21 @@ num! {
         Model = 1,
         Child = 2,
     }
+}
+
+api! {
+    #[repr(C)]
+    struct BoundingBox {
+        a: Vec3,
+        b: Vec3,
+    }
+}
+
+impl BoundingBox {
+    pub const EMPTY: Self = Self {
+        a: Vec3::DEFAULT,
+        b: Vec3::DEFAULT,
+    };
 }
 
 api! {
@@ -202,7 +216,7 @@ api! {
         rotate: Vec3,
         translate: Vec3,
         scale: Vec3,
-        transform: Option<AffineMatrix>,
+        original: Option<AffineMatrix>,
     }
 }
 

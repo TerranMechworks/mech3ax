@@ -1,5 +1,4 @@
-use super::{Object3dFlags, Object3dMwC, SCALE_INITIAL};
-use crate::nodes::math::{apply_matrix_signs, object_matrix};
+use super::{math, Object3dC, Object3dFlags, SCALE_INITIAL};
 use mech3ax_api_types::gamez::nodes::{Object3d, RotateTranslateScale, Transform};
 use mech3ax_api_types::{AffineMatrix, Color, Vec3};
 use mech3ax_common::io_ext::CountingWriter;
@@ -29,18 +28,24 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, object3d: &Object3d)
             rotate,
             translate,
             scale,
-            transform,
+            original,
         }) => {
-            // TODO
-            // let transform = object_matrix(rotate, scale, translate);
-            let transform = transform.unwrap_or_else(|| object_matrix(rotate, scale, translate));
+            let mut transform = math::object_matrix(rotate, scale, translate);
+
+            if let Some(object3d_transform) = original {
+                log::warn!(
+                    "object3d transform fail {:?} != {:?}",
+                    object3d_transform,
+                    transform
+                );
+                transform = object3d_transform;
+            }
+
             (rotate, scale, transform)
         }
     };
 
-    let transform = apply_matrix_signs(&transform, object3d.signs);
-
-    let object = Object3dMwC {
+    let mut object = Object3dC {
         flags: flags.maybe(),
         opacity: object3d.opacity.unwrap_or(0.0),
         color: object3d.color.unwrap_or(Color::BLACK),
@@ -50,6 +55,7 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, object3d: &Object3d)
         transform,
         field096: AffineMatrix::DEFAULT,
     };
+    math::load_signs(&mut object, object3d.signs);
     write.write_struct(&object)?;
     Ok(())
 }

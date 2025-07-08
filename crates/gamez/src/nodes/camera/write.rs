@@ -1,5 +1,4 @@
-use super::CameraC;
-use crate::nodes::math::cotangent;
+use super::{cotangent, CameraC};
 use mech3ax_api_types::gamez::nodes::Camera;
 use mech3ax_api_types::{AffineMatrix, Index, Vec3};
 use mech3ax_common::io_ext::CountingWriter;

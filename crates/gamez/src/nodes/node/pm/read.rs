@@ -1,8 +1,7 @@
 use super::{AreaPartitionC, NodePmC, VirtualPartitionC};
 use crate::nodes::check::{model_index, ptr};
 use crate::nodes::types::{NodeClass, NodeInfo, ZONE_ALWAYS};
-use mech3ax_api_types::gamez::nodes::{ActiveBoundingBox, NodeFlags, Partition};
-use mech3ax_api_types::nodes::BoundingBox;
+use mech3ax_api_types::gamez::nodes::{ActiveBoundingBox, BoundingBox, NodeFlags, Partition};
 use mech3ax_api_types::{Count, Vec3};
 use mech3ax_common::{chk, Result};
 use mech3ax_types::check::node_name;

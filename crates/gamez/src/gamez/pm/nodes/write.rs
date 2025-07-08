@@ -25,13 +25,13 @@ pub(crate) fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[Node]
     for (index, node) in nodes.iter().enumerate() {
         trace!("Processing node data {}/{}", index, node_count);
         match &node.data {
-            NodeData::Camera(camera) => crate::nodes::camera::pm::write(write, camera)?,
-            NodeData::Display(display) => crate::nodes::display::pm::write(write, display)?,
+            NodeData::Camera(camera) => crate::nodes::camera::write(write, camera)?,
+            NodeData::Display(display) => crate::nodes::display::write(write, display)?,
             NodeData::Empty => {}
             NodeData::Light(light) => crate::nodes::light::pm::write(write, light)?,
             NodeData::Lod(lod) => crate::nodes::lod::pm::write(write, lod)?,
-            NodeData::Object3d(object3d) => crate::nodes::object3d::pm::write(write, object3d)?,
-            NodeData::Window(window) => crate::nodes::window::pm::write(write, window)?,
+            NodeData::Object3d(object3d) => crate::nodes::object3d::write(write, object3d)?,
+            NodeData::Window(window) => crate::nodes::window::write(write, window)?,
             NodeData::World(world) => crate::nodes::world::pm::write(write, world)?,
         }
 

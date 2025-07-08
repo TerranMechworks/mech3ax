@@ -3,7 +3,9 @@ mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::Color;
-use mech3ax_types::{impl_as_bytes, Offsets};
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Offsets};
+pub(crate) use read::read;
+pub(crate) use write::write;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
@@ -16,26 +18,6 @@ struct DisplayC {
 }
 impl_as_bytes!(DisplayC, 28);
 
-mod size {
-    pub(crate) fn size() -> u32 {
-        use mech3ax_types::AsBytes as _;
-        super::DisplayC::SIZE
-    }
-}
-
-pub(crate) mod rc {
-    pub(crate) use super::read::read;
-    pub(crate) use super::size::size;
-    pub(crate) use super::write::write;
-}
-
-pub(crate) mod mw {
-    pub(crate) use super::read::read;
-    pub(crate) use super::size::size;
-    pub(crate) use super::write::write;
-}
-
-pub(crate) mod pm {
-    pub(crate) use super::read::read;
-    pub(crate) use super::write::write;
+pub(crate) const fn size() -> u32 {
+    DisplayC::SIZE
 }
