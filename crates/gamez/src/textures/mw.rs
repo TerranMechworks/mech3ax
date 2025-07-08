@@ -1,10 +1,10 @@
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{trace, warn};
 use mech3ax_api_types::gamez::Texture;
-use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, primitive_enum, AsBytes as _, Ascii, Maybe, Ptr};
+use mech3ax_common::{chk, Result};
+use mech3ax_types::check::suffix;
+use mech3ax_types::{impl_as_bytes, primitive_enum, AsBytes as _, Ascii, Maybe, Offsets, Ptr};
 use std::io::{Read, Write};
 
 primitive_enum! {
@@ -15,15 +15,15 @@ primitive_enum! {
 
 type State = Maybe<u32, TextureState>;
 
-#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
 struct TextureMwC {
     image_ptr: Ptr,   // 00
     surface_ptr: Ptr, // 04
     name: Ascii<20>,  // 08
     state: State,     // 28
-    category: u32,    // 32
-    mip: i32,         // 36
+    category: i32,    // 32
+    mip_index: i32,   // 36
 }
 impl_as_bytes!(TextureMwC, 40);
 
@@ -34,16 +34,22 @@ pub(crate) fn read_texture_directory(
     (0..count)
         .map(|index| {
             trace!("Processing texture {}/{}", index, count);
-            let tex: TextureMwC = read.read_struct()?;
+            let texture: TextureMwC = read.read_struct()?;
 
-            assert_that!("image ptr", tex.image_ptr == Ptr::NULL, read.prev + 0)?;
-            assert_that!("surface ptr", tex.surface_ptr == Ptr::NULL, read.prev + 4)?;
-            let name = assert_utf8("name", read.prev + 8, || tex.name.to_str_suffix())?;
-            let _state = assert_that!("state", enum tex.state, read.prev + 28)?;
-            assert_that!("category", tex.category == 0, read.prev + 32)?;
-            assert_that!("mip index", tex.mip >= -1, read.prev + 36)?;
+            let offset = read.prev;
 
-            Ok(Texture { name, mip: tex.mip })
+            chk!(offset, texture.image_ptr == Ptr::NULL)?;
+            chk!(offset, texture.surface_ptr == Ptr::NULL)?;
+            let name = chk!(offset, suffix(&texture.name))?;
+            let _state = chk!(offset, ?texture.state)?;
+            chk!(offset, texture.category == 0)?;
+            chk!(offset, texture.mip_index >= -1)?;
+            chk!(offset, texture.mip_index < count)?;
+
+            Ok(Texture {
+                name,
+                mip_index: texture.mip_index,
+            })
         })
         .collect::<Result<Vec<_>>>()
 }
@@ -56,10 +62,10 @@ pub(crate) fn write_texture_directory(
     for (index, texture) in textures.iter().enumerate() {
         trace!("Processing texture {}/{}", index, count);
         let name = Ascii::from_str_suffix(&texture.name);
-        if texture.mip < -1 {
+        if texture.mip_index < -1 {
             warn!(
                 "WARN: Expected texture mip index >= -1, but was {}",
-                texture.mip
+                texture.mip_index
             );
         }
 
@@ -69,7 +75,7 @@ pub(crate) fn write_texture_directory(
             name,
             state: TextureState::Used.maybe(),
             category: 0,
-            mip: texture.mip,
+            mip_index: texture.mip_index,
         };
         write.write_struct(&tex)?;
     }

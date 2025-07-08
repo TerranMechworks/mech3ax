@@ -66,6 +66,7 @@ fn generate_offsets(
     struct_ident: Ident,
     fields: Vec<(Visibility, Ident)>,
 ) -> TokenStream {
+    let struct_name = struct_ident.to_string();
     let offsets_ident = quote::format_ident!("__{}FieldOffsets", struct_ident);
     let (field_vis, field_idents): (Vec<_>, Vec<_>) = fields.into_iter().unzip();
 
@@ -76,26 +77,18 @@ fn generate_offsets(
         }
     };
 
-    let offsets_const: syn::ItemImpl = syn::parse_quote! {
-        impl #struct_ident {
-            const __FO: #offsets_ident = #offsets_ident {
+    let offsets_trait: syn::ItemImpl = syn::parse_quote! {
+        impl ::mech3ax_types::cstruct::CStruct for #struct_ident {
+            type FieldOffsets = #offsets_ident;
+            const __NAME: &'static str = #struct_name;
+            const __FIELD_OFFSETS: &'static Self::FieldOffsets = &Self::FieldOffsets {
                 #(#field_idents: ::std::mem::offset_of!(#struct_ident, #field_idents),)*
             };
         }
     };
 
-    let offsets_trait: syn::ItemImpl = syn::parse_quote! {
-        impl ::mech3ax_types::cstruct::CStruct for #struct_ident {
-            type FieldOffsets = #offsets_ident;
-            fn __field_offsets(&self) -> &'static Self::FieldOffsets {
-                &Self::__FO
-            }
-        }
-    };
-
     quote::quote! {
         #offsets_struct
-        #offsets_const
         #offsets_trait
     }
 }

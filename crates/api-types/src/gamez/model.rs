@@ -13,18 +13,18 @@ impl_as_bytes!(UvCoord, 8);
 
 api! {
     struct PointLight {
-        unk00: u32,
-        unk04: u32,
+        unk00: i32,
+        unk04: i32,
         unk08: f32,
-        extra: Vec<Vec3>,
+        vertices: Vec<Vec3>,
         unk24: u32,
         color: Color,
         flags: u16,
-        ptr: u32,
+        vertices_ptr: u32,
         unk48: f32,
         unk52: f32,
         unk56: f32,
-        unk60: u32,
+        unk60: i32,
         unk64: f32,
         unk68: f32,
         unk72: f32,

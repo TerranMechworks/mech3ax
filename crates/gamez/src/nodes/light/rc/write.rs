@@ -1,14 +1,30 @@
 use super::{LightRcC, WORLD_VIEW};
 use crate::nodes::helpers::write_node_indices;
-use mech3ax_api_types::gamez::nodes::Light;
+use mech3ax_api_types::gamez::nodes::{Light, LightFlagsExhaustive};
 use mech3ax_api_types::{AffineMatrix, Vec3};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, err, Result};
+use mech3ax_types::maybe::SupportsMaybe;
 use mech3ax_types::Ptr;
 use std::io::Write;
 
 pub(crate) fn write(write: &mut CountingWriter<impl Write>, light: &Light) -> Result<()> {
     let parent_count = assert_len!(i32, light.parent_indices.len(), "light parent indices")?;
+
+    let LightFlagsExhaustive {
+        recalc,
+        unk1,
+        directional,
+        directed_source,
+        point_source,
+        saturated,
+        subdivide: _,
+        static_: _,
+        color: _,
+        unk9,
+        light_map: _,
+        bicolored: _,
+    } = light.flags.exhaustive();
 
     let range_near = light.range.min;
     let range_far = light.range.max;
@@ -20,8 +36,8 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, light: &Light) -> Re
     let range_inv = 1.0 / range_diff;
 
     let licht = LightRcC {
-        recalc: light.recalc,
-        field004: light.field004,
+        recalc: recalc.maybe(),
+        field004: unk1.maybe(),
         orientation: light.orientation,
         translate: light.translate,
         euler_angles: Vec3::DEFAULT,
@@ -35,11 +51,11 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, light: &Light) -> Re
         diffuse: light.diffuse,
         ambient: light.ambient,
         color: light.color,
-        directional: light.directional,
-        directed_source: light.directed_source,
-        point_source: light.point_source,
-        saturated: light.saturated,
-        field200: light.field200,
+        directional: directional.maybe(),
+        directed_source: directed_source.maybe(),
+        point_source: point_source.maybe(),
+        saturated: saturated.maybe(),
+        field200: unk9.maybe(),
         range_near,
         range_far,
         range_far_sq,

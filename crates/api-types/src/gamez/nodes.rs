@@ -89,10 +89,10 @@ api! {
         node_bbox: BoundingBox,
         model_bbox: BoundingBox,
         child_bbox: BoundingBox,
-        field192: u32, // MW, PM
-        field196: u32, // MW, PM
-        field200: u32, // MW, PM
-        field204: u32, // MW, PM
+        field192: i32, // MW, PM
+        field196: i32, // MW, PM
+        field200: i32, // MW, PM
+        field204: i32, // MW, PM
         data: NodeData,
         data_ptr: u32,
         parent_array_ptr: u32,
@@ -139,20 +139,31 @@ api! {
     }
 }
 
+bit! {
+    struct LightFlags: u32 {
+        const RECALC = 1 << 0;
+        const UNK1 = 1 << 1;
+        const DIRECTIONAL = 1 << 2;
+        const DIRECTED_SOURCE = 1 << 3;
+        const POINT_SOURCE = 1 << 4;
+        const SATURATED = 1 << 5;
+        const SUBDIVIDE = 1 << 6;
+        const STATIC = 1 << 7;
+        const COLOR = 1 << 8;
+        const UNK9 = 1 << 9;
+        const LIGHT_MAP = 1 << 10;
+        const BICOLORED = 1 << 11;
+    }
+}
+
 api! {
     struct Light {
-        recalc: i32,
-        field004: i32,
+        flags: LightFlags,
         orientation: Vec3,
         translate: Vec3,
         diffuse: f32,
         ambient: f32,
         color: Color,
-        directional: i32,
-        directed_source: i32,
-        point_source: i32,
-        saturated: i32,
-        field200: i32,
         range: Range,
         parent_indices: Vec<Index>,
         parent_ptr: u32,
@@ -187,6 +198,7 @@ api! {
         rotate: Vec3,
         translate: Vec3,
         scale: Vec3,
+        transform: Option<AffineMatrix>,
     }
 }
 

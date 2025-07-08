@@ -1,4 +1,3 @@
-pub use mech3ax_types::cstruct::CStruct;
 use mech3ax_types::maybe::{PrimitiveRepr, SupportsMaybe};
 use mech3ax_types::Maybe;
 use std::cmp::{PartialEq, PartialOrd};
@@ -125,14 +124,26 @@ pub fn maybe<R: PrimitiveRepr, T: SupportsMaybe<R>>(v: Maybe<R, T>) -> Result<T>
     v.check()
 }
 
+#[inline]
+pub const fn __name<T: mech3ax_types::cstruct::CStruct>(_: &T) -> &'static str {
+    T::__NAME
+}
+
+#[inline]
+pub const fn __field_offsets<T: mech3ax_types::cstruct::CStruct>(
+    _: &T,
+) -> &'static T::FieldOffsets {
+    T::__FIELD_OFFSETS
+}
+
 #[macro_export]
 macro_rules! chk {
     ($offset:expr, $struct:ident.$field:ident == $expected:expr) => {{
         const FILE: &str = file!();
         const LINE: u32 = line!();
         $crate::check::eq(&$struct.$field, &$expected).map_err(|msg| {
-            let name = chk!(__name $struct.$field);
-            let offset = chk!(__offset $struct.$field, $offset);
+            let name = chk!(@name $struct.$field);
+            let offset = chk!(@offset $struct.$field, $offset);
             $crate::check::amend_err(msg, name, offset, FILE, LINE)
         })
     }};
@@ -140,8 +151,8 @@ macro_rules! chk {
         const FILE: &str = file!();
         const LINE: u32 = line!();
         $crate::check::eq(&$struct.$substruct.$field, &$expected).map_err(|msg| {
-            let name = chk!(__name $struct.$substruct.$field);
-            let offset = chk!(__offset $struct.$substruct.$field, $offset);
+            let name = chk!(@name $struct.$substruct.$field);
+            let offset = chk!(@offset $struct.$substruct.$field, $offset);
             $crate::check::amend_err(msg, name, offset, FILE, LINE)
         })
     }};
@@ -149,8 +160,8 @@ macro_rules! chk {
         const FILE: &str = file!();
         const LINE: u32 = line!();
         $crate::check::ne(&$struct.$field, &$expected).map_err(|msg| {
-            let name = chk!(__name $struct.$field);
-            let offset = chk!(__offset $struct.$field, $offset);
+            let name = chk!(@name $struct.$field);
+            let offset = chk!(@offset $struct.$field, $offset);
             $crate::check::amend_err(msg, name, offset, FILE, LINE)
         })
     }};
@@ -158,8 +169,8 @@ macro_rules! chk {
         const FILE: &str = file!();
         const LINE: u32 = line!();
         $crate::check::ne(&$struct.$substruct.$field, &$expected).map_err(|msg| {
-            let name = chk!(__name $struct.$substruct.$field);
-            let offset = chk!(__offset $struct.$substruct.$field, $offset);
+            let name = chk!(@name $struct.$substruct.$field);
+            let offset = chk!(@offset $struct.$substruct.$field, $offset);
             $crate::check::amend_err(msg, name, offset, FILE, LINE)
         })
     }};
@@ -167,8 +178,8 @@ macro_rules! chk {
         const FILE: &str = file!();
         const LINE: u32 = line!();
         $crate::check::lt(&$struct.$field, &$expected).map_err(|msg| {
-            let name = chk!(__name $struct.$field);
-            let offset = chk!(__offset $struct.$field, $offset);
+            let name = chk!(@name $struct.$field);
+            let offset = chk!(@offset $struct.$field, $offset);
             $crate::check::amend_err(msg, name, offset, FILE, LINE)
         })
     }};
@@ -176,8 +187,17 @@ macro_rules! chk {
         const FILE: &str = file!();
         const LINE: u32 = line!();
         $crate::check::gt(&$struct.$field, &$expected).map_err(|msg| {
-            let name = chk!(__name $struct.$field);
-            let offset = chk!(__offset $struct.$field, $offset);
+            let name = chk!(@name $struct.$field);
+            let offset = chk!(@offset $struct.$field, $offset);
+            $crate::check::amend_err(msg, name, offset, FILE, LINE)
+        })
+    }};
+    ($offset:expr, $struct:ident.$field:ident <= $expected:expr) => {{
+        const FILE: &str = file!();
+        const LINE: u32 = line!();
+        $crate::check::le(&$struct.$field, &$expected).map_err(|msg| {
+            let name = chk!(@name $struct.$field);
+            let offset = chk!(@offset $struct.$field, $offset);
             $crate::check::amend_err(msg, name, offset, FILE, LINE)
         })
     }};
@@ -185,8 +205,8 @@ macro_rules! chk {
         const FILE: &str = file!();
         const LINE: u32 = line!();
         $crate::check::ge(&$struct.$field, &$expected).map_err(|msg| {
-            let name = chk!(__name $struct.$field);
-            let offset = chk!(__offset $struct.$field, $offset);
+            let name = chk!(@name $struct.$field);
+            let offset = chk!(@offset $struct.$field, $offset);
             $crate::check::amend_err(msg, name, offset, FILE, LINE)
         })
     }};
@@ -194,8 +214,8 @@ macro_rules! chk {
         const FILE: &str = file!();
         const LINE: u32 = line!();
         $crate::check::maybe($struct.$field).map_err(|msg| {
-            let name = chk!(__name $struct.$field);
-            let offset = chk!(__offset $struct.$field, $offset);
+            let name = chk!(@name $struct.$field);
+            let offset = chk!(@offset $struct.$field, $offset);
             $crate::check::amend_err(msg, name, offset, FILE, LINE)
         })
     }};
@@ -203,8 +223,8 @@ macro_rules! chk {
         const FILE: &str = file!();
         const LINE: u32 = line!();
         $func($struct.$field $(, $arg)*).map_err(|msg| {
-            let name = chk!(__name $struct.$field);
-            let offset = chk!(__offset $struct.$field, $offset);
+            let name = chk!(@name $struct.$field);
+            let offset = chk!(@offset $struct.$field, $offset);
             $crate::check::amend_err(msg, name, offset, FILE, LINE)
         })
     }};
@@ -212,8 +232,8 @@ macro_rules! chk {
         const FILE: &str = file!();
         const LINE: u32 = line!();
         $func($struct.$substruct.$field $(, $arg)*).map_err(|msg| {
-            let name = chk!(__name $struct.$substruct.$field);
-            let offset = chk!(__offset $struct.$substruct.$field, $offset);
+            let name = chk!(@name $struct.$substruct.$field);
+            let offset = chk!(@offset $struct.$substruct.$field, $offset);
             $crate::check::amend_err(msg, name, offset, FILE, LINE)
         })
     }};
@@ -221,8 +241,8 @@ macro_rules! chk {
         const FILE: &str = file!();
         const LINE: u32 = line!();
         $func(&$struct.$field $(, $arg)*).map_err(|msg| {
-            let name = chk!(__name $struct.$field);
-            let offset = chk!(__offset $struct.$field, $offset);
+            let name = chk!(@name $struct.$field);
+            let offset = chk!(@offset $struct.$field, $offset);
             $crate::check::amend_err(msg, name, offset, FILE, LINE)
         })
     }};
@@ -230,15 +250,24 @@ macro_rules! chk {
         const FILE: &str = file!();
         const LINE: u32 = line!();
         $func(&$struct.$substruct.$field $(, $arg)*).map_err(|msg| {
-            let name = chk!(__name $struct.$substruct.$field);
-            let offset = chk!(__offset $struct.$substruct.$field, $offset);
+            let name = chk!(@name $struct.$substruct.$field);
+            let offset = chk!(@offset $struct.$substruct.$field, $offset);
             $crate::check::amend_err(msg, name, offset, FILE, LINE)
         })
     }};
-    (__name $struct:ident.$field:ident) => {
+    ($offset:expr => $name:literal, $value:ident == $expected:expr) => {{
+        const FILE: &str = file!();
+        const LINE: u32 = line!();
+        $crate::check::eq(&$value, &$expected).map_err(|msg| {
+            let name: &str = $name;
+            let offset: usize = $offset;
+            $crate::check::amend_err(msg, name, offset, FILE, LINE)
+        })
+    }};
+    (@name $struct:ident.$field:ident) => {
         concat!(stringify!($struct), ".", stringify!($field))
     };
-    (__name $struct:ident.$substruct:ident.$field:ident) => {
+    (@name $struct:ident.$substruct:ident.$field:ident) => {
         concat!(
             stringify!($struct),
             ".",
@@ -247,16 +276,15 @@ macro_rules! chk {
             stringify!($field)
         )
     };
-    (__offset $struct:ident.$field:ident, $offset:expr) => {{
-        let field_offset: usize = $crate::check::CStruct::__field_offsets(&$struct).$field;
+    (@offset $struct:ident.$field:ident, $offset:expr) => {{
+        let field_offset: usize = $crate::check::__field_offsets(&$struct).$field;
         let base_offset: usize = $offset;
         base_offset.wrapping_add(field_offset)
     }};
-    (__offset $struct:ident.$substruct:ident.$field:ident, $offset:expr) => {{
+    (@offset $struct:ident.$substruct:ident.$field:ident, $offset:expr) => {{
         let base_offset: usize = $offset;
-        let sub_offset: usize = $crate::check::CStruct::__field_offsets(&$struct).$substruct;
-        let field_offset: usize =
-            $crate::check::CStruct::__field_offsets(&$struct.$substruct).$field;
+        let sub_offset: usize = $crate::check::__field_offsets(&$struct).$substruct;
+        let field_offset: usize = $crate::check::__field_offsets(&$struct.$substruct).$field;
         base_offset
             .wrapping_add(sub_offset)
             .wrapping_add(field_offset)

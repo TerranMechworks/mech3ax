@@ -2,7 +2,7 @@ use crate::materials::{read_material, write_material, MatType, RawMaterial};
 use log::trace;
 use mech3ax_api_types::gamez::materials::{Material, TexturedMaterial};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_len, assert_that, assert_with_msg, GameType, Result};
+use mech3ax_common::{assert_len, assert_that, chk, err, GameType, Result};
 use std::io::{Read, Write};
 
 pub const VERSION_MW: u32 = 27;
@@ -14,16 +14,16 @@ pub fn read_version(read: &mut CountingReader<impl Read>, game: GameType) -> Res
     let expected = match game {
         GameType::MW => VERSION_MW,
         GameType::PM => VERSION_PM,
-        GameType::RC => return Err(assert_with_msg!("Recoil has no mechlib")),
-        GameType::CS => return Err(assert_with_msg!("Crimson Skies has no mechlib")),
+        GameType::RC => return Err(err!("Recoil has no mechlib")),
+        GameType::CS => return Err(err!("Crimson Skies has no mechlib")),
     };
-    assert_that!("version", actual == expected, read.prev)?;
+    chk!(read.prev => "version", actual == expected)?;
     read.assert_end()
 }
 
 pub fn read_format(read: &mut CountingReader<impl Read>) -> Result<()> {
     let format = read.read_u32()?;
-    assert_that!("format", format == FORMAT, read.prev)?;
+    chk!(read.prev => "format", format == FORMAT)?;
     read.assert_end()
 }
 
@@ -31,8 +31,8 @@ pub fn write_version(write: &mut CountingWriter<impl Write>, game: GameType) -> 
     let version = match game {
         GameType::MW => VERSION_MW,
         GameType::PM => VERSION_PM,
-        GameType::RC => return Err(assert_with_msg!("Recoil has no mechlib")),
-        GameType::CS => return Err(assert_with_msg!("Crimson Skies has no mechlib")),
+        GameType::RC => return Err(err!("Recoil has no mechlib")),
+        GameType::CS => return Err(err!("Crimson Skies has no mechlib")),
     };
     write.write_u32(version)?;
     Ok(())
@@ -83,9 +83,7 @@ pub fn write_materials(
         write_material(write, material, None, MatType::Ng)?;
         if let Material::Textured(textured) = material {
             if textured.cycle.is_some() {
-                return Err(assert_with_msg!(
-                    "mechlib materials cannot have cycled textures"
-                ));
+                return Err(err!("mechlib materials cannot have cycled textures"));
             }
             write.write_string(&textured.texture)?;
         }

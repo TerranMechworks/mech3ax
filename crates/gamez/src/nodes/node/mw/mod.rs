@@ -6,13 +6,15 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::nodes::{BoundingBox, NodeFlags};
 use mech3ax_api_types::Vec3;
 use mech3ax_types::{impl_as_bytes, Ascii, Maybe, Offsets, PaddedI8, Ptr};
+pub(crate) use read::{assert_node, assert_node_zero};
+pub(crate) use write::{make_node, make_node_zero};
 
 type Flags = Maybe<u32, NodeFlags>;
 type Class = Maybe<u32, NodeClass>;
 
-#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets, Default)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
-pub struct NodeMwC {
+pub(crate) struct NodeMwC {
     name: Ascii<36>,                 // 000
     flags: Flags,                    // 036
     field040: u32,                   // 040
@@ -35,19 +37,17 @@ pub struct NodeMwC {
     model_bbox: BoundingBox,         // 140
     child_bbox: BoundingBox,         // 164
     activation_ptr: Ptr,             // 188
-    field192: u32,                   // 192
-    field196: u32,                   // 196
-    field200: u32,                   // 200
-    field204: u32,                   // 204
+    field192: i32,                   // 192
+    field196: i32,                   // 196
+    field200: i32,                   // 200
+    field204: i32,                   // 204
 }
 impl_as_bytes!(NodeMwC, 208);
 
 impl NodeMwC {
-    #[inline]
-    pub fn zero() -> Self {
-        Self {
-            model_index: -1,
-            ..Default::default()
-        }
+    pub(crate) fn is_zero(&self) -> bool {
+        self.name == ZERO_NAME
     }
 }
+
+const ZERO_NAME: Ascii<36> = Ascii::zero();

@@ -5,8 +5,16 @@ use mech3ax_api_types::{Color, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlagsU16 as LightFlags;
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Hex, Maybe, Ptr};
+use mech3ax_types::{impl_as_bytes, AsBytes as _, Hex, Maybe, Offsets, Ptr};
 use std::io::{Read, Write};
+
+pub(crate) fn priority(value: i32) -> Result<i32, String> {
+    if (-50..=50).contains(&value) {
+        Ok(value)
+    } else {
+        Err(format!("expected {} in -50..=50", value))
+    }
+}
 
 #[inline(always)]
 pub(crate) fn read_u32s(
@@ -176,31 +184,31 @@ pub(crate) use assert_ptr;
 
 type Flags = Maybe<u16, LightFlags>;
 
-#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
-pub(crate) struct LightC {
-    pub(crate) unk00: u32,       // 00
-    pub(crate) unk04: u32,       // 04
-    pub(crate) unk08: f32,       // 08
-    pub(crate) extra_count: i32, // 12 dim_count
-    pub(crate) zero16: u32,      // 16
-    pub(crate) zero20: u32,      // 20
-    pub(crate) unk24: Ptr,       // 24
-    pub(crate) color: Color,     // 28
-    pub(crate) pad40: u16,       // 40
-    pub(crate) flags: Flags,     // 42
-    pub(crate) ptr: Ptr,         // 44 dims
-    pub(crate) unk48: f32,       // 48
-    pub(crate) unk52: f32,       // 52
-    pub(crate) unk56: f32,       // 56
-    pub(crate) unk60: u32,       // 60
-    pub(crate) unk64: f32,       // 64
-    pub(crate) unk68: f32,       // 68
-    pub(crate) unk72: f32,       // 72
+pub(crate) struct PointLightC {
+    pub(crate) unk00: i32,        // 00
+    pub(crate) unk04: i32,        // 04
+    pub(crate) unk08: f32,        // 08
+    pub(crate) vertex_count: i32, // 12
+    pub(crate) zero16: i32,       // 16
+    pub(crate) zero20: i32,       // 20
+    pub(crate) unk24: Ptr,        // 24
+    pub(crate) color: Color,      // 28
+    pub(crate) rgb: u16,          // 40
+    pub(crate) flags: Flags,      // 42
+    pub(crate) vertices_ptr: Ptr, // 44
+    pub(crate) unk48: f32,        // 48
+    pub(crate) unk52: f32,        // 52
+    pub(crate) unk56: f32,        // 56
+    pub(crate) unk60: i32,        // 60
+    pub(crate) unk64: f32,        // 64
+    pub(crate) unk68: f32,        // 68
+    pub(crate) unk72: f32,        // 72
 }
-impl_as_bytes!(LightC, 76);
+impl_as_bytes!(PointLightC, 76);
 
-fn assert_light(light: &LightC, offset: usize) -> Result<LightFlags> {
+fn assert_light(light: &PointLightC, offset: usize) -> Result<LightFlags> {
     // RC: 0/3224, 1/48
     // MW: 0/600
     // PM: 0/817
@@ -224,7 +232,7 @@ fn assert_light(light: &LightC, offset: usize) -> Result<LightFlags> {
     // PM: 1/817
     // CS: 1/715
     // PL: 1/68
-    assert_that!("light field 12", 1 <= light.extra_count <= 10, offset + 12)?;
+    assert_that!("light field 12", 1 <= light.vertex_count <= 10, offset + 12)?;
     assert_that!("light field 16", light.zero16 == 0, offset + 16)?;
     assert_that!("light field 20", light.zero20 == 0, offset + 20)?;
     // RC: != Ptr::NULL
@@ -237,11 +245,15 @@ fn assert_light(light: &LightC, offset: usize) -> Result<LightFlags> {
     assert_that!("light color g", 0.0 <= light.color.g <= 255.0, offset + 32)?;
     assert_that!("light color b", 0.0 <= light.color.b <= 255.0, offset + 36)?;
 
-    assert_that!("light pad 40", light.pad40 == 0, offset + 40)?;
+    assert_that!("light pad 40", light.rgb == 0, offset + 40)?;
     let flags = assert_that!("light state flags", flags light.flags, offset + 42)?;
     // assert_that!("light flags", flags != LightFlags::INACTIVE, offset + 42)?;
 
-    assert_that!("light field 44", light.ptr != Ptr::NULL, offset + 44)?;
+    assert_that!(
+        "light field 44",
+        light.vertices_ptr != Ptr::NULL,
+        offset + 44
+    )?;
     // RC: 0.0/889, 40.0/835, 50.0/1144, 100.0/404
     // MW: 0.0/22, 50.0/390, 2000.0/188
     // PM: 50.0/256, 300.0/18, 2000.0/543
@@ -297,28 +309,28 @@ pub(crate) fn read_lights(
             trace!(
                 "Processing light {} ({}) at {}",
                 index,
-                LightC::SIZE,
+                PointLightC::SIZE,
                 read.offset
             );
             let light = read.read_struct()?;
             let _flags = assert_light(&light, read.prev)?;
             Ok(light)
         })
-        .collect::<Result<Vec<LightC>>>()?;
+        .collect::<Result<Vec<PointLightC>>>()?;
 
     lights
         .into_iter()
         .map(|light| {
-            let extra = read_vec3s(read, light.extra_count as _)?;
+            let vertices = read_vec3s(read, light.vertex_count as _)?;
             Ok(PointLight {
                 unk00: light.unk00,
                 unk04: light.unk04,
                 unk08: light.unk08,
-                extra,
+                vertices,
                 unk24: light.unk24.0,
                 color: light.color,
                 flags: light.flags.into(),
-                ptr: light.ptr.0,
+                vertices_ptr: light.vertices_ptr.0,
                 unk48: light.unk48,
                 unk52: light.unk52,
                 unk56: light.unk56,
@@ -340,23 +352,28 @@ pub(crate) fn write_lights(
         trace!(
             "Processing light {} ({}) at {}",
             index,
-            LightC::SIZE,
+            PointLightC::SIZE,
             write.offset
         );
-        let extra_count = assert_len!(i32, light.extra.len(), "model {} light extra", model_index)?;
+        let extra_count = assert_len!(
+            i32,
+            light.vertices.len(),
+            "model {} light extra",
+            model_index
+        )?;
         let flags = LightFlags::from_bits_truncate(light.flags);
-        let light = LightC {
+        let light = PointLightC {
             unk00: light.unk00,
             unk04: light.unk04,
             unk08: light.unk08,
-            extra_count,
+            vertex_count: extra_count,
             zero16: 0,
             zero20: 0,
             unk24: Ptr(light.unk24),
             color: light.color,
-            pad40: 0,
+            rgb: 0,
             flags: flags.maybe(),
-            ptr: Ptr(light.ptr),
+            vertices_ptr: Ptr(light.vertices_ptr),
             unk48: light.unk48,
             unk52: light.unk52,
             unk56: light.unk56,
@@ -368,7 +385,7 @@ pub(crate) fn write_lights(
         write.write_struct(&light)?;
     }
     for light in lights {
-        write_vec3s(write, &light.extra)?;
+        write_vec3s(write, &light.vertices)?;
     }
     Ok(())
 }

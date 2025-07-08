@@ -13,7 +13,7 @@ type ActiveBBox = Maybe<u32, ActiveBoundingBox>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
-struct NodePmC {
+pub(crate) struct NodePmC {
     name: Ascii<36>,                 // 000
     flags: Flags,                    // 036
     field040: u32,                   // 040
@@ -26,8 +26,8 @@ struct NodePmC {
     action_priority: u32,            // 068
     action_callback: Ptr,            // 072
     area_partition: AreaPartitionPm, // 076
-    parent_count: u16,               // 084
-    child_count: u16,                // 086
+    parent_count: i16,               // 084
+    child_count: i16,                // 086
     parent_array_ptr: Ptr,           // 088
     child_array_ptr: Ptr,            // 092
     bbox_mid: Vec3,                  // 096
@@ -37,9 +37,11 @@ struct NodePmC {
     model_bbox: BoundingBox,         // 140
     child_bbox: BoundingBox,         // 164
     activation_ptr: Ptr,             // 188
-    field192: u32,                   // 192
-    field196: u32,                   // 196
-    field200: u32,                   // 200
-    field204: u32,                   // 204
+    field192: i32,                   // 192
+    field196: i32,                   // 196
+    field200: i32,                   // 200
+    field204: i32,                   // 204
 }
 impl_as_bytes!(NodePmC, 208);
+
+const ZERO_NAME: Ascii<36> = Ascii::zero();

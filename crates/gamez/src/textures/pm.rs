@@ -2,10 +2,10 @@
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::{trace, warn};
 use mech3ax_api_types::gamez::Texture;
-use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, primitive_enum, AsBytes as _, Ascii, Maybe, Ptr};
+use mech3ax_common::{chk, Result};
+use mech3ax_types::check::suffix;
+use mech3ax_types::{impl_as_bytes, primitive_enum, AsBytes as _, Ascii, Maybe, Offsets, Ptr};
 use std::io::{Read, Write};
 
 primitive_enum! {
@@ -17,16 +17,16 @@ primitive_enum! {
 
 type State = Maybe<u32, TextureState>;
 
-#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
 struct TexturePmC {
     image_ptr: Ptr,   // 00
-    zero04: u32,      // 04
+    field04: u32,     // 04
     surface_ptr: Ptr, // 08
     name: Ascii<20>,  // 12
     state: State,     // 32
-    category: u32,    // 36
-    mip: i32,         // 40
+    category: i32,    // 36
+    mip_index: i32,   // 40
 }
 impl_as_bytes!(TexturePmC, 44);
 
@@ -37,25 +37,31 @@ pub(crate) fn read_texture_directory(
     (0..count)
         .map(|index| {
             trace!("Processing texture {}/{}", index, count);
-            let tex: TexturePmC = read.read_struct()?;
+            let texture: TexturePmC = read.read_struct()?;
 
-            assert_that!("field 04", tex.zero04 == 0, read.prev + 4)?;
-            assert_that!("surface ptr", tex.surface_ptr == Ptr::NULL, read.prev + 8)?;
-            let name = assert_utf8("name", read.prev + 12, || tex.name.to_str_suffix())?;
-            let state = assert_that!("state", enum tex.state, read.prev + 32)?;
+            let offset = read.prev;
+
+            chk!(offset, texture.field04 == 0)?;
+            chk!(offset, texture.surface_ptr == Ptr::NULL)?;
+            let name = chk!(offset, suffix(&texture.name))?;
+            let state = chk!(offset, ?texture.state)?;
             match state {
                 TextureState::Assigned => {
-                    assert_that!("image ptr", tex.image_ptr != Ptr::NULL, read.prev + 0)?;
+                    chk!(offset, texture.image_ptr != Ptr::NULL)?;
                 }
                 TextureState::Used => {
                     // somehow, this is now the rarer case
-                    assert_that!("image ptr", tex.image_ptr == Ptr::NULL, read.prev + 0)?;
+                    chk!(offset, texture.image_ptr == Ptr::NULL)?;
                 }
             }
-            assert_that!("category", tex.category == 0, read.prev + 36)?;
-            assert_that!("mip index", tex.mip >= -1, read.prev + 40)?;
+            chk!(offset, texture.category == 0)?;
+            chk!(offset, texture.mip_index >= -1)?;
+            chk!(offset, texture.mip_index < count)?;
 
-            Ok(Texture { name, mip: tex.mip })
+            Ok(Texture {
+                name,
+                mip_index: texture.mip_index,
+            })
         })
         .collect::<Result<Vec<_>>>()
 }
@@ -75,10 +81,10 @@ pub(crate) fn write_texture_directory(
     for (index, (texture, image_ptr)) in textures.iter().zip(ptrs).enumerate() {
         trace!("Processing texture {}/{}", index, count);
         let name = Ascii::from_str_suffix(&texture.name);
-        if texture.mip < -1 {
+        if texture.mip_index < -1 {
             warn!(
                 "WARN: Expected texture mip index >= -1, but was {}",
-                texture.mip
+                texture.mip_index
             );
         }
 
@@ -90,12 +96,12 @@ pub(crate) fn write_texture_directory(
 
         let tex = TexturePmC {
             image_ptr,
-            zero04: 0,
+            field04: 0,
             surface_ptr: Ptr::NULL,
             name,
             state: state.maybe(),
             category: 0,
-            mip: texture.mip,
+            mip_index: texture.mip_index,
         };
         write.write_struct(&tex)?;
     }

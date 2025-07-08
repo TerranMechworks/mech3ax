@@ -1,4 +1,4 @@
-use super::NodeMwC;
+use super::{NodeMwC, ZERO_NAME};
 use crate::nodes::check::{ap, model_index, node_count, ptr};
 use crate::nodes::types::{AreaPartitionPg, NodeClass, NodeInfo, ZONE_ALWAYS};
 use mech3ax_api_types::gamez::nodes::{ActiveBoundingBox, AreaPartition, NodeFlags};
@@ -8,7 +8,37 @@ use mech3ax_common::{chk, Result};
 use mech3ax_types::check::node_name;
 use mech3ax_types::{Ascii, Ptr};
 
-pub(crate) fn assert_node(node: NodeMwC, offset: usize) -> Result<NodeInfo> {
+pub(crate) fn assert_node_zero(node: &NodeMwC, offset: usize) -> Result<()> {
+    chk!(offset, node.name == ZERO_NAME)?;
+    chk!(offset, node.flags == NodeFlags::empty())?;
+    chk!(offset, node.field040 == 0)?;
+    chk!(offset, node.update_flags == 0)?;
+    chk!(offset, node.zone_id == 0u32)?;
+    chk!(offset, node.node_class == 0)?;
+    chk!(offset, node.data_ptr == Ptr::NULL)?;
+    chk!(offset, node.model_index == -1)?;
+    chk!(offset, node.environment_data == Ptr::NULL)?;
+    chk!(offset, node.action_priority == 0)?;
+    chk!(offset, node.action_callback == Ptr::NULL)?;
+    chk!(offset, node.area_partition == AreaPartitionPg::ZERO)?;
+    chk!(offset, node.parent_count == 0)?;
+    chk!(offset, node.parent_array_ptr == Ptr::NULL)?;
+    chk!(offset, node.child_count == 0)?;
+    chk!(offset, node.child_array_ptr == Ptr::NULL)?;
+    chk!(offset, node.bbox_mid == Vec3::DEFAULT)?;
+    chk!(offset, node.bbox_diag == 0.0)?;
+    chk!(offset, node.node_bbox == BoundingBox::EMPTY)?;
+    chk!(offset, node.model_bbox == BoundingBox::EMPTY)?;
+    chk!(offset, node.child_bbox == BoundingBox::EMPTY)?;
+    chk!(offset, node.activation_ptr == Ptr::NULL)?;
+    chk!(offset, node.field192 == 0)?;
+    chk!(offset, node.field196 == 0)?;
+    chk!(offset, node.field200 == 0)?;
+    chk!(offset, node.field204 == 0)?;
+    Ok(())
+}
+
+pub(crate) fn assert_node(node: &NodeMwC, offset: usize, model_count: i32) -> Result<NodeInfo> {
     let name = chk!(offset, node_name(&node.name))?;
     let flags = chk!(offset, ?node.flags)?;
     chk!(offset, node.field040 == 0)?;
@@ -18,6 +48,7 @@ pub(crate) fn assert_node(node: NodeMwC, offset: usize) -> Result<NodeInfo> {
     let node_class = chk!(offset, ?node.node_class)?;
     // data_ptr (056) is variable
     let model_index = chk!(offset, model_index(node.model_index))?;
+    chk!(offset, node.model_index < model_count)?;
     chk!(offset, node.environment_data == Ptr::NULL)?;
     chk!(offset, node.action_priority == 1)?;
     chk!(offset, node.action_callback == Ptr::NULL)?;

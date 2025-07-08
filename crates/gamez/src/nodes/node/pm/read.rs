@@ -3,10 +3,14 @@ use crate::nodes::check::{ap_pm, model_index, ptr};
 use crate::nodes::types::{AreaPartitionPm, NodeClass, NodeInfo, ZONE_ALWAYS};
 use mech3ax_api_types::gamez::nodes::{ActiveBoundingBox, AreaPartition, NodeFlags};
 use mech3ax_api_types::nodes::BoundingBox;
-use mech3ax_api_types::Vec3;
+use mech3ax_api_types::{Count, Vec3};
 use mech3ax_common::{chk, Result};
 use mech3ax_types::check::node_name;
 use mech3ax_types::{Ascii, Ptr};
+
+fn node_count(value: i16) -> Result<Count, String> {
+    Count::check_i16(value)
+}
 
 fn assert_node(node: NodePmC, offset: usize) -> Result<NodeInfo> {
     let name = chk!(offset, node_name(&node.name))?;
@@ -39,10 +43,10 @@ fn assert_node(node: NodePmC, offset: usize) -> Result<NodeInfo> {
     };
 
     // usually, parent count should be 0 or 1
-    let parent_count = node.parent_count;
+    let parent_count = chk!(offset, node_count(node.parent_count))?;
     let parent_array_ptr = chk!(offset, ptr(node.parent_array_ptr, parent_count))?;
 
-    let child_count = node.child_count;
+    let child_count = chk!(offset, node_count(node.child_count))?;
     let child_array_ptr = chk!(offset, ptr(node.child_array_ptr, child_count))?;
 
     chk!(offset, node.bbox_mid == Vec3::DEFAULT)?;

@@ -50,11 +50,20 @@ pub(crate) fn make(input: JsonFlagsInput) -> Result<proc_macro2::TokenStream> {
         .zip(variant_attrs.iter_mut())
         .map(|(ident, attrs)| {
             let mut name = ident.to_string().to_snake_case();
-            if name == "override" {
-                name = "override_".to_string();
-                attrs.push(parse_quote! {
-                    #[serde(rename = "override")]
-                });
+            match name.as_str() {
+                "override" => {
+                    name = "override_".to_string();
+                    attrs.push(parse_quote! {
+                        #[serde(rename = "override")]
+                    });
+                }
+                "static" => {
+                    name = "static_".to_string();
+                    attrs.push(parse_quote! {
+                        #[serde(rename = "static")]
+                    });
+                }
+                _ => {}
             }
             Ident::new(&name, ident.span())
         })

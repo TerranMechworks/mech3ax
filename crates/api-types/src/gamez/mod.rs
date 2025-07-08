@@ -5,7 +5,6 @@ pub mod nodes;
 
 use crate::api;
 use crate::gamez::nodes::Node;
-use crate::nodes::mw::NodeMw;
 use crate::nodes::pm::NodePm;
 use materials::Material;
 use mech3ax_timestamp::DateTime;
@@ -23,7 +22,8 @@ api! {
 api! {
     struct Texture {
         name: String,
-        mip: i32 = { -1i32 },
+        // TODO: Option<Index>
+        mip_index: i32 = { -1i32 },
     }
 }
 
@@ -32,7 +32,7 @@ api! {
         textures: Vec<Texture>,
         materials: Vec<Material>,
         models: Vec<Model>,
-        nodes: Vec<NodeMw>,
+        nodes: Vec<Node>,
         metadata: GameZMetadata,
     }
 }

@@ -1,38 +1,40 @@
 use super::NODE_INDEX_INVALID;
+use crate::nodes::helpers::write_node_indices;
+use crate::nodes::node::mw::{make_node, make_node_zero, NodeMwC};
 use log::trace;
-use mech3ax_api_types::nodes::mw::NodeMw;
+use mech3ax_api_types::gamez::nodes::{Node, NodeData};
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, Result};
-use mech3ax_nodes::common::write_child_indices;
-use mech3ax_nodes::mw::{size_node, write_node_data, write_node_info, NodeMwC};
+use mech3ax_common::{assert_len, err, Result};
 use mech3ax_types::AsBytes as _;
 use std::io::Write;
 
 pub(crate) fn write_nodes(
     write: &mut CountingWriter<impl Write>,
-    nodes: &[NodeMw],
+    nodes: &[Node],
     array_size: i32,
     offset: u32,
 ) -> Result<()> {
     let mut offset = offset + (NodeMwC::SIZE + 4) * (array_size as u32);
+    // TODO
     let node_count = assert_len!(i32, nodes.len(), "GameZ nodes")?;
 
     for (index, node) in nodes.iter().enumerate() {
         trace!("Processing node info {}/{}", index, node_count);
-        write_node_info(write, node)?;
+        let node_info = make_node(node)?;
+        write.write_struct(&node_info)?;
 
-        let node_data_offset = match node {
-            NodeMw::Empty(empty) => empty.parent,
+        let node_data_offset = match node.data {
+            NodeData::Empty => match &node.parent_indices[..] {
+                &[parent] => parent.to_i32() as u32,
+                _ => return Err(err!("empty {}/{} has multiple parents", index, node_count)),
+            },
             _ => offset,
         };
 
-        trace!("Node {} data offset: {}", index, node_data_offset);
+        trace!("Node data offset: {}", node_data_offset);
         write.write_u32(node_data_offset)?;
         offset += size_node(node);
     }
-    // padding for spurious "Processing node info", since the count is not known
-    // and we have to peek for zero node infos.
-    trace!("");
 
     trace!(
         "Processing {}..{} node info zeros at {}",
@@ -40,7 +42,7 @@ pub(crate) fn write_nodes(
         array_size,
         write.offset
     );
-    let node_zero = NodeMwC::zero();
+    let node_zero = make_node_zero();
     for index in node_count..array_size {
         write.write_struct_no_log(&node_zero)?;
         let mut index = index + 1;
@@ -52,27 +54,42 @@ pub(crate) fn write_nodes(
     trace!("Processed note info zeros at {}", write.offset);
 
     for (index, node) in nodes.iter().enumerate() {
-        if !matches!(node, NodeMw::Empty(_)) {
-            trace!("Processing node data {}/{}", index, node_count);
+        trace!("Processing node data {}/{}", index, node_count);
+        match &node.data {
+            NodeData::Camera(camera) => crate::nodes::camera::mw::write(write, camera)?,
+            NodeData::Display(display) => crate::nodes::display::mw::write(write, display)?,
+            NodeData::Empty => {}
+            NodeData::Light(light) => crate::nodes::light::mw::write(write, light)?,
+            NodeData::Lod(lod) => crate::nodes::lod::mw::write(write, lod)?,
+            NodeData::Object3d(object3d) => crate::nodes::object3d::mw::write(write, object3d)?,
+            NodeData::Window(window) => crate::nodes::window::mw::write(write, window)?,
+            NodeData::World(world) => crate::nodes::world::mw::write(write, world)?,
         }
-        write_node_data(write, node)?;
-        match node {
-            NodeMw::Lod(lod) => {
-                write.write_u32(lod.parent)?;
-                write_child_indices(write, &lod.children)?;
-            }
-            NodeMw::Object3d(object3d) => {
-                if let Some(parent) = object3d.parent {
-                    write.write_u32(parent)?;
-                }
-                write_child_indices(write, &object3d.children)?;
-            }
-            NodeMw::World(world) => {
-                write_child_indices(write, &world.children)?;
-            }
-            _ => {}
+
+        if !matches!(node.data, NodeData::Empty) {
+            write_node_indices(write, &node.parent_indices)?;
         }
+        write_node_indices(write, &node.child_indices)?;
     }
 
+    trace!("Processed node data at {}", write.offset);
     Ok(())
+}
+
+fn size_node(node: &Node) -> u32 {
+    let node_size = match &node.data {
+        NodeData::Camera(_camera) => crate::nodes::camera::mw::size(),
+        NodeData::Display(_display) => crate::nodes::display::mw::size(),
+        NodeData::Empty => return 0,
+        NodeData::Light(light) => crate::nodes::light::mw::size(light),
+        NodeData::Lod(_lod) => crate::nodes::lod::mw::size(),
+        NodeData::Object3d(_object3d) => crate::nodes::object3d::mw::size(),
+        NodeData::Window(_window) => crate::nodes::window::mw::size(),
+        NodeData::World(world) => crate::nodes::world::mw::size(world),
+    };
+
+    let parent_size = (node.parent_indices.len() as u32).wrapping_mul(4);
+    let child_size = (node.child_indices.len() as u32).wrapping_mul(4);
+
+    node_size.wrapping_add(parent_size).wrapping_add(child_size)
 }

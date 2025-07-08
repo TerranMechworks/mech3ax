@@ -1,1 +1,1 @@
-pub use crate::ascii::check::node_name;
+pub use crate::ascii::check::{node_name, suffix};

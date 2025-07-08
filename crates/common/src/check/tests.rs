@@ -27,25 +27,25 @@ fn level1() {
         c: 3,
     };
 
-    let name = chk!(__name foo.a);
+    let name = chk!(@name foo.a);
     assert_eq!(name, "foo.a");
-    let offset = chk!(__offset foo.a, 0);
+    let offset = chk!(@offset foo.a, 0);
     assert_eq!(offset, 0);
-    let offset = chk!(__offset foo.a, 1000);
+    let offset = chk!(@offset foo.a, 1000);
     assert_eq!(offset, 1000);
 
-    let name = chk!(__name foo.b);
+    let name = chk!(@name foo.b);
     assert_eq!(name, "foo.b");
-    let offset = chk!(__offset foo.b, 0);
+    let offset = chk!(@offset foo.b, 0);
     assert_eq!(offset, 4);
-    let offset = chk!(__offset foo.b, 1000);
+    let offset = chk!(@offset foo.b, 1000);
     assert_eq!(offset, 1004);
 
-    let name = chk!(__name foo.c);
+    let name = chk!(@name foo.c);
     assert_eq!(name, "foo.c");
-    let offset = chk!(__offset foo.c, 0);
+    let offset = chk!(@offset foo.c, 0);
     assert_eq!(offset, 12);
-    let offset = chk!(__offset foo.c, 1000);
+    let offset = chk!(@offset foo.c, 1000);
     assert_eq!(offset, 1012);
 }
 
@@ -57,17 +57,17 @@ fn level2() {
         c: 3,
     };
 
-    let name = chk!(__name foo.b.x);
+    let name = chk!(@name foo.b.x);
     assert_eq!(name, "foo.b.x");
-    let offset = chk!(__offset foo.b.x, 0);
+    let offset = chk!(@offset foo.b.x, 0);
     assert_eq!(offset, 4);
-    let offset = chk!(__offset foo.b.x, 1000);
+    let offset = chk!(@offset foo.b.x, 1000);
     assert_eq!(offset, 1004);
 
-    let name = chk!(__name foo.b.y);
+    let name = chk!(@name foo.b.y);
     assert_eq!(name, "foo.b.y");
-    let offset = chk!(__offset foo.b.y, 0);
+    let offset = chk!(@offset foo.b.y, 0);
     assert_eq!(offset, 8);
-    let offset = chk!(__offset foo.b.y, 1000);
+    let offset = chk!(@offset foo.b.y, 1000);
     assert_eq!(offset, 1008);
 }

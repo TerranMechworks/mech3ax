@@ -1,4 +1,4 @@
-use mech3ax_api_types::Index;
+use mech3ax_api_types::{Count, Index};
 use mech3ax_common::check::amend_err;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::Result;
@@ -15,14 +15,15 @@ pub(crate) use read_node_indices;
 
 pub(crate) fn _read_node_indices<F>(
     read: &mut CountingReader<impl Read>,
-    count: u16,
+    count: Count,
     mut err: F,
     file: &str,
     line: u32,
 ) -> Result<Vec<Index>>
 where
-    F: FnMut(u16, u16) -> String,
+    F: FnMut(i16, i16) -> String,
 {
+    let count = count.to_i16();
     (0..count)
         .map(|index| {
             let value = read.read_i32()?;

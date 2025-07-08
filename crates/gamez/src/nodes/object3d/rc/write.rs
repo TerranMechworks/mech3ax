@@ -29,6 +29,7 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, object3d: &Object3d)
             rotate,
             translate,
             scale,
+            transform: _,
         }) => {
             let transform = object_matrix(rotate, scale, translate);
             (rotate, scale, transform)

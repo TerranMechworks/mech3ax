@@ -63,6 +63,7 @@ fn assert_object3d(object3d: &Object3dRcC, offset: usize) -> Result<Object3d> {
             rotate: object3d.rotate,
             translate,
             scale: object3d.scale,
+            transform: None,
         })
     };
 

@@ -15,6 +15,7 @@ pub(crate) fn write_nodes(
     offset: u32,
 ) -> Result<()> {
     let mut offset = offset + (NodeRcC::SIZE + 4) * (array_size as u32);
+    // TODO
     let node_count = assert_len!(i32, nodes.len(), "GameZ nodes")?;
 
     for (index, node) in nodes.iter().enumerate() {
@@ -50,7 +51,6 @@ pub(crate) fn write_nodes(
         }
         write.write_i32(index)?;
     }
-
     trace!("Processed note info zeros at {}", write.offset);
 
     for (index, node) in nodes.iter().enumerate() {

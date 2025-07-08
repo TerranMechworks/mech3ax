@@ -6,7 +6,7 @@ use mech3ax_api_types::gamez::model::{
 };
 use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{assert_that, chk, Result};
 use mech3ax_types::Ptr;
 use std::io::Read;
 
@@ -14,71 +14,55 @@ pub(crate) fn read_model_info(read: &mut CountingReader<impl Read>) -> Result<Wr
     let model: ModelPmC = read.read_struct()?;
     let offset = read.prev;
 
-    let model_type = assert_that!("model type", enum model.model_type, offset + 0)?;
-    let facade_mode = assert_that!("facade mode", enum model.facade_mode, offset + 4)?;
-    let bitflags = assert_that!("model flags", flags model.flags, offset + 8)?;
-    assert_that!("parent count (model)", model.parent_count > 0, offset + 12)?;
+    let model_type = chk!(offset, ?model.model_type)?;
+    let facade_mode = chk!(offset, ?model.facade_mode)?;
+    let bitflags = chk!(offset, ?model.flags)?;
+    chk!(offset, model.parent_count > 0)?;
 
-    assert_that!(
-        "texture scroll frame",
-        model.tex_scroll_frame == 0,
-        offset + 48
-    )?;
-    assert_that!(
-        "active polygon index",
-        model.active_polygon_index == 0,
-        offset + 88
-    )?;
+    chk!(offset, model.tex_scroll_frame == 0)?;
+    chk!(offset, model.active_polygon_index == 0)?;
 
     if model.polygon_count == 0 {
-        assert_that!("polygons ptr", model.polygons_ptr == Ptr::NULL, offset + 52)?;
-        assert_that!("vertex count", model.vertex_count == 0, offset + 20)?;
-        assert_that!("normal count", model.normal_count == 0, offset + 24)?;
-        assert_that!("morph count", model.morph_count == 0, offset + 28)?;
+        chk!(offset, model.polygons_ptr == Ptr::NULL)?;
+        chk!(offset, model.vertex_count == 0)?;
+        chk!(offset, model.normal_count == 0)?;
+        chk!(offset, model.morph_count == 0)?;
         // this is a really weird case where the model only has light info
-        assert_that!("light count", model.light_count > 0, offset + 32)?;
+        chk!(offset, model.light_count > 0)?;
     } else {
-        assert_that!("polygons ptr", model.polygons_ptr != Ptr::NULL, offset + 52)?;
+        chk!(offset, model.polygons_ptr != Ptr::NULL)?;
     }
 
     if model.vertex_count == 0 {
-        assert_that!("vertices ptr", model.vertices_ptr == Ptr::NULL, offset + 56)?;
+        chk!(offset, model.vertices_ptr == Ptr::NULL)?;
     } else {
-        assert_that!("vertices ptr", model.vertices_ptr != Ptr::NULL, offset + 56)?;
+        chk!(offset, model.vertices_ptr != Ptr::NULL)?;
     }
 
     if model.normal_count == 0 {
-        assert_that!("normals ptr", model.normals_ptr == Ptr::NULL, offset + 60)?;
+        chk!(offset, model.normals_ptr == Ptr::NULL)?;
     } else {
-        assert_that!("normals ptr", model.normals_ptr != Ptr::NULL, offset + 60)?;
+        chk!(offset, model.normals_ptr != Ptr::NULL)?;
     }
 
     if model.light_count == 0 {
-        assert_that!("lights ptr", model.lights_ptr == Ptr::NULL, offset + 64)?;
+        chk!(offset, model.lights_ptr == Ptr::NULL)?;
     } else {
-        assert_that!("lights ptr", model.lights_ptr != Ptr::NULL, offset + 64)?;
+        chk!(offset, model.lights_ptr != Ptr::NULL)?;
     }
 
-    assert_that!("morph factor", model.morph_factor == 0.0, offset + 36)?;
+    chk!(offset, model.morph_factor == 0.0)?;
 
     if model.morph_count == 0 {
-        assert_that!("morphs ptr", model.morphs_ptr == Ptr::NULL, offset + 68)?;
+        chk!(offset, model.morphs_ptr == Ptr::NULL)?;
     } else {
-        assert_that!("morphs ptr", model.morphs_ptr != Ptr::NULL, offset + 68)?;
+        chk!(offset, model.morphs_ptr != Ptr::NULL)?;
     }
 
     if model.material_ref_count == 0 {
-        assert_that!(
-            "material refs ptr",
-            model.material_refs_ptr == Ptr::NULL,
-            offset + 96
-        )?;
+        chk!(offset, model.material_refs_ptr == Ptr::NULL)?;
     } else {
-        assert_that!(
-            "material refs ptr",
-            model.material_refs_ptr != Ptr::NULL,
-            offset + 96
-        )?;
+        chk!(offset, model.material_refs_ptr != Ptr::NULL)?;
     }
 
     let texture_scroll = UvCoord {
@@ -148,47 +132,23 @@ fn assert_polygon_info(
     offset: usize,
     poly_index: u32,
 ) -> Result<(u32, u32, u32, Polygon)> {
-    let bitflags = assert_that!("polygon flags", flags poly.flags, offset + 0)?;
+    let bitflags = chk!(offset, ?poly.flags)?;
 
     let verts_in_poly = bitflags.base();
     assert_that!("verts in poly", verts_in_poly >= 3, offset)?;
 
-    assert_that!("priority", -50 <= poly.priority <= 50, offset + 4)?;
-    assert_that!(
-        "vertex indices ptr",
-        poly.vertex_indices_ptr != Ptr::NULL,
-        offset + 8
-    )?;
+    chk!(offset, priority(poly.priority))?;
+    chk!(offset, poly.vertex_indices_ptr != Ptr::NULL)?;
     if bitflags.contains(PolygonBitFlags::NORMALS) {
-        assert_that!(
-            "normal indices ptr",
-            poly.normal_indices_ptr != Ptr::NULL,
-            offset + 12
-        )?;
+        chk!(offset, poly.normal_indices_ptr != Ptr::NULL)?;
     } else {
-        assert_that!(
-            "normal indices ptr",
-            poly.normal_indices_ptr == Ptr::NULL,
-            offset + 12
-        )?;
+        chk!(offset, poly.normal_indices_ptr == Ptr::NULL)?;
     };
-    assert_that!("material count", poly.material_count > 0, offset + 16)?;
-    assert_that!(
-        "materials ptr",
-        poly.materials_ptr != Ptr::NULL,
-        offset + 20
-    )?;
+    chk!(offset, poly.material_count > 0)?;
+    chk!(offset, poly.materials_ptr != Ptr::NULL)?;
     // uvs ptr is variable, and determines whether UVs are loaded
-    assert_that!(
-        "vertex colors ptr",
-        poly.vertex_colors_ptr != Ptr::NULL,
-        offset + 28
-    )?;
-    assert_that!(
-        "material refs ptr",
-        poly.matl_refs_ptr != Ptr::NULL,
-        offset + 32
-    )?;
+    chk!(offset, poly.vertex_colors_ptr != Ptr::NULL)?;
+    chk!(offset, poly.matl_refs_ptr != Ptr::NULL)?;
     let zone_set = assert_zone_set(poly.zone_set.0, offset + 36)?;
 
     let mut flags = PolygonFlags::empty();
@@ -278,11 +238,7 @@ pub(crate) fn read_model_data(
     // material references are discarded, since they can be re-calculated
     for _ in 0..wrapped.material_ref_count {
         let material_ref: MaterialRefC = read.read_struct()?;
-        assert_that!(
-            "material ref index",
-            material_ref.material_index < material_count,
-            read.prev
-        )?;
+        chk!(read.prev, material_ref.material_index < material_count)?;
     }
 
     Ok(model)
@@ -384,44 +340,28 @@ fn read_materials(
 }
 
 pub(crate) fn assert_model_info_zero(model: &ModelPmC, offset: usize) -> Result<()> {
-    assert_that!(
-        "model_type",
-        model.model_type == ModelType::Default,
-        offset + 0
-    )?;
-    assert_that!("facade_follow", model.facade_mode == 0, offset + 4)?;
-    assert_that!("flags", model.flags == ModelBitFlags::empty(), offset + 8)?;
-    assert_that!("parent_count", model.parent_count == 0, offset + 12)?;
-    assert_that!("polygon_count", model.polygon_count == 0, offset + 16)?;
-    assert_that!("vertex_count", model.vertex_count == 0, offset + 20)?;
-    assert_that!("normal_count", model.normal_count == 0, offset + 24)?;
-    assert_that!("morph_count", model.morph_count == 0, offset + 28)?;
-    assert_that!("light_count", model.light_count == 0, offset + 32)?;
-    assert_that!("morph_factor", model.morph_factor == 0.0, offset + 36)?;
-    assert_that!("tex_scroll_u", model.tex_scroll_u == 0.0, offset + 40)?;
-    assert_that!("tex_scroll_v", model.tex_scroll_v == 0.0, offset + 44)?;
-    assert_that!("tex_scroll_frame", model.tex_scroll_frame == 0, offset + 48)?;
-    assert_that!("polygons_ptr", model.polygons_ptr == Ptr::NULL, offset + 52)?;
-    assert_that!("vertices_ptr", model.vertices_ptr == Ptr::NULL, offset + 56)?;
-    assert_that!("normals_ptr", model.normals_ptr == Ptr::NULL, offset + 60)?;
-    assert_that!("lights_ptr", model.lights_ptr == Ptr::NULL, offset + 64)?;
-    assert_that!("morphs_ptr", model.morphs_ptr == Ptr::NULL, offset + 68)?;
-    assert_that!("bbox_mid", model.bbox_mid == Vec3::DEFAULT, offset + 72)?;
-    assert_that!("bbox_diag", model.bbox_diag == 0.0, offset + 84)?;
-    assert_that!(
-        "active_polygon_index",
-        model.active_polygon_index == 0,
-        offset + 88
-    )?;
-    assert_that!(
-        "material_ref_count",
-        model.material_ref_count == 0,
-        offset + 92
-    )?;
-    assert_that!(
-        "material_refs_ptr",
-        model.material_refs_ptr == Ptr::NULL,
-        offset + 96
-    )?;
+    chk!(offset, model.model_type == ModelType::Default)?;
+    chk!(offset, model.facade_mode == 0)?;
+    chk!(offset, model.flags == ModelBitFlags::empty())?;
+    chk!(offset, model.parent_count == 0)?;
+    chk!(offset, model.polygon_count == 0)?;
+    chk!(offset, model.vertex_count == 0)?;
+    chk!(offset, model.normal_count == 0)?;
+    chk!(offset, model.morph_count == 0)?;
+    chk!(offset, model.light_count == 0)?;
+    chk!(offset, model.morph_factor == 0.0)?;
+    chk!(offset, model.tex_scroll_u == 0.0)?;
+    chk!(offset, model.tex_scroll_v == 0.0)?;
+    chk!(offset, model.tex_scroll_frame == 0)?;
+    chk!(offset, model.polygons_ptr == Ptr::NULL)?;
+    chk!(offset, model.vertices_ptr == Ptr::NULL)?;
+    chk!(offset, model.normals_ptr == Ptr::NULL)?;
+    chk!(offset, model.lights_ptr == Ptr::NULL)?;
+    chk!(offset, model.morphs_ptr == Ptr::NULL)?;
+    chk!(offset, model.bbox_mid == Vec3::DEFAULT)?;
+    chk!(offset, model.bbox_diag == 0.0)?;
+    chk!(offset, model.active_polygon_index == 0)?;
+    chk!(offset, model.material_ref_count == 0)?;
+    chk!(offset, model.material_refs_ptr == Ptr::NULL)?;
     Ok(())
 }

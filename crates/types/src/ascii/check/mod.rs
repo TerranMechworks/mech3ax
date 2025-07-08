@@ -10,3 +10,13 @@ pub fn node_name<const N: usize>(value: &Ascii<N>) -> Result<String, String> {
         ConversionError::Unterminated => "missing zero terminator".to_string(),
     })
 }
+
+pub fn suffix<const N: usize>(value: &Ascii<N>) -> Result<String, String> {
+    value.to_str_suffix().map_err(|e| match e {
+        ConversionError::PaddingError(padding) => format!("expected string padding `{}`", padding),
+        ConversionError::NonAscii(index) => {
+            format!("invalid character at +{}", index)
+        }
+        ConversionError::Unterminated => "missing zero terminator".to_string(),
+    })
+}

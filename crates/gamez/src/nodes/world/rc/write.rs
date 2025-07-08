@@ -78,7 +78,7 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Re
             let zf = partition.z as f32;
             // TODO
             let node_count =
-                assert_len!(u16, partition.node_indices.len(), "partition node indices")?;
+                assert_len!(i16, partition.node_indices.len(), "partition node indices")?;
             let diagonal = partition_diag(partition.min.y, partition.max.y, 128.0);
 
             let mid_y = (partition.max.y + partition.min.y) * 0.5;

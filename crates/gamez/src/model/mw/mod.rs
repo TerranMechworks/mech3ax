@@ -4,7 +4,7 @@ mod write;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::model::{FacadeMode, Model, ModelType};
 use mech3ax_api_types::Vec3;
-use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Hex, Maybe, Ptr};
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Hex, Maybe, Offsets, Ptr};
 pub(crate) use read::{assert_model_info_zero, read_model_data, read_model_info};
 pub(crate) use write::{size_model, write_model_data, write_model_info};
 
@@ -31,7 +31,7 @@ type MType = Maybe<u32, ModelType>;
 type FMode = Maybe<u32, FacadeMode>;
 type MFlags = Maybe<u32, ModelBitFlags>;
 
-#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets, Default)]
 #[repr(C)]
 pub(crate) struct ModelMwC {
     model_type: MType,         // 00
@@ -70,7 +70,7 @@ bitflags! {
 
 type PFlags = Maybe<u32, PolygonBitFlags>;
 
-#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
 struct PolygonMwC {
     flags: PFlags,           // 00

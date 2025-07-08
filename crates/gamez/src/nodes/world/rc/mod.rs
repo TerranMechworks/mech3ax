@@ -89,7 +89,7 @@ struct PartitionRcC {
     mid: Vec3,       // 40
     diagonal: f32,   // 52
     field56: u16,    // 56
-    node_count: u16, // 58
+    node_count: i16, // 58
     nodes_ptr: Ptr,  // 60
 }
 impl_as_bytes!(PartitionRcC, 64);

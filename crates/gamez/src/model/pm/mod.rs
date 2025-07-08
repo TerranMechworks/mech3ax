@@ -6,7 +6,7 @@ use bytemuck::{AnyBitPattern, NoUninit};
 pub(crate) use matl::make_material_refs;
 use mech3ax_api_types::gamez::model::{FacadeMode, Model, ModelType};
 use mech3ax_api_types::Vec3;
-use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Hex, Maybe, Ptr};
+use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Hex, Maybe, Offsets, Ptr};
 pub(crate) use read::{assert_model_info_zero, read_model_data, read_model_info};
 pub(crate) use write::{size_model, write_model_data, write_model_info};
 
@@ -38,7 +38,7 @@ type MType = Maybe<u32, ModelType>;
 type FMode = Maybe<u32, FacadeMode>;
 type MFlags = Maybe<u32, ModelBitFlags>;
 
-#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets, Default)]
 #[repr(C)]
 pub(crate) struct ModelPmC {
     model_type: MType,            // 00
@@ -81,7 +81,7 @@ bitflags! {
 
 type PFlags = Maybe<u32, PolygonBitFlags>;
 
-#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
 struct PolygonPmC {
     flags: PFlags,           // 00
@@ -97,7 +97,7 @@ struct PolygonPmC {
 }
 impl_as_bytes!(PolygonPmC, 40);
 
-#[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern)]
+#[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
 pub struct MaterialRefC {
     pub material_index: u32, // 00

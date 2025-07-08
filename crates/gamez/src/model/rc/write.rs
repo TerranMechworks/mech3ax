@@ -379,7 +379,7 @@ pub(crate) fn size_model(model: &Model) -> u32 {
     let mut size =
         Vec3::SIZE * (model.vertices.len() + model.normals.len() + model.morphs.len()) as u32;
     for light in &model.lights {
-        size += LightC::SIZE + Vec3::SIZE * light.extra.len() as u32;
+        size += PointLightC::SIZE + Vec3::SIZE * light.vertices.len() as u32;
     }
     for polygon in &model.polygons {
         let normal_indices_len = polygon

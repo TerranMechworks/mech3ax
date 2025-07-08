@@ -48,7 +48,7 @@ pub(crate) fn make_node(node: &Node) -> Result<NodeRcC> {
     let area_partition = match &node.area_partition {
         Some(ap) => {
             if ap.virtual_x != 0 || ap.virtual_y != 0 {
-                log::warn!("node area partition virtual coordinates ignored in RC");
+                log::warn!("WARN: node area partition virtual coordinates ignored in RC");
             }
             AreaPartitionPg {
                 x: ap.x.into(),

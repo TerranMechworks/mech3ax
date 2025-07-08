@@ -5,6 +5,7 @@ use crate::nodes::math::partition_diag;
 use crate::nodes::range::RangeI32;
 use log::trace;
 use mech3ax_api_types::gamez::nodes::{Area, World, WorldFog, WorldPartition, WorldPtrs};
+use mech3ax_api_types::Count;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{chk, Result};
 use mech3ax_types::Ptr;
@@ -12,13 +13,13 @@ use std::io::Read;
 
 struct WorldTemp {
     warudo: World,
-    light_count: u16,
-    sound_count: u16,
+    light_count: Count,
+    sound_count: Count,
 }
 
 struct PartitionTemp {
     partition: WorldPartition,
-    node_count: u16,
+    node_count: Count,
 }
 
 pub(crate) fn read(read: &mut CountingReader<impl Read>) -> Result<World> {
@@ -201,6 +202,10 @@ fn read_partitions(
         .collect::<Result<Vec<_>>>()
 }
 
+fn partition_node_count(value: i16) -> Result<Count, String> {
+    Count::check_i16(value)
+}
+
 fn assert_partition(
     partition: &PartitionRcC,
     x: i32,
@@ -215,7 +220,8 @@ fn assert_partition(
     chk!(offset, partition.x == xf)?;
     chk!(offset, partition.z == zf)?;
     chk!(offset, partition.field56 == 0)?;
-    let nodes_ptr = chk!(offset, ptr(partition.nodes_ptr, partition.node_count))?;
+    let node_count = chk!(offset, partition_node_count(partition.node_count))?;
+    let nodes_ptr = chk!(offset, ptr(partition.nodes_ptr, node_count))?;
 
     chk!(offset, partition.min.x == xf)?;
     // y is unknown
@@ -237,7 +243,6 @@ fn assert_partition(
     let diagonal = partition_diag(partition.min.y, partition.max.y, 128.0);
     chk!(offset, partition.diagonal == diagonal)?;
 
-    let node_count = partition.node_count;
     let partition = WorldPartition {
         x,
         z,
