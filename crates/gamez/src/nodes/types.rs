@@ -1,6 +1,6 @@
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::nodes::{
-    ActiveBoundingBox, AreaPartition, BoundingBox, NodeData, NodeFlags,
+    ActiveBoundingBox, BoundingBox, NodeData, NodeFlags, Partition,
 };
 use mech3ax_api_types::{Count, Index};
 use mech3ax_types::{impl_as_bytes, primitive_enum, Offsets, Ptr};
@@ -12,7 +12,8 @@ pub(crate) struct NodeInfo {
     pub(crate) zone_id: i8,
     pub(crate) data_ptr: Ptr,
     pub(crate) model_index: Option<Index>,
-    pub(crate) area_partition: Option<AreaPartition>,
+    pub(crate) area_partition: Option<Partition>,
+    pub(crate) virtual_partition: Option<Partition>,
     pub(crate) parent_count: Count,
     pub(crate) parent_array_ptr: Ptr,
     pub(crate) child_count: Count,
@@ -61,38 +62,13 @@ impl NodeClass {
 
 #[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern, Offsets, Default)]
 #[repr(C)]
-pub(crate) struct AreaPartitionPg {
+pub(crate) struct AreaPartitionC {
     pub(crate) x: i32, // 0
-    pub(crate) y: i32, // 4
+    pub(crate) z: i32, // 4
 }
-impl_as_bytes!(AreaPartitionPg, 8);
+impl_as_bytes!(AreaPartitionC, 8);
 
-impl AreaPartitionPg {
-    pub(crate) const DEFAULT: Self = Self { x: -1, y: -1 };
-    pub(crate) const ZERO: Self = Self { x: 0, y: 0 };
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern, Offsets)]
-#[repr(C)]
-pub(crate) struct AreaPartitionPm {
-    pub(crate) x: i16,         // 0
-    pub(crate) y: i16,         // 2
-    pub(crate) virtual_x: i16, // 4
-    pub(crate) virtual_y: i16, // 6
-}
-impl_as_bytes!(AreaPartitionPm, 8);
-
-impl AreaPartitionPm {
-    pub(crate) const DEFAULT: Self = Self {
-        x: -1,
-        y: -1,
-        virtual_x: 0,
-        virtual_y: 0,
-    };
-    pub(crate) const ZERO: Self = Self {
-        x: 0,
-        y: 0,
-        virtual_x: 0,
-        virtual_y: 0,
-    };
+impl AreaPartitionC {
+    pub(crate) const DEFAULT: Self = Self { x: -1, z: -1 };
+    pub(crate) const ZERO: Self = Self { x: 0, z: 0 };
 }

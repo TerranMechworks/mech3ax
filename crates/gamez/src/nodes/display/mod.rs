@@ -34,3 +34,8 @@ pub(crate) mod mw {
     pub(crate) use super::size::size;
     pub(crate) use super::write::write;
 }
+
+pub(crate) mod pm {
+    pub(crate) use super::read::read;
+    pub(crate) use super::write::write;
+}

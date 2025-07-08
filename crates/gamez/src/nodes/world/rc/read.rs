@@ -85,7 +85,8 @@ fn assert_world(world: &WorldRcC, offset: usize) -> Result<WorldTemp> {
     // -- virtual partition
     // usually 16
     let partition_max_dec_feature_count = chk!(offset, ?world.partition_max_dec_feature_count)?;
-    chk!(offset, world.virtual_partition == 0)?;
+    let virtual_partition = chk!(offset, ?world.virtual_partition)?;
+
     chk!(offset, world.virt_partition_x_size == 256.0)?;
     chk!(offset, world.virt_partition_z_size == -256.0)?;
     chk!(offset, world.virt_partition_x_half == 128.0)?;
@@ -127,6 +128,7 @@ fn assert_world(world: &WorldRcC, offset: usize) -> Result<WorldTemp> {
         },
         area,
         partition_max_dec_feature_count,
+        virtual_partition,
         light_indices: Vec::new(),
         sound_indices: Vec::new(),
         partitions: Vec::new(),
@@ -249,6 +251,7 @@ fn assert_partition(
         min: partition.min,
         max: partition.max,
         node_indices: Vec::new(),
+        values: Vec::new(), // TODO
         nodes_ptr: nodes_ptr.0,
     };
 

@@ -67,11 +67,9 @@ num! {
 }
 
 api! {
-    struct AreaPartition {
+    struct Partition {
         x: u8,
-        y: u8,
-        virtual_x: u8,
-        virtual_y: u8,
+        z: u8,
     }
 }
 
@@ -82,10 +80,11 @@ api! {
         update_flags: u32,
         zone_id: i8,
         model_index: Option<Index>,
-        area_partition: Option<AreaPartition>,
+        area_partition: Option<Partition>,
+        virtual_partition: Option<Partition>, // PM
         parent_indices: Vec<Index>,
         child_indices: Vec<Index>,
-        active_bbox: ActiveBoundingBox,
+        active_bbox: ActiveBoundingBox, // PM
         node_bbox: BoundingBox,
         model_bbox: BoundingBox,
         child_bbox: BoundingBox,
@@ -97,6 +96,7 @@ api! {
         data_ptr: u32,
         parent_array_ptr: u32,
         child_array_ptr: u32,
+        index: u32, // PM
     }
 }
 
@@ -164,6 +164,10 @@ api! {
         diffuse: f32,
         ambient: f32,
         color: Color,
+        color_ambient: Color, // PM
+        color_diffuse_mixed: Color, // PM
+        color_ambient_mixed: Color, // PM
+        color_da_combined: Color, // PM
         range: Range,
         parent_indices: Vec<Index>,
         parent_ptr: u32,
@@ -272,12 +276,21 @@ api! {
 }
 
 api! {
+    struct WorldPartitionValue {
+        node_index: Index,
+        y_min: f32,
+        y_max: f32,
+    }
+}
+
+api! {
     struct WorldPartition {
         x: i32,
         z: i32,
         min: Vec3,
         max: Vec3,
         node_indices: Vec<Index>,
+        values: Vec<WorldPartitionValue>,
         nodes_ptr: u32,
     }
 }
@@ -297,6 +310,7 @@ api! {
     struct World {
         fog: WorldFog,
         area: Area,
+        virtual_partition: bool,
         partition_max_dec_feature_count: u8,
         light_indices: Vec<Index>,
         sound_indices: Vec<Index>,

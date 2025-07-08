@@ -1,5 +1,5 @@
 use super::{Object3dFlags, Object3dMwC, SCALE_INITIAL};
-use crate::nodes::math::{extract_signs, object_matrix};
+use crate::nodes::math::{extract_matrix_signs, object_matrix};
 use mech3ax_api_types::gamez::nodes::{Object3d, RotateTranslateScale, Transform};
 use mech3ax_api_types::{AffineMatrix, Color, Vec3};
 use mech3ax_common::io_ext::CountingReader;
@@ -40,7 +40,7 @@ fn assert_object3d(object3d: &Object3dMwC, offset: usize) -> Result<Object3d> {
     };
     chk!(offset, object3d.field096 == AffineMatrix::DEFAULT)?;
 
-    let signs = extract_signs(&object3d.transform);
+    let signs = extract_matrix_signs(&object3d.transform);
     let transform = if flags.contains(Object3dFlags::TRANSFORM_INITIAL) {
         chk!(offset, object3d.rotate == Vec3::DEFAULT)?;
         chk!(offset, object3d.scale == SCALE_INITIAL)?;

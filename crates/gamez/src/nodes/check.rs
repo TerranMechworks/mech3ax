@@ -7,10 +7,6 @@ pub(crate) fn ap(value: i32) -> Result<u8> {
     u8::try_from(value).map_err(|_e| format!("expected {} in 0..={}", value, u8::MAX))
 }
 
-pub(crate) fn ap_pm(value: i16) -> Result<u8> {
-    u8::try_from(value).map_err(|_e| format!("expected {} in 0..={}", value, u8::MAX))
-}
-
 pub(crate) fn model_index(value: i32) -> Result<Option<Index>> {
     if value == -1 {
         return Ok(None);

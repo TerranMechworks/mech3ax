@@ -1,11 +1,14 @@
-use super::{PartitionMwC, WorldMwC};
+use super::{PartitionPmC, PartitionValueC, WorldPmC};
 use crate::nodes::check::{node_count, ptr};
 use crate::nodes::helpers::read_node_indices;
 use crate::nodes::math::partition_diag;
 use crate::nodes::range::RangeI32;
 use log::trace;
-use mech3ax_api_types::gamez::nodes::{Area, World, WorldFog, WorldPartition, WorldPtrs};
-use mech3ax_api_types::Count;
+use mech3ax_api_types::gamez::nodes::{
+    Area, World, WorldFog, WorldPartition, WorldPartitionValue, WorldPtrs,
+};
+use mech3ax_api_types::{Count, Index};
+use mech3ax_common::check::amend_err;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{chk, Result};
 use mech3ax_types::Ptr;
@@ -23,7 +26,7 @@ struct PartitionTemp {
 }
 
 pub(crate) fn read(read: &mut CountingReader<impl Read>) -> Result<World> {
-    let world: WorldMwC = read.read_struct()?;
+    let world: WorldPmC = read.read_struct()?;
     let WorldTemp {
         mut warudo,
         light_count,
@@ -45,7 +48,7 @@ pub(crate) fn read(read: &mut CountingReader<impl Read>) -> Result<World> {
     Ok(warudo)
 }
 
-fn assert_world(world: &WorldMwC, offset: usize) -> Result<WorldTemp> {
+fn assert_world(world: &WorldPmC, offset: usize) -> Result<WorldTemp> {
     chk!(offset, world.flags == 0)?;
     // -- area partition
     chk!(offset, world.area_partition_used == 0)?;
@@ -82,6 +85,11 @@ fn assert_world(world: &WorldMwC, offset: usize) -> Result<WorldTemp> {
         bottom: area_bottom,
     };
 
+    chk!(offset, world.area_left2 == world.area_left - 3.0)?;
+    chk!(offset, world.area_bottom2 == world.area_bottom + 3.0)?;
+    chk!(offset, world.area_right2 == world.area_right + 3.0)?;
+    chk!(offset, world.area_top2 == world.area_top - 3.0)?;
+
     // -- virtual partition
     // usually 16
     let partition_max_dec_feature_count = chk!(offset, ?world.partition_max_dec_feature_count)?;
@@ -92,6 +100,19 @@ fn assert_world(world: &WorldMwC, offset: usize) -> Result<WorldTemp> {
     // virt_partition_z_min == 1
     // virt_partition_x_max == world.virt_partition_x_count - 1
     // virt_partition_z_max == world.virt_partition_y_count - 1
+    if virtual_partition {
+        chk!(
+            offset,
+            world.virt_partition_x_max == world.virt_partition_x_count - 1
+        )?;
+        chk!(
+            offset,
+            world.virt_partition_z_max == world.virt_partition_z_count - 1
+        )?;
+    } else {
+        chk!(offset, world.virt_partition_x_max == 0)?;
+        chk!(offset, world.virt_partition_z_max == 0)?;
+    }
 
     chk!(offset, world.virt_partition_x_size == 256.0)?;
     chk!(offset, world.virt_partition_z_size == -256.0)?;
@@ -108,9 +129,9 @@ fn assert_world(world: &WorldMwC, offset: usize) -> Result<WorldTemp> {
     chk!(offset, world.virt_partition_x_count == area.x_count(256))?;
     chk!(offset, world.virt_partition_z_count == area.z_count(256))?;
     chk!(offset, world.virt_partition_ptr != Ptr::NULL)?;
-    chk!(offset, world.field148 == 1.0)?;
-    chk!(offset, world.field152 == 1.0)?;
-    chk!(offset, world.field156 == 1.0)?;
+    chk!(offset, world.field164 == 1.0)?;
+    chk!(offset, world.field168 == 1.0)?;
+    chk!(offset, world.field172 == 1.0)?;
 
     // -- light nodes
     let light_count = chk!(offset, node_count(world.light_count))?;
@@ -122,7 +143,7 @@ fn assert_world(world: &WorldMwC, offset: usize) -> Result<WorldTemp> {
     let sound_nodes_ptr = chk!(offset, ptr(world.sound_nodes_ptr, sound_count))?;
     let sound_data_ptr = chk!(offset, ptr(world.sound_data_ptr, sound_count))?;
 
-    chk!(offset, world.field184 == 0)?;
+    chk!(offset, world.field200 == 0)?;
 
     let warudo = World {
         fog: WorldFog {
@@ -187,20 +208,14 @@ fn read_partitions(
                         z_idx,
                         z_len,
                     );
-                    let partition: PartitionMwC = read.read_struct()?;
+                    let partition: PartitionPmC = read.read_struct()?;
                     let PartitionTemp {
                         mut partition,
                         node_count,
                     } = assert_partition(&partition, x_pos, z_pos, read.prev)?;
 
                     if node_count > 0 {
-                        partition.node_indices =
-                            read_node_indices!(read, node_count, |idx, cnt| {
-                                format!(
-                                    "world partition x: {} z: {} node index {}/{}",
-                                    x_pos, z_pos, idx, cnt
-                                )
-                            })?;
+                        partition.values = read_partition_values(read, node_count, x_pos, z_pos)?;
                     }
 
                     Ok(partition)
@@ -210,12 +225,38 @@ fn read_partitions(
         .collect::<Result<Vec<_>>>()
 }
 
+fn read_partition_values(
+    read: &mut CountingReader<impl Read>,
+    count: Count,
+    x_pos: i32,
+    z_pos: i32,
+) -> Result<Vec<WorldPartitionValue>> {
+    let count = count.to_i16();
+    (0..count)
+        .map(|index| {
+            let value: PartitionValueC = read.read_struct_no_log()?;
+            let node_index = Index::check_i32(value.node_index).map_err(|msg| {
+                let name = format!(
+                    "world partition x: {} z: {} node index {}/{}",
+                    x_pos, z_pos, index, count
+                );
+                amend_err(msg, &name, read.prev, file!(), line!())
+            })?;
+            Ok(WorldPartitionValue {
+                node_index,
+                y_min: value.y_min,
+                y_max: value.y_max,
+            })
+        })
+        .collect::<Result<Vec<WorldPartitionValue>>>()
+}
+
 fn partition_node_count(value: i16) -> Result<Count, String> {
     Count::check_i16(value)
 }
 
 fn assert_partition(
-    partition: &PartitionMwC,
+    partition: &PartitionPmC,
     x: i32,
     z: i32,
     offset: usize,
@@ -228,10 +269,16 @@ fn assert_partition(
     chk!(offset, partition.x == xf)?;
     chk!(offset, partition.z == zf)?;
     chk!(offset, partition.field56 == 0)?;
+
     let node_count = chk!(offset, partition_node_count(partition.node_count))?;
     let nodes_ptr = chk!(offset, ptr(partition.nodes_ptr, node_count))?;
+
     chk!(offset, partition.field64 == 0)?;
     chk!(offset, partition.field68 == 0)?;
+    chk!(offset, partition.field72 == 0)?;
+    chk!(offset, partition.field76 == 0)?;
+    chk!(offset, partition.field80 == 0)?;
+    chk!(offset, partition.field84 == 0)?;
 
     chk!(offset, partition.min.x == xf)?;
     // y is unknown
@@ -262,7 +309,7 @@ fn assert_partition(
         min: partition.min,
         max: partition.max,
         node_indices: Vec::new(),
-        values: Vec::new(), // TODO
+        values: Vec::new(),
         nodes_ptr: nodes_ptr.0,
     };
 

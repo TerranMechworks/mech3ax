@@ -1,5 +1,5 @@
-use super::{Object3dFlags, Object3dRcC, SCALE_INITIAL};
-use crate::nodes::math::{extract_matrix_signs, object_matrix};
+use super::{Object3dFlags, Object3dPmC, SCALE_INITIAL};
+use crate::nodes::math::{extract_matrix_signs, extract_rotate_signs, object_matrix};
 use mech3ax_api_types::gamez::nodes::{Object3d, RotateTranslateScale, Transform};
 use mech3ax_api_types::{AffineMatrix, Color, Vec3};
 use mech3ax_common::io_ext::CountingReader;
@@ -7,9 +7,7 @@ use mech3ax_common::{chk, Result};
 use std::io::Read;
 
 pub(crate) fn read(read: &mut CountingReader<impl Read>) -> Result<Object3d> {
-    let object3d: Object3dRcC = read.read_struct()?;
-
-    // let matrix_signs = extract_matrix_signs(&object3d.matrix);
+    let object3d: Object3dPmC = read.read_struct()?;
     assert_object3d(&object3d, read.prev)
 }
 
@@ -22,7 +20,7 @@ fn rotation(value: f32) -> std::result::Result<(), String> {
     }
 }
 
-fn assert_object3d(object3d: &Object3dRcC, offset: usize) -> Result<Object3d> {
+fn assert_object3d(object3d: &Object3dPmC, offset: usize) -> Result<Object3d> {
     let flags = chk!(offset, ?object3d.flags)?;
     // TODO: UNK5
     let opacity = if flags.contains(Object3dFlags::OPACITY) {
@@ -40,7 +38,7 @@ fn assert_object3d(object3d: &Object3dRcC, offset: usize) -> Result<Object3d> {
     };
     chk!(offset, object3d.field096 == AffineMatrix::DEFAULT)?;
 
-    let signs = extract_matrix_signs(&object3d.transform);
+    let signs = extract_matrix_signs(&object3d.transform) | extract_rotate_signs(&object3d.rotate);
     let transform = if flags.contains(Object3dFlags::TRANSFORM_INITIAL) {
         chk!(offset, object3d.rotate == Vec3::DEFAULT)?;
         chk!(offset, object3d.scale == SCALE_INITIAL)?;
@@ -58,12 +56,20 @@ fn assert_object3d(object3d: &Object3dRcC, offset: usize) -> Result<Object3d> {
         let translate = object3d.transform.translate();
 
         let transform = object_matrix(object3d.rotate, object3d.scale, translate);
-        chk!(offset, object3d.transform == transform)?;
+        // TODO
+        // chk!(offset, object3d.transform == transform)?;
+        let transform = if object3d.transform == transform {
+            log::warn!("OBJECT3D AFFINE PASS");
+            None
+        } else {
+            log::warn!("OBJECT3D AFFINE FAIL");
+            Some(object3d.transform)
+        };
         Transform::RotateTranslateScale(RotateTranslateScale {
             rotate: object3d.rotate,
             translate,
             scale: object3d.scale,
-            transform: None,
+            transform,
         })
     };
 

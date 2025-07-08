@@ -1,5 +1,5 @@
-use super::{Object3dFlags, Object3dMwC, SCALE_INITIAL};
-use crate::nodes::math::{apply_matrix_signs, object_matrix};
+use super::{Object3dFlags, Object3dPmC, SCALE_INITIAL};
+use crate::nodes::math::{apply_matrix_signs, apply_rotate_signs, object_matrix};
 use mech3ax_api_types::gamez::nodes::{Object3d, RotateTranslateScale, Transform};
 use mech3ax_api_types::{AffineMatrix, Color, Vec3};
 use mech3ax_common::io_ext::CountingWriter;
@@ -39,8 +39,9 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, object3d: &Object3d)
     };
 
     let transform = apply_matrix_signs(&transform, object3d.signs);
+    let rotate = apply_rotate_signs(&rotate, object3d.signs);
 
-    let object = Object3dMwC {
+    let object = Object3dPmC {
         flags: flags.maybe(),
         opacity: object3d.opacity.unwrap_or(0.0),
         color: object3d.color.unwrap_or(Color::BLACK),

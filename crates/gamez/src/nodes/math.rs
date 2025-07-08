@@ -96,8 +96,8 @@ fn apply_zero_sign(value: f32, sign: bool) -> f32 {
 /// This is required for complete binary accuracy, since in Rust, ``0.0 == -0.0``. So
 /// when we compare against the calculated matrix or identity matrix, the zero sign will
 /// be ignored. This function saves them for writing.
-pub(crate) fn extract_signs(matrix: &AffineMatrix) -> u32 {
-    0 | extract_zero_sign(matrix.r00) << 0
+pub(crate) fn extract_matrix_signs(matrix: &AffineMatrix) -> u32 {
+    extract_zero_sign(matrix.r00) << 0
         | extract_zero_sign(matrix.r01) << 1
         | extract_zero_sign(matrix.r02) << 2
         | extract_zero_sign(matrix.r10) << 3
@@ -111,12 +111,21 @@ pub(crate) fn extract_signs(matrix: &AffineMatrix) -> u32 {
         | extract_zero_sign(matrix.r32) << 11
 }
 
+/// Extract the zero sign from a rotation (i.e. if the value is 0.0 or -0.0).
+///
+/// This is required for complete binary accuracy, since in Rust, ``0.0 == -0.0``.
+pub(crate) fn extract_rotate_signs(rotate: &Vec3) -> u32 {
+    extract_zero_sign(rotate.x) << 12
+        | extract_zero_sign(rotate.y) << 13
+        | extract_zero_sign(rotate.z) << 14
+}
+
 /// Apply the zero sign to a matrix (i.e. if the value is 0.0 or -0.0).
 ///
 /// This is required for complete binary accuracy, since in Rust, ``0.0 == -0.0``. So
 /// when we compare against the calculated matrix or identity matrix, the zero sign will
 /// be ignored. This function applies them from reading.
-pub(crate) fn apply_signs(matrix: &AffineMatrix, signs: u32) -> AffineMatrix {
+pub(crate) fn apply_matrix_signs(matrix: &AffineMatrix, signs: u32) -> AffineMatrix {
     AffineMatrix {
         r00: apply_zero_sign(matrix.r00, ((signs >> 0) & 1) == 1),
         r01: apply_zero_sign(matrix.r01, ((signs >> 1) & 1) == 1),
@@ -130,5 +139,16 @@ pub(crate) fn apply_signs(matrix: &AffineMatrix, signs: u32) -> AffineMatrix {
         r30: apply_zero_sign(matrix.r30, ((signs >> 9) & 1) == 1),
         r31: apply_zero_sign(matrix.r31, ((signs >> 10) & 1) == 1),
         r32: apply_zero_sign(matrix.r32, ((signs >> 11) & 1) == 1),
+    }
+}
+
+/// Apply the zero sign to a v (i.e. if the value is 0.0 or -0.0).
+///
+/// This is required for complete binary accuracy, since in Rust, ``0.0 == -0.0``.
+pub(crate) fn apply_rotate_signs(rotate: &Vec3, signs: u32) -> Vec3 {
+    Vec3 {
+        x: apply_zero_sign(rotate.x, ((signs >> 12) & 1) == 1),
+        y: apply_zero_sign(rotate.y, ((signs >> 13) & 1) == 1),
+        z: apply_zero_sign(rotate.z, ((signs >> 14) & 1) == 1),
     }
 }

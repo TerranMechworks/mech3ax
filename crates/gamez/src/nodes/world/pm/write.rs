@@ -1,4 +1,4 @@
-use super::{PartitionMwC, WorldMwC};
+use super::{PartitionPmC, PartitionValueC, WorldPmC};
 use crate::nodes::helpers::write_node_indices;
 use crate::nodes::math::partition_diag;
 use crate::nodes::range::RangeI32;
@@ -15,13 +15,24 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Re
     let area_width = world.area.right - world.area.left;
     let area_height = world.area.top - world.area.bottom;
 
+    let area_left = world.area.left as f32;
+    let area_bottom = world.area.bottom as f32;
+    let area_right = world.area.right as f32;
+    let area_top = world.area.top as f32;
+
     let virt_partition_x_count = world.area.x_count(256);
     let virt_partition_z_count = world.area.z_count(256);
+
+    let (virt_partition_x_max, virt_partition_z_max) = if world.virtual_partition {
+        (virt_partition_x_count - 1, virt_partition_z_count - 1)
+    } else {
+        (0, 0)
+    };
 
     let light_count = assert_len!(i32, world.light_indices.len(), "world light indices")?;
     let sound_count = assert_len!(i32, world.sound_indices.len(), "world sound indices")?;
 
-    let warudo = WorldMwC {
+    let warudo = WorldPmC {
         flags: 0,
         area_partition_used: 0,
         area_partition_unk: world.unk,
@@ -31,18 +42,22 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Re
         fog_range: world.fog.fog_range,
         fog_altitude: world.fog.fog_altitude,
         fog_density: world.fog.fog_density,
-        area_left: world.area.left as f32,
-        area_bottom: world.area.bottom as f32,
+        area_left,
+        area_bottom,
         area_width: area_width as f32,
         area_height: area_height as f32,
-        area_right: world.area.right as f32,
-        area_top: world.area.top as f32,
+        area_right,
+        area_top,
+        area_left2: area_left - 3.0,
+        area_bottom2: area_bottom + 3.0,
+        area_right2: area_right + 3.0,
+        area_top2: area_top - 3.0,
         partition_max_dec_feature_count: world.partition_max_dec_feature_count.maybe(),
         virtual_partition: world.virtual_partition.maybe(),
         virt_partition_x_min: 1,
         virt_partition_z_min: 1,
-        virt_partition_x_max: virt_partition_x_count - 1,
-        virt_partition_z_max: virt_partition_z_count - 1,
+        virt_partition_x_max,
+        virt_partition_z_max,
         virt_partition_x_size: 256.0,
         virt_partition_z_size: -256.0,
         virt_partition_x_half: 128.0,
@@ -55,16 +70,16 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Re
         virt_partition_x_count,
         virt_partition_z_count,
         virt_partition_ptr: Ptr(world.ptrs.virt_partition_ptr),
-        field148: 1.0,
-        field152: 1.0,
-        field156: 1.0,
+        field164: 1.0,
+        field168: 1.0,
+        field172: 1.0,
         light_count,
         light_nodes_ptr: Ptr(world.ptrs.light_nodes_ptr),
         light_data_ptr: Ptr(world.ptrs.light_data_ptr),
         sound_count,
         sound_nodes_ptr: Ptr(world.ptrs.sound_nodes_ptr),
         sound_data_ptr: Ptr(world.ptrs.sound_data_ptr),
-        field184: 0,
+        field200: 0,
     };
     write.write_struct(&warudo)?;
 
@@ -84,8 +99,7 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Re
             let xf = partition.x as f32;
             let zf = partition.z as f32;
             // TODO
-            let node_count =
-                assert_len!(i16, partition.node_indices.len(), "partition node indices")?;
+            let node_count = assert_len!(i16, partition.values.len(), "partition values")?;
             let diagonal = partition_diag(partition.min.y, partition.max.y, 128.0);
 
             let mid_y = (partition.max.y + partition.min.y) * 0.5;
@@ -96,7 +110,7 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Re
                 z: zf - 128.0,
             };
 
-            let part = PartitionMwC {
+            let part = PartitionPmC {
                 flags: Hex(0x100),
                 field04: -1,
                 x: xf,
@@ -110,10 +124,21 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Re
                 nodes_ptr: Ptr(partition.nodes_ptr),
                 field64: 0,
                 field68: 0,
+                field72: 0,
+                field76: 0,
+                field80: 0,
+                field84: 0,
             };
             write.write_struct(&part)?;
 
-            write_node_indices(write, &partition.node_indices)?;
+            for pv in &partition.values {
+                let value = PartitionValueC {
+                    node_index: pv.node_index.to_i32(),
+                    y_min: pv.y_min,
+                    y_max: pv.y_max,
+                };
+                write.write_struct_no_log(&value)?;
+            }
         }
     }
 

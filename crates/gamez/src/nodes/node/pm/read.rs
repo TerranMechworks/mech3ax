@@ -1,7 +1,7 @@
-use super::NodePmC;
-use crate::nodes::check::{ap_pm, model_index, ptr};
-use crate::nodes::types::{AreaPartitionPm, NodeClass, NodeInfo, ZONE_ALWAYS};
-use mech3ax_api_types::gamez::nodes::{ActiveBoundingBox, AreaPartition, NodeFlags};
+use super::{AreaPartitionC, NodePmC, VirtualPartitionC};
+use crate::nodes::check::{model_index, ptr};
+use crate::nodes::types::{NodeClass, NodeInfo, ZONE_ALWAYS};
+use mech3ax_api_types::gamez::nodes::{ActiveBoundingBox, NodeFlags, Partition};
 use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_api_types::{Count, Vec3};
 use mech3ax_common::{chk, Result};
@@ -12,34 +12,53 @@ fn node_count(value: i16) -> Result<Count, String> {
     Count::check_i16(value)
 }
 
-fn assert_node(node: NodePmC, offset: usize) -> Result<NodeInfo> {
+fn ap(value: i16) -> Result<u8, String> {
+    u8::try_from(value).map_err(|_e| format!("expected {} in 0..={}", value, u8::MAX))
+}
+
+pub(crate) fn assert_node(node: &NodePmC, offset: usize, model_count: i32) -> Result<NodeInfo> {
     let name = chk!(offset, node_name(&node.name))?;
 
     let flags = chk!(offset, ?node.flags)?;
+
     chk!(offset, node.field040 == 0)?;
     // TODO
     // let update_flags 44
     let zone_id = chk!(offset, ?node.zone_id)?;
     let node_class = chk!(offset, ?node.node_class)?;
+
+    if node_class == NodeClass::Empty {
+        return Err(mech3ax_common::check::amend_err(
+            "unexpected node type 0".to_string(),
+            "node.node_class",
+            offset,
+            file!(),
+            line!(),
+        )
+        .into());
+    }
+
     // data_ptr (056) is variable
     let model_index = chk!(offset, model_index(node.model_index))?;
+    chk!(offset, node.model_index < model_count)?;
     chk!(offset, node.environment_data == 0)?;
     chk!(offset, node.action_priority == 1)?;
     chk!(offset, node.action_callback == 0)?;
 
-    let area_partition = if node.area_partition == AreaPartitionPm::DEFAULT {
+    let area_partition = if node.area_partition == AreaPartitionC::DEFAULT {
         None
     } else {
-        let x = chk!(offset, ap_pm(node.area_partition.x))?;
-        let y = chk!(offset, ap_pm(node.area_partition.y))?;
-        let virtual_x = chk!(offset, ap_pm(node.area_partition.virtual_x))?;
-        let virtual_y = chk!(offset, ap_pm(node.area_partition.virtual_y))?;
-        Some(AreaPartition {
-            x,
-            y,
-            virtual_x,
-            virtual_y,
-        })
+        let x = chk!(offset, ap(node.area_partition.x))?;
+        let z = chk!(offset, ap(node.area_partition.z))?;
+        Some(Partition { x, z })
+    };
+
+    let virtual_partition = if node.virtual_partition == VirtualPartitionC::DEFAULT {
+        None
+    } else {
+        let x = chk!(offset, ap(node.virtual_partition.x))?;
+        let z = chk!(offset, ap(node.virtual_partition.z))?;
+        Some(Partition { x, z })
     };
 
     // usually, parent count should be 0 or 1
@@ -65,7 +84,7 @@ fn assert_node(node: NodePmC, offset: usize) -> Result<NodeInfo> {
     match node_class {
         NodeClass::Camera => assert_camera(&node, offset)?,
         NodeClass::Display => assert_display(&node, offset)?,
-        NodeClass::Empty => assert_empty(&node, offset)?,
+        NodeClass::Empty => unreachable!("pm empty"),
         NodeClass::Light => assert_light(&node, offset)?,
         NodeClass::Lod => assert_lod(&node, offset)?,
         NodeClass::Object3d => assert_object3d(&node, offset)?,
@@ -81,6 +100,7 @@ fn assert_node(node: NodePmC, offset: usize) -> Result<NodeInfo> {
         data_ptr: node.data_ptr,
         model_index,
         area_partition,
+        virtual_partition,
         parent_count,
         parent_array_ptr,
         child_count,
@@ -117,7 +137,8 @@ fn assert_camera(node: &NodePmC, offset: usize) -> Result<()> {
     chk!(offset, node.environment_data == Ptr::NULL)?;
     chk!(offset, node.action_priority == 1)?;
     chk!(offset, node.action_callback == Ptr::NULL)?;
-    chk!(offset, node.area_partition == AreaPartitionPm::DEFAULT)?;
+    chk!(offset, node.area_partition == AreaPartitionC::DEFAULT)?;
+    chk!(offset, node.virtual_partition == VirtualPartitionC::DEFAULT)?;
     chk!(offset, node.parent_count == 0)?;
     chk!(offset, node.child_count == 0)?;
     chk!(offset, node.parent_array_ptr == Ptr::NULL)?;
@@ -136,7 +157,7 @@ fn assert_camera(node: &NodePmC, offset: usize) -> Result<()> {
     Ok(())
 }
 
-const DISPLAY_NAME: Ascii<36> = Ascii::node_name("camera1");
+const DISPLAY_NAME: Ascii<36> = Ascii::node_name("display");
 
 fn assert_display(node: &NodePmC, offset: usize) -> Result<()> {
     let display_flags = NodeFlags::ACTIVE
@@ -155,7 +176,8 @@ fn assert_display(node: &NodePmC, offset: usize) -> Result<()> {
     chk!(offset, node.environment_data == Ptr::NULL)?;
     chk!(offset, node.action_priority == 1)?;
     chk!(offset, node.action_callback == Ptr::NULL)?;
-    chk!(offset, node.area_partition == AreaPartitionPm::DEFAULT)?;
+    chk!(offset, node.area_partition == AreaPartitionC::DEFAULT)?;
+    chk!(offset, node.virtual_partition == VirtualPartitionC::DEFAULT)?;
     chk!(offset, node.parent_count == 0)?;
     chk!(offset, node.child_count == 0)?;
     chk!(offset, node.parent_array_ptr == Ptr::NULL)?;
@@ -172,44 +194,6 @@ fn assert_display(node: &NodePmC, offset: usize) -> Result<()> {
     chk!(offset, node.field200 == 0)?;
     chk!(offset, node.field204 == 0)?;
     Ok(())
-}
-
-fn assert_empty(node: &NodePmC, offset: usize) -> Result<()> {
-    // chk!(offset, node.name == )?;
-    // chk!(offset, node.flags == )?;
-    chk!(offset, node.field040 == 0)?;
-    // chk!(offset, node.update_flags == 0)?;
-    // chk!(offset, node.zone_id == ZONE_ALWAYS)?;
-    chk!(offset, node.node_class == NodeClass::Empty)?;
-    chk!(offset, node.data_ptr == Ptr::NULL)?;
-    chk!(offset, node.model_index == -1)?;
-    chk!(offset, node.environment_data == Ptr::NULL)?;
-    chk!(offset, node.action_priority == 1)?;
-    chk!(offset, node.action_callback == Ptr::NULL)?;
-    chk!(offset, node.area_partition == AreaPartitionPm::DEFAULT)?;
-    chk!(offset, node.parent_count == 0)?;
-    chk!(offset, node.child_count == 0)?;
-    chk!(offset, node.parent_array_ptr == Ptr::NULL)?;
-    chk!(offset, node.child_array_ptr == Ptr::NULL)?;
-    chk!(offset, node.bbox_mid == Vec3::DEFAULT)?;
-    chk!(offset, node.bbox_diag == 0.0)?;
-    // chk!(offset, node.active_bbox == ActiveBoundingBox::Node)?;
-    // chk!(offset, node.node_bbox == BoundingBox::EMPTY)?;
-    // chk!(offset, node.model_bbox == BoundingBox::EMPTY)?;
-    // chk!(offset, node.child_bbox == BoundingBox::EMPTY)?;
-    chk!(offset, node.activation_ptr == Ptr::NULL)?;
-    chk!(offset, node.field192 == 0)?;
-    chk!(offset, node.field196 == 160)?;
-    chk!(offset, node.field200 == 0)?;
-    chk!(offset, node.field204 == 0)?;
-    Err(mech3ax_common::check::amend_err(
-        "unexpected node type".to_string(),
-        "node.node_class",
-        offset,
-        file!(),
-        line!(),
-    )
-    .into())
 }
 
 const LIGHT_NAME: Ascii<36> = Ascii::node_name("sunlight");
@@ -244,7 +228,8 @@ fn assert_light(node: &NodePmC, offset: usize) -> Result<()> {
     chk!(offset, node.environment_data == Ptr::NULL)?;
     chk!(offset, node.action_priority == 1)?;
     chk!(offset, node.action_callback == Ptr::NULL)?;
-    chk!(offset, node.area_partition == AreaPartitionPm::DEFAULT)?;
+    chk!(offset, node.area_partition == AreaPartitionC::DEFAULT)?;
+    chk!(offset, node.virtual_partition == VirtualPartitionC::DEFAULT)?;
     chk!(offset, node.parent_count == 0)?;
     chk!(offset, node.child_count == 0)?;
     chk!(offset, node.parent_array_ptr == Ptr::NULL)?;
@@ -275,7 +260,8 @@ fn assert_lod(node: &NodePmC, offset: usize) -> Result<()> {
     chk!(offset, node.environment_data == Ptr::NULL)?;
     chk!(offset, node.action_priority == 1)?;
     chk!(offset, node.action_callback == Ptr::NULL)?;
-    chk!(offset, node.area_partition == AreaPartitionPm::DEFAULT)?;
+    chk!(offset, node.area_partition == AreaPartitionC::DEFAULT)?;
+    chk!(offset, node.virtual_partition == VirtualPartitionC::DEFAULT)?;
     chk!(offset, node.parent_count == 1)?;
     chk!(offset, node.child_count > 0)?;
     chk!(offset, node.parent_array_ptr != Ptr::NULL)?;
@@ -344,7 +330,8 @@ fn assert_window(node: &NodePmC, offset: usize) -> Result<()> {
     chk!(offset, node.environment_data == Ptr::NULL)?;
     chk!(offset, node.action_priority == 1)?;
     chk!(offset, node.action_callback == Ptr::NULL)?;
-    chk!(offset, node.area_partition == AreaPartitionPm::DEFAULT)?;
+    chk!(offset, node.area_partition == AreaPartitionC::DEFAULT)?;
+    chk!(offset, node.virtual_partition == VirtualPartitionC::DEFAULT)?;
     chk!(offset, node.parent_count == 0)?;
     chk!(offset, node.child_count == 0)?;
     chk!(offset, node.parent_array_ptr == Ptr::NULL)?;
@@ -382,7 +369,8 @@ fn assert_world(node: &NodePmC, offset: usize) -> Result<()> {
     chk!(offset, node.environment_data == Ptr::NULL)?;
     chk!(offset, node.action_priority == 1)?;
     chk!(offset, node.action_callback == Ptr::NULL)?;
-    chk!(offset, node.area_partition == AreaPartitionPm::DEFAULT)?;
+    chk!(offset, node.area_partition == AreaPartitionC::DEFAULT)?;
+    chk!(offset, node.virtual_partition == VirtualPartitionC::DEFAULT)?;
     chk!(offset, node.parent_count == 0)?;
     chk!(offset, node.child_count > 0)?;
     chk!(offset, node.parent_array_ptr == Ptr::NULL)?;

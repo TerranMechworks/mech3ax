@@ -35,7 +35,7 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Re
         area_right: world.area.right as f32,
         area_top: world.area.top as f32,
         partition_max_dec_feature_count: world.partition_max_dec_feature_count.maybe(),
-        virtual_partition: 0,
+        virtual_partition: world.virtual_partition.maybe(),
         virt_partition_x_size: 256.0,
         virt_partition_z_size: -256.0,
         virt_partition_x_half: 128.0,

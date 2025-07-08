@@ -1,41 +1,65 @@
-use super::{ActiveBBox, Class, Flags, NodePmC, ZERO_NAME};
-use crate::nodes::types::{AreaPartitionPg, AreaPartitionPm};
+use super::{AreaPartitionC, NodePmC, VirtualPartitionC};
 use crate::nodes::NodeClass;
 use mech3ax_api_types::gamez::nodes::Node;
-use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_api_types::{Index, Vec3};
 use mech3ax_common::{assert_len, Result};
 use mech3ax_types::maybe::SupportsMaybe as _;
-use mech3ax_types::{Ascii, PaddedI8, Ptr};
+use mech3ax_types::{Ascii, Ptr};
 
-pub(crate) fn make_node_zero() -> NodePmC {
-    NodePmC {
-        name: ZERO_NAME,
-        flags: Flags::empty(),
+pub(crate) fn make_node(node: &Node) -> Result<NodePmC> {
+    let name = Ascii::from_str_node_name(&node.name);
+    let node_class = NodeClass::from_data(&node.data);
+
+    let area_partition = match &node.area_partition {
+        Some(ap) => AreaPartitionC {
+            x: ap.x.into(),
+            z: ap.z.into(),
+        },
+        None => AreaPartitionC::DEFAULT,
+    };
+
+    let virtual_partition = match &node.virtual_partition {
+        Some(vp) => VirtualPartitionC {
+            x: vp.x.into(),
+            z: vp.z.into(),
+        },
+        None => VirtualPartitionC::DEFAULT,
+    };
+
+    // TODO
+    let parent_count = assert_len!(i16, node.parent_indices.len(), "node parent indices")?;
+    let child_count = assert_len!(i16, node.child_indices.len(), "node child indices")?;
+    let parent_array_ptr = Ptr(node.parent_array_ptr);
+    let child_array_ptr = Ptr(node.child_array_ptr);
+
+    Ok(NodePmC {
+        name,
+        flags: node.flags.maybe(),
         field040: 0,
-        update_flags: 0,
-        zone_id: PaddedI8::empty(),
-        node_class: Class::empty(),
-        data_ptr: Ptr::NULL,
-        model_index: -1,
+        update_flags: node.update_flags,
+        zone_id: node.zone_id.maybe(),
+        node_class: node_class.maybe(),
+        data_ptr: Ptr(node.data_ptr),
+        model_index: node.model_index.map(Index::to_i32).unwrap_or(-1),
         environment_data: Ptr::NULL,
-        action_priority: 0,
+        action_priority: 1,
         action_callback: Ptr::NULL,
-        area_partition: AreaPartitionPm::ZERO,
-        parent_count: 0,
-        child_count: 0,
-        parent_array_ptr: Ptr::NULL,
-        child_array_ptr: Ptr::NULL,
+        area_partition,
+        virtual_partition,
+        parent_count,
+        child_count,
+        parent_array_ptr,
+        child_array_ptr,
         bbox_mid: Vec3::DEFAULT,
         bbox_diag: 0.0,
-        active_bbox: ActiveBBox::empty(),
-        node_bbox: BoundingBox::EMPTY,
-        model_bbox: BoundingBox::EMPTY,
-        child_bbox: BoundingBox::EMPTY,
+        active_bbox: node.active_bbox.maybe(),
+        node_bbox: node.node_bbox,
+        model_bbox: node.model_bbox,
+        child_bbox: node.child_bbox,
         activation_ptr: Ptr::NULL,
-        field192: 0,
-        field196: 0,
-        field200: 0,
-        field204: 0,
-    }
+        field192: node.field192,
+        field196: node.field196,
+        field200: node.field200,
+        field204: node.field204,
+    })
 }

@@ -7,12 +7,12 @@ use crate::textures::rc as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::{GameZDataRc, GameZMetadata};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_len, assert_that, Result};
+use mech3ax_common::{assert_len, assert_that, chk, Result};
 use mech3ax_timestamp::DateTime;
-use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _};
+use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _, Offsets};
 use std::io::{Read, Write};
 
-#[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern)]
+#[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
 struct HeaderRcC {
     signature: u32,        // 00
@@ -39,51 +39,36 @@ const HEADER_M6: HeaderRcC = HeaderRcC {
     nodes_offset: 2299168,
 };
 
+fn texture_count(value: i32) -> Result<i32, String> {
+    if (0..4096).contains(&value) {
+        Ok(value)
+    } else {
+        Err(format!("expected {} in 0..4096", value))
+    }
+}
+
 pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataRc> {
     let header: HeaderRcC = read.read_struct()?;
 
-    assert_that!("signature", header.signature == SIGNATURE, read.prev + 0)?;
-    assert_that!("version", header.version == VERSION_RC, read.prev + 4)?;
-    assert_that!("texture count", 0 <= header.texture_count <= 4095, read.prev + 8)?;
+    let offset = read.prev;
 
-    assert_that!(
-        "texture offset",
-        header.textures_offset == HeaderRcC::SIZE,
-        read.prev + 8
-    )?;
-    assert_that!(
-        "materials offset",
-        header.materials_offset > header.textures_offset,
-        read.prev + 12
-    )?;
-    assert_that!(
-        "models offset",
-        header.models_offset > header.materials_offset,
-        read.prev + 16
-    )?;
-    assert_that!(
-        "nodes offset",
-        header.nodes_offset > header.models_offset,
-        read.prev + 20
-    )?;
+    chk!(offset, header.signature == SIGNATURE)?;
+    chk!(offset, header.version == VERSION_RC)?;
+    chk!(offset, texture_count(header.texture_count))?;
+    chk!(offset, header.textures_offset == HeaderRcC::SIZE)?;
+    chk!(offset, header.materials_offset > header.textures_offset)?;
+    chk!(offset, header.models_offset > header.materials_offset)?;
+    chk!(offset, header.nodes_offset > header.models_offset)?;
 
     let textures_offset = u32_to_usize(header.textures_offset);
     let materials_offset = u32_to_usize(header.materials_offset);
     let models_offset = u32_to_usize(header.models_offset);
     let nodes_offset = u32_to_usize(header.nodes_offset);
 
-    assert_that!(
-        "node array size",
-        header.node_array_size > 0,
-        read.prev + 24
-    )?;
+    chk!(offset, header.node_array_size > 0)?;
     // need at least world, window, camera, display, and light
-    assert_that!("node count", header.node_count > 5, read.prev + 28)?;
-    assert_that!(
-        "node count",
-        header.node_count <= header.node_array_size,
-        read.prev + 28
-    )?;
+    chk!(offset, header.node_count > 5)?;
+    chk!(offset, header.node_count <= header.node_array_size)?;
 
     assert_that!(
         "textures offset",

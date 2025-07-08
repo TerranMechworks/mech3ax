@@ -1,5 +1,5 @@
 use super::{Class, Flags, NodeMwC, ZERO_NAME};
-use crate::nodes::types::AreaPartitionPg;
+use crate::nodes::types::AreaPartitionC;
 use crate::nodes::NodeClass;
 use mech3ax_api_types::gamez::nodes::Node;
 use mech3ax_api_types::nodes::BoundingBox;
@@ -21,7 +21,7 @@ pub(crate) fn make_node_zero() -> NodeMwC {
         environment_data: Ptr::NULL,
         action_priority: 0,
         action_callback: Ptr::NULL,
-        area_partition: AreaPartitionPg::ZERO,
+        area_partition: AreaPartitionC::ZERO,
         parent_count: 0,
         parent_array_ptr: Ptr::NULL,
         child_count: 0,
@@ -44,17 +44,16 @@ pub(crate) fn make_node(node: &Node) -> Result<NodeMwC> {
     let node_class = NodeClass::from_data(&node.data);
 
     let area_partition = match &node.area_partition {
-        Some(ap) => {
-            if ap.virtual_x != 0 || ap.virtual_y != 0 {
-                log::warn!("WARN: node area partition virtual coordinates ignored in MW");
-            }
-            AreaPartitionPg {
-                x: ap.x.into(),
-                y: ap.y.into(),
-            }
-        }
-        None => AreaPartitionPg::DEFAULT,
+        Some(ap) => AreaPartitionC {
+            x: ap.x.into(),
+            z: ap.z.into(),
+        },
+        None => AreaPartitionC::DEFAULT,
     };
+
+    if node.virtual_partition.is_some() {
+        log::warn!("WARN: node virtual partition ignored in MW");
+    }
 
     // TODO
     let mut parent_count = assert_len!(i32, node.parent_indices.len(), "node parent indices")?;

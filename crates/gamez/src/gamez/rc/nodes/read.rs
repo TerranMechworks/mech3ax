@@ -88,6 +88,7 @@ pub(crate) fn read_nodes(
                 zone_id: node_info.zone_id,
                 model_index: node_info.model_index,
                 area_partition: node_info.area_partition,
+                virtual_partition: node_info.virtual_partition,
                 parent_indices: Vec::new(),
                 child_indices: Vec::new(),
                 active_bbox: node_info.active_bbox,
@@ -102,6 +103,7 @@ pub(crate) fn read_nodes(
                 data_ptr: node_info.data_ptr.0,
                 parent_array_ptr: node_info.parent_array_ptr.0,
                 child_array_ptr: node_info.child_array_ptr.0,
+                index: 0,
             };
 
             match node_info.node_class {

@@ -4,7 +4,7 @@ mod write;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::nodes::{FogType, World};
 use mech3ax_api_types::{Color, Range, Vec3};
-use mech3ax_types::{impl_as_bytes, Hex, Maybe, Offsets, PaddedU8, Ptr};
+use mech3ax_types::{impl_as_bytes, Bool32, Hex, Maybe, Offsets, PaddedU8, Ptr};
 pub(crate) use read::read;
 pub(crate) use write::write;
 
@@ -51,7 +51,7 @@ struct WorldMwC {
     area_right: f32,                           // 068
     area_top: f32,                             // 072
     partition_max_dec_feature_count: PaddedU8, // 076
-    virtual_partition: i32,                    // 080
+    virtual_partition: Bool32,                 // 080
     virt_partition_x_min: i32,                 // 084
     virt_partition_z_min: i32,                 // 088
     virt_partition_x_max: i32,                 // 092
