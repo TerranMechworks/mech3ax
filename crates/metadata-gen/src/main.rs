@@ -111,8 +111,7 @@ fn add_gamez(resolver: &mut impl Resolver) {
     add_nodes(resolver);
 
     // --- gamez/mechlib.rs
-    resolver.push::<api::gamez::mechlib::MechlibModelMw>();
-    resolver.push::<api::gamez::mechlib::MechlibModelPm>();
+    resolver.push::<api::gamez::mechlib::MechlibModel>();
 
     // --- gamez/mod.rs
     resolver.push::<api::gamez::Texture>();

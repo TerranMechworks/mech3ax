@@ -51,7 +51,7 @@ pub(crate) fn write_nodes(
         }
         write.write_i32(index)?;
     }
-    trace!("Processed note info zeros at {}", write.offset);
+    trace!("Processed node info zeros at {}", write.offset);
 
     for (index, node) in nodes.iter().enumerate() {
         trace!("Processing node data {}/{}", index, node_count);

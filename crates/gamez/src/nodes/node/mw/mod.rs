@@ -6,8 +6,8 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::nodes::{BoundingBox, NodeFlags};
 use mech3ax_api_types::Vec3;
 use mech3ax_types::{impl_as_bytes, Ascii, Maybe, Offsets, PaddedI8, Ptr};
-pub(crate) use read::{assert_node, assert_node_zero};
-pub(crate) use write::{make_node, make_node_zero};
+pub(crate) use read::{assert_node, assert_node_mechlib, assert_node_zero};
+pub(crate) use write::{make_node, make_node_mechlib, make_node_zero};
 
 type Flags = Maybe<u32, NodeFlags>;
 type Class = Maybe<u32, NodeClass>;

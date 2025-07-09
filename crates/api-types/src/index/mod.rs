@@ -47,6 +47,11 @@ impl Index {
     }
 
     #[inline]
+    pub fn to_usize(self) -> usize {
+        self.0.try_into().expect("valid index")
+    }
+
+    #[inline]
     pub fn check_i32(value: i32) -> Result<Self, String> {
         Self::from_i32(value).ok_or_else(|| format!("expected {} in 0..={}", value, INDEX_MAX_16))
     }

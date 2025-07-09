@@ -35,7 +35,6 @@ pub fn amend_err(
     file: &str,
     line: u32,
 ) -> crate::assert::AssertionError {
-    // let backtrace = std::backtrace::Backtrace::force_capture();
     crate::assert::AssertionError(format!(
         "Assert failed for `{name}` at {offset}: {msg}\n({file}:{line})",
     ))

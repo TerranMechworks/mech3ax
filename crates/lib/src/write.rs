@@ -6,7 +6,7 @@ use eyre::{bail, eyre, Context as _, Result};
 use mech3ax_api_types::anim::AnimMetadata;
 use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_api_types::gamez::materials::Material;
-use mech3ax_api_types::gamez::mechlib::{MechlibModelMw, MechlibModelPm};
+use mech3ax_api_types::gamez::mechlib::MechlibModel;
 use mech3ax_api_types::gamez::{GameZDataMw, GameZDataPm, GameZDataRc};
 use mech3ax_api_types::image::TextureManifest;
 use mech3ax_api_types::interp::Script;
@@ -228,11 +228,11 @@ fn write_mechlib_transform_mw(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
             Ok(buf.into_inner())
         }
         original => {
-            let mut model: MechlibModelMw = mech3ax_exchange::from_slice(&data)
+            let model: MechlibModel = mech3ax_exchange::from_slice(&data)
                 .with_context(|| format!("Model data for `{}` is invalid", original))?;
 
             let mut buf = CountingWriter::new(Vec::new(), 0);
-            mech3ax_gamez::mechlib::mw::write_model(&mut buf, &mut model)
+            mech3ax_gamez::mechlib::mw::write_model(&mut buf, &model)
                 .with_context(|| format!("Failed to write model data for `{}`", original))?;
             Ok(buf.into_inner())
         }
@@ -253,11 +253,11 @@ fn write_mechlib_transform_pm(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
             Ok(buf.into_inner())
         }
         original => {
-            let mut model: MechlibModelPm = mech3ax_exchange::from_slice(&data)
+            let model: MechlibModel = mech3ax_exchange::from_slice(&data)
                 .with_context(|| format!("Model data for `{}` is invalid", original))?;
 
             let mut buf = CountingWriter::new(Vec::new(), 0);
-            mech3ax_gamez::mechlib::pm::write_model(&mut buf, &mut model)
+            mech3ax_gamez::mechlib::pm::write_model(&mut buf, &model)
                 .with_context(|| format!("Failed to write model data for `{}`", original))?;
             Ok(buf.into_inner())
         }

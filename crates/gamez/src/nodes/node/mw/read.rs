@@ -1,4 +1,4 @@
-use super::{NodeMwC, ZERO_NAME};
+use super::{Class, NodeMwC, ZERO_NAME};
 use crate::nodes::check::{ap, model_index, node_count, ptr};
 use crate::nodes::types::{AreaPartitionC, NodeClass, NodeInfo, ZONE_ALWAYS};
 use mech3ax_api_types::gamez::nodes::{ActiveBoundingBox, BoundingBox, NodeFlags, Partition};
@@ -113,6 +113,87 @@ pub(crate) fn assert_node(node: &NodeMwC, offset: usize, model_count: i32) -> Re
         field204: node.field204,
         node_class,
         offset: 0, // to be filled in by read loop
+    })
+}
+
+fn node_class_mechlib(_: Class, node_class: NodeClass) -> Result<(), String> {
+    match node_class {
+        NodeClass::Object3d => Ok(()),
+        _ => Err(format!(
+            "expected {:?} to be {:?} in mechlib",
+            node_class,
+            NodeClass::Object3d
+        )),
+    }
+}
+
+pub(crate) fn assert_node_mechlib(node: &NodeMwC, offset: usize) -> Result<NodeInfo> {
+    let name = chk!(offset, node_name(&node.name))?;
+    let flags = chk!(offset, ?node.flags)?;
+    chk!(offset, node.field040 == 0)?;
+    // TODO
+    // let update_flags 44
+    let zone_id = chk!(offset, ?node.zone_id)?;
+    let node_class = chk!(offset, ?node.node_class)?;
+    chk!(offset, node_class_mechlib(node.node_class, node_class))?;
+    chk!(offset, node.data_ptr != Ptr::NULL)?;
+    // in mechlib, the model index is a pointer
+    let model_ptr = node.model_index as u32;
+    chk!(offset, node.environment_data == Ptr::NULL)?;
+    chk!(offset, node.action_priority == 1)?;
+    chk!(offset, node.action_callback == Ptr::NULL)?;
+
+    let area_partition = if node.area_partition == AreaPartitionC::DEFAULT {
+        None
+    } else {
+        let x = chk!(offset, ap(node.area_partition.x))?;
+        let z = chk!(offset, ap(node.area_partition.z))?;
+        Some(Partition { x, z })
+    };
+
+    // usually, parent count should be 0 or 1
+    let parent_count = chk!(offset, node_count(node.parent_count))?;
+    chk!(offset, node.parent_count < 2)?;
+    let parent_array_ptr = chk!(offset, ptr(node.parent_array_ptr, parent_count))?;
+
+    let child_count = chk!(offset, node_count(node.child_count))?;
+    let child_array_ptr = chk!(offset, ptr(node.child_array_ptr, child_count))?;
+
+    chk!(offset, node.bbox_mid == Vec3::DEFAULT)?;
+    chk!(offset, node.bbox_diag == 0.0)?;
+    // TODO: assert based on flags
+    // node_bbox (116) is variable
+    // model_bbox (140) is variable
+    // child_bbox (164) is variable
+    chk!(offset, node.activation_ptr == Ptr::NULL)?;
+    chk!(offset, node.field192 == 0)?;
+    chk!(offset, node.field196 == 160)?;
+    chk!(offset, node.field200 == 0)?;
+    chk!(offset, node.field204 == 0)?;
+
+    Ok(NodeInfo {
+        name,
+        flags,
+        update_flags: node.update_flags,
+        zone_id,
+        data_ptr: node.data_ptr,
+        model_index: None,
+        area_partition,
+        virtual_partition: None,
+        parent_count,
+        parent_array_ptr,
+        child_count,
+        child_array_ptr,
+        active_bbox: ActiveBoundingBox::Node,
+        node_bbox: node.node_bbox,
+        model_bbox: node.model_bbox,
+        child_bbox: node.child_bbox,
+        field192: node.field192,
+        field196: node.field196,
+        field200: node.field200,
+        field204: node.field204,
+        node_class,
+        offset: model_ptr,
     })
 }
 
