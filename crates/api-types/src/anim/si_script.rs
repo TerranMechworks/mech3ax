@@ -46,8 +46,11 @@ api! {
     struct ObjectMotionSiFrame {
         start_time: f32,
         end_time: f32,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
         translate: Option<TranslateData> = { None },
+        #[serde(skip_serializing_if = "Option::is_none", default)]
         rotate: Option<RotateData> = { None },
+        #[serde(skip_serializing_if = "Option::is_none", default)]
         scale: Option<ScaleData> = { None },
     }
 }

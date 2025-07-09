@@ -13,6 +13,14 @@ pub(crate) const VERSION_PM: u32 = 41;
 #[expect(dead_code)]
 pub(crate) const VERSION_CS: u32 = 42;
 
+pub(crate) fn texture_count(value: i32) -> Result<i32, String> {
+    if (0..4096).contains(&value) {
+        Ok(value)
+    } else {
+        Err(format!("expected {} in 0..4096", value))
+    }
+}
+
 // we'll never know why???
 pub(crate) const NODE_INDEX_INVALID: i32 = 0x00FFFFFF;
 

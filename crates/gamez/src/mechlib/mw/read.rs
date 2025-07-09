@@ -1,9 +1,9 @@
 use crate::model::mw::{read_model_data, read_model_info};
 use crate::nodes::node::mw::{assert_node_mechlib, NodeMwC};
 use log::trace;
-use mech3ax_api_types::gamez::mechlib::MechlibModel;
 use mech3ax_api_types::gamez::model::Model;
 use mech3ax_api_types::gamez::nodes::{Node, NodeData};
+use mech3ax_api_types::gamez::MechlibModel;
 use mech3ax_api_types::Index;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{err, Error, Result};

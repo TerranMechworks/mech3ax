@@ -3,7 +3,7 @@ macro_rules! api {
         $(#[doc = $struct_doc:literal])*
         struct $name:ident $(: $semantic:tt)? {$(
             $(#[doc = $field_doc:literal])*
-            $(#[serde(with = $serde:literal)])?
+            $(#[serde($($serde:tt)*)])?
             $field_name:ident: $field_ty:ty $(= { $($default:tt)* })?,
         )*}
     ) => {
@@ -11,7 +11,7 @@ macro_rules! api {
         #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
         pub struct $name {$(
             $(#[doc = $field_doc])*
-            $(#[serde(with = $serde)])?
+            $(#[serde($($serde)*)])?
             pub $field_name: $field_ty,
         )*}
 

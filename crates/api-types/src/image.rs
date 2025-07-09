@@ -50,6 +50,7 @@ sum! {
 api! {
     struct TextureInfo {
         name: String,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
         rename: Option<String> = { None },
         alpha: TextureAlpha,
         width: u16,

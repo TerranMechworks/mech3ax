@@ -10,7 +10,7 @@ use crate::textures::pm as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
 use data::Campaign;
 use log::trace;
-use mech3ax_api_types::gamez::{GameZDataPm, GameZMetadata};
+use mech3ax_api_types::gamez::{GameZ, GameZMetadata};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, chk, Result};
 use mech3ax_timestamp::unix::{from_timestamp, to_timestamp};
@@ -41,7 +41,7 @@ fn texture_count(value: i32) -> Result<i32, String> {
     }
 }
 
-pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataPm> {
+pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZ> {
     let header: HeaderPmC = read.read_struct()?;
     let campaign = Campaign::from_header(&header);
     trace!("Campaign: {:?}", campaign);
@@ -96,7 +96,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataPm> {
         node_array_size: header.node_array_size,
         node_data_count: header.node_count,
     };
-    Ok(GameZDataPm {
+    Ok(GameZ {
         textures,
         materials,
         models,
@@ -105,7 +105,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataPm> {
     })
 }
 
-pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataPm) -> Result<()> {
+pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZ) -> Result<()> {
     let texture_count = assert_len!(i32, gamez.textures.len(), "GameZ textures")?;
     let node_array_size = assert_len!(i32, gamez.nodes.len(), "GameZ nodes")?;
 

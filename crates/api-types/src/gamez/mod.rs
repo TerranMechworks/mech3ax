@@ -1,53 +1,39 @@
 pub mod materials;
-pub mod mechlib;
 pub mod model;
 pub mod nodes;
 
-use crate::api;
-use crate::gamez::nodes::Node;
+use crate::{api, Count, Index};
 use materials::Material;
 use mech3ax_timestamp::DateTime;
 use model::Model;
+use nodes::Node;
 
 api! {
-    struct GameZMetadata {
-        datetime: DateTime,
-        model_array_size: i32,
-        node_array_size: i32,
-        node_data_count: i32,
+    struct MechlibModel {
+        nodes: Vec<Node>,
+        models: Vec<Model>,
     }
 }
 
 api! {
     struct Texture {
         name: String,
-        // TODO: Option<Index>
-        mip_index: i32 = { -1i32 },
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        mip_index: Option<Index> = { None },
     }
 }
 
 api! {
-    struct GameZDataMw {
-        textures: Vec<Texture>,
-        materials: Vec<Material>,
-        models: Vec<Model>,
-        nodes: Vec<Node>,
-        metadata: GameZMetadata,
+    struct GameZMetadata {
+        datetime: DateTime,
+        model_array_size: Count,
+        node_array_size: Count,
+        node_data_count: Count,
     }
 }
 
 api! {
-    struct GameZDataPm {
-        textures: Vec<Texture>,
-        materials: Vec<Material>,
-        models: Vec<Model>,
-        nodes: Vec<Node>,
-        metadata: GameZMetadata,
-    }
-}
-
-api! {
-    struct GameZDataRc {
+    struct GameZ {
         textures: Vec<Texture>,
         materials: Vec<Material>,
         models: Vec<Model>,

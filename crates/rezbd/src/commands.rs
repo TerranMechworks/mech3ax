@@ -2,8 +2,7 @@ use crate::{InterpOpts, ZMapOpts, ZipOpts};
 use eyre::{bail, Context as _, Result};
 use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_api_types::gamez::materials::Material;
-use mech3ax_api_types::gamez::mechlib::MechlibModel;
-use mech3ax_api_types::gamez::{GameZDataMw, GameZDataPm, GameZDataRc};
+use mech3ax_api_types::gamez::{GameZ, MechlibModel};
 use mech3ax_api_types::image::TextureManifest;
 use mech3ax_api_types::interp::Script;
 use mech3ax_api_types::motion::Motion;
@@ -262,7 +261,7 @@ fn gamez_mw(opts: &ZipOpts) -> Result<()> {
 
     drop(zip);
 
-    let gamez = GameZDataMw {
+    let gamez = GameZ {
         metadata,
         textures,
         materials,
@@ -286,7 +285,7 @@ fn gamez_pm(opts: &ZipOpts) -> Result<()> {
 
     drop(zip);
 
-    let gamez = GameZDataPm {
+    let gamez = GameZ {
         metadata,
         textures,
         materials,
@@ -310,7 +309,7 @@ fn gamez_rc(opts: &ZipOpts) -> Result<()> {
 
     drop(zip);
 
-    let gamez = GameZDataRc {
+    let gamez = GameZ {
         textures,
         materials,
         models,

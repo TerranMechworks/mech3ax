@@ -17,7 +17,7 @@ pub(crate) fn _read_node_indices<F>(
     read: &mut CountingReader<impl Read>,
     count: Count,
     mut err: F,
-    file: &str,
+    file: &'static str,
     line: u32,
 ) -> Result<Vec<Index>>
 where

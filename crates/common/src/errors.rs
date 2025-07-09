@@ -1,4 +1,5 @@
 use crate::assert::AssertionError;
+use crate::check::CheckError;
 use std::fmt;
 
 #[derive(Debug, Clone)]
@@ -64,6 +65,7 @@ impl From<std::num::TryFromIntError> for PeError {
 pub enum Error {
     IO(std::io::Error),
     Assert(AssertionError),
+    Check(CheckError),
     PeError(PeError),
     InvalidAlphaChannel {
         name: String,
@@ -79,9 +81,10 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::IO(e) => e.fmt(f),
-            Self::Assert(e) => e.fmt(f),
-            Self::PeError(e) => e.fmt(f),
+            Self::IO(e) => fmt::Display::fmt(e, f),
+            Self::Assert(e) => fmt::Display::fmt(e, f),
+            Self::Check(e) => fmt::Display::fmt(e, f),
+            Self::PeError(e) => fmt::Display::fmt(e, f),
             Self::InvalidAlphaChannel {
                 name,
                 expected,
@@ -103,6 +106,7 @@ impl std::error::Error for Error {
         match self {
             Self::IO(e) => Some(e),
             Self::Assert(e) => Some(e),
+            Self::Check(e) => Some(e),
             Self::PeError(e) => Some(e),
             Self::InvalidAlphaChannel { .. } | Self::InvalidImageFormat { .. } => None,
         }
@@ -123,17 +127,17 @@ impl From<AssertionError> for Error {
     }
 }
 
+impl From<CheckError> for Error {
+    #[inline]
+    fn from(e: CheckError) -> Self {
+        Self::Check(e)
+    }
+}
+
 impl From<PeError> for Error {
     #[inline]
     fn from(e: PeError) -> Self {
         Self::PeError(e)
-    }
-}
-
-impl From<String> for Error {
-    #[inline]
-    fn from(value: String) -> Self {
-        Self::Assert(AssertionError(value))
     }
 }
 

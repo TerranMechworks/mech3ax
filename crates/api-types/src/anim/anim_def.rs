@@ -12,6 +12,7 @@ api! {
     struct AnimDefFile {
         name: String,
         datetime: DateTime,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
         hash: Option<u32> = { None },
     }
 }

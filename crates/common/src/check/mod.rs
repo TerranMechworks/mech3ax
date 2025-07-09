@@ -3,27 +3,48 @@ use mech3ax_types::Maybe;
 use std::cmp::{PartialEq, PartialOrd};
 use std::fmt;
 
+#[derive(Clone)]
+pub struct CheckError {
+    msg: Box<str>,
+    file: &'static str,
+    line: u32,
+}
+
+impl CheckError {
+    pub fn new(msg: String, file: &'static str, line: u32) -> Self {
+        Self {
+            msg: msg.into_boxed_str(),
+            file,
+            line,
+        }
+    }
+}
+
+impl fmt::Debug for CheckError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}\n({}: {})", self.msg, self.file, self.line)
+    }
+}
+
+impl fmt::Display for CheckError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}\n({}: {})", self.msg, self.file, self.line)
+    }
+}
+
+impl std::error::Error for CheckError {}
+
 type Result<T> = std::result::Result<T, String>;
 
 #[macro_export]
 macro_rules! err {
-    // ($offset:expr, $fmt:literal) => {{
-    //     let offset: usize = $offset;
-    //     let msg = format!(concat!("Error at {offset}: ", $fmt), offset=offset);
-    //     $crate::assert::AssertionError(msg).into()
-    // }};
-    // ($offset:expr, $fmt:literal, $($arg:tt)+) => {{
-    //     let offset: usize = $offset;
-    //     let msg = format!(concat!("Error at {offset}: ", $fmt), $($arg)+, offset=offset);
-    //     $crate::assert::AssertionError(msg).into()
-    // }};
     ($fmt:literal) => {{
-        const MSG: &str = concat!($fmt, "\n(", file!(), ":", stringify!(line!()), ")");
-        $crate::assert::AssertionError(MSG.to_string()).into()
+        const MSG: &str = $fmt;
+        $crate::check::CheckError::new(MSG.to_string(), file!(), line!()).into()
     }};
     ($fmt:literal, $($arg:tt)+) => {{
-        let msg = format!(concat!($fmt, "\n(", file!(), ":", stringify!(line!()), ")"), $($arg)+);
-        $crate::assert::AssertionError(msg).into()
+        let msg: String = format!($fmt, $($arg)+);
+        $crate::check::CheckError::new(msg, file!(), line!()).into()
     }};
 }
 
@@ -32,12 +53,11 @@ pub fn amend_err(
     msg: String,
     name: &str,
     offset: usize,
-    file: &str,
+    file: &'static str,
     line: u32,
-) -> crate::assert::AssertionError {
-    crate::assert::AssertionError(format!(
-        "Assert failed for `{name}` at {offset}: {msg}\n({file}:{line})",
-    ))
+) -> CheckError {
+    let msg = format!("Assert failed for `{name}` at {offset}: {msg}",);
+    CheckError::new(msg, file, line)
 }
 
 #[inline]

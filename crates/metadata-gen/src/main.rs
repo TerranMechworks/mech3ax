@@ -7,11 +7,14 @@ use resolver::Resolver;
 
 fn add_types(resolver: &mut impl Resolver) {
     // --- common.rs
+    resolver.push::<api::AffineMatrix>();
+    resolver.push::<api::Color>();
+    resolver.push::<api::Matrix>();
+    resolver.push::<api::Quaternion>();
     resolver.push::<api::Range>();
     resolver.push::<api::Vec3>();
-    resolver.push::<api::Color>();
-    resolver.push::<api::Quaternion>();
-    resolver.push::<api::Matrix>();
+    resolver.push::<api::Count>();
+    resolver.push::<api::Index>();
 
     // --- zmap.rs
     resolver.push::<api::zmap::MapColor>();
@@ -46,48 +49,6 @@ fn add_types(resolver: &mut impl Resolver) {
     resolver.push::<api::archive::ArchiveEntry>();
 }
 
-fn add_nodes(resolver: &mut impl Resolver) {
-    // --- nodes/mod.rs
-    resolver.push::<api::nodes::Camera>();
-    resolver.push::<api::nodes::Display>();
-    resolver.push::<api::nodes::Window>();
-    resolver.push::<api::nodes::AreaPartition>();
-    resolver.push::<api::nodes::Area>();
-    resolver.push::<api::nodes::BoundingBox>();
-    resolver.push::<api::nodes::Transformation>();
-    resolver.push::<api::nodes::PartitionPg>();
-    resolver.push::<api::nodes::PartitionValue>();
-    resolver.push::<api::nodes::PartitionNg>();
-    resolver.push::<api::nodes::NodeFlags>();
-
-    // --- nodes/mw.rs
-    resolver.push::<api::nodes::mw::Empty>();
-    resolver.push::<api::nodes::mw::Light>();
-    resolver.push::<api::nodes::mw::Lod>();
-    resolver.push::<api::nodes::mw::Object3d>();
-    resolver.push::<api::nodes::mw::World>();
-    resolver.push::<api::nodes::mw::NodeMw>();
-
-    // --- nodes/pm.rs
-    resolver.push::<api::nodes::pm::AreaPartitionPm>();
-    resolver.push::<api::nodes::pm::Light>();
-    resolver.push::<api::nodes::pm::Lod>();
-    resolver.push::<api::nodes::pm::Object3d>();
-    resolver.push::<api::nodes::pm::World>();
-    resolver.push::<api::nodes::pm::NodePm>();
-
-    // --- nodes/rc.rs
-    resolver.push::<api::nodes::rc::RotationTranslation>();
-    resolver.push::<api::nodes::rc::TranslationOnly>();
-    resolver.push::<api::nodes::rc::Transformation>();
-    resolver.push::<api::nodes::rc::Empty>();
-    resolver.push::<api::nodes::rc::Light>();
-    resolver.push::<api::nodes::rc::Lod>();
-    resolver.push::<api::nodes::rc::Object3d>();
-    resolver.push::<api::nodes::rc::World>();
-    resolver.push::<api::nodes::rc::NodeRc>();
-}
-
 fn add_gamez(resolver: &mut impl Resolver) {
     // --- gamez/materials.rs
     resolver.push::<api::gamez::materials::CycleData>();
@@ -110,15 +71,37 @@ fn add_gamez(resolver: &mut impl Resolver) {
     // nodes required for mechlib
     add_nodes(resolver);
 
-    // --- gamez/mechlib.rs
-    resolver.push::<api::gamez::mechlib::MechlibModel>();
-
     // --- gamez/mod.rs
+    resolver.push::<api::gamez::MechlibModel>();
     resolver.push::<api::gamez::Texture>();
     resolver.push::<api::gamez::GameZMetadata>();
-    resolver.push::<api::gamez::GameZDataMw>();
-    resolver.push::<api::gamez::GameZDataPm>();
-    resolver.push::<api::gamez::GameZDataRc>();
+    resolver.push::<api::gamez::GameZ>();
+}
+
+fn add_nodes(resolver: &mut impl Resolver) {
+    // --- gamez/nodes.rs
+    resolver.push::<api::gamez::nodes::NodeFlags>();
+    resolver.push::<api::gamez::nodes::ActiveBoundingBox>();
+    resolver.push::<api::gamez::nodes::BoundingBox>();
+    resolver.push::<api::gamez::nodes::Partition>();
+    resolver.push::<api::gamez::nodes::Display>();
+    resolver.push::<api::gamez::nodes::Camera>();
+    resolver.push::<api::gamez::nodes::LightFlags>();
+    resolver.push::<api::gamez::nodes::Light>();
+    resolver.push::<api::gamez::nodes::Lod>();
+    resolver.push::<api::gamez::nodes::RotateTranslateScale>();
+    resolver.push::<api::gamez::nodes::Transform>();
+    resolver.push::<api::gamez::nodes::Object3d>();
+    resolver.push::<api::gamez::nodes::Window>();
+    resolver.push::<api::gamez::nodes::FogType>();
+    resolver.push::<api::gamez::nodes::Area>();
+    resolver.push::<api::gamez::nodes::WorldFog>();
+    resolver.push::<api::gamez::nodes::WorldPartitionValue>();
+    resolver.push::<api::gamez::nodes::WorldPartition>();
+    resolver.push::<api::gamez::nodes::WorldPtrs>();
+    resolver.push::<api::gamez::nodes::World>();
+    resolver.push::<api::gamez::nodes::NodeData>();
+    resolver.push::<api::gamez::nodes::Node>();
 }
 
 fn add_events(resolver: &mut impl Resolver) {

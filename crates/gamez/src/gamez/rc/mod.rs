@@ -2,10 +2,11 @@ mod models;
 mod nodes;
 
 use super::common::{NODE_INDEX_INVALID, SIGNATURE, VERSION_RC};
+use crate::gamez::common::texture_count;
 use crate::materials::{self, MatType};
 use crate::textures::rc as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::gamez::{GameZDataRc, GameZMetadata};
+use mech3ax_api_types::gamez::{GameZ, GameZMetadata};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, chk, Result};
 use mech3ax_timestamp::DateTime;
@@ -39,17 +40,8 @@ const HEADER_M6: HeaderRcC = HeaderRcC {
     nodes_offset: 2299168,
 };
 
-fn texture_count(value: i32) -> Result<i32, String> {
-    if (0..4096).contains(&value) {
-        Ok(value)
-    } else {
-        Err(format!("expected {} in 0..4096", value))
-    }
-}
-
-pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataRc> {
+pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZ> {
     let header: HeaderRcC = read.read_struct()?;
-
     let offset = read.prev;
 
     chk!(offset, header.signature == SIGNATURE)?;
@@ -105,7 +97,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataRc> {
         node_array_size: header.node_array_size,
         node_data_count: header.node_count,
     };
-    Ok(GameZDataRc {
+    Ok(GameZ {
         textures,
         materials,
         models,
@@ -114,7 +106,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataRc> {
     })
 }
 
-pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataRc) -> Result<()> {
+pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZ) -> Result<()> {
     let texture_count = assert_len!(i32, gamez.textures.len(), "GameZ textures")?;
 
     let GameZMetadata {
