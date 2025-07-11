@@ -139,7 +139,12 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZ) -> Res
     let campaign = Campaign::from_header(&header);
     trace!("Campaign: {:?}", campaign);
 
-    textures::write_texture_directory(write, &gamez.textures, campaign.image_ptrs())?;
+    textures::write_texture_directory(
+        write,
+        &gamez.textures,
+        texture_count,
+        campaign.image_ptrs(),
+    )?;
     materials::write_materials_ng(write, &gamez.materials, material_array_size, texture_count)?;
     models::write_models(write, &models, model_array_size)?;
     nodes::write_nodes(write, &gamez.nodes)?;

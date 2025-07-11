@@ -1,10 +1,10 @@
-use super::mip_index;
+use super::{mip_index, mip_index_ok};
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::trace;
 use mech3ax_api_types::gamez::Texture;
 use mech3ax_api_types::{Count, IndexO32};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{chk, Result};
+use mech3ax_common::{chk, err, Result};
 use mech3ax_types::check::suffix;
 use mech3ax_types::{impl_as_bytes, primitive_enum, AsBytes as _, Ascii, Maybe, Offsets, Ptr};
 use std::io::{Read, Write};
@@ -54,13 +54,12 @@ pub(crate) fn read_texture_directory(
 pub(crate) fn write_texture_directory(
     write: &mut CountingWriter<impl Write>,
     textures: &[Texture],
+    count: Count,
 ) -> Result<()> {
-    let count = textures.len();
     for (index, texture) in textures.iter().enumerate() {
         trace!("Processing texture {}/{}", index, count);
         let name = Ascii::from_str_suffix(&texture.name);
-        // TODO
-        let mip_index = texture.mip_index.maybe();
+        let mip_index = mip_index_ok(texture.mip_index, count).map_err(|msg| err!(msg))?;
 
         let tex = TextureRcC {
             image_ptr: Ptr::NULL,

@@ -140,7 +140,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZ) -> Res
     };
     write.write_struct(&header)?;
 
-    textures::write_texture_directory(write, &gamez.textures)?;
+    textures::write_texture_directory(write, &gamez.textures, texture_count)?;
     materials::write_materials_rc(write, &gamez.materials, material_array_size, texture_count)?;
     models::write_models(write, &gamez.models, model_array_size, &model_offsets)?;
     nodes::write_nodes(write, &gamez.nodes, node_array_size, nodes_offset)?;
