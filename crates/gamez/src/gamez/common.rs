@@ -1,11 +1,7 @@
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::{Count, Count32};
-use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{chk, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Offsets};
-use std::io::{Read, Write};
-use std::ops::Range;
-
+use mech3ax_common::{chk, err, Result};
+use mech3ax_types::{impl_as_bytes, Offsets};
 pub(crate) const SIGNATURE: u32 = 0x02971222;
 
 pub(crate) const VERSION_RC: u32 = 15;
@@ -33,78 +29,43 @@ pub(crate) const NODE_INDEX_TOP: u32 = 0x02000000;
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
 pub(crate) struct ModelArrayC {
-    pub(crate) array_size: Count32, // 00
-    pub(crate) count: Count32,      // 04
-    pub(crate) last_index: Count32, // 08
+    array_size: Count32, // 00
+    count: Count32,      // 04
+    index_free: i32,     // 08
 }
 impl_as_bytes!(ModelArrayC, 12);
-pub(crate) const MODEL_ARRAY_C_SIZE: u32 = ModelArrayC::SIZE;
 
-#[derive(Debug)]
-#[repr(transparent)]
-pub(crate) struct ModelIndexIter(Range<i32>);
+pub(crate) fn assert_model_array(
+    model_array: &ModelArrayC,
+    offset: usize,
+) -> Result<(Count, Count)> {
+    let model_array_size = chk!(offset, ?model_array.array_size)?;
+    let model_count = chk!(offset, ?model_array.count)?;
+    // technically, we could handle count == array_size, but then index_free
+    // would have to be -1
+    chk!(offset, model_count < model_array_size)?;
 
-impl Iterator for ModelIndexIter {
-    type Item = (i32, i32);
+    let index_free = model_count.to_i32();
+    chk!(offset, model_array.index_free == index_free)?;
 
-    fn next(&mut self) -> Option<Self::Item> {
-        let index = self.0.next()?;
-        let mut expected_index = index + 1;
-        if expected_index == self.0.end {
-            expected_index = -1;
-        }
-        Some((index, expected_index))
+    Ok((model_count, model_array_size))
+}
+
+pub(crate) fn make_model_array(count: Count, array_size: Count) -> Result<ModelArrayC> {
+    // technically, we could handle count == array_size, but then index_free
+    // would have to be -1
+    if count >= array_size {
+        return Err(err!(
+            "Too many GameZ models: expected {} < {}",
+            count,
+            array_size
+        ));
     }
-}
+    let index_free = count.to_i32();
 
-#[derive(Debug)]
-pub(crate) struct ModelArray {
-    pub(crate) count: Count,
-    pub(crate) array_size: Count,
-    #[allow(dead_code)]
-    pub(crate) last_index: Count,
-}
-
-impl ModelArray {
-    pub(crate) fn valid(&self) -> Range<i32> {
-        0..self.count.to_i32()
-    }
-
-    pub(crate) fn zeros(&self) -> ModelIndexIter {
-        ModelIndexIter(self.count.to_i32()..self.array_size.to_i32())
-    }
-}
-
-pub(crate) fn read_model_array_sequential(
-    read: &mut CountingReader<impl Read>,
-) -> Result<ModelArray> {
-    let info: ModelArrayC = read.read_struct()?;
-    let offset = read.prev;
-
-    let array_size = chk!(offset, ?info.array_size)?;
-    let count = chk!(offset, ?info.count)?;
-    let last_index = chk!(offset, ?info.last_index)?;
-
-    chk!(offset, info.count < info.array_size)?;
-    chk!(offset, info.last_index == info.count)?;
-
-    Ok(ModelArray {
-        array_size,
-        count,
-        last_index,
-    })
-}
-
-pub(crate) fn write_model_array_sequential(
-    write: &mut CountingWriter<impl Write>,
-    array_size: Count,
-    count: Count,
-) -> Result<ModelIndexIter> {
-    let info = ModelArrayC {
+    Ok(ModelArrayC {
         array_size: array_size.maybe(),
         count: count.maybe(),
-        last_index: count.maybe(),
-    };
-    write.write_struct(&info)?;
-    Ok(ModelIndexIter(count.to_i32()..array_size.to_i32()))
+        index_free,
+    })
 }

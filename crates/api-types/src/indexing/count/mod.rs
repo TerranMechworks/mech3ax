@@ -76,8 +76,19 @@ impl Count {
     }
 
     #[inline]
-    pub fn iter(self) -> std::ops::Range<i32> {
-        0..self.to_i32()
+    pub fn iter(self) -> CountIter {
+        CountIter {
+            curr: 0,
+            end: self.to_i16(),
+        }
+    }
+
+    #[inline]
+    pub fn iter_from(self, start: Count) -> CountIter {
+        CountIter {
+            curr: start.to_i16(),
+            end: self.to_i16(),
+        }
     }
 
     #[inline]
@@ -127,6 +138,26 @@ impl Count {
             Err(format!("expected {index} in 0..{self}"))
         } else {
             Ok(super::IndexR(index.value as _))
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct CountIter {
+    curr: i16,
+    end: i16,
+}
+
+impl Iterator for CountIter {
+    type Item = super::IndexR;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.curr < self.end {
+            let next = self.curr + 1;
+            let prev = std::mem::replace(&mut self.curr, next);
+            Some(super::IndexR(prev))
+        } else {
+            None
         }
     }
 }

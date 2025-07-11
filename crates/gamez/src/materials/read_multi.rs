@@ -59,15 +59,15 @@ pub(super) fn read_materials(
         if expected_index_prev < zero_start {
             expected_index_prev = -1;
         }
-        let material_index_prev = read.read_i16()?;
-        chk!(read.prev, material_index_prev == expected_index_prev)?;
+        let material_free_prev = read.read_i16()?;
+        chk!(read.prev, material_free_prev == expected_index_prev)?;
 
         let mut expected_index_next = index + 1;
         if expected_index_next >= zero_end {
             expected_index_next = -1;
         }
-        let material_index_next = read.read_i16()?;
-        chk!(read.prev, material_index_next == expected_index_next)?;
+        let material_free_next = read.read_i16()?;
+        chk!(read.prev, material_free_next == expected_index_next)?;
     }
 
     trace!("Processed material zeros at {}", read.offset);
@@ -100,9 +100,15 @@ pub(super) fn read_materials(
 fn assert_material_array(material_array: MaterialArrayC, offset: usize) -> Result<(Count, Count)> {
     let material_array_size = chk!(offset, ?material_array.array_size)?;
     let material_count = chk!(offset, ?material_array.count)?;
-    chk!(offset, material_count <= material_array_size)?;
-    let index_max = material_count.to_i32();
-    chk!(offset, material_array.index_max == index_max)?;
-    chk!(offset, material_array.index_last == index_max - 1)?;
+    // technically, we could handle count == array_size, but then index_free
+    // would have to be -1
+    chk!(offset, material_count < material_array_size)?;
+
+    // this assumes the materials are written contiguously, which luckily is
+    // the case for all GameZ. otherwise, the indexing code would be way more
+    // complicated also
+    let index_free = material_count.to_i32();
+    chk!(offset, material_array.index_free == index_free)?;
+    chk!(offset, material_array.index_last == index_free - 1)?;
     Ok((material_count, material_array_size))
 }

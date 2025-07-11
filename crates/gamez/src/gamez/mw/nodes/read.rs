@@ -23,7 +23,7 @@ pub(crate) fn read_nodes(
     for index in array_size.iter() {
         let node: NodeMwC = read.read_struct_no_log()?;
         if node.is_zero() {
-            count = index;
+            count = index.to_i32();
             break;
         }
         let _ = read.read_i32()?;
@@ -57,7 +57,6 @@ pub(crate) fn read_nodes(
         array_size,
         read.offset
     );
-    // TODO
     for index in count..array_size.to_i32() {
         let node: NodeMwC = read.read_struct_no_log()?;
         assert_node_zero(&node, read.prev)

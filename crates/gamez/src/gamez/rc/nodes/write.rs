@@ -44,7 +44,6 @@ pub(crate) fn write_nodes(
         write.offset
     );
     let node_zero = make_node_zero();
-    // TODO
     for index in node_count.to_i32()..array_size.to_i32() {
         write.write_struct_no_log(&node_zero)?;
         let mut index = index + 1;

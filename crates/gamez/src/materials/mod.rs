@@ -27,7 +27,7 @@ enum MatlType {
 struct MaterialArrayC {
     array_size: Count32,
     count: Count32,
-    index_max: i32,
+    index_free: i32,
     index_last: i32,
 }
 impl_as_bytes!(MaterialArrayC, 16);

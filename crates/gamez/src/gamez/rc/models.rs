@@ -1,16 +1,14 @@
-use crate::gamez::common::{
-    read_model_array_sequential, write_model_array_sequential, MODEL_ARRAY_C_SIZE,
-};
+use crate::gamez::common::{assert_model_array, make_model_array, ModelArrayC};
 use crate::model::rc::{
     assert_model_info_zero, read_model_data, read_model_info, size_model, write_model_data,
-    write_model_info, ModelRcC, MODEL_C_SIZE,
+    write_model_info, ModelRcC,
 };
 use log::trace;
 use mech3ax_api_types::gamez::model::Model;
 use mech3ax_api_types::Count;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, chk, len, Result};
-use mech3ax_types::u32_to_usize;
+use mech3ax_common::{chk, len, Result};
+use mech3ax_types::{u32_to_usize, AsBytes as _};
 use std::io::{Read, Write};
 
 pub(crate) fn read_models(
@@ -18,48 +16,59 @@ pub(crate) fn read_models(
     end_offset: usize,
     material_count: Count,
 ) -> Result<(Vec<Model>, Count, Count)> {
-    let model_indices = read_model_array_sequential(read)?;
+    let model_array: ModelArrayC = read.read_struct()?;
+    let (count, array_size) = assert_model_array(&model_array, read.prev)?;
 
     let mut prev_offset = read.offset;
-    let models = model_indices
-        .valid()
+    let models = count
+        .iter()
         .map(|index| {
-            trace!("Processing model info {}/{}", index, model_indices.count);
+            trace!("Processing model info {}/{}", index, count);
             let wrapped = read_model_info(read)?;
+
             let model_offset = u32_to_usize(read.read_u32()?);
-            assert_that!("model offset", prev_offset <= model_offset <= end_offset, read.prev)?;
+            chk!(read.prev, model_offset >= prev_offset)?;
+            chk!(read.prev, model_offset <= end_offset)?;
+
             prev_offset = model_offset;
             Ok((wrapped, model_offset, index))
         })
         .collect::<Result<Vec<_>>>()?;
 
+    let zero_start = count.to_i32();
+    let zero_end = array_size.to_i32();
+
     trace!(
         "Processing {}..{} model info zeros at {}",
-        model_indices.count,
-        model_indices.array_size,
+        zero_start,
+        zero_end,
         read.offset
     );
-    for (model_index, expected_index) in model_indices.zeros() {
+    for index in zero_start..zero_end {
         let model: ModelRcC = read.read_struct_no_log()?;
         assert_model_info_zero(&model, read.prev)
-            .inspect_err(|_| trace!("{:#?} (index: {}, at {})", model, model_index, read.prev))?;
+            .inspect_err(|_| trace!("{:#?} (index: {}, at {})", model, index, read.prev))?;
 
-        let actual_index = read.read_i32()?;
-        assert_that!("model index", actual_index == expected_index, read.prev)?;
+        let mut expected_index_next = index + 1;
+        if expected_index_next >= zero_end {
+            expected_index_next = -1;
+        }
+        let model_index_next = read.read_i32()?;
+        chk!(read.prev, model_index_next == expected_index_next)?;
     }
     trace!("Processed model info zeros at {}", read.offset);
 
     let models = models
         .into_iter()
         .map(|(wrapped, model_offset, index)| {
-            trace!("Processing model data {}/{}", index, model_indices.count);
-            assert_that!("model offset", read.offset == model_offset, read.offset)?;
-            let model = read_model_data(read, wrapped, material_count)?;
-            Ok(model)
+            trace!("Processing model data {}/{}", index, count);
+            chk!(read.offset, model_offset == read.offset)?;
+
+            read_model_data(read, wrapped, material_count)
         })
         .collect::<Result<Vec<_>>>()?;
 
-    Ok((models, model_indices.count, model_indices.array_size))
+    Ok((models, count, array_size))
 }
 
 pub(crate) fn write_models(
@@ -69,25 +78,33 @@ pub(crate) fn write_models(
     offsets: &[u32],
 ) -> Result<()> {
     let count = len!(models.len(), "GameZ models")?;
-    let model_indices_zero = write_model_array_sequential(write, array_size, count)?;
+    let model_array = make_model_array(count, array_size)?;
+    write.write_struct(&model_array)?;
 
-    let count = models.len();
     for (index, (model, offset)) in models.iter().zip(offsets.iter().copied()).enumerate() {
         trace!("Processing model info {}/{}", index, count);
         write_model_info(write, model, index)?;
         write.write_u32(offset)?;
     }
 
+    let zero_start = count.to_i32();
+    let zero_end = array_size.to_i32();
+
     trace!(
         "Processing {}..{} model info zeros at {}",
-        count,
-        array_size,
+        zero_start,
+        zero_end,
         write.offset
     );
     let model_zero = ModelRcC::default();
-    for (_model_index, expected_index) in model_indices_zero {
+    for index in zero_start..zero_end {
         write.write_struct_no_log(&model_zero)?;
-        write.write_i32(expected_index)?;
+
+        let mut model_index_next = index + 1;
+        if model_index_next >= zero_end {
+            model_index_next = -1;
+        }
+        write.write_i32(model_index_next)?;
     }
     trace!("Processed model info zeros at {}", write.offset);
 
@@ -102,7 +119,7 @@ pub(crate) fn write_models(
 pub(crate) fn size_models(offset: u32, array_size: Count, models: &[Model]) -> (u32, Vec<u32>) {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let array_size = array_size.to_u32();
-    let mut offset = offset + MODEL_ARRAY_C_SIZE + (MODEL_C_SIZE + 4) * array_size;
+    let mut offset = offset + ModelArrayC::SIZE + (ModelRcC::SIZE + 4) * array_size;
     let offsets = models
         .iter()
         .map(|model| {

@@ -78,6 +78,11 @@ impl SupportsMaybe<i16> for Index {
     fn maybe(self) -> Maybe<i16, Self> {
         Maybe::new(self.0)
     }
+
+    #[inline]
+    fn check(v: i16) -> Result<Self, String> {
+        Ok(Self(v))
+    }
 }
 
 impl SupportsMaybe<i32> for Index {
@@ -100,6 +105,11 @@ impl SupportsMaybe<i32> for Index {
     #[inline]
     fn maybe(self) -> Maybe<i32, Self> {
         Maybe::new(self.0 as i32)
+    }
+
+    #[inline]
+    fn check(v: i32) -> Result<Self, String> {
+        Self::from_bits(v).ok_or_else(|| format!("expected {} in {}..={}", v, i16::MIN, i16::MAX))
     }
 }
 
@@ -387,8 +397,7 @@ impl AnimDefLookup for AnimDef {
         R: PrimitiveRepr,
         Index: SupportsMaybe<R>,
     {
-        index
-            .validate()
+        Index::from_bits(index.value)
             .ok_or_else(|| assert_with_msg!("Node index {} is out of range (at {})", index, offset))
             .and_then(|index| node_from_index(self, index, offset))
     }
@@ -406,8 +415,7 @@ impl AnimDefLookup for AnimDef {
         R: PrimitiveRepr,
         Index: SupportsMaybe<R>,
     {
-        index
-            .validate()
+        Index::from_bits(index.value)
             .ok_or_else(|| {
                 assert_with_msg!("Light index {} is out of range (at {})", index, offset)
             })
@@ -427,8 +435,7 @@ impl AnimDefLookup for AnimDef {
         R: PrimitiveRepr,
         Index: SupportsMaybe<R>,
     {
-        index
-            .validate()
+        Index::from_bits(index.value)
             .ok_or_else(|| {
                 assert_with_msg!("Puffer index {} is out of range (at {})", index, offset)
             })
@@ -448,8 +455,7 @@ impl AnimDefLookup for AnimDef {
         R: PrimitiveRepr,
         Index: SupportsMaybe<R>,
     {
-        index
-            .validate()
+        Index::from_bits(index.value)
             .ok_or_else(|| {
                 assert_with_msg!("Sound node index {} is out of range (at {})", index, offset)
             })
@@ -469,8 +475,7 @@ impl AnimDefLookup for AnimDef {
         R: PrimitiveRepr,
         Index: SupportsMaybe<R>,
     {
-        index
-            .validate()
+        Index::from_bits(index.value)
             .ok_or_else(|| {
                 assert_with_msg!(
                     "Static sound index {} is out of range (at {})",
@@ -494,8 +499,7 @@ impl AnimDefLookup for AnimDef {
         R: PrimitiveRepr,
         Index: SupportsMaybe<R>,
     {
-        index
-            .validate()
+        Index::from_bits(index.value)
             .ok_or_else(|| {
                 assert_with_msg!("Effect index {} is out of range (at {})", index, offset)
             })

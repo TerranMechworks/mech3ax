@@ -40,7 +40,6 @@ pub(crate) fn read_nodes(
         array_size,
         read.offset
     );
-    // TODO
     for index in count.to_i32()..array_size.to_i32() {
         let node: NodeRcC = read.read_struct_no_log()?;
         assert_node_zero(&node, read.prev)

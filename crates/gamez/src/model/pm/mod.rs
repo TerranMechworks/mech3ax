@@ -6,7 +6,7 @@ use bytemuck::{AnyBitPattern, NoUninit};
 pub(crate) use matl::make_material_refs;
 use mech3ax_api_types::gamez::model::{FacadeMode, Model, ModelType};
 use mech3ax_api_types::{IndexR32, Vec3};
-use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Hex, Maybe, Offsets, Ptr};
+use mech3ax_types::{bitflags, impl_as_bytes, Hex, Maybe, Offsets, Ptr};
 pub(crate) use read::{assert_model_info_zero, read_model_data, read_model_info};
 pub(crate) use write::{size_model, write_model_data, write_model_info};
 
@@ -66,7 +66,6 @@ pub(crate) struct ModelPmC {
     material_refs_ptr: Ptr,       // 96
 }
 impl_as_bytes!(ModelPmC, 100);
-pub(crate) const MODEL_C_SIZE: u32 = ModelPmC::SIZE;
 
 bitflags! {
     struct PolygonBitFlags: u32 {
