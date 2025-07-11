@@ -1,4 +1,4 @@
-use crate::model::pm::{make_material_refs, write_model_data, write_model_info};
+use crate::model::pm::{make_material_refs_mechlib, write_model_data, write_model_info};
 use crate::nodes::node::pm::make_node_mechlib;
 use crate::nodes::NodeClass;
 use log::trace;
@@ -66,10 +66,7 @@ fn write_tree(
             .get(index)
             .ok_or_else(|| -> Error { err!("invalid model index {}", index) })?;
 
-        // TODO: we could get the materials here, but it would be a pain/API
-        // change. they are only used to determine if the material is cycled,
-        // and in the default mechlib, no materials are cycled.
-        let material_refs = make_material_refs(&[], model, true);
+        let material_refs = make_material_refs_mechlib(model);
 
         write_model_info(write, model, &material_refs, index)?;
         write_model_data(write, model, &material_refs, index)?;

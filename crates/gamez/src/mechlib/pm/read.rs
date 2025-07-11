@@ -50,7 +50,10 @@ fn read_tree(
                     .ok_or_else(|| -> Error { err!("too many models") })?;
 
                 let wrapped = read_model_info(read)?;
-                // TODO
+                // fake the material count. the problem here is that the
+                // materials are written at the end of the ZBD, so requiring the
+                // true material count here would be a huge pain. trap for the
+                // modders...
                 let material_count = Count::from_i16(4096).unwrap();
                 let model = read_model_data(read, wrapped, material_count)?;
 

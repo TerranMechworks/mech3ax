@@ -122,6 +122,8 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZ) -> Res
 
     let timestamp = to_timestamp(&datetime);
 
+    // TODO: figure out how to recalculate `node_last_free`
+
     let header = HeaderPmC {
         signature: SIGNATURE,
         version: VERSION_PM,

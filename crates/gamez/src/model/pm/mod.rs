@@ -3,7 +3,7 @@ mod read;
 mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
-pub(crate) use matl::make_material_refs;
+pub(crate) use matl::{make_material_refs, make_material_refs_mechlib};
 use mech3ax_api_types::gamez::model::{FacadeMode, Model, ModelType};
 use mech3ax_api_types::{IndexR32, Vec3};
 use mech3ax_types::{bitflags, impl_as_bytes, Hex, Maybe, Offsets, Ptr};

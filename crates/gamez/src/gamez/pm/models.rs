@@ -129,7 +129,7 @@ pub(crate) fn gather_materials<'a>(
     models
         .iter()
         .map(|model| {
-            let material_refs = make_material_refs(materials, model, false);
+            let material_refs = make_material_refs(materials, model);
             ModelInfo {
                 model,
                 material_refs,
