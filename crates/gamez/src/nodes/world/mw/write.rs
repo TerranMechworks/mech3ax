@@ -1,4 +1,4 @@
-use super::{PartitionMwC, WorldMwC};
+use super::{PartitionMwC, WorldMwC, C3_FIXUP};
 use crate::nodes::helpers::write_node_indices;
 use crate::nodes::math::partition_diag;
 use crate::nodes::range::RangeI32;
@@ -85,7 +85,20 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Re
             let node_count = len!(partition.node_indices.len(), "partition node indices")?;
             let diagonal = partition_diag(partition.min.y, partition.max.y, 128.0);
 
-            let mid_y = (partition.max.y + partition.min.y) * 0.5;
+            let mut mid_y = (partition.max.y + partition.min.y) * 0.5;
+
+            // there are a few values in the c3 gamez of v1.0 and v1.1 where this fails.
+            // might be due to floating point errors in the original calculation (lower
+            // mantissa bits don't match).
+            if let Some(original) = C3_FIXUP.iter().find_map(|(ptr, mid_y_bits, original)| {
+                if partition.nodes_ptr == *ptr && mid_y.to_bits() == *mid_y_bits {
+                    Some(f32::from_bits(*original))
+                } else {
+                    None
+                }
+            }) {
+                mid_y = original;
+            }
 
             let mid = Vec3 {
                 x: xf + 128.0,

@@ -1,4 +1,4 @@
-use super::{PartitionMwC, WorldMwC};
+use super::{PartitionMwC, WorldMwC, C3_FIXUP};
 use crate::nodes::check::ptr;
 use crate::nodes::helpers::read_node_indices;
 use crate::nodes::math::partition_diag;
@@ -244,7 +244,18 @@ fn assert_partition(
     // there are a few values in the c3 gamez of v1.0 and v1.1 where this fails.
     // might be due to floating point errors in the original calculation (lower
     // mantissa bits don't match).
-    chk!(offset, partition.mid.y == mid_y)?;
+    if partition.mid.y != mid_y {
+        let k = (
+            partition.nodes_ptr.0,
+            mid_y.to_bits(),
+            partition.mid.y.to_bits(),
+        );
+        if C3_FIXUP.iter().any(|fixup| fixup == &k) {
+            // found it
+        } else {
+            chk!(offset, partition.mid.y == mid_y)?;
+        }
+    }
 
     // since x and z always have a side of 128.0/-128.0 * 2 length respectively,
     // and the sign doesn't matter because the values are squared, only min.y and
