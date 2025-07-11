@@ -1,8 +1,8 @@
-use crate::{api, num, sum, Color};
+use crate::{api, num, sum, Color, IndexR};
 
 api! {
     struct CycleData {
-        textures: Vec<String>,
+        texture_indices: Vec<IndexR>,
         looping: bool,
         speed: f32,
         current_frame: i32,
@@ -46,11 +46,9 @@ impl Default for Soil {
 
 api! {
     struct TexturedMaterial {
-        texture: String,
-        // the GameZ data doesn't use the pointer (it stores the texture name index)
-        pointer: u32 = { 0u32 },
-        cycle: Option<CycleData> = { None },
+        texture_index: IndexR,
         soil: Soil = { Soil::Default },
+        cycle: Option<CycleData> = { None },
         flag: bool,
     }
 }

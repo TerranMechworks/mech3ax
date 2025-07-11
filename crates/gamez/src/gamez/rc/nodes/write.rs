@@ -3,20 +3,21 @@ use crate::nodes::helpers::write_node_indices;
 use crate::nodes::node::rc::{make_node, make_node_zero, NodeRcC};
 use log::trace;
 use mech3ax_api_types::gamez::nodes::{Node, NodeData};
+use mech3ax_api_types::Count;
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, err, Result};
+use mech3ax_common::{err, len, Result};
 use mech3ax_types::AsBytes as _;
 use std::io::Write;
 
 pub(crate) fn write_nodes(
     write: &mut CountingWriter<impl Write>,
     nodes: &[Node],
-    array_size: i32,
+    array_size: Count,
     offset: u32,
 ) -> Result<()> {
-    let mut offset = offset + (NodeRcC::SIZE + 4) * (array_size as u32);
+    let mut offset = offset + (NodeRcC::SIZE + 4) * array_size.to_u32();
     // TODO
-    let node_count = assert_len!(i32, nodes.len(), "GameZ nodes")?;
+    let node_count = len!(nodes.len(), "GameZ nodes")?;
 
     for (index, node) in nodes.iter().enumerate() {
         trace!("Processing node info {}/{}", index, node_count);
@@ -43,10 +44,11 @@ pub(crate) fn write_nodes(
         write.offset
     );
     let node_zero = make_node_zero();
-    for index in node_count..array_size {
+    // TODO
+    for index in node_count.to_i32()..array_size.to_i32() {
         write.write_struct_no_log(&node_zero)?;
         let mut index = index + 1;
-        if index == array_size {
+        if index == array_size.to_i32() {
             index = NODE_INDEX_INVALID;
         }
         write.write_i32(index)?;

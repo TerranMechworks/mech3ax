@@ -231,7 +231,7 @@ fn write_polygons(
             uvs_ptr,
             vertex_colors_ptr: Ptr(polygon.vertex_colors_ptr),
             unk_ptr: Ptr(polygon.matl_refs_ptr),
-            material_index: material.material_index,
+            material_index: material.material_index.maybe(),
             zone_set,
         };
         write.write_struct(&poly)?;

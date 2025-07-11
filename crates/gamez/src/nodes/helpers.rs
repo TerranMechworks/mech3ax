@@ -1,4 +1,4 @@
-use mech3ax_api_types::{Count, Index};
+use mech3ax_api_types::{Count, IndexR, IndexR32};
 use mech3ax_common::check::amend_err;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::Result;
@@ -19,25 +19,25 @@ pub(crate) fn _read_node_indices<F>(
     mut err: F,
     file: &'static str,
     line: u32,
-) -> Result<Vec<Index>>
+) -> Result<Vec<IndexR>>
 where
     F: FnMut(i16, i16) -> String,
 {
     let count = count.to_i16();
     (0..count)
         .map(|index| {
-            let value = read.read_i32()?;
-            Index::check_i32(value).map_err(|msg| {
+            let value = IndexR32::new(read.read_i32()?);
+            value.check().map_err(|msg| {
                 let name = err(index, count);
                 amend_err(msg, &name, read.prev, file, line).into()
             })
         })
-        .collect::<Result<Vec<Index>>>()
+        .collect::<Result<Vec<IndexR>>>()
 }
 
 pub(crate) fn write_node_indices(
     write: &mut CountingWriter<impl Write>,
-    indices: &[Index],
+    indices: &[IndexR],
 ) -> Result<()> {
     for index in indices.iter().copied() {
         let value = index.to_i32();

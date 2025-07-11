@@ -15,7 +15,7 @@ macro_rules! api {
             pub $field_name: $field_ty,
         )*}
 
-        $crate::api!(@md $name { $($field_name: $field_ty,)* });
+        $crate::api!(@md $name { $($field_name: $field_ty $( { $($default)* })?,)* });
     };
     (@sem ) => {
         ::mech3ax_metadata_types::TypeSemantic::Ref
@@ -40,6 +40,9 @@ macro_rules! api {
     };
     (@default Soil::Default) => {
         ::mech3ax_metadata_types::DefaultHandling::SoilIsDefault
+    };
+    (@default -1i16) => {
+        ::mech3ax_metadata_types::DefaultHandling::I16IsNegOne
     };
     (@default -1i32) => {
         ::mech3ax_metadata_types::DefaultHandling::I32IsNegOne
@@ -88,7 +91,7 @@ macro_rules! api {
         $crate::api!(@md $name $(: $semantic)? { $($field_name: $field_ty,)* });
     };
     (@md $name:ident $(: $semantic:tt)? {$(
-        $field_name:ident: $field_ty:ty,
+        $field_name:ident: $field_ty:ty $( { $($default:tt)* })?,
     )*}) => {
         impl ::mech3ax_metadata_types::DerivedMetadata for $name {
             const TYPE_INFO: &'static ::mech3ax_metadata_types::TypeInfo =
@@ -99,7 +102,7 @@ macro_rules! api {
                         ::mech3ax_metadata_types::TypeInfoStructField {
                             name: stringify!($field_name),
                             type_info: <$field_ty as ::mech3ax_metadata_types::DerivedMetadata>::TYPE_INFO,
-                            default: ::mech3ax_metadata_types::DefaultHandling::Normal,
+                            default: $crate::api!(@default $($($default)*)? ),
                         },
                     )*],
                     module_path: ::std::module_path!(),

@@ -1,5 +1,5 @@
 use super::{LightFlags as LFlags, LightPmC, WORLD_VIEW};
-use crate::nodes::check::{color, node_count, ptr};
+use crate::nodes::check::{color, ptr};
 use crate::nodes::helpers::read_node_indices;
 use mech3ax_api_types::gamez::nodes::{Light, LightFlags};
 use mech3ax_api_types::{AffineMatrix, Count, Range, Vec3};
@@ -84,7 +84,7 @@ fn assert_light(light: &LightPmC, offset: usize) -> Result<LightTemp> {
     let range_inv = 1.0 / (light.range_far - light.range_near);
     chk!(offset, light.range_inv == range_inv)?;
 
-    let parent_count = chk!(offset, node_count(light.parent_count))?;
+    let parent_count = chk!(offset, ?light.parent_count)?;
     chk!(offset, ptr(light.parent_ptr, parent_count))?;
 
     let mut flags = LightFlags::empty();

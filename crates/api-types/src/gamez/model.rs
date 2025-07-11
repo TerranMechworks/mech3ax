@@ -1,5 +1,5 @@
 use crate::serde::bool_false;
-use crate::{api, bit, num, Color, Vec3};
+use crate::{api, bit, num, Color, IndexR, Vec3};
 use mech3ax_types::impl_as_bytes;
 
 api! {
@@ -44,7 +44,7 @@ bit! {
 
 api! {
     struct PolygonMaterial {
-        material_index: u32,
+        material_index: IndexR,
         uv_coords: Option<Vec<UvCoord>>,
     }
 }

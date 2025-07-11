@@ -257,7 +257,7 @@ fn write_polygons(
             vertex_indices_ptr: Ptr(polygon.vertex_indices_ptr),
             normal_indices_ptr,
             uvs_ptr,
-            material_index: material.material_index,
+            material_index: material.material_index.maybe(),
             zone_set,
         };
         write.write_struct(&poly)?;

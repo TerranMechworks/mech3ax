@@ -4,7 +4,7 @@ use log::trace;
 use mech3ax_api_types::gamez::model::{
     Model, ModelFlags, ModelType, Polygon, PolygonFlags, PolygonMaterial, UvCoord,
 };
-use mech3ax_api_types::Vec3;
+use mech3ax_api_types::{Count, IndexR, IndexR32, Vec3};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, chk, Result};
 use mech3ax_types::Ptr;
@@ -121,10 +121,14 @@ fn assert_model_info(model: &ModelMwC, offset: usize) -> Result<WrappedModel> {
     })
 }
 
+fn matl_index(index: IndexR32, count: Count) -> Result<IndexR, String> {
+    count.index_req_i32(index)
+}
+
 fn assert_polygon_info(
     poly: PolygonMwC,
     offset: usize,
-    material_count: u32,
+    material_count: Count,
     poly_index: u32,
 ) -> Result<(u32, u32, Polygon)> {
     let bitflags = chk!(offset, ?poly.flags)?;
@@ -142,7 +146,7 @@ fn assert_polygon_info(
     // uvs ptr is variable, and determines whether UVs are loaded
     chk!(offset, poly.vertex_colors_ptr != Ptr::NULL)?;
     chk!(offset, poly.unk_ptr != Ptr::NULL)?;
-    chk!(offset, poly.material_index < material_count)?;
+    let material_index = chk!(offset, matl_index(poly.material_index, material_count))?;
     let zone_set = assert_zone_set(poly.zone_set.0, offset + 32)?;
 
     let mut flags = PolygonFlags::empty();
@@ -154,7 +158,7 @@ fn assert_polygon_info(
     }
 
     let materials = vec![PolygonMaterial {
-        material_index: poly.material_index,
+        material_index,
         uv_coords: None,
     }];
 
@@ -181,7 +185,7 @@ fn assert_polygon_info(
 pub(crate) fn read_model_data(
     read: &mut CountingReader<impl Read>,
     wrapped: WrappedModel,
-    material_count: u32,
+    material_count: Count,
 ) -> Result<Model> {
     let mut model = wrapped.model;
 
@@ -229,7 +233,7 @@ pub(crate) fn read_model_data(
 fn read_polygons(
     read: &mut CountingReader<impl Read>,
     count: u32,
-    material_count: u32,
+    material_count: Count,
 ) -> Result<Vec<Polygon>> {
     let poly_infos = (0..count)
         .map(|index| {

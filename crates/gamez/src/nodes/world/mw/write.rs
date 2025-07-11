@@ -6,9 +6,8 @@ use log::trace;
 use mech3ax_api_types::gamez::nodes::World;
 use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, Result};
-use mech3ax_types::maybe::SupportsMaybe as _;
-use mech3ax_types::{Hex, Ptr};
+use mech3ax_common::{len, Result};
+use mech3ax_types::{Hex, Ptr, SupportsMaybe as _};
 use std::io::Write;
 
 pub(crate) fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Result<()> {
@@ -18,8 +17,8 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Re
     let virt_partition_x_count = world.area.x_count(256);
     let virt_partition_z_count = world.area.z_count(256);
 
-    let light_count = assert_len!(i32, world.light_indices.len(), "world light indices")?;
-    let sound_count = assert_len!(i32, world.sound_indices.len(), "world sound indices")?;
+    let light_count = len!(world.light_indices.len(), "world light indices")?;
+    let sound_count = len!(world.sound_indices.len(), "world sound indices")?;
 
     let warudo = WorldMwC {
         flags: 0,
@@ -58,10 +57,10 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Re
         field148: 1.0,
         field152: 1.0,
         field156: 1.0,
-        light_count,
+        light_count: light_count.maybe(),
         light_nodes_ptr: Ptr(world.ptrs.light_nodes_ptr),
         light_data_ptr: Ptr(world.ptrs.light_data_ptr),
-        sound_count,
+        sound_count: sound_count.maybe(),
         sound_nodes_ptr: Ptr(world.ptrs.sound_nodes_ptr),
         sound_data_ptr: Ptr(world.ptrs.sound_data_ptr),
         field184: 0,
@@ -83,9 +82,7 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Re
         for partition in partitions {
             let xf = partition.x as f32;
             let zf = partition.z as f32;
-            // TODO
-            let node_count =
-                assert_len!(i16, partition.node_indices.len(), "partition node indices")?;
+            let node_count = len!(partition.node_indices.len(), "partition node indices")?;
             let diagonal = partition_diag(partition.min.y, partition.max.y, 128.0);
 
             let mid_y = (partition.max.y + partition.min.y) * 0.5;
@@ -106,7 +103,7 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Re
                 mid,
                 diagonal,
                 field56: 0,
-                node_count,
+                node_count: node_count.maybe(),
                 nodes_ptr: Ptr(partition.nodes_ptr),
                 field64: 0,
                 field68: 0,

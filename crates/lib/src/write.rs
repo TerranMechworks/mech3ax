@@ -5,8 +5,7 @@ use crate::{filename_to_string, i32_to_game};
 use eyre::{bail, eyre, Context as _, Result};
 use mech3ax_api_types::anim::AnimMetadata;
 use mech3ax_api_types::archive::ArchiveEntry;
-use mech3ax_api_types::gamez::materials::Material;
-use mech3ax_api_types::gamez::{GameZ, MechlibModel};
+use mech3ax_api_types::gamez::{GameZ, MechlibMaterial, MechlibModel};
 use mech3ax_api_types::image::TextureManifest;
 use mech3ax_api_types::interp::Script;
 use mech3ax_api_types::motion::Motion;
@@ -218,7 +217,7 @@ fn write_mechlib_transform_mw(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
         "format" => Ok(data),
         "version" => Ok(data),
         "materials" => {
-            let materials: Vec<Material> =
+            let materials: Vec<MechlibMaterial> =
                 mech3ax_exchange::from_slice(&data).context("Materials data is invalid")?;
 
             let mut buf = CountingWriter::new(Vec::new(), 0);
@@ -243,7 +242,7 @@ fn write_mechlib_transform_pm(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
         "format" => Ok(data),
         "version" => Ok(data),
         "materials" => {
-            let materials: Vec<Material> =
+            let materials: Vec<MechlibMaterial> =
                 mech3ax_exchange::from_slice(&data).context("Materials data is invalid")?;
 
             let mut buf = CountingWriter::new(Vec::new(), 0);

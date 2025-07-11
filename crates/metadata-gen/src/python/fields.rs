@@ -54,7 +54,7 @@ impl Field {
                 // Soil must be imported
                 Some("Soil.Default".to_string())
             }
-            DefaultHandling::I32IsNegOne => Some("-1".to_string()),
+            DefaultHandling::I16IsNegOne | DefaultHandling::I32IsNegOne => Some("-1".to_string()),
         };
 
         Self {

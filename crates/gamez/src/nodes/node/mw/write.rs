@@ -2,10 +2,9 @@ use super::{Class, Flags, NodeMwC, ZERO_NAME};
 use crate::nodes::types::AreaPartitionC;
 use crate::nodes::NodeClass;
 use mech3ax_api_types::gamez::nodes::{BoundingBox, Node};
-use mech3ax_api_types::{Index, Vec3};
-use mech3ax_common::{assert_len, Result};
-use mech3ax_types::maybe::SupportsMaybe as _;
-use mech3ax_types::{Ascii, PaddedI8, Ptr};
+use mech3ax_api_types::{Count, IndexO, IndexO32, Vec3};
+use mech3ax_common::{len, Result};
+use mech3ax_types::{Ascii, PaddedI8, Ptr, SupportsMaybe as _};
 
 pub(crate) fn make_node_zero() -> NodeMwC {
     NodeMwC {
@@ -16,14 +15,14 @@ pub(crate) fn make_node_zero() -> NodeMwC {
         zone_id: PaddedI8::empty(),
         node_class: Class::empty(),
         data_ptr: Ptr::NULL,
-        model_index: -1,
+        model_index: IndexO::NONE.maybe(),
         environment_data: Ptr::NULL,
         action_priority: 0,
         action_callback: Ptr::NULL,
         area_partition: AreaPartitionC::ZERO,
-        parent_count: 0,
+        parent_count: Count::EMPTY.maybe(),
         parent_array_ptr: Ptr::NULL,
-        child_count: 0,
+        child_count: Count::EMPTY.maybe(),
         child_array_ptr: Ptr::NULL,
         bbox_mid: Vec3::DEFAULT,
         bbox_diag: 0.0,
@@ -54,14 +53,13 @@ pub(crate) fn make_node(node: &Node) -> Result<NodeMwC> {
         log::warn!("WARN: node virtual partition ignored in MW");
     }
 
-    // TODO
-    let mut parent_count = assert_len!(i32, node.parent_indices.len(), "node parent indices")?;
-    let child_count = assert_len!(i32, node.child_indices.len(), "node child indices")?;
+    let mut parent_count = len!(node.parent_indices.len(), "node parent indices")?;
+    let child_count = len!(node.child_indices.len(), "node child indices")?;
     let parent_array_ptr = Ptr(node.parent_array_ptr);
     let child_array_ptr = Ptr(node.child_array_ptr);
 
     if node_class == NodeClass::Empty {
-        parent_count = 0;
+        parent_count = Count::EMPTY;
     }
 
     Ok(NodeMwC {
@@ -72,14 +70,14 @@ pub(crate) fn make_node(node: &Node) -> Result<NodeMwC> {
         zone_id: node.zone_id.maybe(),
         node_class: node_class.maybe(),
         data_ptr: Ptr(node.data_ptr),
-        model_index: node.model_index.map(Index::to_i32).unwrap_or(-1),
+        model_index: node.model_index.maybe(),
         environment_data: Ptr::NULL,
         action_priority: 1,
         action_callback: Ptr::NULL,
         area_partition,
-        parent_count,
+        parent_count: parent_count.maybe(),
         parent_array_ptr,
-        child_count,
+        child_count: child_count.maybe(),
         child_array_ptr,
         bbox_mid: Vec3::DEFAULT,
         bbox_diag: 0.0,
@@ -99,7 +97,7 @@ pub(crate) fn make_node_mechlib(node: &Node) -> Result<NodeMwC> {
     let node_class = NodeClass::from_data(&node.data);
 
     // this holds the model ptr for mechlib
-    let model_index = node.index as i32;
+    let model_index = IndexO32::new(node.index as i32);
 
     let area_partition = match &node.area_partition {
         Some(ap) => AreaPartitionC {
@@ -113,14 +111,13 @@ pub(crate) fn make_node_mechlib(node: &Node) -> Result<NodeMwC> {
         log::warn!("WARN: node virtual partition ignored in MW");
     }
 
-    // TODO
-    let mut parent_count = assert_len!(i32, node.parent_indices.len(), "node parent indices")?;
-    let child_count = assert_len!(i32, node.child_indices.len(), "node child indices")?;
+    let mut parent_count = len!(node.parent_indices.len(), "node parent indices")?;
+    let child_count = len!(node.child_indices.len(), "node child indices")?;
     let parent_array_ptr = Ptr(node.parent_array_ptr);
     let child_array_ptr = Ptr(node.child_array_ptr);
 
     if node_class == NodeClass::Empty {
-        parent_count = 0;
+        parent_count = Count::EMPTY;
     }
 
     Ok(NodeMwC {
@@ -136,9 +133,9 @@ pub(crate) fn make_node_mechlib(node: &Node) -> Result<NodeMwC> {
         action_priority: 1,
         action_callback: Ptr::NULL,
         area_partition,
-        parent_count,
+        parent_count: parent_count.maybe(),
         parent_array_ptr,
-        child_count,
+        child_count: child_count.maybe(),
         child_array_ptr,
         bbox_mid: Vec3::DEFAULT,
         bbox_diag: 0.0,

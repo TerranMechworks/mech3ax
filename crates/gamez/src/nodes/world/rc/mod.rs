@@ -3,7 +3,7 @@ mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::nodes::{FogType, World};
-use mech3ax_api_types::{Color, Range, Vec3};
+use mech3ax_api_types::{Color, Count16, Count32, Range, Vec3};
 use mech3ax_types::{impl_as_bytes, Bool32, Hex, Maybe, Offsets, PaddedU8, Ptr};
 pub(crate) use read::read;
 pub(crate) use write::write;
@@ -67,10 +67,10 @@ struct WorldRcC {
     field132: f32,                             // 132 (1)
     field136: f32,                             // 136 (1)
     field140: f32,                             // 140 (1)
-    light_count: i32,                          // 144
+    light_count: Count32,                      // 144
     light_nodes_ptr: Ptr,                      // 148
     light_data_ptr: Ptr,                       // 152
-    sound_count: i32,                          // 156
+    sound_count: Count32,                      // 156
     sound_nodes_ptr: Ptr,                      // 160
     sound_data_ptr: Ptr,                       // 164
     field168: i32,                             // 168 (0)
@@ -80,16 +80,16 @@ impl_as_bytes!(WorldRcC, 172);
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
 struct PartitionRcC {
-    flags: Hex<u32>, // 00
-    field04: i32,    // 04
-    x: f32,          // 08
-    z: f32,          // 12
-    min: Vec3,       // 16
-    max: Vec3,       // 28
-    mid: Vec3,       // 40
-    diagonal: f32,   // 52
-    field56: u16,    // 56
-    node_count: i16, // 58
-    nodes_ptr: Ptr,  // 60
+    flags: Hex<u32>,     // 00
+    field04: i32,        // 04
+    x: f32,              // 08
+    z: f32,              // 12
+    min: Vec3,           // 16
+    max: Vec3,           // 28
+    mid: Vec3,           // 40
+    diagonal: f32,       // 52
+    field56: u16,        // 56
+    node_count: Count16, // 58
+    nodes_ptr: Ptr,      // 60
 }
 impl_as_bytes!(PartitionRcC, 64);

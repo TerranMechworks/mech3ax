@@ -4,10 +4,10 @@ use log::trace;
 use mech3ax_api_types::gamez::model::{
     Model, ModelFlags, ModelType, Polygon, PolygonFlags, PolygonMaterial, UvCoord,
 };
-use mech3ax_api_types::Vec3;
+use mech3ax_api_types::{Count, IndexR, IndexR32, Vec3};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{assert_that, chk, Result};
-use mech3ax_types::Ptr;
+use mech3ax_types::{Maybe, Ptr};
 use std::io::Read;
 
 pub(crate) fn read_model_info(read: &mut CountingReader<impl Read>) -> Result<WrappedModel> {
@@ -185,10 +185,14 @@ fn assert_polygon_info(
     Ok((poly_index, verts_in_poly, poly.material_count, polygon))
 }
 
+fn matl_index(index: IndexR32, count: Count) -> Result<IndexR, String> {
+    count.index_req_i32(index)
+}
+
 pub(crate) fn read_model_data(
     read: &mut CountingReader<impl Read>,
     wrapped: WrappedModel,
-    material_count: u32,
+    material_count: Count,
 ) -> Result<Model> {
     let mut model = wrapped.model;
 
@@ -238,7 +242,10 @@ pub(crate) fn read_model_data(
     // material references are discarded, since they can be re-calculated
     for _ in 0..wrapped.material_ref_count {
         let material_ref: MaterialRefC = read.read_struct()?;
-        chk!(read.prev, material_ref.material_index < material_count)?;
+        chk!(
+            read.prev,
+            matl_index(material_ref.material_index, material_count)
+        )?;
     }
 
     Ok(model)
@@ -247,7 +254,7 @@ pub(crate) fn read_model_data(
 fn read_polygons(
     read: &mut CountingReader<impl Read>,
     count: u32,
-    material_count: u32,
+    material_count: Count,
 ) -> Result<Vec<Polygon>> {
     let poly_infos = (0..count)
         .map(|index| {
@@ -303,7 +310,7 @@ fn read_polygons(
 fn read_materials(
     read: &mut CountingReader<impl Read>,
     mat_count: u32,
-    material_count: u32,
+    material_count: Count,
     verts_in_poly: u32,
     has_uvs: bool,
 ) -> Result<Vec<PolygonMaterial>> {
@@ -314,9 +321,8 @@ fn read_materials(
     );
     let material_indices = (0..mat_count)
         .map(|_| {
-            let mat_index = read.read_u32()?;
-            assert_that!("material index", mat_index < material_count, read.prev)?;
-            Ok(mat_index)
+            let material_index = Maybe::new(read.read_i32()?);
+            Ok(chk!(read.prev, matl_index(material_index, material_count))?)
         })
         .collect::<Result<Vec<_>>>()?;
 

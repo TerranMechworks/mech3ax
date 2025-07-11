@@ -1,4 +1,4 @@
-use crate::{api, bit, num, sum, AffineMatrix, Color, Index, Range, Vec3};
+use crate::{api, bit, num, sum, AffineMatrix, Color, IndexO, IndexR, Range, Vec3};
 
 bit! {
     struct NodeFlags: u32 {
@@ -93,11 +93,11 @@ api! {
         flags: NodeFlags,
         update_flags: u32,
         zone_id: i8,
-        model_index: Option<Index>,
+        model_index: IndexO,
         area_partition: Option<Partition>,
         virtual_partition: Option<Partition>, // PM
-        parent_indices: Vec<Index>,
-        child_indices: Vec<Index>,
+        parent_indices: Vec<IndexR>,
+        child_indices: Vec<IndexR>,
         active_bbox: ActiveBoundingBox, // PM
         node_bbox: BoundingBox,
         model_bbox: BoundingBox,
@@ -139,10 +139,10 @@ api! {
 
 api! {
     struct Camera {
-        world_index: Option<Index>,
-        window_index: Option<Index>,
-        focus_node_xy: Option<Index>,
-        focus_node_xz: Option<Index>,
+        world_index: IndexO,
+        window_index: IndexO,
+        focus_node_xy: IndexO,
+        focus_node_xz: IndexO,
         clip_near: f32,
         clip_far: f32,
         lod_multiplier: f32,
@@ -183,7 +183,7 @@ api! {
         color_ambient_mixed: Color, // PM
         color_da_combined: Color, // PM
         range: Range,
-        parent_indices: Vec<Index>,
+        parent_indices: Vec<IndexR>,
         parent_ptr: u32,
     }
 }
@@ -291,7 +291,7 @@ api! {
 
 api! {
     struct WorldPartitionValue {
-        node_index: Index,
+        node_index: IndexR,
         y_min: f32,
         y_max: f32,
     }
@@ -303,7 +303,7 @@ api! {
         z: i32,
         min: Vec3,
         max: Vec3,
-        node_indices: Vec<Index>,
+        node_indices: Vec<IndexR>,
         values: Vec<WorldPartitionValue>,
         nodes_ptr: u32,
     }
@@ -326,8 +326,8 @@ api! {
         area: Area,
         virtual_partition: bool,
         partition_max_dec_feature_count: u8,
-        light_indices: Vec<Index>,
-        sound_indices: Vec<Index>,
+        light_indices: Vec<IndexR>,
+        sound_indices: Vec<IndexR>,
         partitions: Vec<Vec<WorldPartition>>,
         unk: i32,
         ptrs: WorldPtrs,

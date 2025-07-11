@@ -5,7 +5,7 @@ use log::trace;
 use mech3ax_api_types::gamez::model::Model;
 use mech3ax_api_types::gamez::nodes::{Node, NodeData};
 use mech3ax_api_types::gamez::MechlibModel;
-use mech3ax_api_types::Index;
+use mech3ax_api_types::IndexR;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{err, Error, Result};
 use std::io::Write;
@@ -16,7 +16,7 @@ pub fn write_model(
 ) -> Result<()> {
     write_tree(
         write,
-        Index::MIN,
+        IndexR::ZERO,
         &mechlib_model.nodes,
         &mechlib_model.models,
     )
@@ -24,7 +24,7 @@ pub fn write_model(
 
 fn write_tree(
     write: &mut CountingWriter<impl Write>,
-    node_index: Index,
+    node_index: IndexR,
     nodes: &[Node],
     models: &[Model],
 ) -> Result<()> {
@@ -52,7 +52,7 @@ fn write_tree(
         }
     }
 
-    if let Some(model_index) = node.model_index {
+    if let Some(model_index) = node.model_index.to_req() {
         let index = model_index.to_usize();
         trace!("Processing model {}", model_index);
 

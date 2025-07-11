@@ -1,5 +1,4 @@
 use super::{cotangent, CameraC};
-use crate::nodes::check::node_index;
 use mech3ax_api_types::gamez::nodes::Camera;
 use mech3ax_api_types::{AffineMatrix, Vec3};
 use mech3ax_common::io_ext::CountingReader;
@@ -12,10 +11,11 @@ pub(crate) fn read(read: &mut CountingReader<impl Read>) -> Result<Camera> {
 }
 
 fn assert_camera(camera: &CameraC, offset: usize) -> Result<Camera> {
-    let world_index = chk!(offset, node_index(camera.world_index))?;
-    let window_index = chk!(offset, node_index(camera.window_index))?;
-    let focus_node_xy = chk!(offset, node_index(camera.focus_node_xy))?;
-    let focus_node_xz = chk!(offset, node_index(camera.focus_node_xz))?;
+    // TODO: count validation
+    let world_index = chk!(offset, ?camera.world_index)?;
+    let window_index = chk!(offset, ?camera.window_index)?;
+    let focus_node_xy = chk!(offset, ?camera.focus_node_xy)?;
+    let focus_node_xz = chk!(offset, ?camera.focus_node_xz)?;
     chk!(offset, camera.flags == 0)?; // TODO
     chk!(offset, camera.translate == Vec3::DEFAULT)?;
     chk!(offset, camera.rotate == Vec3::DEFAULT)?;

@@ -5,7 +5,7 @@ mod write;
 use bytemuck::{AnyBitPattern, NoUninit};
 pub(crate) use matl::make_material_refs;
 use mech3ax_api_types::gamez::model::{FacadeMode, Model, ModelType};
-use mech3ax_api_types::Vec3;
+use mech3ax_api_types::{IndexR32, Vec3};
 use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Hex, Maybe, Offsets, Ptr};
 pub(crate) use read::{assert_model_info_zero, read_model_data, read_model_info};
 pub(crate) use write::{size_model, write_model_data, write_model_info};
@@ -100,9 +100,9 @@ impl_as_bytes!(PolygonPmC, 40);
 #[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
 pub struct MaterialRefC {
-    pub material_index: u32, // 00
-    pub usage_count: u32,    // 04
-    pub polygon_ptr: Ptr,    // 08
+    pub material_index: IndexR32, // 00
+    pub usage_count: u32,         // 04
+    pub polygon_ptr: Ptr,         // 08
 }
 impl_as_bytes!(MaterialRefC, 12);
 

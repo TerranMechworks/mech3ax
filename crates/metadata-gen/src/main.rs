@@ -13,8 +13,6 @@ fn add_types(resolver: &mut impl Resolver) {
     resolver.push::<api::Quaternion>();
     resolver.push::<api::Range>();
     resolver.push::<api::Vec3>();
-    resolver.push::<api::Count>();
-    resolver.push::<api::Index>();
 
     // --- zmap.rs
     resolver.push::<api::zmap::MapColor>();

@@ -3,7 +3,7 @@ mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::nodes::FogType;
-use mech3ax_api_types::{Color, Range, Vec3};
+use mech3ax_api_types::{Color, Count16, Count32, IndexR32, Range, Vec3};
 use mech3ax_types::{impl_as_bytes, Bool32, Hex, Maybe, Offsets, PaddedU8, Ptr};
 pub(crate) use read::read;
 pub(crate) use write::write;
@@ -53,10 +53,10 @@ struct WorldPmC {
     field164: f32,                             // 164
     field168: f32,                             // 168
     field172: f32,                             // 172
-    light_count: i32,                          // 176
+    light_count: Count32,                      // 176
     light_nodes_ptr: Ptr,                      // 180
     light_data_ptr: Ptr,                       // 184
-    sound_count: i32,                          // 188
+    sound_count: Count32,                      // 188
     sound_nodes_ptr: Ptr,                      // 192
     sound_data_ptr: Ptr,                       // 196
     field200: i32,                             // 200
@@ -66,31 +66,31 @@ impl_as_bytes!(WorldPmC, 204);
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
 struct PartitionPmC {
-    flags: Hex<u32>, // 00
-    field04: i32,    // 04
-    x: f32,          // 08
-    z: f32,          // 12
-    min: Vec3,       // 16
-    max: Vec3,       // 28
-    mid: Vec3,       // 40
-    diagonal: f32,   // 52
-    field56: u16,    // 56
-    node_count: i16, // 58
-    nodes_ptr: Ptr,  // 60
-    field64: i32,    // 64
-    field68: i32,    // 68
-    field72: i32,    // 72
-    field76: i32,    // 76
-    field80: i32,    // 80
-    field84: i32,    // 84
+    flags: Hex<u32>,     // 00
+    field04: i32,        // 04
+    x: f32,              // 08
+    z: f32,              // 12
+    min: Vec3,           // 16
+    max: Vec3,           // 28
+    mid: Vec3,           // 40
+    diagonal: f32,       // 52
+    field56: u16,        // 56
+    node_count: Count16, // 58
+    nodes_ptr: Ptr,      // 60
+    field64: i32,        // 64
+    field68: i32,        // 68
+    field72: i32,        // 72
+    field76: i32,        // 76
+    field80: i32,        // 80
+    field84: i32,        // 84
 }
 impl_as_bytes!(PartitionPmC, 88);
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
 struct PartitionValueC {
-    node_index: i32, // 00
-    y_min: f32,      // 04
-    y_max: f32,      // 08
+    node_index: IndexR32, // 00
+    y_min: f32,           // 04
+    y_max: f32,           // 08
 }
 impl_as_bytes!(PartitionValueC, 12);

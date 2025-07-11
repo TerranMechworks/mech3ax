@@ -1,10 +1,9 @@
 use super::{AreaPartitionC, NodePmC, VirtualPartitionC};
 use crate::nodes::NodeClass;
 use mech3ax_api_types::gamez::nodes::Node;
-use mech3ax_api_types::{Index, Vec3};
-use mech3ax_common::{assert_len, Result};
-use mech3ax_types::maybe::SupportsMaybe as _;
-use mech3ax_types::{Ascii, Ptr};
+use mech3ax_api_types::{IndexO32, Vec3};
+use mech3ax_common::{len, Result};
+use mech3ax_types::{Ascii, Ptr, SupportsMaybe as _};
 
 pub(crate) fn make_node(node: &Node) -> Result<NodePmC> {
     let name = Ascii::from_str_node_name(&node.name);
@@ -26,9 +25,8 @@ pub(crate) fn make_node(node: &Node) -> Result<NodePmC> {
         None => VirtualPartitionC::DEFAULT,
     };
 
-    // TODO
-    let parent_count = assert_len!(i16, node.parent_indices.len(), "node parent indices")?;
-    let child_count = assert_len!(i16, node.child_indices.len(), "node child indices")?;
+    let parent_count = len!(node.parent_indices.len(), "node parent indices")?;
+    let child_count = len!(node.child_indices.len(), "node child indices")?;
     let parent_array_ptr = Ptr(node.parent_array_ptr);
     let child_array_ptr = Ptr(node.child_array_ptr);
 
@@ -40,14 +38,14 @@ pub(crate) fn make_node(node: &Node) -> Result<NodePmC> {
         zone_id: node.zone_id.maybe(),
         node_class: node_class.maybe(),
         data_ptr: Ptr(node.data_ptr),
-        model_index: node.model_index.map(Index::to_i32).unwrap_or(-1),
+        model_index: node.model_index.maybe(),
         environment_data: Ptr::NULL,
         action_priority: 1,
         action_callback: Ptr::NULL,
         area_partition,
         virtual_partition,
-        parent_count,
-        child_count,
+        parent_count: parent_count.maybe(),
+        child_count: child_count.maybe(),
         parent_array_ptr,
         child_array_ptr,
         bbox_mid: Vec3::DEFAULT,
@@ -69,7 +67,7 @@ pub(crate) fn make_node_mechlib(node: &Node) -> Result<NodePmC> {
     let node_class = NodeClass::from_data(&node.data);
 
     // this holds the model ptr for mechlib
-    let model_index = node.index as i32;
+    let model_index = IndexO32::new(node.index as i32);
 
     let area_partition = match &node.area_partition {
         Some(ap) => AreaPartitionC {
@@ -87,9 +85,8 @@ pub(crate) fn make_node_mechlib(node: &Node) -> Result<NodePmC> {
         None => VirtualPartitionC::DEFAULT,
     };
 
-    // TODO
-    let parent_count = assert_len!(i16, node.parent_indices.len(), "node parent indices")?;
-    let child_count = assert_len!(i16, node.child_indices.len(), "node child indices")?;
+    let parent_count = len!(node.parent_indices.len(), "node parent indices")?;
+    let child_count = len!(node.child_indices.len(), "node child indices")?;
     let parent_array_ptr = Ptr(node.parent_array_ptr);
     let child_array_ptr = Ptr(node.child_array_ptr);
 
@@ -107,8 +104,8 @@ pub(crate) fn make_node_mechlib(node: &Node) -> Result<NodePmC> {
         action_callback: Ptr::NULL,
         area_partition,
         virtual_partition,
-        parent_count,
-        child_count,
+        parent_count: parent_count.maybe(),
+        child_count: child_count.maybe(),
         parent_array_ptr,
         child_array_ptr,
         bbox_mid: Vec3::DEFAULT,

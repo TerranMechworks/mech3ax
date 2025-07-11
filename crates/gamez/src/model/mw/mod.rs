@@ -3,7 +3,7 @@ mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::model::{FacadeMode, Model, ModelType};
-use mech3ax_api_types::Vec3;
+use mech3ax_api_types::{IndexR32, Vec3};
 use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Hex, Maybe, Offsets, Ptr};
 pub(crate) use read::{assert_model_info_zero, read_model_data, read_model_info};
 pub(crate) use write::{size_model, write_model_data, write_model_info};
@@ -73,15 +73,15 @@ type PFlags = Maybe<u32, PolygonBitFlags>;
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
 struct PolygonMwC {
-    flags: PFlags,           // 00
-    priority: i32,           // 04
-    vertex_indices_ptr: Ptr, // 08
-    normal_indices_ptr: Ptr, // 12
-    uvs_ptr: Ptr,            // 16
-    vertex_colors_ptr: Ptr,  // 20
-    unk_ptr: Ptr,            // 24
-    material_index: u32,     // 28
-    zone_set: Hex<u32>,      // 32
+    flags: PFlags,            // 00
+    priority: i32,            // 04
+    vertex_indices_ptr: Ptr,  // 08
+    normal_indices_ptr: Ptr,  // 12
+    uvs_ptr: Ptr,             // 16
+    vertex_colors_ptr: Ptr,   // 20
+    unk_ptr: Ptr,             // 24
+    material_index: IndexR32, // 28
+    zone_set: Hex<u32>,       // 32
 }
 impl_as_bytes!(PolygonMwC, 36);
 

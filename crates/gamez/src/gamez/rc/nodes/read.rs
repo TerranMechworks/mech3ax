@@ -4,7 +4,7 @@ use crate::nodes::node::rc::{assert_node, assert_node_zero, NodeRcC};
 use crate::nodes::NodeClass;
 use log::trace;
 use mech3ax_api_types::gamez::nodes::{Node, NodeData};
-use mech3ax_api_types::Index;
+use mech3ax_api_types::{Count, IndexR32};
 use mech3ax_common::check::amend_err;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{err, Result};
@@ -13,11 +13,12 @@ use std::io::Read;
 
 pub(crate) fn read_nodes(
     read: &mut CountingReader<impl Read>,
-    array_size: i32,
-    count: i32,
-    model_count: i32,
+    array_size: Count,
+    count: Count,
+    model_count: Count,
 ) -> Result<Vec<Node>> {
-    let nodes = (0..count)
+    let nodes = count
+        .iter()
         .map(|index| {
             trace!("Processing node info {}/{}", index, count);
             let node: NodeRcC = read.read_struct()?;
@@ -39,7 +40,8 @@ pub(crate) fn read_nodes(
         array_size,
         read.offset
     );
-    for index in count..array_size {
+    // TODO
+    for index in count.to_i32()..array_size.to_i32() {
         let node: NodeRcC = read.read_struct_no_log()?;
         assert_node_zero(&node, read.prev)
             .inspect_err(|_| trace!("{:#?} (index: {}, at {})", node, index, read.prev))?;
@@ -47,7 +49,7 @@ pub(crate) fn read_nodes(
         let actual_index = read.read_i32()?;
 
         let mut expected_index = index + 1;
-        if expected_index == array_size {
+        if expected_index == array_size.to_i32() {
             expected_index = NODE_INDEX_INVALID;
         }
 
@@ -116,8 +118,8 @@ pub(crate) fn read_nodes(
                     node.data = NodeData::Display(display);
                 }
                 NodeClass::Empty => {
-                    let parent_index = node_info.offset as i32;
-                    let parent_index = Index::check_i32(parent_index).map_err(|msg| {
+                    let parent_index = IndexR32::new(node_info.offset as i32);
+                    let parent_index = parent_index.check().map_err(|msg| {
                         let name = format!("empty {}/{} parent index", index, count);
                         amend_err(msg, &name, read.offset, file!(), line!())
                     })?;
@@ -145,14 +147,14 @@ pub(crate) fn read_nodes(
                 }
             };
 
-            if node_info.parent_count > 0 {
+            if !node_info.parent_count.is_empty() {
                 node.parent_indices =
                     read_node_indices!(read, node_info.parent_count, |idx, cnt| {
                         format!("node {}/{} parent index {}/{}", index, count, idx, cnt)
                     })?;
             }
 
-            if node_info.child_count > 0 {
+            if !node_info.child_count.is_empty() {
                 node.child_indices =
                     read_node_indices!(read, node_info.child_count, |idx, cnt| {
                         format!("node {}/{} child index {}/{}", index, count, idx, cnt)

@@ -4,19 +4,21 @@ use crate::nodes::node::pm::{assert_node, NodePmC};
 use crate::nodes::NodeClass;
 use log::trace;
 use mech3ax_api_types::gamez::nodes::{Node, NodeData};
+use mech3ax_api_types::Count;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{chk, Result};
 use std::io::Read;
 
 pub(crate) fn read_nodes(
     read: &mut CountingReader<impl Read>,
-    array_size: i32,
-    model_count: i32,
+    array_size: Count,
+    model_count: Count,
 ) -> Result<Vec<Node>> {
     // in PM, zeroed out nodes aren't written
     let count = array_size;
 
-    let nodes = (0..count)
+    let nodes = count
+        .iter()
         .map(|index| {
             trace!("Processing node info {}/{}", index, count);
             let node: NodePmC = read.read_struct()?;
@@ -102,14 +104,14 @@ pub(crate) fn read_nodes(
                 }
             };
 
-            if node_info.parent_count > 0 {
+            if !node_info.parent_count.is_empty() {
                 node.parent_indices =
                     read_node_indices!(read, node_info.parent_count, |idx, cnt| {
                         format!("node {}/{} parent index {}/{}", index, count, idx, cnt)
                     })?;
             }
 
-            if node_info.child_count > 0 {
+            if !node_info.child_count.is_empty() {
                 node.child_indices =
                     read_node_indices!(read, node_info.child_count, |idx, cnt| {
                         format!("node {}/{} child index {}/{}", index, count, idx, cnt)

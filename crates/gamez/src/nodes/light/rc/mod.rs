@@ -3,7 +3,7 @@ mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::nodes::Light;
-use mech3ax_api_types::{AffineMatrix, Color, Vec3};
+use mech3ax_api_types::{AffineMatrix, Color, Count32, Vec3};
 use mech3ax_types::{impl_as_bytes, Bool32, Offsets, Ptr};
 pub(crate) use read::read;
 pub(crate) use write::write;
@@ -41,7 +41,7 @@ struct LightRcC {
     range_far: f32,            // 208
     range_far_sq: f32,         // 212
     range_inv: f32,            // 216
-    parent_count: i32,         // 220
+    parent_count: Count32,     // 220
     parent_ptr: Ptr,           // 224
 }
 impl_as_bytes!(LightRcC, 228);

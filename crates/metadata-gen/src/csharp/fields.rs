@@ -112,7 +112,7 @@ impl Field {
             DefaultHandling::SoilIsDefault => {
                 Some("Mech3DotNet.Types.Gamez.Materials.Soil.Default".to_string())
             }
-            DefaultHandling::I32IsNegOne => Some("-1".to_string()),
+            DefaultHandling::I16IsNegOne | DefaultHandling::I32IsNegOne => Some("-1".to_string()),
         };
 
         Self {

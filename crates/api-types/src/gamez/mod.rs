@@ -2,7 +2,7 @@ pub mod materials;
 pub mod model;
 pub mod nodes;
 
-use crate::{api, Count, Index};
+use crate::{api, sum, Color, Count, IndexO};
 use materials::Material;
 use mech3ax_timestamp::DateTime;
 use model::Model;
@@ -16,16 +16,38 @@ api! {
 }
 
 api! {
+    struct MechlibTexturedMaterial {
+        texture_name: String,
+        // flag: bool,
+        ptr: u32,
+    }
+}
+
+api! {
+    struct MechlibColoredMaterial {
+        color: Color,
+        alpha: u8,
+    }
+}
+
+sum! {
+    enum MechlibMaterial {
+        Textured(MechlibTexturedMaterial),
+        Colored(MechlibColoredMaterial),
+    }
+}
+api! {
     struct Texture {
         name: String,
-        #[serde(skip_serializing_if = "Option::is_none", default)]
-        mip_index: Option<Index> = { None },
+        #[serde(skip_serializing_if = "IndexO::is_none", default)]
+        mip_index: IndexO = { -1i16 },
     }
 }
 
 api! {
     struct GameZMetadata {
         datetime: DateTime,
+        material_array_size: Count,
         model_array_size: Count,
         node_array_size: Count,
         node_data_count: Count,

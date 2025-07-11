@@ -86,7 +86,7 @@ where
     fn check(v: R) -> Result<Self, String>;
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(transparent)]
 pub struct Maybe<R, F: SupportsMaybe<R>>
 where

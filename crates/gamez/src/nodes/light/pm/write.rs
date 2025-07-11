@@ -1,14 +1,14 @@
 use super::{LightFlags, LightPmC, WORLD_VIEW};
 use crate::nodes::helpers::write_node_indices;
 use mech3ax_api_types::gamez::nodes::{Light, LightFlagsExhaustive};
-use mech3ax_api_types::{AffineMatrix, Color, Vec3};
+use mech3ax_api_types::{AffineMatrix, Vec3};
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, err, Result};
+use mech3ax_common::{err, len, Result};
 use mech3ax_types::Ptr;
 use std::io::Write;
 
 pub(crate) fn write(write: &mut CountingWriter<impl Write>, light: &Light) -> Result<()> {
-    let parent_count = assert_len!(i32, light.parent_indices.len(), "light parent indices")?;
+    let parent_count = len!(light.parent_indices.len(), "light parent indices")?;
 
     let LightFlagsExhaustive {
         recalc,
@@ -97,7 +97,7 @@ pub(crate) fn write(write: &mut CountingWriter<impl Write>, light: &Light) -> Re
         range_near_sq,
         range_far_sq,
         range_inv,
-        parent_count,
+        parent_count: parent_count.maybe(),
         parent_ptr: Ptr(light.parent_ptr),
     };
     write.write_struct(&licht)?;

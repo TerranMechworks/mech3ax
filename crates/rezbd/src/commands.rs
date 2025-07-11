@@ -1,8 +1,7 @@
 use crate::{InterpOpts, ZMapOpts, ZipOpts};
 use eyre::{bail, Context as _, Result};
 use mech3ax_api_types::archive::ArchiveEntry;
-use mech3ax_api_types::gamez::materials::Material;
-use mech3ax_api_types::gamez::{GameZ, MechlibModel};
+use mech3ax_api_types::gamez::{GameZ, MechlibMaterial, MechlibModel};
 use mech3ax_api_types::image::TextureManifest;
 use mech3ax_api_types::interp::Script;
 use mech3ax_api_types::motion::Motion;
@@ -183,7 +182,7 @@ pub(crate) fn mechlib(opts: ZipOpts) -> Result<()> {
                     Ok(buf.into_inner())
                 }
                 "materials" => {
-                    let materials: Vec<Material> = zip_json(zip, "materials.json")?;
+                    let materials: Vec<MechlibMaterial> = zip_json(zip, "materials.json")?;
                     write_materials(&mut buf, &materials)
                         .context("Failed to write mechlib materials")?;
                     Ok(buf.into_inner())

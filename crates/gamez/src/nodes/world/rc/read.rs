@@ -1,5 +1,5 @@
 use super::{PartitionRcC, WorldRcC};
-use crate::nodes::check::{node_count, ptr};
+use crate::nodes::check::ptr;
 use crate::nodes::helpers::read_node_indices;
 use crate::nodes::math::partition_diag;
 use crate::nodes::range::RangeI32;
@@ -30,12 +30,12 @@ pub(crate) fn read(read: &mut CountingReader<impl Read>) -> Result<World> {
         sound_count,
     } = assert_world(&world, read.prev)?;
 
-    if light_count > 0 {
+    if !light_count.is_empty() {
         warudo.light_indices = read_node_indices!(read, light_count, |idx, cnt| {
             format!("world node light index {}/{}", idx, cnt)
         })?;
     }
-    if sound_count > 0 {
+    if !sound_count.is_empty() {
         warudo.sound_indices = read_node_indices!(read, sound_count, |idx, cnt| {
             format!("world node sound index {}/{}", idx, cnt)
         })?;
@@ -107,12 +107,12 @@ fn assert_world(world: &WorldRcC, offset: usize) -> Result<WorldTemp> {
     chk!(offset, world.field140 == 1.0)?;
 
     // -- light nodes
-    let light_count = chk!(offset, node_count(world.light_count))?;
+    let light_count = chk!(offset, ?world.light_count)?;
     let light_nodes_ptr = chk!(offset, ptr(world.light_nodes_ptr, light_count))?;
     let light_data_ptr = chk!(offset, ptr(world.light_data_ptr, light_count))?;
 
     // -- sound nodes
-    let sound_count = chk!(offset, node_count(world.sound_count))?;
+    let sound_count = chk!(offset, ?world.sound_count)?;
     let sound_nodes_ptr = chk!(offset, ptr(world.sound_nodes_ptr, sound_count))?;
     let sound_data_ptr = chk!(offset, ptr(world.sound_data_ptr, sound_count))?;
 
@@ -187,7 +187,7 @@ fn read_partitions(
                         node_count,
                     } = assert_partition(&partition, x_pos, z_pos, read.prev)?;
 
-                    if node_count > 0 {
+                    if !node_count.is_empty() {
                         partition.node_indices =
                             read_node_indices!(read, node_count, |idx, cnt| {
                                 format!(
@@ -204,10 +204,6 @@ fn read_partitions(
         .collect::<Result<Vec<_>>>()
 }
 
-fn partition_node_count(value: i16) -> Result<Count, String> {
-    Count::check_i16(value)
-}
-
 fn assert_partition(
     partition: &PartitionRcC,
     x: i32,
@@ -222,7 +218,7 @@ fn assert_partition(
     chk!(offset, partition.x == xf)?;
     chk!(offset, partition.z == zf)?;
     chk!(offset, partition.field56 == 0)?;
-    let node_count = chk!(offset, partition_node_count(partition.node_count))?;
+    let node_count = chk!(offset, ?partition.node_count)?;
     let nodes_ptr = chk!(offset, ptr(partition.nodes_ptr, node_count))?;
 
     chk!(offset, partition.min.x == xf)?;

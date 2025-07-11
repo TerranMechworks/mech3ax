@@ -7,16 +7,17 @@ use crate::model::rc::{
 };
 use log::trace;
 use mech3ax_api_types::gamez::model::Model;
+use mech3ax_api_types::Count;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_len, assert_that, Result};
+use mech3ax_common::{assert_that, chk, len, Result};
 use mech3ax_types::u32_to_usize;
 use std::io::{Read, Write};
 
 pub(crate) fn read_models(
     read: &mut CountingReader<impl Read>,
     end_offset: usize,
-    material_count: u32,
-) -> Result<(Vec<Model>, i32, i32)> {
+    material_count: Count,
+) -> Result<(Vec<Model>, Count, Count)> {
     let model_indices = read_model_array_sequential(read)?;
 
     let mut prev_offset = read.offset;
@@ -64,10 +65,10 @@ pub(crate) fn read_models(
 pub(crate) fn write_models(
     write: &mut CountingWriter<impl Write>,
     models: &[Model],
-    array_size: i32,
+    array_size: Count,
     offsets: &[u32],
 ) -> Result<()> {
-    let count = assert_len!(i32, models.len(), "GameZ models")?;
+    let count = len!(models.len(), "GameZ models")?;
     let model_indices_zero = write_model_array_sequential(write, array_size, count)?;
 
     let count = models.len();
@@ -98,12 +99,10 @@ pub(crate) fn write_models(
     Ok(())
 }
 
-const U32_SIZE: u32 = std::mem::size_of::<u32>() as _;
-
-pub(crate) fn size_models(offset: u32, array_size: i32, models: &[Model]) -> (u32, Vec<u32>) {
+pub(crate) fn size_models(offset: u32, array_size: Count, models: &[Model]) -> (u32, Vec<u32>) {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
-    let array_size = array_size as u32;
-    let mut offset = offset + MODEL_ARRAY_C_SIZE + (MODEL_C_SIZE + U32_SIZE) * array_size;
+    let array_size = array_size.to_u32();
+    let mut offset = offset + MODEL_ARRAY_C_SIZE + (MODEL_C_SIZE + 4) * array_size;
     let offsets = models
         .iter()
         .map(|model| {

@@ -2,7 +2,7 @@ mod read;
 mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::{AffineMatrix, Vec3};
+use mech3ax_api_types::{AffineMatrix, IndexO32, Vec3};
 use mech3ax_types::{impl_as_bytes, AsBytes as _, Offsets};
 pub(crate) use read::read;
 pub(crate) use write::write;
@@ -10,10 +10,10 @@ pub(crate) use write::write;
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
 struct CameraC {
-    world_index: i32,                  // 000
-    window_index: i32,                 // 004
-    focus_node_xy: i32,                // 008
-    focus_node_xz: i32,                // 012
+    world_index: IndexO32,             // 000
+    window_index: IndexO32,            // 004
+    focus_node_xy: IndexO32,           // 008
+    focus_node_xz: IndexO32,           // 012
     flags: u32,                        // 016
     translate: Vec3,                   // 020
     rotate: Vec3,                      // 032

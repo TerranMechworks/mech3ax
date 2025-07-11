@@ -2,10 +2,9 @@
 pub mod anim;
 pub mod archive;
 mod common;
-mod count;
 pub mod gamez;
 pub mod image;
-mod index;
+mod indexing;
 pub mod interp;
 pub(crate) mod macros;
 pub mod messages;
@@ -22,5 +21,6 @@ pub(crate) use crate::macros::sum::sum;
 
 pub use crate::serde::bytes::Bytes;
 pub use common::{AffineMatrix, Color, Matrix, Quaternion, Range, Vec3};
-pub use count::Count;
-pub use index::Index;
+pub use indexing::{
+    Count, Count16, Count32, IndexO, IndexO16, IndexO32, IndexR, IndexR16, IndexR32,
+};

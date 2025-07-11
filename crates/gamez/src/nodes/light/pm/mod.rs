@@ -2,7 +2,7 @@ mod read;
 mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::{AffineMatrix, Color, Vec3};
+use mech3ax_api_types::{AffineMatrix, Color, Count32, Vec3};
 use mech3ax_types::{bitflags, impl_as_bytes, Maybe, Offsets, Ptr};
 pub(crate) use read::read;
 pub(crate) use write::write;
@@ -52,7 +52,7 @@ struct LightPmC {
     range_near_sq: f32,         // 236
     range_far_sq: f32,          // 240
     range_inv: f32,             // 244
-    parent_count: i32,          // 248
+    parent_count: Count32,      // 248
     parent_ptr: Ptr,            // 252
 }
 impl_as_bytes!(LightPmC, 256);

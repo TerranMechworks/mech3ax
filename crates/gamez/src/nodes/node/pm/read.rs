@@ -2,20 +2,16 @@ use super::{AreaPartitionC, Class, NodePmC, VirtualPartitionC};
 use crate::nodes::check::{model_index, ptr};
 use crate::nodes::types::{NodeClass, NodeInfo, ZONE_ALWAYS};
 use mech3ax_api_types::gamez::nodes::{ActiveBoundingBox, BoundingBox, NodeFlags, Partition};
-use mech3ax_api_types::{Count, Vec3};
+use mech3ax_api_types::{Count, IndexO, Vec3};
 use mech3ax_common::{chk, Result};
 use mech3ax_types::check::node_name;
 use mech3ax_types::{Ascii, Ptr};
-
-fn node_count(value: i16) -> Result<Count, String> {
-    Count::check_i16(value)
-}
 
 fn ap(value: i16) -> Result<u8, String> {
     u8::try_from(value).map_err(|_e| format!("expected {} in 0..={}", value, u8::MAX))
 }
 
-pub(crate) fn assert_node(node: &NodePmC, offset: usize, model_count: i32) -> Result<NodeInfo> {
+pub(crate) fn assert_node(node: &NodePmC, offset: usize, model_count: Count) -> Result<NodeInfo> {
     let name = chk!(offset, node_name(&node.name))?;
     let flags = chk!(offset, ?node.flags)?;
     chk!(offset, node.field040 == 0)?;
@@ -24,8 +20,7 @@ pub(crate) fn assert_node(node: &NodePmC, offset: usize, model_count: i32) -> Re
     let zone_id = chk!(offset, ?node.zone_id)?;
     let node_class = chk!(offset, ?node.node_class)?;
     // data_ptr (056) is variable
-    let model_index = chk!(offset, model_index(node.model_index))?;
-    chk!(offset, node.model_index < model_count)?;
+    let model_index = chk!(offset, model_index(node.model_index, model_count))?;
     chk!(offset, node.environment_data == Ptr::NULL)?;
     chk!(offset, node.action_priority == 1)?;
     chk!(offset, node.action_callback == Ptr::NULL)?;
@@ -47,10 +42,10 @@ pub(crate) fn assert_node(node: &NodePmC, offset: usize, model_count: i32) -> Re
     };
 
     // usually, parent count should be 0 or 1
-    let parent_count = chk!(offset, node_count(node.parent_count))?;
+    let parent_count = chk!(offset, ?node.parent_count)?;
     let parent_array_ptr = chk!(offset, ptr(node.parent_array_ptr, parent_count))?;
 
-    let child_count = chk!(offset, node_count(node.child_count))?;
+    let child_count = chk!(offset, ?node.child_count)?;
     let child_array_ptr = chk!(offset, ptr(node.child_array_ptr, child_count))?;
 
     chk!(offset, node.bbox_mid == Vec3::DEFAULT)?;
@@ -134,7 +129,7 @@ pub(crate) fn assert_node_mechlib(node: &NodePmC, offset: usize) -> Result<NodeI
         }
         _ => unreachable!("invalid mechlib node class {node_class:?}"),
     }
-    let model_ptr = node.model_index as u32;
+    let model_ptr = node.model_index.value as u32;
     chk!(offset, node.environment_data == Ptr::NULL)?;
     chk!(offset, node.action_priority == 1)?;
     chk!(offset, node.action_callback == Ptr::NULL)?;
@@ -156,11 +151,11 @@ pub(crate) fn assert_node_mechlib(node: &NodePmC, offset: usize) -> Result<NodeI
     };
 
     // usually, parent count should be 0 or 1
-    let parent_count = chk!(offset, node_count(node.parent_count))?;
+    let parent_count = chk!(offset, ?node.parent_count)?;
     chk!(offset, node.parent_count < 2)?;
     let parent_array_ptr = chk!(offset, ptr(node.parent_array_ptr, parent_count))?;
 
-    let child_count = chk!(offset, node_count(node.child_count))?;
+    let child_count = chk!(offset, ?node.child_count)?;
     let child_array_ptr = chk!(offset, ptr(node.child_array_ptr, child_count))?;
 
     chk!(offset, node.bbox_mid == Vec3::DEFAULT)?;
@@ -182,7 +177,7 @@ pub(crate) fn assert_node_mechlib(node: &NodePmC, offset: usize) -> Result<NodeI
         update_flags: node.update_flags,
         zone_id,
         data_ptr: node.data_ptr,
-        model_index: None,
+        model_index: IndexO::NONE,
         area_partition,
         virtual_partition,
         parent_count,

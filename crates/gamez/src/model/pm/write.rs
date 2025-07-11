@@ -270,10 +270,10 @@ fn write_polygons(
             .materials
             .iter()
             .map(|material| {
-                write.write_u32(material.material_index)?;
+                write.write_i32(material.material_index.to_i32())?;
                 Ok(material.material_index)
             })
-            .collect::<Result<Vec<u32>>>()?;
+            .collect::<Result<Vec<_>>>()?;
         trace!("Material indices: {:?}", material_indices);
 
         for material in polygon.materials.iter() {

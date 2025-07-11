@@ -4,7 +4,7 @@ use log::trace;
 use mech3ax_api_types::gamez::model::Model;
 use mech3ax_api_types::gamez::nodes::{Node, NodeData};
 use mech3ax_api_types::gamez::MechlibModel;
-use mech3ax_api_types::Index;
+use mech3ax_api_types::{Count, IndexO, IndexR};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{err, Error, Result};
 use std::io::Read;
@@ -17,18 +17,15 @@ pub fn read_model(read: &mut CountingReader<impl Read>) -> Result<MechlibModel> 
     Ok(MechlibModel { nodes, models })
 }
 
-fn usize_to_index(len: usize) -> Option<Index> {
-    len.try_into().ok().and_then(Index::from_i16)
-}
-
 fn read_tree(
     read: &mut CountingReader<impl Read>,
     nodes: &mut Vec<Node>,
     models: &mut Vec<Model>,
-    parent_index: Option<Index>,
-) -> Result<Index> {
+    parent_index: Option<IndexR>,
+) -> Result<IndexR> {
     let node_index = nodes.len();
-    let index = usize_to_index(node_index).ok_or_else(|| -> Error { err!("too many nodes") })?;
+    let index =
+        IndexR::from_usize(node_index).ok_or_else(|| -> Error { err!("too many nodes") })?;
 
     trace!("Processing node {}", node_index);
 
@@ -40,18 +37,18 @@ fn read_tree(
     let model_index = if node_info.offset != 0 {
         // the model index is the current length, as we'll push a new model
         let model_index =
-            usize_to_index(models.len()).ok_or_else(|| -> Error { err!("too many models") })?;
+            IndexO::from_usize(models.len()).ok_or_else(|| -> Error { err!("too many models") })?;
 
         let wrapped = read_model_info(read)?;
         // TODO
-        let material_count = 4096;
+        let material_count = Count::from_i16(4096).unwrap();
         let model = read_model_data(read, wrapped, material_count)?;
 
         models.push(model);
 
-        Some(model_index)
+        model_index
     } else {
-        None
+        IndexO::NONE
     };
 
     let parent_indices = match (parent_index, node_info.parent_count.to_i16()) {

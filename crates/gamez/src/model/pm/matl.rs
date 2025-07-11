@@ -1,7 +1,7 @@
 use super::{MaterialRefC, PolygonPmC};
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::gamez::model::Model;
-use mech3ax_types::{u32_to_usize, AsBytes as _, Ptr};
+use mech3ax_types::{AsBytes as _, Ptr};
 
 pub(crate) fn make_material_refs(
     materials: &[Material],
@@ -20,14 +20,14 @@ pub(crate) fn make_material_refs(
 
         if let Some(matl) = polygon.materials.first() {
             let is_cycled = materials
-                .get(u32_to_usize(matl.material_index))
+                .get(matl.material_index.to_usize())
                 .map(Material::is_cycled)
                 .unwrap_or_default();
 
             if is_cycled {
                 // cycled infos are not de-duplicated
                 cycled_infos.push(MaterialRefC {
-                    material_index: matl.material_index,
+                    material_index: matl.material_index.maybe(),
                     usage_count: 1,
                     polygon_ptr,
                 });
@@ -40,7 +40,7 @@ pub(crate) fn make_material_refs(
                     Some(mi) => mi.usage_count += 1,
                     None => {
                         normal_infos.push(MaterialRefC {
-                            material_index: matl.material_index,
+                            material_index: matl.material_index.maybe(),
                             usage_count: 1,
                             polygon_ptr,
                         });
