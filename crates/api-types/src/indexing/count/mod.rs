@@ -107,37 +107,41 @@ impl Count {
 
     #[inline]
     pub fn index_opt_i16(self, index: Maybe<i16, super::IndexO>) -> Result<super::IndexO, String> {
-        if index < -1 || index > self.to_i16() {
+        let v = index.value;
+        if v < -1 || v > self.to_i16() {
             Err(format!("expected {index} in -1..{self}"))
         } else {
-            Ok(super::IndexO(index.value))
+            Ok(super::IndexO(v))
         }
     }
 
     #[inline]
     pub fn index_opt_i32(self, index: Maybe<i32, super::IndexO>) -> Result<super::IndexO, String> {
-        if index < -1 || index > self.to_i32() {
+        let v = index.value;
+        if v < -1 || v > self.to_i32() {
             Err(format!("expected {index} in -1..{self}"))
         } else {
-            Ok(super::IndexO(index.value as _))
+            Ok(super::IndexO(v as _))
         }
     }
 
     #[inline]
     pub fn index_req_i16(self, index: Maybe<i16, super::IndexR>) -> Result<super::IndexR, String> {
-        if index < 0 || index > self.to_i16() {
+        let v = index.value;
+        if v < 0 || v > self.to_i16() {
             Err(format!("expected {index} in 0..{self}"))
         } else {
-            Ok(super::IndexR(index.value))
+            Ok(super::IndexR(v))
         }
     }
 
     #[inline]
     pub fn index_req_i32(self, index: Maybe<i32, super::IndexR>) -> Result<super::IndexR, String> {
-        if index < 0 || index > self.to_i32() {
+        let v = index.value;
+        if v < 0 || v > self.to_i32() {
             Err(format!("expected {index} in 0..{self}"))
         } else {
-            Ok(super::IndexR(index.value as _))
+            Ok(super::IndexR(v as _))
         }
     }
 }

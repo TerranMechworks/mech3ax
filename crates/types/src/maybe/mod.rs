@@ -47,7 +47,7 @@ macro_rules! impl_primitive_repr {
         impl<F: SupportsMaybe<$ty>> PartialOrd<Maybe<$ty, F>> for $ty {
             #[inline]
             fn partial_cmp(&self, other: &Maybe<$ty, F>) -> Option<std::cmp::Ordering> {
-                other.value.partial_cmp(self)
+                self.partial_cmp(&other.value)
             }
         }
 
@@ -100,13 +100,6 @@ impl<R: PrimitiveRepr, F: SupportsMaybe<R>> PartialEq<F> for Maybe<R, F> {
     #[inline]
     fn eq(&self, other: &F) -> bool {
         other.maybe().value.eq(&self.value)
-    }
-}
-
-impl<R: PrimitiveRepr, F: SupportsMaybe<R>> PartialOrd<F> for Maybe<R, F> {
-    #[inline]
-    fn partial_cmp(&self, other: &F) -> Option<std::cmp::Ordering> {
-        other.maybe().value.partial_cmp(&self.value)
     }
 }
 
@@ -194,3 +187,6 @@ impl_maybe!(u32);
 impl_maybe!(i8);
 impl_maybe!(i16);
 impl_maybe!(i32);
+
+#[cfg(test)]
+mod tests;
