@@ -269,7 +269,7 @@ fn assert_partition(
         min: partition.min,
         max: partition.max,
         node_indices: Vec::new(),
-        values: Vec::new(), // TODO
+        values: Vec::new(), // TODO: combine
         nodes_ptr: nodes_ptr.0,
     };
 

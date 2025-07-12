@@ -39,8 +39,6 @@ fn float(value: f32) -> Result<f32, String> {
 fn assert_light(light: &LightMwC, offset: usize) -> Result<LightTemp> {
     let bitflags = chk!(offset, ?light.flags)?;
 
-    // chk!(offset, light.orientation.z == 0)?;
-    // chk!(offset, light.translate == Vec3::DEFAULT)?;
     chk!(offset, light.euler_angles == Vec3::DEFAULT)?;
     chk!(offset, light.world_translate == Vec3::DEFAULT)?;
     chk!(offset, light.transform == AffineMatrix::DEFAULT)?;

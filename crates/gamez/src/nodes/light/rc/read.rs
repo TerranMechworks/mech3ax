@@ -41,11 +41,6 @@ fn assert_light(light: &LightRcC, offset: usize) -> Result<LightTemp> {
     let recalc = chk!(offset, ?light.recalc)?;
     let unk1 = chk!(offset, ?light.field004)?;
 
-    // TODO (always Z = 0.0)
-    chk!(offset, light.orientation.z == 0.0)?;
-    // TODO (always 0)
-    chk!(offset, light.translate == Vec3::DEFAULT)?;
-
     chk!(offset, light.euler_angles == Vec3::DEFAULT)?;
     chk!(offset, light.world_translate == Vec3::DEFAULT)?;
     chk!(offset, light.transform == AffineMatrix::DEFAULT)?;
