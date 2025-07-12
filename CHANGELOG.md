@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## [0.7.0-rc1] - 2025-07-11
+
+* Update to Rust 1.88.0, edition 2024
 * Support Python codegen (codegen)
 * GameZ: No longer support CS (`gamez`, breaking change)
 * GameZ/Nodes: Many, many changes (`gamez`/`nodes`, breaking change)
@@ -10,6 +13,7 @@
 * ObjectRef and NodeRef fields
 * SeqDef fields
 * Save SI scripts separately
+* Anim secrets
 
 ## [0.6.1] - 2024-11-28
 
