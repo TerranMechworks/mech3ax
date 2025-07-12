@@ -79,9 +79,7 @@ pub(crate) fn read_nodes(
                     let display = crate::nodes::display::read(read)?;
                     node.data = NodeData::Display(display);
                 }
-                NodeClass::Empty => {
-                    unreachable!("pm empty")
-                }
+                NodeClass::Empty => {}
                 NodeClass::Light => {
                     let light = crate::nodes::light::pm::read(read)?;
                     node.data = NodeData::Light(light);

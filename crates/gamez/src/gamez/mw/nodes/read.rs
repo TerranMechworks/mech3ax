@@ -16,8 +16,8 @@ pub(crate) fn read_nodes(
     array_size: Count,
     model_count: Count,
 ) -> Result<Vec<Node>> {
-    // the node_count is wildly inaccurate for some files, and there are more nodes to
-    // read after the provided count. so, we basically have to check the entire array
+    // this code assumes the nodes are contiguous, but strictly speaking the
+    // engine likely doesn't require this
     let mut count = -1;
     let prev_offset = read.offset;
     for index in array_size.iter() {

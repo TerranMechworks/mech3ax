@@ -38,7 +38,7 @@ const HEADER_C1: HeaderPmC = HeaderPmC {
     materials_offset: 19268,
     models_offset: 65452,
     node_array_size: Count32::new(5793),
-    node_count: Count32::new(1240),
+    node_last_free: 1240,
     nodes_offset: 4909452,
 };
 
@@ -51,7 +51,7 @@ const HEADER_C2: HeaderPmC = HeaderPmC {
     materials_offset: 17464,
     models_offset: 63648,
     node_array_size: Count32::new(5593),
-    node_count: Count32::new(835),
+    node_last_free: 835,
     nodes_offset: 3609596,
 };
 
@@ -64,7 +64,7 @@ const HEADER_C3: HeaderPmC = HeaderPmC {
     materials_offset: 15968,
     models_offset: 62152,
     node_array_size: Count32::new(3541),
-    node_count: Count32::new(3541),
+    node_last_free: 3541,
     nodes_offset: 2992964,
 };
 
@@ -77,6 +77,6 @@ const HEADER_C4: HeaderPmC = HeaderPmC {
     materials_offset: 17640,
     models_offset: 63824,
     node_array_size: Count32::new(5755),
-    node_count: Count32::new(1822),
+    node_last_free: 1822,
     nodes_offset: 3833584,
 };

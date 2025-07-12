@@ -50,7 +50,7 @@ api! {
         material_array_size: Count,
         model_array_size: Count,
         node_array_size: Count,
-        node_data_count: Count,
+        node_last_free: i32,
     }
 }
 

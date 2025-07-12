@@ -9,16 +9,33 @@ use mech3ax_common::check::amend_err;
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{err, Result};
 use mech3ax_types::u32_to_usize;
-use std::io::Read;
+use std::io::{Read, Seek};
 
 pub(crate) fn read_nodes(
-    read: &mut CountingReader<impl Read>,
+    read: &mut CountingReader<impl Read + Seek>,
     array_size: Count,
-    count: Count,
     model_count: Count,
 ) -> Result<Vec<Node>> {
-    let nodes = count
-        .iter()
+    // this code assumes the nodes are contiguous, but strictly speaking the
+    // engine likely doesn't require this
+    let mut count = -1;
+    let prev_offset = read.offset;
+    for index in array_size.iter() {
+        let node: NodeRcC = read.read_struct_no_log()?;
+        if node.is_zero() {
+            count = index.to_i32();
+            break;
+        }
+        let _ = read.read_i32()?;
+    }
+    read.seek(std::io::SeekFrom::Start(prev_offset as _))?;
+
+    // need at least world, window, camera, display, and light
+    if count < 6 {
+        return Err(err!("Too few nodes in GameZ ({})", count));
+    }
+
+    let nodes = (0..count)
         .map(|index| {
             trace!("Processing node info {}/{}", index, count);
             let node: NodeRcC = read.read_struct()?;
@@ -40,7 +57,7 @@ pub(crate) fn read_nodes(
         array_size,
         read.offset
     );
-    for index in count.to_i32()..array_size.to_i32() {
+    for index in count..array_size.to_i32() {
         let node: NodeRcC = read.read_struct_no_log()?;
         assert_node_zero(&node, read.prev)
             .inspect_err(|_| trace!("{:#?} (index: {}, at {})", node, index, read.prev))?;

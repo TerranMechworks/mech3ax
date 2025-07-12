@@ -16,7 +16,6 @@ pub(crate) fn write_nodes(
     offset: u32,
 ) -> Result<()> {
     let mut offset = offset + (NodeRcC::SIZE + 4) * array_size.to_u32();
-    // TODO
     let node_count = len!(nodes.len(), "GameZ nodes")?;
 
     for (index, node) in nodes.iter().enumerate() {

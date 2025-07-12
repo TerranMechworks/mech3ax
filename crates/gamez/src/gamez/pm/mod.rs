@@ -29,7 +29,7 @@ struct HeaderPmC {
     materials_offset: u32,    // 20
     models_offset: u32,       // 24
     node_array_size: Count32, // 28
-    node_count: Count32,      // 32
+    node_last_free: i32,      // 32
     nodes_offset: u32,        // 36
 }
 impl_as_bytes!(HeaderPmC, 40);
@@ -50,10 +50,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZ> {
     chk!(offset, header.models_offset > header.materials_offset)?;
     chk!(offset, header.nodes_offset > header.models_offset)?;
     let node_array_size = chk!(offset, ?header.node_array_size)?;
-    let node_data_count = chk!(offset, ?header.node_count)?;
-    // need at least world, window, camera, display, and light
-    chk!(offset, header.node_count > 5)?;
-    chk!(offset, header.node_count <= header.node_array_size)?;
+    chk!(offset, header.node_last_free <= header.node_array_size)?;
     chk!(offset, header.nodes_offset > header.models_offset)?;
 
     let textures_offset = u32_to_usize(header.textures_offset);
@@ -89,8 +86,8 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZ> {
         datetime,
         material_array_size,
         model_array_size,
-        node_array_size: node_array_size,
-        node_data_count,
+        node_array_size,
+        node_last_free: header.node_last_free,
     };
     Ok(GameZ {
         textures,
@@ -110,7 +107,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZ) -> Res
         material_array_size,
         model_array_size,
         node_array_size: _,
-        node_data_count,
+        node_last_free,
     } = gamez.metadata;
 
     let textures_offset = HeaderPmC::SIZE;
@@ -133,7 +130,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZ) -> Res
         materials_offset,
         models_offset,
         node_array_size: node_array_size.maybe(),
-        node_count: node_data_count.maybe(),
+        node_last_free,
         nodes_offset,
     };
     write.write_struct(&header)?;

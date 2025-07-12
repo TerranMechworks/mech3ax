@@ -40,6 +40,12 @@ pub(crate) struct NodeRcC {
 }
 impl_as_bytes!(NodeRcC, 192);
 
+impl NodeRcC {
+    pub(crate) fn is_zero(&self) -> bool {
+        self.name == ZERO_NAME
+    }
+}
+
 const ZERO_NAME: Ascii<36> = Ascii::zero();
 
 const ABORT_TEST_NODE_NAME: Ascii<36> =

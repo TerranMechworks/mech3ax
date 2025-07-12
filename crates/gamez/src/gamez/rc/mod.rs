@@ -6,12 +6,12 @@ use crate::materials;
 use crate::textures::rc as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::{GameZ, GameZMetadata};
-use mech3ax_api_types::{Count, Count32};
+use mech3ax_api_types::Count32;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, chk, len, Result};
 use mech3ax_timestamp::DateTime;
 use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _, Offsets};
-use std::io::{Read, Write};
+use std::io::{Read, Seek, Write};
 
 #[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]
@@ -23,24 +23,12 @@ struct HeaderRcC {
     materials_offset: u32,    // 16
     models_offset: u32,       // 20
     node_array_size: Count32, // 24
-    node_count: Count32,      // 28
+    node_last_free: i32,      // 28
     nodes_offset: u32,        // 32
 }
 impl_as_bytes!(HeaderRcC, 36);
 
-const HEADER_M6: HeaderRcC = HeaderRcC {
-    signature: SIGNATURE,
-    version: VERSION_RC,
-    texture_count: Count32::new(612),
-    textures_offset: 36,
-    materials_offset: 22068,
-    models_offset: 242084,
-    node_array_size: Count32::new(16000),
-    node_count: Count32::new(309),
-    nodes_offset: 2299168,
-};
-
-pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZ> {
+pub fn read_gamez(read: &mut CountingReader<impl Read + Seek>) -> Result<GameZ> {
     let header: HeaderRcC = read.read_struct()?;
     let offset = read.prev;
 
@@ -52,10 +40,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZ> {
     chk!(offset, header.models_offset > header.materials_offset)?;
     chk!(offset, header.nodes_offset > header.models_offset)?;
     let node_array_size = chk!(offset, ?header.node_array_size)?;
-    let node_data_count = chk!(offset, ?header.node_count)?;
-    // need at least world, window, camera, display, and light
-    chk!(offset, header.node_count > 5)?;
-    chk!(offset, header.node_count <= header.node_array_size)?;
+    chk!(offset, header.node_last_free <= header.node_array_size)?;
     chk!(offset, header.nodes_offset > header.models_offset)?;
 
     let textures_offset = u32_to_usize(header.textures_offset);
@@ -83,13 +68,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZ> {
         models::read_models(read, nodes_offset, material_count)?;
 
     assert_that!("nodes offset", read.offset == nodes_offset, read.offset)?;
-    let node_count = if header == HEADER_M6 {
-        log::debug!("m6 node_count fixup: 309 -> 4955");
-        Count::check_i16(4955).unwrap()
-    } else {
-        node_data_count
-    };
-    let nodes = nodes::read_nodes(read, node_array_size, node_count, model_count)?;
+    let nodes = nodes::read_nodes(read, node_array_size, model_count)?;
 
     read.assert_end()?;
 
@@ -98,7 +77,7 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZ> {
         material_array_size,
         model_array_size,
         node_array_size,
-        node_data_count,
+        node_last_free: header.node_last_free,
     };
     Ok(GameZ {
         textures,
@@ -117,7 +96,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZ) -> Res
         material_array_size,
         model_array_size,
         node_array_size,
-        node_data_count,
+        mut node_last_free,
     } = gamez.metadata;
 
     let textures_offset = HeaderRcC::SIZE;
@@ -127,6 +106,11 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZ) -> Res
     let (nodes_offset, model_offsets) =
         models::size_models(models_offset, model_array_size, &gamez.models);
 
+    // recalculate
+    if node_last_free == -1 {
+        node_last_free = gamez.nodes.len() as i32;
+    }
+
     let header = HeaderRcC {
         signature: SIGNATURE,
         version: VERSION_RC,
@@ -135,7 +119,7 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZ) -> Res
         materials_offset,
         models_offset,
         node_array_size: node_array_size.maybe(),
-        node_count: node_data_count.maybe(),
+        node_last_free,
         nodes_offset,
     };
     write.write_struct(&header)?;
