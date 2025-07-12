@@ -1,9 +1,9 @@
 use crate::{InterpOpts, MsgOpts, ReaderOpts, ZMapOpts, ZipOpts};
-use eyre::{bail, Context as _, Result};
+use eyre::{Context as _, Result, bail};
 use image::ImageFormat;
-use mech3ax_archive::{read_archive, Mode, Version};
-use mech3ax_common::io_ext::CountingReader;
+use mech3ax_archive::{Mode, Version, read_archive};
 use mech3ax_common::GameType;
+use mech3ax_common::io_ext::CountingReader;
 use mech3ax_gamez::gamez;
 use mech3ax_gamez::mechlib::{self, read_format, read_materials, read_version};
 use mech3ax_image::read_textures;
@@ -15,8 +15,8 @@ use mech3ax_saves::{read_activation, read_save_header};
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Cursor, Seek, Write};
 use std::path::Path;
-use zip::write::{SimpleFileOptions, ZipWriter};
 use zip::CompressionMethod;
+use zip::write::{SimpleFileOptions, ZipWriter};
 
 fn buf_reader<P: AsRef<Path>>(path: P) -> Result<BufReader<File>> {
     Ok(BufReader::new(
@@ -431,7 +431,7 @@ of Sony Computer Entertainment America LLC. This project is not
 endorsed by or affiliated with any previous or current
 rightsholders.
 
-Copyright (C) 2015-2024  Toby Fleming
+Copyright (C) 2015-2025  Toby Fleming
 
 Licensed under the European Union Public Licence (EUPL) 1.2.
 "

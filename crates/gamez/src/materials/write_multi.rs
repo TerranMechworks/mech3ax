@@ -1,10 +1,10 @@
 use super::write_single::{make_material, make_material_zero, write_cycle};
 use super::{MaterialArrayC, MatlType};
 use log::trace;
-use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::Count;
+use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{err, len, Result};
+use mech3ax_common::{Result, err, len};
 use std::io::Write;
 
 pub(super) fn write_materials(
@@ -45,9 +45,7 @@ pub(super) fn write_materials(
 
     trace!(
         "Processing {}..{} material zeros at {}",
-        zero_start,
-        zero_end,
-        write.offset
+        zero_start, zero_end, write.offset
     );
     let matl_zero = make_material_zero(ty);
     for index in zero_start..zero_end {
@@ -69,12 +67,11 @@ pub(super) fn write_materials(
     trace!("Processed material zeros at {}", write.offset);
 
     for (index, material) in materials.iter().enumerate() {
-        // TODO: edition 2024 combine these into one if statement
-        if let Material::Textured(textured) = material {
-            if let Some(cycle) = &textured.cycle {
-                trace!("Processing material cycle {}/{}", index, count);
-                write_cycle(write, cycle, texture_count)?;
-            }
+        if let Material::Textured(textured) = material
+            && let Some(cycle) = &textured.cycle
+        {
+            trace!("Processing material cycle {}/{}", index, count);
+            write_cycle(write, cycle, texture_count)?;
         }
     }
     Ok(())

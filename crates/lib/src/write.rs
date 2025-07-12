@@ -36,7 +36,7 @@ fn buffer_callback(callback: NameBufferCb, name: &str) -> Result<Vec<u8>> {
         .ok_or_else(|| eyre!("callback didn't set any data on `{}`", name))
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn write_interp(
     filename: *const c_char,
     _game_type_id: i32,
@@ -90,7 +90,7 @@ fn write_passthrough_transform(_name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
     Ok(data)
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn write_sounds(
     filename: *const c_char,
     game_type_id: i32,
@@ -125,7 +125,7 @@ fn write_reader_json_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
     Ok(buf.into_inner())
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn write_reader_json(
     filename: *const c_char,
     game_type_id: i32,
@@ -150,7 +150,7 @@ pub extern "C" fn write_reader_json(
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn write_reader_raw(
     filename: *const c_char,
     game_type_id: i32,
@@ -185,7 +185,7 @@ fn write_motion_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
     Ok(buf.into_inner())
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn write_motion(
     filename: *const c_char,
     game_type_id: i32,
@@ -262,7 +262,7 @@ fn write_mechlib_transform_pm(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn write_mechlib(
     filename: *const c_char,
     game_type_id: i32,
@@ -302,7 +302,7 @@ fn parse_manifest(ptr: *const u8, len: usize) -> Result<TextureManifest> {
     mech3ax_exchange::from_slice(buf).context("texture manifest is invalid")
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn write_textures(
     filename: *const c_char,
     _game_type_id: i32,
@@ -331,7 +331,7 @@ pub extern "C" fn write_textures(
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn write_gamez(
     filename: *const c_char,
     game_type_id: i32,
@@ -368,7 +368,7 @@ fn parse_metadata(ptr: *const u8, len: usize) -> Result<AnimMetadata> {
     mech3ax_exchange::from_slice(buf).context("anim metadata is invalid")
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn write_anim(
     filename: *const c_char,
     game_type_id: i32,
@@ -411,7 +411,7 @@ pub extern "C" fn write_anim(
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn write_zmap(
     filename: *const c_char,
     game_type_id: i32,

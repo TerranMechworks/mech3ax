@@ -1,6 +1,6 @@
-use eyre::{eyre, Error, Result};
+use eyre::{Error, Result, eyre};
 use std::cell::RefCell;
-use std::panic::{catch_unwind, UnwindSafe};
+use std::panic::{UnwindSafe, catch_unwind};
 
 const INVALID: usize = 0;
 
@@ -39,7 +39,7 @@ where
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn last_error_length() -> usize {
     LAST_ERROR.with(|prev| match *prev.borrow() {
         Some(ref err) => format!("{:#}\0", err).len(),
@@ -47,7 +47,7 @@ pub extern "C" fn last_error_length() -> usize {
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn last_error_message(ptr: *mut u8, len: usize) -> usize {
     if ptr.is_null() || len < 1 {
         return INVALID;
@@ -63,6 +63,8 @@ pub unsafe extern "C" fn last_error_message(ptr: *mut u8, len: usize) -> usize {
         return INVALID;
     }
 
-    std::ptr::copy_nonoverlapping(message.as_ptr(), ptr, count);
+    unsafe {
+        std::ptr::copy_nonoverlapping(message.as_ptr(), ptr, count);
+    }
     count.saturating_sub(1)
 }

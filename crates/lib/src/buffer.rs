@@ -10,7 +10,7 @@ impl CallbackBuffer {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn buffer_set_data(buffer: *mut CallbackBuffer, ptr: *const u8, len: usize) {
     if buffer.is_null() || ptr.is_null() {
         return;

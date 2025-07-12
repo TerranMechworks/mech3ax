@@ -2,11 +2,11 @@ use crate::callbacks::{DataCb, NameDataCb, WaveArchiveCb, WaveFileCb};
 use crate::error::err_to_c;
 use crate::wave::WaveFile;
 use crate::{filename_to_string, i32_to_game};
-use eyre::{bail, Context as _, Result};
+use eyre::{Context as _, Result, bail};
 use image::ImageFormat;
 use mech3ax_archive::{Mode, Version};
-use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::GameType;
+use mech3ax_common::io_ext::CountingReader;
 use std::fs::File;
 use std::io::{BufReader, Cursor};
 use std::os::raw::c_char;
@@ -26,7 +26,7 @@ fn buffer_callback(callback: NameDataCb, name: &str, data: &[u8]) -> Result<()> 
     Ok(())
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn read_interp(
     filename: *const c_char,
     _game_type_id: i32,
@@ -43,7 +43,7 @@ pub extern "C" fn read_interp(
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn read_messages(
     filename: *const c_char,
     game_type_id: i32,
@@ -86,7 +86,7 @@ fn read_passthrough_transform(_name: &str, data: Vec<u8>, _offset: usize) -> Res
     Ok(data)
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn read_sounds(
     filename: *const c_char,
     game_type_id: i32,
@@ -112,7 +112,7 @@ fn read_reader_json_transform(name: &str, data: Vec<u8>, offset: usize) -> Resul
 }
 
 // filename returned by data callback will be .zrd!
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn read_reader_json(
     filename: *const c_char,
     game_type_id: i32,
@@ -129,7 +129,7 @@ pub extern "C" fn read_reader_json(
 }
 
 // filename returned by data callback will be .zrd!
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn read_reader_raw(
     filename: *const c_char,
     game_type_id: i32,
@@ -155,7 +155,7 @@ fn read_motion_transform(name: &str, data: Vec<u8>, offset: usize) -> Result<Vec
 }
 
 // callback filename will not end in .json!
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn read_motion(
     filename: *const c_char,
     game_type_id: i32,
@@ -232,7 +232,7 @@ fn read_mechlib_transform_pm(name: &str, data: Vec<u8>, offset: usize) -> Result
 }
 
 // callback filename will end in .flt (except for format, version, materials)!
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn read_mechlib(
     filename: *const c_char,
     game_type_id: i32,
@@ -256,7 +256,7 @@ pub extern "C" fn read_mechlib(
 }
 
 // callback filename will not end in .png! last call will be the manifest
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn read_textures(
     filename: *const c_char,
     _game_type_id: i32,
@@ -280,7 +280,7 @@ pub extern "C" fn read_textures(
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn read_gamez(filename: *const c_char, game_type_id: i32, callback: DataCb) -> i32 {
     err_to_c(|| {
         let game = i32_to_game(game_type_id)?;
@@ -316,7 +316,7 @@ pub extern "C" fn read_gamez(filename: *const c_char, game_type_id: i32, callbac
 }
 
 // last call will be the metadata
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn read_anim(
     filename: *const c_char,
     game_type_id: i32,
@@ -356,7 +356,7 @@ pub extern "C" fn read_anim(
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn read_sounds_as_wav(
     filename: *const c_char,
     game_type_id: i32,
@@ -395,7 +395,7 @@ pub extern "C" fn read_sounds_as_wav(
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn read_sound_as_wav(filename: *const c_char, callback: WaveFileCb) -> i32 {
     err_to_c(|| {
         let input = buf_reader(filename)?;
@@ -414,7 +414,7 @@ pub extern "C" fn read_sound_as_wav(filename: *const c_char, callback: WaveFileC
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn read_zmap(filename: *const c_char, game_type_id: i32, callback: DataCb) -> i32 {
     err_to_c(|| {
         let game = i32_to_game(game_type_id)?;

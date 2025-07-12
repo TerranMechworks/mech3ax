@@ -1,5 +1,5 @@
 use crate::{InterpOpts, ZMapOpts, ZipOpts};
-use eyre::{bail, Context as _, Result};
+use eyre::{Context as _, Result, bail};
 use mech3ax_api_types::archive::ArchiveEntry;
 use mech3ax_api_types::gamez::{GameZ, MechlibMaterial, MechlibModel};
 use mech3ax_api_types::image::TextureManifest;
@@ -7,9 +7,9 @@ use mech3ax_api_types::interp::Script;
 use mech3ax_api_types::motion::Motion;
 use mech3ax_api_types::saves::AnimActivation;
 use mech3ax_api_types::zmap::Zmap;
-use mech3ax_archive::{write_archive, Mode, Version};
-use mech3ax_common::io_ext::CountingWriter;
+use mech3ax_archive::{Mode, Version, write_archive};
 use mech3ax_common::GameType;
+use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_gamez::gamez;
 use mech3ax_gamez::mechlib::{self, write_format, write_materials, write_version};
 use mech3ax_image::write_textures;
@@ -444,7 +444,7 @@ of Sony Computer Entertainment America LLC. This project is not
 endorsed by or affiliated with any previous or current
 rightsholders.
 
-Copyright (C) 2015-2024  Toby Fleming
+Copyright (C) 2015-2025  Toby Fleming
 
 Licensed under the European Union Public Licence (EUPL) 1.2.
 "
