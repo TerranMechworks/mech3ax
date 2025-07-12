@@ -3,7 +3,7 @@ mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::saves::ActivationStatus;
-use mech3ax_types::{impl_as_bytes, Ascii, Maybe};
+use mech3ax_types::{Ascii, Maybe, impl_as_bytes};
 pub use read::read_activation;
 pub use write::write_activation;
 

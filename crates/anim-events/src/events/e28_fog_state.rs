@@ -1,12 +1,12 @@
 use super::EventAll;
 use crate::utils::assert_color;
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::anim::events::{FogState, FogType};
 use mech3ax_api_types::anim::AnimDef;
+use mech3ax_api_types::anim::events::{FogState, FogType};
 use mech3ax_api_types::{Color, Range};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Ascii, Maybe};
+use mech3ax_common::{Result, assert_that};
+use mech3ax_types::{AsBytes as _, Ascii, Maybe, bitflags, impl_as_bytes};
 use std::io::{Read, Write};
 
 const DEFAULT_FOG_NAME: Ascii<32> = Ascii::new(b"default_fog_name\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");

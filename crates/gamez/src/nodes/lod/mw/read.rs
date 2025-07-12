@@ -1,8 +1,8 @@
 use super::LodMwC;
-use mech3ax_api_types::gamez::nodes::Lod;
 use mech3ax_api_types::Range;
+use mech3ax_api_types::gamez::nodes::Lod;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{chk, Result};
+use mech3ax_common::{Result, chk};
 use std::io::Read;
 
 pub(crate) fn read(read: &mut CountingReader<impl Read>) -> Result<Lod> {

@@ -1,17 +1,17 @@
 use super::{EventMw, EventPm, Flags, ObjectMotionFlags};
-use crate::types::{index, AnimDefLookup as _, Idx16};
+use crate::types::{AnimDefLookup as _, Idx16, index};
 use bytemuck::{AnyBitPattern, NoUninit};
+use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::anim::events::{
     BounceSequences, BounceSound, BounceSounds, ForwardRotation, ForwardRotationDistance,
     ForwardRotationTime, Gravity, ObjectMotion, ObjectMotionScale, ObjectMotionTranslation,
     ObjectMotionXyzRot, TranslationRange,
 };
-use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{Range, Vec3};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii};
+use mech3ax_common::{Result, assert_that};
+use mech3ax_types::{AsBytes as _, Ascii, impl_as_bytes};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]

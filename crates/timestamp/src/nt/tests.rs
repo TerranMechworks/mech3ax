@@ -1,4 +1,4 @@
-use super::{from_filetime, to_filetime, DT_MAX, FILETIME_MAX, NT_EPOCH};
+use super::{DT_MAX, FILETIME_MAX, NT_EPOCH, from_filetime, to_filetime};
 use time::Duration;
 
 const FILETIME_MIN: u64 = 1;

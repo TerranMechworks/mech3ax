@@ -1,4 +1,4 @@
-use crate::{api, num, sum, Color, IndexR};
+use crate::{Color, IndexR, api, num, sum};
 
 api! {
     struct CycleData {

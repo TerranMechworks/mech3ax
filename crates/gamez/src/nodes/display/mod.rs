@@ -3,7 +3,7 @@ mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::Color;
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Offsets};
+use mech3ax_types::{AsBytes as _, Offsets, impl_as_bytes};
 pub(crate) use read::read;
 pub(crate) use write::write;
 

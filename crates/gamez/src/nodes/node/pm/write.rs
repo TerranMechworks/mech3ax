@@ -2,7 +2,7 @@ use super::{AreaPartitionC, NodePmC, VirtualPartitionC};
 use crate::nodes::NodeClass;
 use mech3ax_api_types::gamez::nodes::Node;
 use mech3ax_api_types::{IndexO32, Vec3};
-use mech3ax_common::{len, Result};
+use mech3ax_common::{Result, len};
 use mech3ax_types::{Ascii, Ptr, SupportsMaybe as _};
 
 pub(crate) fn make_node(node: &Node) -> Result<NodePmC> {

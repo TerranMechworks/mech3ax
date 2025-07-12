@@ -1,5 +1,5 @@
-use mech3ax_types::maybe::{PrimitiveRepr, SupportsMaybe};
 use mech3ax_types::Maybe;
+use mech3ax_types::maybe::{PrimitiveRepr, SupportsMaybe};
 use std::cmp::{PartialEq, PartialOrd};
 use std::fmt;
 

@@ -2,7 +2,7 @@ use super::{
     Area, AreaPartition, BoundingBox, Camera, Display, NodeFlags, PartitionPg, Transformation,
     Window,
 };
-use crate::{api, sum, Color, Range, Vec3};
+use crate::{Color, Range, Vec3, api, sum};
 
 api! {
     struct Empty {

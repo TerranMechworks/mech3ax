@@ -2,7 +2,7 @@ use super::module_path::{py_camel_case, rust_mod_path_to_path, rust_mod_path_to_
 use super::python_type::{PythonType, SerializeType};
 use super::resolver::TypeResolver;
 use mech3ax_metadata_types::TypeInfoEnum;
-use minijinja::{context, Environment};
+use minijinja::{Environment, context};
 use serde::Serialize;
 use std::borrow::Cow;
 use std::path::PathBuf;

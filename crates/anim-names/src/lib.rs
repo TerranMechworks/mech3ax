@@ -30,11 +30,7 @@ macro_rules! rev {
             $index.binary_search(&hash).ok().and_then(|index| {
                 let (bytes, string) = $table[index];
                 // guard against updating the string but not the hash
-                if name == string {
-                    Some(bytes)
-                } else {
-                    None
-                }
+                if name == string { Some(bytes) } else { None }
             })
         }
     };

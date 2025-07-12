@@ -1,15 +1,15 @@
-use super::delta::{delta, FloatFromToC};
 use super::EventAll;
-use crate::types::{index, AnimDefLookup, Idx16};
+use super::delta::{FloatFromToC, delta};
+use crate::types::{AnimDefLookup, Idx16, index};
 use bytemuck::{AnyBitPattern, NoUninit};
+use mech3ax_api_types::Vec3;
+use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::anim::events::{
     AtNode, FbfxCsinwaveCsin, FbfxCsinwaveFromTo, FbfxCsinwaveScreenPos, FloatFromTo,
 };
-use mech3ax_api_types::anim::AnimDef;
-use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Maybe};
+use mech3ax_common::{Result, assert_that};
+use mech3ax_types::{AsBytes as _, Maybe, bitflags, impl_as_bytes};
 use std::io::{Read, Write};
 
 // flags:

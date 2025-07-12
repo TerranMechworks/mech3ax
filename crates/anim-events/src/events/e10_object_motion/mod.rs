@@ -2,7 +2,7 @@ mod ng;
 mod rc;
 
 use super::{EventMw, EventPm, EventRc};
-use mech3ax_types::{bitflags, Maybe};
+use mech3ax_types::{Maybe, bitflags};
 
 bitflags! {
     struct ObjectMotionFlags: u32 {

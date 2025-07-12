@@ -1,6 +1,6 @@
 use super::{FLOAT, INT, LIST, STRING};
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, assert_with_msg, Result};
+use mech3ax_common::{Result, assert_len, assert_with_msg};
 use serde_json::{Number, Value};
 use std::convert::TryInto as _;
 use std::io::Write;

@@ -2,7 +2,7 @@ use crate::flags::NodeBitFlags;
 use crate::pm::node::{NodeVariantPm, NodeVariantsPm};
 use crate::types::ZONE_DEFAULT;
 use mech3ax_api_types::nodes::{BoundingBox, Display};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{Result, assert_that};
 
 const DISPLAY_NAME: &str = "display";
 

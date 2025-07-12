@@ -4,8 +4,8 @@ use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::ObjectMotionSiScript;
 use mech3ax_api_types::anim::{AnimDef, SiScript};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _};
+use mech3ax_common::{Result, assert_that, assert_with_msg};
+use mech3ax_types::{AsBytes as _, impl_as_bytes, u32_to_usize};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]

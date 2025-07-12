@@ -1,4 +1,4 @@
-use crate::{api, bit, num, sum, AffineMatrix, Color, IndexO, IndexR, Range, Vec3};
+use crate::{AffineMatrix, Color, IndexO, IndexR, Range, Vec3, api, bit, num, sum};
 
 bit! {
     struct NodeFlags: u32 {

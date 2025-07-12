@@ -1,13 +1,13 @@
 use super::EventAll;
-use crate::types::{index, AnimDefLookup as _, Idx32};
+use crate::types::{AnimDefLookup as _, Idx32, index};
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::anim::events::{AtNode, SoundNode, Translate};
-use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::Vec3;
+use mech3ax_api_types::anim::AnimDef;
+use mech3ax_api_types::anim::events::{AtNode, SoundNode, Translate};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{bitflags, impl_as_bytes, AsBytes as _, Ascii, Bool32, Maybe};
+use mech3ax_common::{Result, assert_that};
+use mech3ax_types::{AsBytes as _, Ascii, Bool32, Maybe, bitflags, impl_as_bytes};
 use std::io::{Read, Write};
 
 bitflags! {

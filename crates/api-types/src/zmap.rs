@@ -1,5 +1,5 @@
 //! Recoil `m*.zmap` data structures.
-use crate::{api, Vec3};
+use crate::{Vec3, api};
 use mech3ax_types::impl_as_bytes;
 
 api! {

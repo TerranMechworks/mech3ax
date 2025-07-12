@@ -4,7 +4,7 @@ use super::module_path::{
 use super::python_type::{PythonType, SerializeType};
 use super::resolver::TypeResolver;
 use mech3ax_metadata_types::{TypeInfo, TypeInfoUnion};
-use minijinja::{context, Environment};
+use minijinja::{Environment, context};
 use serde::Serialize;
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};

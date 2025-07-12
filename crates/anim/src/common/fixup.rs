@@ -1,6 +1,6 @@
 use log::debug;
-use mech3ax_common::assert::format_conversion_err;
 use mech3ax_common::Result;
+use mech3ax_common::assert::format_conversion_err;
 use mech3ax_types::{Ascii, ConversionError};
 
 pub(crate) struct Fwd<F, const N: usize>

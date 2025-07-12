@@ -1,5 +1,5 @@
 use mech3ax_api_types::anim::AnimDef;
-use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_common::{Result, assert_that, assert_with_msg};
 use mech3ax_types::maybe::{Maybe, PrimitiveRepr, SupportsMaybe};
 use std::fmt;
 
@@ -22,11 +22,7 @@ pub(crate) struct Index(pub(crate) i16);
 impl Index {
     const fn to_usize(self) -> Option<usize> {
         let Self(v) = self;
-        if v < 0 {
-            None
-        } else {
-            Some(v as _)
-        }
+        if v < 0 { None } else { Some(v as _) }
     }
 
     const fn from_usize(value: usize) -> Option<Self> {

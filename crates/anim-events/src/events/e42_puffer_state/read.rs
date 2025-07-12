@@ -2,16 +2,16 @@ use super::{
     PufferStateColors, PufferStateCommon, PufferStateFlags, PufferStateGrowths,
     PufferStateTextureC, PufferStateTextures,
 };
-use crate::types::{index, AnimDefLookup as _};
+use crate::types::{AnimDefLookup as _, index};
+use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::anim::events::{
     PufferInterval, PufferIntervalGarbage, PufferIntervalType, PufferState, PufferStateColor,
     PufferStateTexture,
 };
-use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{Range, Vec3};
 use mech3ax_common::assert::assert_utf8;
-use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{u32_to_usize, AsBytes as _};
+use mech3ax_common::{Result, assert_that};
+use mech3ax_types::{AsBytes as _, u32_to_usize};
 
 pub(super) fn assert_common(
     common: PufferStateCommon,

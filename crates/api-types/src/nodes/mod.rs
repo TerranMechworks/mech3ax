@@ -2,7 +2,7 @@ pub mod mw;
 pub mod pm;
 pub mod rc;
 
-use crate::{api, Color, Matrix, Range, Vec3};
+use crate::{Color, Matrix, Range, Vec3, api};
 use mech3ax_types::impl_as_bytes;
 
 api! {

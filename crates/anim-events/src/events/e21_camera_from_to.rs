@@ -1,13 +1,13 @@
-use super::delta::{delta, FloatFromToC};
-use super::e20_camera_state::CameraStateFlags;
 use super::EventAll;
+use super::delta::{FloatFromToC, delta};
+use super::e20_camera_state::CameraStateFlags;
 use crate::types::{AnimDefLookup as _, Idx32};
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::anim::events::{CameraFromTo, FloatFromTo};
 use mech3ax_api_types::anim::AnimDef;
+use mech3ax_api_types::anim::events::{CameraFromTo, FloatFromTo};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Maybe};
+use mech3ax_common::{Result, assert_that};
+use mech3ax_types::{AsBytes as _, Maybe, impl_as_bytes};
 use std::io::{Read, Write};
 
 type Flags = Maybe<u32, CameraStateFlags>;

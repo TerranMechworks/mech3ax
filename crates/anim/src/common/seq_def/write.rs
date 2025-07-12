@@ -3,7 +3,7 @@ use log::trace;
 use mech3ax_api_types::anim::events::Event;
 use mech3ax_api_types::anim::{AnimDef, ResetState, SiScript};
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_with_msg, Result};
+use mech3ax_common::{Result, assert_with_msg};
 use mech3ax_types::{Ascii, Ptr};
 use std::io::Write;
 

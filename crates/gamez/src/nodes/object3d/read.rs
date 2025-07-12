@@ -1,8 +1,8 @@
-use super::{math, Flags, Object3dC, Object3dFlags, SCALE_INITIAL};
+use super::{Flags, Object3dC, Object3dFlags, SCALE_INITIAL, math};
 use mech3ax_api_types::gamez::nodes::{Object3d, RotateTranslateScale, Transform};
 use mech3ax_api_types::{AffineMatrix, Color, Vec3};
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{chk, Result};
+use mech3ax_common::{Result, chk};
 use std::io::Read;
 
 pub(crate) fn read(read: &mut CountingReader<impl Read>) -> Result<Object3d> {

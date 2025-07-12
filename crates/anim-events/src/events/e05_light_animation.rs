@@ -1,13 +1,13 @@
 use super::EventAll;
 use crate::types::{AnimDefLookup as _, Idx32};
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::anim::events::LightAnimation;
 use mech3ax_api_types::anim::AnimDef;
+use mech3ax_api_types::anim::events::LightAnimation;
 use mech3ax_api_types::{Color, Range};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii};
+use mech3ax_common::{Result, assert_that};
+use mech3ax_types::{AsBytes as _, Ascii, impl_as_bytes};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]

@@ -1,8 +1,8 @@
-use super::{cotangent, CameraC};
+use super::{CameraC, cotangent};
 use mech3ax_api_types::gamez::nodes::Camera;
 use mech3ax_api_types::{AffineMatrix, Vec3};
-use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::Result;
+use mech3ax_common::io_ext::CountingWriter;
 use std::io::Write;
 
 pub(crate) fn write(write: &mut CountingWriter<impl Write>, camera: &Camera) -> Result<()> {

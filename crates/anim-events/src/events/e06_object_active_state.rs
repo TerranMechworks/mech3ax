@@ -1,11 +1,11 @@
 use super::EventAll;
-use crate::types::{index, AnimDefLookup as _, Idx16, INPUT_NODE_NAME};
+use crate::types::{AnimDefLookup as _, INPUT_NODE_NAME, Idx16, index};
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::anim::events::ObjectActiveState;
 use mech3ax_api_types::anim::AnimDef;
+use mech3ax_api_types::anim::events::ObjectActiveState;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Bool32};
+use mech3ax_common::{Result, assert_that};
+use mech3ax_types::{AsBytes as _, Bool32, impl_as_bytes};
 use std::io::{Read, Write};
 
 const PM_FIXUP_NODE_INDEX: Idx16 = index!(-1);

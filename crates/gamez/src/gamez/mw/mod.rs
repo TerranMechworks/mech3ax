@@ -1,16 +1,16 @@
 mod models;
 mod nodes;
 
-use super::common::{texture_count, NODE_INDEX_INVALID, SIGNATURE, VERSION_MW};
+use super::common::{NODE_INDEX_INVALID, SIGNATURE, VERSION_MW, texture_count};
 use crate::materials;
 use crate::textures::mw as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::gamez::{GameZ, GameZMetadata};
 use mech3ax_api_types::Count;
+use mech3ax_api_types::gamez::{GameZ, GameZMetadata};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, chk, len, Result};
+use mech3ax_common::{Result, assert_that, chk, len};
 use mech3ax_timestamp::DateTime;
-use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _, Maybe, Offsets};
+use mech3ax_types::{AsBytes as _, Maybe, Offsets, impl_as_bytes, u32_to_usize};
 use std::io::{Read, Seek, Write};
 
 type Count32 = Maybe<i32, Count>;

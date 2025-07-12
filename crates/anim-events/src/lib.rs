@@ -11,7 +11,7 @@ mod utils;
 
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::{EventData, StartOffset};
-use mech3ax_types::{impl_as_bytes, primitive_enum, Maybe};
+use mech3ax_types::{Maybe, impl_as_bytes, primitive_enum};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]

@@ -1,5 +1,5 @@
 use super::{Area, BoundingBox, Camera, Display, NodeFlags, PartitionNg, Transformation, Window};
-use crate::{api, sum, Range};
+use crate::{Range, api, sum};
 use mech3ax_types::impl_as_bytes;
 
 api! {

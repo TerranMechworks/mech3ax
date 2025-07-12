@@ -1,8 +1,8 @@
-use super::{MapHeaderC, MAP_VERSION};
+use super::{MAP_VERSION, MapHeaderC};
 use log::trace;
 use mech3ax_api_types::zmap::{MapFeature, Zmap};
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, Result};
+use mech3ax_common::{Result, assert_len};
 use std::io::Write;
 
 fn write_map_feature(

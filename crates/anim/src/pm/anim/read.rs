@@ -1,17 +1,17 @@
 use super::{AnimHeaderC, AnimInfoC, Mission, SiScriptC};
 use crate::common::anim_list::read_anim_list;
 use crate::pm::anim_def::{read_anim_def, read_anim_def_zero};
-use crate::{SaveItem, SIGNATURE, VERSION_PM};
+use crate::{SIGNATURE, SaveItem, VERSION_PM};
 use log::{debug, trace};
 use mech3ax_anim_events::si_script::read_si_script_frames;
 use mech3ax_anim_names::pm::anim_list_fwd;
 use mech3ax_api_types::anim::{AnimMetadata, SiScript};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, Error, Rename, Result};
-use mech3ax_timestamp::unix::from_timestamp;
+use mech3ax_common::{Error, Rename, Result, assert_that};
 use mech3ax_timestamp::DateTime;
-use mech3ax_types::{str_from_ascii, u32_to_usize, ConversionError};
+use mech3ax_timestamp::unix::from_timestamp;
+use mech3ax_types::{ConversionError, str_from_ascii, u32_to_usize};
 use std::convert::From;
 use std::io::Read;
 

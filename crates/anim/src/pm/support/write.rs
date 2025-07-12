@@ -2,8 +2,8 @@ use super::{NodeRefC, ObjectRefC};
 use crate::common::support::bin_to_affine;
 use log::trace;
 use mech3ax_api_types::anim::{NodeRef, ObjectRef};
-use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::Result;
+use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_types::{Ascii, EnumerateEx as _, Hex, Ptr};
 use std::io::Write;
 

@@ -2,7 +2,7 @@ use super::{MotionFlags, MotionHeaderC, VERSION};
 use log::trace;
 use mech3ax_api_types::motion::Motion;
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, assert_that, Result};
+use mech3ax_common::{Result, assert_len, assert_that};
 use std::io::Write;
 
 pub fn write_motion(write: &mut CountingWriter<impl Write>, motion: &Motion) -> Result<()> {

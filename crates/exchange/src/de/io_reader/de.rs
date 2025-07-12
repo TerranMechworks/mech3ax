@@ -1,5 +1,5 @@
-use super::private::EnumType;
 use super::IoReader;
+use super::private::EnumType;
 use crate::error::{Error, ErrorCode, Result};
 use serde::de;
 use std::io::Read;

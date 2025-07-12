@@ -1,14 +1,14 @@
-use crate::gamez::common::{assert_model_array, make_model_array, ModelArrayC};
+use crate::gamez::common::{ModelArrayC, assert_model_array, make_model_array};
 use crate::model::rc::{
-    assert_model_info_zero, read_model_data, read_model_info, size_model, write_model_data,
-    write_model_info, ModelRcC,
+    ModelRcC, assert_model_info_zero, read_model_data, read_model_info, size_model,
+    write_model_data, write_model_info,
 };
 use log::trace;
-use mech3ax_api_types::gamez::model::Model;
 use mech3ax_api_types::Count;
+use mech3ax_api_types::gamez::model::Model;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{chk, len, Result};
-use mech3ax_types::{u32_to_usize, AsBytes as _};
+use mech3ax_common::{Result, chk, len};
+use mech3ax_types::{AsBytes as _, u32_to_usize};
 use std::io::{Read, Write};
 
 pub(crate) fn read_models(
@@ -40,9 +40,7 @@ pub(crate) fn read_models(
 
     trace!(
         "Processing {}..{} model info zeros at {}",
-        zero_start,
-        zero_end,
-        read.offset
+        zero_start, zero_end, read.offset
     );
     for index in zero_start..zero_end {
         let model: ModelRcC = read.read_struct_no_log()?;
@@ -92,9 +90,7 @@ pub(crate) fn write_models(
 
     trace!(
         "Processing {}..{} model info zeros at {}",
-        zero_start,
-        zero_end,
-        write.offset
+        zero_start, zero_end, write.offset
     );
     let model_zero = ModelRcC::default();
     for index in zero_start..zero_end {

@@ -3,8 +3,8 @@ use log::trace;
 use mech3ax_api_types::anim::{
     ActivationPrerequisite, PrerequisiteAnimation, PrerequisiteObject, PrerequisiteParent,
 };
-use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::Result;
+use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_types::{Ascii, Ptr};
 use std::io::Write;
 

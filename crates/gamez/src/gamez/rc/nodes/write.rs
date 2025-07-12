@@ -1,11 +1,11 @@
 use super::NODE_INDEX_INVALID;
 use crate::nodes::helpers::write_node_indices;
-use crate::nodes::node::rc::{make_node, make_node_zero, NodeRcC};
+use crate::nodes::node::rc::{NodeRcC, make_node, make_node_zero};
 use log::trace;
-use mech3ax_api_types::gamez::nodes::{Node, NodeData};
 use mech3ax_api_types::Count;
+use mech3ax_api_types::gamez::nodes::{Node, NodeData};
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{err, len, Result};
+use mech3ax_common::{Result, err, len};
 use mech3ax_types::AsBytes as _;
 use std::io::Write;
 
@@ -38,9 +38,7 @@ pub(crate) fn write_nodes(
 
     trace!(
         "Processing {}..{} node info zeros at {}",
-        node_count,
-        array_size,
-        write.offset
+        node_count, array_size, write.offset
     );
     let node_zero = make_node_zero();
     for index in node_count.to_i32()..array_size.to_i32() {

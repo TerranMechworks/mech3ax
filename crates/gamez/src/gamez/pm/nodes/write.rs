@@ -3,8 +3,8 @@ use crate::nodes::helpers::write_node_indices;
 use crate::nodes::node::pm::make_node;
 use log::trace;
 use mech3ax_api_types::gamez::nodes::{Node, NodeData};
-use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::Result;
+use mech3ax_common::io_ext::CountingWriter;
 use std::io::Write;
 
 pub(crate) fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[Node]) -> Result<()> {

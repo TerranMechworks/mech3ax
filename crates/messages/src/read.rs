@@ -5,7 +5,7 @@ use crate::{message_table, pe, string_table};
 use log::trace;
 use mech3ax_api_types::messages::{MessageEntry, Messages};
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, assert_with_msg, GameType, Result};
+use mech3ax_common::{GameType, Result, assert_that, assert_with_msg};
 use std::collections::HashMap;
 use std::io::Read;
 
@@ -20,13 +20,11 @@ fn parse_data_section(
 
     trace!(
         "Data section raw: {}, len: {}",
-        data_section.pointer_to_raw_data,
-        data_section.size_of_raw_data
+        data_section.pointer_to_raw_data, data_section.size_of_raw_data
     );
     trace!(
         "Data section RVA: {}, len: {}",
-        data_section.virtual_address,
-        data_section.virtual_size
+        data_section.virtual_address, data_section.virtual_size
     );
 
     let data_section_offset = u32_to_usize(data_section.pointer_to_raw_data);
@@ -54,13 +52,11 @@ fn get_resource_section(sections: &pe::SectionsAndDirectories) -> Result<&pe::Im
 
     trace!(
         "Resource section raw: {}, len: {}",
-        resource_section.pointer_to_raw_data,
-        resource_section.size_of_raw_data
+        resource_section.pointer_to_raw_data, resource_section.size_of_raw_data
     );
     trace!(
         "Resource section RVA: {}, len: {}",
-        resource_section.virtual_address,
-        resource_section.virtual_size
+        resource_section.virtual_address, resource_section.virtual_size
     );
 
     // Technically, you're supposed to look up which section a data directory
@@ -125,8 +121,7 @@ fn parse_resource_section_st(
     for block in blocks {
         trace!(
             "String block RVA: {}, len: {}",
-            block.data_offset,
-            block.data_size
+            block.data_offset, block.data_size
         );
 
         let virt_start = block.data_offset;

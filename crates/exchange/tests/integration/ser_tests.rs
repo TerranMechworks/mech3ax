@@ -1,5 +1,5 @@
-use super::{assert_matches, Bytes};
-use mech3ax_exchange::{to_vec, ErrorCode};
+use super::{Bytes, assert_matches};
+use mech3ax_exchange::{ErrorCode, to_vec};
 use std::collections::HashMap;
 
 macro_rules! assert_err {

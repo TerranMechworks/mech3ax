@@ -3,19 +3,19 @@ mod models;
 mod nodes;
 
 use super::common::{
-    texture_count, NODE_INDEX_BOT_MASK, NODE_INDEX_TOP, NODE_INDEX_TOP_MASK, SIGNATURE, VERSION_PM,
+    NODE_INDEX_BOT_MASK, NODE_INDEX_TOP, NODE_INDEX_TOP_MASK, SIGNATURE, VERSION_PM, texture_count,
 };
 use crate::materials;
 use crate::textures::pm as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
 use data::Campaign;
 use log::trace;
-use mech3ax_api_types::gamez::{GameZ, GameZMetadata};
 use mech3ax_api_types::Count32;
+use mech3ax_api_types::gamez::{GameZ, GameZMetadata};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, chk, len, Result};
+use mech3ax_common::{Result, assert_that, chk, len};
 use mech3ax_timestamp::unix::{from_timestamp, to_timestamp};
-use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _, Offsets};
+use mech3ax_types::{AsBytes as _, Offsets, impl_as_bytes, u32_to_usize};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern, Offsets)]

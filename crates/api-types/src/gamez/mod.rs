@@ -2,7 +2,7 @@ pub mod materials;
 pub mod model;
 pub mod nodes;
 
-use crate::{api, sum, Color, Count, IndexO};
+use crate::{Color, Count, IndexO, api, sum};
 use materials::Material;
 use mech3ax_timestamp::DateTime;
 use model::Model;

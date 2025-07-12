@@ -2,7 +2,7 @@ use crate::flags::NodeBitFlags;
 use crate::mw::node::{NodeVariantMw, NodeVariantsMw};
 use crate::types::ZONE_DEFAULT;
 use mech3ax_api_types::nodes::mw::Object3d;
-use mech3ax_common::{assert_len, assert_that, Result};
+use mech3ax_common::{Result, assert_len, assert_that};
 
 const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     0

@@ -4,7 +4,7 @@ mod read;
 mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_types::{bitflags, impl_as_bytes, Ascii, Maybe};
+use mech3ax_types::{Ascii, Maybe, bitflags, impl_as_bytes};
 pub use read::read_textures;
 pub use write::write_textures;
 

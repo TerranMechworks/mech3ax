@@ -8,7 +8,7 @@ use crate::types::Idx32;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::events::PufferStateColor;
 use mech3ax_api_types::{Range, Vec3};
-use mech3ax_types::{bitflags, impl_as_bytes, Ascii, Bool32, Maybe};
+use mech3ax_types::{Ascii, Bool32, Maybe, bitflags, impl_as_bytes};
 
 bitflags! {
     struct PufferStateFlags: u32 {

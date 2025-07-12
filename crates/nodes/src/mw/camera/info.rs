@@ -2,7 +2,7 @@ use crate::flags::NodeBitFlags;
 use crate::mw::node::{NodeVariantMw, NodeVariantsMw};
 use crate::types::ZONE_DEFAULT;
 use mech3ax_api_types::nodes::{BoundingBox, Camera};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{Result, assert_that};
 
 const CAMERA_NAME: &str = "camera1";
 

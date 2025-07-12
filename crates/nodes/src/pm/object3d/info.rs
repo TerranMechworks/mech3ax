@@ -1,7 +1,7 @@
 use crate::flags::NodeBitFlags;
 use crate::pm::node::{NodeVariantPm, NodeVariantsPm};
 use mech3ax_api_types::nodes::pm::Object3d;
-use mech3ax_common::{assert_len, assert_that, Result};
+use mech3ax_common::{Result, assert_len, assert_that};
 
 const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     0

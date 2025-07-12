@@ -1,4 +1,4 @@
-use super::{global_palette_len, TexFlags, TextureEntryC, TextureInfoC, TexturesHeaderC};
+use super::{TexFlags, TextureEntryC, TextureInfoC, TexturesHeaderC, global_palette_len};
 use image::{DynamicImage, RgbImage, RgbaImage};
 use log::debug;
 use mech3ax_api_types::image::{
@@ -6,7 +6,7 @@ use mech3ax_api_types::image::{
 };
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, Error, Rename, Result};
+use mech3ax_common::{Error, Rename, Result, assert_that};
 use mech3ax_pixel_ops::{pal8to888, pal8to888a, rgb565to888, rgb565to888a, simple_alpha};
 use mech3ax_types::{u16_to_usize, u32_to_usize};
 use std::io::Read;

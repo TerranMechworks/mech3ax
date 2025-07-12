@@ -4,7 +4,7 @@ use std::borrow::Cow;
 use std::fmt;
 use std::sync::LazyLock;
 use time::format_description::well_known::Rfc3339;
-use time::format_description::{modifier, Component, FormatItem};
+use time::format_description::{Component, FormatItem, modifier};
 use time::{PrimitiveDateTime, Time};
 const TIME_MIN: Time = Time::MIDNIGHT;
 const UNIX_EPOCH: PrimitiveDateTime = PrimitiveDateTime::new(date(1970, 1, 1), TIME_MIN);

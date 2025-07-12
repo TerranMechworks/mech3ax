@@ -1,5 +1,5 @@
 use super::{Area, AreaPartition, BoundingBox, Camera, Display, NodeFlags, PartitionPg, Window};
-use crate::{api, sum, Color, Matrix, Range, Vec3};
+use crate::{Color, Matrix, Range, Vec3, api, sum};
 
 api! {
     struct RotationTranslation {

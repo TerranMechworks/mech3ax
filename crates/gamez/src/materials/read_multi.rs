@@ -2,10 +2,10 @@ use super::read_single::{assert_material, assert_material_zero, read_cycle};
 use super::{MaterialArrayC, MaterialC, MatlType};
 use crate::materials::RawMaterial;
 use log::trace;
-use mech3ax_api_types::gamez::materials::{Material, TexturedMaterial};
 use mech3ax_api_types::Count;
+use mech3ax_api_types::gamez::materials::{Material, TexturedMaterial};
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{chk, Result};
+use mech3ax_common::{Result, chk};
 use mech3ax_types::Ptr;
 use std::io::Read;
 
@@ -46,9 +46,7 @@ pub(super) fn read_materials(
 
     trace!(
         "Processing {}..{} material zeros at {}",
-        zero_start,
-        zero_end,
-        read.offset
+        zero_start, zero_end, read.offset
     );
     for index in zero_start..zero_end {
         let material: MaterialC = read.read_struct_no_log()?;

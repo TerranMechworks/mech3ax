@@ -4,7 +4,7 @@ mod read;
 mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_types::{impl_as_bytes, Ascii, Hex};
+use mech3ax_types::{Ascii, Hex, impl_as_bytes};
 pub use read::read_archive;
 use std::fmt;
 pub use write::write_archive;

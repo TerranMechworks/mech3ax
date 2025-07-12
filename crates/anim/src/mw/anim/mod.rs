@@ -3,7 +3,7 @@ mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::AnimMission;
-use mech3ax_types::{impl_as_bytes, Hex};
+use mech3ax_types::{Hex, impl_as_bytes};
 pub use read::read_anim;
 pub use write::write_anim;
 

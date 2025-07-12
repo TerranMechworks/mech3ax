@@ -1,12 +1,12 @@
 use crate::model::mw::{read_model_data, read_model_info};
-use crate::nodes::node::mw::{assert_node_mechlib, NodeMwC};
+use crate::nodes::node::mw::{NodeMwC, assert_node_mechlib};
 use log::trace;
+use mech3ax_api_types::gamez::MechlibModel;
 use mech3ax_api_types::gamez::model::Model;
 use mech3ax_api_types::gamez::nodes::{Node, NodeData};
-use mech3ax_api_types::gamez::MechlibModel;
 use mech3ax_api_types::{Count, IndexO, IndexR};
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{err, Error, Result};
+use mech3ax_common::{Error, Result, err};
 use std::io::Read;
 
 pub fn read_model(read: &mut CountingReader<impl Read>) -> Result<MechlibModel> {

@@ -1,6 +1,6 @@
 use super::IoWriter;
 use crate::error::{Error, ErrorCode, Result};
-use serde::{ser, Serialize};
+use serde::{Serialize, ser};
 use std::io::Write;
 
 macro_rules! err_unsupported {

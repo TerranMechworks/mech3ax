@@ -3,7 +3,7 @@ use log::trace;
 use mech3ax_api_types::interp::Script;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{Result, assert_that};
 use mech3ax_timestamp::unix::from_timestamp;
 use mech3ax_types::{string_from_ascii, u32_to_usize};
 use std::io::Read;

@@ -2,7 +2,7 @@ mod read;
 mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_types::{impl_as_bytes, Offsets};
+use mech3ax_types::{Offsets, impl_as_bytes};
 pub(crate) use read::read;
 pub(crate) use write::write;
 

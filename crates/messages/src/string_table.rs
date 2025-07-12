@@ -1,7 +1,7 @@
 use crate::size::u16_to_usize;
 use log::trace;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_with_msg, Result};
+use mech3ax_common::{Result, assert_with_msg};
 use std::collections::HashMap;
 use std::io::Read;
 

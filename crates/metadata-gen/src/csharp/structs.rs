@@ -1,9 +1,9 @@
 use super::csharp_type::{CSharpType, SerializeType, TypeKind};
-use super::fields::{sort_generics, Field};
+use super::fields::{Field, sort_generics};
 use super::module_path::{dotnet_namespace_to_path, rust_mod_path_to_dotnet};
 use super::resolver::TypeResolver;
 use mech3ax_metadata_types::{TypeInfoStruct, TypeSemantic};
-use minijinja::{context, Environment};
+use minijinja::{Environment, context};
 use serde::Serialize;
 use std::borrow::Cow;
 use std::collections::HashSet;

@@ -1,8 +1,8 @@
-use super::{math, Object3dC, Object3dFlags, SCALE_INITIAL};
+use super::{Object3dC, Object3dFlags, SCALE_INITIAL, math};
 use mech3ax_api_types::gamez::nodes::{Object3d, RotateTranslateScale, Transform};
 use mech3ax_api_types::{AffineMatrix, Color, Vec3};
-use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::Result;
+use mech3ax_common::io_ext::CountingWriter;
 use std::io::Write;
 
 pub(crate) fn write(write: &mut CountingWriter<impl Write>, object3d: &Object3d) -> Result<()> {

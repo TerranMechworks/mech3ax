@@ -1,9 +1,9 @@
 use super::{Class, Flags, NodeMwC, ZERO_NAME};
-use crate::nodes::types::AreaPartitionC;
 use crate::nodes::NodeClass;
+use crate::nodes::types::AreaPartitionC;
 use mech3ax_api_types::gamez::nodes::{BoundingBox, Node};
 use mech3ax_api_types::{Count, IndexO, IndexO32, Vec3};
-use mech3ax_common::{len, Result};
+use mech3ax_common::{Result, len};
 use mech3ax_types::{Ascii, PaddedI8, Ptr, SupportsMaybe as _};
 
 pub(crate) fn make_node_zero() -> NodeMwC {

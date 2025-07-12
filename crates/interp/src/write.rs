@@ -2,7 +2,7 @@ use super::{InterpEntryC, InterpHeaderC, SIGNATURE, VERSION};
 use log::trace;
 use mech3ax_api_types::interp::Script;
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, Result};
+use mech3ax_common::{Result, assert_len};
 use mech3ax_timestamp::unix::to_timestamp;
 use mech3ax_types::{AsBytes as _, Ascii};
 use std::io::Write;
@@ -75,10 +75,7 @@ fn write_line(write: &mut CountingWriter<impl Write>, line: &str, index: usize) 
 
     trace!(
         "Script line {}, size {}, args: {} at {}",
-        index,
-        size,
-        arg_count,
-        write.offset
+        index, size, arg_count, write.offset
     );
     write.write_u32(size)?;
     write.write_u32(arg_count)?;

@@ -4,7 +4,7 @@ mod write;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::nodes::Light;
 use mech3ax_api_types::{AffineMatrix, Color, Count32, Vec3};
-use mech3ax_types::{impl_as_bytes, Bool32, Offsets, Ptr};
+use mech3ax_types::{Bool32, Offsets, Ptr, impl_as_bytes};
 pub(crate) use read::read;
 pub(crate) use write::write;
 

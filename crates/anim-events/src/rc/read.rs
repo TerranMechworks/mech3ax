@@ -1,4 +1,4 @@
-use crate::events::{object_motion_si_script, EventRc};
+use crate::events::{EventRc, object_motion_si_script};
 use crate::{EventHeaderC, EventType};
 use mech3ax_api_types::anim::events::{
     AnimVerbose, CallAnimation, CallObjectConnector, CallSequence, Callback, CameraFromTo,
@@ -11,8 +11,8 @@ use mech3ax_api_types::anim::events::{
 };
 use mech3ax_api_types::anim::{AnimDef, SiScript};
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{u32_to_usize, AsBytes as _};
+use mech3ax_common::{Result, assert_that, assert_with_msg};
+use mech3ax_types::{AsBytes as _, u32_to_usize};
 use std::io::Read;
 
 macro_rules! read {
@@ -179,7 +179,7 @@ pub fn read_events(
                 EventData::DetonateWeapon(read!(DetonateWeapon, read, anim_def, data_size))
             }
             EventType::PufferState => {
-                return Err(assert_with_msg!("invalid event `PufferState` for RC"))
+                return Err(assert_with_msg!("invalid event `PufferState` for RC"));
             }
         };
 

@@ -4,9 +4,9 @@ use log::trace;
 use mech3ax_api_types::gamez::Texture;
 use mech3ax_api_types::{Count, IndexO32};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{chk, err, Result};
+use mech3ax_common::{Result, chk, err};
 use mech3ax_types::check::suffix;
-use mech3ax_types::{impl_as_bytes, primitive_enum, AsBytes as _, Ascii, Maybe, Offsets, Ptr};
+use mech3ax_types::{AsBytes as _, Ascii, Maybe, Offsets, Ptr, impl_as_bytes, primitive_enum};
 use std::io::{Read, Write};
 
 primitive_enum! {

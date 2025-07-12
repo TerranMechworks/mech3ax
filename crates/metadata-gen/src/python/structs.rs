@@ -3,7 +3,7 @@ use super::module_path::{rust_mod_path_to_path, rust_mod_path_to_py};
 use super::resolver::TypeResolver;
 use crate::python::python_type::{PythonType, SerializeType};
 use mech3ax_metadata_types::{TypeInfoStruct, TypeSemantic};
-use minijinja::{context, Environment};
+use minijinja::{Environment, context};
 use serde::Serialize;
 use std::borrow::Cow;
 use std::collections::HashSet;

@@ -1,7 +1,7 @@
 use mech3ax_api_types::{Count, IndexR, IndexR32};
+use mech3ax_common::Result;
 use mech3ax_common::check::amend_err;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::Result;
 use std::io::{Read, Write};
 
 macro_rules! read_node_indices {

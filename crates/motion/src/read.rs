@@ -2,7 +2,7 @@ use super::{MotionFlags, MotionHeaderC, VERSION};
 use log::trace;
 use mech3ax_api_types::motion::{Motion, MotionFrame, MotionPart};
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{Result, assert_that};
 use mech3ax_types::Maybe;
 use std::io::Read;
 

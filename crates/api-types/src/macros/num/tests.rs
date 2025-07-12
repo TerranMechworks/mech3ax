@@ -1,5 +1,5 @@
 use crate::num;
-use serde_test::{assert_tokens, Configure as _, Token};
+use serde_test::{Configure as _, Token, assert_tokens};
 
 num! {
     enum TestRepr : u8 {

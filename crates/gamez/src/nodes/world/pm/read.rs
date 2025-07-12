@@ -4,13 +4,13 @@ use crate::nodes::helpers::read_node_indices;
 use crate::nodes::math::partition_diag;
 use crate::nodes::range::RangeI32;
 use log::trace;
+use mech3ax_api_types::Count;
 use mech3ax_api_types::gamez::nodes::{
     Area, World, WorldFog, WorldPartition, WorldPartitionValue, WorldPtrs,
 };
-use mech3ax_api_types::Count;
 use mech3ax_common::check::amend_err;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{chk, Result};
+use mech3ax_common::{Result, chk};
 use mech3ax_types::Ptr;
 use std::io::Read;
 

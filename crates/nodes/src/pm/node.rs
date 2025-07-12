@@ -3,12 +3,12 @@ use super::{camera, display, light, lod, object3d, window, world};
 use crate::flags::NodeBitFlags;
 use crate::types::NodeType;
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::nodes::pm::{AreaPartitionPm, NodePm};
 use mech3ax_api_types::nodes::BoundingBox;
+use mech3ax_api_types::nodes::pm::{AreaPartitionPm, NodePm};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, Ascii, Bool16, Maybe, Ptr};
+use mech3ax_common::{Result, assert_that, assert_with_msg};
+use mech3ax_types::{Ascii, Bool16, Maybe, Ptr, impl_as_bytes};
 use std::io::{Read, Write};
 
 #[derive(Debug)]

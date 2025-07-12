@@ -3,7 +3,7 @@ mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::AffineMatrix;
-use mech3ax_types::{impl_as_bytes, Ascii, Hex, Ptr};
+use mech3ax_types::{Ascii, Hex, Ptr, impl_as_bytes};
 pub(crate) use read::{read_nodes, read_objects};
 pub(crate) use write::{write_nodes, write_objects};
 

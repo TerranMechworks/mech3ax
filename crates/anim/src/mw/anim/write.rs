@@ -7,7 +7,7 @@ use log::{debug, trace};
 use mech3ax_anim_names::mw::anim_list_rev;
 use mech3ax_api_types::anim::{AnimMetadata, SiScript};
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, Error, Result};
+use mech3ax_common::{Error, Result, assert_len};
 use mech3ax_types::EnumerateEx as _;
 use std::convert::From;
 use std::io::Write;

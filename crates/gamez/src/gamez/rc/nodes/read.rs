@@ -1,13 +1,13 @@
 use super::NODE_INDEX_INVALID;
-use crate::nodes::helpers::read_node_indices;
-use crate::nodes::node::rc::{assert_node, assert_node_zero, NodeRcC};
 use crate::nodes::NodeClass;
+use crate::nodes::helpers::read_node_indices;
+use crate::nodes::node::rc::{NodeRcC, assert_node, assert_node_zero};
 use log::trace;
 use mech3ax_api_types::gamez::nodes::{Node, NodeData};
 use mech3ax_api_types::{Count, IndexR32};
 use mech3ax_common::check::amend_err;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{err, Result};
+use mech3ax_common::{Result, err};
 use mech3ax_types::u32_to_usize;
 use std::io::{Read, Seek};
 
@@ -53,9 +53,7 @@ pub(crate) fn read_nodes(
 
     trace!(
         "Processing {}..{} node info zeros at {}",
-        count,
-        array_size,
-        read.offset
+        count, array_size, read.offset
     );
     for index in count..array_size.to_i32() {
         let node: NodeRcC = read.read_struct_no_log()?;

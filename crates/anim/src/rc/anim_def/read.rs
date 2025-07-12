@@ -1,7 +1,7 @@
 use super::{AnimDefC, AnimDefFlags, RESET_TIME_BORK};
 use crate::common::activation_prereq::read_activ_prereqs;
 use crate::common::fixup::Fwd;
-use crate::common::seq_def::{read_reset_state_pg, read_sequence_defs, ReadEventsRc};
+use crate::common::seq_def::{ReadEventsRc, read_reset_state_pg, read_sequence_defs};
 use crate::common::support::{
     read_anim_refs, read_dynamic_sounds, read_effects, read_lights, read_nodes, read_objects,
     read_static_sounds,
@@ -9,11 +9,11 @@ use crate::common::support::{
 use log::debug;
 use mech3ax_anim_names::rc::{anim_name_fwd, anim_root_name_fwd};
 // use mech3ax_api_types::anim::events::EventData;
-use mech3ax_api_types::anim::{AnimDef, AnimDefPtrs, Execution, SiScript};
 use mech3ax_api_types::Range;
+use mech3ax_api_types::anim::{AnimDef, AnimDefPtrs, Execution, SiScript};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{Result, assert_that};
 use mech3ax_types::Ptr;
 use std::io::Read;
 

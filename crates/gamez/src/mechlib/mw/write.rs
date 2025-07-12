@@ -1,13 +1,13 @@
 use crate::model::mw::{write_model_data, write_model_info};
-use crate::nodes::node::mw::make_node_mechlib;
 use crate::nodes::NodeClass;
+use crate::nodes::node::mw::make_node_mechlib;
 use log::trace;
+use mech3ax_api_types::IndexR;
+use mech3ax_api_types::gamez::MechlibModel;
 use mech3ax_api_types::gamez::model::Model;
 use mech3ax_api_types::gamez::nodes::{Node, NodeData};
-use mech3ax_api_types::gamez::MechlibModel;
-use mech3ax_api_types::IndexR;
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{err, Error, Result};
+use mech3ax_common::{Error, Result, err};
 use std::io::Write;
 
 pub fn write_model(

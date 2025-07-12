@@ -4,8 +4,8 @@ use mech3ax_api_types::gamez::model::{PointLight, UvCoord};
 use mech3ax_api_types::{Color, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlagsU16 as LightFlags;
-use mech3ax_common::{assert_len, assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Hex, Maybe, Offsets, Ptr};
+use mech3ax_common::{Result, assert_len, assert_that, assert_with_msg};
+use mech3ax_types::{AsBytes as _, Hex, Maybe, Offsets, Ptr, impl_as_bytes};
 use std::io::{Read, Write};
 
 pub(crate) fn priority(value: i32) -> Result<i32, String> {
@@ -126,7 +126,7 @@ pub(crate) fn make_zone_set(zone_set: &[i8]) -> Result<Hex<u32>> {
             return Err(assert_with_msg!(
                 "Expected 3 or fewer zones, but got {}",
                 other.len()
-            ))
+            ));
         }
     };
 

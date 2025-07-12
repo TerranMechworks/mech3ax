@@ -1,7 +1,7 @@
 use super::{FrameC, FrameFlags, RotateDataC, ScaleDataC, TranslateDataC};
 use mech3ax_api_types::anim::{ObjectMotionSiFrame, RotateData, ScaleData, TranslateData};
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{Result, assert_that};
 use std::io::Read;
 
 pub fn read_si_script_frames(

@@ -4,8 +4,8 @@ use mech3ax_api_types::nodes::mw::Light;
 use mech3ax_api_types::{Color, Range, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::light::LightFlagsU32 as LightFlags;
-use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Maybe, Zeros};
+use mech3ax_common::{Result, assert_that};
+use mech3ax_types::{AsBytes as _, Maybe, Zeros, impl_as_bytes};
 use std::io::{Read, Write};
 
 type Flags = Maybe<u32, LightFlags>;

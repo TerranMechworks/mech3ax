@@ -56,11 +56,7 @@ fn apply_zero_sign(value: f32, signs: u32, index: u32) -> f32 {
     if value == 0.0 {
         let has_sign = value.is_sign_negative();
         let has_bit = (signs & (1 << index)) != 0;
-        if has_sign != has_bit {
-            -value
-        } else {
-            value
-        }
+        if has_sign != has_bit { -value } else { value }
     } else {
         value
     }

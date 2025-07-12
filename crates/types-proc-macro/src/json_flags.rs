@@ -1,5 +1,5 @@
 use heck::ToSnakeCase as _;
-use syn::{parse_quote, Ident, Result, Token};
+use syn::{Ident, Result, Token, parse_quote};
 
 pub(crate) struct JsonFlagsVariant {
     pub(crate) attrs: Vec<syn::Attribute>,

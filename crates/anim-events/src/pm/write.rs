@@ -1,9 +1,9 @@
 use crate::events::EventPm;
-use crate::{event_type, EventHeaderC};
-use mech3ax_api_types::anim::events::*;
+use crate::{EventHeaderC, event_type};
 use mech3ax_api_types::anim::AnimDef;
+use mech3ax_api_types::anim::events::*;
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_with_msg, Result};
+use mech3ax_common::{Result, assert_with_msg};
 use mech3ax_types::AsBytes as _;
 use std::io::Write;
 

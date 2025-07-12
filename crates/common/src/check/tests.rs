@@ -1,6 +1,6 @@
 use crate::chk;
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_types::{impl_as_bytes, Offsets};
+use mech3ax_types::{Offsets, impl_as_bytes};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Offsets)]
 #[repr(C)]

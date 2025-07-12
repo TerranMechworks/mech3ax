@@ -1,7 +1,7 @@
 use super::{FrameC, FrameFlags, RotateDataC, ScaleDataC, TranslateDataC};
 use mech3ax_api_types::anim::ObjectMotionSiFrame;
-use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::Result;
+use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_types::{AsBytes as _, Bytes};
 use std::io::Write;
 

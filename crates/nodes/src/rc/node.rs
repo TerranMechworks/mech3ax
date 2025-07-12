@@ -3,14 +3,14 @@ use crate::flags::NodeBitFlags;
 use crate::types::NodeType;
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::debug;
+use mech3ax_api_types::Vec3;
 use mech3ax_api_types::nodes::rc::{Empty, NodeRc};
 use mech3ax_api_types::nodes::{AreaPartition, BoundingBox};
-use mech3ax_api_types::Vec3;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{Result, assert_that};
 use mech3ax_types::maybe::SupportsMaybe as _;
-use mech3ax_types::{impl_as_bytes, Ascii, Maybe, PaddedI8, Ptr};
+use mech3ax_types::{Ascii, Maybe, PaddedI8, Ptr, impl_as_bytes};
 use std::io::{Read, Write};
 
 #[derive(Debug)]

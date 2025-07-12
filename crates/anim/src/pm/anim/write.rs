@@ -8,10 +8,10 @@ use mech3ax_anim_names::pm::anim_list_rev;
 use mech3ax_api_types::anim::AnimMetadata;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, assert_with_msg, Error, Result};
-use mech3ax_timestamp::unix::to_timestamp;
+use mech3ax_common::{Error, Result, assert_len, assert_with_msg};
 use mech3ax_timestamp::DateTime;
-use mech3ax_types::{str_to_ascii, EnumerateEx as _};
+use mech3ax_timestamp::unix::to_timestamp;
+use mech3ax_types::{EnumerateEx as _, str_to_ascii};
 use std::convert::From;
 use std::io::Write;
 

@@ -1,12 +1,12 @@
-use super::{HeaderOneC, HeaderTwoC, Mode, TableEntryC, Version, VERSION_ONE, VERSION_TWO};
+use super::{HeaderOneC, HeaderTwoC, Mode, TableEntryC, VERSION_ONE, VERSION_TWO, Version};
 use crate::FiletimeC;
 use log::{debug, trace};
 use mech3ax_api_types::archive::{
     ArchiveEntry, ArchiveEntryInfo, ArchiveEntryInfoInvalid, ArchiveEntryInfoValid,
 };
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, assert_with_msg, Error, Result};
-use mech3ax_crc32::{crc32_update, CRC32_INIT};
+use mech3ax_common::{Error, Result, assert_len, assert_with_msg};
+use mech3ax_crc32::{CRC32_INIT, crc32_update};
 use mech3ax_timestamp::nt::to_filetime;
 use mech3ax_types::{Ascii, Bytes, Hex};
 use std::io::Write;

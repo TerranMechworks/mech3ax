@@ -3,7 +3,7 @@ mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::AffineMatrix;
-use mech3ax_types::{impl_as_bytes, primitive_enum, Ascii, Hex, Maybe, Ptr};
+use mech3ax_types::{Ascii, Hex, Maybe, Ptr, impl_as_bytes, primitive_enum};
 pub(crate) use read::{
     affine_to_bin, read_anim_refs, read_dynamic_sounds, read_effects, read_lights, read_nodes,
     read_objects, read_puffers, read_static_sounds,

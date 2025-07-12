@@ -1,5 +1,5 @@
 //! MW3/PM `motion.zbd` data structures.
-use crate::{api, Quaternion, Vec3};
+use crate::{Quaternion, Vec3, api};
 
 api! {
     struct MotionFrame {

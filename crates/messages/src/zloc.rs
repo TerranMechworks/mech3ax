@@ -2,7 +2,7 @@ use crate::size::u32_to_usize;
 use log::trace;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_common::{Result, assert_that, assert_with_msg};
 use mech3ax_types::str_from_ascii;
 use std::io::Cursor;
 

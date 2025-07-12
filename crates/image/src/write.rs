@@ -1,13 +1,13 @@
-use super::{global_palette_len, TexFlags, TextureEntryC, TextureInfoC, TexturesHeaderC};
+use super::{TexFlags, TextureEntryC, TextureInfoC, TexturesHeaderC, global_palette_len};
 use image::DynamicImage;
 use log::debug;
 use mech3ax_api_types::image::{
     PaletteData, TextureAlpha, TextureInfo, TextureManifest, TexturePalette,
 };
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, assert_that, assert_with_msg, Error, Result};
+use mech3ax_common::{Error, Result, assert_len, assert_that, assert_with_msg};
 use mech3ax_pixel_ops::{rgb888ato565, rgb888atopal8, rgb888to565, rgb888topal8};
-use mech3ax_types::{u16_to_usize, u32_to_usize, AsBytes as _, Ascii};
+use mech3ax_types::{AsBytes as _, Ascii, u16_to_usize, u32_to_usize};
 use std::io::Write;
 
 pub fn write_textures<F, E>(

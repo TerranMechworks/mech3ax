@@ -1,6 +1,6 @@
 use crate::size::u16_to_usize;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_common::{Result, assert_that, assert_with_msg};
 use mech3ax_encoding::windows1252_decode;
 use mech3ax_types::u32_to_usize;
 use std::collections::HashMap;
@@ -21,7 +21,7 @@ fn remove_trailing(buf: &mut Vec<u8>) -> Result<()> {
             return Err(assert_with_msg!(
                 "Message table: expected trailing \n, was {}",
                 actual
-            ))
+            ));
         }
         None => return Err(assert_with_msg!("Message table: ran out of chars")),
     };
@@ -31,7 +31,7 @@ fn remove_trailing(buf: &mut Vec<u8>) -> Result<()> {
             return Err(assert_with_msg!(
                 "Message table: expected trailing \r, was {}",
                 actual
-            ))
+            ));
         }
         None => return Err(assert_with_msg!("Message table: ran out of chars")),
     };

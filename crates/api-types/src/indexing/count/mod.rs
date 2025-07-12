@@ -15,11 +15,7 @@ impl Count {
 
     #[inline]
     pub const fn from_i16(value: i16) -> Option<Self> {
-        if value < 0 {
-            None
-        } else {
-            Some(Self(value))
-        }
+        if value < 0 { None } else { Some(Self(value)) }
     }
 
     #[inline]

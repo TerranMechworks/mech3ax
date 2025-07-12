@@ -4,7 +4,7 @@ use crate::nodes::helpers::read_node_indices;
 use mech3ax_api_types::gamez::nodes::{Light, LightFlags};
 use mech3ax_api_types::{AffineMatrix, Count, Range, Vec3};
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{chk, Result};
+use mech3ax_common::{Result, chk};
 use std::io::Read;
 
 struct LightTemp {

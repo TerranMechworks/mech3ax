@@ -1,19 +1,15 @@
 use super::{EventAll, EventMw, EventPm, EventRc};
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::anim::events::{Condition, Else, Elseif, Endif, If, NodeUndercover};
 use mech3ax_api_types::anim::AnimDef;
+use mech3ax_api_types::anim::events::{Condition, Else, Elseif, Endif, If, NodeUndercover};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, primitive_enum, AsBytes as _, Bytes, Maybe};
+use mech3ax_common::{Result, assert_that, assert_with_msg};
+use mech3ax_types::{AsBytes as _, Bytes, Maybe, impl_as_bytes, primitive_enum};
 use std::io::{Read, Write};
 
 macro_rules! bool_c {
     ($value:expr) => {
-        if $value {
-            1u32
-        } else {
-            0u32
-        }
+        if $value { 1u32 } else { 0u32 }
     };
 }
 

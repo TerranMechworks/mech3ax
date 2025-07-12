@@ -8,8 +8,8 @@ use mech3ax_api_types::nodes::mw::{Empty, NodeMw};
 use mech3ax_api_types::nodes::{AreaPartition, BoundingBox};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii, Bool32, Maybe, Ptr};
+use mech3ax_common::{Result, assert_that, assert_with_msg};
+use mech3ax_types::{AsBytes as _, Ascii, Bool32, Maybe, Ptr, impl_as_bytes};
 use std::io::{Read, Seek, SeekFrom, Write};
 
 #[derive(Debug)]

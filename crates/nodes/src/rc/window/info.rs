@@ -2,7 +2,7 @@ use crate::flags::NodeBitFlags;
 use crate::rc::node::{NodeVariantRc, NodeVariantsRc};
 use crate::types::ZONE_ALWAYS;
 use mech3ax_api_types::nodes::{BoundingBox, Window};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{Result, assert_that};
 
 const WINDOW_NAME: &str = "window1";
 

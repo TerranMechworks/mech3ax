@@ -1,9 +1,9 @@
 use super::{MaterialC, MaterialCycleC, MaterialFlags, MatlType};
-use mech3ax_api_types::gamez::materials::{CycleData, Material, Soil};
 use mech3ax_api_types::gamez::MechlibMaterial;
+use mech3ax_api_types::gamez::materials::{CycleData, Material, Soil};
 use mech3ax_api_types::{Color, Count, IndexR, IndexR32};
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{err, len, Result};
+use mech3ax_common::{Result, err, len};
 use mech3ax_types::Ptr;
 use std::io::Write;
 

@@ -6,8 +6,8 @@ use mech3ax_api_types::anim::{
 };
 use mech3ax_api_types::{Quaternion, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{bitflags, impl_as_bytes, u32_to_usize, AsBytes as _, Maybe};
+use mech3ax_common::{Result, assert_that, assert_with_msg};
+use mech3ax_types::{AsBytes as _, Maybe, bitflags, impl_as_bytes, u32_to_usize};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]

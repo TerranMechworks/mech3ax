@@ -2,10 +2,10 @@ mod constants;
 mod structures;
 
 use super::bin::StructAt as _;
-use super::size::{u16_to_usize, FromBytes as _};
-use constants::{ImageFileFlags, IMAGE_DIRECTORY_ENTRY_RESOURCE};
+use super::size::{FromBytes as _, u16_to_usize};
+use constants::{IMAGE_DIRECTORY_ENTRY_RESOURCE, ImageFileFlags};
 use log::trace;
-use mech3ax_common::{assert_that, Error, PeError, Result};
+use mech3ax_common::{Error, PeError, Result, assert_that};
 use structures::*;
 
 pub type ImageSection = IMAGE_SECTION_HEADER;

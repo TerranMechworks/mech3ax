@@ -1,4 +1,4 @@
-use super::{IndexR as Index, INDEX_MAX};
+use super::{INDEX_MAX, IndexR as Index};
 
 #[test]
 fn from_i16_negative() {

@@ -1,9 +1,9 @@
 use crate::flags::NodeBitFlags;
 use crate::mw::node::{NodeVariantMw, NodeVariantsMw};
 use crate::types::ZONE_DEFAULT;
-use mech3ax_api_types::nodes::mw::World;
 use mech3ax_api_types::nodes::BoundingBox;
-use mech3ax_common::{assert_len, assert_that, Result};
+use mech3ax_api_types::nodes::mw::World;
+use mech3ax_common::{Result, assert_len, assert_that};
 
 pub(crate) const WORLD_NAME: &str = "world1";
 

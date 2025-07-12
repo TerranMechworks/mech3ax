@@ -2,12 +2,12 @@ use super::{AnimHeaderC, AnimInfoC, Mission};
 use crate::common::anim_list::read_anim_list;
 use crate::common::si_script::save_anim_scripts;
 use crate::rc::anim_def::{read_anim_def, read_anim_def_zero};
-use crate::{SaveItem, SIGNATURE, VERSION_RC};
+use crate::{SIGNATURE, SaveItem, VERSION_RC};
 use log::{debug, trace};
 use mech3ax_anim_names::rc::anim_list_fwd;
 use mech3ax_api_types::anim::{AnimMetadata, SiScript};
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, Error, Rename, Result};
+use mech3ax_common::{Error, Rename, Result, assert_that};
 use std::convert::From;
 use std::io::Read;
 

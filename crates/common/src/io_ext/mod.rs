@@ -1,6 +1,6 @@
 use crate::assert_with_msg;
 use log::trace;
-use mech3ax_types::{u32_to_usize, AsBytes};
+use mech3ax_types::{AsBytes, u32_to_usize};
 use std::io::{Read, Result, Seek, SeekFrom, Write};
 
 #[cfg(not(target_endian = "little"))]

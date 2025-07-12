@@ -3,15 +3,15 @@ mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::SeqDefState;
-use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, Ascii, Maybe, Ptr};
+use mech3ax_common::{Result, assert_that};
+use mech3ax_types::{Ascii, Maybe, Ptr, impl_as_bytes};
 pub(crate) use read::{
-    read_reset_state_pg, read_reset_state_pm, read_sequence_defs, ReadEventsMw, ReadEventsPm,
-    ReadEventsRc,
+    ReadEventsMw, ReadEventsPm, ReadEventsRc, read_reset_state_pg, read_reset_state_pm,
+    read_sequence_defs,
 };
 pub(crate) use write::{
-    write_reset_state_pg, write_reset_state_pm, write_sequence_defs, WriteEventsMw, WriteEventsPm,
-    WriteEventsRc,
+    WriteEventsMw, WriteEventsPm, WriteEventsRc, write_reset_state_pg, write_reset_state_pm,
+    write_sequence_defs,
 };
 
 type State = Maybe<u8, SeqDefState>;

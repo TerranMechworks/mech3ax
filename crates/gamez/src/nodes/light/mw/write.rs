@@ -3,7 +3,7 @@ use crate::nodes::helpers::write_node_indices;
 use mech3ax_api_types::gamez::nodes::{Light, LightFlagsExhaustive};
 use mech3ax_api_types::{AffineMatrix, Vec3};
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{err, len, Result};
+use mech3ax_common::{Result, err, len};
 use mech3ax_types::Ptr;
 use std::io::Write;
 

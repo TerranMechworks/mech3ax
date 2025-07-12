@@ -3,7 +3,7 @@ mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::{Quaternion, Vec3};
-use mech3ax_types::{bitflags, impl_as_bytes, Bytes, Maybe};
+use mech3ax_types::{Bytes, Maybe, bitflags, impl_as_bytes};
 pub use read::read_si_script_frames;
 pub use write::{size_si_script_frames, write_si_script_frames};
 

@@ -1,6 +1,6 @@
 use super::has_borked_parents;
 use crate::common::{read_child_indices, write_child_indices};
-use crate::math::{apply_matrix_signs, euler_to_matrix, extract_matrix_signs, scale_to_matrix, PI};
+use crate::math::{PI, apply_matrix_signs, euler_to_matrix, extract_matrix_signs, scale_to_matrix};
 use crate::rc::node::NodeVariantsRc;
 use bytemuck::{AnyBitPattern, NoUninit};
 use log::trace;
@@ -9,8 +9,8 @@ use mech3ax_api_types::nodes::rc::{
 };
 use mech3ax_api_types::{Matrix, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Zeros};
+use mech3ax_common::{Result, assert_that, assert_with_msg};
+use mech3ax_types::{AsBytes as _, Zeros, impl_as_bytes};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -156,8 +156,7 @@ pub(crate) fn read(read: &mut CountingReader<impl Read>, node: NodeVariantsRc) -
     let (parent, parents) = if is_borked && node.parent_count > 1 {
         trace!(
             "Processing {} parent indices {}",
-            node.parent_count,
-            read.offset
+            node.parent_count, read.offset
         );
         let parents = (0..node.parent_count)
             .map(|_| read.read_u32())

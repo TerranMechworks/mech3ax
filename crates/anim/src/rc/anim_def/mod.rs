@@ -5,7 +5,7 @@ mod zero;
 use crate::common::seq_def::SeqDefInfoC;
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::AnimActivation;
-use mech3ax_types::{bitflags, impl_as_bytes, Ascii, Maybe, Ptr, Zeros};
+use mech3ax_types::{Ascii, Maybe, Ptr, Zeros, bitflags, impl_as_bytes};
 pub(crate) use read::read_anim_def;
 pub(crate) use write::write_anim_def;
 pub(crate) use zero::{read_anim_def_zero, write_anim_def_zero};

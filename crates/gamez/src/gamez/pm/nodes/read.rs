@@ -1,12 +1,12 @@
 use super::{NODE_INDEX_BOT_MASK, NODE_INDEX_TOP, NODE_INDEX_TOP_MASK};
-use crate::nodes::helpers::read_node_indices;
-use crate::nodes::node::pm::{assert_node, NodePmC};
 use crate::nodes::NodeClass;
+use crate::nodes::helpers::read_node_indices;
+use crate::nodes::node::pm::{NodePmC, assert_node};
 use log::trace;
-use mech3ax_api_types::gamez::nodes::{Node, NodeData};
 use mech3ax_api_types::Count;
+use mech3ax_api_types::gamez::nodes::{Node, NodeData};
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{chk, Result};
+use mech3ax_common::{Result, chk};
 use std::io::Read;
 
 pub(crate) fn read_nodes(

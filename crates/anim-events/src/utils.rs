@@ -1,5 +1,5 @@
 use mech3ax_api_types::Color;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{Result, assert_that};
 
 pub(crate) fn _assert_color(
     name_r: &str,

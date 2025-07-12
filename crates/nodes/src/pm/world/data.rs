@@ -8,8 +8,8 @@ use mech3ax_api_types::nodes::pm::World;
 use mech3ax_api_types::nodes::{Area, PartitionNg, PartitionValue};
 use mech3ax_api_types::{Color, Range};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_len, assert_that, Result};
-use mech3ax_types::{impl_as_bytes, Bool32};
+use mech3ax_common::{Result, assert_len, assert_that};
+use mech3ax_types::{Bool32, impl_as_bytes};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -165,8 +165,7 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
 
         trace!(
             "Processing {} partition node indices at {}",
-            partition.count,
-            read.offset
+            partition.count, read.offset
         );
         (0..partition.count)
             .map(|_| read.read_struct_no_log())

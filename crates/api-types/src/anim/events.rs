@@ -1,4 +1,4 @@
-use crate::{api, num, sum, Color, Range, Vec3};
+use crate::{Color, Range, Vec3, api, num, sum};
 use mech3ax_types::impl_as_bytes;
 
 num! {

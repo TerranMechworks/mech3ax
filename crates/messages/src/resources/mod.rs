@@ -3,7 +3,7 @@ mod structures;
 use super::bin::StructAt as _;
 use super::size::FromBytes as _;
 use log::trace;
-use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_common::{Result, assert_that, assert_with_msg};
 use structures::*;
 
 const RT_STRING: u32 = 6;
@@ -48,9 +48,7 @@ impl<'a> ResourceReader<'a> {
         let abs_offset = self.abs_offset();
         trace!(
             "{} resource dir offset: {} ({})",
-            name,
-            abs_offset,
-            self.offset
+            name, abs_offset, self.offset
         );
         let res_dir: IMAGE_RESOURCE_DIRECTORY = self.data.struct_at(self.offset)?;
         self.offset += IMAGE_RESOURCE_DIRECTORY::SIZE;
@@ -67,8 +65,7 @@ impl<'a> ResourceReader<'a> {
         )?;
         trace!(
             "{} resource dir ID entries: {}",
-            name,
-            res_dir.number_of_id_entries
+            name, res_dir.number_of_id_entries
         );
 
         Ok(res_dir.number_of_id_entries)
@@ -78,9 +75,7 @@ impl<'a> ResourceReader<'a> {
         let abs_offset = self.abs_offset();
         trace!(
             "{} resource entry offset: {} ({})",
-            name,
-            abs_offset,
-            self.offset
+            name, abs_offset, self.offset
         );
         let res_entry: IMAGE_RESOURCE_DIRECTORY_ENTRY = self.data.struct_at(self.offset)?;
         self.offset += IMAGE_RESOURCE_DIRECTORY_ENTRY::SIZE;
@@ -93,9 +88,7 @@ impl<'a> ResourceReader<'a> {
         let abs_offset = self.abs_offset();
         trace!(
             "{} resource entry offset: {} ({})",
-            name,
-            abs_offset,
-            self.offset
+            name, abs_offset, self.offset
         );
         let res_data: IMAGE_RESOURCE_DATA_ENTRY = self.data.struct_at(self.offset)?;
         self.offset += IMAGE_RESOURCE_DATA_ENTRY::SIZE;
@@ -252,9 +245,7 @@ pub fn read_resource_directory_st(
                 .ok_or_else(|| assert_with_msg!("Expected name resource entry name to be an ID"))?;
             trace!(
                 "Name resource dir for block {} at {} ({})",
-                block_id,
-                entry_offset,
-                reader.offset
+                block_id, entry_offset, reader.offset
             );
             Ok((entry_offset, block_id))
         })
@@ -287,10 +278,7 @@ pub fn read_resource_directory_st(
                 })?;
                 trace!(
                     "Lang resource dir for block {}/lang {} at {} ({})",
-                    block_id,
-                    lang_id,
-                    entry_offset,
-                    reader.offset
+                    block_id, lang_id, entry_offset, reader.offset
                 );
                 match lang_id_check {
                     None => lang_id_check = Some(lang_id),
@@ -300,7 +288,7 @@ pub fn read_resource_directory_st(
                             "Expected language ID {} to match previous value {}",
                             lang_id,
                             lid,
-                        ))
+                        ));
                     }
                 }
                 reader.offset = entry_offset;
@@ -310,10 +298,7 @@ pub fn read_resource_directory_st(
                 let (data_offset, data_size) = reader.read_data("lang", ST_CODE_PAGE)?;
                 trace!(
                     "Data for block {} at {}, size {} ({})",
-                    block_id,
-                    data_offset,
-                    data_size,
-                    reader.offset
+                    block_id, data_offset, data_size, reader.offset
                 );
                 Ok(StringBlock {
                     block_id,

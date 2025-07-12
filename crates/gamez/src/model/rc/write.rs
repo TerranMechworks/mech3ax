@@ -1,13 +1,13 @@
 use super::{ModelBitFlags, ModelRcC, PolygonBitFlags, PolygonRcC};
 use crate::model::common::*;
 use log::{trace, warn};
+use mech3ax_api_types::Vec3;
 use mech3ax_api_types::gamez::model::{
     FacadeMode, Model, ModelFlagsExhaustive, Polygon, PolygonFlagsExhaustive, PolygonMaterial,
     UvCoord,
 };
-use mech3ax_api_types::Vec3;
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, assert_with_msg, Result};
+use mech3ax_common::{Result, assert_len, assert_with_msg};
 use mech3ax_types::{AsBytes as _, Ptr};
 use std::io::Write;
 
@@ -268,8 +268,7 @@ fn write_polygons(
         let vertex_count = polygon.vertex_indices.len();
         trace!(
             "Processing {} vertex indices at {}",
-            vertex_count,
-            write.offset
+            vertex_count, write.offset
         );
         write_u32s(write, &polygon.vertex_indices)?;
 

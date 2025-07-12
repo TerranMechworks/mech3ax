@@ -1,16 +1,16 @@
 mod models;
 mod nodes;
 
-use super::common::{texture_count, NODE_INDEX_INVALID, SIGNATURE, VERSION_RC};
+use super::common::{NODE_INDEX_INVALID, SIGNATURE, VERSION_RC, texture_count};
 use crate::materials;
 use crate::textures::rc as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::gamez::{GameZ, GameZMetadata};
 use mech3ax_api_types::Count32;
+use mech3ax_api_types::gamez::{GameZ, GameZMetadata};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, chk, len, Result};
+use mech3ax_common::{Result, assert_that, chk, len};
 use mech3ax_timestamp::DateTime;
-use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _, Offsets};
+use mech3ax_types::{AsBytes as _, Offsets, impl_as_bytes, u32_to_usize};
 use std::io::{Read, Seek, Write};
 
 #[derive(Debug, Clone, Copy, PartialEq, NoUninit, AnyBitPattern, Offsets)]

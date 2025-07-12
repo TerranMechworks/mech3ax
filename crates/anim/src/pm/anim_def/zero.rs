@@ -1,6 +1,6 @@
 use super::AnimDefC;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{Result, assert_that};
 use std::io::{Read, Write};
 
 pub(crate) fn write_anim_def_zero(write: &mut CountingWriter<impl Write>) -> Result<()> {

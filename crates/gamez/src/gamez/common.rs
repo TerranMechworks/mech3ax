@@ -1,7 +1,7 @@
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::{Count, Count32};
-use mech3ax_common::{chk, err, Result};
-use mech3ax_types::{impl_as_bytes, Offsets};
+use mech3ax_common::{Result, chk, err};
+use mech3ax_types::{Offsets, impl_as_bytes};
 pub(crate) const SIGNATURE: u32 = 0x02971222;
 
 pub(crate) const VERSION_RC: u32 = 15;

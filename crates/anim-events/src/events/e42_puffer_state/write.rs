@@ -2,13 +2,13 @@ use super::{
     PufferStateColors, PufferStateCommon, PufferStateFlags, PufferStateGrowths,
     PufferStateTextureC, PufferStateTextures,
 };
-use crate::types::{index, AnimDefLookup as _};
+use crate::types::{AnimDefLookup as _, index};
+use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::anim::events::{
     PufferIntervalType, PufferState, PufferStateColor, PufferStateTexture,
 };
-use mech3ax_api_types::anim::AnimDef;
 use mech3ax_api_types::{Range, Vec3};
-use mech3ax_common::{assert_len, assert_with_msg, Result};
+use mech3ax_common::{Result, assert_len, assert_with_msg};
 use mech3ax_types::{Ascii, Bool32};
 
 pub(super) fn make_common(state: &PufferState, anim_def: &AnimDef) -> Result<PufferStateCommon> {
@@ -160,7 +160,14 @@ pub(super) fn make_textures(
         }
     }
 
-    let [texture_0, texture_1, texture_2, texture_3, texture_4, texture_5] = t;
+    let [
+        texture_0,
+        texture_1,
+        texture_2,
+        texture_3,
+        texture_4,
+        texture_5,
+    ] = t;
     Ok(PufferStateTextures {
         has_run_time: has_run_time.into(),
         texture_0,

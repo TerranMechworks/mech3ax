@@ -1,10 +1,10 @@
 use crate::events::EventPm;
 use crate::{EventHeaderC, EventType};
-use mech3ax_api_types::anim::events::*;
 use mech3ax_api_types::anim::AnimDef;
+use mech3ax_api_types::anim::events::*;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, assert_with_msg, Result};
-use mech3ax_types::{u32_to_usize, AsBytes as _};
+use mech3ax_common::{Result, assert_that, assert_with_msg};
+use mech3ax_types::{AsBytes as _, u32_to_usize};
 use std::io::Read;
 
 macro_rules! read {

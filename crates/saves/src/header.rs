@@ -1,5 +1,5 @@
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{Result, assert_that};
 use std::io::{Read, Write};
 
 const VERSION_MW: u32 = 8;

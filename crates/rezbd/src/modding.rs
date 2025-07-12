@@ -1,5 +1,5 @@
-use crate::commands::buf_writer;
 use crate::ZrdOpts;
+use crate::commands::buf_writer;
 use eyre::{Context as _, OptionExt as _, Result};
 use image::{ColorType, DynamicImage, GenericImageView, ImageFormat};
 use mech3ax_api_types::image::{TextureAlpha, TextureManifest};

@@ -3,7 +3,7 @@ use mech3ax_api_types::gamez::nodes::{
     ActiveBoundingBox, BoundingBox, NodeData, NodeFlags, Partition,
 };
 use mech3ax_api_types::{Count, IndexO};
-use mech3ax_types::{impl_as_bytes, primitive_enum, Offsets, Ptr};
+use mech3ax_types::{Offsets, Ptr, impl_as_bytes, primitive_enum};
 
 pub(crate) struct NodeInfo {
     pub(crate) name: String,

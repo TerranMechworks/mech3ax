@@ -1,10 +1,10 @@
 use super::{AnimActivationC, VALUES_SIZE};
 use log::trace;
-use mech3ax_api_types::saves::{ActivationType, AnimActivation};
 use mech3ax_api_types::Bytes;
+use mech3ax_api_types::saves::{ActivationType, AnimActivation};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_common::{Result, assert_that, assert_with_msg};
 use std::io::{Cursor, Read};
 use std::num::NonZeroU32;
 

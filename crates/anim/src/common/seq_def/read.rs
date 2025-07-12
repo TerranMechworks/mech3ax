@@ -4,7 +4,7 @@ use mech3ax_api_types::anim::events::Event;
 use mech3ax_api_types::anim::{AnimDef, ResetState, SeqDef, SiScript};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{Result, assert_that};
 use std::io::Read;
 
 pub(crate) trait ReadEvents<R: Read> {

@@ -1,10 +1,10 @@
 use crate::flags::NodeBitFlags;
 use crate::rc::node::{NodeVariantRc, NodeVariantsRc};
 use crate::types::ZONE_ALWAYS;
-use mech3ax_api_types::nodes::rc::Light;
-use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_api_types::Vec3;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_api_types::nodes::BoundingBox;
+use mech3ax_api_types::nodes::rc::Light;
+use mech3ax_common::{Result, assert_that};
 
 const BBOX_LIGHT: BoundingBox = BoundingBox {
     a: Vec3 {

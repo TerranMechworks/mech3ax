@@ -1,9 +1,9 @@
-use super::{MapHeaderC, MAP_VERSION};
+use super::{MAP_VERSION, MapHeaderC};
 use log::trace;
-use mech3ax_api_types::zmap::{MapColor, MapFeature, Zmap};
 use mech3ax_api_types::Vec3;
+use mech3ax_api_types::zmap::{MapColor, MapFeature, Zmap};
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{Result, assert_that};
 use std::io::Read;
 
 fn read_map_feature(

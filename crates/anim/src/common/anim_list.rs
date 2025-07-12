@@ -2,9 +2,9 @@ use crate::common::fixup::{Fwd, Rev};
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::anim::AnimDefFile;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_len, Result};
+use mech3ax_common::{Result, assert_len};
 use mech3ax_timestamp::unix::{from_timestamp, to_timestamp};
-use mech3ax_types::{impl_as_bytes, Ascii};
+use mech3ax_types::{Ascii, impl_as_bytes};
 use std::io::{Read, Write};
 
 /// An `ANIMATION_LIST` (header?).

@@ -3,10 +3,10 @@ use crate::nodes::helpers::write_node_indices;
 use crate::nodes::math::partition_diag;
 use crate::nodes::range::RangeI32;
 use log::trace;
-use mech3ax_api_types::gamez::nodes::World;
 use mech3ax_api_types::Vec3;
+use mech3ax_api_types::gamez::nodes::World;
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{len, Result};
+use mech3ax_common::{Result, len};
 use mech3ax_types::{Hex, Ptr, SupportsMaybe as _};
 use std::io::Write;
 

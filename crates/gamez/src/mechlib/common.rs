@@ -1,9 +1,9 @@
 use crate::materials::{read_material_mechlib, write_material_mechlib};
 use log::trace;
-use mech3ax_api_types::gamez::MechlibMaterial;
 use mech3ax_api_types::Count32;
+use mech3ax_api_types::gamez::MechlibMaterial;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{chk, err, len, GameType, Result};
+use mech3ax_common::{GameType, Result, chk, err, len};
 use std::io::{Read, Write};
 
 pub const VERSION_MW: u32 = 27;

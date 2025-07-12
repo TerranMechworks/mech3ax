@@ -1,6 +1,6 @@
 use super::DateTime;
 use serde::{Deserialize, Serialize};
-use serde_test::{assert_tokens, Configure as _, Token};
+use serde_test::{Configure as _, Token, assert_tokens};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 struct Time {

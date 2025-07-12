@@ -1,11 +1,11 @@
 use super::{NodeRefC, ObjectRefC};
 use crate::common::support::affine_to_bin;
 use log::trace;
-use mech3ax_api_types::anim::{NodeRef, ObjectRef};
 use mech3ax_api_types::AffineMatrix;
+use mech3ax_api_types::anim::{NodeRef, ObjectRef};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, Result};
+use mech3ax_common::{Result, assert_that};
 use mech3ax_types::Ptr;
 use std::collections::HashSet;
 use std::io::Read;

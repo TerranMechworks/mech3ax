@@ -1,6 +1,6 @@
 use super::{FLOAT, INT, LIST, STRING};
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_with_msg, Result};
+use mech3ax_common::{Result, assert_with_msg};
 use serde_json::{Number, Value};
 use std::io::Read;
 

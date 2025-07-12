@@ -2,7 +2,7 @@ use super::{AnimDefC, AnimDefFlags};
 use crate::common::activation_prereq::write_activ_prereqs;
 use crate::common::fixup::Rev;
 use crate::common::seq_def::{
-    write_reset_state_pg, write_sequence_defs, SeqDefInfoC, WriteEventsMw,
+    SeqDefInfoC, WriteEventsMw, write_reset_state_pg, write_sequence_defs,
 };
 use crate::common::support::{
     write_anim_refs, write_dynamic_sounds, write_lights, write_nodes, write_objects, write_puffers,
@@ -12,7 +12,7 @@ use mech3ax_anim_events::mw::size_events;
 use mech3ax_anim_names::mw::{anim_name_rev, anim_root_name_rev};
 use mech3ax_api_types::anim::{AnimDef, Execution, SiScript};
 use mech3ax_common::io_ext::CountingWriter;
-use mech3ax_common::{assert_len, assert_with_msg, Result};
+use mech3ax_common::{Result, assert_len, assert_with_msg};
 use mech3ax_types::{Ascii, Ptr, Zeros};
 use std::io::Write;
 

@@ -18,14 +18,14 @@ mod ptr;
 mod zeros;
 
 pub use as_bytes::AsBytes;
-pub use ascii::{str_from_ascii, str_to_ascii, string_from_ascii, Ascii};
-pub use boolean::{Bool16, Bool32, Bool8};
+pub use ascii::{Ascii, str_from_ascii, str_to_ascii, string_from_ascii};
+pub use boolean::{Bool8, Bool16, Bool32};
 pub use bytes::Bytes;
-pub use cast::{i32_to_usize, u16_to_usize, u32_to_i64, u32_to_usize, AsUsize};
+pub use cast::{AsUsize, i32_to_usize, u16_to_usize, u32_to_i64, u32_to_usize};
 pub use enumerate::EnumerateEx;
 pub use hex::Hex;
 pub use maybe::{Maybe, SupportsMaybe};
-pub use mech3ax_types_proc_macro::{json_flags, Offsets};
+pub use mech3ax_types_proc_macro::{Offsets, json_flags};
 pub use padded::{PaddedI8, PaddedU8};
 pub use ptr::Ptr;
 pub use zeros::Zeros;

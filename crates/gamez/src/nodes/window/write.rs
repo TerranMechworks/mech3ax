@@ -1,7 +1,7 @@
 use super::{WindowC, WindowClearPolygonC};
 use mech3ax_api_types::gamez::nodes::Window;
-use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::Result;
+use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_types::Ptr;
 use std::io::Write;
 

@@ -5,7 +5,7 @@ use crate::nodes::types::{AreaPartitionC, NodeClass};
 use bytemuck::{AnyBitPattern, NoUninit};
 use mech3ax_api_types::gamez::nodes::{BoundingBox, NodeFlags};
 use mech3ax_api_types::{Count32, IndexO32, Vec3};
-use mech3ax_types::{impl_as_bytes, Ascii, Maybe, Offsets, PaddedI8, Ptr};
+use mech3ax_types::{Ascii, Maybe, Offsets, PaddedI8, Ptr, impl_as_bytes};
 pub(crate) use read::{assert_node, assert_node_zero};
 pub(crate) use write::{make_node, make_node_zero};
 

@@ -3,7 +3,7 @@ use mech3ax_api_types::gamez::materials::{ColoredMaterial, CycleData, Soil};
 use mech3ax_api_types::gamez::{MechlibColoredMaterial, MechlibMaterial, MechlibTexturedMaterial};
 use mech3ax_api_types::{Color, Count, IndexR, IndexR32};
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{chk, Result};
+use mech3ax_common::{Result, chk};
 use mech3ax_types::Ptr;
 use std::io::Read;
 

@@ -1,5 +1,5 @@
 use crate::serde::bytes;
-use crate::{api, Quaternion, Vec3};
+use crate::{Quaternion, Vec3, api};
 
 api! {
     struct TranslateData {

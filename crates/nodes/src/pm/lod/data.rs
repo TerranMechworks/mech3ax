@@ -1,11 +1,11 @@
 use crate::pm::node::NodeVariantLodPm;
 use crate::pm::wrappers::WrapperPm;
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_api_types::nodes::pm::Lod;
 use mech3ax_api_types::Range;
+use mech3ax_api_types::nodes::pm::Lod;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
-use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, Bool32, Zeros};
+use mech3ax_common::{Result, assert_that};
+use mech3ax_types::{Bool32, Zeros, impl_as_bytes};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]

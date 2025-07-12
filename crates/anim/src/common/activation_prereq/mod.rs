@@ -2,7 +2,7 @@ mod read;
 mod write;
 
 use bytemuck::{AnyBitPattern, NoUninit};
-use mech3ax_types::{impl_as_bytes, primitive_enum, Ascii, Bool32, Maybe, Ptr};
+use mech3ax_types::{Ascii, Bool32, Maybe, Ptr, impl_as_bytes, primitive_enum};
 pub(crate) use read::read_activ_prereqs;
 pub(crate) use write::write_activ_prereqs;
 

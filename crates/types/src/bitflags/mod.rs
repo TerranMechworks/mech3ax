@@ -1,7 +1,7 @@
 mod disp;
 mod display_set;
 
-pub use disp::{format_flags_u16, format_flags_u32, format_flags_u8, gather_flags};
+pub use disp::{format_flags_u8, format_flags_u16, format_flags_u32, gather_flags};
 
 #[macro_export]
 macro_rules! bitflags {

@@ -6,7 +6,7 @@ use mech3ax_api_types::gamez::model::{
 };
 use mech3ax_api_types::{Count, IndexR, IndexR32, Vec3};
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_that, chk, Result};
+use mech3ax_common::{Result, assert_that, chk};
 use mech3ax_types::{Maybe, Ptr};
 use std::io::Read;
 
@@ -199,8 +199,7 @@ pub(crate) fn read_model_data(
     if wrapped.vertex_count > 0 {
         trace!(
             "Processing {} vertices at {}",
-            wrapped.vertex_count,
-            read.offset
+            wrapped.vertex_count, read.offset
         );
         model.vertices = read_vec3s(read, wrapped.vertex_count)?;
     }
@@ -208,8 +207,7 @@ pub(crate) fn read_model_data(
     if wrapped.normal_count > 0 {
         trace!(
             "Processing {} normals at {}",
-            wrapped.normal_count,
-            read.offset
+            wrapped.normal_count, read.offset
         );
         model.normals = read_vec3s(read, wrapped.normal_count)?;
     }
@@ -217,8 +215,7 @@ pub(crate) fn read_model_data(
     if wrapped.morph_count > 0 {
         trace!(
             "Processing {} morphs at {}",
-            wrapped.morph_count,
-            read.offset
+            wrapped.morph_count, read.offset
         );
         model.morphs = read_vec3s(read, wrapped.morph_count)?;
     }
@@ -226,8 +223,7 @@ pub(crate) fn read_model_data(
     if wrapped.light_count > 0 {
         trace!(
             "Processing {} lights at {}",
-            wrapped.light_count,
-            read.offset
+            wrapped.light_count, read.offset
         );
         model.lights = read_lights(read, wrapped.light_count)?;
     }
@@ -236,8 +232,7 @@ pub(crate) fn read_model_data(
 
     trace!(
         "Processing {} material refs at {}",
-        wrapped.material_ref_count,
-        read.offset
+        wrapped.material_ref_count, read.offset
     );
     // material references are discarded, since they can be re-calculated
     for _ in 0..wrapped.material_ref_count {
@@ -273,16 +268,14 @@ fn read_polygons(
 
             trace!(
                 "Processing {} vertex indices at {}",
-                verts_in_poly,
-                read.offset
+                verts_in_poly, read.offset
             );
             polygon.vertex_indices = read_u32s(read, verts_in_poly)?;
 
             if polygon.normal_indices_ptr != 0 {
                 trace!(
                     "Processing {} normal indices at {}",
-                    verts_in_poly,
-                    read.offset
+                    verts_in_poly, read.offset
                 );
                 polygon.normal_indices = Some(read_u32s(read, verts_in_poly)?);
             }
@@ -297,8 +290,7 @@ fn read_polygons(
 
             trace!(
                 "Processing {} vertex colors at {}",
-                verts_in_poly,
-                read.offset
+                verts_in_poly, read.offset
             );
             polygon.vertex_colors = read_colors(read, verts_in_poly)?;
 
@@ -316,8 +308,7 @@ fn read_materials(
 ) -> Result<Vec<PolygonMaterial>> {
     trace!(
         "Processing {} material indices at {}",
-        mat_count,
-        read.offset
+        mat_count, read.offset
     );
     let material_indices = (0..mat_count)
         .map(|_| {

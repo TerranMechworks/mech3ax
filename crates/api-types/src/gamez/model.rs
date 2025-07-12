@@ -1,5 +1,5 @@
 use crate::serde::bool_false;
-use crate::{api, bit, num, Color, IndexR, Vec3};
+use crate::{Color, IndexR, Vec3, api, bit, num};
 use mech3ax_types::impl_as_bytes;
 
 api! {

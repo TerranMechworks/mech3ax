@@ -1,14 +1,14 @@
-use super::{HeaderOneC, HeaderTwoC, Mode, TableEntryC, Version, VERSION_ONE, VERSION_TWO};
+use super::{HeaderOneC, HeaderTwoC, Mode, TableEntryC, VERSION_ONE, VERSION_TWO, Version};
 use log::{debug, trace};
 use mech3ax_api_types::archive::{
     ArchiveEntry, ArchiveEntryInfo, ArchiveEntryInfoInvalid, ArchiveEntryInfoValid,
 };
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
-use mech3ax_common::{assert_len, assert_that, assert_with_msg, Error, Rename, Result};
-use mech3ax_crc32::{crc32_update, CRC32_INIT};
+use mech3ax_common::{Error, Rename, Result, assert_len, assert_that, assert_with_msg};
+use mech3ax_crc32::{CRC32_INIT, crc32_update};
 use mech3ax_timestamp::nt::from_filetime;
-use mech3ax_types::{u32_to_i64, u32_to_usize, AsBytes};
+use mech3ax_types::{AsBytes, u32_to_i64, u32_to_usize};
 use std::io::{Read, Seek, SeekFrom};
 
 const HEADER_ONE_SIZE: i64 = u32_to_i64(HeaderOneC::SIZE);
@@ -57,10 +57,7 @@ where
 
             trace!(
                 "Reading entry {}/`{}` data with length {} at {}",
-                index,
-                name,
-                len,
-                start
+                index, name, len, start
             );
             assert_that!("entry offset", read.offset == start, index).map_err(Error::Assert)?;
 
