@@ -71,6 +71,9 @@ fn add_gamez(resolver: &mut impl Resolver) {
 
     // --- gamez/mod.rs
     resolver.push::<api::gamez::MechlibModel>();
+    resolver.push::<api::gamez::MechlibTexturedMaterial>();
+    resolver.push::<api::gamez::MechlibColoredMaterial>();
+    resolver.push::<api::gamez::MechlibMaterial>();
     resolver.push::<api::gamez::Texture>();
     resolver.push::<api::gamez::GameZMetadata>();
     resolver.push::<api::gamez::GameZ>();

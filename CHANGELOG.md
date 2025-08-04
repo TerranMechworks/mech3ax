@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [0.7.0-rc2] - 2025-08-03
+
+* Fix interop oversights
+
 ## [0.7.0-rc1] - 2025-07-11
 
 * Update to Rust 1.88.0, edition 2024

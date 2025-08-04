@@ -130,7 +130,7 @@ pub extern "C" fn read_reader_json(
 
 // filename returned by data callback will be .zrd!
 #[unsafe(no_mangle)]
-pub extern "C" fn read_reader_raw(
+pub extern "C" fn read_reader(
     filename: *const c_char,
     game_type_id: i32,
     callback: NameDataCb,
@@ -257,7 +257,7 @@ pub extern "C" fn read_mechlib(
 
 // callback filename will not end in .png! last call will be the manifest
 #[unsafe(no_mangle)]
-pub extern "C" fn read_textures(
+pub extern "C" fn read_images(
     filename: *const c_char,
     _game_type_id: i32,
     callback: NameDataCb,
@@ -326,8 +326,8 @@ pub extern "C" fn read_anim(
         let game = i32_to_game(game_type_id)?;
         match game {
             GameType::MW => {}
-            GameType::PM => bail!("Pirate's Moon support for Anim isn't implemented yet"),
-            GameType::RC => bail!("Recoil support for Anim isn't implemented yet"),
+            GameType::PM => {}
+            GameType::RC => {}
             GameType::CS => bail!("Crimson Skies support for Anim isn't implemented yet"),
         }
         let input = buf_reader(filename)?;
@@ -347,8 +347,13 @@ pub extern "C" fn read_anim(
             buffer_callback(callback, name, &data)
         };
 
-        let metadata = mech3ax_anim::mw::read_anim(&mut read, save_item)
-            .context("Failed to read anim data")?;
+        let metadata = match game {
+            GameType::MW => mech3ax_anim::mw::read_anim(&mut read, save_item),
+            GameType::PM => mech3ax_anim::pm::read_anim(&mut read, save_item),
+            GameType::RC => mech3ax_anim::rc::read_anim(&mut read, save_item),
+            GameType::CS => unreachable!(),
+        }
+        .context("Failed to read anim data")?;
 
         let data = mech3ax_exchange::to_vec(&metadata)?;
         let name = "metadata.bin";

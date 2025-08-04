@@ -13,7 +13,6 @@ use mech3ax_api_types::zmap::Zmap;
 use mech3ax_archive::{Mode, Version};
 use mech3ax_common::GameType;
 use mech3ax_common::io_ext::CountingWriter;
-use serde_json::Value;
 use std::fs::File;
 use std::io::{BufWriter, Cursor};
 use std::os::raw::c_char;
@@ -115,43 +114,8 @@ pub extern "C" fn write_sounds(
     })
 }
 
-fn write_reader_json_transform(name: &str, data: Vec<u8>) -> Result<Vec<u8>> {
-    let value: Value = serde_json::from_slice(&data)
-        .with_context(|| format!("Reader data for `{}` is invalid", name))?;
-
-    let mut buf = CountingWriter::new(Vec::new(), 0);
-    mech3ax_reader::write_reader(&mut buf, &value)
-        .with_context(|| format!("Failed to write reader data for `{}`", name))?;
-    Ok(buf.into_inner())
-}
-
 #[unsafe(no_mangle)]
-pub extern "C" fn write_reader_json(
-    filename: *const c_char,
-    game_type_id: i32,
-    entries_ptr: *const u8,
-    entries_len: usize,
-    callback: NameBufferCb,
-) -> i32 {
-    err_to_c(|| {
-        let game = i32_to_game(game_type_id)?;
-        let version = match game {
-            GameType::MW | GameType::RC | GameType::CS => Version::One,
-            GameType::PM => Version::Two(Mode::Reader),
-        };
-        write_archive(
-            version,
-            filename,
-            entries_ptr,
-            entries_len,
-            callback,
-            write_reader_json_transform,
-        )
-    })
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn write_reader_raw(
+pub extern "C" fn write_reader(
     filename: *const c_char,
     game_type_id: i32,
     entries_ptr: *const u8,
@@ -296,14 +260,14 @@ pub extern "C" fn write_mechlib(
 
 fn parse_manifest(ptr: *const u8, len: usize) -> Result<TextureManifest> {
     if ptr.is_null() {
-        bail!("texture manifest is null");
+        bail!("image manifest is null");
     }
     let buf = unsafe { std::slice::from_raw_parts(ptr, len) };
-    mech3ax_exchange::from_slice(buf).context("texture manifest is invalid")
+    mech3ax_exchange::from_slice(buf).context("image manifest is invalid")
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn write_textures(
+pub extern "C" fn write_images(
     filename: *const c_char,
     _game_type_id: i32,
     manifest_ptr: *const u8,
@@ -327,7 +291,7 @@ pub extern "C" fn write_textures(
                 Ok(image)
             },
         )
-        .context("Failed to write texture package")
+        .context("Failed to write image package")
     })
 }
 
@@ -380,8 +344,8 @@ pub extern "C" fn write_anim(
         let game = i32_to_game(game_type_id)?;
         match game {
             GameType::MW => {}
-            GameType::PM => bail!("Pirate's Moon support for Anim isn't implemented yet"),
-            GameType::RC => bail!("Recoil support for Anim isn't implemented yet"),
+            GameType::PM => {}
+            GameType::RC => {}
             GameType::CS => bail!("Crimson Skies support for Anim isn't implemented yet"),
         }
         let metadata = parse_metadata(metadata_ptr, metadata_len)?;
@@ -406,8 +370,13 @@ pub extern "C" fn write_anim(
                 }
             };
 
-        mech3ax_anim::mw::write_anim(&mut write, &metadata, load_item)
-            .context("Failed to write Anim data")
+        match game {
+            GameType::MW => mech3ax_anim::mw::write_anim(&mut write, &metadata, load_item),
+            GameType::PM => mech3ax_anim::pm::write_anim(&mut write, &metadata, load_item),
+            GameType::RC => mech3ax_anim::rc::write_anim(&mut write, &metadata, load_item),
+            GameType::CS => unreachable!(),
+        }
+        .context("Failed to write Anim data")
     })
 }
 
