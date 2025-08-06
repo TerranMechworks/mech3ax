@@ -152,6 +152,8 @@ namespace {{ union.namespace }}
 {%- endif %}
 {%- endfor %}
 
+        #region "Serialize/Deserialize logic"
+
         private static void Serialize({{ union.name }} v, Serializer s)
         {
             switch (v.Variant)
@@ -198,6 +200,8 @@ namespace {{ union.namespace }}
                     throw new UnknownVariantException("{{ union.name }}", variantIndex);
             }
         }
+
+        #endregion
     }
 }
 

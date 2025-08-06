@@ -165,8 +165,6 @@ namespace {{ struct.namespace }}
         where {{ generic }} : notnull
 {%- endfor %}
     {
-        public static readonly TypeConverter<{{ struct.type_name }}> Converter = new TypeConverter<{{ struct.type_name }}>(Deserialize, Serialize);
-
 {%- for field in struct.fields %}
         public {{ field.ty }} {{ field.name }}{% if field.default %} = {{ field.default }}{% endif %};
 {%- endfor %}
@@ -178,12 +176,9 @@ namespace {{ struct.namespace }}
 {%- endfor %}
         }
 
-        private struct Fields
-        {
-{%- for field in struct.fields %}
-            public Field<{{ field.ty }}> {{ field.name }};
-{%- endfor %}
-        }
+        #region "Serialize/Deserialize logic"
+
+        public static readonly TypeConverter<{{ struct.type_name }}> Converter = new TypeConverter<{{ struct.type_name }}>(Deserialize, Serialize);
 
         public static void Serialize({{ struct.type_name }} v, Serializer s)
         {
@@ -191,6 +186,13 @@ namespace {{ struct.namespace }}
 {%- for field in struct.fields %}
             s.SerializeFieldName("{{ field.key }}");
             {{ field.serde.serialize }}(v.{{ field.name }});
+{%- endfor %}
+        }
+
+        private struct Fields
+        {
+{%- for field in struct.fields %}
+            public Field<{{ field.ty }}> {{ field.name }};
 {%- endfor %}
         }
 
@@ -221,6 +223,8 @@ namespace {{ struct.namespace }}
 {% endfor %}
             );
         }
+
+        #endregion
     }
 }
 
