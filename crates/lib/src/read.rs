@@ -102,32 +102,6 @@ pub extern "C" fn read_sounds(
     })
 }
 
-fn read_reader_json_transform(name: &str, data: Vec<u8>, offset: usize) -> Result<Vec<u8>> {
-    let mut read = CountingReader::new(Cursor::new(data));
-    // translate to absolute offset
-    read.offset = offset;
-    let root = mech3ax_reader::read_reader(&mut read)
-        .with_context(|| format!("Failed to read reader data for `{}`", name))?;
-    Ok(serde_json::to_vec(&root)?)
-}
-
-// filename returned by data callback will be .zrd!
-#[unsafe(no_mangle)]
-pub extern "C" fn read_reader_json(
-    filename: *const c_char,
-    game_type_id: i32,
-    callback: NameDataCb,
-) -> i32 {
-    err_to_c(|| {
-        let game = i32_to_game(game_type_id)?;
-        let version = match game {
-            GameType::MW | GameType::RC | GameType::CS => Version::One,
-            GameType::PM => Version::Two(Mode::Reader),
-        };
-        read_archive(version, filename, callback, read_reader_json_transform)
-    })
-}
-
 // filename returned by data callback will be .zrd!
 #[unsafe(no_mangle)]
 pub extern "C" fn read_reader(
