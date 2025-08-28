@@ -2,7 +2,6 @@ use crate::math::{apply_matrix_signs, euler_to_matrix, extract_matrix_signs, PI}
 use crate::mw::node::NodeVariantsMw;
 use crate::mw::wrappers::WrapperMw;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
 use mech3ax_api_types::nodes::mw::Object3d;
 use mech3ax_api_types::nodes::Transformation;
 use mech3ax_api_types::{Matrix, Vec3};
@@ -85,17 +84,10 @@ fn assert_object3d(object3d: Object3dMwC, offset: usize) -> Result<Option<Transf
     Ok(transformation)
 }
 
-pub fn read(
+pub(crate) fn read(
     read: &mut CountingReader<impl Read>,
     node: NodeVariantsMw,
-    index: usize,
 ) -> Result<WrapperMw<Object3d>> {
-    debug!(
-        "Reading object3d node data {} (mw, {}) at {}",
-        index,
-        Object3dMwC::SIZE,
-        read.offset
-    );
     let object3d: Object3dMwC = read.read_struct()?;
 
     let matrix_signs = extract_matrix_signs(&object3d.matrix);
@@ -126,18 +118,7 @@ pub fn read(
     })
 }
 
-pub fn write(
-    write: &mut CountingWriter<impl Write>,
-    object3d: &Object3d,
-    index: usize,
-) -> Result<()> {
-    debug!(
-        "Writing object3d node data {} (mw, {}) at {}",
-        index,
-        Object3dMwC::SIZE,
-        write.offset
-    );
-
+pub(crate) fn write(write: &mut CountingWriter<impl Write>, object3d: &Object3d) -> Result<()> {
     let (flags, rotation, translation, matrix) = object3d
         .transformation
         .as_ref()
@@ -170,7 +151,7 @@ pub fn write(
     Ok(())
 }
 
-pub fn size(object3d: &Object3d) -> u32 {
+pub(crate) fn size(object3d: &Object3d) -> u32 {
     let parent_size = if object3d.parent.is_some() { 4 } else { 0 };
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let children_length = object3d.children.len() as u32;

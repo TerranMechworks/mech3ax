@@ -1,4 +1,5 @@
 use crate::materials::{read_material, write_material, MatType, RawMaterial};
+use log::trace;
 use mech3ax_api_types::gamez::materials::{Material, TexturedMaterial};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, assert_with_msg, GameType, Result};
@@ -46,11 +47,12 @@ pub fn read_materials(read: &mut CountingReader<impl Read>) -> Result<Vec<Materi
     let count = read.read_u32()?;
     let materials = (0..count)
         .map(|index| {
-            let material = read_material(read, index, MatType::Ng)?;
+            trace!("Reading material {}", index);
+            let material = read_material(read, MatType::Ng)?;
             Ok(match material {
                 RawMaterial::Textured(mat) => {
                     // mechlib materials cannot have cycled textures
-                    assert_that!("cycle ptr", mat.cycle_ptr == None, read.prev + 36)?;
+                    assert_that!("cycle ptr", mat.cycle_ptr == 0, read.prev + 36)?;
                     // mechlib materials store the texture name immediately after
                     let texture = read.read_string()?;
                     Material::Textured(TexturedMaterial {
@@ -77,7 +79,8 @@ pub fn write_materials(
     write.write_u32(materials_len)?;
 
     for (index, material) in materials.iter().enumerate() {
-        write_material(write, material, None, index, MatType::Ng)?;
+        trace!("Writing material {}", index);
+        write_material(write, material, None, MatType::Ng)?;
         if let Material::Textured(textured) = material {
             if textured.cycle.is_some() {
                 return Err(assert_with_msg!(

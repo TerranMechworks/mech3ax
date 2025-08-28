@@ -1,5 +1,6 @@
 use super::HeaderRcC;
 use crate::gamez::common::{SIGNATURE, VERSION_RC};
+use log::debug;
 
 macro_rules! header_m6 {
     ($node_count:literal) => {
@@ -22,12 +23,20 @@ const HEADER_M6_WRITE: HeaderRcC = header_m6!(4955);
 
 pub(super) fn read(header: &mut HeaderRcC) {
     if header == &HEADER_M6_READ {
+        debug!(
+            "m6 header node_count fixup: `{}` -> `{}`",
+            header.node_count, HEADER_M6_WRITE.node_count
+        );
         header.node_count = HEADER_M6_WRITE.node_count;
     }
 }
 
 pub(super) fn write(header: &mut HeaderRcC) {
     if header == &HEADER_M6_WRITE {
+        debug!(
+            "m6 header node_count fixup: `{}` <- `{}`",
+            HEADER_M6_READ.node_count, header.node_count
+        );
         header.node_count = HEADER_M6_READ.node_count;
     }
 }

@@ -8,7 +8,7 @@ use mech3ax_api_types::nodes::{AreaPartition, BoundingBox};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii, Maybe, Ptr};
+use mech3ax_types::{impl_as_bytes, Ascii, Maybe, Ptr};
 use std::io::{Read, Write};
 
 #[derive(Debug)]
@@ -68,9 +68,9 @@ pub enum NodeVariantRc {
 
 type Flags = Maybe<u32, NodeBitFlags>;
 
-#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
-struct NodeRcC {
+pub struct NodeRcC {
     name: Ascii<36>,               // 000
     flags: Flags,                  // 036
     zero040: u32,                  // 040
@@ -98,7 +98,15 @@ struct NodeRcC {
 }
 impl_as_bytes!(NodeRcC, 192);
 
-pub const NODE_RC_C_SIZE: u32 = NodeRcC::SIZE;
+impl NodeRcC {
+    #[inline]
+    pub fn zero() -> Self {
+        Self {
+            mesh_index: -1,
+            ..Default::default()
+        }
+    }
+}
 
 const ABORT_TEST_NODE_NAME: Ascii<36> =
     Ascii::new(b"abort_test\0ng\0ame\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
@@ -110,6 +118,7 @@ fn assert_node(node: NodeRcC, offset: usize) -> Result<(NodeType, NodeVariantsRc
     let node_type = assert_that!("node type", enum NodeType => node.node_type, offset + 52)?;
 
     let name = if node.name == ABORT_TEST_NODE_NAME {
+        debug!("node name `abort_test` fixup");
         ABORT_TEST_NAME.to_string()
     } else {
         assert_utf8("node name", offset + 0, || node.name.to_str_node_name())?
@@ -199,33 +208,157 @@ fn assert_node(node: NodeRcC, offset: usize) -> Result<(NodeType, NodeVariantsRc
     Ok((node_type, variants))
 }
 
-pub fn read_node_info(read: &mut CountingReader<impl Read>, index: u32) -> Result<NodeVariantRc> {
-    debug!(
-        "Reading node info {} (rc, {}) at {}",
-        index,
-        NodeRcC::SIZE,
-        read.offset
-    );
+pub fn read_node_info(read: &mut CountingReader<impl Read>) -> Result<NodeVariantRc> {
     let node: NodeRcC = read.read_struct()?;
 
     let (node_type, node) = assert_node(node, read.prev)?;
-    debug!("Node `{}` read", node.name);
     let variant = match node_type {
+        NodeType::Camera => camera::assert_variants(node, read.prev)?,
+        NodeType::Display => display::assert_variants(node, read.prev)?,
         // Empty nodes only occur in m6?
         NodeType::Empty => empty::assert_variants(node, read.prev)?,
-        // NodeType::Empty => return Err(assert_with_msg!("No Empty")),
-        NodeType::Camera => camera::assert_variants(node, read.prev)?,
-        NodeType::World => world::assert_variants(node, read.prev)?,
-        NodeType::Window => window::assert_variants(node, read.prev)?,
-        NodeType::Display => display::assert_variants(node, read.prev)?,
-        NodeType::Object3d => object3d::assert_variants(node, read.prev)?,
-        NodeType::LoD => lod::assert_variants(node, read.prev)?,
         NodeType::Light => light::assert_variants(node, read.prev)?,
+        NodeType::LoD => lod::assert_variants(node, read.prev)?,
+        NodeType::Object3d => object3d::assert_variants(node, read.prev)?,
+        NodeType::Window => window::assert_variants(node, read.prev)?,
+        NodeType::World => world::assert_variants(node, read.prev)?,
     };
     Ok(variant)
 }
 
-fn assert_node_info_zero(node: NodeRcC, offset: usize) -> Result<()> {
+pub fn read_node_data(
+    read: &mut CountingReader<impl Read>,
+    variant: NodeVariantRc,
+) -> Result<NodeRc> {
+    match variant {
+        NodeVariantRc::Camera { data_ptr } => Ok(NodeRc::Camera(camera::read(read, data_ptr)?)),
+        NodeVariantRc::Display { data_ptr } => Ok(NodeRc::Display(display::read(read, data_ptr)?)),
+        NodeVariantRc::Empty(empty) => Ok(NodeRc::Empty(empty)),
+        NodeVariantRc::Light { data_ptr } => Ok(NodeRc::Light(light::read(read, data_ptr)?)),
+        NodeVariantRc::Lod(node) => Ok(NodeRc::Lod(lod::read(read, node)?)),
+        NodeVariantRc::Object3d(node) => Ok(NodeRc::Object3d(object3d::read(read, node)?)),
+        NodeVariantRc::Window { data_ptr } => Ok(NodeRc::Window(window::read(read, data_ptr)?)),
+        NodeVariantRc::World {
+            data_ptr,
+            children_count,
+            children_array_ptr,
+        } => Ok(NodeRc::World(world::read(
+            read,
+            data_ptr,
+            children_count,
+            children_array_ptr,
+        )?)),
+    }
+}
+
+fn write_variant(
+    write: &mut CountingWriter<impl Write>,
+    node_type: NodeType,
+    variant: NodeVariantsRc,
+) -> Result<()> {
+    let name = if variant.name == ABORT_TEST_NAME {
+        debug!("node name `abort_test` fixup");
+        ABORT_TEST_NODE_NAME
+    } else {
+        Ascii::from_str_node_name(&variant.name)
+    };
+
+    let area_partition = variant.area_partition.unwrap_or(AreaPartition::DEFAULT);
+
+    let node = NodeRcC {
+        name,
+        flags: variant.flags.maybe(),
+        zero040: 0,
+        unk044: variant.unk044,
+        zone_id: variant.zone_id,
+        node_type: node_type as u32,
+        data_ptr: Ptr(variant.data_ptr),
+        mesh_index: variant.mesh_index,
+        environment_data: 0,
+        action_priority: 1,
+        action_callback: 0,
+        area_partition,
+        parent_count: variant.parent_count,
+        parent_array_ptr: Ptr(variant.parent_array_ptr),
+        children_count: variant.children_count,
+        children_array_ptr: Ptr(variant.children_array_ptr),
+        zero100: 0,
+        zero104: 0,
+        zero108: 0,
+        zero112: 0,
+        unk116: variant.unk116,
+        unk140: variant.unk140,
+        unk164: variant.unk164,
+        zero188: 0,
+    };
+    write.write_struct(&node)?;
+    Ok(())
+}
+
+pub fn write_node_info(write: &mut CountingWriter<impl Write>, node: &NodeRc) -> Result<()> {
+    match node {
+        NodeRc::Camera(camera) => {
+            let variant = camera::make_variants(camera);
+            write_variant(write, NodeType::Camera, variant)
+        }
+        NodeRc::Display(display) => {
+            let variant = display::make_variants(display);
+            write_variant(write, NodeType::Display, variant)
+        }
+        NodeRc::Empty(empty) => {
+            let variant = empty::make_variants(empty);
+            write_variant(write, NodeType::Empty, variant)
+        }
+        NodeRc::Light(light) => {
+            let variant = light::make_variants(light);
+            write_variant(write, NodeType::Light, variant)
+        }
+        NodeRc::Lod(lod) => {
+            let variant = lod::make_variants(lod)?;
+            write_variant(write, NodeType::LoD, variant)
+        }
+        NodeRc::Object3d(object3d) => {
+            let variant = object3d::make_variants(object3d)?;
+            write_variant(write, NodeType::Object3d, variant)
+        }
+        NodeRc::Window(window) => {
+            let variant = window::make_variants(window);
+            write_variant(write, NodeType::Window, variant)
+        }
+        NodeRc::World(world) => {
+            let variant = world::make_variants(world)?;
+            write_variant(write, NodeType::World, variant)
+        }
+    }
+}
+
+pub fn write_node_data(write: &mut CountingWriter<impl Write>, node: &NodeRc) -> Result<()> {
+    match node {
+        NodeRc::Camera(camera) => camera::write(write, camera),
+        NodeRc::Display(display) => display::write(write, display),
+        NodeRc::Empty(_) => Ok(()),
+        NodeRc::Light(light) => light::write(write, light),
+        NodeRc::Lod(lod) => lod::write(write, lod),
+        NodeRc::Object3d(object3d) => object3d::write(write, object3d),
+        NodeRc::Window(window) => window::write(write, window),
+        NodeRc::World(world) => world::write(write, world),
+    }
+}
+
+pub fn size_node(node: &NodeRc) -> u32 {
+    match node {
+        NodeRc::Camera(_) => camera::size(),
+        NodeRc::Empty(_) => empty::size(),
+        NodeRc::Display(_) => display::size(),
+        NodeRc::Light(_) => light::size(),
+        NodeRc::Lod(lod) => lod::size(lod),
+        NodeRc::Object3d(object3d) => object3d::size(object3d),
+        NodeRc::Window(_) => window::size(),
+        NodeRc::World(world) => world::size(world),
+    }
+}
+
+pub fn assert_node_info_zero(node: &NodeRcC, offset: usize) -> Result<()> {
     assert_that!("name", zero node.name, offset + 0)?;
     assert_that!("flags", node.flags == Flags::empty(), offset + 36)?;
     assert_that!("node type", node.node_type == 0, offset + 52)?;
@@ -265,207 +398,4 @@ fn assert_node_info_zero(node: NodeRcC, offset: usize) -> Result<()> {
     assert_that!("bbox 3", node.unk164 == BoundingBox::EMPTY, offset + 164)?;
     assert_that!("field 188", node.zero188 == 0, offset + 188)?;
     Ok(())
-}
-
-pub fn read_node_info_zero(read: &mut CountingReader<impl Read>, index: u32) -> Result<()> {
-    debug!(
-        "Reading zero node info {} (rc, {}) at {}",
-        index,
-        NodeRcC::SIZE,
-        read.offset
-    );
-    let node: NodeRcC = read.read_struct()?;
-    assert_node_info_zero(node, read.prev)
-}
-
-fn write_variant(
-    write: &mut CountingWriter<impl Write>,
-    node_type: NodeType,
-    variant: NodeVariantsRc,
-    index: usize,
-) -> Result<()> {
-    debug!(
-        "Writing node info {} (rc, {}) at {}",
-        index,
-        NodeRcC::SIZE,
-        write.offset
-    );
-
-    let name = if variant.name == ABORT_TEST_NAME {
-        ABORT_TEST_NODE_NAME
-    } else {
-        Ascii::from_str_node_name(&variant.name)
-    };
-
-    let area_partition = variant.area_partition.unwrap_or(AreaPartition::DEFAULT);
-
-    let node = NodeRcC {
-        name,
-        flags: variant.flags.maybe(),
-        zero040: 0,
-        unk044: variant.unk044,
-        zone_id: variant.zone_id,
-        node_type: node_type as u32,
-        data_ptr: Ptr(variant.data_ptr),
-        mesh_index: variant.mesh_index,
-        environment_data: 0,
-        action_priority: 1,
-        action_callback: 0,
-        area_partition,
-        parent_count: variant.parent_count,
-        parent_array_ptr: Ptr(variant.parent_array_ptr),
-        children_count: variant.children_count,
-        children_array_ptr: Ptr(variant.children_array_ptr),
-        zero100: 0,
-        zero104: 0,
-        zero108: 0,
-        zero112: 0,
-        unk116: variant.unk116,
-        unk140: variant.unk140,
-        unk164: variant.unk164,
-        zero188: 0,
-    };
-    write.write_struct(&node)?;
-    Ok(())
-}
-
-pub fn write_node_info(
-    write: &mut CountingWriter<impl Write>,
-    node: &NodeRc,
-    index: usize,
-) -> Result<()> {
-    match node {
-        NodeRc::Camera(camera) => {
-            let variant = camera::make_variants(camera);
-            write_variant(write, NodeType::Camera, variant, index)
-        }
-        NodeRc::Display(display) => {
-            let variant = display::make_variants(display);
-            write_variant(write, NodeType::Display, variant, index)
-        }
-        NodeRc::Empty(empty) => {
-            let variant = empty::make_variants(empty);
-            write_variant(write, NodeType::Empty, variant, index)
-        }
-        NodeRc::Light(light) => {
-            let variant = light::make_variants(light);
-            write_variant(write, NodeType::Light, variant, index)
-        }
-        NodeRc::Lod(lod) => {
-            let variant = lod::make_variants(lod)?;
-            write_variant(write, NodeType::LoD, variant, index)
-        }
-        NodeRc::Object3d(object3d) => {
-            let variant = object3d::make_variants(object3d)?;
-            write_variant(write, NodeType::Object3d, variant, index)
-        }
-        NodeRc::Window(window) => {
-            let variant = window::make_variants(window);
-            write_variant(write, NodeType::Window, variant, index)
-        }
-        NodeRc::World(world) => {
-            let variant = world::make_variants(world)?;
-            write_variant(write, NodeType::World, variant, index)
-        }
-    }
-}
-
-pub fn write_node_info_zero(write: &mut CountingWriter<impl Write>, index: u32) -> Result<()> {
-    debug!(
-        "Writing zero node info {} (rc, {}) at {}",
-        index,
-        NodeRcC::SIZE,
-        write.offset
-    );
-    let node = NodeRcC {
-        name: Ascii::zero(),
-        flags: Flags::empty(),
-        zero040: 0,
-        unk044: 0,
-        zone_id: 0,
-        node_type: 0,
-        data_ptr: Ptr::NULL,
-        mesh_index: -1,
-        environment_data: 0,
-        action_priority: 0,
-        action_callback: 0,
-        area_partition: AreaPartition::ZERO,
-        parent_count: 0,
-        parent_array_ptr: Ptr::NULL,
-        children_count: 0,
-        children_array_ptr: Ptr::NULL,
-        zero100: 0,
-        zero104: 0,
-        zero108: 0,
-        zero112: 0,
-        unk116: BoundingBox::EMPTY,
-        unk140: BoundingBox::EMPTY,
-        unk164: BoundingBox::EMPTY,
-        zero188: 0,
-    };
-    write.write_struct(&node)?;
-    Ok(())
-}
-
-pub fn read_node_data(
-    read: &mut CountingReader<impl Read>,
-    variant: NodeVariantRc,
-    index: usize,
-) -> Result<NodeRc> {
-    match variant {
-        NodeVariantRc::Camera { data_ptr } => {
-            Ok(NodeRc::Camera(camera::read(read, data_ptr, index)?))
-        }
-        NodeVariantRc::Display { data_ptr } => {
-            Ok(NodeRc::Display(display::read(read, data_ptr, index)?))
-        }
-        NodeVariantRc::Empty(empty) => Ok(NodeRc::Empty(empty)),
-        NodeVariantRc::Light { data_ptr } => Ok(NodeRc::Light(light::read(read, data_ptr, index)?)),
-        NodeVariantRc::Lod(node) => Ok(NodeRc::Lod(lod::read(read, node, index)?)),
-        NodeVariantRc::Object3d(node) => Ok(NodeRc::Object3d(object3d::read(read, node, index)?)),
-        NodeVariantRc::Window { data_ptr } => {
-            Ok(NodeRc::Window(window::read(read, data_ptr, index)?))
-        }
-        NodeVariantRc::World {
-            data_ptr,
-            children_count,
-            children_array_ptr,
-        } => Ok(NodeRc::World(world::read(
-            read,
-            data_ptr,
-            children_count,
-            children_array_ptr,
-            index,
-        )?)),
-    }
-}
-
-pub fn size_node(node: &NodeRc) -> u32 {
-    match node {
-        NodeRc::Camera(_) => camera::size(),
-        NodeRc::Empty(_) => empty::size(),
-        NodeRc::Display(_) => display::size(),
-        NodeRc::Light(_) => light::size(),
-        NodeRc::Lod(lod) => lod::size(lod),
-        NodeRc::Object3d(object3d) => object3d::size(object3d),
-        NodeRc::Window(_) => window::size(),
-        NodeRc::World(world) => world::size(world),
-    }
-}
-
-pub fn write_node_data(
-    write: &mut CountingWriter<impl Write>,
-    node: &NodeRc,
-    index: usize,
-) -> Result<()> {
-    match node {
-        NodeRc::Camera(camera) => camera::write(write, camera, index),
-        NodeRc::Display(display) => display::write(write, display, index),
-        NodeRc::Empty(_) => Ok(()),
-        NodeRc::Light(light) => light::write(write, light, index),
-        NodeRc::Lod(lod) => lod::write(write, lod, index),
-        NodeRc::Object3d(object3d) => object3d::write(write, object3d, index),
-        NodeRc::Window(window) => window::write(write, window, index),
-        NodeRc::World(world) => world::write(write, world, index),
-    }
 }

@@ -44,7 +44,7 @@ const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     | 0,
 );
 
-pub fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<NodeVariantRc> {
+pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<NodeVariantRc> {
     let is_borked = has_borked_parents(node.data_ptr, node.parent_array_ptr);
 
     // cannot assert name
@@ -86,7 +86,7 @@ pub fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<NodeVarian
     Ok(NodeVariantRc::Object3d(node))
 }
 
-pub fn make_variants(object3d: &Object3d) -> Result<NodeVariantsRc> {
+pub(crate) fn make_variants(object3d: &Object3d) -> Result<NodeVariantsRc> {
     let is_borked = has_borked_parents(object3d.data_ptr, object3d.parent_array_ptr);
 
     let parent_count = if is_borked {

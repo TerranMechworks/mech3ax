@@ -39,15 +39,15 @@ bitflags! {
 }
 
 impl NodeBitFlags {
-    pub const BASE: Self = Self::from_bits_truncate(
+    pub(crate) const BASE: Self = Self::from_bits_truncate(
         Self::ACTIVE.bits() | Self::TREE_VALID.bits() | Self::ID_ZONE_CHECK.bits(),
     );
-    pub const DEFAULT: Self = Self::from_bits_truncate(
+    pub(crate) const DEFAULT: Self = Self::from_bits_truncate(
         Self::BASE.bits() | Self::ALTITUDE_SURFACE.bits() | Self::INTERSECT_SURFACE.bits(),
     );
 
     #[inline]
-    pub const fn mask_not(self, v: Self) -> Self {
+    pub(crate) const fn mask_not(self, v: Self) -> Self {
         Self(self.0 & (!v.0))
     }
 }
@@ -147,12 +147,12 @@ bitflags! {
 
 impl NodeBitFlagsCs {
     #[inline]
-    pub const fn mask_not(self, v: Self) -> Self {
+    pub(crate) const fn mask_not(self, v: Self) -> Self {
         Self(self.0 & (!v.0))
     }
 
     #[inline]
-    pub const fn mask(self, v: Self) -> Self {
+    pub(crate) const fn mask(self, v: Self) -> Self {
         Self(self.0 & v.0)
     }
 }

@@ -1,6 +1,5 @@
 use crate::math::cotangent;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
 use mech3ax_api_types::nodes::Camera;
 use mech3ax_api_types::{Matrix, Range, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -10,44 +9,44 @@ use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
-pub struct CameraC {
-    pub world_index: i32,       // 000
-    pub window_index: i32,      // 004
-    pub focus_node_xy: i32,     // 008
-    pub focus_node_xz: i32,     // 012
-    pub flags: u32,             // 016
-    pub translation: Vec3,      // 020
-    pub rotation: Vec3,         // 032
-    pub world_translate: Vec3,  // 044
-    pub world_rotate: Vec3,     // 056
-    pub mtw_matrix: Matrix,     // 068
-    pub unk104: Vec3,           // 104
-    pub view_vector: Vec3,      // 116
-    pub matrix: Matrix,         // 128
-    pub alt_translate: Vec3,    // 164
-    pub clip: Range,            // 176
-    pub zero184: Zeros<24>,     // 184
-    pub lod_multiplier: f32,    // 208
-    pub lod_inv_sq: f32,        // 212
-    pub fov_h_zoom_factor: f32, // 216
-    pub fov_v_zoom_factor: f32, // 220
-    pub fov_h_base: f32,        // 224
-    pub fov_v_base: f32,        // 228
-    pub fov: Range,             // 232
-    pub fov_h_half: f32,        // 240
-    pub fov_v_half: f32,        // 244
-    pub one248: u32,            // 248
-    pub zero252: Zeros<60>,     // 252
-    pub one312: u32,            // 312
-    pub zero316: Zeros<72>,     // 316
-    pub one388: u32,            // 388
-    pub zero392: Zeros<72>,     // 392
-    pub zero464: u32,           // 464
-    pub fov_h_cot: f32,         // 468
-    pub fov_v_cot: f32,         // 472
-    pub stride: i32,            // 476
-    pub zone_set: i32,          // 480
-    pub unk484: i32,            // 484
+pub(crate) struct CameraC {
+    pub(crate) world_index: i32,       // 000
+    pub(crate) window_index: i32,      // 004
+    pub(crate) focus_node_xy: i32,     // 008
+    pub(crate) focus_node_xz: i32,     // 012
+    pub(crate) flags: u32,             // 016
+    pub(crate) translation: Vec3,      // 020
+    pub(crate) rotation: Vec3,         // 032
+    pub(crate) world_translate: Vec3,  // 044
+    pub(crate) world_rotate: Vec3,     // 056
+    pub(crate) mtw_matrix: Matrix,     // 068
+    pub(crate) unk104: Vec3,           // 104
+    pub(crate) view_vector: Vec3,      // 116
+    pub(crate) matrix: Matrix,         // 128
+    pub(crate) alt_translate: Vec3,    // 164
+    pub(crate) clip: Range,            // 176
+    pub(crate) zero184: Zeros<24>,     // 184
+    pub(crate) lod_multiplier: f32,    // 208
+    pub(crate) lod_inv_sq: f32,        // 212
+    pub(crate) fov_h_zoom_factor: f32, // 216
+    pub(crate) fov_v_zoom_factor: f32, // 220
+    pub(crate) fov_h_base: f32,        // 224
+    pub(crate) fov_v_base: f32,        // 228
+    pub(crate) fov: Range,             // 232
+    pub(crate) fov_h_half: f32,        // 240
+    pub(crate) fov_v_half: f32,        // 244
+    pub(crate) one248: u32,            // 248
+    pub(crate) zero252: Zeros<60>,     // 252
+    pub(crate) one312: u32,            // 312
+    pub(crate) zero316: Zeros<72>,     // 316
+    pub(crate) one388: u32,            // 388
+    pub(crate) zero392: Zeros<72>,     // 392
+    pub(crate) zero464: u32,           // 464
+    pub(crate) fov_h_cot: f32,         // 468
+    pub(crate) fov_v_cot: f32,         // 472
+    pub(crate) stride: i32,            // 476
+    pub(crate) zone_set: i32,          // 480
+    pub(crate) unk484: i32,            // 484
 }
 impl_as_bytes!(CameraC, 488);
 
@@ -181,13 +180,7 @@ fn assert_camera(camera: &CameraC, offset: usize) -> Result<()> {
     Ok(())
 }
 
-pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -> Result<Camera> {
-    debug!(
-        "Reading camera node data {} ({}) at {}",
-        index,
-        CameraC::SIZE,
-        read.offset
-    );
+pub(crate) fn read(read: &mut CountingReader<impl Read>, data_ptr: u32) -> Result<Camera> {
     let camera: CameraC = read.read_struct()?;
 
     assert_camera(&camera, read.prev)?;
@@ -200,14 +193,7 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -
     })
 }
 
-pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera, index: usize) -> Result<()> {
-    debug!(
-        "Writing camera node data {} ({}) at {}",
-        index,
-        CameraC::SIZE,
-        write.offset
-    );
-
+pub(crate) fn write(write: &mut CountingWriter<impl Write>, camera: &Camera) -> Result<()> {
     let fov_h_half = camera.fov.min / 2.0;
     let fov_v_half = camera.fov.max / 2.0;
 
@@ -254,6 +240,6 @@ pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera, index: usi
     Ok(())
 }
 
-pub fn size() -> u32 {
+pub(crate) fn size() -> u32 {
     CameraC::SIZE
 }

@@ -6,7 +6,6 @@ use super::common::{NODE_INDEX_INVALID, SIGNATURE, VERSION_RC};
 use crate::materials;
 use crate::textures::rc as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
 use mech3ax_api_types::gamez::GameZDataRc;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
@@ -28,16 +27,10 @@ struct HeaderRcC {
 }
 impl_as_bytes!(HeaderRcC, 36);
 
-pub const NODE_ARRAY_SIZE: u32 = 16000;
+pub(crate) const NODE_ARRAY_SIZE: u32 = 16000;
 
 pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataRc> {
-    debug!(
-        "Reading gamez header (rc, {}) at {}",
-        HeaderRcC::SIZE,
-        read.offset
-    );
     let mut header: HeaderRcC = read.read_struct()?;
-
     fixup::read(&mut header);
 
     assert_that!("signature", header.signature == SIGNATURE, read.prev + 0)?;
@@ -93,7 +86,6 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataRc> {
     assert_that!("meshes offset", read.offset == meshes_offset, read.offset)?;
     let (meshes, meshes_count) = meshes::read_meshes(read, nodes_offset, material_count)?;
     assert_that!("nodes offset", read.offset == nodes_offset, read.offset)?;
-    debug!("Reading {} nodes at {}", header.node_count, read.offset);
     let nodes = nodes::read_nodes(read, header.node_count, meshes_count)?;
     // `read_nodes` calls `assert_end`
 
@@ -115,11 +107,6 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataRc) 
         materials_offset + materials::size_materials(&gamez.materials, materials::MatType::Rc);
     let (nodes_offset, mesh_offsets) = meshes::size_meshes(meshes_offset, &gamez.meshes);
 
-    debug!(
-        "Writing gamez header (rc, {}) at {}",
-        HeaderRcC::SIZE,
-        write.offset
-    );
     let mut header = HeaderRcC {
         signature: SIGNATURE,
         version: VERSION_RC,
@@ -142,7 +129,6 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataRc) 
         materials::MatType::Rc,
     )?;
     meshes::write_meshes(write, &gamez.meshes, &mesh_offsets)?;
-    debug!("Writing {} nodes at {}", node_count, write.offset);
     nodes::write_nodes(write, &gamez.nodes, nodes_offset)?;
     Ok(())
 }

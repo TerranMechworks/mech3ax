@@ -34,7 +34,17 @@ pub struct Window {
 }
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, NoUninit, AnyBitPattern, Struct,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    NoUninit,
+    AnyBitPattern,
+    Struct,
+    Default,
 )]
 #[dotnet(val_struct)]
 #[repr(C)]
@@ -59,17 +69,19 @@ pub struct Area {
 }
 
 impl Area {
+    #[inline]
     pub const fn x_count(&self, size: i32) -> i32 {
         (self.right - self.left) / size
     }
 
+    #[inline]
     pub const fn y_count(&self, size: i32) -> i32 {
         (self.bottom - self.top) / size
     }
 }
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Serialize, Deserialize, NoUninit, AnyBitPattern, Struct,
+    Debug, Clone, Copy, PartialEq, Serialize, Deserialize, NoUninit, AnyBitPattern, Struct, Default,
 )]
 #[repr(C)]
 pub struct BoundingBox {

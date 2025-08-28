@@ -44,7 +44,7 @@ const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
 );
 
 #[allow(clippy::collapsible_else_if)]
-pub fn assert_variants(
+pub(crate) fn assert_variants(
     node: NodeVariantsMw,
     offset: usize,
     mesh_index_is_ptr: bool,
@@ -96,7 +96,7 @@ pub fn assert_variants(
     Ok(NodeVariantMw::Object3d(node))
 }
 
-pub fn make_variants(object3d: &Object3d) -> Result<NodeVariantsMw> {
+pub(crate) fn make_variants(object3d: &Object3d) -> Result<NodeVariantsMw> {
     let children_count = assert_len!(u32, object3d.children.len(), "object 3d children")?;
     Ok(NodeVariantsMw {
         name: object3d.name.clone(),

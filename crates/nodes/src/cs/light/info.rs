@@ -6,7 +6,7 @@ use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_api_types::Vec3;
 use mech3ax_common::{assert_that, Result};
 
-pub const LIGHT_NAME: &str = "sunlight";
+pub(crate) const LIGHT_NAME: &str = "sunlight";
 
 const LIGHT_FLAGS: NodeBitFlagsCs = NodeBitFlagsCs::from_bits_truncate(
     NodeBitFlagsCs::UNK03.bits()
@@ -28,7 +28,7 @@ const LIGHT_BBOX: BoundingBox = BoundingBox {
         z: -1.0,
     },
 };
-pub fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVariantCs> {
+pub(crate) fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVariantCs> {
     assert_that!("light name", node.name eq LIGHT_NAME, offset + 0)?;
     assert_that!("light flags", node.flags == LIGHT_FLAGS, offset + 36)?;
     assert_that!("light field 040", node.unk040 == 0x00000000, offset + 40)?;
@@ -78,7 +78,7 @@ pub fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVarian
     })
 }
 
-pub fn make_variants(light: &Light) -> NodeVariantsCs {
+pub(crate) fn make_variants(light: &Light) -> NodeVariantsCs {
     NodeVariantsCs {
         name: LIGHT_NAME.to_string(),
         flags: LIGHT_FLAGS,

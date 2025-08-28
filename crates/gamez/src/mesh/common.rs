@@ -29,13 +29,13 @@ pub(crate) fn read_vec3s(
     read: &mut CountingReader<impl Read>,
     count: u32,
 ) -> std::io::Result<Vec<Vec3>> {
-    (0..count).map(|_| read.read_struct()).collect()
+    (0..count).map(|_| read.read_struct_no_log()).collect()
 }
 
 #[inline(always)]
 pub(crate) fn write_vec3s(write: &mut CountingWriter<impl Write>, vecs: &[Vec3]) -> Result<()> {
     for vec in vecs {
-        write.write_struct(vec)?;
+        write.write_struct_no_log(vec)?;
     }
     Ok(())
 }
@@ -45,13 +45,13 @@ pub(crate) fn read_colors(
     read: &mut CountingReader<impl Read>,
     count: u32,
 ) -> std::io::Result<Vec<Color>> {
-    (0..count).map(|_| read.read_struct()).collect()
+    (0..count).map(|_| read.read_struct_no_log()).collect()
 }
 
 #[inline(always)]
 pub(crate) fn write_colors(write: &mut CountingWriter<impl Write>, colors: &[Color]) -> Result<()> {
     for color in colors {
-        write.write_struct(color)?;
+        write.write_struct_no_log(color)?;
     }
     Ok(())
 }
@@ -61,13 +61,7 @@ pub(crate) fn read_uvs(
     read: &mut CountingReader<impl Read>,
     count: u32,
 ) -> std::io::Result<Vec<UvCoord>> {
-    (0..count)
-        .map(|_| {
-            let u = read.read_f32()?;
-            let v = read.read_f32()?;
-            Ok(UvCoord { u, v })
-        })
-        .collect()
+    (0..count).map(|_| read.read_struct_no_log()).collect()
 }
 
 #[inline(always)]
@@ -76,8 +70,7 @@ pub(crate) fn write_uvs(
     uv_coords: &[UvCoord],
 ) -> Result<()> {
     for uv in uv_coords {
-        write.write_f32(uv.u)?;
-        write.write_f32(uv.v)?;
+        write.write_struct_no_log(uv)?;
     }
     Ok(())
 }
@@ -86,25 +79,25 @@ type Flags = Maybe<u16, LightFlags>;
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
-pub struct LightC {
-    pub unk00: u32,       // 00
-    pub unk04: u32,       // 04
-    pub unk08: f32,       // 08
-    pub extra_count: u32, // 12
-    pub zero16: u32,      // 16
-    pub zero20: u32,      // 20
-    pub unk24: Ptr,       // 24
-    pub color: Color,     // 28
-    pub pad40: u16,       // 40
-    pub flags: Flags,     // 42
-    pub ptr: Ptr,         // 44
-    pub unk48: f32,       // 48
-    pub unk52: f32,       // 52
-    pub unk56: f32,       // 56
-    pub unk60: u32,       // 60
-    pub unk64: f32,       // 64
-    pub unk68: f32,       // 68
-    pub unk72: f32,       // 72
+pub(crate) struct LightC {
+    pub(crate) unk00: u32,       // 00
+    pub(crate) unk04: u32,       // 04
+    pub(crate) unk08: f32,       // 08
+    pub(crate) extra_count: u32, // 12
+    pub(crate) zero16: u32,      // 16
+    pub(crate) zero20: u32,      // 20
+    pub(crate) unk24: Ptr,       // 24
+    pub(crate) color: Color,     // 28
+    pub(crate) pad40: u16,       // 40
+    pub(crate) flags: Flags,     // 42
+    pub(crate) ptr: Ptr,         // 44
+    pub(crate) unk48: f32,       // 48
+    pub(crate) unk52: f32,       // 52
+    pub(crate) unk56: f32,       // 56
+    pub(crate) unk60: u32,       // 60
+    pub(crate) unk64: f32,       // 64
+    pub(crate) unk68: f32,       // 68
+    pub(crate) unk72: f32,       // 72
 }
 impl_as_bytes!(LightC, 76);
 
@@ -196,7 +189,10 @@ fn assert_light(light: &LightC, offset: usize) -> Result<LightFlags> {
     Ok(flags)
 }
 
-pub fn read_lights(read: &mut CountingReader<impl Read>, count: u32) -> Result<Vec<MeshLight>> {
+pub(crate) fn read_lights(
+    read: &mut CountingReader<impl Read>,
+    count: u32,
+) -> Result<Vec<MeshLight>> {
     let lights = (0..count)
         .map(|index| {
             trace!(
@@ -236,7 +232,10 @@ pub fn read_lights(read: &mut CountingReader<impl Read>, count: u32) -> Result<V
         .collect::<Result<Vec<_>>>()
 }
 
-pub fn write_lights(write: &mut CountingWriter<impl Write>, lights: &[MeshLight]) -> Result<()> {
+pub(crate) fn write_lights(
+    write: &mut CountingWriter<impl Write>,
+    lights: &[MeshLight],
+) -> Result<()> {
     for (index, light) in lights.iter().enumerate() {
         trace!(
             "Writing light {} (mw, {}) at {}",

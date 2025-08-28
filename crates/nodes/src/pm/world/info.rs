@@ -14,9 +14,9 @@ const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
 const DEFAULT_FLAGS: NodeBitFlags =
     NodeBitFlags::from_bits_truncate(ALWAYS_PRESENT.bits() | NodeBitFlags::ALTITUDE_SURFACE.bits());
 
-pub const WORLD_NAME: &str = "world1";
+pub(crate) const WORLD_NAME: &str = "world1";
 
-pub fn assert_variants(node: NodeVariantsPm, offset: usize) -> Result<NodeVariantPm> {
+pub(crate) fn assert_variants(node: NodeVariantsPm, offset: usize) -> Result<NodeVariantPm> {
     assert_that!("world name", node.name eq WORLD_NAME, offset + 0)?;
     assert_that!("world flags", node.flags == DEFAULT_FLAGS, offset + 36)?;
     // zero040 (40) already asserted
@@ -69,7 +69,7 @@ pub fn assert_variants(node: NodeVariantsPm, offset: usize) -> Result<NodeVarian
     })
 }
 
-pub fn make_variants(world: &World) -> Result<NodeVariantsPm> {
+pub(crate) fn make_variants(world: &World) -> Result<NodeVariantsPm> {
     let children_count = assert_len!(u16, world.children.len(), "world children")?;
     Ok(NodeVariantsPm {
         name: WORLD_NAME.to_owned(),

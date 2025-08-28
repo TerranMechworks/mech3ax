@@ -1,11 +1,10 @@
 use super::info::{CAMERA_NAME, SPYGLASS_NAME};
 use crate::node_data::camera::CameraC;
-use log::debug;
 use mech3ax_api_types::nodes::cs::Camera;
 use mech3ax_api_types::{Matrix, Range, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{AsBytes as _, Zeros};
+use mech3ax_types::Zeros;
 use std::io::{Read, Write};
 
 const CLIP: Range = Range {
@@ -127,18 +126,11 @@ fn assert_camera(camera: &CameraC, spyglass: bool, offset: usize) -> Result<()> 
     Ok(())
 }
 
-pub fn read(
+pub(crate) fn read(
     read: &mut CountingReader<impl Read>,
     data_ptr: u32,
     spyglass: bool,
-    index: usize,
 ) -> Result<Camera> {
-    debug!(
-        "Reading camera node data {} (cs, {}) at {}",
-        index,
-        CameraC::SIZE,
-        read.offset
-    );
     let camera: CameraC = read.read_struct()?;
 
     assert_camera(&camera, spyglass, read.prev)?;
@@ -151,14 +143,7 @@ pub fn read(
     })
 }
 
-pub fn write(write: &mut CountingWriter<impl Write>, camera: &Camera, index: usize) -> Result<()> {
-    debug!(
-        "Writing camera node data {} (cs, {}) at {}",
-        index,
-        CameraC::SIZE,
-        write.offset
-    );
-
+pub(crate) fn write(write: &mut CountingWriter<impl Write>, camera: &Camera) -> Result<()> {
     let window_index = if camera.name == SPYGLASS_NAME { 4 } else { 2 };
 
     let camera = CameraC {

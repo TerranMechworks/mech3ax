@@ -1,6 +1,6 @@
+use crate::common::{read_child_indices, write_child_indices};
 use crate::rc::node::NodeVariantLodRc;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
 use mech3ax_api_types::nodes::rc::Lod;
 use mech3ax_api_types::Range;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -62,17 +62,7 @@ fn assert_lod(lod: &LodRcC, offset: usize) -> Result<(bool, Range, f32, Option<u
     ))
 }
 
-pub fn read(
-    read: &mut CountingReader<impl Read>,
-    node: NodeVariantLodRc,
-    index: usize,
-) -> Result<Lod> {
-    debug!(
-        "Reading lod node data {} (rc, {}) at {}",
-        index,
-        LodRcC::SIZE,
-        read.offset
-    );
+pub(crate) fn read(read: &mut CountingReader<impl Read>, node: NodeVariantLodRc) -> Result<Lod> {
     let lod: LodRcC = read.read_struct()?;
 
     let (level, range, unk60, unk76) = assert_lod(&lod, read.prev)?;
@@ -82,14 +72,7 @@ pub fn read(
     } else {
         None
     };
-
-    debug!(
-        "Reading lod {} x children {} (rc) at {}",
-        node.children_count, index, read.offset
-    );
-    let children = (0..node.children_count)
-        .map(|_| read.read_u32())
-        .collect::<std::io::Result<Vec<_>>>()?;
+    let children = read_child_indices(read, node.children_count)?;
 
     Ok(Lod {
         name: node.name,
@@ -108,13 +91,7 @@ pub fn read(
     })
 }
 
-pub fn write(write: &mut CountingWriter<impl Write>, lod: &Lod, index: usize) -> Result<()> {
-    debug!(
-        "Writing lod node data {} (rc, {}) at {}",
-        index,
-        LodRcC::SIZE,
-        write.offset
-    );
+pub(crate) fn write(write: &mut CountingWriter<impl Write>, lod: &Lod) -> Result<()> {
     let lodc = LodRcC {
         level: bool_c!(lod.level),
         range_near_sq: lod.range.min * lod.range.min,
@@ -132,21 +109,12 @@ pub fn write(write: &mut CountingWriter<impl Write>, lod: &Lod, index: usize) ->
     if let Some(parent) = lod.parent {
         write.write_u32(parent)?;
     }
-
-    debug!(
-        "Writing lod {} x children {} (rc) at {}",
-        lod.children.len(),
-        index,
-        write.offset
-    );
-    for child in lod.children.iter().copied() {
-        write.write_u32(child)?;
-    }
+    write_child_indices(write, &lod.children)?;
 
     Ok(())
 }
 
-pub fn size(lod: &Lod) -> u32 {
+pub(crate) fn size(lod: &Lod) -> u32 {
     let parent_size = if lod.parent.is_some() { 4 } else { 0 };
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let children_length = lod.children.len() as u32;

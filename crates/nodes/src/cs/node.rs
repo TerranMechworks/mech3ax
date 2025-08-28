@@ -156,8 +156,10 @@ fn assert_node(node: NodeCsC, offset: usize) -> Result<(NodeType, NodeVariantsCs
     }
 
     let name = if node.name == GEOMETRY_NODE_NAME {
+        debug!("node name `geometry` fixup");
         GEOMETRY_NAME.to_string()
     } else if node.name == COCKPIT_NODE_NAME {
+        debug!("node name `cockpit1` fixup");
         COCKPIT_NAME.to_string()
     } else {
         assert_utf8("node name", offset + 0, || node.name.to_str_node_name())?
@@ -276,17 +278,10 @@ fn assert_node(node: NodeCsC, offset: usize) -> Result<(NodeType, NodeVariantsCs
     Ok((node_type, variants))
 }
 
-pub fn read_node_info(read: &mut CountingReader<impl Read>, index: u32) -> Result<NodeVariantCs> {
-    debug!(
-        "Reading node info {} (cs, {}) at {}",
-        index,
-        NodeCsC::SIZE,
-        read.offset
-    );
+pub fn read_node_info(read: &mut CountingReader<impl Read>) -> Result<NodeVariantCs> {
     let node: NodeCsC = read.read_struct()?;
 
     let (node_type, node) = assert_node(node, read.prev)?;
-    debug!("Node `{}` read", node.name);
     let variant = match node_type {
         NodeType::World => world::assert_variants(node, read.prev)?,
         NodeType::Display => display::assert_variants(node, read.prev)?,
@@ -304,18 +299,12 @@ fn write_variant(
     write: &mut CountingWriter<impl Write>,
     node_type: NodeType,
     variant: NodeVariantsCs,
-    index: usize,
 ) -> Result<()> {
-    debug!(
-        "Writing node info {} (cs, {}) at {}",
-        index,
-        NodeCsC::SIZE,
-        write.offset
-    );
-
     let name = if variant.name == GEOMETRY_NAME {
+        debug!("node name `geometry` fixup");
         Ascii::new(GEOMETRY_NODE_NAME)
     } else if variant.name == COCKPIT_NAME {
+        debug!("node name `cockpit1` fixup");
         Ascii::new(COCKPIT_NODE_NAME)
     } else {
         Ascii::from_str_node_name(&variant.name)
@@ -358,39 +347,35 @@ fn write_variant(
     Ok(())
 }
 
-pub fn write_node_info(
-    write: &mut CountingWriter<impl Write>,
-    node: &NodeCs,
-    index: usize,
-) -> Result<()> {
+pub fn write_node_info(write: &mut CountingWriter<impl Write>, node: &NodeCs) -> Result<()> {
     match node {
         NodeCs::World(world) => {
             let variant = world::make_variants(world)?;
-            write_variant(write, NodeType::World, variant, index)
+            write_variant(write, NodeType::World, variant)
         }
         NodeCs::Display(display) => {
             let variant = display::make_variants(display);
-            write_variant(write, NodeType::Display, variant, index)
+            write_variant(write, NodeType::Display, variant)
         }
         NodeCs::Window(window) => {
             let variant = window::make_variants(window);
-            write_variant(write, NodeType::Window, variant, index)
+            write_variant(write, NodeType::Window, variant)
         }
         NodeCs::Camera(camera) => {
             let variant = camera::make_variants(camera);
-            write_variant(write, NodeType::Camera, variant, index)
+            write_variant(write, NodeType::Camera, variant)
         }
         NodeCs::Light(light) => {
             let variant = light::make_variants(light);
-            write_variant(write, NodeType::Light, variant, index)
+            write_variant(write, NodeType::Light, variant)
         }
         NodeCs::Lod(lod) => {
             let variant = lod::make_variants(lod)?;
-            write_variant(write, NodeType::LoD, variant, index)
+            write_variant(write, NodeType::LoD, variant)
         }
         NodeCs::Object3d(object3d) => {
             let variant = object3d::make_variants(object3d)?;
-            write_variant(write, NodeType::Object3d, variant, index)
+            write_variant(write, NodeType::Object3d, variant)
         }
     }
 }
@@ -399,7 +384,6 @@ pub fn read_node_data(
     read: &mut CountingReader<impl Read>,
     variant: NodeVariantCs,
     node_index: u32,
-    index: usize,
 ) -> Result<NodeCs> {
     match variant {
         NodeVariantCs::World {
@@ -407,48 +391,44 @@ pub fn read_node_data(
             children_count,
             children_array_ptr,
         } => {
-            let world = world::read(read, data_ptr, children_count, children_array_ptr, index)?;
+            let world = world::read(read, data_ptr, children_count, children_array_ptr)?;
             Ok(NodeCs::World(world))
         }
         NodeVariantCs::Display { data_ptr } => {
-            let display = display::read(read, data_ptr, index)?;
+            let display = display::read(read, data_ptr)?;
             Ok(NodeCs::Display(display))
         }
         NodeVariantCs::Window { data_ptr, spyglass } => {
-            let window = window::read(read, data_ptr, spyglass, index)?;
+            let window = window::read(read, data_ptr, spyglass)?;
             Ok(NodeCs::Window(window))
         }
         NodeVariantCs::Camera { data_ptr, spyglass } => {
-            let camera = camera::read(read, data_ptr, spyglass, index)?;
+            let camera = camera::read(read, data_ptr, spyglass)?;
             Ok(NodeCs::Camera(camera))
         }
         NodeVariantCs::Light { data_ptr } => {
-            let light = light::read(read, data_ptr, node_index, index)?;
+            let light = light::read(read, data_ptr, node_index)?;
             Ok(NodeCs::Light(light))
         }
         NodeVariantCs::Lod(lod) => {
-            let lod = lod::read(read, lod, node_index, index)?;
+            let lod = lod::read(read, lod, node_index)?;
             Ok(NodeCs::Lod(lod))
         }
         NodeVariantCs::Object3d(node) => {
-            let object3d = object3d::read(read, node, node_index, index)?;
+            let object3d = object3d::read(read, node, node_index)?;
             Ok(NodeCs::Object3d(object3d))
         }
     }
 }
 
-pub fn write_node_data(
-    write: &mut CountingWriter<impl Write>,
-    node: &NodeCs,
-    index: usize,
-) -> Result<()> {
+pub fn write_node_data(write: &mut CountingWriter<impl Write>, node: &NodeCs) -> Result<()> {
     match node {
-        NodeCs::World(world) => world::write(write, world, index),
-        NodeCs::Display(display) => display::write(write, display, index),
-        NodeCs::Window(window) => window::write(write, window, index),
-        NodeCs::Camera(camera) => camera::write(write, camera, index),
-        NodeCs::Light(light) => light::write(write, light, index),
-        NodeCs::Lod(lod) => lod::write(write, lod, index),
-        NodeCs::Object3d(object3d) => object3d::write(write, object3d, index),
+        NodeCs::World(world) => world::write(write, world),
+        NodeCs::Display(display) => display::write(write, display),
+        NodeCs::Window(window) => window::write(write, window),
+        NodeCs::Camera(camera) => camera::write(write, camera),
+        NodeCs::Light(light) => light::write(write, light),
+        NodeCs::Lod(lod) => lod::write(write, lod),
+        NodeCs::Object3d(object3d) => object3d::write(write, object3d),
     }
 }

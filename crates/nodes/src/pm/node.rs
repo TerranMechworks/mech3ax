@@ -3,13 +3,12 @@ use super::{camera, display, light, lod, object3d, window, world};
 use crate::flags::NodeBitFlags;
 use crate::types::NodeType;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
 use mech3ax_api_types::nodes::pm::{AreaPartitionPm, NodePm};
 use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Ascii, Maybe, Ptr};
+use mech3ax_types::{impl_as_bytes, Ascii, Maybe, Ptr};
 use std::io::{Read, Write};
 
 #[derive(Debug)]
@@ -103,8 +102,6 @@ struct NodePmC {
     zero204: u32,                    // 204
 }
 impl_as_bytes!(NodePmC, 208);
-
-pub const NODE_PM_C_SIZE: u32 = NodePmC::SIZE;
 
 fn assert_node(node: NodePmC, offset: usize) -> Result<(NodeType, NodeVariantsPm)> {
     // invariants for every node type
@@ -225,47 +222,10 @@ fn assert_node(node: NodePmC, offset: usize) -> Result<(NodeType, NodeVariantsPm
     Ok((node_type, variants))
 }
 
-#[inline]
-pub fn mechlib_only_err_pm() -> mech3ax_common::Error {
-    assert_with_msg!("Expected only Object3d or Lod nodes in mechlib")
-}
-
-pub fn read_node_mechlib(
-    read: &mut CountingReader<impl Read>,
-    index: usize,
-) -> Result<WrappedNodePm> {
-    debug!(
-        "Reading mechlib node {} (pm, {}) at {}",
-        index,
-        NodePmC::SIZE,
-        read.offset
-    );
+pub fn read_node_info_gamez(read: &mut CountingReader<impl Read>) -> Result<NodeVariantPm> {
     let node: NodePmC = read.read_struct()?;
 
     let (node_type, node) = assert_node(node, read.prev)?;
-    debug!("Node `{}` read", node.name);
-    let variant = match node_type {
-        NodeType::Object3d => object3d::assert_variants(node, read.prev, true),
-        NodeType::LoD => lod::assert_variants(node, read.prev, true),
-        _ => Err(mechlib_only_err_pm()),
-    }?;
-    read_node_data(read, variant, index)
-}
-
-pub fn read_node_info_gamez(
-    read: &mut CountingReader<impl Read>,
-    index: u32,
-) -> Result<NodeVariantPm> {
-    debug!(
-        "Reading node info {} (pm, {}) at {}",
-        index,
-        NodePmC::SIZE,
-        read.offset
-    );
-    let node: NodePmC = read.read_struct()?;
-
-    let (node_type, node) = assert_node(node, read.prev)?;
-    debug!("Node `{}` read", node.name);
     let variant = match node_type {
         NodeType::Empty => unreachable!("empty nodes should not occur in pm"),
         NodeType::World => world::assert_variants(node, read.prev)?,
@@ -282,7 +242,6 @@ pub fn read_node_info_gamez(
 pub fn read_node_data(
     read: &mut CountingReader<impl Read>,
     variant: NodeVariantPm,
-    index: usize,
 ) -> Result<WrappedNodePm> {
     match variant {
         NodeVariantPm::World {
@@ -290,31 +249,31 @@ pub fn read_node_data(
             children_count,
             children_array_ptr,
         } => {
-            let world = world::read(read, data_ptr, children_count, children_array_ptr, index)?;
+            let world = world::read(read, data_ptr, children_count, children_array_ptr)?;
             Ok(WrappedNodePm::World(world))
         }
         NodeVariantPm::Window { data_ptr } => {
-            let window = window::read(read, data_ptr, index)?;
+            let window = window::read(read, data_ptr)?;
             Ok(WrappedNodePm::Window(window))
         }
         NodeVariantPm::Camera { data_ptr } => {
-            let camera = camera::read(read, data_ptr, index)?;
+            let camera = camera::read(read, data_ptr)?;
             Ok(WrappedNodePm::Camera(camera))
         }
         NodeVariantPm::Display { data_ptr } => {
-            let display = display::read(read, data_ptr, index)?;
+            let display = display::read(read, data_ptr)?;
             Ok(WrappedNodePm::Display(display))
         }
         NodeVariantPm::Light { data_ptr } => {
-            let light = light::read(read, data_ptr, index)?;
+            let light = light::read(read, data_ptr)?;
             Ok(WrappedNodePm::Light(light))
         }
         NodeVariantPm::Lod(node) => {
-            let lod = lod::read(read, node, index)?;
+            let lod = lod::read(read, node)?;
             Ok(WrappedNodePm::Lod(lod))
         }
         NodeVariantPm::Object3d(node) => {
-            let object3d = object3d::read(read, node, index)?;
+            let object3d = object3d::read(read, node)?;
             Ok(WrappedNodePm::Object3d(object3d))
         }
     }
@@ -324,15 +283,7 @@ fn write_variant(
     write: &mut CountingWriter<impl Write>,
     node_type: NodeType,
     variant: NodeVariantsPm,
-    index: usize,
 ) -> Result<()> {
-    debug!(
-        "Writing node info {} (pm, {}) at {}",
-        index,
-        NodePmC::SIZE,
-        write.offset
-    );
-
     let name = Ascii::from_str_node_name(&variant.name);
 
     let area_partition = variant.area_partition.unwrap_or(AreaPartitionPm::DEFAULT);
@@ -376,52 +327,64 @@ pub fn write_node_info(
     write: &mut CountingWriter<impl Write>,
     node: &NodePm,
     mesh_index_is_ptr: bool,
-    index: usize,
 ) -> Result<()> {
     match node {
         NodePm::World(world) => {
             let variant = world::make_variants(world)?;
-            write_variant(write, NodeType::World, variant, index)
+            write_variant(write, NodeType::World, variant)
         }
         NodePm::Window(window) => {
             let variant = window::make_variants(window);
-            write_variant(write, NodeType::Window, variant, index)
+            write_variant(write, NodeType::Window, variant)
         }
         NodePm::Camera(camera) => {
             let variant = camera::make_variants(camera);
-            write_variant(write, NodeType::Camera, variant, index)
+            write_variant(write, NodeType::Camera, variant)
         }
         NodePm::Display(display) => {
             let variant = display::make_variants(display);
-            write_variant(write, NodeType::Display, variant, index)
+            write_variant(write, NodeType::Display, variant)
         }
         NodePm::Light(light) => {
             let variant = light::make_variants(light);
-            write_variant(write, NodeType::Light, variant, index)
+            write_variant(write, NodeType::Light, variant)
         }
         NodePm::Lod(lod) => {
             let variant = lod::make_variants(lod, mesh_index_is_ptr)?;
-            write_variant(write, NodeType::LoD, variant, index)
+            write_variant(write, NodeType::LoD, variant)
         }
         NodePm::Object3d(object3d) => {
             let variant = object3d::make_variants(object3d)?;
-            write_variant(write, NodeType::Object3d, variant, index)
+            write_variant(write, NodeType::Object3d, variant)
         }
     }
 }
 
-pub fn write_node_data(
-    write: &mut CountingWriter<impl Write>,
-    node: &NodePm,
-    index: usize,
-) -> Result<()> {
+pub fn write_node_data(write: &mut CountingWriter<impl Write>, node: &NodePm) -> Result<()> {
     match node {
-        NodePm::World(world) => world::write(write, world, index),
-        NodePm::Window(window) => window::write(write, window, index),
-        NodePm::Camera(camera) => camera::write(write, camera, index),
-        NodePm::Display(display) => display::write(write, display, index),
-        NodePm::Light(light) => light::write(write, light, index),
-        NodePm::Lod(lod) => lod::write(write, lod, index),
-        NodePm::Object3d(object3d) => object3d::write(write, object3d, index),
+        NodePm::World(world) => world::write(write, world),
+        NodePm::Window(window) => window::write(write, window),
+        NodePm::Camera(camera) => camera::write(write, camera),
+        NodePm::Display(display) => display::write(write, display),
+        NodePm::Light(light) => light::write(write, light),
+        NodePm::Lod(lod) => lod::write(write, lod),
+        NodePm::Object3d(object3d) => object3d::write(write, object3d),
     }
+}
+
+#[inline]
+pub fn mechlib_only_err_pm() -> mech3ax_common::Error {
+    assert_with_msg!("Expected only Object3d or Lod nodes in mechlib")
+}
+
+pub fn read_node_mechlib(read: &mut CountingReader<impl Read>) -> Result<WrappedNodePm> {
+    let node: NodePmC = read.read_struct()?;
+
+    let (node_type, node) = assert_node(node, read.prev)?;
+    let variant = match node_type {
+        NodeType::Object3d => object3d::assert_variants(node, read.prev, true),
+        NodeType::LoD => lod::assert_variants(node, read.prev, true),
+        _ => Err(mechlib_only_err_pm()),
+    }?;
+    read_node_data(read, variant)
 }

@@ -5,9 +5,9 @@ use mech3ax_api_types::nodes::mw::World;
 use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_common::{assert_len, assert_that, Result};
 
-pub const WORLD_NAME: &str = "world1";
+pub(crate) const WORLD_NAME: &str = "world1";
 
-pub fn assert_variants(node: NodeVariantsMw, offset: usize) -> Result<NodeVariantMw> {
+pub(crate) fn assert_variants(node: NodeVariantsMw, offset: usize) -> Result<NodeVariantMw> {
     assert_that!("world name", node.name eq WORLD_NAME, offset + 0)?;
     assert_that!(
         "world flags",
@@ -63,7 +63,7 @@ pub fn assert_variants(node: NodeVariantsMw, offset: usize) -> Result<NodeVarian
     })
 }
 
-pub fn make_variants(world: &World) -> Result<NodeVariantsMw> {
+pub(crate) fn make_variants(world: &World) -> Result<NodeVariantsMw> {
     let children_count = assert_len!(u32, world.children.len(), "world children")?;
     Ok(NodeVariantsMw {
         name: WORLD_NAME.to_owned(),

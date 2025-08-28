@@ -1,7 +1,6 @@
 use crate::mw::node::NodeVariantLodMw;
 use crate::mw::wrappers::WrapperMw;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
 use mech3ax_api_types::nodes::mw::Lod;
 use mech3ax_api_types::Range;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -63,17 +62,10 @@ fn assert_lod(lod: LodMwC, offset: usize) -> Result<(bool, Range, f32, Option<u3
     ))
 }
 
-pub fn read(
+pub(crate) fn read(
     read: &mut CountingReader<impl Read>,
     node: NodeVariantLodMw,
-    index: usize,
 ) -> Result<WrapperMw<Lod>> {
-    debug!(
-        "Reading lod node data {} (mw, {}) at {}",
-        index,
-        LodMwC::SIZE,
-        read.offset
-    );
     let lod: LodMwC = read.read_struct()?;
 
     let (level, range, unk60, unk76) = assert_lod(lod, read.prev)?;
@@ -101,13 +93,7 @@ pub fn read(
     })
 }
 
-pub fn write(write: &mut CountingWriter<impl Write>, lod: &Lod, index: usize) -> Result<()> {
-    debug!(
-        "Writing lod node data {} (mw, {}) at {}",
-        index,
-        LodMwC::SIZE,
-        write.offset
-    );
+pub(crate) fn write(write: &mut CountingWriter<impl Write>, lod: &Lod) -> Result<()> {
     let lod = LodMwC {
         level: bool_c!(lod.level),
         range_near_sq: lod.range.min * lod.range.min,
@@ -124,7 +110,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, lod: &Lod, index: usize) ->
     Ok(())
 }
 
-pub fn size(lod: &Lod) -> u32 {
+pub(crate) fn size(lod: &Lod) -> u32 {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let children_length = lod.children.len() as u32;
     LodMwC::SIZE + 4 + 4 * children_length

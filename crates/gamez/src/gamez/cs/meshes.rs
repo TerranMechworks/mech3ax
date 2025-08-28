@@ -1,16 +1,17 @@
 use super::fixup::Fixup;
 use crate::gamez::common::{read_meshes_info_nonseq, write_meshes_info_nonseq, MESHES_INFO_C_SIZE};
 use crate::mesh::ng::{
-    read_mesh_data, read_mesh_info_maybe, size_mesh, write_mesh_data, write_mesh_info,
-    write_mesh_info_zero, MESH_C_SIZE,
+    assert_mesh_info, assert_mesh_info_zero, read_mesh_data, size_mesh, write_mesh_data,
+    write_mesh_info, MeshNgC, MESH_C_SIZE,
 };
+use log::trace;
 use mech3ax_api_types::gamez::mesh::MeshNg;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
-use mech3ax_types::u32_to_usize;
+use mech3ax_types::{u32_to_usize, AsBytes as _};
 use std::io::{Read, Write};
 
-pub fn read_meshes(
+pub(crate) fn read_meshes(
     read: &mut CountingReader<impl Read>,
     end_offset: usize,
     material_count: u32,
@@ -22,19 +23,33 @@ pub fn read_meshes(
     let mut last_index = -1i32;
     let mut prev_offset = read.offset;
 
-    let meshes = meshes_info.iter()
-        .map(|(mesh_index, expected_index)|
-            match read_mesh_info_maybe(read, mesh_index)? {
-            Some(wrapped_mesh) => {
+    let meshes = meshes_info
+        .iter()
+        .map(|(mesh_index, expected_index)| {
+            let mesh: MeshNgC = read.read_struct_no_log()?;
+
+            if mesh.parent_count > 0 {
+                trace!(
+                    "Reading mesh info {}/{}",
+                    mesh_index,
+                    meshes_info.array_size
+                );
+                trace!("{:#?} (len: {}, at {})", mesh, MeshNgC::SIZE, read.prev);
+
+                let wrapped_mesh = assert_mesh_info(mesh, read.prev)?;
+
                 count += 1;
                 last_index = expected_index;
                 let mesh_offset = u32_to_usize(read.read_u32()?);
-                log::debug!("filled mesh info: {} at {}", expected_index, read.prev);
                 assert_that!("mesh offset", prev_offset <= mesh_offset <= end_offset, read.prev)?;
                 prev_offset = mesh_offset;
+
                 Ok(Some((wrapped_mesh, mesh_offset, mesh_index)))
-            }
-            None => {
+            } else {
+                assert_mesh_info_zero(&mesh, read.prev).inspect_err(|_| {
+                    trace!("{:#?} (index: {}, at {})", mesh, mesh_index, read.prev)
+                })?;
+
                 let expected_index = fixup.mesh_index_remap(expected_index);
                 let actual_index = read.read_i32()?;
                 assert_that!("mesh index", actual_index == expected_index, read.prev)?;
@@ -55,8 +70,13 @@ pub fn read_meshes(
         .into_iter()
         .map(|maybe_mesh| match maybe_mesh {
             Some((wrapped_mesh, mesh_offset, mesh_index)) => {
+                trace!(
+                    "Reading mesh data {}/{}",
+                    mesh_index,
+                    meshes_info.array_size
+                );
                 assert_that!("mesh offset", read.offset == mesh_offset, read.offset)?;
-                let mesh = read_mesh_data(read, wrapped_mesh, material_count, mesh_index)?;
+                let mesh = read_mesh_data(read, wrapped_mesh, material_count)?;
                 Ok(Some(mesh))
             }
             None => Ok(None),
@@ -66,7 +86,7 @@ pub fn read_meshes(
     Ok(meshes)
 }
 
-pub fn write_meshes(
+pub(crate) fn write_meshes(
     write: &mut CountingWriter<impl Write>,
     meshes: Vec<Option<(&MeshNg, u32)>>,
     fixup: Fixup,
@@ -82,14 +102,22 @@ pub fn write_meshes(
 
     let meshes_info = write_meshes_info_nonseq(write, array_size, count, last_index)?;
 
+    let mesh_zero = MeshNgC::default();
     for ((mesh_index, expected_index), mesh) in meshes_info.iter().zip(meshes.iter()) {
         match mesh {
             Some((mesh, offset)) => {
-                write_mesh_info(write, mesh, mesh_index)?;
+                trace!("Writing mesh info {}/{}", mesh_index, array_size);
+                write_mesh_info(write, mesh)?;
                 write.write_u32(*offset)?;
             }
             None => {
-                write_mesh_info_zero(write, mesh_index)?;
+                trace!(
+                    "Writing mesh info zero {}/{} at {}",
+                    mesh_index,
+                    array_size,
+                    write.offset
+                );
+                write.write_struct_no_log(&mesh_zero)?;
                 let expected_index = fixup.mesh_index_remap(expected_index);
                 write.write_i32(expected_index)?;
             }
@@ -98,7 +126,8 @@ pub fn write_meshes(
 
     for (mesh_index, mesh) in meshes.iter().enumerate() {
         if let Some((mesh, _)) = mesh {
-            write_mesh_data(write, mesh, mesh_index)?;
+            trace!("Writing mesh data {}/{}", mesh_index, array_size);
+            write_mesh_data(write, mesh)?;
         }
     }
 
@@ -107,7 +136,10 @@ pub fn write_meshes(
 
 const U32_SIZE: u32 = std::mem::size_of::<u32>() as _;
 
-pub fn size_meshes(offset: u32, meshes: &[Option<MeshNg>]) -> (u32, Vec<Option<(&MeshNg, u32)>>) {
+pub(crate) fn size_meshes(
+    offset: u32,
+    meshes: &[Option<MeshNg>],
+) -> (u32, Vec<Option<(&MeshNg, u32)>>) {
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let array_size = meshes.len() as u32;
     let mut offset = offset + MESHES_INFO_C_SIZE + (MESH_C_SIZE + U32_SIZE) * array_size;

@@ -5,8 +5,8 @@ use mech3ax_api_types::nodes::cs::Window;
 use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_common::{assert_that, assert_with_msg, Result};
 
-pub const WINDOW_NAME: &str = "window1";
-pub const SPYGLASS_NAME: &str = "sgwin";
+pub(crate) const WINDOW_NAME: &str = "window1";
+pub(crate) const SPYGLASS_NAME: &str = "sgwin";
 
 const WINDOW_FLAGS: NodeBitFlagsCs = NodeBitFlagsCs::from_bits_truncate(
     NodeBitFlagsCs::UNK02.bits()
@@ -16,7 +16,7 @@ const WINDOW_FLAGS: NodeBitFlagsCs = NodeBitFlagsCs::from_bits_truncate(
         | NodeBitFlagsCs::UNK24.bits(),
 );
 
-pub fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVariantCs> {
+pub(crate) fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVariantCs> {
     let spyglass = match node.name.as_str() {
         WINDOW_NAME => Ok(false),
         SPYGLASS_NAME => Ok(true),
@@ -79,7 +79,7 @@ pub fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVarian
     })
 }
 
-pub fn make_variants(window: &Window) -> NodeVariantsCs {
+pub(crate) fn make_variants(window: &Window) -> NodeVariantsCs {
     NodeVariantsCs {
         name: window.name.clone(),
         flags: WINDOW_FLAGS,

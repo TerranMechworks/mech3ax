@@ -146,7 +146,7 @@ const HEADER_PLANES: HeaderCsC = HeaderCsC {
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Fixup {
+pub(crate) enum Fixup {
     None,
     C4,
     Planes,
@@ -173,7 +173,7 @@ impl Fixup {
         }
     }
 
-    pub fn mesh_index_remap(&self, expected_index: i32) -> i32 {
+    pub(crate) fn mesh_index_remap(&self, expected_index: i32) -> i32 {
         match self {
             Self::None => expected_index,
             Self::Planes => match expected_index {
@@ -251,7 +251,7 @@ impl Fixup {
         }
     }
 
-    pub fn last_index_remap(&self, last_index: i32) -> i32 {
+    pub(crate) fn last_index_remap(&self, last_index: i32) -> i32 {
         match self {
             Self::None => last_index,
             Self::Planes => {

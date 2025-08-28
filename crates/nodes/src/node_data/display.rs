@@ -1,5 +1,4 @@
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
 use mech3ax_api_types::nodes::Display;
 use mech3ax_api_types::Color;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -18,13 +17,7 @@ struct DisplayC {
 }
 impl_as_bytes!(DisplayC, 28);
 
-pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -> Result<Display> {
-    debug!(
-        "Reading display node data {} ({}) at {}",
-        index,
-        DisplayC::SIZE,
-        read.offset
-    );
+pub(crate) fn read(read: &mut CountingReader<impl Read>, data_ptr: u32) -> Result<Display> {
     let display: DisplayC = read.read_struct()?;
 
     assert_that!("display origin x", display.origin_x == 0, read.prev + 0)?;
@@ -52,17 +45,7 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -
     })
 }
 
-pub fn write(
-    write: &mut CountingWriter<impl Write>,
-    display: &Display,
-    index: usize,
-) -> Result<()> {
-    debug!(
-        "Writing display node data {} ({}) at {}",
-        index,
-        DisplayC::SIZE,
-        write.offset
-    );
+pub(crate) fn write(write: &mut CountingWriter<impl Write>, display: &Display) -> Result<()> {
     let display = DisplayC {
         origin_x: 0,
         origin_y: 0,
@@ -74,6 +57,6 @@ pub fn write(
     Ok(())
 }
 
-pub fn size() -> u32 {
+pub(crate) fn size() -> u32 {
     DisplayC::SIZE
 }

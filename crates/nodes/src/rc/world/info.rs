@@ -16,9 +16,9 @@ const DEFAULT_FLAGS: NodeBitFlags =
 const DEFAULT_FLAGS_M2: NodeBitFlags =
     NodeBitFlags::from_bits_truncate(ALWAYS_PRESENT.bits() | NodeBitFlags::LANDMARK.bits());
 
-pub const WORLD_NAME: &str = "world1";
+pub(crate) const WORLD_NAME: &str = "world1";
 
-pub fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<NodeVariantRc> {
+pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<NodeVariantRc> {
     assert_that!("world name", node.name eq WORLD_NAME, offset + 0)?;
     // yes, this is a nasty hack, but...
     if node.data_ptr == 0x016D3D40 && node.children_array_ptr == 0x0170F360 {
@@ -71,7 +71,7 @@ pub fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<NodeVarian
     })
 }
 
-pub fn make_variants(world: &World) -> Result<NodeVariantsRc> {
+pub(crate) fn make_variants(world: &World) -> Result<NodeVariantsRc> {
     let children_count = assert_len!(u32, world.children.len(), "world children")?;
     // yes, this is a nasty hack, but...
     let flags = if world.data_ptr == 0x016D3D40 && world.children_array_ptr == 0x0170F360 {

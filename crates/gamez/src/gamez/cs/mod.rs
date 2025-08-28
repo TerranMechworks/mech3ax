@@ -70,11 +70,6 @@ fn redupe_texture_names(textures: &[TextureName]) -> (Vec<String>, Vec<String>) 
 }
 
 pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataCs> {
-    debug!(
-        "Reading gamez header (cs, {}) at {}",
-        HeaderCsC::SIZE,
-        read.offset
-    );
     let header: HeaderCsC = read.read_struct()?;
 
     assert_that!("signature", header.signature == SIGNATURE, read.prev + 0)?;
@@ -123,10 +118,6 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataCs> {
     assert_that!("meshes offset", read.offset == meshes_offset, read.offset)?;
     let meshes = meshes::read_meshes(read, nodes_offset, material_count, fixup)?;
     assert_that!("nodes offset", read.offset == nodes_offset, read.offset)?;
-    debug!(
-        "Reading {} nodes at {}",
-        header.node_array_size, read.offset
-    );
     let is_gamez = fixup != Fixup::Planes;
     let nodes = nodes::read_nodes(
         read,
@@ -174,11 +165,6 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataCs) 
         2338
     };
 
-    debug!(
-        "Writing gamez header (cs, {}) at {}",
-        HeaderCsC::SIZE,
-        write.offset
-    );
     let header = HeaderCsC {
         signature: SIGNATURE,
         version: VERSION_CS,
@@ -204,7 +190,6 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataCs) 
         materials::MatType::Ng,
     )?;
     meshes::write_meshes(write, meshes, fixup)?;
-    debug!("Writing {} nodes at {}", node_array_size, write.offset);
     nodes::write_nodes(write, &gamez.nodes)?;
     Ok(())
 }

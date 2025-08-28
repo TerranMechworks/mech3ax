@@ -3,13 +3,13 @@ use crate::math::partition_diag;
 use crate::pm::WrapperPm;
 use crate::range::RangeI32;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::{debug, trace};
+use log::trace;
 use mech3ax_api_types::nodes::pm::World;
 use mech3ax_api_types::nodes::{Area, PartitionNg, PartitionValue};
 use mech3ax_api_types::{Color, Range};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _};
+use mech3ax_types::impl_as_bytes;
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -97,13 +97,6 @@ impl_as_bytes!(PartitionPmC, 88);
 const FOG_STATE_LINEAR: u32 = 1;
 
 fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Result<PartitionNg> {
-    debug!(
-        "Reading world partition data x: {}, y: {} (pm, {}) at {}",
-        x,
-        y,
-        PartitionPmC::SIZE,
-        read.offset
-    );
     let partition: PartitionPmC = read.read_struct()?;
 
     let xf = x as f32;
@@ -169,18 +162,14 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
         Vec::new()
     } else {
         assert_that!("partition ptr", partition.ptr != 0, read.prev + 60)?;
+
+        trace!(
+            "Reading {} partition node indices at {}",
+            partition.count,
+            read.offset
+        );
         (0..partition.count)
-            .map(|index| {
-                trace!(
-                    "Reading partition x: {}, y: {} value {} at {}",
-                    x,
-                    y,
-                    index,
-                    read.offset
-                );
-                let value = read.read_struct()?;
-                Ok(value)
-            })
+            .map(|_| read.read_struct_no_log())
             .collect::<std::io::Result<Vec<PartitionValue>>>()?
     };
 
@@ -432,19 +421,12 @@ fn assert_world(world: &WorldPmC, offset: usize) -> Result<(Area, RangeI32, Rang
     Ok((area, area_x, area_y, virtual_partition))
 }
 
-pub fn read(
+pub(crate) fn read(
     read: &mut CountingReader<impl Read>,
     data_ptr: u32,
     children_count: u16,
     children_array_ptr: u32,
-    index: usize,
 ) -> Result<WrapperPm<World>> {
-    debug!(
-        "Reading world node data {} (pm, {}) at {}",
-        index,
-        WorldPmC::SIZE,
-        read.offset
-    );
     let world: WorldPmC = read.read_struct()?;
 
     let (area, area_x, area_y, virtual_partition) = assert_world(&world, read.prev)?;
@@ -477,14 +459,6 @@ pub fn read(
 }
 
 fn write_partition(write: &mut CountingWriter<impl Write>, partition: &PartitionNg) -> Result<()> {
-    debug!(
-        "Writing world partition data x: {}, y: {} (pm, {}) at {}",
-        partition.x,
-        partition.y,
-        PartitionPmC::SIZE,
-        write.offset
-    );
-
     let x = partition.x as f32;
     let y = partition.y as f32;
     let diagonal = partition_diag(partition.z_min, partition.z_max, 128.0);
@@ -518,15 +492,13 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
     };
     write.write_struct(&partition_c)?;
 
-    for (index, node) in partition.nodes.iter().enumerate() {
-        trace!(
-            "Writing partition x: {}, y: {} value {} at {}",
-            partition.x,
-            partition.y,
-            index,
-            write.offset
-        );
-        write.write_struct(node)?;
+    trace!(
+        "Writing {} partition node indices at {}",
+        partition.nodes.len(),
+        write.offset
+    );
+    for node in partition.nodes.iter() {
+        write.write_struct_no_log(node)?;
     }
 
     Ok(())
@@ -544,14 +516,7 @@ fn write_partitions(
     Ok(())
 }
 
-pub fn write(write: &mut CountingWriter<impl Write>, world: &World, index: usize) -> Result<()> {
-    debug!(
-        "Writing world node data {} (pm, {}) at {}",
-        index,
-        WorldPmC::SIZE,
-        write.offset
-    );
-
+pub(crate) fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Result<()> {
     let area_left = world.area.left as f32;
     let area_top = world.area.top as f32;
     let area_right = world.area.right as f32;

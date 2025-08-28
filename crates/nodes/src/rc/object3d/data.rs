@@ -1,8 +1,9 @@
 use super::has_borked_parents;
+use crate::common::{read_child_indices, write_child_indices};
 use crate::math::{apply_matrix_signs, euler_to_matrix, extract_matrix_signs, scale_to_matrix, PI};
 use crate::rc::node::NodeVariantsRc;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
+use log::trace;
 use mech3ax_api_types::nodes::rc::{
     Object3d, RotationTranslation, Transformation, TranslationOnly,
 };
@@ -132,10 +133,8 @@ fn assert_object3d(object3d: Object3dRcC, offset: usize) -> Result<Transformatio
             // m12: 1.1%
             // m13: 18.1%
             let matrix = if object3d.matrix == Matrix::IDENTITY {
-                debug!("MAT PASS");
                 None
             } else {
-                debug!("MAT FAIL");
                 Some(object3d.matrix)
             };
             Ok(Transformation::TranslationOnly(TranslationOnly {
@@ -147,28 +146,18 @@ fn assert_object3d(object3d: Object3dRcC, offset: usize) -> Result<Transformatio
     }
 }
 
-pub fn read(
-    read: &mut CountingReader<impl Read>,
-    node: NodeVariantsRc,
-    index: usize,
-) -> Result<Object3d> {
-    let is_borked = has_borked_parents(node.data_ptr, node.parent_array_ptr);
-
-    debug!(
-        "Reading object3d node data {} (rc, {}) at {}",
-        index,
-        Object3dRcC::SIZE,
-        read.offset
-    );
+pub(crate) fn read(read: &mut CountingReader<impl Read>, node: NodeVariantsRc) -> Result<Object3d> {
     let object3d: Object3dRcC = read.read_struct()?;
 
     let matrix_signs = extract_matrix_signs(&object3d.matrix);
     let transformation = assert_object3d(object3d, read.prev)?;
 
+    let is_borked = has_borked_parents(node.data_ptr, node.parent_array_ptr);
     let (parent, parents) = if is_borked && node.parent_count > 1 {
-        debug!(
-            "Reading object3d {} x parents {} (rc) at {}",
-            node.parent_count, index, read.offset
+        trace!(
+            "Reading {} parent indices {}",
+            node.parent_count,
+            read.offset
         );
         let parents = (0..node.parent_count)
             .map(|_| read.read_u32())
@@ -183,13 +172,7 @@ pub fn read(
         (parent, None)
     };
 
-    debug!(
-        "Reading object3d {} x children {} (rc) at {}",
-        node.children_count, index, read.offset
-    );
-    let children = (0..node.children_count)
-        .map(|_| read.read_u32())
-        .collect::<std::io::Result<Vec<_>>>()?;
+    let children = read_child_indices(read, node.children_count)?;
 
     Ok(Object3d {
         name: node.name,
@@ -211,19 +194,8 @@ pub fn read(
     })
 }
 
-pub fn write(
-    write: &mut CountingWriter<impl Write>,
-    object3d: &Object3d,
-    index: usize,
-) -> Result<()> {
+pub(crate) fn write(write: &mut CountingWriter<impl Write>, object3d: &Object3d) -> Result<()> {
     let is_borked = has_borked_parents(object3d.data_ptr, object3d.parent_array_ptr);
-
-    debug!(
-        "Writing object3d node data {} (rc, {}) at {}",
-        index,
-        Object3dRcC::SIZE,
-        write.offset
-    );
 
     let mut scale = SCALE_ONE;
     let mut rotation = Vec3::DEFAULT;
@@ -270,10 +242,9 @@ pub fn write(
     if is_borked {
         match (object3d.parent, &object3d.parents) {
             (None, Some(parents)) => {
-                debug!(
-                    "Writing object3d {} x parents {} (rc) at {}",
+                trace!(
+                    "Writing {} parents indices at {}",
                     parents.len(),
-                    index,
                     write.offset
                 );
                 for parent in parents.iter().copied() {
@@ -292,20 +263,12 @@ pub fn write(
         write.write_u32(parent)?;
     }
 
-    debug!(
-        "Writing object3d {} x children {} (rc) at {}",
-        object3d.children.len(),
-        index,
-        write.offset
-    );
-    for child in object3d.children.iter().copied() {
-        write.write_u32(child)?;
-    }
+    write_child_indices(write, &object3d.children)?;
 
     Ok(())
 }
 
-pub fn size(object3d: &Object3d) -> u32 {
+pub(crate) fn size(object3d: &Object3d) -> u32 {
     let parent_size = if object3d.parent.is_some() { 4 } else { 0 };
     // Cast safety: truncation simply leads to incorrect size (TODO?)
     let parents_length = object3d

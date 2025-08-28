@@ -1,6 +1,5 @@
 use super::info::LIGHT_NAME;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
 use mech3ax_api_types::nodes::mw::Light;
 use mech3ax_api_types::{Color, Range, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
@@ -87,13 +86,7 @@ fn assert_light(light: &LightMwC, offset: usize) -> Result<()> {
     Ok(())
 }
 
-pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -> Result<Light> {
-    debug!(
-        "Reading light node data {} (mw, {}) at {}",
-        index,
-        LightMwC::SIZE,
-        read.offset
-    );
+pub(crate) fn read(read: &mut CountingReader<impl Read>, data_ptr: u32) -> Result<Light> {
     let light: LightMwC = read.read_struct()?;
 
     assert_light(&light, read.prev)?;
@@ -114,13 +107,7 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -
     })
 }
 
-pub fn write(write: &mut CountingWriter<impl Write>, light: &Light, index: usize) -> Result<()> {
-    debug!(
-        "Writing light node data {} (mw, {}) at {}",
-        index,
-        LightMwC::SIZE,
-        write.offset
-    );
+pub(crate) fn write(write: &mut CountingWriter<impl Write>, light: &Light) -> Result<()> {
     let light = LightMwC {
         direction: light.direction,
         translation: Vec3::DEFAULT,
@@ -147,6 +134,6 @@ pub fn write(write: &mut CountingWriter<impl Write>, light: &Light, index: usize
     Ok(())
 }
 
-pub fn size() -> u32 {
+pub(crate) fn size() -> u32 {
     LightMwC::SIZE + 4
 }

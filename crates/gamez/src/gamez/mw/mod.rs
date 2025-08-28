@@ -5,12 +5,11 @@ use super::common::{NODE_INDEX_INVALID, SIGNATURE, VERSION_MW};
 use crate::materials;
 use crate::textures::mw as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
 use mech3ax_api_types::gamez::{GameZDataMw, GameZMetadataMw};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
 use mech3ax_types::{impl_as_bytes, u32_to_usize, AsBytes as _};
-use std::io::{Read, Write};
+use std::io::{Read, Seek, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
 #[repr(C)]
@@ -27,12 +26,7 @@ struct HeaderMwC {
 }
 impl_as_bytes!(HeaderMwC, 36);
 
-pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataMw> {
-    debug!(
-        "Reading gamez header (mw, {}) at {}",
-        HeaderMwC::SIZE,
-        read.offset
-    );
+pub fn read_gamez(read: &mut CountingReader<impl Read + Seek>) -> Result<GameZDataMw> {
     let header: HeaderMwC = read.read_struct()?;
 
     assert_that!("signature", header.signature == SIGNATURE, read.prev + 0)?;
@@ -93,11 +87,11 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataMw> {
         node_data_count: header.node_count,
     };
     Ok(GameZDataMw {
-        metadata,
         textures,
         materials,
         meshes,
         nodes,
+        metadata,
     })
 }
 
@@ -114,11 +108,6 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataMw) 
     let (nodes_offset, mesh_offsets) =
         meshes::size_meshes(meshes_offset, meshes_array_size, &gamez.meshes);
 
-    debug!(
-        "Writing gamez header (mw, {}) at {}",
-        HeaderMwC::SIZE,
-        write.offset
-    );
     let header = HeaderMwC {
         signature: SIGNATURE,
         version: VERSION_MW,

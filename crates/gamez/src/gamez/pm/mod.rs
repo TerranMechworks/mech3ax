@@ -7,7 +7,6 @@ use super::common::{
 use crate::materials;
 use crate::textures::ng as textures;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
 use mech3ax_api_types::gamez::{GameZDataPm, GameZMetadataPm};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, Result};
@@ -31,11 +30,6 @@ struct HeaderPmC {
 impl_as_bytes!(HeaderPmC, 40);
 
 pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataPm> {
-    debug!(
-        "Reading gamez header (pm, {}) at {}",
-        HeaderPmC::SIZE,
-        read.offset
-    );
     let header: HeaderPmC = read.read_struct()?;
 
     assert_that!("signature", header.signature == SIGNATURE, read.prev + 0)?;
@@ -63,10 +57,12 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataPm> {
     let meshes_offset = u32_to_usize(header.meshes_offset);
     let nodes_offset = u32_to_usize(header.nodes_offset);
 
+    // need at least world, window, camera, display, and light
+    assert_that!("node count", header.node_count > 5, read.prev + 32)?;
     assert_that!(
         "node count",
         header.node_count <= header.node_array_size,
-        read.prev + 28
+        read.prev + 32
     )?;
 
     assert_that!(
@@ -86,10 +82,6 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataPm> {
     let (meshes, meshes_count, mesh_array_size) =
         meshes::read_meshes(read, nodes_offset, material_count)?;
     assert_that!("nodes offset", read.offset == nodes_offset, read.offset)?;
-    debug!(
-        "Reading {} nodes at {}",
-        header.node_array_size, read.offset
-    );
     let nodes = nodes::read_nodes(read, header.node_array_size, meshes_count)?;
     // `read_nodes` calls `assert_end`
 
@@ -110,8 +102,8 @@ pub fn read_gamez(read: &mut CountingReader<impl Read>) -> Result<GameZDataPm> {
 
 pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataPm) -> Result<()> {
     let texture_count = assert_len!(u32, gamez.textures.len(), "GameZ textures")?;
-    let node_array_size = assert_len!(u32, gamez.nodes.len(), "GameZ nodes")?;
 
+    let node_array_size = assert_len!(u32, gamez.nodes.len(), "GameZ nodes")?;
     let meshes_array_size = gamez.metadata.meshes_array_size;
 
     let textures_offset = HeaderPmC::SIZE;
@@ -121,11 +113,6 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataPm) 
     let (nodes_offset, mesh_offsets) =
         meshes::size_meshes(meshes_offset, meshes_array_size, &gamez.meshes);
 
-    debug!(
-        "Writing gamez header (pm, {}) at {}",
-        HeaderPmC::SIZE,
-        write.offset
-    );
     let header = HeaderPmC {
         signature: SIGNATURE,
         version: VERSION_PM,
@@ -148,7 +135,6 @@ pub fn write_gamez(write: &mut CountingWriter<impl Write>, gamez: &GameZDataPm) 
         materials::MatType::Ng,
     )?;
     meshes::write_meshes(write, &gamez.meshes, &mesh_offsets, meshes_array_size)?;
-    debug!("Writing {} nodes at {}", node_array_size, write.offset);
     nodes::write_nodes(write, &gamez.nodes)?;
     Ok(())
 }

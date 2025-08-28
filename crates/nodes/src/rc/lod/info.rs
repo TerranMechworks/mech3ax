@@ -48,7 +48,7 @@ const BORKED_UNK044: &[u32; 6] = &[
     0x0189AF70, 0x018B16A0, 0x018C2C30, 0x018C54C0, 0x018CC320, 0x018F4930,
 ];
 
-pub fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<NodeVariantRc> {
+pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<NodeVariantRc> {
     // cannot assert name
     let const_flags = node.flags.mask_not(VARIABLE_FLAGS);
     assert_that!("lod flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
@@ -107,7 +107,7 @@ pub fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<NodeVarian
     }))
 }
 
-pub fn make_variants(lod: &Lod) -> Result<NodeVariantsRc> {
+pub(crate) fn make_variants(lod: &Lod) -> Result<NodeVariantsRc> {
     let children_count = assert_len!(u32, lod.children.len(), "lod children")?;
     let unk044 = if BORKED_UNK044.contains(&lod.data_ptr) {
         0

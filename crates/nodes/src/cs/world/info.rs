@@ -5,7 +5,7 @@ use mech3ax_api_types::nodes::cs::World;
 use mech3ax_api_types::nodes::BoundingBox;
 use mech3ax_common::{assert_len, assert_that, Result};
 
-pub const WORLD_NAME: &str = "world1";
+pub(crate) const WORLD_NAME: &str = "world1";
 
 const WORLD_FLAGS: NodeBitFlagsCs = NodeBitFlagsCs::from_bits_truncate(
     NodeBitFlagsCs::UNK02.bits()
@@ -15,7 +15,7 @@ const WORLD_FLAGS: NodeBitFlagsCs = NodeBitFlagsCs::from_bits_truncate(
         | NodeBitFlagsCs::UNK24.bits(),
 );
 
-pub fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVariantCs> {
+pub(crate) fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVariantCs> {
     assert_that!("world name", node.name eq WORLD_NAME, offset + 0)?;
     assert_that!("world flags", node.flags == WORLD_FLAGS, offset + 36)?;
     assert_that!("world field 040", node.unk040 == 0x00000000, offset + 40)?;
@@ -67,7 +67,7 @@ pub fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVarian
     })
 }
 
-pub fn make_variants(world: &World) -> Result<NodeVariantsCs> {
+pub(crate) fn make_variants(world: &World) -> Result<NodeVariantsCs> {
     let children_count = assert_len!(u16, world.children.len(), "world children")?;
     Ok(NodeVariantsCs {
         name: WORLD_NAME.to_string(),

@@ -25,7 +25,7 @@ const VARIABLE_FLAGS: NodeBitFlagsCs = NodeBitFlagsCs::from_bits_truncate(
     | 0,
 );
 
-pub fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVariantCs> {
+pub(crate) fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVariantCs> {
     // can't assert name
     // flags (36) is variable
     let const_flags = node.flags.mask_not(VARIABLE_FLAGS);
@@ -59,7 +59,7 @@ pub fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVarian
     Ok(NodeVariantCs::Object3d(node))
 }
 
-pub fn make_variants(object3d: &Object3d) -> Result<NodeVariantsCs> {
+pub(crate) fn make_variants(object3d: &Object3d) -> Result<NodeVariantsCs> {
     let children_count = assert_len!(u16, object3d.children.len(), "object3d children")?;
     //let mut flags = ALWAYS_PRESENT;
     let flags = NodeBitFlagsCs::from_bits_truncate(object3d.flags);

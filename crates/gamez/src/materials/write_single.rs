@@ -1,10 +1,9 @@
 use super::{CycleInfoC, MatType, MaterialC, MaterialFlags};
-use log::debug;
+use log::trace;
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::Color;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, assert_with_msg, bool_c, Result};
-use mech3ax_types::AsBytes as _;
 use std::io::Write;
 
 pub(super) fn find_texture_index_by_name(textures: &[String], texture_name: &str) -> Result<u32> {
@@ -22,15 +21,8 @@ pub(crate) fn write_material(
     write: &mut CountingWriter<impl Write>,
     material: &Material,
     pointer: Option<u32>,
-    index: usize,
     ty: MatType,
 ) -> Result<()> {
-    debug!(
-        "Writing material {} ({}) at {}",
-        index,
-        MaterialC::SIZE,
-        write.offset
-    );
     let mat_c = match material {
         Material::Textured(material) => {
             let mut flags = match ty {
@@ -92,12 +84,7 @@ pub(super) fn write_cycle(
 ) -> Result<()> {
     if let Material::Textured(mat) = material {
         if let Some(cycle) = &mat.cycle {
-            debug!(
-                "Writing cycle info {} ({}) at {}",
-                index,
-                CycleInfoC::SIZE,
-                write.offset
-            );
+            trace!("Writing cycle info {}", index);
 
             let unk00 = bool_c!(cycle.unk00);
             let count = assert_len!(u32, cycle.textures.len(), "cycle textures")?;
@@ -112,12 +99,9 @@ pub(super) fn write_cycle(
             };
             write.write_struct(&info)?;
 
-            debug!(
-                "Writing {} x cycle textures {} at {}",
-                count, index, write.offset
-            );
             for texture_name in &cycle.textures {
                 let index = find_texture_index_by_name(textures, texture_name)?;
+                trace!("`{}` -> {}", texture_name, index);
                 write.write_u32(index)?;
             }
         }

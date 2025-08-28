@@ -44,7 +44,7 @@ const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     | 0,
 );
 
-pub fn assert_variants(node: NodeVariantsMw, offset: usize) -> Result<NodeVariantMw> {
+pub(crate) fn assert_variants(node: NodeVariantsMw, offset: usize) -> Result<NodeVariantMw> {
     // cannot assert name
     let const_flags = node.flags.mask_not(VARIABLE_FLAGS);
     assert_that!("lod flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
@@ -99,7 +99,7 @@ pub fn assert_variants(node: NodeVariantsMw, offset: usize) -> Result<NodeVarian
     }))
 }
 
-pub fn make_variants(lod: &Lod) -> Result<NodeVariantsMw> {
+pub(crate) fn make_variants(lod: &Lod) -> Result<NodeVariantsMw> {
     let children_count = assert_len!(u32, lod.children.len(), "lod children")?;
     Ok(NodeVariantsMw {
         name: lod.name.clone(),

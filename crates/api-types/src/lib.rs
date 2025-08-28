@@ -52,6 +52,7 @@ impl Range {
     NoUninit,
     AnyBitPattern,
     Struct,
+    Default,
 )]
 #[dotnet(val_struct)]
 #[repr(C)]
@@ -120,6 +121,7 @@ impl Color {
     NoUninit,
     AnyBitPattern,
     Struct,
+    Default,
 )]
 #[dotnet(val_struct)]
 #[repr(C)]
@@ -151,6 +153,7 @@ impl Quaternion {
     NoUninit,
     AnyBitPattern,
     Struct,
+    Default,
 )]
 #[dotnet(val_struct)]
 #[repr(C)]

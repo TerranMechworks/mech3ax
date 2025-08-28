@@ -1,16 +1,16 @@
+use crate::common::{read_child_indices, write_child_indices};
 use crate::cs::node::NodeVariantsCs;
 use crate::math::{
     apply_matrix_signs, apply_vec3_signs, euler_to_matrix, extract_matrix_signs,
     extract_vec3_signs, PI,
 };
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
 use mech3ax_api_types::nodes::cs::Object3d;
 use mech3ax_api_types::nodes::Transformation;
 use mech3ax_api_types::{Matrix, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Zeros};
+use mech3ax_types::{impl_as_bytes, Zeros};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -88,18 +88,11 @@ fn assert_object3d(object3d: Object3dCsC, offset: usize) -> Result<Option<Transf
     Ok(transformation)
 }
 
-pub fn read(
+pub(crate) fn read(
     read: &mut CountingReader<impl Read>,
     node: NodeVariantsCs,
     node_index: u32,
-    index: usize,
 ) -> Result<Object3d> {
-    debug!(
-        "Reading object3d node data {} (cs, {}) at {}",
-        index,
-        Object3dCsC::SIZE,
-        read.offset
-    );
     let object3d: Object3dCsC = read.read_struct()?;
 
     let matrix_signs = extract_matrix_signs(&object3d.matrix);
@@ -111,13 +104,7 @@ pub fn read(
     } else {
         None
     };
-    debug!(
-        "Reading node {} children x{} (cs) at {}",
-        index, node.children_count, read.offset
-    );
-    let children = (0..node.children_count)
-        .map(|_| read.read_u32())
-        .collect::<std::io::Result<Vec<_>>>()?;
+    let children = read_child_indices(read, u32::from(node.children_count))?;
 
     Ok(Object3d {
         name: node.name,
@@ -144,18 +131,7 @@ pub fn read(
     })
 }
 
-pub fn write(
-    write: &mut CountingWriter<impl Write>,
-    object3d: &Object3d,
-    index: usize,
-) -> Result<()> {
-    debug!(
-        "Writing object3d node data {} (cs, {}) at {}",
-        index,
-        Object3dCsC::SIZE,
-        write.offset
-    );
-
+pub(crate) fn write(write: &mut CountingWriter<impl Write>, object3d: &Object3d) -> Result<()> {
     let (flags, rotation, translation, matrix) = object3d
         .transformation
         .as_ref()
@@ -190,15 +166,7 @@ pub fn write(
     if let Some(parent) = object3d.parent {
         write.write_u32(parent)?;
     }
-    debug!(
-        "Writing node {} children x{} (cs) at {}",
-        index,
-        object3d.children.len(),
-        write.offset
-    );
-    for child in object3d.children.iter().copied() {
-        write.write_u32(child)?;
-    }
+    write_child_indices(write, &object3d.children)?;
 
     Ok(())
 }

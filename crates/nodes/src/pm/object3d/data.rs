@@ -2,13 +2,12 @@ use crate::math::{apply_matrix_signs, euler_to_matrix, extract_matrix_signs, PI}
 use crate::pm::node::NodeVariantsPm;
 use crate::pm::wrappers::WrapperPm;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
 use mech3ax_api_types::nodes::pm::Object3d;
 use mech3ax_api_types::nodes::Transformation;
 use mech3ax_api_types::{Matrix, Vec3};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Zeros};
+use mech3ax_types::{impl_as_bytes, Zeros};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -77,17 +76,10 @@ fn assert_object3d(object3d: Object3dPmC, offset: usize) -> Result<Option<Transf
     Ok(transformation)
 }
 
-pub fn read(
+pub(crate) fn read(
     read: &mut CountingReader<impl Read>,
     node: NodeVariantsPm,
-    index: usize,
 ) -> Result<WrapperPm<Object3d>> {
-    debug!(
-        "Reading object3d node data {} (pm, {}) at {}",
-        index,
-        Object3dPmC::SIZE,
-        read.offset
-    );
     let object3d: Object3dPmC = read.read_struct()?;
 
     let matrix_signs = extract_matrix_signs(&object3d.matrix);
@@ -121,18 +113,7 @@ pub fn read(
     })
 }
 
-pub fn write(
-    write: &mut CountingWriter<impl Write>,
-    object3d: &Object3d,
-    index: usize,
-) -> Result<()> {
-    debug!(
-        "Writing object3d node data {} (pm, {}) at {}",
-        index,
-        Object3dPmC::SIZE,
-        write.offset
-    );
-
+pub(crate) fn write(write: &mut CountingWriter<impl Write>, object3d: &Object3d) -> Result<()> {
     let (flags, mut rotation, translation, matrix) = object3d
         .transformation
         .as_ref()

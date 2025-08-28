@@ -1,14 +1,15 @@
 use super::info::WORLD_NAME;
+use crate::common::{read_child_indices, write_child_indices};
 use crate::math::partition_diag;
 use crate::range::RangeI32;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::{debug, trace};
+use log::trace;
 use mech3ax_api_types::nodes::cs::World;
 use mech3ax_api_types::nodes::{Area, PartitionNg, PartitionValue};
 use mech3ax_api_types::{Color, Range};
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_len, assert_that, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _};
+use mech3ax_types::impl_as_bytes;
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -96,13 +97,6 @@ impl_as_bytes!(PartitionCsC, 88);
 const FOG_STATE_LINEAR: u32 = 1;
 
 fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Result<PartitionNg> {
-    debug!(
-        "Reading world partition data x: {}, y: {} (cs, {}) at {}",
-        x,
-        y,
-        PartitionCsC::SIZE,
-        read.offset
-    );
     let partition: PartitionCsC = read.read_struct()?;
 
     let xf = x as f32;
@@ -169,18 +163,14 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
         Vec::new()
     } else {
         assert_that!("partition ptr", partition.ptr != 0, read.prev + 60)?;
+
+        trace!(
+            "Reading {} partition node indices at {}",
+            partition.count,
+            read.offset
+        );
         (0..partition.count)
-            .map(|index| {
-                trace!(
-                    "Reading partition x: {}, y: {} value {} at {}",
-                    x,
-                    y,
-                    index,
-                    read.offset
-                );
-                let value = read.read_struct()?;
-                Ok(value)
-            })
+            .map(|_| read.read_struct_no_log())
             .collect::<std::io::Result<Vec<PartitionValue>>>()?
     };
 
@@ -196,20 +186,43 @@ fn read_partition(read: &mut CountingReader<impl Read>, x: i32, y: i32) -> Resul
 
 fn read_partitions(
     read: &mut CountingReader<impl Read>,
-    area_x: RangeI32,
-    area_y: RangeI32,
+    area: &Area,
 ) -> Result<Vec<Vec<PartitionNg>>> {
+    let area_x = RangeI32::new(area.left, area.right, 1024);
+    // because the virtual partition y size is negative, this is inverted!
+    let area_y = RangeI32::new(area.bottom, area.top, -1024);
+
+    let y_len = area_y.len();
+    let x_len = area_x.len();
+
     area_y
-        .map(|y| {
+        .enumerate()
+        .map(|(y_idx, y_pos)| {
             area_x
                 .clone()
-                .map(|x| read_partition(read, x, y))
+                .enumerate()
+                .map(|(x_idx, x_pos)| {
+                    trace!(
+                        "Reading area partition x: {}..{}..{} ({}/{}), y: {}..{}..{} ({}/{})",
+                        area.left,
+                        x_pos,
+                        area.right,
+                        x_idx,
+                        x_len,
+                        area.bottom,
+                        y_pos,
+                        area.top,
+                        y_idx,
+                        y_len,
+                    );
+                    read_partition(read, x_pos, y_pos)
+                })
                 .collect::<Result<Vec<_>>>()
         })
         .collect::<Result<Vec<_>>>()
 }
 
-fn assert_world(world: &WorldCsC, offset: usize) -> Result<(bool, Area, RangeI32, RangeI32)> {
+fn assert_world(world: &WorldCsC, offset: usize) -> Result<(bool, Area)> {
     let flags = assert_that!("world flags", bool world.flags, offset + 0)?;
     assert_that!("world ap used", world.area_partition_used == 0, offset + 4)?;
     // no idea about area_partition_count
@@ -362,18 +375,14 @@ fn assert_world(world: &WorldCsC, offset: usize) -> Result<(bool, Area, RangeI32
         offset + 148
     )?;
 
-    let area_x = RangeI32::new(area.left, area.right, 1024);
-    // because the virtual partition y size is negative, this is inverted!
-    let area_y = RangeI32::new(area.bottom, area.top, -1024);
-
     assert_that!(
         "world vp x count",
-        world.virt_partition_x_count == area_x.len() as u32,
+        world.virt_partition_x_count == area.x_count(1024) as u32,
         offset + 152
     )?;
     assert_that!(
         "world vp y count",
-        world.virt_partition_y_count == area_y.len() as u32,
+        world.virt_partition_y_count == area.y_count(1024) as u32,
         offset + 156
     )?;
 
@@ -416,38 +425,24 @@ fn assert_world(world: &WorldCsC, offset: usize) -> Result<(bool, Area, RangeI32
     assert_that!("world field 196", world.zero196 == 0, offset + 196)?;
     assert_that!("world field 200", world.zero200 == 0, offset + 200)?;
 
-    Ok((flags, area, area_x, area_y))
+    Ok((flags, area))
 }
 
-pub fn read(
+pub(crate) fn read(
     read: &mut CountingReader<impl Read>,
     data_ptr: u32,
     children_count: u16,
     children_array_ptr: u32,
-    index: usize,
 ) -> Result<World> {
-    debug!(
-        "Reading world node data {} (cs, {}) at {}",
-        index,
-        WorldCsC::SIZE,
-        read.offset
-    );
     let world: WorldCsC = read.read_struct()?;
 
-    let (flags, area, area_x, area_y) = assert_world(&world, read.prev)?;
+    let (flags, area) = assert_world(&world, read.prev)?;
 
     // read as a result of world.children_count (always 1, not node.children_count!)
     let world_child_value = read.read_u32()?;
 
-    let partitions = read_partitions(read, area_x, area_y)?;
-
-    debug!(
-        "Reading world {} x children {} (cs) at {}",
-        children_count, index, read.offset
-    );
-    let children = (0..children_count)
-        .map(|_| read.read_u32())
-        .collect::<std::io::Result<Vec<_>>>()?;
+    let partitions = read_partitions(read, &area)?;
+    let children = read_child_indices(read, u32::from(children_count))?;
 
     Ok(World {
         name: WORLD_NAME.to_owned(),
@@ -469,14 +464,6 @@ pub fn read(
 }
 
 fn write_partition(write: &mut CountingWriter<impl Write>, partition: &PartitionNg) -> Result<()> {
-    debug!(
-        "Writing world partition data x: {}, y: {} (cs, {}) at {}",
-        partition.x,
-        partition.y,
-        PartitionCsC::SIZE,
-        write.offset
-    );
-
     let x = partition.x as f32;
     let y = partition.y as f32;
     let diagonal = partition_diag(partition.z_min, partition.z_max, 512.0);
@@ -510,15 +497,13 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
     };
     write.write_struct(&partition_c)?;
 
-    for (index, node) in partition.nodes.iter().enumerate() {
-        trace!(
-            "Writing partition x: {}, y: {} value {} at {}",
-            partition.x,
-            partition.y,
-            index,
-            write.offset
-        );
-        write.write_struct(node)?;
+    trace!(
+        "Writing {} partition node indices at {}",
+        partition.nodes.len(),
+        write.offset
+    );
+    for node in partition.nodes.iter() {
+        write.write_struct_no_log(node)?;
     }
 
     Ok(())
@@ -527,22 +512,46 @@ fn write_partition(write: &mut CountingWriter<impl Write>, partition: &Partition
 fn write_partitions(
     write: &mut CountingWriter<impl Write>,
     partitions: &[Vec<PartitionNg>],
+    area: &Area,
 ) -> Result<()> {
-    for sub_partitions in partitions {
-        for partition in sub_partitions {
+    let area_x = RangeI32::new(area.left, area.right, 1024);
+    // because the virtual partition y size is negative, this is inverted!
+    let area_y = RangeI32::new(area.bottom, area.top, -1024);
+
+    let y_len = area_y.len();
+    let y = assert_len!(i32, partitions.len(), "area partitions y")?;
+    assert_that!("area partitions y count", y == y_len, 0)?;
+
+    let x_len = area_x.len();
+
+    for (y_idx, (sub_partitions, y_pos)) in partitions.iter().zip(area_y).enumerate() {
+        let x = assert_len!(i32, sub_partitions.len(), "area partitions x")?;
+        assert_that!("area partitions x count", x == x_len, y_idx)?;
+
+        for (x_idx, (partition, x_pos)) in sub_partitions.iter().zip(area_x.clone()).enumerate() {
+            trace!(
+                "Writing area partition x: {}..{}..{} ({}/{}), y: {}..{}..{} ({}/{})",
+                area.left,
+                x_pos,
+                area.right,
+                x_idx,
+                x_len,
+                area.bottom,
+                y_pos,
+                area.top,
+                y_idx,
+                y_len,
+            );
             write_partition(write, partition)?;
         }
     }
     Ok(())
 }
 
-pub fn write(write: &mut CountingWriter<impl Write>, world: &World, index: usize) -> Result<()> {
-    debug!(
-        "Writing world node data {} (cs, {}) at {}",
-        index,
-        WorldCsC::SIZE,
-        write.offset
-    );
+pub(crate) fn write(write: &mut CountingWriter<impl Write>, world: &World) -> Result<()> {
+    // validate rect
+    assert_that!("world area right", world.area.right > world.area.left, 0)?;
+    assert_that!("world area bottom", world.area.bottom > world.area.top, 0)?;
 
     let area_left = world.area.left as f32;
     let area_top = world.area.top as f32;
@@ -609,17 +618,8 @@ pub fn write(write: &mut CountingWriter<impl Write>, world: &World, index: usize
     write.write_struct(&world_c)?;
     write.write_u32(world.world_child_value)?;
 
-    write_partitions(write, &world.partitions)?;
-
-    debug!(
-        "Writing world {} x children {} (cs) at {}",
-        world.children.len(),
-        index,
-        write.offset
-    );
-    for child in world.children.iter().copied() {
-        write.write_u32(child)?;
-    }
+    write_partitions(write, &world.partitions, &world.area)?;
+    write_child_indices(write, &world.children)?;
 
     Ok(())
 }

@@ -1,10 +1,9 @@
 use super::info::{SPYGLASS_NAME, WINDOW_NAME};
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
 use mech3ax_api_types::nodes::cs::Window;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Zeros};
+use mech3ax_types::{impl_as_bytes, Zeros};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -23,18 +22,11 @@ struct WindowCsC {
 }
 impl_as_bytes!(WindowCsC, 248);
 
-pub fn read(
+pub(crate) fn read(
     read: &mut CountingReader<impl Read>,
     data_ptr: u32,
     spyglass: bool,
-    index: usize,
 ) -> Result<Window> {
-    debug!(
-        "Reading window node data {} (cs, {}) at {}",
-        index,
-        WindowCsC::SIZE,
-        read.offset
-    );
     let window: WindowCsC = read.read_struct()?;
 
     assert_that!("window origin x", window.origin_x == 0, read.prev + 0)?;
@@ -71,13 +63,7 @@ pub fn read(
     })
 }
 
-pub fn write(write: &mut CountingWriter<impl Write>, window: &Window, index: usize) -> Result<()> {
-    debug!(
-        "Writing window node data {} (cs, {}) at {}",
-        index,
-        WindowCsC::SIZE,
-        write.offset
-    );
+pub(crate) fn write(write: &mut CountingWriter<impl Write>, window: &Window) -> Result<()> {
     let window = WindowCsC {
         origin_x: 0,
         origin_y: 0,

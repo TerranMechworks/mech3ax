@@ -1,82 +1,87 @@
 use super::{NODE_INDEX_BOT_MASK, NODE_INDEX_TOP, NODE_INDEX_TOP_MASK};
-use log::{debug, trace};
-use mech3ax_api_types::nodes::pm::*;
+use log::trace;
+use mech3ax_api_types::nodes::pm::NodePm;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, assert_with_msg, Result};
+use mech3ax_nodes::common::{read_child_indices, write_child_indices};
+use mech3ax_nodes::mw::NodeMwC;
 use mech3ax_nodes::pm::{
     read_node_data, read_node_info_gamez, write_node_data, write_node_info, NodeVariantPm,
-    WrappedNodePm, NODE_PM_C_SIZE,
+    WrappedNodePm,
 };
-use mech3ax_types::u32_to_usize;
+use mech3ax_types::{u32_to_usize, AsBytes as _};
 use std::io::{Read, Write};
 
-pub fn read_nodes(
+pub(crate) fn read_nodes(
     read: &mut CountingReader<impl Read>,
     array_size: u32,
     meshes_count: i32,
 ) -> Result<Vec<NodePm>> {
-    let end_offset = read.offset + u32_to_usize(NODE_PM_C_SIZE * array_size + 4 * array_size);
+    let end_offset = read.offset + (u32_to_usize(NodeMwC::SIZE) + 4) * u32_to_usize(array_size);
 
-    let mut variants = Vec::new();
     let mut light_node: Option<u32> = None;
-    for index in 0..array_size {
-        let node_info_pos = read.offset;
-        let variant = read_node_info_gamez(read, index)?;
+    let variants = (0..array_size)
+        .map(|index| {
+            trace!("Reading node info {}/{}", index, array_size);
 
-        let node_index = read.read_u32()?;
-        let top = node_index & NODE_INDEX_TOP_MASK;
-        assert_that!("node index top", top == NODE_INDEX_TOP, read.prev)?;
-        let node_index = node_index & NODE_INDEX_BOT_MASK;
-        trace!("Node {} index: {}", index, node_index);
+            let node_info_pos = read.offset;
+            let variant = read_node_info_gamez(read)?;
 
-        match &variant {
-            NodeVariantPm::World { .. } => {
-                assert_that!("node position (world)", index == 0, node_info_pos)?;
-                assert_that!("node index (world)", node_index == 1, read.prev)?;
-            }
-            NodeVariantPm::Window { .. } => {
-                assert_that!("node position (window)", index == 1, node_info_pos)?;
-                assert_that!("node index (window)", node_index == 2, read.prev)?;
-            }
-            NodeVariantPm::Camera { .. } => {
-                assert_that!("node position (camera)", index == 2, node_info_pos)?;
-                assert_that!("node index (camera)", node_index == 3, read.prev)?;
-            }
-            NodeVariantPm::Display { .. } => {
-                assert_that!("node position (display)", index == 3, node_info_pos)?;
-                assert_that!("node index (display)", node_index == 4, read.prev)?;
-            }
-            NodeVariantPm::Light { .. } => {
-                // exclude world, window, camera, or display indices
-                assert_that!("node position (light)", index > 3, node_info_pos)?;
-                if let Some(i) = light_node {
-                    return Err(assert_with_msg!(
-                        "Unexpected light node in position {}, already found in {} (at {})",
-                        index,
-                        i,
-                        node_info_pos,
-                    ));
+            let node_index = read.read_u32()?;
+            let top = node_index & NODE_INDEX_TOP_MASK;
+            assert_that!("node index top", top == NODE_INDEX_TOP, read.prev)?;
+            let node_index = node_index & NODE_INDEX_BOT_MASK;
+            trace!("Node {} index: {}", index, node_index);
+
+            match &variant {
+                NodeVariantPm::World { .. } => {
+                    assert_that!("node position (world)", index == 0, node_info_pos)?;
+                    assert_that!("node index (world)", node_index == 1, read.prev)?;
                 }
-                light_node = Some(index);
-            }
-            NodeVariantPm::Lod(_) => {
-                // exclude world, window, camera, or display indices
-                assert_that!("node position (lod)", index > 3, node_info_pos)?;
-            }
-            NodeVariantPm::Object3d(object3d) => {
-                // exclude world, window, camera, or display indices
-                assert_that!("node position (object3d)", index > 3, node_info_pos)?;
-                if object3d.mesh_index >= 0 {
-                    assert_that!(
-                        "object3d mesh index",
-                        object3d.mesh_index < meshes_count,
-                        node_info_pos
-                    )?;
+                NodeVariantPm::Window { .. } => {
+                    assert_that!("node position (window)", index == 1, node_info_pos)?;
+                    assert_that!("node index (window)", node_index == 2, read.prev)?;
+                }
+                NodeVariantPm::Camera { .. } => {
+                    assert_that!("node position (camera)", index == 2, node_info_pos)?;
+                    assert_that!("node index (camera)", node_index == 3, read.prev)?;
+                }
+                NodeVariantPm::Display { .. } => {
+                    assert_that!("node position (display)", index == 3, node_info_pos)?;
+                    assert_that!("node index (display)", node_index == 4, read.prev)?;
+                }
+                NodeVariantPm::Light { .. } => {
+                    // exclude world, window, camera, or display indices
+                    assert_that!("node position (light)", index > 3, node_info_pos)?;
+                    if let Some(i) = light_node {
+                        return Err(assert_with_msg!(
+                            "Unexpected light node in position {}, already found in {} (at {})",
+                            index,
+                            i,
+                            node_info_pos,
+                        ));
+                    }
+                    light_node = Some(index);
+                }
+                NodeVariantPm::Lod(_) => {
+                    // exclude world, window, camera, or display indices
+                    assert_that!("node position (lod)", index > 3, node_info_pos)?;
+                }
+                NodeVariantPm::Object3d(object3d) => {
+                    // exclude world, window, camera, or display indices
+                    assert_that!("node position (object3d)", index > 3, node_info_pos)?;
+                    if object3d.mesh_index >= 0 {
+                        assert_that!(
+                            "object3d mesh index",
+                            object3d.mesh_index < meshes_count,
+                            node_info_pos
+                        )?;
+                    }
                 }
             }
-        }
-        variants.push((variant, node_index));
-    }
+            Ok((variant, node_index))
+        })
+        .collect::<Result<Vec<_>>>()?;
 
     assert_that!("node info end", end_offset == read.offset, read.offset)?;
     let _light_node_index = light_node
@@ -85,60 +90,43 @@ pub fn read_nodes(
     let nodes = variants
         .into_iter()
         .enumerate()
-        .map(
-            |(index, (variant, node_index))| match read_node_data(read, variant, index)? {
-                WrappedNodePm::World(wrapped_world) => {
-                    let mut world = wrapped_world.wrapped;
-                    debug!(
-                        "Reading node {} children x{} (pm) at {}",
-                        index, wrapped_world.children_count, read.offset
-                    );
-                    world.children = (0..wrapped_world.children_count)
-                        .map(|_| read.read_u32())
-                        .collect::<std::io::Result<Vec<_>>>()?;
-                    Ok(NodePm::World(world))
-                }
-                WrappedNodePm::Window(window) => Ok(NodePm::Window(window)),
+        .map(|(index, (variant, node_index))| {
+            trace!("Reading node data {}/{}", index, array_size);
+            match read_node_data(read, variant)? {
                 WrappedNodePm::Camera(camera) => Ok(NodePm::Camera(camera)),
                 WrappedNodePm::Display(display) => Ok(NodePm::Display(display)),
                 WrappedNodePm::Light(mut light) => {
                     light.node_index = node_index;
                     Ok(NodePm::Light(light))
                 }
+                WrappedNodePm::Window(window) => Ok(NodePm::Window(window)),
                 WrappedNodePm::Lod(wrapped_lod) => {
                     let mut lod = wrapped_lod.wrapped;
-
                     lod.node_index = node_index;
                     lod.parent = read.read_u32()?;
-                    debug!(
-                        "Reading node {} children x{} (pm) at {}",
-                        index, wrapped_lod.children_count, read.offset
-                    );
-                    lod.children = (0..wrapped_lod.children_count)
-                        .map(|_| read.read_u32())
-                        .collect::<std::io::Result<Vec<_>>>()?;
+                    lod.children = read_child_indices(read, u32::from(wrapped_lod.children_count))?;
                     Ok(NodePm::Lod(lod))
                 }
                 WrappedNodePm::Object3d(wrapped_obj) => {
                     let mut object3d = wrapped_obj.wrapped;
-
                     object3d.node_index = node_index;
                     object3d.parent = if wrapped_obj.has_parent {
                         Some(read.read_u32()?)
                     } else {
                         None
                     };
-                    debug!(
-                        "Reading node {} children x{} (pm) at {}",
-                        index, wrapped_obj.children_count, read.offset
-                    );
-                    object3d.children = (0..wrapped_obj.children_count)
-                        .map(|_| read.read_u32())
-                        .collect::<std::io::Result<Vec<_>>>()?;
+                    object3d.children =
+                        read_child_indices(read, u32::from(wrapped_obj.children_count))?;
                     Ok(NodePm::Object3d(object3d))
                 }
-            },
-        )
+                WrappedNodePm::World(wrapped_world) => {
+                    let mut world = wrapped_world.wrapped;
+                    world.children =
+                        read_child_indices(read, u32::from(wrapped_world.children_count))?;
+                    Ok(NodePm::World(world))
+                }
+            }
+        })
         .collect::<Result<Vec<_>>>()?;
 
     read.assert_end()?;
@@ -176,9 +164,12 @@ fn assert_area_partitions(nodes: &[NodePm], offset: usize) -> Result<()> {
     Ok(())
 }
 
-pub fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NodePm]) -> Result<()> {
+pub(crate) fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NodePm]) -> Result<()> {
+    let node_count = nodes.len();
+
     for (index, node) in nodes.iter().enumerate() {
-        write_node_info(write, node, false, index)?;
+        trace!("Writing node info {}/{}", index, node_count);
+        write_node_info(write, node, false)?;
         let node_index = match node {
             NodePm::World(_) => 1,
             NodePm::Window(_) => 2,
@@ -194,44 +185,21 @@ pub fn write_nodes(write: &mut CountingWriter<impl Write>, nodes: &[NodePm]) -> 
     }
 
     for (index, node) in nodes.iter().enumerate() {
-        write_node_data(write, node, index)?;
+        trace!("Writing node data {}/{}", index, node_count);
+        write_node_data(write, node)?;
         match node {
-            NodePm::World(world) => {
-                debug!(
-                    "Writing node {} children x{} (pm) at {}",
-                    index,
-                    world.children.len(),
-                    write.offset
-                );
-                for child in world.children.iter().copied() {
-                    write.write_u32(child)?;
-                }
-            }
             NodePm::Lod(lod) => {
                 write.write_u32(lod.parent)?;
-                debug!(
-                    "Writing node {} children x{} (pm) at {}",
-                    index,
-                    lod.children.len(),
-                    write.offset
-                );
-                for child in lod.children.iter().copied() {
-                    write.write_u32(child)?;
-                }
+                write_child_indices(write, &lod.children)?;
             }
             NodePm::Object3d(object3d) => {
                 if let Some(parent) = object3d.parent {
                     write.write_u32(parent)?;
                 }
-                debug!(
-                    "Writing node {} children x{} (pm) at {}",
-                    index,
-                    object3d.children.len(),
-                    write.offset
-                );
-                for child in object3d.children.iter().copied() {
-                    write.write_u32(child)?;
-                }
+                write_child_indices(write, &object3d.children)?;
+            }
+            NodePm::World(world) => {
+                write_child_indices(write, &world.children)?;
             }
             _ => {}
         }

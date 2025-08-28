@@ -1,12 +1,11 @@
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
 use mech3ax_api_types::nodes::Window;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
 use mech3ax_types::{impl_as_bytes, AsBytes as _, Zeros};
 use std::io::{Read, Write};
 
-#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
+#[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern, Default)]
 #[repr(C)]
 struct WindowC {
     origin_x: u32,       // 000
@@ -22,13 +21,7 @@ struct WindowC {
 }
 impl_as_bytes!(WindowC, 248);
 
-pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -> Result<Window> {
-    debug!(
-        "Reading window node data {} ({}) at {}",
-        index,
-        WindowC::SIZE,
-        read.offset
-    );
+pub(crate) fn read(read: &mut CountingReader<impl Read>, data_ptr: u32) -> Result<Window> {
     let window: WindowC = read.read_struct()?;
 
     assert_that!("window origin x", window.origin_x == 0, read.prev + 0)?;
@@ -63,29 +56,17 @@ pub fn read(read: &mut CountingReader<impl Read>, data_ptr: u32, index: usize) -
     })
 }
 
-pub fn write(write: &mut CountingWriter<impl Write>, window: &Window, index: usize) -> Result<()> {
-    debug!(
-        "Writing window node data {} (rc, {}) at {}",
-        index,
-        WindowC::SIZE,
-        write.offset
-    );
+pub(crate) fn write(write: &mut CountingWriter<impl Write>, window: &Window) -> Result<()> {
     let window = WindowC {
-        origin_x: 0,
-        origin_y: 0,
         resolution_x: window.resolution_x,
         resolution_y: window.resolution_y,
-        zero016: Zeros::new(),
         buffer_index: -1,
-        buffer_ptr: 0,
-        zero236: 0,
-        zero240: 0,
-        zero244: 0,
+        ..Default::default()
     };
     write.write_struct(&window)?;
     Ok(())
 }
 
-pub fn size() -> u32 {
+pub(crate) fn size() -> u32 {
     WindowC::SIZE
 }

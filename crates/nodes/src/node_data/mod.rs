@@ -1,3 +1,3 @@
-pub mod camera;
-pub mod display;
-pub mod window;
+pub(crate) mod camera;
+pub(crate) mod display;
+pub(crate) mod window;

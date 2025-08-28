@@ -24,7 +24,7 @@ const ALWAYS_PRESENT: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     | 0,
 );
 
-pub fn assert_variants(
+pub(crate) fn assert_variants(
     node: NodeVariantsPm,
     offset: usize,
     mesh_index_is_ptr: bool,
@@ -92,7 +92,7 @@ pub fn assert_variants(
     }))
 }
 
-pub fn make_variants(lod: &Lod, mesh_index_is_ptr: bool) -> Result<NodeVariantsPm> {
+pub(crate) fn make_variants(lod: &Lod, mesh_index_is_ptr: bool) -> Result<NodeVariantsPm> {
     let children_count = assert_len!(u16, lod.children.len(), "lod children")?;
     Ok(NodeVariantsPm {
         name: lod.name.clone(),

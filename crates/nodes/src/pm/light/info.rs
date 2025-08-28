@@ -18,9 +18,9 @@ const BBOX_LIGHT: BoundingBox = BoundingBox {
         z: -1.0,
     },
 };
-pub const LIGHT_NAME: &str = "sunlight";
+pub(crate) const LIGHT_NAME: &str = "sunlight";
 
-pub fn assert_variants(node: NodeVariantsPm, offset: usize) -> Result<NodeVariantPm> {
+pub(crate) fn assert_variants(node: NodeVariantsPm, offset: usize) -> Result<NodeVariantPm> {
     assert_that!("light name", node.name eq LIGHT_NAME, offset + 0)?;
     assert_that!(
         "light flags",
@@ -75,7 +75,7 @@ pub fn assert_variants(node: NodeVariantsPm, offset: usize) -> Result<NodeVarian
     })
 }
 
-pub fn make_variants(light: &Light) -> NodeVariantsPm {
+pub(crate) fn make_variants(light: &Light) -> NodeVariantsPm {
     NodeVariantsPm {
         name: LIGHT_NAME.to_owned(),
         flags: NodeBitFlags::DEFAULT | NodeBitFlags::UNK08,

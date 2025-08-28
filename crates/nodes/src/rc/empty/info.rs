@@ -43,7 +43,7 @@ const VARIABLE_FLAGS: NodeBitFlags = NodeBitFlags::from_bits_truncate(
     | 0,
 );
 
-pub fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<NodeVariantRc> {
+pub(crate) fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<NodeVariantRc> {
     // cannot assert name
     let const_flags = node.flags.mask_not(VARIABLE_FLAGS);
     assert_that!("empty flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
@@ -89,7 +89,7 @@ pub fn assert_variants(node: NodeVariantsRc, offset: usize) -> Result<NodeVarian
     }))
 }
 
-pub fn make_variants(empty: &Empty) -> NodeVariantsRc {
+pub(crate) fn make_variants(empty: &Empty) -> NodeVariantsRc {
     NodeVariantsRc {
         name: empty.name.clone(),
         flags: NodeBitFlags::from(&empty.flags),

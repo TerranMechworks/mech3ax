@@ -1,11 +1,11 @@
+use crate::common::{read_child_indices, write_child_indices};
 use crate::cs::node::NodeVariantLodCs;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
 use mech3ax_api_types::nodes::cs::Lod;
 use mech3ax_api_types::Range;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Zeros};
+use mech3ax_types::{impl_as_bytes, Zeros};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -57,30 +57,17 @@ fn assert_lod(lod: &LodCsC, offset: usize) -> Result<(bool, Range)> {
     Ok((level, range))
 }
 
-pub fn read(
+pub(crate) fn read(
     read: &mut CountingReader<impl Read>,
     node: NodeVariantLodCs,
     node_index: u32,
-    index: usize,
 ) -> Result<Lod> {
-    debug!(
-        "Reading lod node data {} (cs, {}) at {}",
-        index,
-        LodCsC::SIZE,
-        read.offset
-    );
     let lod: LodCsC = read.read_struct()?;
 
     let (level, range) = assert_lod(&lod, read.prev)?;
 
     let parent = read.read_u32()?;
-    debug!(
-        "Reading node {} children x{} (cs) at {}",
-        index, node.children_count, read.offset
-    );
-    let children = (0..node.children_count)
-        .map(|_| read.read_u32())
-        .collect::<std::io::Result<Vec<_>>>()?;
+    let children = read_child_indices(read, u32::from(node.children_count))?;
 
     Ok(Lod {
         name: node.name,
@@ -103,13 +90,7 @@ pub fn read(
     })
 }
 
-pub fn write(write: &mut CountingWriter<impl Write>, lod: &Lod, index: usize) -> Result<()> {
-    debug!(
-        "Writing lod node data {} (cs, {}) at {}",
-        index,
-        LodCsC::SIZE,
-        write.offset
-    );
+pub(crate) fn write(write: &mut CountingWriter<impl Write>, lod: &Lod) -> Result<()> {
     let lodc = LodCsC {
         level: bool_c!(lod.level),
         range_near_sq: lod.range.min * lod.range.min,
@@ -127,15 +108,7 @@ pub fn write(write: &mut CountingWriter<impl Write>, lod: &Lod, index: usize) ->
     write.write_struct(&lodc)?;
 
     write.write_u32(lod.parent)?;
-    debug!(
-        "Writing node {} children x{} (cs) at {}",
-        index,
-        lod.children.len(),
-        write.offset
-    );
-    for child in lod.children.iter().copied() {
-        write.write_u32(child)?;
-    }
+    write_child_indices(write, &lod.children)?;
 
     Ok(())
 }

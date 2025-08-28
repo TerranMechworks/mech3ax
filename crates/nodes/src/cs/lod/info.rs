@@ -19,7 +19,7 @@ const VARIABLE_FLAGS: NodeBitFlagsCs = NodeBitFlagsCs::from_bits_truncate(
         | 0,
 );
 
-pub fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVariantCs> {
+pub(crate) fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVariantCs> {
     // can't assert name
     let const_flags = node.flags.mask_not(VARIABLE_FLAGS);
     assert_that!("lod flags", const_flags == ALWAYS_PRESENT, offset + 36)?;
@@ -80,7 +80,7 @@ pub fn assert_variants(node: NodeVariantsCs, offset: usize) -> Result<NodeVarian
     }))
 }
 
-pub fn make_variants(lod: &Lod) -> Result<NodeVariantsCs> {
+pub(crate) fn make_variants(lod: &Lod) -> Result<NodeVariantsCs> {
     let children_count = assert_len!(u16, lod.children.len(), "lod children")?;
     let mut flags = ALWAYS_PRESENT;
     if lod.flags_unk03 {

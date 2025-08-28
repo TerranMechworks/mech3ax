@@ -1,11 +1,10 @@
 use super::write_single::{find_texture_index_by_name, write_cycle, write_material};
 use super::{MatType, MaterialC, MaterialFlags, MaterialInfoC};
-use log::{debug, trace};
+use log::trace;
 use mech3ax_api_types::gamez::materials::Material;
 use mech3ax_api_types::Color;
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{assert_len, Result};
-use mech3ax_types::AsBytes as _;
 use std::io::Write;
 
 pub(crate) fn write_materials(
@@ -14,11 +13,6 @@ pub(crate) fn write_materials(
     materials: &[Material],
     ty: MatType,
 ) -> Result<()> {
-    debug!(
-        "Writing material info header ({}) at {}",
-        MaterialInfoC::SIZE,
-        write.offset
-    );
     let materials_len = assert_len!(i16, materials.len(), "materials")?;
     // Cast safety: i32 > i16
     let count = materials_len as i32;
@@ -32,21 +26,18 @@ pub(crate) fn write_materials(
     write.write_struct(&info)?;
 
     for (index, material) in (0i16..).zip(materials.iter()) {
+        trace!("Writing material {}/{}", index, materials_len);
+
         let pointer = if let Material::Textured(textured) = material {
             // reconstruct the texture index
             let texture_index = find_texture_index_by_name(textures, &textured.texture)?;
-            trace!(
-                "Material {} texture `{}` index: {}",
-                index,
-                textured.texture,
-                texture_index
-            );
+            trace!("`{}` -> {}", textured.texture, texture_index);
             Some(texture_index)
         } else {
             None
         };
-        // Cast safety: index is purely for debug here, and also >= 0
-        write_material(write, material, pointer, index as usize, ty)?;
+
+        write_material(write, material, pointer, ty)?;
 
         // since materials_len <= i16::MAX, this is also true for index, so no
         // overflow is possible
@@ -95,14 +86,14 @@ fn write_materials_zero(
     };
 
     let end = ty.size_i16();
+    trace!(
+        "Writing {}..{} material zeros at {}",
+        start,
+        end,
+        write.offset
+    );
     for index in start..end {
-        debug!(
-            "Writing zero material {} ({}) at {}",
-            index,
-            MaterialC::SIZE,
-            write.offset
-        );
-        write.write_struct(&material)?;
+        write.write_struct_no_log(&material)?;
 
         let mut index1 = index - 1;
         if index1 < start {
@@ -116,5 +107,6 @@ fn write_materials_zero(
         }
         write.write_i16(index2)?;
     }
+    trace!("Wrote material zeros at {}", write.offset);
     Ok(())
 }

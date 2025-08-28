@@ -1,5 +1,5 @@
 #[derive(Debug, Clone)]
-pub struct RangeI32 {
+pub(crate) struct RangeI32 {
     start: i32,
     curr: i32,
     stop: i32,
@@ -7,7 +7,7 @@ pub struct RangeI32 {
 }
 
 impl RangeI32 {
-    pub fn new(start: i32, stop: i32, step: i32) -> Self {
+    pub(crate) fn new(start: i32, stop: i32, step: i32) -> Self {
         let modulo = (start - stop) % step;
         Self {
             start,
@@ -17,7 +17,7 @@ impl RangeI32 {
         }
     }
 
-    pub fn len(&self) -> i32 {
+    pub(crate) fn len(&self) -> i32 {
         (self.stop - self.start) / self.step
     }
 }

@@ -1,8 +1,8 @@
 use mech3ax_api_types::{Matrix, Vec3};
 
-pub const PI: f32 = std::f32::consts::PI;
+pub(crate) const PI: f32 = std::f32::consts::PI;
 
-pub fn euler_to_matrix(rotation: &Vec3) -> Matrix {
+pub(crate) fn euler_to_matrix(rotation: &Vec3) -> Matrix {
     let x = -rotation.x;
     let y = -rotation.y;
     let z = -rotation.z;
@@ -25,7 +25,7 @@ pub fn euler_to_matrix(rotation: &Vec3) -> Matrix {
     }
 }
 
-pub fn scale_to_matrix(scale: &Vec3) -> Matrix {
+pub(crate) fn scale_to_matrix(scale: &Vec3) -> Matrix {
     Matrix {
         a: scale.x,
         b: 0.0,
@@ -71,7 +71,7 @@ fn apply_zero_sign(value: f32, signs: u32, index: u32) -> f32 {
 /// This is required for complete binary accuracy, since in Rust, ``0.0 == -0.0``. So
 /// when we compare against the calculated matrix or identity matrix, the zero sign will
 /// be ignored. This function saves them for writing.
-pub fn extract_matrix_signs(matrix: &Matrix) -> u32 {
+pub(crate) fn extract_matrix_signs(matrix: &Matrix) -> u32 {
     let mut signs = 0;
     signs |= extract_zero_sign(matrix.a, 0);
     signs |= extract_zero_sign(matrix.b, 1);
@@ -90,7 +90,7 @@ pub fn extract_matrix_signs(matrix: &Matrix) -> u32 {
 /// This is required for complete binary accuracy, since in Rust, ``0.0 == -0.0``. So
 /// when we compare against the calculated matrix or identity matrix, the zero sign will
 /// be ignored. This function applies them from reading.
-pub fn apply_matrix_signs(matrix: &Matrix, signs: u32) -> Matrix {
+pub(crate) fn apply_matrix_signs(matrix: &Matrix, signs: u32) -> Matrix {
     Matrix {
         a: apply_zero_sign(matrix.a, signs, 0),
         b: apply_zero_sign(matrix.b, signs, 1),
@@ -104,7 +104,7 @@ pub fn apply_matrix_signs(matrix: &Matrix, signs: u32) -> Matrix {
     }
 }
 
-pub fn extract_vec3_signs(v: &Vec3) -> u32 {
+pub(crate) fn extract_vec3_signs(v: &Vec3) -> u32 {
     let mut signs = 0;
     signs |= extract_zero_sign(v.x, 0);
     signs |= extract_zero_sign(v.y, 1);
@@ -112,7 +112,7 @@ pub fn extract_vec3_signs(v: &Vec3) -> u32 {
     signs
 }
 
-pub fn apply_vec3_signs(v: Vec3, signs: u32) -> Vec3 {
+pub(crate) fn apply_vec3_signs(v: Vec3, signs: u32) -> Vec3 {
     Vec3 {
         x: apply_zero_sign(v.x, signs, 0),
         y: apply_zero_sign(v.y, signs, 1),
@@ -128,7 +128,7 @@ fn approx_sqrt(value: f32) -> f32 {
 }
 
 #[inline]
-pub fn partition_diag(z_min: f32, z_max: f32, sides: f64) -> f32 {
+pub(crate) fn partition_diag(z_min: f32, z_max: f32, sides: f64) -> f32 {
     // must perform this calculation with doubles to avoid loss of precision
     let z_side = (z_min as f64 - z_max as f64) * 0.5;
     let temp = 2.0 * sides * sides + z_side * z_side;
@@ -136,7 +136,7 @@ pub fn partition_diag(z_min: f32, z_max: f32, sides: f64) -> f32 {
 }
 
 #[inline]
-pub fn cotangent(value: f32) -> f32 {
+pub(crate) fn cotangent(value: f32) -> f32 {
     // must perform this calculation with doubles to avoid loss of precision
     let temp = 1.0 / (value as f64).tan();
     temp as f32

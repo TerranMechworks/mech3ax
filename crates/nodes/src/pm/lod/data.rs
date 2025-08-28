@@ -1,12 +1,11 @@
 use crate::pm::node::NodeVariantLodPm;
 use crate::pm::wrappers::WrapperPm;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
 use mech3ax_api_types::nodes::pm::Lod;
 use mech3ax_api_types::Range;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, bool_c, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Zeros};
+use mech3ax_types::{impl_as_bytes, Zeros};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -58,17 +57,10 @@ fn assert_lod(lod: &LodPmC, offset: usize) -> Result<(bool, Range)> {
     Ok((level, range))
 }
 
-pub fn read(
+pub(crate) fn read(
     read: &mut CountingReader<impl Read>,
     node: NodeVariantLodPm,
-    index: usize,
 ) -> Result<WrapperPm<Lod>> {
-    debug!(
-        "Reading lod node data {} (pm, {}) at {}",
-        index,
-        LodPmC::SIZE,
-        read.offset
-    );
     let lod: LodPmC = read.read_struct()?;
 
     let (level, range) = assert_lod(&lod, read.prev)?;
@@ -95,13 +87,7 @@ pub fn read(
     })
 }
 
-pub fn write(write: &mut CountingWriter<impl Write>, lod: &Lod, index: usize) -> Result<()> {
-    debug!(
-        "Writing lod node data {} (pm, {}) at {}",
-        index,
-        LodPmC::SIZE,
-        write.offset
-    );
+pub(crate) fn write(write: &mut CountingWriter<impl Write>, lod: &Lod) -> Result<()> {
     let lod = LodPmC {
         level: bool_c!(lod.level),
         range_near_sq: lod.range.min * lod.range.min,

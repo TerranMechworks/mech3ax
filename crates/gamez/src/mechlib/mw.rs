@@ -1,4 +1,5 @@
 use crate::mesh::mw::{read_mesh_data, read_mesh_info, write_mesh_data, write_mesh_info};
+use log::trace;
 use mech3ax_api_types::gamez::mechlib::ModelMw;
 use mech3ax_api_types::gamez::mesh::MeshMw;
 use mech3ax_api_types::nodes::mw::{NodeMw, Object3d};
@@ -16,7 +17,8 @@ fn read_node_and_mesh(
     meshes: &mut Vec<MeshMw>,
     mesh_ptrs: &mut Vec<i32>,
 ) -> Result<u32> {
-    match read_node_mechlib(read, nodes.len())? {
+    trace!("Reading node {}", nodes.len());
+    match read_node_mechlib(read)? {
         WrappedNodeMw::Object3d(wrapped) => {
             read_node_and_mesh_object3d(read, nodes, meshes, mesh_ptrs, wrapped)
         }
@@ -43,10 +45,11 @@ fn read_node_and_mesh_object3d(
         mesh_ptrs.push(object3d.mesh_index);
         object3d.mesh_index = mesh_index;
 
-        let wrapped_mesh = read_mesh_info(read, mesh_index)?;
+        trace!("Reading mesh {}", mesh_index);
+        let wrapped_mesh = read_mesh_info(read)?;
         // TODO: we ought to base this on the materials in mechlib, but...
         let material_count = 4096;
-        let mesh = read_mesh_data(read, wrapped_mesh, material_count, mesh_index)?;
+        let mesh = read_mesh_data(read, wrapped_mesh, material_count)?;
         meshes.push(mesh);
     } else {
         object3d.mesh_index = -1;
@@ -112,14 +115,16 @@ fn write_node_and_mesh(
         _ => return Err(mechlib_only_err_mw()),
     };
 
-    write_node_info(write, node, index)?;
-    write_node_data(write, node, index)?;
+    trace!("Writing node {}", index);
+    write_node_info(write, node)?;
+    write_node_data(write, node)?;
 
     // if mesh_index isn't -1, then we need to write out the mesh, too
     if let Some(mesh_index) = restore_index {
         let mesh = &meshes[mesh_index];
-        write_mesh_info(write, mesh, mesh_index)?;
-        write_mesh_data(write, mesh, mesh_index)?;
+        trace!("Writing mesh {}", mesh_index);
+        write_mesh_info(write, mesh)?;
+        write_mesh_data(write, mesh)?;
     }
 
     let child_indices = match node {

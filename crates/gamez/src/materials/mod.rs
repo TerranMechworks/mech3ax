@@ -96,15 +96,15 @@ struct CycleInfoC {
 impl_as_bytes!(CycleInfoC, 28);
 
 #[derive(Debug)]
-pub struct RawTexturedMaterial {
-    pub pointer: u32,
-    pub cycle_ptr: Option<u32>,
-    pub soil: Soil,
-    pub flag: bool,
+pub(crate) struct RawTexturedMaterial {
+    pub(crate) pointer: u32,
+    pub(crate) cycle_ptr: u32,
+    pub(crate) soil: Soil,
+    pub(crate) flag: bool,
 }
 
 #[derive(Debug)]
-pub enum RawMaterial {
+pub(crate) enum RawMaterial {
     Textured(RawTexturedMaterial),
     Colored(ColoredMaterial),
 }

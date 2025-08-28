@@ -1,11 +1,10 @@
 use super::info::LIGHT_NAME;
 use bytemuck::{AnyBitPattern, NoUninit};
-use log::debug;
 use mech3ax_api_types::nodes::cs::Light;
 use mech3ax_api_types::Range;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{assert_that, Result};
-use mech3ax_types::{impl_as_bytes, AsBytes as _, Zeros};
+use mech3ax_types::{impl_as_bytes, Zeros};
 use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Copy, NoUninit, AnyBitPattern)]
@@ -97,18 +96,11 @@ fn assert_light(light: &LightCsC, offset: usize) -> Result<()> {
     Ok(())
 }
 
-pub fn read(
+pub(crate) fn read(
     read: &mut CountingReader<impl Read>,
     data_ptr: u32,
     node_index: u32,
-    index: usize,
 ) -> Result<Light> {
-    debug!(
-        "Reading light node data {} (cs, {}) at {}",
-        index,
-        LightCsC::SIZE,
-        read.offset
-    );
     let light: LightCsC = read.read_struct()?;
 
     assert_light(&light, read.prev)?;
@@ -126,14 +118,7 @@ pub fn read(
     })
 }
 
-pub fn write(write: &mut CountingWriter<impl Write>, light: &Light, index: usize) -> Result<()> {
-    debug!(
-        "Writing light node data {} (cs, {}) at {}",
-        index,
-        LightCsC::SIZE,
-        write.offset
-    );
-
+pub(crate) fn write(write: &mut CountingWriter<impl Write>, light: &Light) -> Result<()> {
     let light = LightCsC {
         unk000: 0.0,
         unk004: 0.0,
