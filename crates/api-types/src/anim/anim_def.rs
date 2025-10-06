@@ -3,7 +3,7 @@ use super::events::Event;
 use super::support::{
     AnimRef, DynamicSoundRef, EffectRef, LightRef, NodeRef, ObjectRef, PufferRef, StaticSoundRef,
 };
-use crate::serde::bytes;
+use crate::serde::{bytes, bytes_opt};
 use crate::{Range, api, num, sum};
 use mech3ax_timestamp::DateTime;
 
@@ -12,10 +12,8 @@ api! {
     struct AnimDefFile {
         name: String,
         datetime: DateTime,
-        // #[serde(skip_serializing_if = "Option::is_none", default, with = "bytes_opt")]
-        // garbage: Option<Vec<u8>> = { None },
-        #[serde(with = "bytes")]
-        garbage: Vec<u8>,
+        #[serde(skip_serializing_if = "Option::is_none", default, with = "bytes_opt")]
+        garbage: Option<Vec<u8>> = { None },
     }
 }
 

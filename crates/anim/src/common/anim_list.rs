@@ -3,7 +3,7 @@ use mech3ax_api_types::anim::AnimDefFile;
 use mech3ax_common::io_ext::{CountingReader, CountingWriter};
 use mech3ax_common::{Result, assert_len, chk};
 use mech3ax_timestamp::unix::{from_timestamp, to_timestamp};
-use mech3ax_types::check::garbage;
+use mech3ax_types::check::{garbage, make_garbage};
 use mech3ax_types::{Ascii, Offsets, impl_as_bytes};
 use std::io::{Read, Write};
 
@@ -49,7 +49,7 @@ pub(crate) fn write_anim_list(
     let count = assert_len!(u32, anim_list.len(), "anim list")?;
     write.write_struct(&AnimListC { count })?;
     for anim_def_file in anim_list {
-        let name = Ascii::from_str_garbage(&anim_def_file.name, &anim_def_file.garbage);
+        let name = make_garbage(&anim_def_file.name, &anim_def_file.garbage);
         let timestamp = to_timestamp(&anim_def_file.datetime);
         let anim_def_file = AnimDefFileC { name, timestamp };
         write.write_struct(&anim_def_file)?;
