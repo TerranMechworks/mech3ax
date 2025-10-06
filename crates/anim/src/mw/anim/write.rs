@@ -4,7 +4,6 @@ use crate::common::si_script::load_anim_scripts;
 use crate::mw::anim_def::{write_anim_def, write_anim_def_zero};
 use crate::{LoadItem, LoadItemName, SIGNATURE, VERSION_MW};
 use log::{debug, trace};
-use mech3ax_anim_names::mw::anim_list_rev;
 use mech3ax_api_types::anim::{AnimMetadata, SiScript};
 use mech3ax_common::io_ext::CountingWriter;
 use mech3ax_common::{Error, Result, assert_len};
@@ -23,7 +22,7 @@ where
     E: From<std::io::Error> + From<Error>,
 {
     write_anim_header(write)?;
-    write_anim_list(write, &metadata.anim_list, anim_list_rev)?;
+    write_anim_list(write, &metadata.anim_list)?;
     write_anim_info(write, metadata)?;
     let scripts = load_anim_scripts(&metadata.script_names, &mut load_item)?;
     write_anim_defs(write, &metadata.anim_def_names, load_item, &scripts)?;

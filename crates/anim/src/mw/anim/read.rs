@@ -4,7 +4,6 @@ use crate::common::si_script::save_anim_scripts;
 use crate::mw::anim_def::{read_anim_def, read_anim_def_zero};
 use crate::{SIGNATURE, SaveItem, VERSION_MW};
 use log::{debug, trace};
-use mech3ax_anim_names::mw::anim_list_fwd;
 use mech3ax_api_types::anim::{AnimMetadata, SiScript};
 use mech3ax_common::io_ext::CountingReader;
 use mech3ax_common::{Error, Rename, Result, assert_that};
@@ -28,7 +27,7 @@ where
     E: From<std::io::Error> + From<Error>,
 {
     read_anim_header(read)?;
-    let anim_list = read_anim_list(read, anim_list_fwd)?;
+    let anim_list = read_anim_list(read)?;
     let anim_info = read_anim_info(read)?;
     let mut scripts = Vec::new();
     let anim_def_names = read_anim_defs(read, anim_info.def_count, &mut save_item, &mut scripts)?;

@@ -4,7 +4,6 @@ use crate::pm::anim_def::{write_anim_def, write_anim_def_zero};
 use crate::{LoadItem, LoadItemName, SIGNATURE, VERSION_PM};
 use log::{debug, trace};
 use mech3ax_anim_events::si_script::{size_si_script_frames, write_si_script_frames};
-use mech3ax_anim_names::pm::anim_list_rev;
 use mech3ax_api_types::anim::AnimMetadata;
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingWriter;
@@ -27,7 +26,7 @@ where
 {
     let datetime = metadata.datetime.as_ref();
     write_anim_header(write, datetime)?;
-    write_anim_list(write, &metadata.anim_list, anim_list_rev)?;
+    write_anim_list(write, &metadata.anim_list)?;
     write_anim_info(write, metadata)?;
     write_anim_defs(write, &metadata.anim_def_names, &mut load_item)?;
     write_anim_scripts(write, &metadata.script_names, load_item)?;

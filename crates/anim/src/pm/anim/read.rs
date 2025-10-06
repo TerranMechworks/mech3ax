@@ -4,7 +4,6 @@ use crate::pm::anim_def::{read_anim_def, read_anim_def_zero};
 use crate::{SIGNATURE, SaveItem, VERSION_PM};
 use log::{debug, trace};
 use mech3ax_anim_events::si_script::read_si_script_frames;
-use mech3ax_anim_names::pm::anim_list_fwd;
 use mech3ax_api_types::anim::{AnimMetadata, SiScript};
 use mech3ax_common::assert::assert_utf8;
 use mech3ax_common::io_ext::CountingReader;
@@ -33,7 +32,7 @@ where
     E: From<std::io::Error> + From<Error>,
 {
     let datetime = read_anim_header(read)?;
-    let anim_list = read_anim_list(read, anim_list_fwd)?;
+    let anim_list = read_anim_list(read)?;
     let anim_info = read_anim_info(read)?;
     let anim_def_names = read_anim_defs(read, anim_info.def_count, &mut save_item)?;
     let script_names = read_anim_scripts(read, anim_info.script_count, save_item)?;

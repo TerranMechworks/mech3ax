@@ -8,10 +8,6 @@ include!("data/mw_anim_root_names.rs");
 include!("data/pm_anim_root_names.rs");
 include!("data/rc_anim_root_names.rs");
 
-include!("data/mw_anim_list.rs");
-include!("data/pm_anim_list.rs");
-include!("data/rc_anim_list.rs");
-
 fn main() {
     let out_dir = std::env::var("OUT_DIR").unwrap();
 
@@ -22,10 +18,6 @@ fn main() {
     map(&out_dir, "mw_anim_root_names", MW_ANIM_ROOT_NAMES);
     map(&out_dir, "pm_anim_root_names", PM_ANIM_ROOT_NAMES);
     map(&out_dir, "rc_anim_root_names", RC_ANIM_ROOT_NAMES);
-
-    map(&out_dir, "mw_anim_list", MW_ANIM_LIST);
-    map(&out_dir, "pm_anim_list", PM_ANIM_LIST);
-    map(&out_dir, "rc_anim_list", RC_ANIM_LIST);
 }
 
 fn map<const N: usize>(out_dir: &str, name: &str, names: &[(&[u8; N], &str)]) {
