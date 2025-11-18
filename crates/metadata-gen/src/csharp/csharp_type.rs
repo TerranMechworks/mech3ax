@@ -193,7 +193,7 @@ impl CSharpType {
     pub(crate) fn byte_vec() -> Self {
         Self {
             name: Cow::Borrowed("byte[]"),
-            kind: TypeKind::Val,
+            kind: TypeKind::Ref,
             generics: None,
             serde: SerializeType::Bytes,
         }

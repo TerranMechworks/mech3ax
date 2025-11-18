@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [0.7.0-rc3] - 2025-11-17
+
+* Use garbage for AnimDefFile.Name, not fixup data
+
 ## [0.7.0-rc2] - 2025-08-03
 
 * Fix interop oversights

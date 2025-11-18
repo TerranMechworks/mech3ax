@@ -28,8 +28,8 @@ fn num_repr_json() {
 fn num_repr_exchange() {
     let expected_value = TestRepr::SpamEggs;
     let exchange = mech3ax_exchange::to_vec(&expected_value).unwrap();
-    // <EnumUnit><1i32>
-    assert_eq!(exchange, &[80u8, 0, 0, 0, 1, 0, 0, 0] as &[u8]);
+    // <EnumUnit><2i32>
+    assert_eq!(exchange, &[80u8, 0, 0, 0, 2, 0, 0, 0] as &[u8]);
     let actual_value: TestRepr = mech3ax_exchange::from_slice(&exchange).unwrap();
     assert_eq!(actual_value, expected_value);
 }
@@ -71,8 +71,8 @@ fn num_plain_json() {
 fn num_plain_exchange() {
     let expected_value = TestPlain::SpamEggs;
     let exchange = mech3ax_exchange::to_vec(&expected_value).unwrap();
-    // <EnumUnit><1i32>
-    assert_eq!(exchange, &[80u8, 0, 0, 0, 1, 0, 0, 0] as &[u8]);
+    // <EnumUnit><4i32>
+    assert_eq!(exchange, &[80u8, 0, 0, 0, 4, 0, 0, 0] as &[u8]);
     let actual_value: TestPlain = mech3ax_exchange::from_slice(&exchange).unwrap();
     assert_eq!(actual_value, expected_value);
 }
